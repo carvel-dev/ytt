@@ -29,7 +29,7 @@ ytt template -R -f examples/playground/example-demo/
 ytt template -R -f examples/playground/example-demo/ --output tmp/
 ```
 
-See `examples/playground/*` for examples shown on [get-ytt.io](https://get-ytt.io).
+See [examples/playground/](examples/playground/) for examples shown on [get-ytt.io](https://get-ytt.io).
 
 ## Development
 
