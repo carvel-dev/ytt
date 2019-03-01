@@ -28,13 +28,13 @@ func NewServer(opts ServerOpts) *Server {
 
 func (s *Server) Mux() *http.ServeMux {
 	mux := http.NewServeMux()
-	mux.HandleFunc("/", s.redirectToHTTPs(s.noCacheHandler(s.checkReleaseCookie(s.mainHandler))))
-	mux.HandleFunc("/js/", s.redirectToHTTPs(s.noCacheHandler(s.checkReleaseCookie(s.assetHandler))))
-	mux.HandleFunc("/examples", s.redirectToHTTPs(s.noCacheHandler(s.checkReleaseCookie(s.examplesListHandler))))
-	mux.HandleFunc("/examples/", s.redirectToHTTPs(s.noCacheHandler(s.checkReleaseCookie(s.examplesHandler))))
+	mux.HandleFunc("/", s.redirectToHTTPs(s.noCacheHandler(s.mainHandler)))
+	mux.HandleFunc("/js/", s.redirectToHTTPs(s.noCacheHandler(s.assetHandler)))
+	mux.HandleFunc("/examples", s.redirectToHTTPs(s.noCacheHandler(s.examplesListHandler)))
+	mux.HandleFunc("/examples/", s.redirectToHTTPs(s.noCacheHandler(s.examplesHandler)))
 	// no need for caching as it's a POST
-	mux.HandleFunc("/template", s.redirectToHTTPs(s.checkReleaseCookie(s.templateHandler)))
-	mux.HandleFunc("/alpha-test", s.redirectToHTTPs(s.noCacheHandler(s.addReleaseCookieHandler)))
+	mux.HandleFunc("/template", s.redirectToHTTPs(s.templateHandler))
+	mux.HandleFunc("/alpha-test", s.redirectToHTTPs(s.noCacheHandler(s.alphaTestHandler)))
 	mux.HandleFunc("/health", s.healthHandler)
 	return mux
 }
@@ -179,30 +179,6 @@ func (s *Server) noCacheHandler(wrappedFunc func(http.ResponseWriter, *http.Requ
 	}
 }
 
-const (
-	releaseCookieName = "x-release-test"
-)
-
-func (s *Server) checkReleaseCookie(wrappedFunc func(http.ResponseWriter, *http.Request)) func(http.ResponseWriter, *http.Request) {
-	return func(w http.ResponseWriter, r *http.Request) {
-		if s.opts.CheckCookie {
-			cookie, err := r.Cookie(releaseCookieName)
-			if err != nil || len(cookie.String()) == 0 {
-				s.logError(w, fmt.Errorf("come back soon!"))
-				return
-			}
-		}
-
-		wrappedFunc(w, r)
-	}
-}
-
-func (s *Server) addReleaseCookieHandler(w http.ResponseWriter, r *http.Request) {
-	cookie := http.Cookie{
-		Name:    releaseCookieName,
-		Value:   releaseCookieName,
-		Expires: time.Now().AddDate(0, 0, 365),
-	}
-	http.SetCookie(w, &cookie)
+func (s *Server) alphaTestHandler(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
 }
