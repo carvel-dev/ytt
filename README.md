@@ -15,7 +15,7 @@ Features:
 - includes *sandboxed* "fully featured" _Pythonic_ programming language
   - compared to what's exposed in go/template for example
 
-Try out [online playground](https://get-ytt.io/play) or download latest binaries from [Releases](https://github.com/get-ytt/ytt/releases) page (playground is included via `ytt playground` command).
+Try out [online playground](https://get-ytt.io) or download latest binaries from [Releases](https://github.com/get-ytt/ytt/releases) page (playground is included via `ytt playground` command).
 
 ## Docs
 
