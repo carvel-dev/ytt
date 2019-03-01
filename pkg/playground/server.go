@@ -146,8 +146,13 @@ func (s *Server) redirectToHTTPs(wrappedFunc func(http.ResponseWriter, *http.Req
 
 		if checkHTTPs && r.Header.Get(http.CanonicalHeaderKey("x-forwarded-proto")) != "https" {
 			if r.Method == http.MethodGet || r.Method == http.MethodHead {
-				r.URL.Scheme = "https"
-				http.Redirect(w, r, "/", http.StatusMovedPermanently)
+				host := r.Header.Get("host")
+				if len(host) == 0 {
+					s.logError(w, fmt.Errorf("expected non-empty Host header"))
+					return
+				}
+
+				http.Redirect(w, r, "https://"+host, http.StatusMovedPermanently)
 				return
 			}
 
