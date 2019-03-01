@@ -22,18 +22,20 @@ Try out [online playground](https://get-ytt.io) or download latest binaries from
 - [Language](docs/lang.md)
 - [Security](docs/security.md)
 
+## Try it
+
+```
+ytt template -R -f examples/playground/example-demo/
+ytt template -R -f examples/playground/example-demo/ --output tmp/
+```
+
+See `examples/playground/*` for examples shown on [get-ytt.io](https://get-ytt.io).
+
 ## Development
 
 ```bash
 ./hack/build.sh
-./ytt template -f template.yml
-./ytt template -R -f examples/eirini --output tmp/eirini --input examples/eirini/input.yml
-```
-
-Tests:
-
-```bash
-./hack/test-all.sh
 ./hack/test-unit.sh
 ./hack/test-e2e.sh
+./hack/test-all.sh
 ```
