@@ -1,0 +1,8 @@
+#! to stop templating with a custom error
+#! use provided assert.fail function
+
+#@ load("@ytt:assert", "assert")
+
+#@ val = 123
+
+key: #@ val if val > 130 else assert.fail("val is too small")

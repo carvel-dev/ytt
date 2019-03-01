@@ -1,0 +1,22 @@
+#@ load("@ytt:template", "template")
+
+--- #@ template.replace([{"test1": 123}])
+--- #@ template.replace([{"test2": 124}, {"test2": 125}])
+---
+test0: after
+
+#! TODO have a test that asserts on following error
+#! ---
+#! #@ template.replace([{"test3": 123}])
+#! #! no dashes
+#! test4: after
+
++++
+
+test1: 123
+---
+test2: 124
+---
+test2: 125
+---
+test0: after

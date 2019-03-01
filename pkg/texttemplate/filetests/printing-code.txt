@@ -1,0 +1,3 @@
+before(@= "5" @)af(@= "5" @)ter(@= "\n" @)
++++
+before5af5ter

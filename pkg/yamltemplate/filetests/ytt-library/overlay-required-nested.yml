@@ -1,0 +1,50 @@
+#@ load("@ytt:overlay", "overlay")
+
+#@ def test1_left():
+key1:
+  key1: val1
+  key2: val2
+#@ end
+
+#@ def test1_right():
+#@overlay/match missing_ok=True
+key2:
+- name: foo
+  other: key
+#@ end
+
+test1: #@ overlay.apply(test1_left(), test1_right())
+
+#@ def test2_left():
+key1:
+  key1: val1
+  key2: val2
+#@ end
+
+#@ def test2_right():
+#@overlay/match missing_ok=True
+key1:
+  key1: val1
+  #! TODO key3 is no in left obj, but does not have
+  #! to be marked as required=false, since parent
+  #! node already marked tree as required=false
+  #@overlay/match missing_ok=True
+  key3: val3
+#@ end
+
+test2: #@ overlay.apply(test2_left(), test2_right())
+
++++
+
+test1:
+  key1:
+    key1: val1
+    key2: val2
+  key2:
+  - name: foo
+    other: key
+test2:
+  key1:
+    key1: val1
+    key2: val2
+    key3: val3

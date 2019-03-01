@@ -1,0 +1,16 @@
+#! parser allows to indent documents
+#@ if True:
+  #@ if False:
+---
+  test1: a
+  test1a: a
+  #@ else/end:
+---
+  test1: b
+  test1a: b
+#@ end
+
++++
+
+test1: b
+test1a: b

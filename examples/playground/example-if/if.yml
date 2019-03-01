@@ -1,0 +1,35 @@
+#! it would be pretty hard to do most templating
+#! tasks without supporting some conditional logic
+
+#@ if True:
+key1a: inside-if1
+#@ end
+
+#! alternatively if conditional applies to one YAML
+#! node, you can use 'if/end' to avoid an extra line
+
+#@ if/end True:
+key1b: inside-if1
+
+#! if/end would not work for the following example
+#! that needs to span several YAML nodes
+
+#@ if True:
+key2a: keya
+key2b: keyb
+key2c: keyc
+#@ end
+
+#! of course we can nest ifs any way we want
+#! as long as 'end's are properly closed
+
+#@ if True:
+key3a:
+  #@ something = 123
+  #@ if/end something > 10:
+  nested_key:
+    another_key: inside-if-nif
+#@ else:
+key3a: inside-else1
+key3b: inside-else2
+#@ end

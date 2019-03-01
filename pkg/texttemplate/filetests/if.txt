@@ -1,0 +1,9 @@
+(@- if True: -@)
+
+line1
+
+(@- end @)(@ if False: @)line1a(@ end @)
+line2
++++
+line1
+line2

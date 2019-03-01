@@ -1,0 +1,26 @@
+#@ load("@ytt:yaml", "yaml")
+
+test1: #@ yaml.encode({"a": [1,2,3,{"c":456}], "b": "str"})
+test2: #@ yaml.encode({})
+test3: #@ yaml.decode("{}")
+test4: #@ yaml.decode('{"a":[1,2,3,{"c":456}],"b":"str"}')
+
++++
+
+test1: |
+  a:
+  - 1
+  - 2
+  - 3
+  - c: 456
+  b: str
+test2: |
+  {}
+test3: {}
+test4:
+  a:
+  - 1
+  - 2
+  - 3
+  - c: 456
+  b: str

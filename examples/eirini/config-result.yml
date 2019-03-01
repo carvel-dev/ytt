@@ -1,0 +1,86 @@
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: RoleBinding
+metadata:
+  name: secret-generator-configgin-role-binding
+  labels:
+    app.kubernetes.io/component: secret-generator-configgin-role-binding
+    skiff-role-name: secret-generator-configgin-role-binding
+    app.kubernetes.io/instance: release-name
+    app.kubernetes.io/managed-by: release-sv
+    app.kubernetes.io/name: chart-name
+    app.kubernetes.io/version: chart-appver
+    helm.sh/chart: chart-name-chart-ver
+subjects:
+- kind: ServiceAccount
+  name: secret-generator
+roleRef:
+  kind: Role
+  name: configgin-role
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: RoleBinding
+metadata:
+  name: secret-generator-secrets-role-binding
+  labels:
+    app.kubernetes.io/component: secret-generator-secrets-role-binding
+    skiff-role-name: secret-generator-secrets-role-binding
+    app.kubernetes.io/instance: release-name
+    app.kubernetes.io/managed-by: release-sv
+    app.kubernetes.io/name: chart-name
+    app.kubernetes.io/version: chart-appver
+    helm.sh/chart: chart-name-chart-ver
+subjects:
+- kind: ServiceAccount
+  name: secret-generator
+roleRef:
+  kind: Role
+  name: secrets-role
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: release-ns-secret-generator-binding-psp
+  labels:
+    app.kubernetes.io/component: release-ns-secret-generator-binding-psp
+    skiff-role-name: release-ns-secret-generator-binding-psp
+    app.kubernetes.io/instance: release-name
+    app.kubernetes.io/managed-by: release-sv
+    app.kubernetes.io/name: chart-name
+    app.kubernetes.io/version: chart-appver
+    helm.sh/chart: chart-name-chart-ver
+subjects:
+- kind: ServiceAccount
+  name: secret-generator
+  namespace: release-ns
+roleRef:
+  kind: ClusterRole
+  name: release-ns-psp-role-nonprivileged
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: Role
+metadata:
+  name: secrets-role
+  labels:
+    app.kubernetes.io/component: secrets-role
+    skiff-role-name: secrets-role
+    app.kubernetes.io/instance: release-name
+    app.kubernetes.io/managed-by: release-sv
+    app.kubernetes.io/name: chart-name
+    app.kubernetes.io/version: chart-appver
+    helm.sh/chart: chart-name-chart-ver
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - configmaps
+  - secrets
+  verbs:
+  - create
+  - get
+  - list
+  - patch
+  - update
+  - delete

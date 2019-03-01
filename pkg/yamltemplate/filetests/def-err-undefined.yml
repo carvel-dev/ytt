@@ -1,0 +1,22 @@
+other: #@ missing1(12)
+another: #@ missing2()
+#@ missing3()
+
+#! with some whitespace before
+#@ missing4()
+
++++
+
+ERR: 
+- undefined: missing1
+    stdin:1
+     L other: #@ missing1(12)
+- undefined: missing2
+    stdin:2
+     L another: #@ missing2()
+- undefined: missing3
+    stdin:3
+     L #@ missing3()
+- undefined: missing4
+    stdin:6
+     L #@ missing4()

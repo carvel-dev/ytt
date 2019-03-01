@@ -1,0 +1,47 @@
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  labels:
+    #@ if True:
+    key1:
+      #@ if True:
+      key1: nestedif
+      #@ else:
+      key1: nestedelse
+      #@ end
+    #@ end
+
+    #@ if False:
+    key1: 123
+    #@ end
+
+    #@ if True:
+    #@ if True:
+    key2: nestedif
+    #@ end
+    #@ end
+
+    key3: key3
+
+    #! tests that nested if can work with follow-in else
+    #@ if True:
+    key4:
+      #@ if True:
+      key4: nestedif
+      #@ end
+    #@ else:
+    key4: key4
+    #@ end
+
++++
+
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  labels:
+    key1:
+      key1: nestedif
+    key2: nestedif
+    key3: key3
+    key4:
+      key4: nestedif

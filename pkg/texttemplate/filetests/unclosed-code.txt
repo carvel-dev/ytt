@@ -1,0 +1,5 @@
+
+test(@ a = 5
++++
+
+ERR:Missing code closing '@)' at line 2 col 13

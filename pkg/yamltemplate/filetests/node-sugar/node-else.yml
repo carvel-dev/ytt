@@ -1,0 +1,16 @@
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  labels:
+    #@ if False:
+    key: if
+    #@ else/end:
+    key: else
+
++++
+
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  labels:
+    key: else

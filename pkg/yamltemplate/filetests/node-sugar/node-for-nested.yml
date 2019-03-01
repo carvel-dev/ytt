@@ -1,0 +1,57 @@
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  labels:
+    array1:
+    #@ for/end i in range(0,3):
+    - nested:
+      #@ for/end i in range(0,3):
+      - #@ i
+
+    array2:
+      #@ for i in range(0,3):
+      #@ for/end j in range(0,3):
+      - #@ "{i},{j}".format(i=i, j=j)
+      #@ end
+
+    array3:
+      #! for/end is not at the beginning of the line
+      #@ for i in range(0,2):
+      #@   for/end j in range(0,2):
+      - #@ "{i},{j}".format(i=i, j=j)
+      #@ end
+
++++
+
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  labels:
+    array1:
+    - nested:
+      - 0
+      - 1
+      - 2
+    - nested:
+      - 0
+      - 1
+      - 2
+    - nested:
+      - 0
+      - 1
+      - 2
+    array2:
+    - 0,0
+    - 0,1
+    - 0,2
+    - 1,0
+    - 1,1
+    - 1,2
+    - 2,0
+    - 2,1
+    - 2,2
+    array3:
+    - 0,0
+    - 0,1
+    - 1,0
+    - 1,1

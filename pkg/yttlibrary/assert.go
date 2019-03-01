@@ -1,0 +1,35 @@
+package yttlibrary
+
+import (
+	"fmt"
+
+	"github.com/get-ytt/ytt/pkg/template/core"
+	"go.starlark.net/starlark"
+	"go.starlark.net/starlarkstruct"
+)
+
+var (
+	AssertAPI = starlark.StringDict{
+		"assert": &starlarkstruct.Module{
+			Name: "assert",
+			Members: starlark.StringDict{
+				"fail": starlark.NewBuiltin("assert.fail", core.ErrWrapper(assertModule{}.Fail)),
+			},
+		},
+	}
+)
+
+type assertModule struct{}
+
+func (b assertModule) Fail(thread *starlark.Thread, f *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
+	if args.Len() != 1 {
+		return starlark.None, fmt.Errorf("expected exactly one argument")
+	}
+
+	val, err := core.NewStarlarkValue(args.Index(0)).AsString()
+	if err != nil {
+		return starlark.None, err
+	}
+
+	return starlark.None, fmt.Errorf("fail: %s", val)
+}

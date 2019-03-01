@@ -1,0 +1,114 @@
+#@ load("@ytt:overlay", "overlay")
+
+#@ def test1_left():
+key1: val1
+#@ end
+
+#@ def test1_right():
+key1: val2
+#@ end
+
+test1: #@ overlay.apply(test1_left(), test1_right())
+
+#@ def test2_left():
+key1:
+  key10: val10
+  key11: val11
+key3: val3
+#@ end
+
+#@ def test2_right():
+key1:
+  key10: val10.0
+  #@overlay/match missing_ok=True
+  key12: val12
+#@overlay/match missing_ok=True
+key2: val2
+#@overlay/remove
+key3:
+#@ end
+
+test2: #@ overlay.apply(test2_left(), test2_right())
+
+#@ def test3_left():
+key1:
+- item1
+- item2
+#@ end
+
+#@ def test3_right(i):
+key1:
+#@overlay/match by=overlay.index(i)
+#@overlay/replace
+- item3
+#@ end
+
+test3: #@ overlay.apply(test3_left(), test3_right(1))
+test3a: #@ overlay.apply(test3_left(), test3_right(0), test3_right(1))
+
+#@ def test4_left():
+key1:
+- item1
+- item2
+key2: []
+#@ end
+
+#@ def test4_right():
+key1:
+#@overlay/match by=overlay.all,expects="0+"
+#@overlay/replace
+- item4
+key2:
+#@overlay/match by=overlay.all,expects="0+"
+#@overlay/replace
+- item4
+#@ end
+
+test4: #@ overlay.apply(test4_left(), test4_right())
+
+#@ def test5_left():
+key1:
+- name: blah
+- name: foo
+- name: foo2
+#@ end
+
+#@ def test5_right():
+key1:
+#@overlay/match by="name"
+#@overlay/replace
+- name: foo
+  other: key
+#@ end
+
+test5: #@ overlay.apply(test5_left(), test5_right())
+
++++
+
+test1:
+  key1: val2
+test2:
+  key1:
+    key10: val10.0
+    key11: val11
+    key12: val12
+  key2: val2
+test3:
+  key1:
+  - item1
+  - item3
+test3a:
+  key1:
+  - item3
+  - item3
+test4:
+  key1:
+  - item4
+  - item4
+  key2: []
+test5:
+  key1:
+  - name: blah
+  - name: foo
+    other: key
+  - name: foo2

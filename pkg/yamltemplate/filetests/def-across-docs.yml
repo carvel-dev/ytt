@@ -1,0 +1,16 @@
+---
+array:
+#@ def tpl():
+- item1
+- item2
+#@ end
+---
+test1: #@ tpl()
+
++++
+
+array: []
+---
+test1:
+- item1
+- item2

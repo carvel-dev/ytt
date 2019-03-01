@@ -1,0 +1,14 @@
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  labels:
+    int: #@ 123 + "124"
+    #! subsequent errors are ignored
+    intCalc: #@ "124" + 123
+
++++
+
+ERR: 
+- unknown binary op: int + string
+    stdin:5 in <toplevel>
+     L     int: #@ 123 + "124"

@@ -1,0 +1,31 @@
+#! example is based on the following github repo: https://bit.ly/2EoYwuN
+
+#@ load("@ytt:data", "data")
+#@ load("helpers.star", "name")
+#@ load("helpers.lib.yml", "metadata")
+
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata: #@ metadata(data.values)
+spec:
+  replicas: #@ data.values.replicaCount
+  template:
+    metadata:
+      labels:
+        app: #@ name(data.values)
+        release: #@ data.values.Release.Name
+    spec:
+      containers:
+      - name: #@ data.values.Chart.Name
+        image: nginx:stable
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: #@ data.values.service.internalPort
+        livenessProbe:
+          httpGet:
+            path: /
+            port: #@ data.values.service.internalPort
+        readinessProbe:
+          httpGet:
+            path: /
+            port: #@ data.values.service.internalPort

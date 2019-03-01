@@ -1,0 +1,31 @@
+#@ load("@ytt:overlay", "overlay")
+#@ load("@ytt:template", "template")
+
+#@ def ingress():
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: example-ingress
+  annotations:
+    ingress.kubernetes.io/rewrite-target: /
+#! ... removed for brevity
+#@ end
+
+#@ def updates():
+metadata:
+  annotations:
+    #@overlay/match missing_ok=True
+    nginx.ingress.kubernetes.io/limit-rps: 2000
+    #@overlay/match missing_ok=True
+    nginx.ingress.kubernetes.io/enable-access-log: "true"
+#@ end
+
+#@ def updates2():
+metadata:
+  annotations:
+    #@overlay/remove
+    ingress.kubernetes.io/rewrite-target:
+#@ end
+
+--- #@ template.replace([overlay.apply(ingress(), updates())])
+--- #@ template.replace([overlay.apply(ingress(), updates(), updates2())])

@@ -1,0 +1,14 @@
+#@ load("@ytt:data", "data")
+#@ load("helpers.lib.yml", "metadata", "selector")
+
+apiVersion: v1
+kind: Service
+metadata: #@ metadata(data.values)
+spec:
+  type: #@ data.values.service.type
+  ports:
+    - port: #@ data.values.service.externalPort
+      targetPort: #@ data.values.service.internalPort
+      protocol: TCP
+      name: #@ data.values.service.name
+  selector: #@ selector(data.values)

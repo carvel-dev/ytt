@@ -1,0 +1,52 @@
+---
+b: 123
+
+#@ if False:
+---
+test1: not-present
+test1a: not-present
+#@ end
+
+---
+middle: true
+
+---
+#! TODO reconsider pruning out empty docs
+#@ if True:
+#@ end
+
+#! single doc in one if
+#@ if True:
+---
+test2: present
+test2a: present
+#@ end
+
+#! showcases multiple docs within one if
+#@ if True:
+---
+test3: present
+test3a: present
+#@ if/end False:
+---
+test3: not-present
+test3a: not-present
+---
+test3: present
+test3a: present
+#@ end
+
++++
+
+b: 123
+---
+middle: true
+---
+test2: present
+test2a: present
+---
+test3: present
+test3a: present
+---
+test3: present
+test3a: present

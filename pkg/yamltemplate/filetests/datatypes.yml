@@ -1,0 +1,37 @@
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  labels:
+    int: #@ 123
+    intCalc: #@ 123 + 124
+    intNeg: #@ 1 - 50
+    float: #@ 123.123
+    t: #@ True
+    f: #@ False
+    nullz: #@ None
+    string: #@ "string"
+    stringFormat: #@ "@foo {file} bar".format(file="blah")
+    map: #@ {"a":123}
+    list: #@ ["a", 123, {"a":123}]
+
++++
+
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  labels:
+    int: 123
+    intCalc: 247
+    intNeg: -49
+    float: 123.123
+    t: true
+    f: false
+    nullz: null
+    string: string
+    stringFormat: '@foo blah bar'
+    map:
+      a: 123
+    list:
+    - a
+    - 123
+    - a: 123

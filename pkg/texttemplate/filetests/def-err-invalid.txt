@@ -1,0 +1,20 @@
+(@ def lines(x): @)
+(@- for i in range(0,x): -@)
+line(@= i @)
+(@ end -@)
+(@ end @)
+
+(@- def other_lines(): @)
+singleline
+(@ end -@)
+
+(@ lines(5) @)
+(@ # TODO improve error message @)
++++
+
+ERR:
+- __ytt_tplXXX_set_node: cannot set non-string value (int64)
+    stdin:3 in lines
+     L = i 
+    stdin:11 in <toplevel>
+     L  lines(5) 

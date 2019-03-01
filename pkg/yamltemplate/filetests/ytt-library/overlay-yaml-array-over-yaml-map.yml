@@ -1,0 +1,23 @@
+#@ load("@ytt:overlay", "overlay")
+
+#@ def test1_left():
+key1:
+  key1: val1
+  key2: val2
+#@ end
+
+#@ def test1_right():
+#@overlay/replace
+key1:
+- name: foo
+  other: key
+#@ end
+
+test1: #@ overlay.apply(test1_left(), test1_right())
+
++++
+
+test1:
+  key1:
+  - name: foo
+    other: key

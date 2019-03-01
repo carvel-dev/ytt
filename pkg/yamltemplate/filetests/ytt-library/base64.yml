@@ -1,0 +1,15 @@
+#@ load("@ytt:base64", "base64")
+
+test1: #@ base64.encode("regular")
+test2: #@ base64.encode("regula")
+test3: #@ base64.decode("cmVndWxhcg==")
+test4: #@ base64.decode("cmVndWxh")
+
+#! TODO test strict/raw/url/custom padding?
+
++++
+
+test1: cmVndWxhcg==
+test2: cmVndWxh
+test3: regular
+test4: regula

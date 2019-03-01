@@ -1,0 +1,18 @@
+#@data/values
+---
+apps:
+- name: apple
+  path: /apple
+  port: 8080
+  text: "Hi from #ytt apple"
+  additional_args: []
+
+- name: banana
+  path: /banana
+  port: 8080
+  text: "Hi from #ytt banana"
+
+- name: orange
+  path: /orange
+  port: 8080
+  text: "Hi from #ytt orange"

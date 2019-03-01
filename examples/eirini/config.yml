@@ -1,0 +1,117 @@
+#@ load("@ytt:data", "data")
+
+#@ def labelSafe(str):
+#@   return str.replace("+", "_")
+#@ end
+
+#@ def labelSafe2(str):
+#@   return str[:63].rstrip("-")
+#@ end
+
+#@ if/end data.values.kube.auth == "rbacz":
+---
+apiVersion: "v1"
+kind: "ServiceAccount"
+metadata:
+  name: "secret-generator"
+  labels:
+    app.kubernetes.io/component: "secret-generator"
+    skiff-role-name: "secret-generator"
+    app.kubernetes.io/instance: #@ data.values.Release.Name
+    app.kubernetes.io/managed-by: #@ data.values.Release.Service
+    app.kubernetes.io/name: #@ labelSafe2(data.values.nameOverride or data.values.Chart.Name)
+    app.kubernetes.io/version: #@ data.values.Chart.AppVersion or data.values.Chart.Version
+    helm.sh/chart: #@ "{name}-{ver}".format(name=data.values.Chart.Name, ver=labelSafe(data.values.Chart.Version))
+
+#@ if data.values.kube.auth == "rbac":
+---
+apiVersion: "rbac.authorization.k8s.io/v1beta1"
+kind: "RoleBinding"
+metadata:
+  name: "secret-generator-configgin-role-binding"
+  labels:
+    app.kubernetes.io/component: "secret-generator-configgin-role-binding"
+    skiff-role-name: "secret-generator-configgin-role-binding"
+    app.kubernetes.io/instance: #@ data.values.Release.Name
+    app.kubernetes.io/managed-by: #@ data.values.Release.Service
+    app.kubernetes.io/name: #@ labelSafe2(data.values.nameOverride or data.values.Chart.Name)
+    app.kubernetes.io/version: #@ data.values.Chart.AppVersion or data.values.Chart.Version
+    helm.sh/chart: #@ "{name}-{ver}".format(name=data.values.Chart.Name, ver=labelSafe(data.values.Chart.Version))
+subjects:
+- kind: "ServiceAccount"
+  name: "secret-generator"
+roleRef:
+  kind: "Role"
+  name: "configgin-role"
+  apiGroup: "rbac.authorization.k8s.io"
+---
+apiVersion: "rbac.authorization.k8s.io/v1beta1"
+kind: "RoleBinding"
+metadata:
+  name: "secret-generator-secrets-role-binding"
+  labels:
+    app.kubernetes.io/component: "secret-generator-secrets-role-binding"
+    skiff-role-name: "secret-generator-secrets-role-binding"
+    app.kubernetes.io/instance: #@ data.values.Release.Name
+    app.kubernetes.io/managed-by: #@ data.values.Release.Service
+    app.kubernetes.io/name: #@ labelSafe2(data.values.nameOverride or data.values.Chart.Name)
+    app.kubernetes.io/version: #@ data.values.Chart.AppVersion or data.values.Chart.Version
+    helm.sh/chart: #@ "{name}-{ver}".format(name=data.values.Chart.Name, ver=labelSafe(data.values.Chart.Version))
+subjects:
+- kind: "ServiceAccount"
+  name: "secret-generator"
+roleRef:
+  kind: "Role"
+  name: "secrets-role"
+  apiGroup: "rbac.authorization.k8s.io"
+
+#@ if/end data.values.kube.psp.nonprivileged:
+---
+apiVersion: "rbac.authorization.k8s.io/v1"
+kind: "ClusterRoleBinding"
+metadata:
+  name: #@ "{ns}-secret-generator-binding-psp".format(ns=data.values.Release.Namespace)
+  labels:
+    app.kubernetes.io/component: #@ "{ns}-secret-generator-binding-psp".format(ns=data.values.Release.Namespace)
+    skiff-role-name: #@ "{ns}-secret-generator-binding-psp".format(ns=data.values.Release.Namespace)
+    app.kubernetes.io/instance: #@ data.values.Release.Name
+    app.kubernetes.io/managed-by: #@ data.values.Release.Service
+    app.kubernetes.io/name: #@ labelSafe2(data.values.nameOverride or data.values.Chart.Name)
+    app.kubernetes.io/version: #@ data.values.Chart.AppVersion or data.values.Chart.Version
+    helm.sh/chart: #@ "{name}-{ver}".format(name=data.values.Chart.Name, ver=labelSafe(data.values.Chart.Version))
+subjects:
+- kind: "ServiceAccount"
+  name: "secret-generator"
+  namespace: #@ data.values.Release.Namespace
+roleRef:
+  kind: "ClusterRole"
+  name: #@ "{ns}-psp-role-nonprivileged".format(ns=data.values.Release.Namespace)
+  apiGroup: "rbac.authorization.k8s.io"
+
+---
+apiVersion: "rbac.authorization.k8s.io/v1beta1"
+kind: "Role"
+metadata:
+  name: "secrets-role"
+  labels:
+    app.kubernetes.io/component: "secrets-role"
+    skiff-role-name: "secrets-role"
+    app.kubernetes.io/instance: #@ data.values.Release.Name
+    app.kubernetes.io/managed-by: #@ data.values.Release.Service
+    app.kubernetes.io/name: #@ labelSafe2(data.values.nameOverride or data.values.Chart.Name)
+    app.kubernetes.io/version: #@ data.values.Chart.AppVersion or data.values.Chart.Version
+    helm.sh/chart: #@ "{name}-{ver}".format(name=data.values.Chart.Name, ver=labelSafe(data.values.Chart.Version))
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - "configmaps"
+  - "secrets"
+  verbs:
+  - "create"
+  - "get"
+  - "list"
+  - "patch"
+  - "update"
+  - "delete"
+#@ end

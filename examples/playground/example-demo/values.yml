@@ -1,0 +1,11 @@
+#@data/values
+---
+echos:
+- name: first
+  port: 8080
+  text: "Hello #ytt World on 8080!"
+- name: second
+  port: 8081
+  text: "Hello #ytt World on 8081!"
+service:
+  enabled: true

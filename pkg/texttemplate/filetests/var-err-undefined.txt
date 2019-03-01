@@ -1,0 +1,15 @@
+(@ def lines(x): @)
+(@- for i in range(0,x): -@)
+line(@= str(a) @)
+(@ end -@)
+(@ end @)
+
+(@- def other_lines(): @)
+singleline
+(@ end -@)
++++
+
+ERR:
+- undefined: a
+    stdin:3
+     L = str(a) 

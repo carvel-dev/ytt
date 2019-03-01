@@ -1,0 +1,59 @@
+#@ if True:
+#@ a = 123
+#@ else:
+#@ a = 124
+#@ end
+test1: #@ a
+
+#@ if False:
+#@ a = 123
+#@ elif True:
+#@ a = 124
+#@ else:
+#@ a = 125
+#@ end
+test2: #@ a
+
+#@ if False:
+test3: #@ 123
+test3a: #@ 123
+#@ elif True:
+test3: #@ 124
+test3a: #@ 124
+#@ else:
+test3: #@ 125
+test3a: #@ 125
+#@ end
+
+#@ if False:
+test4: #@ 123
+test4a: #@ 123
+#@ elif False:
+test4: #@ 124
+test4a: #@ 124
+#@ else:
+test4: #@ 125
+test4a: #@ 125
+#@ end
+
+#@ if True:
+test5: #@ 123
+test5a: #@ 123
+#@ elif False:
+test5: #@ 124
+test5a: #@ 124
+#@ else:
+test5: #@ 125
+test5a: #@ 125
+#@ end
+
++++
+
+test1: 123
+test2: 124
+test3: 124
+test3a: 124
+test4: 125
+test4a: 125
+test5: 123
+test5a: 123

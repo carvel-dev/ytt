@@ -1,0 +1,9 @@
+#@ load("@ytt:sha256", "sha256")
+
+test1: #@ sha256.sum("")
+test2: #@ sha256.sum("data")
+
++++
+
+test1: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+test2: 3a6eb0790f39ac87c94f3856b2dd2c5d110e6811602261a9a923d3bb23adc8b7

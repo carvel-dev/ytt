@@ -1,0 +1,98 @@
+#@ load("@ytt:template", "template")
+#@ load("@ytt:overlay", "overlay")
+
+#@ def test1_left():
+---
+#! exact match
+metadata:
+  name: test1
+---
+metadata:
+  name: test1
+  #! additional non-matching key
+  other: key
+---
+metadata:
+  #! missing name key
+  other: key
+---
+#! missing top level key
+{}
+#@ end
+
+#@ def test1_right():
+#@overlay/match by=overlay.subset({"metadata":{"name":"test1"}}),expects=2
+---
+#@overlay/match missing_ok=True
+key1:
+- name: foo
+#@ end
+
+---
+test1
+--- #@ template.replace(overlay.apply(test1_left(), test1_right()))
+
+#@ def test2_left():
+---
+#! exact match
+metadata:
+- name: test2
+---
+metadata:
+- name: test2
+#! additional non-matching item
+- other: key
+---
+metadata:
+#! missing name key
+- other: key
+---
+#! missing top level key
+{}
+#@ end
+
+#@ def test2_right():
+#@overlay/match by=overlay.subset({"metadata":[{"name":"test2"}]}),expects=2
+---
+#@overlay/match missing_ok=True
+key1:
+- name: foo
+#@ end
+
+---
+test2
+--- #@ template.replace(overlay.apply(test2_left(), test2_right()))
+
++++
+
+test1
+---
+metadata:
+  name: test1
+key1:
+- name: foo
+---
+metadata:
+  name: test1
+  other: key
+key1:
+- name: foo
+---
+metadata:
+  other: key
+---
+test2
+---
+metadata:
+- name: test2
+key1:
+- name: foo
+---
+metadata:
+- name: test2
+- other: key
+key1:
+- name: foo
+---
+metadata:
+- other: key

@@ -1,0 +1,33 @@
+#@ load("@ytt:overlay", "overlay")
+
+#@overlay/match by=overlay.subset({"name": "bosh"})
+---
+releases:
+#@overlay/match by="name",missing_ok=True
+- name: os-conf
+  version: 18
+  url: https://bosh.io/d/github.com/cloudfoundry/os-conf-release?v=18
+  sha1: 78d79f08ff5001cc2a24f572837c7a9c59a0e796
+
+instance_groups:
+#@overlay/match by="name"
+- name: bosh
+  properties:
+    director:
+      #@overlay/match missing_ok=True
+      default_ssh_options:
+        gateway_user: jumpbox
+  jobs:
+  #@overlay/match by="name",missing_ok=True
+  - name: user_add
+    release: os-conf
+    properties:
+      users:
+      #@overlay/match by="name"
+      - name: jumpbox
+        public_key: ((jumpbox_ssh.public_key))
+
+variables:
+#@overlay/match by="name",missing_ok=True
+- name: jumpbox_ssh
+  type: ssh

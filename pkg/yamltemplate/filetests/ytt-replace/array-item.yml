@@ -1,0 +1,59 @@
+#@ load("@ytt:template", "template")
+
+#@ def array_from_def():
+- item1
+- item2
+#@ end
+
+---
+start:
+- #@ template.replace([{"a": 123}])
+- #@ template.replace([{"b": 124}])
+- #@ template.replace(array_from_def())
+- c: 126
+
+middle:
+- a: 127
+- #@ template.replace([{"b": 123}])
+- #@ template.replace([{"c": 124}, {"test4": "more-than-one-item"}])
+- #@ template.replace(array_from_def())
+- d: 126
+
+end:
+- a: 126
+- #@ template.replace([{"b": 123}])
+- #@ template.replace([{"c": 124}])
+- #@ template.replace(array_from_def())
+
+empty:
+- #@ template.replace([{"b": 123}])
+- #@ template.replace([{"c": 124}])
+- #@ template.replace(array_from_def())
+
++++
+
+start:
+- a: 123
+- b: 124
+- item1
+- item2
+- c: 126
+middle:
+- a: 127
+- b: 123
+- c: 124
+- test4: more-than-one-item
+- item1
+- item2
+- d: 126
+end:
+- a: 126
+- b: 123
+- c: 124
+- item1
+- item2
+empty:
+- b: 123
+- c: 124
+- item1
+- item2

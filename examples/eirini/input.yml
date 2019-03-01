@@ -1,0 +1,16 @@
+#@data/values
+---
+Release:
+  Name: release-name
+  Service: release-sv
+  Namespace: release-ns
+Chart:
+  Name: chart-name
+  AppVersion: chart-appver
+  Version: chart-ver
+
+nameOverride:
+kube:
+  auth: rbac
+  psp:
+    nonprivileged: true

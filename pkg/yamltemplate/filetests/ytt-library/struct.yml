@@ -1,0 +1,66 @@
+#@ load("@ytt:struct", "struct")
+
+#@ def _test4():
+#@   return "val4"
+#@ end
+
+#@ def _bound_test1(self):
+#@   return self
+#@ end
+
+#@ def _bound_test2(self, other):
+#@   if other:
+#@     return self+"-"+other
+#@   end
+#@   return self
+#@ end
+
+#@ st = struct.make(
+#@   test1="val1",
+#@   test2="val2",
+#@   test3=lambda x: x,
+#@   test4=_test4,
+#@   test5=struct.bind(_bound_test1, "bound-val1"),
+#@   test6=struct.bind(_bound_test2, "bound-val2"),
+#@   test7=struct.bind(_bound_test2, "bound-val3", "bound-val4"))
+
+#@ obj = struct.make_and_bind("bound-obj",
+#@   test1="val1",
+#@   test2="val2",
+#@   test3=lambda x: x,
+#@   test5=_bound_test1,
+#@   test6=_bound_test2)
+
+struct:
+  test1: #@ st.test1
+  test2: #@ st.test2
+  test3: #@ st.test3(123)
+  test4: #@ st.test4()
+  test5: #@ st.test5()
+  test6: #@ st.test6("other")
+  test7: #@ st.test7()
+
+object:
+  test1: #@ obj.test1
+  test2: #@ obj.test2
+  test3: #@ obj.test3()
+  #! test4: #@ obj.test4()
+  test5: #@ obj.test5()
+  test6: #@ obj.test6("other")
+
++++
+
+struct:
+  test1: val1
+  test2: val2
+  test3: 123
+  test4: val4
+  test5: bound-val1
+  test6: bound-val2-other
+  test7: bound-val3-bound-val4
+object:
+  test1: val1
+  test2: val2
+  test3: bound-obj
+  test5: bound-obj
+  test6: bound-obj-other

@@ -1,0 +1,14 @@
+test:
+#! comment is unindented from the key2 level
+  key1: value
+  #! comment
+  key2: value
+#! comment
+  key3: value
+
++++
+
+test:
+  key1: value
+  key2: value
+  key3: value

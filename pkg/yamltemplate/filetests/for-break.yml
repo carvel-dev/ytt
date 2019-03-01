@@ -1,0 +1,33 @@
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  labels:
+    array:
+    #@ last = 0
+    #@ for i in range(0,3):
+    #@   last = i
+    #@   if i == 1:
+    #@     break
+    #@   end
+    - i: #@ i
+    #@ end
+
+    another:
+    #@ for i in range(0,3):
+    #@   if i < last:
+    #@     continue
+    #@   end
+    - i: #@ i
+    #@ end
+
++++
+
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  labels:
+    array:
+    - i: 0
+    another:
+    - i: 1
+    - i: 2

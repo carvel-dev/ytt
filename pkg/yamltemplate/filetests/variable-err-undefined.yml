@@ -1,0 +1,21 @@
+#@ missing1
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  labels: #@ missing2
+
+#! with some whitespace before
+#@ missing3
+
++++
+
+ERR: 
+- undefined: missing1
+    stdin:1
+     L #@ missing1
+- undefined: missing2
+    stdin:5
+     L   labels: #@ missing2
+- undefined: missing3
+    stdin:8
+     L #@ missing3

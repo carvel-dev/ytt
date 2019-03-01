@@ -1,0 +1,72 @@
+#@ load("@ytt:template", "template")
+#@ load("@ytt:overlay", "overlay")
+
+#@ def test1_left():
+---
+item: 1
+---
+item: 2
+---
+item: 3
+#@ end
+
+#@ def test1_right():
+#@overlay/match by=overlay.subset({"item": 1})
+#@overlay/insert before=True
+---
+for_item: 1
+before: true
+#@overlay/match by=overlay.subset({"item": 1})
+#@overlay/insert after=True
+---
+for_item: 1
+after: true
+#@overlay/match by=overlay.subset({"item": 2})
+#@overlay/insert before=True
+---
+for_item: 2
+before: true
+#@overlay/match by=overlay.subset({"item": 2})
+#@overlay/insert after=True
+---
+for_item: 2
+after: true
+#@overlay/match by=overlay.subset({"item": 3})
+#@overlay/insert before=True
+---
+for_item: 3
+before: true
+#@overlay/match by=overlay.subset({"item": 3})
+#@overlay/insert after=True
+---
+for_item: 3
+after: true
+#@ end
+
+--- #@ template.replace(overlay.apply(test1_left(), test1_right()))
+
++++
+
+for_item: 1
+before: true
+---
+item: 1
+---
+for_item: 1
+after: true
+---
+for_item: 2
+before: true
+---
+item: 2
+---
+for_item: 2
+after: true
+---
+for_item: 3
+before: true
+---
+item: 3
+---
+for_item: 3
+after: true

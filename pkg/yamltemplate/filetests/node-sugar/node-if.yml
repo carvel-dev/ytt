@@ -1,0 +1,22 @@
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  labels:
+    #! show that nif only affects next node
+    #@ if/end False:
+    test1: 123
+    test1a: 123 #! should show up
+
+    #@ if/end True:
+    test2: 123
+    #@ if/end False:
+    test2: 124
+
++++
+
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  labels:
+    test1a: 123
+    test2: 123

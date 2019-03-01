@@ -1,0 +1,14 @@
+#! shared functionality could be extracted into 
+#! separate files and exported functions loaded in
+
+#! TODO currently YAML library files need to be *.lib.yml
+#@ load("funcs.lib.yml", "func1", "func2")
+
+#! if there is a conflicting function name,
+#! it could be renamed to a different name
+
+#@ load("funcs.star", func3="func1")
+
+func1_key: #@ func1()
+func2_key: #@ func2()
+func3_key: #@ func3()

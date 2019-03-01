@@ -1,0 +1,7 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: example-ingress2
+  annotations:
+    ingress.kubernetes.io/rewrite-target: /
+#! ... removed for brevity

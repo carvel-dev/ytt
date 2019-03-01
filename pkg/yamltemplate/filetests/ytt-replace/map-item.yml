@@ -1,0 +1,59 @@
+#@ load("@ytt:template", "template")
+
+#@ def map_from_def():
+key1: val1
+key2: val2
+#@ end
+
+start:
+  _: #@ template.replace({"a": 123})
+  _: #@ template.replace({"b": 124})
+  _: #@ template.replace(map_from_def())
+  c: 126
+
+middle:
+  a: 127
+  _: #@ template.replace({"b": 123, "test3": "multiple-items", "test4": "replaced-next1"})
+  _: #@ template.replace({"c": 124, "test4": "replaced-next2"})
+  _: #@ template.replace(map_from_def())
+  #@yaml/map-key-override
+  test4: replaced-next3
+
+end:
+  a: 126
+  _: #@ template.replace({"b": 123})
+  _: #@ template.replace({"c": 124})
+  _: #@ template.replace(map_from_def())
+
+empty:
+  _: #@ template.replace({"b": 123})
+  _: #@ template.replace({"c": 124})
+  _: #@ template.replace(map_from_def())
+
++++
+
+start:
+  a: 123
+  b: 124
+  key1: val1
+  key2: val2
+  c: 126
+middle:
+  a: 127
+  b: 123
+  test3: multiple-items
+  test4: replaced-next3
+  c: 124
+  key1: val1
+  key2: val2
+end:
+  a: 126
+  b: 123
+  c: 124
+  key1: val1
+  key2: val2
+empty:
+  b: 123
+  c: 124
+  key1: val1
+  key2: val2

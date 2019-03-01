@@ -1,0 +1,25 @@
+#@ load("@ytt:data", "data")
+#@ load("helpers.star", "fullname")
+#@ load("helpers.lib.yml", "labels")
+
+#@ if/end data.values.ingress.enabled:
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: #@ fullname(data.values)
+  labels: #@ labels(data.values)
+  #@ if/end data.values.ingress.annotations:
+  annotations: #@ data.values.ingress.annotations
+spec:
+  rules:
+    #@ for/end host in data.values.ingress.hosts:
+    - host: #@ host
+      http:
+        paths:
+          - path: /
+            backend:
+              serviceName: #@ fullname(data.values)
+              servicePort: #@ data.values.service.externalPort
+  #@ if/end data.values.ingress.tls:
+  tls: #@ data.values.ingress.tls

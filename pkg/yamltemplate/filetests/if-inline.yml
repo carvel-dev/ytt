@@ -1,0 +1,17 @@
+test1: #@ 123 if True else 124
+
+#! multi-line if-inline
+#@ a = (123 if False
+#@ else 124)
+test2: #@ a
+
+#! multi-line if-inline
+#@ a = (123 if False
+#@          else 124)
+test3: #@ a
+
++++
+
+test1: 123
+test2: 124
+test3: 124

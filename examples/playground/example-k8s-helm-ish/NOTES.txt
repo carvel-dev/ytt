@@ -1,0 +1,22 @@
+(@ load("@ytt:data", "data") @)
+(@ load("helpers.star", "fullname", "name") -@)
+
+1. Get the application URL by running these commands:
+(@- if data.values.ingress.enabled: @)
+  (@- for h in data.values.ingress.hosts: @)
+    http(@= "s" if data.values.ingress.tls else "" @)://(@= h @)
+  (@ end @)
+(@ elif data.values.service.type == "NodePort": @)
+  export NODE_PORT=$(kubectl get --namespace (@= data.values.Release.Namespace @) -o jsonpath="{.spec.ports[0].nodePort}" services (@= fullname(data.values) @))
+  export NODE_IP=$(kubectl get nodes --namespace (@= data.values.Release.Namespace @) -o jsonpath="{.items[0].status.addresses[0].address}")
+  echo http://$NODE_IP:$NODE_PORT
+(@- elif data.values.service.type == "LoadBalancer": @)
+NOTE: It may take a few minutes for the LoadBalancer IP to be available.
+You can watch the status of by running 'kubectl get svc -w (@= fullname(data.values) @)'
+  export SERVICE_IP=$(kubectl get svc --namespace (@= data.values.Release.Namespace @) (@= fullname(data.values) @) -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+  echo http://$SERVICE_IP:(@= str(data.values.service.externalPort) @)
+(@- elif data.values.service.type == "ClusterIP": @)
+  export POD_NAME=$(kubectl get pods --namespace (@= data.values.Release.Namespace @) -l "app.kubernetes.io/name=(@= name(data.values) @),app.kubernetes.io/instance=(@= data.values.Release.Name @)" -o jsonpath="{.items[0].metadata.name}")
+  echo "Visit http://127.0.0.1:8080 to use your application"
+  kubectl port-forward $POD_NAME 8080:80
+(@ end -@)

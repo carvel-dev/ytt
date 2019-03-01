@@ -1,0 +1,26 @@
+#@ if True:
+#@ a = 123
+#@ else:
+#@ a = 124
+#@ end
+test1: #@ a
+
+#@  if True:
+#@       a = 223
+#@  else:
+#@  a = 224
+#@    end
+test2: #@ a
+
+#! preserves space within strings
+#@ a = "line1\n\
+#@    line2"
+test3: #@ a
+
++++
+
+test1: 123
+test2: 223
+test3: |-
+  line1
+     line2

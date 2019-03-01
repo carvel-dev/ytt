@@ -1,0 +1,27 @@
+#! occasionally some data needs to be mapped
+#! into a set of YAML nodes, in those cases 
+#! for loops are handy
+
+array:
+#@ for i in range(0,10):
+- item: #@ i
+#@ end
+
+array_with_data:
+#@ for i in [1,5,{"key":"val"}]:
+- item: #@ i
+#@ end
+
+#! continue and break keywords allow to further
+#! control execution of for loop
+
+array_odd:
+#@ for i in range(0,10):
+#@   if i % 2 == 0:
+#@     continue
+#@   end
+#@   if i > 5:
+#@     break
+#@   end
+- #@ i
+#@ end

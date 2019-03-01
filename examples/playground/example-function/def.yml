@@ -1,0 +1,20 @@
+#! sometimes it is useful to extract common
+#! functionality into functions.
+
+#@ def some_data():
+#@   return [1,2,{"key":"value"}]
+#@ end
+
+simple_key: #@ some_data()
+
+#! functions can also return YAML fragments
+#! that can be used as standard values
+
+#@ def some_yaml():
+name: max
+cities:
+- SF
+- LA
+#@ end
+
+yaml_key: #@ some_yaml()

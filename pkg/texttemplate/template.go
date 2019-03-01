@@ -1,0 +1,126 @@
+package texttemplate
+
+import (
+	"fmt"
+	"strings"
+	"unicode"
+
+	"github.com/get-ytt/ytt/pkg/template"
+)
+
+type Template struct {
+	name string
+}
+
+func NewTemplate(name string) *Template {
+	return &Template{name: name}
+}
+
+func (e *Template) CompileInline(rootNode *NodeRoot,
+	instructions *template.InstructionSet, nodes *template.Nodes) ([]template.TemplateLine, error) {
+
+	return e.compile(rootNode, instructions, nodes)
+}
+
+func (e *Template) Compile(rootNode *NodeRoot) (*template.CompiledTemplate, error) {
+	instructions := template.NewInstructionSet()
+	nodes := template.NewNodes()
+
+	code, err := e.compile(rootNode, instructions, nodes)
+	if err != nil {
+		return nil, err
+	}
+
+	return template.NewCompiledTemplate(
+		e.name, code, instructions, nodes,
+		template.EvaluationCtxDialects{
+			EvaluationCtxDialectName: EvaluationCtx{},
+		},
+	), nil
+}
+
+func (e *Template) compile(rootNode *NodeRoot,
+	instructions *template.InstructionSet, nodes *template.Nodes) ([]template.TemplateLine, error) {
+
+	code := []template.TemplateLine{}
+	rootNodeTag := nodes.AddRootNode(&NodeRoot{}) // fresh copy to avoid leaking out NodeCode
+
+	code = append(code, []template.TemplateLine{
+		{Instruction: instructions.NewSetCtxType(EvaluationCtxDialectName)},
+		{Instruction: instructions.NewStartCtx(EvaluationCtxDialectName)},
+		{Instruction: instructions.NewStartNode(rootNodeTag)},
+	}...)
+
+	var trimSpaceRight bool
+
+	for i, node := range rootNode.Items {
+		switch typedNode := node.(type) {
+		case *NodeText:
+			if trimSpaceRight {
+				typedNode.Content = strings.TrimLeftFunc(typedNode.Content, unicode.IsSpace)
+				trimSpaceRight = false
+			}
+
+			nodeTag := nodes.AddNode(typedNode, rootNodeTag)
+
+			code = append(code, template.TemplateLine{
+				Instruction: instructions.NewStartNode(nodeTag),
+				SourceLine: &template.SourceLine{
+					Position: typedNode.Position,
+					Content:  typedNode.Content,
+				},
+			})
+
+			code = append(code, template.TemplateLine{
+				Instruction: instructions.NewSetNode(nodeTag),
+				SourceLine: &template.SourceLine{
+					Position: typedNode.Position,
+					Content:  typedNode.Content,
+				},
+			})
+
+		case *NodeCode:
+			meta := NodeCodeMeta{typedNode}
+			trimSpaceRight = meta.ShouldTrimSpaceRight()
+
+			if meta.ShoudTrimSpaceLeft() && i != 0 {
+				if typedLastNode, ok := rootNode.Items[i-1].(*NodeText); ok {
+					typedLastNode.Content = strings.TrimRightFunc(
+						typedLastNode.Content, unicode.IsSpace)
+				}
+			}
+
+			if meta.ShouldPrint() {
+				nodeTag := nodes.AddNode(&NodeText{}, rootNodeTag)
+
+				code = append(code, template.TemplateLine{
+					Instruction: instructions.NewStartNode(nodeTag),
+					SourceLine: &template.SourceLine{
+						Position: typedNode.Position,
+						Content:  typedNode.Content,
+					},
+				})
+
+				code = append(code, template.TemplateLine{
+					Instruction: instructions.NewSetNodeValue(nodeTag, meta.Code()),
+					SourceLine: &template.SourceLine{
+						Position: typedNode.Position,
+						Content:  typedNode.Content,
+					},
+				})
+			} else {
+				code = append(code, template.NewCodeFromBytesAtPosition(
+					[]byte(meta.Code()), typedNode.Position, instructions)...)
+			}
+
+		default:
+			panic(fmt.Sprintf("unknown string template node %T", typedNode))
+		}
+	}
+
+	code = append(code, template.TemplateLine{
+		Instruction: instructions.NewEndCtx(),
+	})
+
+	return code, nil
+}

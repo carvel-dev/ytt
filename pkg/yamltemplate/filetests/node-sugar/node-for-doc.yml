@@ -1,0 +1,25 @@
+#@ for/end i in range(0,3):
+---
+test1: #@ i
+test1a: #@ i
+---
+test2: present
+
+#@ for/end i in range(0,1):
+---
+test3: #@ i
+
++++
+
+test1: 0
+test1a: 0
+---
+test1: 1
+test1a: 1
+---
+test1: 2
+test1a: 2
+---
+test2: present
+---
+test3: 0

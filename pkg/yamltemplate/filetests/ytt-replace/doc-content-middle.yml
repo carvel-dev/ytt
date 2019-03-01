@@ -1,0 +1,16 @@
+#@ load("@ytt:template", "template")
+
+--- #@ template.replace([{"test1": 123}])
+---
+test0: middle
+--- #@ template.replace([{"test2": 124}, {"test2": 125}])
+
++++
+
+test1: 123
+---
+test0: middle
+---
+test2: 124
+---
+test2: 125

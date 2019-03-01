@@ -1,0 +1,14 @@
+apiVersion: apps/v1beta1
+kind: Deployment
+#@ some_var = 123
+metadata:
+  labels:
+    some_var: #@ some_var
+
++++
+
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  labels:
+    some_var: 123

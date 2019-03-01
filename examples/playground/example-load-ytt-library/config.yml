@@ -1,0 +1,12 @@
+#! here are some common library functionality
+
+#@ load("@ytt:regexp", "regexp")
+#@ load("@ytt:base64", "base64")
+#@ load("@ytt:sha256", "sha256")
+
+regex: #@ regexp.match("[a-z]+[0-9]+", "__hello123__")
+sha256: #@ sha256.sum("data")
+base64: #@ base64.encode("regular")
+
+#! complete list:
+#! https://github.com/get-ytt/ytt/tree/master/docs/lang-ref.md

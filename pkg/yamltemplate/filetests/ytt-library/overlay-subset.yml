@@ -1,0 +1,20 @@
+#@ load("@ytt:overlay", "overlay")
+
+#@ def frag1():
+key1: true
+key2: true
+#@ end
+
+#@ def frag2():
+key3: true
+#@ end
+
+test1: #@ overlay.subset({"key1": True})(0, frag1(), {})
+test2: #@ overlay.subset({"key1": False})(0, frag1(), {})
+test3: #@ overlay.subset({"key1": True})(0, frag2(), {})
+
++++
+
+test1: true
+test2: false
+test3: false

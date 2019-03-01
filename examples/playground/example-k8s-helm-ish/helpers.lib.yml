@@ -1,0 +1,8 @@
+#@ load("helpers.star", "name")
+
+#@ def labels(vars):
+app: #@ name(vars)
+chart: #@ "{}-{}".format(vars.Chart.Name, vars.Chart.Version).replace("+", "_")
+release: #@ vars.Release.Name
+heritage: #@ vars.Release.Service
+#@ end

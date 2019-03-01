@@ -1,0 +1,45 @@
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  labels:
+    #@ if True:
+    t: #@ 123
+    t2:
+      #@ if True:
+      t: #@ 456
+      t2: #@ 456
+      #@ end
+    #@ end
+
+    #@ if False:
+    f: #@ 123
+    f2: #@ 123
+    #@ end
+
+test2:
+#@ if True:
+- item1
+- item2
+#@ end
+
+test3:
+#@ if False:
+- item1
+#@ end
+- item2
+
++++
+
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  labels:
+    t: 123
+    t2:
+      t: 456
+      t2: 456
+test2:
+- item1
+- item2
+test3:
+- item2

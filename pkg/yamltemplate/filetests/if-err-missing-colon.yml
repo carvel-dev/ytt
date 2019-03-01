@@ -1,0 +1,16 @@
+apiVersion: apps/v1beta1
+#@ if True:
+t: #@ 123
+t2:
+  #@ if True
+  t: #@ 456
+  t2: #@ 456
+  #@ end
+#@ end
+
++++
+
+ERR: 
+- got newline, want ':'
+    stdin:6
+     L   t: #@ 456

@@ -1,0 +1,26 @@
+#@ load("@ytt:template", "template")
+
+#@ def tpl(val):
+  #@ if val == 123:
+label1: #@ val
+label2: #@ val+1
+_: #@ template.replace(tpl(12))
+  #@ else:
+label3: #@ val
+label4: #@ val+1
+  #@ end
+#@ end
+
+test:
+- #@ template.replace([tpl(123)])
+- #@ template.replace([tpl(12)])
+
++++
+
+test:
+- label1: 123
+  label2: 124
+  label3: 12
+  label4: 13
+- label3: 12
+  label4: 13

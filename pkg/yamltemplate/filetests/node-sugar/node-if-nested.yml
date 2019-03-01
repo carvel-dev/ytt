@@ -1,0 +1,23 @@
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  labels:
+    #@ if/end True:
+    key1:
+      #@ if True:
+      key1: nestedif
+      #@ else/end:
+      key1: nestedelse
+    #@ if/end False:
+    key1: 123
+    key3: key3
+
++++
+
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  labels:
+    key1:
+      key1: nestedif
+    key3: key3

@@ -1,0 +1,47 @@
+#! example is based on the following post: https://bit.ly/2QNCWab
+#! instead of passing around app at the function call sites,
+#! let's add functions to the app objects so we
+#! can use app.config() instead of app_config(app)
+
+#@ load("@ytt:struct", "struct")
+
+#@ def/end _labels(self):
+app: #@ self.name
+
+#@ def _svc_name(self):
+#@   return self.name + "-svc"
+#@ end
+
+#@ def _config(self):
+---
+kind: Pod
+apiVersion: v1
+metadata:
+  name: #@ self.name + "-app"
+  labels: #@ _labels(self)
+spec:
+  containers:
+  - name: app
+    image: hashicorp/http-echo
+    args:
+    - -listen=:(@= str(self.port) @)
+    - -text=(@= self.text @)
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: #@ _svc_name(self)
+spec:
+  selector: #@ _labels(self)
+  ports:
+  - port: #@ self.port
+#@ end
+
+#@ def make_app(app):
+#@   return struct.make_and_bind(app,
+#@     config=_config,
+#@     svc_name=_svc_name,
+#@     path=app.path,
+#@     port=app.port,
+#@   )
+#@ end

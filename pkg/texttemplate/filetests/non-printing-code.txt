@@ -1,0 +1,3 @@
+before(@ a = 5 @)af(@ b = 5 @)ter
++++
+beforeafter

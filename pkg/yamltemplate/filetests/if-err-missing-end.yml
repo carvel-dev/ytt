@@ -1,0 +1,18 @@
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  labels:
+    #@ if True:
+    t: #@ 123
+    t2:
+      #@ if True:
+      t: #@ 456
+      t2: #@ 456
+      #@ end
+
++++
+
+ERR: 
+- mismatched set of block openings (if/else/elif/for/def) and closing (end)
+    stdin:?
+     L __ytt_tplXXX_end_ctx(None) (generated)

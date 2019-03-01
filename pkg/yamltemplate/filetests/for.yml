@@ -1,0 +1,23 @@
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  labels:
+    array:
+    #@ for i in range(0,3):
+    - #@ i
+    - #@ i+1
+    #@ end
+
++++
+
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  labels:
+    array:
+    - 0
+    - 1
+    - 1
+    - 2
+    - 2
+    - 3

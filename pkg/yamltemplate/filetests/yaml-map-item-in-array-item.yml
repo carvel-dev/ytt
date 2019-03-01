@@ -1,0 +1,69 @@
+test1:
+- 
+  value
+
+test1a:
+- 
+
+
+
+
+  value
+
+test2:
+- 
+  #@ if True:
+  value
+  #@ end
+
+test3:
+- 
+  #@ a = "value"
+  key: #@ a
+
+#! indent-less sequence
+test4:
+- 
+  #@ a = "valuea"
+  key: #@ a
+- 
+  #@ b = "valueb"
+  key: #@ b
+- 
+  #@ if True:
+  key: #@ b
+  #@ end
+- 
+  #@ if False:
+  key: #@ b
+  #@ end
+
+#! indented sequence
+test5:
+  - 
+    #@ if True:
+    key: #@ "a"
+    #@ end
+  - 
+    #@ if False:
+    key: #@ "b"
+    #@ end
+
++++
+
+test1:
+- value
+test1a:
+- value
+test2:
+- value
+test3:
+- key: value
+test4:
+- key: valuea
+- key: valueb
+- key: valueb
+- {}
+test5:
+- key: a
+- {}

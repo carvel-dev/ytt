@@ -1,0 +1,17 @@
+#! instead of setting values of a particular node
+#! template.replace allows to replace selected node
+#! with specified content
+
+#@ load("@ytt:template", "template")
+
+in_map:
+  key1: value1
+  key2: value2
+  #! _ is a conventional replacement key
+  #! any other key can be selected
+  _: #@ template.replace({"key3": "value3"})
+
+in_array:
+- item1
+- item2
+- #@ template.replace([{"key3": "value3"}])

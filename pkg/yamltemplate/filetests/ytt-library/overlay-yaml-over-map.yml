@@ -1,0 +1,23 @@
+#@ load("@ytt:overlay", "overlay")
+
+#@ def test1_left():
+#@ return {"key1": [{"name": "foo", "another": "key"}]}
+#@ end
+
+#@ def test1_right():
+key1:
+#@overlay/match by="name"
+- name: foo
+  #@overlay/match expects=[0,1]
+  other: key
+#@ end
+
+test1: #@ overlay.apply(test1_left(), test1_right())
+
++++
+
+test1:
+  key1:
+  - another: key
+    name: foo
+    other: key

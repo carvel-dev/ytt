@@ -1,0 +1,5 @@
+#@data/values
+---
+port: 8080
+#! note how text is quoted automatically in the result file
+text: "Hello #ytt World!"

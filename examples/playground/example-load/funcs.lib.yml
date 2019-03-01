@@ -1,0 +1,14 @@
+#! this file can contain functions that return YAML fragments
+
+#@ def func1():
+name: max
+cities:
+- SF
+- LA
+#@ end
+
+#@ def func2():
+name: joanna
+cities:
+- SF
+#@ end

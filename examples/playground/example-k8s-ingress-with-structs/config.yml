@@ -1,0 +1,25 @@
+#@ load("@ytt:data", "data")
+#@ load("@ytt:template", "template")
+#@ load("app.lib.yml", "make_app")
+
+#@ apps = [ make_app(app) for app in data.values.apps ]
+
+#@ for/end app in apps:
+--- #@ template.replace(app.config())
+
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: example-ingress
+  annotations:
+    ingress.kubernetes.io/rewrite-target: /
+spec:
+  rules:
+  - http:
+      paths:
+      #@ for/end app in apps:
+      - path: #@ app.path
+        backend:
+          serviceName: #@ app.svc_name()
+          servicePort: #@ app.port

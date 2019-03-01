@@ -1,0 +1,228 @@
+package yamltemplate
+
+import (
+	"fmt"
+	"sort"
+
+	"github.com/get-ytt/ytt/pkg/template"
+	"github.com/get-ytt/ytt/pkg/yamlmeta"
+)
+
+const (
+	EvaluationCtxDialectName template.EvaluationCtxDialectName = "yaml"
+)
+
+type EvaluationCtx struct{}
+
+var _ template.EvaluationCtxDialect = EvaluationCtx{}
+
+func (e EvaluationCtx) PrepareNode(
+	parentNode template.EvaluationNode, val template.EvaluationNode) error {
+
+	if typedMap, ok := parentNode.(*yamlmeta.Map); ok {
+		if typedMapItem, ok := val.(*yamlmeta.MapItem); ok {
+			return MapItemOverride{}.Apply(typedMap, typedMapItem)
+		}
+	}
+	return nil
+}
+
+func (e EvaluationCtx) Replace(
+	parentNodes []template.EvaluationNode, val interface{}) error {
+
+	switch typedCurrNode := parentNodes[len(parentNodes)-1].(type) {
+	case *yamlmeta.Document:
+		if len(parentNodes) < 2 {
+			return fmt.Errorf("expected to find document set, but was not enough parents")
+		}
+
+		parentNode := parentNodes[len(parentNodes)-2]
+		typedParentNode, ok := parentNode.(*yamlmeta.DocumentSet)
+		if !ok {
+			return fmt.Errorf("expected to find document set, but was %T", parentNode)
+		}
+
+		return e.replaceItemInDocSet(typedParentNode, typedCurrNode, val)
+
+	case *yamlmeta.MapItem:
+		if len(parentNodes) < 2 {
+			return fmt.Errorf("expected to find map, but was not enough parents")
+		}
+
+		parentNode := parentNodes[len(parentNodes)-2]
+		typedParentNode, ok := parentNode.(*yamlmeta.Map)
+		if !ok {
+			return fmt.Errorf("expected parent of map item to be map, but was %T", parentNode)
+		}
+
+		return e.replaceItemInMap(typedParentNode, typedCurrNode, val)
+
+	case *yamlmeta.ArrayItem:
+		if len(parentNodes) < 2 {
+			return fmt.Errorf("expected to find array, but was not enough parents")
+		}
+
+		parentNode := parentNodes[len(parentNodes)-2]
+		typedParentNode, ok := parentNode.(*yamlmeta.Array)
+		if !ok {
+			return fmt.Errorf("expected parent of array item to be array, but was %T", parentNode)
+		}
+
+		return e.replaceItemInArray(typedParentNode, typedCurrNode, val)
+
+	default:
+		return fmt.Errorf("expected to replace document value, map item or array item, but found %T", typedCurrNode)
+	}
+}
+
+func (e EvaluationCtx) replaceItemInDocSet(dstDocSet *yamlmeta.DocumentSet, placeholderItem *yamlmeta.Document, val interface{}) error {
+	insertItems, err := e.convertValToDocSetItems(val)
+	if err != nil {
+		return err
+	}
+
+	for i, item := range dstDocSet.Items {
+		if item == placeholderItem {
+			newItems := dstDocSet.Items[:i]
+			newItems = append(newItems, insertItems...)
+			newItems = append(newItems, dstDocSet.Items[i+1:]...)
+			dstDocSet.Items = newItems
+			return nil
+		}
+	}
+
+	return fmt.Errorf("expected to find placeholder doc in docset")
+}
+
+func (e EvaluationCtx) convertValToDocSetItems(val interface{}) ([]*yamlmeta.Document, error) {
+	result := []*yamlmeta.Document{}
+
+	switch typedVal := val.(type) {
+	case []interface{}:
+		for _, item := range typedVal {
+			result = append(result, &yamlmeta.Document{Value: item})
+		}
+
+	case *yamlmeta.DocumentSet:
+		result = typedVal.Items
+
+	default:
+		return nil, fmt.Errorf("expected value to be docset, but was %T", val)
+	}
+
+	return result, nil
+}
+
+func (e EvaluationCtx) replaceItemInMap(
+	dstMap *yamlmeta.Map, placeholderItem *yamlmeta.MapItem, val interface{}) error {
+
+	insertItems, carryMeta, err := e.convertValToMapItems(val)
+	if err != nil {
+		return err
+	}
+
+	// If map items does not carry metadata
+	// we cannot check for override conflicts
+	if carryMeta {
+		for _, newItem := range insertItems {
+			err := MapItemOverride{}.Apply(dstMap, newItem)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	for i, item := range dstMap.Items {
+		if item == placeholderItem {
+			newItems := dstMap.Items[:i]
+			newItems = append(newItems, insertItems...)
+			newItems = append(newItems, dstMap.Items[i+1:]...)
+			dstMap.Items = newItems
+			return nil
+		}
+	}
+
+	return fmt.Errorf("expected to find placeholder map item in map")
+}
+
+func (e EvaluationCtx) convertValToMapItems(val interface{}) ([]*yamlmeta.MapItem, bool, error) {
+	switch typedVal := val.(type) {
+	case map[interface{}]interface{}:
+		// TODO figure out how to avoid sorting
+		result := []*yamlmeta.MapItem{}
+		for _, k := range e.sortedMapKeys(typedVal) {
+			result = append(result, &yamlmeta.MapItem{Key: k, Value: typedVal[k]})
+		}
+		return result, false, nil
+
+	case *yamlmeta.Map:
+		return typedVal.Items, true, nil
+
+	default:
+		return nil, false, fmt.Errorf("expected value to be map, but was %T", val)
+	}
+}
+
+func (e EvaluationCtx) replaceItemInArray(dstArray *yamlmeta.Array, placeholderItem *yamlmeta.ArrayItem, val interface{}) error {
+	insertItems, err := e.convertValToArrayItems(val)
+	if err != nil {
+		return err
+	}
+
+	for i, item := range dstArray.Items {
+		if item == placeholderItem {
+			newItems := dstArray.Items[:i]
+			newItems = append(newItems, insertItems...)
+			newItems = append(newItems, dstArray.Items[i+1:]...)
+			dstArray.Items = newItems
+			return nil
+		}
+	}
+
+	return fmt.Errorf("expected to find placeholder array item in array")
+}
+
+func (e EvaluationCtx) convertValToArrayItems(val interface{}) ([]*yamlmeta.ArrayItem, error) {
+	result := []*yamlmeta.ArrayItem{}
+
+	switch typedVal := val.(type) {
+	case []interface{}:
+		for _, item := range typedVal {
+			result = append(result, &yamlmeta.ArrayItem{Value: item})
+		}
+
+	case *yamlmeta.Array:
+		result = typedVal.Items
+
+	default:
+		return nil, fmt.Errorf("expected value to be array, but was %T", val)
+	}
+
+	return result, nil
+}
+
+func (e EvaluationCtx) ShouldWrapRootValue(nodeVal interface{}) bool {
+	switch nodeVal.(type) {
+	case *yamlmeta.Document, *yamlmeta.MapItem, *yamlmeta.ArrayItem:
+		return true
+	default:
+		return false
+	}
+}
+
+func (e EvaluationCtx) WrapRootValue(val interface{}) interface{} {
+	return &StarlarkFragment{val}
+}
+
+func (e EvaluationCtx) sortedMapKeys(m map[interface{}]interface{}) []interface{} {
+	var keys []interface{}
+	for k, _ := range m {
+		keys = append(keys, k)
+	}
+	sort.Slice(keys, func(i, j int) bool {
+		iStr := fmt.Sprintf("%s", keys[i])
+		jStr := fmt.Sprintf("%s", keys[j])
+		return iStr < jStr
+	})
+	return keys
+}

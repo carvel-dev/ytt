@@ -1,0 +1,9 @@
+#@ if True:
+#@   pass
+
++++
+
+ERR: 
+- keyword pass is not supported
+    stdin:2
+     L #@   pass

@@ -1,0 +1,28 @@
+#@ def yamlfunc():
+key: value
+#@ return "yamlfuncresult"
+#@ end
+
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  labels:
+    #! should not be templated
+    test1: #@ "string(@= str(5) @)"
+    test2: "string(@= str(5) @)"
+    test3: |
+      (@- def textfunc(): @)textfuncresult(@ end -@)
+      fromyaml=(@= yamlfunc() @)
+      fromtext=(@= textfunc() @)
+
++++
+
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  labels:
+    test1: string(@= str(5) @)
+    test2: string5
+    test3: |
+      fromyaml=yamlfuncresult
+      fromtext=textfuncresult

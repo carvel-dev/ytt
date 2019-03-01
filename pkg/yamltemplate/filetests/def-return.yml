@@ -1,0 +1,41 @@
+#@ load("@ytt:template", "template")
+
+#@ def tpl_empty_return(val):
+  #@ if val == 123:
+label1: #@ val
+    #@ return
+label2: #@ val+1
+  #@ else:
+label3: #@ val
+label4: #@ val+1
+  #@ end
+#@ end
+
+#! preserve return value if one is specified
+#@ def tpl_val_return(val):
+label1: #@ val
+label2: #@ val+1
+#@ return {"a": 123}
+#@ end
+
+#! calls another func as part of return
+#@ def tpl_func_call_return(val):
+label1: #@ val
+label2: #@ val+1
+#@ return tpl_empty_return(123)
+#@ end
+
+test:
+- #@ template.replace([tpl_empty_return(123)])
+- #@ template.replace([tpl_empty_return(12)])
+- #@ template.replace([tpl_val_return(123)])
+- #@ template.replace([tpl_func_call_return(123)])
+
++++
+
+test:
+- label1: 123
+- label3: 12
+  label4: 13
+- a: 123
+- label1: 123

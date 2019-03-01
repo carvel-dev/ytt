@@ -1,0 +1,9 @@
+(@ def name_from_text(): -@)
+(@ if True: @)
+
+some-data with
+
+text formatting
+
+(@ end @)
+(@- end @)

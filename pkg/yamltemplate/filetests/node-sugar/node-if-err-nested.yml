@@ -1,0 +1,7 @@
+#@ if/end True:
+#@ if/end True:
+key2: nestednif
+
++++
+
+ERR: Unexpected code at line stdin:2 after use of '*/end', expected YAML node

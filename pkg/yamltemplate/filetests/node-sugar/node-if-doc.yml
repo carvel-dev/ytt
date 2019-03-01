@@ -1,0 +1,29 @@
+---
+b: 123
+
+#@ if/end False:
+---
+test1: not-present
+test1a: not-present
+---
+test1b: present #! this doc should be present
+
+---
+#@ if True:
+#@ end
+
+---
+
+#@ if/end True:
+---
+test2: present
+test2a: present
+
++++
+
+b: 123
+---
+test1b: present
+---
+test2: present
+test2a: present

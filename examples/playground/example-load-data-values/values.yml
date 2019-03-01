@@ -1,0 +1,9 @@
+#! some variables need to be configurable externally
+#! we can specify them in a separate file or a separate
+#! YAML document node
+
+#@ load("@ytt:data", "data")
+
+#@ some_list = [data.values.my_map, "item2"]
+
+list_with_a_map: #@ some_list

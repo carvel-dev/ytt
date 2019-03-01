@@ -1,0 +1,35 @@
+#@ load("@ytt:data", "data")
+
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  labels:
+    int: #@ data.values.int
+    intNeg: #@ data.values.intNeg
+    float: #@ data.values.float
+    t: #@ data.values.t
+    f: #@ data.values.f
+    nullz: #@ data.values.nullz
+    string: #@ data.values.string
+    map: #@ data.values.map
+    list: #@ data.values.list
+
++++
+
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  labels:
+    int: 123
+    intNeg: -49
+    float: 123.123
+    t: true
+    f: false
+    nullz: null
+    string: string
+    map:
+      a: 123
+    list:
+    - a
+    - 123
+    - a: 123

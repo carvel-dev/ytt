@@ -1,0 +1,26 @@
+#@ load("@ytt:template", "template")
+#@ load("config.star", "labelSafe", "labelSafe2")
+
+#@ def labels(info):
+  app.kubernetes.io/instance: #@ info.Release.Name
+  app.kubernetes.io/managed-by: #@ info.Release.Service
+  app.kubernetes.io/name: #@ labelSafe2(info.nameOverride or info.Chart.Name)
+  app.kubernetes.io/version: #@ info.Chart.AppVersion or info.Chart.Version
+  helm.sh/chart: #@ "{name}-{ver}".format(name=info.Chart.Name, ver=labelSafe(info.Chart.Version))
+#@ end
+
+#@ def labels2(info):
+  _: #@ template.replace(releaseLabels(info.Release))
+  _: #@ template.replace(chartLabels(info.Chart, info.nameOverride))
+#@ end
+
+#@ def releaseLabels(release):
+  app.kubernetes.io/instance: #@ release.Name
+  app.kubernetes.io/managed-by: #@ release.Service
+#@ end
+
+#@ def chartLabels(chart, nameOverride):
+  app.kubernetes.io/name: #@ labelSafe2(nameOverride or chart.Name)
+  app.kubernetes.io/version: #@ chart.AppVersion or chart.Version
+  helm.sh/chart: #@ "{name}-{ver}".format(name=chart.Name, ver=labelSafe(chart.Version))
+#@ end

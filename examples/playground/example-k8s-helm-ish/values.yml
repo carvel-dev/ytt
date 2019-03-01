@@ -1,0 +1,34 @@
+#@data/values
+---
+Release:
+  Name: release-name
+  Service: release-sv
+  Namespace: release-ns
+Chart:
+  Name: chart-name
+  AppVersion: chart-appver
+  Version: chart-ver
+
+nameOverride:
+replicaCount: 1
+image:
+  repository: nginx
+  tag: stable
+  pullPolicy: IfNotPresent
+service:
+  name: nginx
+  type: ClusterIP
+  externalPort: 80
+  internalPort: 80
+ingress:
+  enabled: false
+  hosts:
+  - chart-example.local
+  annotations:
+    #! kubernetes.io/ingress.class: nginx
+    #! kubernetes.io/tls-acme: "true"
+  tls:
+    #! Secrets must be manually created in the namespace.
+    #! - secretName: chart-example-tls
+    #!   hosts:
+    #!     - chart-example.local

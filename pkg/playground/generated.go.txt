@@ -1,0 +1,114 @@
+package playground
+
+(@
+
+load("@ytt:assert", "assert")
+load("@ytt:data", "data")
+
+def golang_escape_tick(str):
+  # in Go the only way to escape tick is to
+  # break up string and wrap tick in double quotes
+  return str.replace("`", "`+\"`\"+`")
+end
+
+def inject_google_analytics(str):
+  return str.replace("<!-- google analytics -->", data.values.google_analytics)
+end
+
+assetFiles = []
+exampleFiles = []
+
+for file in data.list():
+  if file.startswith('js/') or file.startswith('templates/'):
+    assetFiles.append(file)
+  elif file.startswith('example'):
+    exampleFiles.append(file)
+  end
+end
+
+examples = [
+  {"name": "example-plain-yaml"},
+  {"name": "example-datatypes"},
+  {"name": "example-variable"},
+  {"name": "example-if"},
+  {"name": "example-for"},
+  {"name": "example-function"},
+  {"name": "example-load"},
+  {"name": "example-load-ytt-library"},
+  {"name": "example-load-custom-library"},
+  {"name": "example-assert"},
+  {"name": "example-load-data-values"},
+  {"name": "example-load-data-files"},
+  {"name": "example-text-template"},
+  {"name": "example-replace"},
+  {"name": "example-overlay"},
+  {"name": "example-overlay-files"},
+  {"name": "example-k8s-ingress"},
+  {"name": "example-k8s-ingress-with-defs"},
+  {"name": "example-k8s-ingress-with-structs"},
+  {"name": "example-k8s-helm-ish"},
+  {"name": "example-demo"},
+]
+
+for example in examples:
+  example["files"] = []
+  for file in exampleFiles:
+    if file.startswith(example["name"]+"/"):
+      example["files"].append(file)
+    end
+  end
+  if len(example["files"]) == 0:
+    assert.fail("expected to find at least one file for example "+example["name"])
+  end
+end
+
+unaccountedExampleFiles = []
+
+for file in exampleFiles:
+  accounted = False
+  for example in examples:
+    for accountedFile in example["files"]:
+      if accountedFile == file:
+        accounted = True
+        break
+      end
+    end
+  end
+  if not accounted:
+    unaccountedExampleFiles.append(file)
+  end
+end
+
+if len(unaccountedExampleFiles) > 0:
+  assert.fail("found unaccounted example files {}".format(unaccountedExampleFiles))
+end
+
+@)
+
+func init() {
+	Files = map[string]File{
+		(@ for name in assetFiles: @)
+    "(@= name @)": File{
+      Name: "(@= name @)",
+      Content: `(@= inject_google_analytics(golang_escape_tick(data.read(name))) @)`,
+    },
+		(@ end @)
+	}
+
+  Examples = []Example{
+    (@ for example in examples: @)
+    {
+      ID: "(@= example["name"] @)",
+      DisplayName: "(@= example["name"].replace("example-", "").replace("-", " ").capitalize() @)",
+      Files: []File{
+        (@ for file in example["files"]: @)
+        {
+          Name: "(@= file.replace(example["name"]+"/", "", 1) @)",
+          Content: `(@= golang_escape_tick(data.read(file)) @)`,
+        },
+        (@ end @)
+      },
+    },
+    (@ end @)
+  }
+}

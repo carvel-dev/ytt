@@ -1,0 +1,19 @@
+#@ load("@ytt:json", "json")
+
+test1: #@ json.encode({"a": [1,2,3,{"c":456}], "b": "str"})
+test2: #@ json.encode({})
+test3: #@ json.decode("{}")
+test4: #@ json.decode('{"a":[1,2,3,{"c":456}],"b":"str"}')
+
++++
+
+test1: '{"a":[1,2,3,{"c":456}],"b":"str"}'
+test2: '{}'
+test3: {}
+test4:
+  a:
+  - 1
+  - 2
+  - 3
+  - c: 456
+  b: str

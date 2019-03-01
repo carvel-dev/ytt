@@ -1,0 +1,18 @@
+#@ load("@ytt:template", "template")
+#@ load("helpers.star", "fullname", "name")
+
+#@ def metadata(vars):
+name: #@ fullname(vars)
+labels: #@ labels(vars)
+#@ end
+
+#@ def labels(vars):
+chart: #@ "{}-{}".format(vars.Chart.Name, vars.Chart.Version).replace("+", "_")
+heritage: #@ vars.Release.Service
+_: #@ template.replace(selector(vars))
+#@ end
+
+#@ def selector(vars):
+app: #@ name(vars)
+release: #@ vars.Release.Name
+#@ end

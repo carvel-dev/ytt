@@ -1,0 +1,24 @@
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  labels:
+    #@ if False:
+    key: if
+    #@ elif True:
+    key: elif
+    #@ else/end:
+    key: else
+
+    #@ if False:
+    key2: if
+    #@ elif/end True:
+    key2: elif
+
++++
+
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  labels:
+    key: elif
+    key2: elif

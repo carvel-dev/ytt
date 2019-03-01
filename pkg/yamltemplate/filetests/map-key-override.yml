@@ -1,0 +1,29 @@
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  labels:
+    #! allows same key to be used in two branches of the conditional
+    #@ if False:
+    key1: nif
+    #@ else/end:
+    key1: nelse
+
+    #@ if True:
+    key2: nif
+    #@ else/end:
+    key2: nelse
+
+    #! supports overriding keys that are already specified
+    test3: first
+    #@yaml/map-key-override
+    test3: second
+
++++
+
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  labels:
+    key1: nelse
+    key2: nif
+    test3: second

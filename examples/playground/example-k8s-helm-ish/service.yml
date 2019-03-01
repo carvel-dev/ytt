@@ -1,0 +1,19 @@
+#@ load("@ytt:data", "data")
+#@ load("helpers.star", "fullname", "name")
+#@ load("helpers.lib.yml", "labels")
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: #@ fullname(data.values)
+  labels: #@ labels(data.values)
+spec:
+  type: #@ data.values.service.type
+  ports:
+    - port: #@ data.values.service.externalPort
+      targetPort: #@ data.values.service.internalPort
+      protocol: TCP
+      name: #@ data.values.service.name
+  selector:
+    app: #@ name(data.values)
+    release: #@ data.values.Release.Name

@@ -1,0 +1,9 @@
+#@ load("@ytt:md5", "md5")
+
+test1: #@ md5.sum("")
+test2: #@ md5.sum("data")
+
++++
+
+test1: d41d8cd98f00b204e9800998ecf8427e
+test2: 8d777f385d3dfec8815d20f7496026dc

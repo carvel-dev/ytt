@@ -1,0 +1,37 @@
+#! example is based on the following post: https://bit.ly/2QNCWab
+#! let's make it possible to have multiple copies
+#! of the app: apple, banana, orange. to do so pull
+#! reusable functionality into a set of functions.
+#! take a look and move to next example: k8s-ingress-with-objs
+
+#@ def/end app_labels(app):
+app: #@ app.name
+
+#@ def app_svc_name(app):
+#@   return app.name + "-svc"
+#@ end
+
+#@ def app_config(app):
+---
+kind: Pod
+apiVersion: v1
+metadata:
+  name: #@ app.name + "-app"
+  labels: #@ app_labels(app)
+spec:
+  containers:
+  - name: app
+    image: hashicorp/http-echo
+    args:
+    - -listen=:(@= str(app.port) @)
+    - -text=(@= app.text @)
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: #@ app_svc_name(app)
+spec:
+  selector: #@ app_labels(app)
+  ports:
+  - port: #@ app.port
+#@ end

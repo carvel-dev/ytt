@@ -1,0 +1,3 @@
+(@ def nameFromTextTemplate(): -@)
+(@ if True: @)secret-generator-configgin-role-binding(@ end @)
+(@- end @)

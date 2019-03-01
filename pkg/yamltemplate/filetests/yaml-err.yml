@@ -1,0 +1,5 @@
+apiVersion: @123
+
++++
+
+ERR: yaml: line 1: found character that cannot start any token

@@ -1,0 +1,16 @@
+#@ load("@ytt:template", "template")
+
+#@ def tpl():
+test3: first
+test4: second
+#@ end
+
+test3: first
+_: #@ template.replace(tpl())
+
++++
+
+ERR: 
+- template.replace: disallowed to override key 'test3' value
+    stdin:9 in <toplevel>
+     L _: #@ template.replace(tpl())

@@ -1,0 +1,15 @@
+#@ load("@ytt:data", "data")
+
+#! data.list() provides list of all files given to ytt
+#! (which includes templates themselves)
+
+#! to load content from a file as a string
+#! without applying any templating use data.read(...)
+
+#@ files = data.list()
+
+files: #@ files
+
+csvs:
+#@ for/end file in [ f for f in files if f.endswith(".csv") ]:
+- #@ data.read(file)

@@ -1,0 +1,23 @@
+#@ def yamlfunc():
+key: #@ textfunc()
+#@ end
+
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  labels:
+    #! TODO stacktrace is still not correct
+    test3: |
+      (@- def textfunc(): @)(@= 1+"1" @)(@ end -@)
+      fromtext=(@= yamlfunc() @)
+
++++
+
+ERR: 
+- unknown binary op: int + string
+    stdin:1 in textfunc
+     L = 1+"1" 
+    stdin:2 in yamlfunc
+     L key: #@ textfunc()
+    stdin:2 in <toplevel>
+     L = yamlfunc() 

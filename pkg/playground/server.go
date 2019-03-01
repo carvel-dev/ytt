@@ -1,0 +1,208 @@
+package playground
+
+import (
+	"encoding/json"
+	"fmt"
+	"io/ioutil"
+	"log"
+	"net"
+	"net/http"
+	"strings"
+	"time"
+)
+
+type ServerOpts struct {
+	ListenAddr   string
+	CheckCookie  bool
+	TemplateFunc func([]byte) ([]byte, error)
+	ErrorFunc    func(error) ([]byte, error)
+}
+
+type Server struct {
+	opts ServerOpts
+}
+
+func NewServer(opts ServerOpts) *Server {
+	return &Server{opts}
+}
+
+func (s *Server) Mux() *http.ServeMux {
+	mux := http.NewServeMux()
+	mux.HandleFunc("/", s.redirectToHTTPs(s.noCacheHandler(s.checkReleaseCookie(s.mainHandler))))
+	mux.HandleFunc("/js/", s.redirectToHTTPs(s.noCacheHandler(s.checkReleaseCookie(s.assetHandler))))
+	mux.HandleFunc("/examples", s.redirectToHTTPs(s.noCacheHandler(s.checkReleaseCookie(s.examplesListHandler))))
+	mux.HandleFunc("/examples/", s.redirectToHTTPs(s.noCacheHandler(s.checkReleaseCookie(s.examplesHandler))))
+	// no need for caching as it's a POST
+	mux.HandleFunc("/template", s.redirectToHTTPs(s.checkReleaseCookie(s.templateHandler)))
+	mux.HandleFunc("/alpha-test", s.redirectToHTTPs(s.noCacheHandler(s.addReleaseCookieHandler)))
+	mux.HandleFunc("/health", s.healthHandler)
+	return mux
+}
+
+func (s *Server) Run() error {
+	server := &http.Server{
+		Addr:    s.opts.ListenAddr,
+		Handler: s.Mux(),
+	}
+	fmt.Printf("Listening on http://%s\n", server.Addr)
+	return server.ListenAndServe()
+}
+
+func (s *Server) mainHandler(w http.ResponseWriter, r *http.Request) {
+	s.write(w, []byte(Files["templates/index.html"].Content))
+}
+
+func (s *Server) assetHandler(w http.ResponseWriter, r *http.Request) {
+	if strings.HasSuffix(r.URL.Path, ".css") {
+		w.Header().Set("Content-Type", "text/css")
+	}
+	if strings.HasSuffix(r.URL.Path, ".js") {
+		w.Header().Set("Content-Type", "application/javascript")
+	}
+	s.write(w, []byte(Files[strings.TrimPrefix(r.URL.Path, "/")].Content))
+}
+
+func (s *Server) examplesListHandler(w http.ResponseWriter, r *http.Request) {
+	examples := []Example{}
+
+	for _, example := range Examples {
+		examples = append(examples, Example{
+			ID:          example.ID,
+			DisplayName: example.DisplayName,
+		})
+	}
+
+	listBytes, err := json.Marshal(examples)
+	if err != nil {
+		s.logError(w, err)
+		return
+	}
+
+	s.write(w, listBytes)
+}
+
+func (s *Server) examplesHandler(w http.ResponseWriter, r *http.Request) {
+	for _, example := range Examples {
+		if example.ID == strings.TrimPrefix(r.URL.Path, "/examples/") {
+			exampleBytes, err := json.Marshal(example)
+			if err != nil {
+				s.logError(w, err)
+				return
+			}
+
+			s.write(w, exampleBytes)
+			return
+		}
+	}
+
+	s.logError(w, fmt.Errorf("Did not find example"))
+}
+
+func (s *Server) templateHandler(w http.ResponseWriter, r *http.Request) {
+	data, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		s.logError(w, err)
+		return
+	}
+
+	resp, err := s.opts.TemplateFunc(data)
+	if err != nil {
+		s.logError(w, err)
+		return
+	}
+
+	s.write(w, resp)
+}
+
+func (s *Server) healthHandler(w http.ResponseWriter, r *http.Request) {
+	s.write(w, []byte("ok"))
+}
+
+func (s *Server) logError(w http.ResponseWriter, err error) {
+	log.Print(err.Error())
+
+	resp, err := s.opts.ErrorFunc(err)
+	if err != nil {
+		fmt.Fprintf(w, "generation error: %s", err.Error())
+		return
+	}
+
+	s.write(w, resp)
+}
+
+func (s *Server) write(w http.ResponseWriter, data []byte) {
+	w.Write(data) // not fmt.Fprintf!
+}
+
+func (s *Server) redirectToHTTPs(wrappedFunc func(http.ResponseWriter, *http.Request)) func(http.ResponseWriter, *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		checkHTTPs := true
+		clientIP, _, err := net.SplitHostPort(r.RemoteAddr)
+		if err == nil {
+			if clientIP == "127.0.0.1" {
+				checkHTTPs = false
+			}
+		}
+
+		if checkHTTPs && r.Header.Get(http.CanonicalHeaderKey("x-forwarded-proto")) != "https" {
+			if r.Method == http.MethodGet || r.Method == http.MethodHead {
+				r.URL.Scheme = "https"
+				http.Redirect(w, r, "/", http.StatusMovedPermanently)
+				return
+			}
+
+			// Fail if it's not a GET or HEAD since req may have carried body insecurely
+			s.logError(w, fmt.Errorf("expected HTTPs connection"))
+			return
+		}
+
+		wrappedFunc(w, r)
+	}
+}
+
+var (
+	noCacheHeaders = map[string]string{
+		"Expires":         time.Unix(0, 0).Format(time.RFC1123),
+		"Cache-Control":   "no-cache, private, max-age=0",
+		"Pragma":          "no-cache",
+		"X-Accel-Expires": "0",
+	}
+)
+
+func (s *Server) noCacheHandler(wrappedFunc func(http.ResponseWriter, *http.Request)) func(http.ResponseWriter, *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		for k, v := range noCacheHeaders {
+			w.Header().Set(k, v)
+		}
+
+		wrappedFunc(w, r)
+	}
+}
+
+const (
+	releaseCookieName = "x-release-test"
+)
+
+func (s *Server) checkReleaseCookie(wrappedFunc func(http.ResponseWriter, *http.Request)) func(http.ResponseWriter, *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if s.opts.CheckCookie {
+			cookie, err := r.Cookie(releaseCookieName)
+			if err != nil || len(cookie.String()) == 0 {
+				s.logError(w, fmt.Errorf("come back soon!"))
+				return
+			}
+		}
+
+		wrappedFunc(w, r)
+	}
+}
+
+func (s *Server) addReleaseCookieHandler(w http.ResponseWriter, r *http.Request) {
+	cookie := http.Cookie{
+		Name:    releaseCookieName,
+		Value:   releaseCookieName,
+		Expires: time.Now().AddDate(0, 0, 365),
+	}
+	http.SetCookie(w, &cookie)
+	http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
+}

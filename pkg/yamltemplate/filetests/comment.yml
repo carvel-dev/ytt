@@ -1,0 +1,31 @@
+#! before
+test1: true #! inline
+#! after
+
+#! multiline
+#! multiline
+#! multiline
+
+#@ # single
+#@ # single
+
+#@ """
+#@ multiline
+#@ multiline
+#@ multiline
+#@ """
+
+#@ if True:
+#! middle-of-code
+#@ a = 5
+test2: #@ a
+#@ end
+
+#! test3: #@ # inline-comment TODO
+
+#@comment comment-via-annotation
+
++++
+
+test1: true
+test2: 5
