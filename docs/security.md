@@ -4,6 +4,8 @@ If you believe you have found a security issue in `ytt`, please responsibly disc
 
 ### Attack Vectors
 
+This section is a work-in-progress...
+
 - malicious template input
   - input tries to exhaust cpu/mem/disk resources
     - A: how does it affect go-yaml? ... https://en.wikipedia.org/wiki/Billion_laughs_attack
@@ -16,9 +18,9 @@ If you believe you have found a security issue in `ytt`, please responsibly disc
   - code tries to exfiltrate data over network
     - A: template runtime does not have facilities to access network.
   - code tries to exhaust cpu/mem/disk resources
-    - A: 
+    - A: there are currently no resource constraints set by ytt itself for cpu/mem/disk. currently cpu can be pegged at 100% via an infinite loop. function recursion is also possible; however, it will be contstrained by Go stack space (and will exit the program).
   - code tries to produce YAML that exhausts resources
-    - A: TBD ... https://en.wikipedia.org/wiki/Billion_laughs_attack
+    - A: TBD
   - meltdown/spectre style attacks
     - A: TBD
 
