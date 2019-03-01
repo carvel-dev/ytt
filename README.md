@@ -9,7 +9,7 @@ Features:
 - templating works on YAML structure (instead of text)
   - eliminates variety of problems such as invalid YAML formatting, escaping, etc.
 - syntactic sugar for single YAML node conditionals and for loops
-  - makses it easier to read densely conditioned templated
+  - makes it easier to read densely conditioned templated
 - templates are themselves valid YAML files
   - makes them friendly to existing editors and YAML tools
 - includes *sandboxed* "fully featured" _Pythonic_ programming language
