@@ -161,7 +161,7 @@ function NewExamples(parentEl, templates, exampleLocation, blocker) {
     $.get('/examples/' + id, function(data) {
       var content = JSON.parse(data);
 
-      if (opts.preDoneCallback) opts.preDoneCallback();
+      if (opts.preDoneCallback) opts.preDoneCallback(id);
 
       templates.resetFiles();
       for (var j in content.files) {
@@ -256,6 +256,20 @@ function NewExampleLocation() {
   }
 }
 
+function NewGoogleAnalytics() {
+  return {
+    recordExampleClick: function(name) {
+      if (!window.ga) return;
+      window.ga('send', {
+        hitType: 'event',
+        eventCategory: 'example',
+        eventAction: 'show',
+        eventLabel: name,
+      });
+    }
+  }
+}
+
 $(document).ready(function() {
   var templatesLoadingIndicator = NewLoadingIndicator({
     on: "Playground: templating... in progress",
@@ -266,13 +280,18 @@ $(document).ready(function() {
     postEvaluateCallback: templatesLoadingIndicator.off,
   });
 
+  var googAnalytics = NewGoogleAnalytics();
   var examplesBlocker = NewBlocker($("#playground .blocker"));
-  var exampleLocation = NewExampleLocation()
-  var examples = NewExamples($("#playground"), templates, exampleLocation, examplesBlocker);
+  var exampleLocation = NewExampleLocation();
+  var examples = NewExamples(
+    $("#playground"), templates, exampleLocation, examplesBlocker);
 
   examples.load(exampleLocation.get(), {
     scrollIntoView: exampleLocation.isSet(),
-    preDoneCallback: function() { $("#playground").show(); }
+    preDoneCallback: function(exampleId) {
+      $("#playground").show();
+      googAnalytics.recordExampleClick(exampleId);
+    }
   });
 
   $("#playground .add-config").click(function() {
