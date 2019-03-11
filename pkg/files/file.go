@@ -156,7 +156,7 @@ func (r *File) matchesExt(exts []string) bool {
 
 func NewRegularFileLocalSource(path, dir string, fi os.FileInfo) (LocalSource, error) {
 	if (fi.Mode() & os.ModeType) != 0 {
-		return LocalSource{}, fmt.Errorf("Expecting file '%s' to be more a regular file, but was not", path)
+		return LocalSource{}, fmt.Errorf("Expected file '%s' to be a regular file, but was not", path)
 	}
 	return NewLocalSource(path, dir), nil
 }
