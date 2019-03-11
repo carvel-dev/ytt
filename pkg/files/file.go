@@ -42,7 +42,7 @@ func NewFiles(paths []string, recursive bool) ([]*File, error) {
 			fileSrcs = append(fileSrcs, NewHTTPSource(path))
 
 		default:
-			fileInfo, err := os.Stat(path)
+			fileInfo, err := os.Lstat(path)
 			if err != nil {
 				return nil, fmt.Errorf("Checking file '%s'", path)
 			}
@@ -52,26 +52,26 @@ func NewFiles(paths []string, recursive bool) ([]*File, error) {
 					return nil, fmt.Errorf("Expected file '%s' to not be a directory", path)
 				}
 
-				var selectedPaths []string
-
 				err := filepath.Walk(path, func(walkedPath string, fi os.FileInfo, err error) error {
 					if err != nil || fi.IsDir() {
 						return err
 					}
-					selectedPaths = append(selectedPaths, walkedPath)
+					regLocalSource, err := NewRegularFileLocalSource(walkedPath, path, fi)
+					if err != nil {
+						return err
+					}
+					fileSrcs = append(fileSrcs, regLocalSource)
 					return nil
 				})
 				if err != nil {
-					return nil, fmt.Errorf("Listing files '%s'", path)
-				}
-
-				sort.Strings(selectedPaths)
-
-				for _, selectedPath := range selectedPaths {
-					fileSrcs = append(fileSrcs, NewLocalSource(selectedPath, path))
+					return nil, fmt.Errorf("Listing files '%s': %s", path, err)
 				}
 			} else {
-				fileSrcs = append(fileSrcs, NewLocalSource(path, ""))
+				regLocalSource, err := NewRegularFileLocalSource(path, "", fileInfo)
+				if err != nil {
+					return nil, err
+				}
+				fileSrcs = append(fileSrcs, regLocalSource)
 			}
 		}
 	}
@@ -85,6 +85,10 @@ func NewFiles(paths []string, recursive bool) ([]*File, error) {
 		}
 		files = append(files, file)
 	}
+
+	sort.Slice(files, func(i, j int) bool {
+		return files[i].RelativePath() < files[j].RelativePath()
+	})
 
 	return files, nil
 }
@@ -148,6 +152,13 @@ func (r *File) matchesExt(exts []string) bool {
 		}
 	}
 	return false
+}
+
+func NewRegularFileLocalSource(path, dir string, fi os.FileInfo) (LocalSource, error) {
+	if (fi.Mode() & os.ModeType) != 0 {
+		return LocalSource{}, fmt.Errorf("Expecting file '%s' to be more a regular file, but was not", path)
+	}
+	return NewLocalSource(path, dir), nil
 }
 
 func SplitPath(path string) ([]string, string) {
