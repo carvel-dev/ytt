@@ -82,13 +82,13 @@ func (o *TemplateOptions) RunWithFiles(in TemplateInput, ui cmdcore.PlainUI) Tem
 	outputFiles := []files.OutputFile{}
 	outputDocSets := map[string]*yamlmeta.DocumentSet{}
 
-	templateFiles, libraryAndDataFiles, values, err := o.categorizeFiles(in.Files)
+	rootLibrary := workspace.NewRootLibrary(in.Files)
+	rootLibrary.Print(ui.DebugWriter())
+
+	templateFiles, values, err := o.categorizeFiles(rootLibrary.ListAccessibleFiles())
 	if err != nil {
 		return TemplateOutput{Err: err}
 	}
-
-	rootLibrary := workspace.NewRootLibrary(libraryAndDataFiles)
-	rootLibrary.Print(ui.DebugWriter())
 
 	loader := workspace.NewTemplateLoader(values, ui)
 
@@ -142,25 +142,22 @@ func (o *TemplateOptions) RunWithFiles(in TemplateInput, ui cmdcore.PlainUI) Tem
 	return TemplateOutput{Files: outputFiles, DocSet: combinedDocSet}
 }
 
-func (o *TemplateOptions) categorizeFiles(allFiles []*files.File) ([]*files.File, []*files.File, interface{}, error) {
+func (o *TemplateOptions) categorizeFiles(allFiles []*files.File) ([]*files.File, interface{}, error) {
 	templateFiles := []*files.File{}
-	libraryAndDataFiles := []*files.File{}
 
 	for _, file := range allFiles {
 		switch {
 		case file.IsTemplate():
 			templateFiles = append(templateFiles, file)
 		}
-		// Consider templates as data files as well
-		libraryAndDataFiles = append(libraryAndDataFiles, file)
 	}
 
 	templateFiles, values, err := o.extractValues(templateFiles)
 	if err != nil {
-		return nil, nil, nil, err
+		return nil, nil, err
 	}
 
-	return templateFiles, libraryAndDataFiles, values, nil
+	return templateFiles, values, nil
 }
 
 func (o *TemplateOptions) extractValues(fs []*files.File) ([]*files.File, interface{}, error) {
