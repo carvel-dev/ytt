@@ -21,6 +21,7 @@ Try out [online playground](https://get-ytt.io) or download latest binaries from
 
 - [Language](docs/lang.md)
 - [Security](docs/security.md)
+- [ytt vs X: How ytt is different from other tools / frameworks](docs/ytt-vs-x.md)
 
 ## Try it
 
