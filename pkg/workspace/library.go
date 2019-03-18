@@ -5,7 +5,7 @@ import (
 	"io"
 	"strings"
 
-	"github.com/get-ytt/ytt/pkg/files"
+	"github.com/k14s/ytt/pkg/files"
 )
 
 const (
@@ -104,7 +104,7 @@ func (l *Library) FindFile(path string) (*files.File, error) {
 		}
 		if lib.private {
 			return nil, fmt.Errorf("Could not load file '%s' because it's contained in private library '%s' "+
-				"(use load(\"@lib:file\", \"symbol\") where 'lib' is library name under %s, for example, 'github.com/get-ytt/test')",
+				"(use load(\"@lib:file\", \"symbol\") where 'lib' is library name under %s, for example, 'github.com/k14s/test')",
 				path, files.JoinPath(dirPieces[:i]), privateName)
 		}
 		currLibrary = lib

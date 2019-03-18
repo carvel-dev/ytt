@@ -5,7 +5,7 @@ import (
 	"strings"
 	"unicode"
 
-	"github.com/get-ytt/ytt/pkg/template"
+	"github.com/k14s/ytt/pkg/template"
 )
 
 type Template struct {

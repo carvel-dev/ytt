@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/get-ytt/ytt/pkg/filepos"
-	"github.com/get-ytt/ytt/pkg/yamlmeta/internal/yaml.v2"
+	"github.com/k14s/ytt/pkg/filepos"
+	"github.com/k14s/ytt/pkg/yamlmeta/internal/yaml.v2"
 )
 
 type InterfaceConvertOpts struct {

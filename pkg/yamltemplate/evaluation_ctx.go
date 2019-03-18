@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/get-ytt/ytt/pkg/template"
-	"github.com/get-ytt/ytt/pkg/yamlmeta"
+	"github.com/k14s/ytt/pkg/template"
+	"github.com/k14s/ytt/pkg/yamlmeta"
 )
 
 const (

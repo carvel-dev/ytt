@@ -9,4 +9,4 @@ sha256: #@ sha256.sum("data")
 base64: #@ base64.encode("regular")
 
 #! complete list:
-#! https://github.com/get-ytt/ytt/tree/master/docs/lang-ref.md
+#! https://github.com/k14s/ytt/tree/master/docs/lang-ref.md

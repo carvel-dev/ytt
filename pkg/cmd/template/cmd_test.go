@@ -3,9 +3,9 @@ package template_test
 import (
 	"testing"
 
-	cmdcore "github.com/get-ytt/ytt/pkg/cmd/core"
-	cmdtpl "github.com/get-ytt/ytt/pkg/cmd/template"
-	"github.com/get-ytt/ytt/pkg/files"
+	cmdcore "github.com/k14s/ytt/pkg/cmd/core"
+	cmdtpl "github.com/k14s/ytt/pkg/cmd/template"
+	"github.com/k14s/ytt/pkg/files"
 )
 
 func TestLoad(t *testing.T) {
@@ -190,7 +190,7 @@ func TestDisallowDirectLibraryLoading(t *testing.T) {
 	yamlTplData := []byte(`#@ load("_ytt_lib/data.lib.star", "data")`)
 
 	expectedErr := `
-- cannot load _ytt_lib/data.lib.star: Could not load file '_ytt_lib/data.lib.star' because it's contained in private library '' (use load("@lib:file", "symbol") where 'lib' is library name under _ytt_lib, for example, 'github.com/get-ytt/test')
+- cannot load _ytt_lib/data.lib.star: Could not load file '_ytt_lib/data.lib.star' because it's contained in private library '' (use load("@lib:file", "symbol") where 'lib' is library name under _ytt_lib, for example, 'github.com/k14s/test')
     tpl.yml:1 in <toplevel>
      L #@ load("_ytt_lib/data.lib.star", "data")`
 

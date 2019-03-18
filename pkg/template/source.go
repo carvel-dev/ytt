@@ -3,7 +3,7 @@ package template
 import (
 	"bytes"
 
-	"github.com/get-ytt/ytt/pkg/filepos"
+	"github.com/k14s/ytt/pkg/filepos"
 )
 
 type TemplateLine struct {

@@ -8,6 +8,6 @@
 
 #! RENAME '_ytt_lib1' to '_ytt_lib' below to see example succeed
 
-#@ load("@github.com/get-ytt/test-lib:funcs.star", "testfunc")
+#@ load("@github.com/k14s/test-lib:funcs.star", "testfunc")
 
 result: #@ testfunc()

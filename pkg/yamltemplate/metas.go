@@ -5,9 +5,9 @@ import (
 	"strings"
 	"unicode"
 
-	"github.com/get-ytt/ytt/pkg/structmeta"
-	"github.com/get-ytt/ytt/pkg/template"
-	"github.com/get-ytt/ytt/pkg/yamlmeta"
+	"github.com/k14s/ytt/pkg/structmeta"
+	"github.com/k14s/ytt/pkg/template"
+	"github.com/k14s/ytt/pkg/yamlmeta"
 )
 
 var (

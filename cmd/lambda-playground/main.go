@@ -6,7 +6,7 @@ import (
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
-	"github.com/get-ytt/ytt/pkg/cmd"
+	"github.com/k14s/ytt/pkg/cmd"
 )
 
 type HandlerFuncAdapter struct {

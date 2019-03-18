@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/cppforlife/cobrautil"
-	cmdtpl "github.com/get-ytt/ytt/pkg/cmd/template"
+	cmdtpl "github.com/k14s/ytt/pkg/cmd/template"
 	"github.com/spf13/cobra"
 )
 
@@ -25,7 +25,7 @@ func NewYttCmd(o *YttOptions) *cobra.Command {
 		Short: "ytt performs YAML templating",
 		Long: `ytt performs YAML templating.
 
-Docs: https://github.com/get-ytt/ytt/docs`,
+Docs: https://github.com/k14s/ytt/docs`,
 
 		RunE: ShowHelp,
 

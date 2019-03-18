@@ -3,7 +3,7 @@ package template_test
 import (
 	"testing"
 
-	. "github.com/get-ytt/ytt/pkg/template"
+	. "github.com/k14s/ytt/pkg/template"
 )
 
 func TestAncestorsDeep(t *testing.T) {

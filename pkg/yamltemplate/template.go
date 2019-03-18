@@ -4,10 +4,10 @@ import (
 	"bytes"
 	"fmt"
 
-	"github.com/get-ytt/ytt/pkg/filepos"
-	"github.com/get-ytt/ytt/pkg/template"
-	"github.com/get-ytt/ytt/pkg/texttemplate"
-	"github.com/get-ytt/ytt/pkg/yamlmeta"
+	"github.com/k14s/ytt/pkg/filepos"
+	"github.com/k14s/ytt/pkg/template"
+	"github.com/k14s/ytt/pkg/texttemplate"
+	"github.com/k14s/ytt/pkg/yamlmeta"
 )
 
 type Template struct {

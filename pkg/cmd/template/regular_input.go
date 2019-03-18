@@ -3,8 +3,8 @@ package template
 import (
 	"fmt"
 
-	cmdcore "github.com/get-ytt/ytt/pkg/cmd/core"
-	"github.com/get-ytt/ytt/pkg/files"
+	cmdcore "github.com/k14s/ytt/pkg/cmd/core"
+	"github.com/k14s/ytt/pkg/files"
 	"github.com/spf13/cobra"
 )
 

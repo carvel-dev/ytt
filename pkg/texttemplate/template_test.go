@@ -9,8 +9,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/get-ytt/ytt/pkg/template"
-	"github.com/get-ytt/ytt/pkg/texttemplate"
+	"github.com/k14s/ytt/pkg/template"
+	"github.com/k14s/ytt/pkg/texttemplate"
 	"go.starlark.net/starlark"
 )
 

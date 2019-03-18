@@ -1,8 +1,8 @@
 package yttlibrary
 
 import (
-	"github.com/get-ytt/ytt/pkg/template"
-	"github.com/get-ytt/ytt/pkg/template/core"
+	"github.com/k14s/ytt/pkg/template"
+	"github.com/k14s/ytt/pkg/template/core"
 	"go.starlark.net/starlark"
 	"go.starlark.net/starlarkstruct"
 )

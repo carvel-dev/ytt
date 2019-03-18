@@ -1,9 +1,9 @@
 package yttlibrary
 
 import (
-	"github.com/get-ytt/ytt/pkg/template"
-	tplcore "github.com/get-ytt/ytt/pkg/template/core"
-	"github.com/get-ytt/ytt/pkg/yttlibrary/overlay"
+	"github.com/k14s/ytt/pkg/template"
+	tplcore "github.com/k14s/ytt/pkg/template/core"
+	"github.com/k14s/ytt/pkg/yttlibrary/overlay"
 	"go.starlark.net/starlark"
 )
 

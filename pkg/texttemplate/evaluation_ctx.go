@@ -3,7 +3,7 @@ package texttemplate
 import (
 	"fmt"
 
-	"github.com/get-ytt/ytt/pkg/template"
+	"github.com/k14s/ytt/pkg/template"
 )
 
 const (

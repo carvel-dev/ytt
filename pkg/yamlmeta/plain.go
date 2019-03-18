@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"reflect"
 
-	"github.com/get-ytt/ytt/pkg/yamlmeta/internal/yaml.v2"
+	"github.com/k14s/ytt/pkg/yamlmeta/internal/yaml.v2"
 )
 
 func PlainMarshal(val interface{}) ([]byte, error) {

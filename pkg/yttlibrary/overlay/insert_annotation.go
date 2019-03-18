@@ -3,8 +3,8 @@ package overlay
 import (
 	"fmt"
 
-	"github.com/get-ytt/ytt/pkg/template"
-	tplcore "github.com/get-ytt/ytt/pkg/template/core"
+	"github.com/k14s/ytt/pkg/template"
+	tplcore "github.com/k14s/ytt/pkg/template/core"
 	"go.starlark.net/starlark"
 )
 

@@ -4,13 +4,13 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/get-ytt/ytt/pkg/files"
-	"github.com/get-ytt/ytt/pkg/template"
-	"github.com/get-ytt/ytt/pkg/template/core"
-	"github.com/get-ytt/ytt/pkg/texttemplate"
-	"github.com/get-ytt/ytt/pkg/yamlmeta"
-	"github.com/get-ytt/ytt/pkg/yamltemplate"
-	"github.com/get-ytt/ytt/pkg/yttlibrary"
+	"github.com/k14s/ytt/pkg/files"
+	"github.com/k14s/ytt/pkg/template"
+	"github.com/k14s/ytt/pkg/template/core"
+	"github.com/k14s/ytt/pkg/texttemplate"
+	"github.com/k14s/ytt/pkg/yamlmeta"
+	"github.com/k14s/ytt/pkg/yamltemplate"
+	"github.com/k14s/ytt/pkg/yttlibrary"
 	"go.starlark.net/starlark"
 )
 
@@ -48,7 +48,7 @@ func (l *TemplateLoader) Load(thread *starlark.Thread, module string) (starlark.
 		pieces := strings.SplitN(module[1:], ":", 2)
 		if len(pieces) != 2 {
 			return nil, fmt.Errorf("Expected library path to be in format '@name:path', " +
-				" for example, '@github.com/get-ytt/test:test.star'")
+				" for example, '@github.com/k14s/test:test.star'")
 		}
 
 		foundLib, err := library.FindAccessibleLibrary(pieces[0])

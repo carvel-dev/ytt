@@ -3,9 +3,9 @@ package template
 import (
 	"fmt"
 
-	"github.com/get-ytt/ytt/pkg/template"
-	"github.com/get-ytt/ytt/pkg/yamlmeta"
-	yttoverlay "github.com/get-ytt/ytt/pkg/yttlibrary/overlay"
+	"github.com/k14s/ytt/pkg/template"
+	"github.com/k14s/ytt/pkg/yamlmeta"
+	yttoverlay "github.com/k14s/ytt/pkg/yttlibrary/overlay"
 	"go.starlark.net/starlark"
 )
 

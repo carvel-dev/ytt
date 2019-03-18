@@ -4,12 +4,12 @@ import (
 	"fmt"
 	"time"
 
-	cmdcore "github.com/get-ytt/ytt/pkg/cmd/core"
-	"github.com/get-ytt/ytt/pkg/files"
-	"github.com/get-ytt/ytt/pkg/texttemplate"
-	"github.com/get-ytt/ytt/pkg/workspace"
-	"github.com/get-ytt/ytt/pkg/yamlmeta"
-	"github.com/get-ytt/ytt/pkg/yttlibrary"
+	cmdcore "github.com/k14s/ytt/pkg/cmd/core"
+	"github.com/k14s/ytt/pkg/files"
+	"github.com/k14s/ytt/pkg/texttemplate"
+	"github.com/k14s/ytt/pkg/workspace"
+	"github.com/k14s/ytt/pkg/yamlmeta"
+	"github.com/k14s/ytt/pkg/yttlibrary"
 	"github.com/spf13/cobra"
 )
 

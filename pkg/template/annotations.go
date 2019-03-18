@@ -3,7 +3,7 @@ package template
 import (
 	"strings"
 
-	"github.com/get-ytt/ytt/pkg/structmeta"
+	"github.com/k14s/ytt/pkg/structmeta"
 	"go.starlark.net/starlark"
 )
 

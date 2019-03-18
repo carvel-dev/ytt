@@ -3,7 +3,7 @@ package yamltemplate
 import (
 	"fmt"
 
-	tplcore "github.com/get-ytt/ytt/pkg/template/core"
+	tplcore "github.com/k14s/ytt/pkg/template/core"
 	"go.starlark.net/starlark"
 )
 

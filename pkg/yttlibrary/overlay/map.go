@@ -1,7 +1,7 @@
 package overlay
 
 import (
-	"github.com/get-ytt/ytt/pkg/yamlmeta"
+	"github.com/k14s/ytt/pkg/yamlmeta"
 )
 
 func (o OverlayOp) mergeMapItem(leftMap *yamlmeta.Map, newItem *yamlmeta.MapItem) error {

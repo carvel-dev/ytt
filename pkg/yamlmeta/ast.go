@@ -1,7 +1,7 @@
 package yamlmeta
 
 import (
-	"github.com/get-ytt/ytt/pkg/filepos"
+	"github.com/k14s/ytt/pkg/filepos"
 )
 
 type Node interface {

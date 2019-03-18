@@ -3,8 +3,8 @@ package yamlmeta
 import (
 	"fmt"
 
-	"github.com/get-ytt/ytt/pkg/filepos"
-	"github.com/get-ytt/ytt/pkg/yamlmeta/internal/yaml.v2"
+	"github.com/k14s/ytt/pkg/filepos"
+	"github.com/k14s/ytt/pkg/yamlmeta/internal/yaml.v2"
 )
 
 func (n *DocumentSet) GetPosition() *filepos.Position { return n.Position }

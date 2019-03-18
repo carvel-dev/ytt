@@ -3,9 +3,9 @@ package yttlibrary
 import (
 	"fmt"
 
-	"github.com/get-ytt/ytt/pkg/structmeta"
-	"github.com/get-ytt/ytt/pkg/yamlmeta"
-	"github.com/get-ytt/ytt/pkg/yamltemplate"
+	"github.com/k14s/ytt/pkg/structmeta"
+	"github.com/k14s/ytt/pkg/yamlmeta"
+	"github.com/k14s/ytt/pkg/yamltemplate"
 )
 
 const (

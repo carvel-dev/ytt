@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/get-ytt/ytt/pkg/structmeta"
+	"github.com/k14s/ytt/pkg/structmeta"
 )
 
 type InstructionSet struct {

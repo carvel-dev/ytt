@@ -6,7 +6,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/get-ytt/ytt/pkg/cmd"
+	"github.com/k14s/ytt/pkg/cmd"
 )
 
 func main() {

@@ -7,8 +7,8 @@ import (
 	"os"
 	"os/exec"
 
-	cmdtpl "github.com/get-ytt/ytt/pkg/cmd/template"
-	"github.com/get-ytt/ytt/pkg/playground"
+	cmdtpl "github.com/k14s/ytt/pkg/cmd/template"
+	"github.com/k14s/ytt/pkg/playground"
 	"github.com/spf13/cobra"
 )
 

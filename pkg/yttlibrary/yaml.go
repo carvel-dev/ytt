@@ -3,8 +3,8 @@ package yttlibrary
 import (
 	"fmt"
 
-	"github.com/get-ytt/ytt/pkg/template/core"
-	"github.com/get-ytt/ytt/pkg/yamlmeta"
+	"github.com/k14s/ytt/pkg/template/core"
+	"github.com/k14s/ytt/pkg/yamlmeta"
 	"go.starlark.net/starlark"
 	"go.starlark.net/starlarkstruct"
 )

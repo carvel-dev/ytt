@@ -3,8 +3,8 @@ package texttemplate
 import (
 	"fmt"
 
-	"github.com/get-ytt/ytt/pkg/filepos"
-	"github.com/get-ytt/ytt/pkg/template"
+	"github.com/k14s/ytt/pkg/filepos"
+	"github.com/k14s/ytt/pkg/template"
 )
 
 type NodeRoot struct {

@@ -9,10 +9,10 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/get-ytt/ytt/pkg/template"
-	"github.com/get-ytt/ytt/pkg/yamlmeta"
-	"github.com/get-ytt/ytt/pkg/yamltemplate"
-	"github.com/get-ytt/ytt/pkg/yttlibrary"
+	"github.com/k14s/ytt/pkg/template"
+	"github.com/k14s/ytt/pkg/yamlmeta"
+	"github.com/k14s/ytt/pkg/yamltemplate"
+	"github.com/k14s/ytt/pkg/yttlibrary"
 	"go.starlark.net/starlark"
 )
 
