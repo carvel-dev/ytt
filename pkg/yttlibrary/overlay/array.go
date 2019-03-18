@@ -51,6 +51,17 @@ func (o OverlayOp) removeArrayItem(
 		leftArray.Items[leftIdx] = nil
 	}
 
+	// Prune out all nil items
+	updatedItems := []*yamlmeta.ArrayItem{}
+
+	for _, item := range leftArray.Items {
+		if item != nil {
+			updatedItems = append(updatedItems, item)
+		}
+	}
+
+	leftArray.Items = updatedItems
+
 	return nil
 }
 

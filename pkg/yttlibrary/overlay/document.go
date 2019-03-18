@@ -47,6 +47,19 @@ func (o OverlayOp) removeDocument(
 		leftDocSets[leftIdx[0]].Items[leftIdx[1]] = nil
 	}
 
+	// Prune out all nil documents
+	for _, leftDocSet := range leftDocSets {
+		updatedDocs := []*yamlmeta.Document{}
+
+		for _, item := range leftDocSet.Items {
+			if item != nil {
+				updatedDocs = append(updatedDocs, item)
+			}
+		}
+
+		leftDocSet.Items = updatedDocs
+	}
+
 	return nil
 }
 
