@@ -76,7 +76,7 @@ overlay.apply(left(), one(), two())
 
 Annotations on the "right-side" nodes:
 
-- `@overlay/match [by=matcher,exists=Int|String|List|Function,missing_ok=Bool]`
+- `@overlay/match [by=matcher,expects=Int|String|List|Function,missing_ok=Bool]`
   - valid for both map and array items
   - specifies how to find node on the "left-side"
   - Defaults:
@@ -86,12 +86,12 @@ Annotations on the "right-side" nodes:
   - Examples:
     - `#@overlay/match by="name"`: expects to find 1 "left-side" node that has a key name with "right-side" node value (for that key)
     - `#@overlay/match by=overlay.map_key("name")`: (same as above)
-    - `#@overlay/match by=overlay.all,exists="0+"`: expects to find all "left-side" nodes
+    - `#@overlay/match by=overlay.all,expects="0+"`: expects to find all "left-side" nodes
     - `#@overlay/match missing_ok=True`: expects to find 0 or 1 matching "left-side" node
-    - `#@overlay/match exists=2`: expects to find 2 "left-side" nodes
-    - `#@overlay/match exists="2+"`: expects to find 2 or more "left-side" nodes
-    - `#@overlay/match exists=[0,1,4]`: expects to find 0, 1 or 4 "left-side" nodes
-    - `#@overlay/match exists=lambda x: return x < 10`: expects to less than 10 "left-side" nodes
+    - `#@overlay/match expects=2`: expects to find 2 "left-side" nodes
+    - `#@overlay/match expects="2+"`: expects to find 2 or more "left-side" nodes
+    - `#@overlay/match expects=[0,1,4]`: expects to find 0, 1 or 4 "left-side" nodes
+    - `#@overlay/match expects=lambda x: return x < 10`: expects to less than 10 "left-side" nodes
 - `@overlay/merge` (*default operation*)
   - valid for both map and array items
   - merges node content recursively
