@@ -2,6 +2,8 @@ package template
 
 import (
 	"fmt"
+	"regexp"
+	"strings"
 
 	cmdcore "github.com/k14s/ytt/pkg/cmd/core"
 	"github.com/k14s/ytt/pkg/files"
@@ -9,15 +11,15 @@ import (
 )
 
 type RegularFilesSourceOpts struct {
-	files               []string
-	filterTemplateFiles []string
-	recursive           bool
-	output              string
+	files     []string
+	fileMarks []string
+	recursive bool
+	output    string
 }
 
 func (s *RegularFilesSourceOpts) Set(cmd *cobra.Command) {
 	cmd.Flags().StringSliceVarP(&s.files, "file", "f", nil, "File (ie local path, HTTP URL, -) (can be specified multiple times)")
-	cmd.Flags().StringSliceVar(&s.filterTemplateFiles, "filter-template-file", nil, "Specify which file to template (can be specified multiple times)")
+	cmd.Flags().StringSliceVar(&s.fileMarks, "file-mark", nil, "File mark (ie change file path, mark as non-template) (format: file:key=value) (can be specified multiple times)")
 	cmd.Flags().BoolVarP(&s.recursive, "recursive", "R", false, "Interpret file as directory")
 	cmd.Flags().StringVarP(&s.output, "output", "o", "", "Directory for output")
 }
@@ -40,20 +42,9 @@ func (s *RegularFilesSource) Input() (TemplateInput, error) {
 		return TemplateInput{}, err
 	}
 
-	// Mark some files as non template files
-	if len(s.opts.filterTemplateFiles) > 0 {
-		for _, file := range filesToProcess {
-			var isTemplate bool
-			for _, filteredFile := range s.opts.filterTemplateFiles {
-				if filteredFile == file.RelativePath() {
-					isTemplate = true
-					break
-				}
-			}
-			if !isTemplate {
-				file.MarkNonTemplate()
-			}
-		}
+	err = s.applyFileMarks(filesToProcess)
+	if err != nil {
+		return TemplateInput{}, err
 	}
 
 	return TemplateInput{Files: filesToProcess}, nil
@@ -77,4 +68,114 @@ func (s *RegularFilesSource) Output(out TemplateOutput) error {
 	s.ui.Printf("%s", combinedDocBytes) // no newline
 
 	return nil
+}
+
+func (s *RegularFilesSource) applyFileMarks(filesToProcess []*files.File) error {
+	var exclusiveForOutputFiles []*files.File
+
+	for _, mark := range s.opts.fileMarks {
+		pieces := strings.SplitN(mark, ":", 2)
+		if len(pieces) != 2 {
+			return fmt.Errorf("Expected file mark '%s' to be in format path:key=value", mark)
+		}
+
+		path := pieces[0]
+
+		kv := strings.SplitN(pieces[1], "=", 2)
+		if len(kv) != 2 {
+			return fmt.Errorf("Expected file mark '%s' key-value portion to be in format key=value", mark)
+		}
+
+		var matched bool
+
+		for i, file := range filesToProcess {
+			if s.fileMarkMatches(file, path) {
+				matched = true
+
+				switch kv[0] {
+				case "path":
+					file.MarkRelativePath(kv[1])
+
+				case "exclude":
+					switch kv[1] {
+					case "true":
+						filesToProcess = append(filesToProcess[:i], filesToProcess[i+1:]...)
+					default:
+						return fmt.Errorf("Unknown value in file mark '%s'", mark)
+					}
+
+				case "type":
+					switch kv[1] {
+					case "yaml-template": // yaml template processing
+						file.MarkType(files.TypeYAML)
+						file.MarkTemplate(true)
+					case "yaml-plain": // no template processing
+						file.MarkType(files.TypeYAML)
+						file.MarkTemplate(false)
+					case "text-template":
+						file.MarkType(files.TypeText)
+						file.MarkTemplate(true)
+					case "text-plain":
+						file.MarkType(files.TypeText)
+						file.MarkTemplate(false)
+					case "starlark":
+						file.MarkType(files.TypeStarlark)
+						file.MarkTemplate(false)
+					case "data":
+						file.MarkType(files.TypeUnknown)
+						file.MarkTemplate(false)
+					default:
+						return fmt.Errorf("Unknown value in file mark '%s'", mark)
+					}
+
+				case "for-output":
+					switch kv[1] {
+					case "true":
+						file.MarkForOutput(true)
+					default:
+						return fmt.Errorf("Unknown value in file mark '%s'", mark)
+					}
+
+				case "exclusive-for-output":
+					switch kv[1] {
+					case "true":
+						exclusiveForOutputFiles = append(exclusiveForOutputFiles, file)
+					default:
+						return fmt.Errorf("Unknown value in file mark '%s'", mark)
+					}
+
+				default:
+					return fmt.Errorf("Unknown key in file mark '%s'", mark)
+				}
+			}
+		}
+
+		if !matched {
+			return fmt.Errorf("Expected file mark '%s' to match at least one file by path, but did not", mark)
+		}
+	}
+
+	// If there is at least filtered output file, mark all others as non-templates
+	if len(exclusiveForOutputFiles) > 0 {
+		for _, file := range filesToProcess {
+			file.MarkForOutput(false)
+		}
+		for _, file := range exclusiveForOutputFiles {
+			file.MarkForOutput(true)
+		}
+	}
+
+	return nil
+}
+
+var (
+	quotedMultiLevel  = regexp.QuoteMeta("**/*")
+	quotedSingleLevel = regexp.QuoteMeta("*")
+)
+
+func (s *RegularFilesSource) fileMarkMatches(file *files.File, path string) bool {
+	path = regexp.QuoteMeta(path)
+	path = strings.Replace(path, quotedMultiLevel, ".+", 1)
+	path = strings.Replace(path, quotedSingleLevel, "[^/]+", 1)
+	return regexp.MustCompile("^" + path + "$").MatchString(file.OriginalRelativePath())
 }

@@ -8,14 +8,23 @@ import (
 	"github.com/k14s/ytt/pkg/yamlmeta/internal/yaml.v2"
 )
 
-// associatedName is typicall a file name where data came from
-func NewDocumentSetFromBytes(data []byte, associatedName string) (*DocumentSet, error) {
-	docSet, err := NewParser().ParseBytes(data, associatedName)
+type DocSetOpts struct {
+	WithoutMeta bool
+	// associatedName is typically a file name where data came from
+	AssociatedName string
+}
+
+func NewDocumentSetFromBytesWithOpts(data []byte, opts DocSetOpts) (*DocumentSet, error) {
+	docSet, err := NewParser(opts.WithoutMeta).ParseBytes(data, opts.AssociatedName)
 	if err != nil {
 		return nil, err
 	}
 	docSet.originalBytes = &data
 	return docSet, nil
+}
+
+func NewDocumentSetFromBytes(data []byte, associatedName string) (*DocumentSet, error) {
+	return NewDocumentSetFromBytesWithOpts(data, DocSetOpts{AssociatedName: associatedName})
 }
 
 func (d *DocumentSet) Print(writer io.Writer) {

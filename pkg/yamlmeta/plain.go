@@ -12,7 +12,7 @@ func PlainMarshal(val interface{}) ([]byte, error) {
 }
 
 func PlainUnmarshal(data []byte, val interface{}) error {
-	docSet, err := NewParser().ParseBytes(data, "")
+	docSet, err := NewParser(true).ParseBytes(data, "")
 	if err != nil {
 		return err
 	}

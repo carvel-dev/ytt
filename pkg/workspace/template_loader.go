@@ -132,9 +132,13 @@ func (l *TemplateLoader) EvalYAML(library *Library, file *files.File) (starlark.
 		return nil, nil, err
 	}
 
-	l.ui.Debugf("## file %s\n", file.RelativePath())
+	docSetOpts := yamlmeta.DocSetOpts{
+		AssociatedName: file.RelativePath(),
+		WithoutMeta:    !file.IsTemplate() && !file.IsLibrary(),
+	}
+	l.ui.Debugf("## file %s (opts %#v)\n", file.RelativePath(), docSetOpts)
 
-	docSet, err := yamlmeta.NewDocumentSetFromBytes(fileBs, file.RelativePath())
+	docSet, err := yamlmeta.NewDocumentSetFromBytesWithOpts(fileBs, docSetOpts)
 	if err != nil {
 		return nil, nil, fmt.Errorf("Unmarshaling YAML template: %s", err)
 	}
@@ -168,6 +172,10 @@ func (l *TemplateLoader) EvalText(library *Library, file *files.File) (starlark.
 	}
 
 	l.ui.Debugf("## file %s\n", file.RelativePath())
+
+	if !file.IsTemplate() && !file.IsLibrary() {
+		return nil, string(fileBs), nil
+	}
 
 	textRoot, err := texttemplate.NewParser().Parse(fileBs, file.RelativePath())
 	if err != nil {

@@ -85,14 +85,14 @@ func (o *TemplateOptions) RunWithFiles(in TemplateInput, ui cmdcore.PlainUI) Tem
 	rootLibrary := workspace.NewRootLibrary(in.Files)
 	rootLibrary.Print(ui.DebugWriter())
 
-	templateFiles, values, err := o.categorizeFiles(rootLibrary.ListAccessibleFiles())
+	forOutputFiles, values, err := o.categorizeFiles(rootLibrary.ListAccessibleFiles())
 	if err != nil {
 		return TemplateOutput{Err: err}
 	}
 
 	loader := workspace.NewTemplateLoader(values, ui)
 
-	for _, file := range templateFiles {
+	for _, file := range forOutputFiles {
 		// TODO find more generic way
 		switch file.Type() {
 		case files.TypeYAML:
@@ -143,21 +143,20 @@ func (o *TemplateOptions) RunWithFiles(in TemplateInput, ui cmdcore.PlainUI) Tem
 }
 
 func (o *TemplateOptions) categorizeFiles(allFiles []*files.File) ([]*files.File, interface{}, error) {
-	templateFiles := []*files.File{}
-
-	for _, file := range allFiles {
-		switch {
-		case file.IsTemplate():
-			templateFiles = append(templateFiles, file)
-		}
-	}
-
-	templateFiles, values, err := o.extractValues(templateFiles)
+	allFiles, values, err := o.extractValues(allFiles)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	return templateFiles, values, nil
+	forOutputFiles := []*files.File{}
+
+	for _, file := range allFiles {
+		if file.IsForOutput() {
+			forOutputFiles = append(forOutputFiles, file)
+		}
+	}
+
+	return forOutputFiles, values, nil
 }
 
 func (o *TemplateOptions) extractValues(fs []*files.File) ([]*files.File, interface{}, error) {
@@ -166,8 +165,7 @@ func (o *TemplateOptions) extractValues(fs []*files.File) ([]*files.File, interf
 	var newFs []*files.File
 
 	for _, file := range fs {
-		switch file.Type() {
-		case files.TypeYAML:
+		if file.Type() == files.TypeYAML && file.IsTemplate() {
 			fileBs, err := file.Bytes()
 			if err != nil {
 				return nil, nil, err
@@ -192,13 +190,11 @@ func (o *TemplateOptions) extractValues(fs []*files.File) ([]*files.File, interf
 				}
 				valuesFile = file
 				foundValues = values
-			} else {
-				newFs = append(newFs, file)
+				continue
 			}
-
-		default:
-			newFs = append(newFs, file)
 		}
+
+		newFs = append(newFs, file)
 	}
 
 	return newFs, foundValues, nil

@@ -20,14 +20,18 @@ type Type int
 const (
 	TypeUnknown Type = iota
 	TypeYAML
-	TypeStarlark
 	TypeText
+	TypeStarlark
 )
 
 type File struct {
-	src         Source
-	relPath     string
-	nonTemplate bool
+	src     Source
+	relPath string
+
+	markedRelPath   *string
+	markedType      *Type
+	markedTemplate  *bool
+	markedForOutput *bool
 }
 
 func NewFiles(paths []string, recursive bool) ([]*File, error) {
@@ -110,11 +114,28 @@ func MustNewFileFromSource(fileSrc Source) *File {
 	return file
 }
 
-func (r *File) Description() string    { return r.src.Description() }
-func (r *File) RelativePath() string   { return r.relPath }
+func (r *File) Description() string { return r.src.Description() }
+
+func (r *File) OriginalRelativePath() string { return r.relPath }
+
+func (r *File) MarkRelativePath(relPath string) { r.markedRelPath = &relPath }
+
+func (r *File) RelativePath() string {
+	if r.markedRelPath != nil {
+		return *r.markedRelPath
+	}
+	return r.relPath
+}
+
 func (r *File) Bytes() ([]byte, error) { return r.src.Bytes() }
 
+func (r *File) MarkType(t Type) { r.markedType = &t }
+
 func (r *File) Type() Type {
+	if r.markedType != nil {
+		return *r.markedType
+	}
+
 	switch {
 	case r.matchesExt(yamlExts):
 		return TypeYAML
@@ -127,10 +148,33 @@ func (r *File) Type() Type {
 	}
 }
 
-func (r *File) MarkNonTemplate() { r.nonTemplate = true }
+func (r *File) MarkForOutput(forOutput bool) { r.markedForOutput = &forOutput }
+
+func (r *File) IsForOutput() bool {
+	if r.markedForOutput != nil {
+		return *r.markedForOutput
+	}
+	if r.markedTemplate != nil {
+		// it may still be for output, even though it's not a template
+		if *r.markedTemplate {
+			return true
+		}
+	}
+	return r.isTemplate()
+}
+
+func (r *File) MarkTemplate(template bool) { r.markedTemplate = &template }
 
 func (r *File) IsTemplate() bool {
-	return !r.nonTemplate && !r.IsLibrary() && (r.matchesExt(yamlExts) || r.matchesExt(textExts))
+	if r.markedTemplate != nil {
+		return *r.markedTemplate
+	}
+	return r.isTemplate()
+}
+
+func (r *File) isTemplate() bool {
+	t := r.Type()
+	return !r.IsLibrary() && (t == TypeYAML || t == TypeText)
 }
 
 func (r *File) IsLibrary() bool {

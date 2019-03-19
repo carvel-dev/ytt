@@ -22,11 +22,12 @@ var (
 )
 
 type Parser struct {
+	withoutMeta    bool
 	associatedName string
 }
 
-func NewParser() *Parser {
-	return &Parser{}
+func NewParser(withoutMeta bool) *Parser {
+	return &Parser{withoutMeta, ""}
 }
 
 func (p *Parser) ParseBytes(data []byte, associatedName string) (*DocumentSet, error) {
@@ -146,6 +147,10 @@ func (p *Parser) parse(val interface{}, lineCorrection int) interface{} {
 }
 
 func (p *Parser) assignMetas(val interface{}, comments []yaml.Comment, lineCorrection int) ([]*Meta, []*Meta) {
+	if p.withoutMeta {
+		return nil, nil
+	}
+
 	nodesAtLines := map[int][]Node{}
 	p.buildLineLocs(val, nodesAtLines)
 

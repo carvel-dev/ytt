@@ -20,8 +20,9 @@ mkdir -p tmp
 		-f . \
 		-f ../../examples/playground \
 		-f ../../hack/build-values.yml \
-		--filter-template-file generated.go.txt \
-		--filter-template-file build-values.yml \
+		--file-mark 'alt-example**/*:type=data' \
+		--file-mark 'example**/*:type=data' \
+		--file-mark 'generated.go.txt:exclusive-for-output=true' \
 		--output ../../tmp/
 )
 mv tmp/generated.go.txt pkg/playground/generated.go
