@@ -211,3 +211,73 @@ func TestDisallowDirectLibraryLoading(t *testing.T) {
 		t.Fatalf("Expected err, but was: >>>%s<<<", out.Err.Error())
 	}
 }
+
+func TestRelativeLoadInLibraries(t *testing.T) {
+	yamlTplData := []byte(`
+#@ load("@library1:funcs.lib.yml", "yamlfunc")
+#@ load("@library1:sub-dir/funcs.lib.txt", "textfunc")
+#@ load("@library2:funcs.star", "starfunc")
+#@ load("funcs.star", "localstarfunc")
+yamlfunc: #@ yamlfunc()
+textfunc: #@ textfunc()
+starfunc: #@ starfunc()
+localstarfunc: #@ localstarfunc()`)
+
+	expectedYAMLTplData := `yamlfunc:
+  yamlfunc: textfunc
+textfunc: textfunc
+starfunc:
+- 1
+- 2
+localstarfunc:
+- 3
+- 4
+`
+
+	yamlFuncsData := []byte(`
+#@ load("sub-dir/funcs.lib.txt", "textfunc")
+#@ def/end yamlfunc():
+yamlfunc: #@ textfunc()`)
+
+	starlarkFuncsData := []byte(`
+def starfunc():
+  return [1,2]
+end`)
+
+	localStarlarkFuncsData := []byte(`
+def localstarfunc():
+  return [3,4]
+end`)
+
+	txtFuncsData := []byte(`(@ def textfunc(): @)textfunc(@ end @)`)
+
+	filesToProcess := []*files.File{
+		files.MustNewFileFromSource(files.NewBytesSource("tpl.yml", yamlTplData)),
+		files.MustNewFileFromSource(files.NewBytesSource("funcs.star", localStarlarkFuncsData)),
+		files.MustNewFileFromSource(files.NewBytesSource("_ytt_lib/library1/funcs.lib.yml", yamlFuncsData)),
+		files.MustNewFileFromSource(files.NewBytesSource("_ytt_lib/library1/sub-dir/funcs.lib.txt", txtFuncsData)),
+		files.MustNewFileFromSource(files.NewBytesSource("_ytt_lib/library2/funcs.star", starlarkFuncsData)),
+	}
+
+	ui := cmdcore.NewPlainUI(false)
+	opts := cmdtpl.NewOptions()
+
+	out := opts.RunWithFiles(cmdtpl.TemplateInput{Files: filesToProcess}, ui)
+	if out.Err != nil {
+		t.Fatalf("Expected RunWithFiles to succeed, but was error: %s", out.Err)
+	}
+
+	if len(out.Files) != 1 {
+		t.Fatalf("Expected number of output files to be 1, but was %#v", out.Files)
+	}
+
+	file := out.Files[0]
+
+	if file.RelativePath() != "tpl.yml" {
+		t.Fatalf("Expected output file to be tpl.yml, but was %#v", file.RelativePath())
+	}
+
+	if string(file.Bytes()) != expectedYAMLTplData {
+		t.Fatalf("Expected output file to have specific data, but was: >>>%s<<<", file.Bytes())
+	}
+}
