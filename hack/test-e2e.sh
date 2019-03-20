@@ -29,5 +29,6 @@ done
 
 ./ytt template -R -f examples/overlay > /dev/null
 ./ytt template -R -f examples/overlay-files > /dev/null
+./ytt template -R -f examples/overlay-regular-files --file-mark file.yml:type=yaml-plain > /dev/null
 
 echo E2E SUCCESS
