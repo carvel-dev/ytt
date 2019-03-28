@@ -36,6 +36,7 @@ test2: #@ overlay.apply(test2_left(), test2_right())
 
 +++
 
+---
 test1:
   key1:
     key1: val1

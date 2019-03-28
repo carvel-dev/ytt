@@ -15,6 +15,7 @@ test3: #@ overlay.subset({"key1": True})(0, frag2(), {})
 
 +++
 
+---
 test1: true
 test2: false
 test3: false

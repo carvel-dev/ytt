@@ -21,6 +21,7 @@ test2a: present
 
 +++
 
+---
 b: 123
 ---
 test1b: present

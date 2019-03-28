@@ -44,6 +44,7 @@ test2: #@ overlay.apply(test2_left(), test2_right())
 
 +++
 
+---
 test1: {}
 ---
 test2: []

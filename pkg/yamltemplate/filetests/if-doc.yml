@@ -38,6 +38,7 @@ test3a: present
 
 +++
 
+---
 b: 123
 ---
 middle: true

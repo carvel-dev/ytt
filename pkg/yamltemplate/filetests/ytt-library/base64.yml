@@ -9,6 +9,7 @@ test4: #@ base64.decode("cmVndWxh")
 
 +++
 
+---
 test1: cmVndWxhcg==
 test2: cmVndWxh
 test3: regular
