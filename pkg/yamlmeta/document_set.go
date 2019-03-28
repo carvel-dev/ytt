@@ -52,6 +52,7 @@ func (d *DocumentSet) AsBytes() ([]byte, error) {
 		if writtenOnce {
 			buf.Write([]byte("---\n")) // TODO use encoder?
 		} else {
+			buf.Write([]byte("---\n"))
 			writtenOnce = true
 		}
 
