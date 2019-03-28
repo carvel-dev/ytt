@@ -20,7 +20,8 @@ starfunc: #@ starfunc()
 listdata: #@ data.list()
 loaddata: #@ data.read("funcs/funcs.star")`)
 
-	expectedYAMLTplData := `yamlfunc:
+	expectedYAMLTplData := `---
+yamlfunc:
   yamlfunc: yamlfunc
 textfunc: textfunc
 starfunc:
@@ -100,7 +101,8 @@ array:
   - #@ yamlfunc()
 `)
 
-	expectedYAMLTplData := `array:
+	expectedYAMLTplData := `---
+array:
 - name: item1
   subarray:
   - item1
@@ -223,7 +225,8 @@ textfunc: #@ textfunc()
 starfunc: #@ starfunc()
 localstarfunc: #@ localstarfunc()`)
 
-	expectedYAMLTplData := `yamlfunc:
+	expectedYAMLTplData := `---
+yamlfunc:
   yamlfunc: textfunc
 textfunc: textfunc
 starfunc:
