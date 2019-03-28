@@ -65,7 +65,7 @@ end`)
 	}
 
 	if len(out.Files) != 1 {
-		t.Fatalf("Expected number of output files to be 1, but was %#v", out.Files)
+		t.Fatalf("Expected number of output files to be 1, but was %d", len(out.Files))
 	}
 
 	file := out.Files[0]
@@ -127,7 +127,7 @@ yamlfunc: yamlfunc`)
 	}
 
 	if len(out.Files) != 1 {
-		t.Fatalf("Expected number of output files to be 1, but was %#v", out.Files)
+		t.Fatalf("Expected number of output files to be 1, but was %d", len(out.Files))
 	}
 
 	file := out.Files[0]
@@ -240,7 +240,13 @@ localstarfunc:
 yamlfunc: #@ textfunc()`)
 
 	starlarkFuncsData := []byte(`
+load("@funcs:funcs.star", "libstarfunc")
 def starfunc():
+  return libstarfunc()
+end`)
+
+	starlarkFuncsLibData := []byte(`
+def libstarfunc():
   return [1,2]
 end`)
 
@@ -257,6 +263,7 @@ end`)
 		files.MustNewFileFromSource(files.NewBytesSource("_ytt_lib/library1/funcs.lib.yml", yamlFuncsData)),
 		files.MustNewFileFromSource(files.NewBytesSource("_ytt_lib/library1/sub-dir/funcs.lib.txt", txtFuncsData)),
 		files.MustNewFileFromSource(files.NewBytesSource("_ytt_lib/library2/funcs.star", starlarkFuncsData)),
+		files.MustNewFileFromSource(files.NewBytesSource("_ytt_lib/library2/_ytt_lib/funcs/funcs.star", starlarkFuncsLibData)),
 	}
 
 	ui := cmdcore.NewPlainUI(false)
@@ -268,13 +275,56 @@ end`)
 	}
 
 	if len(out.Files) != 1 {
-		t.Fatalf("Expected number of output files to be 1, but was %#v", out.Files)
+		t.Fatalf("Expected number of output files to be 1, but was %d", len(out.Files))
 	}
 
 	file := out.Files[0]
 
 	if file.RelativePath() != "tpl.yml" {
 		t.Fatalf("Expected output file to be tpl.yml, but was %#v", file.RelativePath())
+	}
+
+	if string(file.Bytes()) != expectedYAMLTplData {
+		t.Fatalf("Expected output file to have specific data, but was: >>>%s<<<", file.Bytes())
+	}
+}
+
+func TestRelativeLoadInLibrariesForNonRootTemplates(t *testing.T) {
+	expectedYAMLTplData := `libstarfunc:
+- 1
+- 2
+`
+
+	nonTopLevelYmlTplData := []byte(`
+#@ load("@funcs:funcs.star", "libstarfunc")
+libstarfunc: #@ libstarfunc()`)
+
+	nonTopLevelStarlarkFuncsLibData := []byte(`
+def libstarfunc():
+  return [1,2]
+end`)
+
+	filesToProcess := []*files.File{
+		files.MustNewFileFromSource(files.NewBytesSource("non-top-level/tpl.yml", nonTopLevelYmlTplData)),
+		files.MustNewFileFromSource(files.NewBytesSource("non-top-level/_ytt_lib/funcs/funcs.star", nonTopLevelStarlarkFuncsLibData)),
+	}
+
+	ui := cmdcore.NewPlainUI(false)
+	opts := cmdtpl.NewOptions()
+
+	out := opts.RunWithFiles(cmdtpl.TemplateInput{Files: filesToProcess}, ui)
+	if out.Err != nil {
+		t.Fatalf("Expected RunWithFiles to succeed, but was error: %s", out.Err)
+	}
+
+	if len(out.Files) != 1 {
+		t.Fatalf("Expected number of output files to be 1, but was %d", len(out.Files))
+	}
+
+	file := out.Files[0]
+
+	if file.RelativePath() != "non-top-level/tpl.yml" {
+		t.Fatalf("Expected output file to be non-top-level/tpl.yml, but was %#v", file.RelativePath())
 	}
 
 	if string(file.Bytes()) != expectedYAMLTplData {

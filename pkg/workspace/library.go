@@ -119,9 +119,16 @@ func (l *Library) FindFile(path string) (*files.File, error) {
 	return nil, fmt.Errorf("Expected to find file %s", path)
 }
 
-func (l *Library) ListAccessibleFiles() []*files.File {
-	var result []*files.File
-	result = append(result, l.files...)
+type FileInLibrary struct {
+	File    *files.File
+	Library *Library
+}
+
+func (l *Library) ListAccessibleFiles() []FileInLibrary {
+	var result []FileInLibrary
+	for _, file := range l.files {
+		result = append(result, FileInLibrary{File: file, Library: l})
+	}
 	for _, lib := range l.children {
 		if !lib.private {
 			result = append(result, lib.ListAccessibleFiles()...)

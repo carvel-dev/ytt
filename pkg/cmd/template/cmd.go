@@ -92,28 +92,28 @@ func (o *TemplateOptions) RunWithFiles(in TemplateInput, ui cmdcore.PlainUI) Tem
 
 	loader := workspace.NewTemplateLoader(values, ui)
 
-	for _, file := range forOutputFiles {
+	for _, fileInLib := range forOutputFiles {
 		// TODO find more generic way
-		switch file.Type() {
+		switch fileInLib.File.Type() {
 		case files.TypeYAML:
-			_, resultVal, err := loader.EvalYAML(rootLibrary, file)
+			_, resultVal, err := loader.EvalYAML(fileInLib.Library, fileInLib.File)
 			if err != nil {
 				return TemplateOutput{Err: err}
 			}
 
 			resultDocSet := resultVal.(*yamlmeta.DocumentSet)
-			outputDocSets[file.RelativePath()] = resultDocSet
+			outputDocSets[fileInLib.File.RelativePath()] = resultDocSet
 
 		case files.TypeText:
-			_, resultVal, err := loader.EvalText(rootLibrary, file)
+			_, resultVal, err := loader.EvalText(fileInLib.Library, fileInLib.File)
 			if err != nil {
 				return TemplateOutput{Err: err}
 			}
 
 			resultStr := resultVal.(*texttemplate.NodeRoot).AsString()
 
-			ui.Debugf("### %s result\n%s", file.RelativePath(), resultStr)
-			outputFiles = append(outputFiles, files.NewOutputFile(file.RelativePath(), []byte(resultStr)))
+			ui.Debugf("### %s result\n%s", fileInLib.File.RelativePath(), resultStr)
+			outputFiles = append(outputFiles, files.NewOutputFile(fileInLib.File.RelativePath(), []byte(resultStr)))
 
 		default:
 			return TemplateOutput{Err: fmt.Errorf("Unknown file type")}
@@ -142,36 +142,36 @@ func (o *TemplateOptions) RunWithFiles(in TemplateInput, ui cmdcore.PlainUI) Tem
 	return TemplateOutput{Files: outputFiles, DocSet: combinedDocSet}
 }
 
-func (o *TemplateOptions) categorizeFiles(allFiles []*files.File) ([]*files.File, interface{}, error) {
+func (o *TemplateOptions) categorizeFiles(allFiles []workspace.FileInLibrary) ([]workspace.FileInLibrary, interface{}, error) {
 	allFiles, values, err := o.extractValues(allFiles)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	forOutputFiles := []*files.File{}
+	forOutputFiles := []workspace.FileInLibrary{}
 
-	for _, file := range allFiles {
-		if file.IsForOutput() {
-			forOutputFiles = append(forOutputFiles, file)
+	for _, fileInLib := range allFiles {
+		if fileInLib.File.IsForOutput() {
+			forOutputFiles = append(forOutputFiles, fileInLib)
 		}
 	}
 
 	return forOutputFiles, values, nil
 }
 
-func (o *TemplateOptions) extractValues(fs []*files.File) ([]*files.File, interface{}, error) {
+func (o *TemplateOptions) extractValues(fs []workspace.FileInLibrary) ([]workspace.FileInLibrary, interface{}, error) {
 	var foundValues interface{}
 	var valuesFile *files.File
-	var newFs []*files.File
+	var newFs []workspace.FileInLibrary
 
-	for _, file := range fs {
-		if file.Type() == files.TypeYAML && file.IsTemplate() {
-			fileBs, err := file.Bytes()
+	for _, fileInLib := range fs {
+		if fileInLib.File.Type() == files.TypeYAML && fileInLib.File.IsTemplate() {
+			fileBs, err := fileInLib.File.Bytes()
 			if err != nil {
 				return nil, nil, err
 			}
 
-			docSet, err := yamlmeta.NewDocumentSetFromBytes(fileBs, file.RelativePath())
+			docSet, err := yamlmeta.NewDocumentSetFromBytes(fileBs, fileInLib.File.RelativePath())
 			if err != nil {
 				return nil, nil, fmt.Errorf("Unmarshaling YAML template: %s", err)
 			}
@@ -186,15 +186,15 @@ func (o *TemplateOptions) extractValues(fs []*files.File) ([]*files.File, interf
 					// TODO until overlays are here
 					return nil, nil, fmt.Errorf(
 						"Template values could only be specified once, but found multiple (%s, %s)",
-						valuesFile.RelativePath(), file.RelativePath())
+						valuesFile.RelativePath(), fileInLib.File.RelativePath())
 				}
-				valuesFile = file
+				valuesFile = fileInLib.File
 				foundValues = values
 				continue
 			}
 		}
 
-		newFs = append(newFs, file)
+		newFs = append(newFs, fileInLib)
 	}
 
 	return newFs, foundValues, nil

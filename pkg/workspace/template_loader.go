@@ -95,8 +95,8 @@ func (l *TemplateLoader) ListData(thread *starlark.Thread, f *starlark.Builtin,
 	}
 
 	result := []starlark.Value{}
-	for _, file := range l.getLibrary(thread).ListAccessibleFiles() {
-		result = append(result, starlark.String(file.RelativePath()))
+	for _, fileInLib := range l.getLibrary(thread).ListAccessibleFiles() {
+		result = append(result, starlark.String(fileInLib.File.RelativePath()))
 	}
 	return starlark.NewList(result), nil
 }
