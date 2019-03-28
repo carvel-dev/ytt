@@ -42,19 +42,13 @@ func (d *DocumentSet) AsSourceBytes() ([]byte, bool) {
 
 func (d *DocumentSet) AsBytes() ([]byte, error) {
 	buf := new(bytes.Buffer)
-	var writtenOnce bool
 
 	for i, item := range d.Items {
 		if item.injected || item.IsEmpty() {
 			continue
 		}
 
-		if writtenOnce {
-			buf.Write([]byte("---\n")) // TODO use encoder?
-		} else {
-			buf.Write([]byte("---\n"))
-			writtenOnce = true
-		}
+		buf.Write([]byte("---\n"))
 
 		bs, err := yaml.Marshal(item.AsInterface(InterfaceConvertOpts{OrderedMap: true}))
 		if err != nil {
