@@ -199,7 +199,10 @@ func (r *File) matchesExt(exts []string) bool {
 }
 
 func NewRegularFileLocalSource(path, dir string, fi os.FileInfo) (LocalSource, error) {
-	if (fi.Mode() & os.ModeType) != 0 {
+	// support pipes (`ytt template -f <(echo "---")`)
+	namedPipe := (fi.Mode() & os.ModeNamedPipe) != 0
+
+	if !namedPipe && (fi.Mode()&os.ModeType) != 0 {
 		return LocalSource{}, fmt.Errorf("Expected file '%s' to be a regular file, but was not", path)
 	}
 	return NewLocalSource(path, dir), nil
