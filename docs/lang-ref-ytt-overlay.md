@@ -68,7 +68,7 @@ overlay.apply(left(), one(), two())
 - item10
 ```
 
-- `all` matcher matches all array items
+- `all` matcher matches all documents or array items
 ```yaml
 #@overlay/match by=overlay.all
 - item10
@@ -115,3 +115,54 @@ Annotations on the "right-side" nodes:
 - `@overlay/append`
   - valid only for array items
   - appends array item to the end of "left-side" array
+
+#### Overlays as files
+
+ytt CLI treats YAML documents with `overlay/match` annotation as overlays. Such overlays could be specified in any file and are matched against all resulting YAML documents from all other files in the post-templating stage.
+
+In the example below, last YAML document is considered to be an overlay because it has `overlay/match` annotation. It will match *only* first YAML document, which has `example-ingress` as its `metadata.name`.
+
+```yaml
+#@ load("@ytt:overlay", "overlay")
+#@ some_path = "/"
+
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: example-ingress
+  annotations:
+    ingress.kubernetes.io/rewrite-target: #@ some_path
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: another-example-ingress
+  annotations:
+    ingress.kubernetes.io/rewrite-target: #@ some_path
+
+#@overlay/match by=overlay.subset({"metadata":{"name":"example-ingress"}})
+---
+metadata:
+  annotations:
+    #@overlay/remove
+    ingress.kubernetes.io/rewrite-target:
+```
+
+Result:
+
+```yaml
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: example-ingress
+  annotations: {}
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: another-example-ingress
+  annotations:
+    ingress.kubernetes.io/rewrite-target: /
+```
+
+See [Overlay files example](https://get-ytt.io/#example:example-overlay-files) in online playground.
