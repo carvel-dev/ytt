@@ -74,6 +74,14 @@ overlay.apply(left(), one(), two())
 - item10
 ```
 
+- `subset` matcher matches document or array item that has content that matches given map
+```yaml
+#@overlay/match by=overlay.subset({"metadata":{"name":"example-ingress1"}})
+---
+spec:
+  enabled: true
+```
+
 Annotations on the "right-side" nodes:
 
 - `@overlay/match [by=matcher,expects=Int|String|List|Function,missing_ok=Bool]`
