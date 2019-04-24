@@ -141,7 +141,8 @@ func (b overlayModule) compareByMapKey(keyName string, oldVal, newVal interface{
 		return false, err
 	}
 
-	return reflect.DeepEqual(oldKeyVal, newKeyVal), nil
+	result, _ := b.compareLeafs(oldKeyVal, newKeyVal)
+	return result, nil
 }
 
 func (b overlayModule) pullOutMapValue(keyName string, newVal interface{}) (interface{}, error) {
