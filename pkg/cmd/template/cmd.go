@@ -2,6 +2,7 @@ package template
 
 import (
 	"fmt"
+	"sort"
 	"time"
 
 	cmdcore "github.com/k14s/ytt/pkg/cmd/core"
@@ -127,7 +128,8 @@ func (o *TemplateOptions) RunWithFiles(in TemplateInput, ui cmdcore.PlainUI) Tem
 
 	combinedDocSet := &yamlmeta.DocumentSet{}
 
-	for relPath, docSet := range outputDocSets {
+	for _, relPath := range o.sortedOutputDocSetPaths(outputDocSets) {
+		docSet := outputDocSets[relPath]
 		combinedDocSet.Items = append(combinedDocSet.Items, docSet.Items...)
 
 		resultDocBytes, err := docSet.AsBytes()
@@ -207,4 +209,13 @@ func (o *TemplateOptions) pickSource(srcs []FileSource, pickFunc func(FileSource
 		}
 	}
 	return srcs[len(srcs)-1]
+}
+
+func (o *TemplateOptions) sortedOutputDocSetPaths(outputDocSets map[string]*yamlmeta.DocumentSet) []string {
+	var paths []string
+	for relPath, _ := range outputDocSets {
+		paths = append(paths, relPath)
+	}
+	sort.Strings(paths)
+	return paths
 }
