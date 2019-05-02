@@ -29,7 +29,7 @@ array:
 - #@ value
 ```
 
-- `@data/values` (no args) specifies values accessible via `data.values` from `@ytt:data` package
+- `@data/values` (no args) specifies values accessible via `data.values` from `@ytt:data` package (see [ytt @data/values](ytt-data-values.md) for more details.)
 
 #### Text templating annotations
 

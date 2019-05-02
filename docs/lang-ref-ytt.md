@@ -37,7 +37,7 @@ calc.add(3) # 126
 assert.fail("expected value foo, but was {}".format(value)) # stops execution
 ```
 
-- `load("@ytt:data", "data")`
+- `load("@ytt:data", "data")` (see [ytt @data/values](ytt-data-values.md) for more details)
 ```python
 data.values                # struct that has input values
 data.list()                # ["template.yml", "data/data.txt"]
