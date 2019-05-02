@@ -11,13 +11,16 @@ import (
 	"github.com/k14s/ytt/pkg/workspace"
 	"github.com/k14s/ytt/pkg/yamlmeta"
 	"github.com/k14s/ytt/pkg/yttlibrary"
+	yttoverlay "github.com/k14s/ytt/pkg/yttlibrary/overlay"
 	"github.com/spf13/cobra"
+	"go.starlark.net/starlark"
 )
 
 type TemplateOptions struct {
 	Debug                  bool
 	BulkFilesSourceOpts    BulkFilesSourceOpts
 	RegularFilesSourceOpts RegularFilesSourceOpts
+	DataValuesFlags        DataValuesFlags
 }
 
 type TemplateInput struct {
@@ -53,6 +56,7 @@ func NewCmd(o *TemplateOptions) *cobra.Command {
 	cmd.Flags().BoolVar(&o.Debug, "debug", false, "Enable debug output")
 	o.BulkFilesSourceOpts.Set(cmd)
 	o.RegularFilesSourceOpts.Set(cmd)
+	o.DataValuesFlags.Set(cmd)
 	return cmd
 }
 
@@ -87,6 +91,11 @@ func (o *TemplateOptions) RunWithFiles(in TemplateInput, ui cmdcore.PlainUI) Tem
 	rootLibrary.Print(ui.DebugWriter())
 
 	forOutputFiles, values, err := o.categorizeFiles(rootLibrary.ListAccessibleFiles())
+	if err != nil {
+		return TemplateOutput{Err: err}
+	}
+
+	values, err = o.overlayFlagValues(values)
 	if err != nil {
 		return TemplateOutput{Err: err}
 	}
@@ -218,4 +227,28 @@ func (o *TemplateOptions) sortedOutputDocSetPaths(outputDocSets map[string]*yaml
 	}
 	sort.Strings(paths)
 	return paths
+}
+
+func (o *TemplateOptions) overlayFlagValues(fileValues interface{}) (interface{}, error) {
+	if fileValues == nil {
+		fileValues = map[interface{}]interface{}{}
+	}
+
+	astFlagValues, err := o.DataValuesFlags.ASTValues()
+	if err != nil {
+		return nil, err
+	}
+
+	op := yttoverlay.OverlayOp{
+		Left:   yamlmeta.NewASTFromInterface(fileValues),
+		Right:  astFlagValues,
+		Thread: &starlark.Thread{Name: "data-values-overlay-pre-processing"},
+	}
+
+	newLeft, err := op.Apply()
+	if err != nil {
+		return nil, fmt.Errorf("Overlaying data values from flags (provided via --data-value-*) on top of data values (marked as @data/values): %s", err)
+	}
+
+	return (&yamlmeta.Document{Value: newLeft}).AsInterface(yamlmeta.InterfaceConvertOpts{}), nil
 }

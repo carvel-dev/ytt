@@ -127,7 +127,8 @@ func convertToAST(val interface{}) interface{} {
 		result := &Array{}
 		for _, item := range typedVal {
 			result.Items = append(result.Items, &ArrayItem{
-				Value: convertToAST(item),
+				Value:    convertToAST(item),
+				Position: filepos.NewUnknownPosition(),
 			})
 		}
 		return result
@@ -136,8 +137,9 @@ func convertToAST(val interface{}) interface{} {
 		result := &Map{Position: filepos.NewUnknownPosition()}
 		for _, k := range sortedMapKeys(typedVal) {
 			result.Items = append(result.Items, &MapItem{
-				Key:   k,
-				Value: convertToAST(typedVal[k]),
+				Key:      k,
+				Value:    convertToAST(typedVal[k]),
+				Position: filepos.NewUnknownPosition(),
 			})
 		}
 		return result
