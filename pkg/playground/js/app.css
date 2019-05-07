@@ -83,6 +83,22 @@ a:hover {
   cursor: pointer;
 }
 .button:hover { text-decoration: underline; }
+code, .terminal, .logo {
+  font-family: Consolas,Monaco,'Andale Mono','Ubuntu Mono',monospace;
+}
+
+/* k14s tools */
+#k14s-tools {
+  background: #000;
+}
+#k14s-tools p {
+  margin: 0 auto;
+  width: 1200px;
+  color: #777;
+  font-size: 80%;
+  padding: 5px 0;
+}
+#k14s-tools p a { color: #fff; }
 
 /* Examples dropdown */
 .dropdown {}
