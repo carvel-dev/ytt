@@ -42,7 +42,7 @@ func (s *RegularFilesSource) Input() (TemplateInput, error) {
 		return TemplateInput{}, err
 	}
 
-	err = s.applyFileMarks(filesToProcess)
+	filesToProcess, err = s.applyFileMarks(filesToProcess)
 	if err != nil {
 		return TemplateInput{}, err
 	}
@@ -70,20 +70,20 @@ func (s *RegularFilesSource) Output(out TemplateOutput) error {
 	return nil
 }
 
-func (s *RegularFilesSource) applyFileMarks(filesToProcess []*files.File) error {
+func (s *RegularFilesSource) applyFileMarks(filesToProcess []*files.File) ([]*files.File, error) {
 	var exclusiveForOutputFiles []*files.File
 
 	for _, mark := range s.opts.fileMarks {
 		pieces := strings.SplitN(mark, ":", 2)
 		if len(pieces) != 2 {
-			return fmt.Errorf("Expected file mark '%s' to be in format path:key=value", mark)
+			return nil, fmt.Errorf("Expected file mark '%s' to be in format path:key=value", mark)
 		}
 
 		path := pieces[0]
 
 		kv := strings.SplitN(pieces[1], "=", 2)
 		if len(kv) != 2 {
-			return fmt.Errorf("Expected file mark '%s' key-value portion to be in format key=value", mark)
+			return nil, fmt.Errorf("Expected file mark '%s' key-value portion to be in format key=value", mark)
 		}
 
 		var matched bool
@@ -99,9 +99,9 @@ func (s *RegularFilesSource) applyFileMarks(filesToProcess []*files.File) error 
 				case "exclude":
 					switch kv[1] {
 					case "true":
-						filesToProcess = append(filesToProcess[:i], filesToProcess[i+1:]...)
+						filesToProcess[i] = nil
 					default:
-						return fmt.Errorf("Unknown value in file mark '%s'", mark)
+						return nil, fmt.Errorf("Unknown value in file mark '%s'", mark)
 					}
 
 				case "type":
@@ -125,7 +125,7 @@ func (s *RegularFilesSource) applyFileMarks(filesToProcess []*files.File) error 
 						file.MarkType(files.TypeUnknown)
 						file.MarkTemplate(false)
 					default:
-						return fmt.Errorf("Unknown value in file mark '%s'", mark)
+						return nil, fmt.Errorf("Unknown value in file mark '%s'", mark)
 					}
 
 				case "for-output":
@@ -133,7 +133,7 @@ func (s *RegularFilesSource) applyFileMarks(filesToProcess []*files.File) error 
 					case "true":
 						file.MarkForOutput(true)
 					default:
-						return fmt.Errorf("Unknown value in file mark '%s'", mark)
+						return nil, fmt.Errorf("Unknown value in file mark '%s'", mark)
 					}
 
 				case "exclusive-for-output":
@@ -141,19 +141,22 @@ func (s *RegularFilesSource) applyFileMarks(filesToProcess []*files.File) error 
 					case "true":
 						exclusiveForOutputFiles = append(exclusiveForOutputFiles, file)
 					default:
-						return fmt.Errorf("Unknown value in file mark '%s'", mark)
+						return nil, fmt.Errorf("Unknown value in file mark '%s'", mark)
 					}
 
 				default:
-					return fmt.Errorf("Unknown key in file mark '%s'", mark)
+					return nil, fmt.Errorf("Unknown key in file mark '%s'", mark)
 				}
 			}
 		}
 
 		if !matched {
-			return fmt.Errorf("Expected file mark '%s' to match at least one file by path, but did not", mark)
+			return nil, fmt.Errorf("Expected file mark '%s' to match at least one file by path, but did not", mark)
 		}
 	}
+
+	// Remove files that were cleared out
+	filesToProcess = s.clearNils(filesToProcess)
 
 	// If there is at least filtered output file, mark all others as non-templates
 	if len(exclusiveForOutputFiles) > 0 {
@@ -165,7 +168,7 @@ func (s *RegularFilesSource) applyFileMarks(filesToProcess []*files.File) error 
 		}
 	}
 
-	return nil
+	return filesToProcess, nil
 }
 
 var (
@@ -178,4 +181,14 @@ func (s *RegularFilesSource) fileMarkMatches(file *files.File, path string) bool
 	path = strings.Replace(path, quotedMultiLevel, ".+", 1)
 	path = strings.Replace(path, quotedSingleLevel, "[^/]+", 1)
 	return regexp.MustCompile("^" + path + "$").MatchString(file.OriginalRelativePath())
+}
+
+func (s *RegularFilesSource) clearNils(input []*files.File) []*files.File {
+	var output []*files.File
+	for _, file := range input {
+		if file != nil {
+			output = append(output, file)
+		}
+	}
+	return output
 }
