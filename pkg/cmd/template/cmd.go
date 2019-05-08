@@ -31,6 +31,7 @@ type TemplateOutput struct {
 	Files  []files.OutputFile
 	DocSet *yamlmeta.DocumentSet
 	Err    error
+	Empty  bool
 }
 
 type FileSource interface {
@@ -79,6 +80,9 @@ func (o *TemplateOptions) Run() error {
 	}
 
 	out := o.RunWithFiles(in, ui)
+	if out.Empty {
+		return nil
+	}
 
 	return o.pickSource(srcs, func(s FileSource) bool { return s.HasOutput() }).Output(out)
 }
@@ -98,6 +102,10 @@ func (o *TemplateOptions) RunWithFiles(in TemplateInput, ui cmdcore.PlainUI) Tem
 	values, err = o.overlayFlagValues(values)
 	if err != nil {
 		return TemplateOutput{Err: err}
+	}
+
+	if o.DataValuesFlags.Inspect {
+		return o.inspectValues(values, ui)
 	}
 
 	loader := workspace.NewTemplateLoader(values, ui)
@@ -251,4 +259,19 @@ func (o *TemplateOptions) overlayFlagValues(fileValues interface{}) (interface{}
 	}
 
 	return (&yamlmeta.Document{Value: newLeft}).AsInterface(yamlmeta.InterfaceConvertOpts{}), nil
+}
+
+func (o *TemplateOptions) inspectValues(values interface{}, ui cmdcore.PlainUI) TemplateOutput {
+	docSet := &yamlmeta.DocumentSet{
+		Items: []*yamlmeta.Document{{Value: values}},
+	}
+
+	docBytes, err := docSet.AsBytes()
+	if err != nil {
+		return TemplateOutput{Err: fmt.Errorf("Marshaling data values: %s", err)}
+	}
+
+	ui.Printf("%s", docBytes) // no newline
+
+	return TemplateOutput{Empty: true}
 }
