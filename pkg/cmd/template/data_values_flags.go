@@ -18,7 +18,7 @@ type DataValuesFlags struct {
 
 func (s *DataValuesFlags) Set(cmd *cobra.Command) {
 	cmd.Flags().StringSliceVar(&s.Env, "data-values-env", nil, "Extract data values from environment with given prefix (format: PREFIX for vars like PREFIX_all__key1=\"str\") (can be specified multiple times)")
-	cmd.Flags().StringSliceVar(&s.KVs, "data-value", nil, "Set specific data value to given value (format: all.key1.subkey=123, all.key2=\"str\") (can be specified multiple times)")
+	cmd.Flags().StringSliceVarP(&s.KVs, "data-value", "v", nil, "Set specific data value to given value (format: all.key1.subkey=123, all.key2=\"str\") (can be specified multiple times)")
 	cmd.Flags().StringSliceVar(&s.Files, "data-value-file", nil, "Set specific data value to given file contents as string (format: all.key1.subkey=/file/path) (can be specified multiple times)")
 }
 
