@@ -7,7 +7,7 @@ import (
 )
 
 const (
-	Version = "0.8.0"
+	Version = "0.9.0"
 )
 
 type VersionOptions struct{}
