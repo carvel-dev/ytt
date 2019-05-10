@@ -18,8 +18,8 @@ type RegularFilesSourceOpts struct {
 }
 
 func (s *RegularFilesSourceOpts) Set(cmd *cobra.Command) {
-	cmd.Flags().StringSliceVarP(&s.files, "file", "f", nil, "File (ie local path, HTTP URL, -) (can be specified multiple times)")
-	cmd.Flags().StringSliceVar(&s.fileMarks, "file-mark", nil, "File mark (ie change file path, mark as non-template) (format: file:key=value) (can be specified multiple times)")
+	cmd.Flags().StringArrayVarP(&s.files, "file", "f", nil, "File (ie local path, HTTP URL, -) (can be specified multiple times)")
+	cmd.Flags().StringArrayVar(&s.fileMarks, "file-mark", nil, "File mark (ie change file path, mark as non-template) (format: file:key=value) (can be specified multiple times)")
 	cmd.Flags().BoolVarP(&s.recursive, "recursive", "R", false, "Interpret file as directory")
 	cmd.Flags().StringVarP(&s.output, "output", "o", "", "Directory for output")
 }
