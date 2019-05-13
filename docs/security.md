@@ -14,7 +14,7 @@ This section is a work-in-progress...
 
 - malicious template code
   - code tries to load file contents from sensitive locations
-    - A: templating is constrained to seeing only files explicitly specified by the user via -f flag (with possibly -R flag). unless user is tricked to provide sensitive file as input, template code is not able to access it. in other words, template runtime does not have facilities to access arbitrary filesystem locations.
+    - A: templating is constrained to seeing only files explicitly specified by the user via -f flag. unless user is tricked to provide sensitive file as input, template code is not able to access it. in other words, template runtime does not have facilities to access arbitrary filesystem locations.
   - code tries to exfiltrate data over network
     - A: template runtime does not have facilities to access network.
   - code tries to exhaust cpu/mem/disk resources

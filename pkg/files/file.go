@@ -34,7 +34,7 @@ type File struct {
 	markedForOutput *bool
 }
 
-func NewFiles(paths []string, recursive bool) ([]*File, error) {
+func NewFiles(paths []string) ([]*File, error) {
 	var fileSrcs []Source
 
 	for _, path := range paths {
@@ -52,10 +52,6 @@ func NewFiles(paths []string, recursive bool) ([]*File, error) {
 			}
 
 			if fileInfo.IsDir() {
-				if !recursive {
-					return nil, fmt.Errorf("Expected file '%s' to not be a directory", path)
-				}
-
 				err := filepath.Walk(path, func(walkedPath string, fi os.FileInfo, err error) error {
 					if err != nil || fi.IsDir() {
 						return err

@@ -20,7 +20,7 @@ type RegularFilesSourceOpts struct {
 func (s *RegularFilesSourceOpts) Set(cmd *cobra.Command) {
 	cmd.Flags().StringArrayVarP(&s.files, "file", "f", nil, "File (ie local path, HTTP URL, -) (can be specified multiple times)")
 	cmd.Flags().StringArrayVar(&s.fileMarks, "file-mark", nil, "File mark (ie change file path, mark as non-template) (format: file:key=value) (can be specified multiple times)")
-	cmd.Flags().BoolVarP(&s.recursive, "recursive", "R", false, "Interpret file as directory")
+	cmd.Flags().BoolVarP(&s.recursive, "recursive", "R", true, "Interpret file as directory (deprecated; set to true by default)")
 	cmd.Flags().StringVarP(&s.output, "output", "o", "", "Directory for output")
 }
 
@@ -37,7 +37,7 @@ func (s *RegularFilesSource) HasInput() bool  { return len(s.opts.files) > 0 }
 func (s *RegularFilesSource) HasOutput() bool { return true }
 
 func (s *RegularFilesSource) Input() (TemplateInput, error) {
-	filesToProcess, err := files.NewFiles(s.opts.files, s.opts.recursive)
+	filesToProcess, err := files.NewFiles(s.opts.files)
 	if err != nil {
 		return TemplateInput{}, err
 	}
