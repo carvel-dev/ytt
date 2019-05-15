@@ -16,7 +16,7 @@ mkdir -p tmp
 	# Use newly built binary to template all playground assets
 	# into a single Go file
 	cd pkg/playground; 
-	./../../ytt template \
+	./../../ytt \
 		-f . \
 		-f ../../examples/playground \
 		-f ../../hack/build-values.yml \

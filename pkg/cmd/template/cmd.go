@@ -51,7 +51,7 @@ func NewCmd(o *TemplateOptions) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "template",
 		Aliases: []string{"t", "tpl"},
-		Short:   "Process YAML templates",
+		Short:   "Process YAML templates (deprecated; use top-level `ytt` command instead of `ytt template` command)",
 		RunE:    func(_ *cobra.Command, _ []string) error { return o.Run() },
 	}
 	cmd.Flags().BoolVar(&o.Debug, "debug", false, "Enable debug output")

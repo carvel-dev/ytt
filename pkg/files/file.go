@@ -195,7 +195,7 @@ func (r *File) matchesExt(exts []string) bool {
 }
 
 func NewRegularFileLocalSource(path, dir string, fi os.FileInfo) (LocalSource, error) {
-	// support pipes (`ytt template -f <(echo "---")`)
+	// support pipes (`ytt -f <(echo "---")`)
 	namedPipe := (fi.Mode() & os.ModeNamedPipe) != 0
 
 	if !namedPipe && (fi.Mode()&os.ModeType) != 0 {

@@ -20,27 +20,26 @@ func NewDefaultYttCmd() *cobra.Command {
 }
 
 func NewYttCmd(o *YttOptions) *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "ytt",
-		Short: "ytt performs YAML templating",
-		Long: `ytt performs YAML templating.
+	cmd := cmdtpl.NewCmd(cmdtpl.NewOptions())
 
-Docs: https://github.com/k14s/ytt/docs`,
+	cmd.Use = "ytt"
+	cmd.Aliases = nil
+	cmd.Short = "ytt performs YAML templating"
+	cmd.Long = `ytt performs YAML templating.
 
-		RunE: ShowHelp,
+Docs: https://github.com/k14s/ytt/docs`
 
-		// Affects children as well
-		SilenceErrors: true,
-		SilenceUsage:  true,
+	// Affects children as well
+	cmd.SilenceErrors = true
+	cmd.SilenceUsage = true
 
-		// Disable docs header
-		DisableAutoGenTag: true,
+	// Disable docs header
+	cmd.DisableAutoGenTag = true
 
-		// TODO bash completion
-	}
+	// TODO bash completion
 
 	cmd.AddCommand(NewVersionCmd(NewVersionOptions()))
-	cmd.AddCommand(cmdtpl.NewCmd(cmdtpl.NewOptions()))
+	cmd.AddCommand(cmdtpl.NewCmd(cmdtpl.NewOptions())) // for backwards compat
 	cmd.AddCommand(NewPlaygroundCmd(NewPlaygroundOptions()))
 
 	// Last one runs first

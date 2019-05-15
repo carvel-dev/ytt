@@ -51,7 +51,7 @@ func (o *PlaygroundOptions) Run() error {
 
 func (o *PlaygroundOptions) execBinary(data []byte) ([]byte, error) {
 	var out, stderr bytes.Buffer
-	cmd := exec.Command(o.BinaryPath, "tpl", "--bulk-in", string(data), "--bulk-out")
+	cmd := exec.Command(o.BinaryPath, "--bulk-in", string(data), "--bulk-out")
 	cmd.Stdout = &out
 	cmd.Stderr = &stderr
 

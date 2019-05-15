@@ -32,8 +32,8 @@ Grab prebuilt binaries from the [Releases page](https://github.com/k14s/ytt/rele
 ## Try it
 
 ```
-ytt template -f examples/playground/example-demo/
-ytt template -f examples/playground/example-demo/ --output tmp/
+ytt -f examples/playground/example-demo/
+ytt -f examples/playground/example-demo/ --output tmp/
 ```
 
 See [examples/playground/](examples/playground/) for examples shown on [get-ytt.io](https://get-ytt.io).

@@ -38,7 +38,7 @@ These flags can be repeated multiple times and used together.
 
 ```bash
 export VAL_key4=true
-ytt template -f . \
+ytt -f . \
   --data-value key1="val1-arg" \
   --data-value key2.nested=123 \
   --data-value-file key3=/path \
