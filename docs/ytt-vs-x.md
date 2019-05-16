@@ -3,7 +3,7 @@
 ### ytt vs Go text/template (and other text templating tools)
 
 - [Go's text/template](https://golang.org/pkg/text/template/)
-- [Jinnja](http://jinja.pocoo.org/)
+- [Jinja](http://jinja.pocoo.org/)
 
 Most generic templating tools do not understand content that they are templating and consider it just plain text. ytt operates on YAML structures, hence typical escaping and formatting problems common to text templating tools are eliminated. Additionally, ytt provides a very easy way to make structures reusable in a much more readable way that's possible with some text templating tools.
 
