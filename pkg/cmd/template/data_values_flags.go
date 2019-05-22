@@ -87,7 +87,7 @@ func (s *DataValuesFlags) env(prefix string) (map[string]interface{}, error) {
 		}
 
 		// '__' gets translated into a '.' since periods may not be liked by shells
-		result[strings.ReplaceAll(strings.TrimPrefix(pieces[0], prefix+"_"), "__", ".")] = val
+		result[strings.Replace(strings.TrimPrefix(pieces[0], prefix+"_"), "__", ".", -1)] = val
 	}
 
 	return result, nil
