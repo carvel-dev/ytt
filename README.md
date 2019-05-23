@@ -24,6 +24,8 @@ Try out [online playground](https://get-ytt.io) or download latest binaries from
 - [ytt vs X: How ytt is different from other tools / frameworks](docs/ytt-vs-x.md)
 - Blog posts
   - [ytt: The YAML Templating Tool that simplifies complex configuration management](https://developer.ibm.com/blogs/yaml-templating-tool-to-simplify-complex-configuration-management/)
+- Talks
+  - [Introducing the YAML Templating Tool (ytt)](https://www.youtube.com/watch?v=KbB5tI_g3bo) on IBM Developer podcast
 
 ## Install
 
