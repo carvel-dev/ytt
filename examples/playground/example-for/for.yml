@@ -12,6 +12,13 @@ array_with_data:
 - item: #@ i
 #@ end
 
+array_with_index:
+#@ arr = [1,5,{"key":"val"}]
+#@ for i in range(len(arr)):
+- val: #@ arr[i]
+  index: #@ i
+#@ end 
+
 #! continue and break keywords allow to further
 #! control execution of for loop
 
