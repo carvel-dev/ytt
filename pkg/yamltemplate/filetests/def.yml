@@ -19,6 +19,9 @@ parent2:
 - #@ template.replace([tpl(123)])
 - #@ template.replace([tpl(12)])
 
+#@ def def_single_line(): return 123
+parent3: #@ def_single_line()
+
 +++
 
 parent1:
@@ -34,3 +37,4 @@ parent2:
   label2: 124
 - label3: 12
   label4: 13
+parent3: 123
