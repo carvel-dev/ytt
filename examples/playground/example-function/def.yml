@@ -22,31 +22,34 @@ yaml_key: #@ some_yaml()
 #! functions with scalar values must be written
 #! in Starlark
 
-#@ def some_scalar(): return "hello world"
+#@ def some_scalar():
+#@   return "hello world"
+#@ end
 
 scalar_key: #@ some_scalar()
 
 ---
-#! If the YAML fragment inside the function
+#! If the YAML node inside the function
 #! is not compatible with the surrounding context
-#! (here an array in a hash context), functions
-#! can be declared in separate document fragments
+#! (here a list in a map context), functions
+#! can be declared in separate YAML document
 #! to reset the context.
 
 #! To avoid splitting the current document,
 #! definitions can happen in a separate file or
 #! at the top of the document.
 
-#@ def some_yaml_array():
-- hello: world
+#@ def some_list():
+- item1
 #@ end
+
 ---
+yaml_list_key: #@ some_list()
 
-yaml_array_key: #@ some_yaml_array()
-
-#! Function calls can define complete documents
-#! at the top level.
+#! and since functions return just values you
+#! can use them any way you want, for example,
+#! as values of documents
 
 --- #@ some_scalar()
 --- #@ some_yaml()
---- #@ some_yaml_array()
+--- #@ some_list()

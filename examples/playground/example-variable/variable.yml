@@ -9,3 +9,6 @@
 #@ some_list = [my_map, "item2"]
 
 list_with_a_map: #@ some_list
+
+#! and a separate document that contains above list
+--- #@ some_list

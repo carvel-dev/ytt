@@ -3,13 +3,13 @@
 #! for loops are handy
 
 array:
-#@ for i in range(0,10):
-- item: #@ i
+#@ for j in range(0,10):
+- item: #@ j
 #@ end
 
 array_with_data:
-#@ for i in [1,5,{"key":"val"}]:
-- item: #@ i
+#@ for val in [1,5,{"key":"val"}]:
+- item: #@ val
 #@ end
 
 array_with_index:
@@ -23,12 +23,18 @@ array_with_index:
 #! control execution of for loop
 
 array_odd:
-#@ for i in range(0,10):
-#@   if i % 2 == 0:
+#@ for j in range(0,10):
+#@   if j % 2 == 0:
 #@     continue
 #@   end
-#@   if i > 5:
+#@   if j > 5:
 #@     break
 #@   end
-- #@ i
+- #@ j
+#@ end
+
+#! documents can be also produced in a loop
+
+#@ for val in [5,"str",{"key":"val"}]:
+--- #@ val
 #@ end

@@ -20,3 +20,8 @@ nested_map: #@ {"key1": "value1", "key2": "value2"}
 
 list: #@ ["item1", "item2"]
 list_with_a_map: #@ [{"key1": "value1", "key2": "value2"}, "item2"]
+
+#! setting value of YAML document node works as well
+
+--- #@ "document-value"
+--- #@ [1, "item1", {"key1": "value1"}]
