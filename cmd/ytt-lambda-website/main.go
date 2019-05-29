@@ -38,8 +38,8 @@ func (h *HandlerFuncAdapter) Proxy(event events.ALBTargetGroupRequest) (events.A
 }
 
 func main() {
-	playgroundOpts := cmd.NewPlaygroundOptions()
-	playgroundOpts.BinaryPath = "/var/task/ytt"
-	playgroundOpts.CheckCookie = true
-	lambda.Start(New(playgroundOpts.Server().Mux()).Proxy)
+	websiteOpts := cmd.NewWebsiteOptions()
+	websiteOpts.BinaryPath = "/var/task/ytt"
+	websiteOpts.CheckCookie = true
+	lambda.Start(New(websiteOpts.Server().Mux()).Proxy)
 }

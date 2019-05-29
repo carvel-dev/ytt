@@ -8,48 +8,47 @@ import (
 	"os/exec"
 
 	cmdtpl "github.com/k14s/ytt/pkg/cmd/template"
-	"github.com/k14s/ytt/pkg/playground"
+	"github.com/k14s/ytt/pkg/website"
 	"github.com/spf13/cobra"
 )
 
-type PlaygroundOptions struct {
+type WebsiteOptions struct {
 	ListenAddr  string
 	BinaryPath  string
 	CheckCookie bool
 }
 
-func NewPlaygroundOptions() *PlaygroundOptions {
-	return &PlaygroundOptions{
+func NewWebsiteOptions() *WebsiteOptions {
+	return &WebsiteOptions{
 		BinaryPath: os.Args[0],
 	}
 }
 
-func NewPlaygroundCmd(o *PlaygroundOptions) *cobra.Command {
+func NewWebsiteCmd(o *WebsiteOptions) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "playground",
-		Aliases: []string{"pg"},
-		Short:   "Starts playground HTTP server",
-		RunE:    func(_ *cobra.Command, _ []string) error { return o.Run() },
+		Use:   "website",
+		Short: "Starts website HTTP server",
+		RunE:  func(_ *cobra.Command, _ []string) error { return o.Run() },
 	}
 	cmd.Flags().StringVar(&o.ListenAddr, "listen-addr", "localhost:8080", "Listen address")
 	return cmd
 }
 
-func (o *PlaygroundOptions) Server() *playground.Server {
-	opts := playground.ServerOpts{
+func (o *WebsiteOptions) Server() *website.Server {
+	opts := website.ServerOpts{
 		ListenAddr:   o.ListenAddr,
 		TemplateFunc: o.execBinary,
 		ErrorFunc:    o.bulkOutErr,
 		CheckCookie:  o.CheckCookie,
 	}
-	return playground.NewServer(opts)
+	return website.NewServer(opts)
 }
 
-func (o *PlaygroundOptions) Run() error {
+func (o *WebsiteOptions) Run() error {
 	return o.Server().Run()
 }
 
-func (o *PlaygroundOptions) execBinary(data []byte) ([]byte, error) {
+func (o *WebsiteOptions) execBinary(data []byte) ([]byte, error) {
 	var out, stderr bytes.Buffer
 	cmd := exec.Command(o.BinaryPath, "--bulk-in", string(data), "--bulk-out")
 	cmd.Stdout = &out
@@ -63,6 +62,6 @@ func (o *PlaygroundOptions) execBinary(data []byte) ([]byte, error) {
 	return out.Bytes(), nil
 }
 
-func (*PlaygroundOptions) bulkOutErr(err error) ([]byte, error) {
+func (*WebsiteOptions) bulkOutErr(err error) ([]byte, error) {
 	return json.Marshal(cmdtpl.BulkFiles{Errors: err.Error()})
 }

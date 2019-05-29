@@ -40,7 +40,7 @@ Docs: https://github.com/k14s/ytt/docs`
 
 	cmd.AddCommand(NewVersionCmd(NewVersionOptions()))
 	cmd.AddCommand(cmdtpl.NewCmd(cmdtpl.NewOptions())) // for backwards compat
-	cmd.AddCommand(NewPlaygroundCmd(NewPlaygroundOptions()))
+	cmd.AddCommand(NewWebsiteCmd(NewWebsiteOptions()))
 
 	// Last one runs first
 	cobrautil.VisitCommands(cmd, reconfigureCmdWithSubcmd)

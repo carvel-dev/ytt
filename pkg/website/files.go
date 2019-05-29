@@ -1,4 +1,4 @@
-package playground
+package website
 
 type File struct {
 	Name    string `json:"name"`
