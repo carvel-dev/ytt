@@ -10,15 +10,15 @@
 Features:
 
 - templating works on YAML structure (instead of text)
-  - eliminates variety of problems such as invalid YAML formatting, escaping, etc.
+  - which eliminates variety of problems such as invalid YAML formatting, escaping, etc.
 - syntactic sugar for single YAML node conditionals and for loops
-  - makes it easier to read densely conditioned templated
+  - makes it easier to read densely conditioned templates
 - templates are themselves valid YAML files
   - makes them friendly to existing editors and YAML tools
-- includes *sandboxed* "fully featured" _Pythonic_ programming language
-  - compared to what's exposed in go/template for example
+- includes *sandboxed* "fully featured" Python-like programming language
+- allows configuration modularization via functions and libraries
 
-Try out [online playground](https://get-ytt.io) or download latest binaries from [Releases](https://github.com/k14s/ytt/releases) page (playground is included via `ytt playground` command).
+Try out [online playground](https://get-ytt.io) or download latest binaries from [Releases](https://github.com/k14s/ytt/releases) page (playground is included via `ytt website` command).
 
 ## Docs
 
