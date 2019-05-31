@@ -14,13 +14,14 @@ const (
 )
 
 type Library struct {
+	parent   *Library
 	name     string
 	private  bool // in _ytt_lib
 	children []*Library
 	files    []*files.File
 }
 
-func NewRootLibrary(fs []*files.File) *Library {
+func NewRootLibrary(fs []*files.File, recursive bool) *Library {
 	rootLibrary := &Library{}
 
 	for _, file := range fs {
@@ -30,7 +31,7 @@ func NewRootLibrary(fs []*files.File) *Library {
 		for _, piece := range dirPieces {
 			lib, found := currLibrary.FindLibrary(piece)
 			if !found {
-				currLibrary = currLibrary.CreateLibrary(piece)
+				currLibrary = currLibrary.CreateLibrary(piece, !recursive)
 			} else {
 				currLibrary = lib
 			}
@@ -42,7 +43,23 @@ func NewRootLibrary(fs []*files.File) *Library {
 	return rootLibrary
 }
 
+func (l *Library) RelativePath(root *Library) string {
+	if l == root {
+		return ""
+	} else if l.parent == nil || l.parent.name == "" || l.parent == root {
+		return l.name
+	} else {
+		return strings.Join([]string{l.parent.RelativePath(root), l.name}, pathSeparator)
+	}
+}
+
 func (l *Library) FindLibrary(name string) (*Library, bool) {
+	if name == "." {
+		return l, true
+	} else if name == ".." {
+		return l.parent, l.parent != nil
+	}
+
 	for _, lib := range l.children {
 		if lib.name == name {
 			return lib, true
@@ -51,8 +68,8 @@ func (l *Library) FindLibrary(name string) (*Library, bool) {
 	return nil, false
 }
 
-func (l *Library) CreateLibrary(name string) *Library {
-	lib := &Library{name: name, private: name == privateName}
+func (l *Library) CreateLibrary(name string, private bool) *Library {
+	lib := &Library{parent: l, name: name, private: private || name == privateName}
 	l.children = append(l.children, lib)
 	return lib
 }
@@ -92,22 +109,35 @@ func (l *Library) findPrivateLibrary() (*Library, bool) {
 	return nil, false
 }
 
-func (l *Library) FindFile(path string) (*files.File, error) {
-	dirPieces, namePiece := files.SplitPath(path)
+func (l *Library) FindRecursiveLibrary(path string, allowPrivate bool) (*Library, error) {
+	return l.findRecursiveLibrary(path, strings.Split(path, "/"), allowPrivate)
+}
 
+func (l *Library) findRecursiveLibrary(path string, pieces []string, allowPrivate bool) (*Library, error) {
 	var currLibrary *Library = l
-	for i, piece := range dirPieces {
+	for i, piece := range pieces {
 		lib, found := currLibrary.FindLibrary(piece)
 		if !found {
 			return nil, fmt.Errorf("Expected to find file '%s', but did not find '%s'",
-				path, files.JoinPath(dirPieces[:i]))
+				path, files.JoinPath(pieces[:i]))
 		}
-		if lib.private {
+		if lib.private && !allowPrivate {
 			return nil, fmt.Errorf("Could not load file '%s' because it's contained in private library '%s' "+
 				"(use load(\"@lib:file\", \"symbol\") where 'lib' is library name under %s, for example, 'github.com/k14s/test')",
-				path, files.JoinPath(dirPieces[:i]), privateName)
+				path, files.JoinPath(pieces[:i]), privateName)
 		}
 		currLibrary = lib
+	}
+
+	return currLibrary, nil
+}
+
+func (l *Library) FindFile(path string) (*files.File, error) {
+	dirPieces, namePiece := files.SplitPath(path)
+
+	currLibrary, err := l.findRecursiveLibrary(path, dirPieces, false)
+	if err != nil {
+		return nil, err
 	}
 
 	for _, file := range currLibrary.files {
@@ -122,6 +152,16 @@ func (l *Library) FindFile(path string) (*files.File, error) {
 type FileInLibrary struct {
 	File    *files.File
 	Library *Library
+}
+
+func (f *FileInLibrary) RelativePath(root *Library) string {
+	libPath := f.Library.RelativePath(root)
+	_, fName := files.SplitPath(f.File.RelativePath())
+	if libPath == "" {
+		return fName
+	} else {
+		return strings.Join([]string{libPath, fName}, pathSeparator)
+	}
 }
 
 func (l *Library) ListAccessibleFiles() []FileInLibrary {

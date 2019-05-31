@@ -34,7 +34,7 @@ type File struct {
 	markedForOutput *bool
 }
 
-func NewFiles(paths []string) ([]*File, error) {
+func NewFiles(paths []string, recursive bool) ([]*File, error) {
 	var fileSrcs []Source
 
 	for _, path := range paths {
@@ -48,13 +48,17 @@ func NewFiles(paths []string) ([]*File, error) {
 		default:
 			fileInfo, err := os.Lstat(path)
 			if err != nil {
-				return nil, fmt.Errorf("Checking file '%s'", path)
+				return nil, fmt.Errorf("Checking file '%s', %v", path, err)
 			}
 
 			if fileInfo.IsDir() {
 				err := filepath.Walk(path, func(walkedPath string, fi os.FileInfo, err error) error {
-					if err != nil || fi.IsDir() {
+					if err != nil {
 						return err
+					} else if fi.IsDir() && !recursive {
+						return filepath.SkipDir
+					} else if fi.IsDir() {
+						return nil
 					}
 					regLocalSource, err := NewRegularFileLocalSource(walkedPath, path, fi)
 					if err != nil {
@@ -111,6 +115,8 @@ func MustNewFileFromSource(fileSrc Source) *File {
 }
 
 func (r *File) Description() string { return r.src.Description() }
+
+func (r *File) AbsolutePath() string { return r.src.AbsolutePath() }
 
 func (r *File) OriginalRelativePath() string { return r.relPath }
 

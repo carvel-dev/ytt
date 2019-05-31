@@ -1,0 +1,7 @@
+lib1:
+  hello: |
+    hello: world
+  all: |
+    foo: bar
+    ---
+    hello: world

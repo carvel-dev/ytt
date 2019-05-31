@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/k14s/ytt/pkg/eval"
 	"github.com/k14s/ytt/pkg/files"
 	"github.com/k14s/ytt/pkg/template"
 	"github.com/k14s/ytt/pkg/template/core"
@@ -17,15 +18,11 @@ import (
 type TemplateLoader struct {
 	ui                files.UI
 	values            interface{}
-	opts              TemplateLoaderOpts
+	opts              eval.TemplateLoaderOpts
 	compiledTemplates map[string]*template.CompiledTemplate
 }
 
-type TemplateLoaderOpts struct {
-	IgnoreUnknownComments bool
-}
-
-func NewTemplateLoader(values interface{}, ui files.UI, opts TemplateLoaderOpts) *TemplateLoader {
+func NewTemplateLoader(values interface{}, ui files.UI, opts eval.TemplateLoaderOpts) *TemplateLoader {
 	return &TemplateLoader{
 		ui:                ui,
 		values:            values,
@@ -162,7 +159,8 @@ func (l *TemplateLoader) EvalYAML(library *Library, file *files.File) (starlark.
 	l.addCompiledTemplate(file.RelativePath(), compiledTemplate)
 	l.ui.Debugf("### template\n%s", compiledTemplate.DebugCodeAsString())
 
-	yttLibrary := yttlibrary.NewAPI(compiledTemplate.TplReplaceNode, l.values, l)
+	loader := NewLoader(library, file, l.ui, l.opts)
+	yttLibrary := yttlibrary.NewAPI(compiledTemplate.TplReplaceNode, l.values, l, loader)
 	thread := l.newThread(library, yttLibrary, file)
 
 	globals, resultVal, err := compiledTemplate.Eval(thread, l)
@@ -198,7 +196,8 @@ func (l *TemplateLoader) EvalText(library *Library, file *files.File) (starlark.
 	l.addCompiledTemplate(file.RelativePath(), compiledTemplate)
 	l.ui.Debugf("### template\n%s", compiledTemplate.DebugCodeAsString())
 
-	yttLibrary := yttlibrary.NewAPI(compiledTemplate.TplReplaceNode, l.values, l)
+	loader := NewLoader(library, file, l.ui, l.opts)
+	yttLibrary := yttlibrary.NewAPI(compiledTemplate.TplReplaceNode, l.values, l, loader)
 	thread := l.newThread(library, yttLibrary, file)
 
 	globals, resultVal, err := compiledTemplate.Eval(thread, l)
@@ -225,7 +224,8 @@ func (l *TemplateLoader) EvalStarlark(library *Library, file *files.File) (starl
 	l.addCompiledTemplate(file.RelativePath(), compiledTemplate)
 	l.ui.Debugf("### template\n%s", compiledTemplate.DebugCodeAsString())
 
-	yttLibrary := yttlibrary.NewAPI(compiledTemplate.TplReplaceNode, l.values, l)
+	loader := NewLoader(library, file, l.ui, l.opts)
+	yttLibrary := yttlibrary.NewAPI(compiledTemplate.TplReplaceNode, l.values, l, loader)
 	thread := l.newThread(library, yttLibrary, file)
 
 	globals, _, err := compiledTemplate.Eval(thread, l)

@@ -39,6 +39,7 @@ examples = [
   {"name": "example-assert"},
   {"name": "example-load-data-values"},
   {"name": "example-load-data-files"},
+  {"name": "example-load-template-library"},
   {"name": "example-text-template"},
   {"name": "example-replace"},
   {"name": "example-overlay"},

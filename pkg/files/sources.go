@@ -13,6 +13,7 @@ import (
 type Source interface {
 	Description() string
 	RelativePath() (string, error)
+	AbsolutePath() string
 	Bytes() ([]byte, error)
 }
 
@@ -27,6 +28,7 @@ func NewBytesSource(path string, data []byte) BytesSource { return BytesSource{p
 
 func (s BytesSource) Description() string           { return s.path }
 func (s BytesSource) RelativePath() (string, error) { return s.path, nil }
+func (s BytesSource) AbsolutePath() string          { return "" }
 func (s BytesSource) Bytes() ([]byte, error)        { return s.data, nil }
 
 type StdinSource struct {
@@ -42,6 +44,7 @@ func NewStdinSource() StdinSource {
 
 func (s StdinSource) Description() string           { return "stdin.yml" }
 func (s StdinSource) RelativePath() (string, error) { return "stdin.yml", nil }
+func (s StdinSource) AbsolutePath() string          { return "" }
 func (s StdinSource) Bytes() ([]byte, error)        { return s.bytes, s.err }
 
 type LocalSource struct {
@@ -51,7 +54,8 @@ type LocalSource struct {
 
 func NewLocalSource(path, dir string) LocalSource { return LocalSource{path, dir} }
 
-func (s LocalSource) Description() string { return fmt.Sprintf("file '%s'", s.path) }
+func (s LocalSource) Description() string  { return fmt.Sprintf("file '%s'", s.path) }
+func (s LocalSource) AbsolutePath() string { return s.path }
 
 func (s LocalSource) RelativePath() (string, error) {
 	if s.dir == "" {
@@ -89,6 +93,7 @@ func (s HTTPSource) Description() string {
 	return fmt.Sprintf("HTTP URL '%s'", s.url)
 }
 
+func (s HTTPSource) AbsolutePath() string          { return s.url }
 func (s HTTPSource) RelativePath() (string, error) { return path.Base(s.url), nil }
 
 func (s HTTPSource) Bytes() ([]byte, error) {
