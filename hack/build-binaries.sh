@@ -2,6 +2,8 @@
 
 set -e -x -u
 
+BUILD_VALUES= ./hack/build.sh
+
 GOOS=darwin GOARCH=amd64 go build -o ytt-darwin-amd64 ./cmd/ytt
 GOOS=linux GOARCH=amd64 go build -o ytt-linux-amd64 ./cmd/ytt
 GOOS=windows GOARCH=amd64 go build -o ytt-windows-amd64.exe ./cmd/ytt

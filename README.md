@@ -51,5 +51,7 @@ See [examples/playground/](examples/playground/) for examples shown on [get-ytt.
 ./hack/test-e2e.sh
 ./hack/test-all.sh
 
-BUILD_VALUES=./hack/build-values-get-ytt-io.yml ./hack/build.sh # includes goog analytics
+# include goog analytics in 'ytt website' command for https://get-ytt.io
+# (goog analytics is _not_ included in release binaries)
+BUILD_VALUES=./hack/build-values-get-ytt-io.yml ./hack/build.sh
 ```
