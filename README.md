@@ -50,4 +50,6 @@ See [examples/playground/](examples/playground/) for examples shown on [get-ytt.
 ./hack/test-unit.sh
 ./hack/test-e2e.sh
 ./hack/test-all.sh
+
+BUILD_VALUES=./hack/build-values-get-ytt-io.yml ./hack/build.sh # includes goog analytics
 ```

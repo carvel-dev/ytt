@@ -12,6 +12,8 @@ go build -o ytt ./cmd/ytt/...
 
 mkdir -p tmp
 
+build_values_path="../../${BUILD_VALUES:-./hack/build-values-default.yml}"
+
 (
 	# Use newly built binary to template all website assets
 	# into a single Go file
@@ -19,7 +21,7 @@ mkdir -p tmp
 	./../../ytt \
 		-f . \
 		-f ../../examples/playground \
-		-f ../../hack/build-values.yml \
+		-f $build_values_path \
 		--file-mark 'alt-example**/*:type=data' \
 		--file-mark 'example**/*:type=data' \
 		--file-mark 'generated.go.txt:exclusive-for-output=true' \
