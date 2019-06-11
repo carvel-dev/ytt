@@ -20,12 +20,15 @@ h1 {
   text-align: center;
   padding: 20px;
   margin: 0;
-  border-bottom: 1px solid #efefef;
+  border-bottom: 1px solid #ddd;
 }
 .logo {
   color: #111;
   font-size: 30px;
   font-family: courier;
+}
+.logo strong {
+  margin-left: 5px;
 }
 .link-button,
 .button {
@@ -99,16 +102,17 @@ code, .terminal, .logo {
 
 /* k14s tools */
 #k14s-tools {
-  background: #000;
-}
-#k14s-tools p {
   margin: 0 auto;
   width: 1000px;
+  border-bottom: 1px solid #ddd;
+}
+#k14s-tools p {
   color: #777;
+  margin: 0;
   font-size: 80%;
   padding: 5px 0;
 }
-#k14s-tools p a { color: #fff; }
+#k14s-tools p a { color: #111; }
 
 /* Examples dropdown */
 .dropdown {}
@@ -127,7 +131,7 @@ code, .terminal, .logo {
 #intro {
   clear: both;
   display: flex;
-  border-bottom: 1px solid #efefef;
+  border-bottom: 1px solid #ddd;
 }
 #intro #features,
 #intro #resources {
