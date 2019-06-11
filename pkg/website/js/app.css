@@ -13,7 +13,8 @@ body {
   margin-bottom: 10px;
 }
 h1 {
-  position: absolute;;
+  text-align: center;
+  margin-bottom: 0;
 }
 .hero {
   font-size: 20px;
