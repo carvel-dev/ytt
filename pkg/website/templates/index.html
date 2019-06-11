@@ -18,7 +18,7 @@
 
     <div class="content">
       <div class="header">
-        <h1><span class="logo">#@ytt</span></h1>
+        <h1><span class="logo">$ ytt</span></h1>
 
         <p class="hero"><code>ytt</code> is a templating tool that understands YAML structure <br/> 
         allowing you to focus on your data instead of how to properly escape it.</p>
@@ -29,6 +29,20 @@
           <a class="link-button" href="https://github.com/k14s/ytt/releases">Download Binary</a>
           <a class="link-button" href="#playground" id="try-online">Try Online <span>⤵</span></a>
         </p>
+      </div>
+
+      <div id="basic-usage">
+        <h2>Basic Usage</h2>
+        <pre class="terminal">
+<span class="gray"># Configurations picked up from a directory</span>
+$ <span class="green">ytt -f examples/playground/example-demo/</span> | kubectl apply -f-
+
+<span class="gray"># Input customized on command line or file configuration</span>
+$ <span class="green">ytt -f examples/playground/example-demo/ -v service.enabled=false</span> | kapp -y deploy -a app1 -f-
+
+<span class="gray"># Output template results into a directory</span>
+$ <span class="green">ytt -f examples/playground/example-demo/ -o /tmp/output-dir</span>
+</pre>
       </div>
 
       <div id="intro">

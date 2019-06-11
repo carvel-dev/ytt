@@ -83,6 +83,16 @@ a:hover {
   cursor: pointer;
 }
 .button:hover { text-decoration: underline; }
+.terminal {
+  background: #000;
+  color: #eee;
+  font-size: 80%;
+  padding: 7px 9px;
+  border-radius: 4px;
+}
+.terminal .green { color: #A1C935; }
+.terminal .red { color: red; }
+.terminal .gray { color: #777; }
 code, .terminal, .logo {
   font-family: Consolas,Monaco,'Andale Mono','Ubuntu Mono',monospace;
 }
