@@ -1,6 +1,7 @@
 package template_test
 
 import (
+	"strings"
 	"testing"
 
 	cmdcore "github.com/k14s/ytt/pkg/cmd/core"
@@ -400,5 +401,56 @@ yamlfunc: yamlfunc`)
 
 	if string(file.Bytes()) != expectedYAMLTplData {
 		t.Fatalf("Expected output file to have specific data, but was: >>>%s<<<", file.Bytes())
+	}
+}
+
+func TestParseErrTemplateFile(t *testing.T) {
+	yamlTplData := []byte(`
+key: val
+yamlfunc yamlfunc`)
+
+	filesToProcess := []*files.File{
+		files.MustNewFileFromSource(files.NewBytesSource("tpl.yml", yamlTplData)),
+	}
+
+	ui := cmdcore.NewPlainUI(false)
+	opts := cmdtpl.NewOptions()
+
+	out := opts.RunWithFiles(cmdtpl.TemplateInput{Files: filesToProcess}, ui)
+	if out.Err == nil {
+		t.Fatalf("Expected RunWithFiles to fail")
+	}
+
+	if out.Err.Error() != "Unmarshaling YAML template 'tpl.yml': yaml: line 4: could not find expected ':'" {
+		t.Fatalf("Expected RunWithFiles to fail with error, but was '%s'", out.Err.Error())
+	}
+}
+
+func TestParseErrLoadFile(t *testing.T) {
+	yamlTplData := []byte(`
+#@ load("funcs/funcs.lib.yml", "yamlfunc")
+yamlfunc: #@ yamlfunc()`)
+
+	yamlFuncsData := []byte(`
+#@ def yamlfunc():
+key: val
+yamlfunc yamlfunc
+#@ end`)
+
+	filesToProcess := []*files.File{
+		files.MustNewFileFromSource(files.NewBytesSource("tpl.yml", yamlTplData)),
+		files.MustNewFileFromSource(files.NewBytesSource("funcs/funcs.lib.yml", yamlFuncsData)),
+	}
+
+	ui := cmdcore.NewPlainUI(false)
+	opts := cmdtpl.NewOptions()
+
+	out := opts.RunWithFiles(cmdtpl.TemplateInput{Files: filesToProcess}, ui)
+	if out.Err == nil {
+		t.Fatalf("Expected RunWithFiles to fail")
+	}
+
+	if !strings.Contains(out.Err.Error(), "cannot load funcs/funcs.lib.yml: Unmarshaling YAML template 'funcs/funcs.lib.yml': yaml: line 5: could not find expected ':'") {
+		t.Fatalf("Expected RunWithFiles to fail with error, but was '%s'", out.Err.Error())
 	}
 }

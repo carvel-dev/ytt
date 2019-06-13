@@ -146,7 +146,7 @@ func (l *TemplateLoader) EvalYAML(library *Library, file *files.File) (starlark.
 
 	docSet, err := yamlmeta.NewDocumentSetFromBytesWithOpts(fileBs, docSetOpts)
 	if err != nil {
-		return nil, nil, fmt.Errorf("Unmarshaling YAML template: %s", err)
+		return nil, nil, fmt.Errorf("Unmarshaling YAML template '%s': %s", file.RelativePath(), err)
 	}
 
 	l.ui.Debugf("### ast\n")

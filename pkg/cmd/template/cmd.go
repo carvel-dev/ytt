@@ -198,7 +198,7 @@ func (o *TemplateOptions) extractValues(fs []workspace.FileInLibrary) ([]workspa
 
 			docSet, err := yamlmeta.NewDocumentSetFromBytes(fileBs, fileInLib.File.RelativePath())
 			if err != nil {
-				return nil, nil, fmt.Errorf("Unmarshaling YAML template: %s", err)
+				return nil, nil, fmt.Errorf("Unmarshaling YAML template '%s': %s", fileInLib.File.RelativePath(), err)
 			}
 
 			tplOpts := yamltemplate.MetasOpts{IgnoreUnknown: o.IgnoreUnknownComments}
