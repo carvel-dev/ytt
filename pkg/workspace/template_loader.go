@@ -156,7 +156,7 @@ func (l *TemplateLoader) EvalYAML(library *Library, file *files.File) (starlark.
 
 	compiledTemplate, err := yamltemplate.NewTemplate(file.RelativePath(), tplOpts).Compile(docSet)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, fmt.Errorf("Compiling YAML template '%s': %s", file.RelativePath(), err)
 	}
 
 	l.addCompiledTemplate(file.RelativePath(), compiledTemplate)
@@ -187,12 +187,12 @@ func (l *TemplateLoader) EvalText(library *Library, file *files.File) (starlark.
 
 	textRoot, err := texttemplate.NewParser().Parse(fileBs, file.RelativePath())
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, fmt.Errorf("Parsing text template '%s': %s", file.RelativePath(), err)
 	}
 
 	compiledTemplate, err := texttemplate.NewTemplate(file.RelativePath()).Compile(textRoot)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, fmt.Errorf("Compiling text template '%s': %s", file.RelativePath(), err)
 	}
 
 	l.addCompiledTemplate(file.RelativePath(), compiledTemplate)
