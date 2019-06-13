@@ -32,8 +32,12 @@ type MetaAndAnnotation struct {
 	Annotation *structmeta.Annotation
 }
 
-func NewStructMetaFromMeta(meta *yamlmeta.Meta) (structmeta.Meta, error) {
-	structMeta, err := structmeta.NewMetaFromString(meta.Data)
+type MetasOpts struct {
+	IgnoreUnknown bool
+}
+
+func NewStructMetaFromMeta(meta *yamlmeta.Meta, opts MetasOpts) (structmeta.Meta, error) {
+	structMeta, err := structmeta.NewMetaFromString(meta.Data, structmeta.MetaOpts{IgnoreUnknown: opts.IgnoreUnknown})
 	if err != nil {
 		return structmeta.Meta{}, fmt.Errorf(
 			"Unknown comment syntax at %s: '%s': %s",
@@ -42,11 +46,11 @@ func NewStructMetaFromMeta(meta *yamlmeta.Meta) (structmeta.Meta, error) {
 	return structMeta, nil
 }
 
-func NewMetas(node yamlmeta.Node) (Metas, error) {
+func NewMetas(node yamlmeta.Node, opts MetasOpts) (Metas, error) {
 	metas := Metas{}
 
 	for _, meta := range node.GetMetas() {
-		structMeta, err := NewStructMetaFromMeta(meta)
+		structMeta, err := NewStructMetaFromMeta(meta, opts)
 		if err != nil {
 			return metas, err
 		}

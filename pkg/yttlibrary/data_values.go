@@ -9,11 +9,12 @@ import (
 )
 
 const (
-	AnnotationValues structmeta.AnnotationName = "data/values"
+	AnnotationDataValues structmeta.AnnotationName = "data/values"
 )
 
 type DataValues struct {
-	DocSet *yamlmeta.DocumentSet
+	DocSet    *yamlmeta.DocumentSet
+	MetasOpts yamltemplate.MetasOpts
 }
 
 func (v DataValues) Find() (interface{}, bool, error) {
@@ -32,18 +33,18 @@ func (v DataValues) contains(val interface{}) (*yamlmeta.Document, bool, error) 
 	}
 
 	for _, meta := range node.GetMetas() {
-		structMeta, err := yamltemplate.NewStructMetaFromMeta(meta)
+		structMeta, err := yamltemplate.NewStructMetaFromMeta(meta, v.MetasOpts)
 		if err != nil {
 			return nil, false, err
 		}
 
 		for _, ann := range structMeta.Annotations {
-			if ann.Name == AnnotationValues {
+			if ann.Name == AnnotationDataValues {
 				// TODO check for ann emptiness
 				doc, isDoc := node.(*yamlmeta.Document)
 				if !isDoc {
 					return nil, false, fmt.Errorf("Expected YAML doc to be annotated with %s but was %T",
-						AnnotationValues, node)
+						AnnotationDataValues, node)
 				}
 				return doc, true, nil
 			}

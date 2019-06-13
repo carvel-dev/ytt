@@ -117,7 +117,7 @@ func evalTemplate(t *testing.T, data string) (string, *testErr) {
 		return "", &testErr{err, fmt.Errorf("unmarshal error: %v", err)}
 	}
 
-	compiledTemplate, err := yamltemplate.NewTemplate("stdin").Compile(docSet)
+	compiledTemplate, err := yamltemplate.NewTemplate("stdin", yamltemplate.TemplateOpts{}).Compile(docSet)
 	if err != nil {
 		return "", &testErr{err, fmt.Errorf("build error: %v", err)}
 	}

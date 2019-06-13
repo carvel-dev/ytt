@@ -331,3 +331,74 @@ end`)
 		t.Fatalf("Expected output file to have specific data, but was: >>>%s<<<", file.Bytes())
 	}
 }
+
+func TestIgnoreUnknownCommentsFalse(t *testing.T) {
+	yamlTplData := []byte(`
+# plain YAML comment
+#@ load("funcs/funcs.lib.yml", "yamlfunc")
+yamlfunc: #@ yamlfunc()`)
+
+	yamlFuncsData := []byte(`
+#@ def/end yamlfunc():
+yamlfunc: yamlfunc`)
+
+	filesToProcess := []*files.File{
+		files.MustNewFileFromSource(files.NewBytesSource("tpl.yml", yamlTplData)),
+		files.MustNewFileFromSource(files.NewBytesSource("funcs/funcs.lib.yml", yamlFuncsData)),
+	}
+
+	ui := cmdcore.NewPlainUI(false)
+	opts := cmdtpl.NewOptions()
+
+	out := opts.RunWithFiles(cmdtpl.TemplateInput{Files: filesToProcess}, ui)
+	if out.Err == nil {
+		t.Fatalf("Expected RunWithFiles to fail")
+	}
+
+	if out.Err.Error() != "Unknown comment syntax at line tpl.yml:2: ' plain YAML comment': Unknown metadata format (use '#@' or '#!')" {
+		t.Fatalf("Expected RunWithFiles to fail with error, but was '%s'", out.Err.Error())
+	}
+}
+
+func TestIgnoreUnknownCommentsTrue(t *testing.T) {
+	yamlTplData := []byte(`
+# plain YAML comment
+#@ load("funcs/funcs.lib.yml", "yamlfunc")
+yamlfunc: #@ yamlfunc()`)
+
+	expectedYAMLTplData := `yamlfunc:
+  yamlfunc: yamlfunc
+`
+
+	yamlFuncsData := []byte(`
+#@ def/end yamlfunc():
+yamlfunc: yamlfunc`)
+
+	filesToProcess := []*files.File{
+		files.MustNewFileFromSource(files.NewBytesSource("tpl.yml", yamlTplData)),
+		files.MustNewFileFromSource(files.NewBytesSource("funcs/funcs.lib.yml", yamlFuncsData)),
+	}
+
+	ui := cmdcore.NewPlainUI(false)
+	opts := cmdtpl.NewOptions()
+	opts.IgnoreUnknownComments = true
+
+	out := opts.RunWithFiles(cmdtpl.TemplateInput{Files: filesToProcess}, ui)
+	if out.Err != nil {
+		t.Fatalf("Expected RunWithFiles to succeed, but was error: %s", out.Err)
+	}
+
+	if len(out.Files) != 1 {
+		t.Fatalf("Expected number of output files to be 1, but was %d", len(out.Files))
+	}
+
+	file := out.Files[0]
+
+	if file.RelativePath() != "tpl.yml" {
+		t.Fatalf("Expected output file to be tpl.yml, but was %#v", file.RelativePath())
+	}
+
+	if string(file.Bytes()) != expectedYAMLTplData {
+		t.Fatalf("Expected output file to have specific data, but was: >>>%s<<<", file.Bytes())
+	}
+}

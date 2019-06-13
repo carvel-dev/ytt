@@ -17,13 +17,19 @@ import (
 type TemplateLoader struct {
 	ui                files.UI
 	values            interface{}
+	opts              TemplateLoaderOpts
 	compiledTemplates map[string]*template.CompiledTemplate
 }
 
-func NewTemplateLoader(values interface{}, ui files.UI) *TemplateLoader {
+type TemplateLoaderOpts struct {
+	IgnoreUnknownComments bool
+}
+
+func NewTemplateLoader(values interface{}, ui files.UI, opts TemplateLoaderOpts) *TemplateLoader {
 	return &TemplateLoader{
 		ui:                ui,
 		values:            values,
+		opts:              opts,
 		compiledTemplates: map[string]*template.CompiledTemplate{},
 	}
 }
@@ -146,7 +152,9 @@ func (l *TemplateLoader) EvalYAML(library *Library, file *files.File) (starlark.
 	l.ui.Debugf("### ast\n")
 	docSet.Print(l.ui.DebugWriter())
 
-	compiledTemplate, err := yamltemplate.NewTemplate(file.RelativePath()).Compile(docSet)
+	tplOpts := yamltemplate.TemplateOpts{IgnoreUnknownComments: l.opts.IgnoreUnknownComments}
+
+	compiledTemplate, err := yamltemplate.NewTemplate(file.RelativePath(), tplOpts).Compile(docSet)
 	if err != nil {
 		return nil, nil, err
 	}

@@ -12,6 +12,7 @@ import (
 
 type Template struct {
 	name         string
+	opts         TemplateOpts
 	docSet       *yamlmeta.DocumentSet
 	nodes        *template.Nodes
 	instructions *template.InstructionSet
@@ -20,8 +21,12 @@ type Template struct {
 	srcLinesByLine map[int]*template.SourceLine
 }
 
-func NewTemplate(name string) *Template {
-	return &Template{name: name, instructions: template.NewInstructionSet()}
+type TemplateOpts struct {
+	IgnoreUnknownComments bool
+}
+
+func NewTemplate(name string, opts TemplateOpts) *Template {
+	return &Template{name: name, opts: opts, instructions: template.NewInstructionSet()}
 }
 
 func (e *Template) Compile(docSet *yamlmeta.DocumentSet) (*template.CompiledTemplate, error) {
@@ -64,7 +69,7 @@ func (e *Template) build(val interface{}, parentNode yamlmeta.Node, parentTag te
 	code := []template.TemplateLine{}
 	nodeTag := e.nodes.AddNode(node, parentTag)
 
-	metas, err := NewMetas(node)
+	metas, err := NewMetas(node, MetasOpts{IgnoreUnknown: e.opts.IgnoreUnknownComments})
 	if err != nil {
 		return nil, err
 	}

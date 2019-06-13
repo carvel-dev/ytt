@@ -10,6 +10,7 @@ import (
 	"github.com/k14s/ytt/pkg/texttemplate"
 	"github.com/k14s/ytt/pkg/workspace"
 	"github.com/k14s/ytt/pkg/yamlmeta"
+	"github.com/k14s/ytt/pkg/yamltemplate"
 	"github.com/k14s/ytt/pkg/yttlibrary"
 	yttoverlay "github.com/k14s/ytt/pkg/yttlibrary/overlay"
 	"github.com/spf13/cobra"
@@ -17,7 +18,9 @@ import (
 )
 
 type TemplateOptions struct {
-	Debug                  bool
+	IgnoreUnknownComments bool
+	Debug                 bool
+
 	BulkFilesSourceOpts    BulkFilesSourceOpts
 	RegularFilesSourceOpts RegularFilesSourceOpts
 	DataValuesFlags        DataValuesFlags
@@ -51,9 +54,11 @@ func NewCmd(o *TemplateOptions) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "template",
 		Aliases: []string{"t", "tpl"},
-		Short:   "Process YAML templates (deprecated; use top-level `ytt` command instead of `ytt template` command)",
+		Short:   "Process YAML templates (deprecated; use top-level command -- e.g. `ytt -f-` instead of `ytt template -f-`)",
 		RunE:    func(_ *cobra.Command, _ []string) error { return o.Run() },
 	}
+	cmd.Flags().BoolVar(&o.IgnoreUnknownComments, "ignore-unknown-comments", false,
+		"Configure whether unknown comments are considered as errors (comments that do not start with '#@' or '#!')")
 	cmd.Flags().BoolVar(&o.Debug, "debug", false, "Enable debug output")
 	o.BulkFilesSourceOpts.Set(cmd)
 	o.RegularFilesSourceOpts.Set(cmd)
@@ -108,7 +113,8 @@ func (o *TemplateOptions) RunWithFiles(in TemplateInput, ui cmdcore.PlainUI) Tem
 		return o.inspectValues(values, ui)
 	}
 
-	loader := workspace.NewTemplateLoader(values, ui)
+	loaderOpts := workspace.TemplateLoaderOpts{IgnoreUnknownComments: o.IgnoreUnknownComments}
+	loader := workspace.NewTemplateLoader(values, ui, loaderOpts)
 
 	for _, fileInLib := range forOutputFiles {
 		// TODO find more generic way
@@ -195,7 +201,9 @@ func (o *TemplateOptions) extractValues(fs []workspace.FileInLibrary) ([]workspa
 				return nil, nil, fmt.Errorf("Unmarshaling YAML template: %s", err)
 			}
 
-			values, found, err := yttlibrary.DataValues{docSet}.Find()
+			tplOpts := yamltemplate.MetasOpts{IgnoreUnknown: o.IgnoreUnknownComments}
+
+			values, found, err := yttlibrary.DataValues{docSet, tplOpts}.Find()
 			if err != nil {
 				return nil, nil, err
 			}

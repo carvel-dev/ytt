@@ -29,21 +29,22 @@ type Annotation struct {
 //   "@template/code if True:"
 //   "@text/trim-left,text/trim-right,template/code if True:"
 
-func NewMetaFromString(data string) (Meta, error) {
+type MetaOpts struct {
+	IgnoreUnknown bool
+}
+
+func NewMetaFromString(data string, opts MetaOpts) (Meta, error) {
 	meta := Meta{}
 
 	// TODO better error messages?
 	switch {
-	case len(data) == 0:
-		return Meta{}, fmt.Errorf("Expected non-empty metadata")
-
-	case data[0] == '!':
+	case len(data) > 0 && data[0] == '!':
 		meta.Annotations = []*Annotation{{
 			Name:    AnnotationNameComment,
 			Content: data[1:],
 		}}
 
-	case data[0] == '@':
+	case len(data) > 0 && data[0] == '@':
 		pieces := strings.SplitN(data[1:], " ", 2)
 		for _, name := range strings.Split(pieces[0], ",") {
 			meta.Annotations = append(meta.Annotations, &Annotation{
@@ -55,7 +56,14 @@ func NewMetaFromString(data string) (Meta, error) {
 		}
 
 	default:
-		return Meta{}, fmt.Errorf("Unknown metadata format (use '#@' or '#!')")
+		if opts.IgnoreUnknown {
+			meta.Annotations = []*Annotation{{
+				Name:    AnnotationNameComment,
+				Content: data,
+			}}
+		} else {
+			return Meta{}, fmt.Errorf("Unknown metadata format (use '#@' or '#!')")
+		}
 	}
 
 	return meta, nil
