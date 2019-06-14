@@ -218,3 +218,5 @@ code, .terminal, .logo {
   padding: 2px 4px;
   border-radius: 4px;
 }
+
+#footer { text-align: center; }
