@@ -3,7 +3,7 @@
 - Website: https://get-ytt.io
 - Slack: [#k14s in Kubernetes slack](https://slack.kubernetes.io)
 
-`ytt` is a templating tool that understands YAML structure allowing you to focus on your data instead of how to properly escape it.
+`ytt` (pronounced spelled out) is a templating tool that understands YAML structure allowing you to focus on your data instead of how to properly escape it.
 
 [![](docs/ytt-playground-screenshot.png)](https://get-ytt.io/#example:example-demo)
 
