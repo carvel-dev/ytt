@@ -12,4 +12,4 @@
   - [Annotation format](lang-ref-annotation.md)
     - [@data/values annotation](ytt-data-values.md)
 - [Security](security.md)
-- [ytt vs tool X](ytt-vs-x.md)
+- [ytt vs X: How ytt is different from other tools / frameworks](ytt-vs-x.md)
