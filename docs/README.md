@@ -1,6 +1,15 @@
 ## Documentation
 
 - [Language](lang.md)
+  - [Strings](lang-ref-string.md)
+  - [Lists](lang-ref-list.md)
+  - [Dictionaries](lang-ref-dict.md)
+  - [If conditional](lang-ref-if.md)
+  - [For loop](lang-ref-for.md)
+  - [Functions](lang-ref-def.md)
+  - [@ytt library](lang-ref-ytt.md)
+    - [overlay](lang-ref-ytt-overlay.md)
+  - [Annotation format](lang-ref-annotation.md)
+    - [@data/values annotation](ytt-data-values.md)
 - [Security](security.md)
 - [ytt vs tool X](ytt-vs-x.md)
-- [ytt @data/values](ytt-data-values.md)
