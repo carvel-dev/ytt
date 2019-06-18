@@ -13,3 +13,9 @@
     - [@data/values annotation](ytt-data-values.md) describes how to inject input into templates
 - [Security](security.md)
 - [ytt vs X: How ytt is different from other tools / frameworks](ytt-vs-x.md)
+- Blog posts
+  - [ytt: The YAML Templating Tool that simplifies complex configuration management](https://developer.ibm.com/blogs/yaml-templating-tool-to-simplify-complex-configuration-management/)
+  - [Introducing k14s (Kubernetes Tools): Simple and Composable Tools for Application Deployment](https://content.pivotal.io/blog/introducing-k14s-kubernetes-tools-simple-and-composable-tools-for-application-deployment)
+- Talks
+  - [Introducing the YAML Templating Tool (ytt)](https://www.youtube.com/watch?v=KbB5tI_g3bo) on IBM Developer podcast
+  - [TGI Kubernetes 079: YTT and Kapp](https://www.youtube.com/watch?v=CSglwNTQiYg) with Joe Beda
