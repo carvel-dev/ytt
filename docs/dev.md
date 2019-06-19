@@ -1,6 +1,6 @@
-# Developmewnt References
+# Development References
 
-For those interested in extending and improving `ytt`, below is a quick reference on different parts of the source code:
+For those interested in extending and improving `ytt`, below is a quick reference on the structure of the source code:
 
 - [pkg/yamlmeta](https://github.com/k14s/ytt/tree/master/pkg/yamlmeta) handles paraing of yaml and dealing with tracking metadata for yaml nodes
 - [pkg/yamltemplate](https://github.com/k14s/ytt/tree/master/pkg/yamltemplate) deals with assembling template in starlark from yaml
