@@ -39,15 +39,4 @@ See [examples/playground/](examples/playground/) for examples shown on [get-ytt.
 
 ## Development
 
-```bash
-./hack/build.sh
-./hack/test-unit.sh
-./hack/test-e2e.sh
-./hack/test-all.sh
-
-# include goog analytics in 'ytt website' command for https://get-ytt.io
-# (goog analytics is _not_ included in release binaries)
-BUILD_VALUES=./hack/build-values-get-ytt-io.yml ./hack/build.sh
-```
-
-Consult [docs/dev.md](docs/dev.md) for a high level explanation of the code structure.
+Consult [docs/dev.md](docs/dev.md) for build instructions, code structure details.
