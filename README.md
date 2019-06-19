@@ -50,4 +50,4 @@ See [examples/playground/](examples/playground/) for examples shown on [get-ytt.
 BUILD_VALUES=./hack/build-values-get-ytt-io.yml ./hack/build.sh
 ```
 
-Consult [docs/dev.md](docs/dev.md) for a highlevel explanation of the code structure.
+Consult [docs/dev.md](docs/dev.md) for a high level explanation of the code structure.
