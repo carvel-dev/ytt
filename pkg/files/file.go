@@ -32,12 +32,16 @@ type File struct {
 	markedType      *Type
 	markedTemplate  *bool
 	markedForOutput *bool
+
+	order int // lowest comes first; 0 is used to indicate unsorted
 }
 
-func NewFiles(paths []string) ([]*File, error) {
-	var fileSrcs []Source
+func NewSortedFilesFromPaths(paths []string) ([]*File, error) {
+	var groupedFileSrcs [][]Source
 
 	for _, path := range paths {
+		var fileSrcs []Source
+
 		switch {
 		case path == "-":
 			fileSrcs = append(fileSrcs, NewStdinSource())
@@ -74,23 +78,47 @@ func NewFiles(paths []string) ([]*File, error) {
 				fileSrcs = append(fileSrcs, regLocalSource)
 			}
 		}
+
+		groupedFileSrcs = append(groupedFileSrcs, fileSrcs)
 	}
 
-	var files []*File
+	var allFiles []*File
+	currOrder := 1
 
-	for _, fileSrc := range fileSrcs {
-		file, err := NewFileFromSource(fileSrc)
-		if err != nil {
-			return nil, err
+	for _, fileSrcs := range groupedFileSrcs {
+		var files []*File
+
+		for _, fileSrc := range fileSrcs {
+			file, err := NewFileFromSource(fileSrc)
+			if err != nil {
+				return nil, err
+			}
+			files = append(files, file)
 		}
-		files = append(files, file)
+
+		// Only sort files alphanum within a group
+		sort.Slice(files, func(i, j int) bool {
+			return files[i].RelativePath() < files[j].RelativePath()
+		})
+
+		for _, file := range files {
+			file.order = currOrder
+			currOrder += 1
+		}
+
+		allFiles = append(allFiles, files...)
 	}
 
-	sort.Slice(files, func(i, j int) bool {
-		return files[i].RelativePath() < files[j].RelativePath()
-	})
+	return allFiles, nil
+}
 
-	return files, nil
+func NewSortedFiles(files []*File) []*File {
+	currOrder := 1
+	for _, file := range files {
+		file.order = currOrder
+		currOrder += 1
+	}
+	return files
 }
 
 func NewFileFromSource(fileSrc Source) (*File, error) {
@@ -192,6 +220,13 @@ func (r *File) matchesExt(exts []string) bool {
 		}
 	}
 	return false
+}
+
+func (r *File) OrderLess(otherFile *File) bool {
+	if r.order == 0 || otherFile.order == 0 {
+		panic("Missing file order assignment")
+	}
+	return r.order < otherFile.order
 }
 
 func NewRegularFileLocalSource(path, dir string, fi os.FileInfo) (LocalSource, error) {

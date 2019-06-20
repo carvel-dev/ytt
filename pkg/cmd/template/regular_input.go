@@ -37,7 +37,7 @@ func (s *RegularFilesSource) HasInput() bool  { return len(s.opts.files) > 0 }
 func (s *RegularFilesSource) HasOutput() bool { return true }
 
 func (s *RegularFilesSource) Input() (TemplateInput, error) {
-	filesToProcess, err := files.NewFiles(s.opts.files)
+	filesToProcess, err := files.NewSortedFilesFromPaths(s.opts.files)
 	if err != nil {
 		return TemplateInput{}, err
 	}

@@ -12,7 +12,7 @@ import (
 )
 
 type DataValuesPreProcessing struct {
-	valuesFiles           []workspace.FileInLibrary
+	valuesFiles           []*workspace.FileInLibrary
 	flags                 DataValuesFlags
 	loader                *workspace.TemplateLoader
 	IgnoreUnknownComments bool // TODO remove?
@@ -20,6 +20,9 @@ type DataValuesPreProcessing struct {
 
 func (o DataValuesPreProcessing) Apply() (interface{}, error) {
 	var values *yamlmeta.Document
+
+	// Respect assigned file order for data values overlaying to succeed
+	workspace.SortFilesInLibrary(o.valuesFiles)
 
 	for _, fileInLib := range o.valuesFiles {
 		valuesDocs, err := o.templateFile(fileInLib)
@@ -49,7 +52,7 @@ func (o DataValuesPreProcessing) Apply() (interface{}, error) {
 	return valuesWithFlags.AsInterface(yamlmeta.InterfaceConvertOpts{}), nil
 }
 
-func (p DataValuesPreProcessing) templateFile(fileInLib workspace.FileInLibrary) ([]*yamlmeta.Document, error) {
+func (p DataValuesPreProcessing) templateFile(fileInLib *workspace.FileInLibrary) ([]*yamlmeta.Document, error) {
 	_, resultVal, err := p.loader.EvalYAML(fileInLib.Library, fileInLib.File)
 	if err != nil {
 		return nil, err

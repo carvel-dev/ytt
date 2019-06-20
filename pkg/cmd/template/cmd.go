@@ -2,7 +2,6 @@ package template
 
 import (
 	"fmt"
-	"sort"
 	"time"
 
 	cmdcore "github.com/k14s/ytt/pkg/cmd/core"
@@ -18,6 +17,7 @@ import (
 type TemplateOptions struct {
 	IgnoreUnknownComments bool
 	Debug                 bool
+	InspectFiles          bool
 
 	BulkFilesSourceOpts    BulkFilesSourceOpts
 	RegularFilesSourceOpts RegularFilesSourceOpts
@@ -58,6 +58,7 @@ func NewCmd(o *TemplateOptions) *cobra.Command {
 	cmd.Flags().BoolVar(&o.IgnoreUnknownComments, "ignore-unknown-comments", false,
 		"Configure whether unknown comments are considered as errors (comments that do not start with '#@' or '#!')")
 	cmd.Flags().BoolVar(&o.Debug, "debug", false, "Enable debug output")
+	cmd.Flags().BoolVar(&o.InspectFiles, "files-inspect", false, "Inspect files")
 	o.BulkFilesSourceOpts.Set(cmd)
 	o.RegularFilesSourceOpts.Set(cmd)
 	o.DataValuesFlags.Set(cmd)
@@ -92,10 +93,14 @@ func (o *TemplateOptions) Run() error {
 
 func (o *TemplateOptions) RunWithFiles(in TemplateInput, ui cmdcore.PlainUI) TemplateOutput {
 	outputFiles := []files.OutputFile{}
-	outputDocSets := map[string]*yamlmeta.DocumentSet{}
+	outputDocSets := map[*workspace.FileInLibrary]*yamlmeta.DocumentSet{}
 
 	rootLibrary := workspace.NewRootLibrary(in.Files)
 	rootLibrary.Print(ui.DebugWriter())
+
+	if o.InspectFiles {
+		return o.inspectFiles(rootLibrary, ui)
+	}
 
 	forOutputFiles, valuesFiles, err := o.categorizeFiles(rootLibrary.ListAccessibleFiles())
 	if err != nil {
@@ -126,7 +131,7 @@ func (o *TemplateOptions) RunWithFiles(in TemplateInput, ui cmdcore.PlainUI) Tem
 			}
 
 			resultDocSet := resultVal.(*yamlmeta.DocumentSet)
-			outputDocSets[fileInLib.File.RelativePath()] = resultDocSet
+			outputDocSets[fileInLib] = resultDocSet
 
 		case files.TypeText:
 			_, resultVal, err := loader.EvalText(fileInLib.Library, fileInLib.File)
@@ -151,8 +156,8 @@ func (o *TemplateOptions) RunWithFiles(in TemplateInput, ui cmdcore.PlainUI) Tem
 
 	combinedDocSet := &yamlmeta.DocumentSet{}
 
-	for _, relPath := range o.sortedOutputDocSetPaths(outputDocSets) {
-		docSet := outputDocSets[relPath]
+	for _, fileInLib := range o.sortedOutputDocSets(outputDocSets) {
+		docSet := outputDocSets[fileInLib]
 		combinedDocSet.Items = append(combinedDocSet.Items, docSet.Items...)
 
 		resultDocBytes, err := docSet.AsBytes()
@@ -160,20 +165,21 @@ func (o *TemplateOptions) RunWithFiles(in TemplateInput, ui cmdcore.PlainUI) Tem
 			return TemplateOutput{Err: fmt.Errorf("Marshaling template result: %s", err)}
 		}
 
-		ui.Debugf("### %s result\n%s", relPath, resultDocBytes)
-		outputFiles = append(outputFiles, files.NewOutputFile(relPath, resultDocBytes))
+		ui.Debugf("### %s result\n%s", fileInLib.File.RelativePath(), resultDocBytes)
+		outputFile := files.NewOutputFile(fileInLib.File.RelativePath(), resultDocBytes)
+		outputFiles = append(outputFiles, outputFile)
 	}
 
 	return TemplateOutput{Files: outputFiles, DocSet: combinedDocSet}
 }
 
-func (o *TemplateOptions) categorizeFiles(allFiles []workspace.FileInLibrary) ([]workspace.FileInLibrary, []workspace.FileInLibrary, error) {
+func (o *TemplateOptions) categorizeFiles(allFiles []*workspace.FileInLibrary) ([]*workspace.FileInLibrary, []*workspace.FileInLibrary, error) {
 	allFiles, valuesFiles, err := o.separateValuesFiles(allFiles)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	forOutputFiles := []workspace.FileInLibrary{}
+	forOutputFiles := []*workspace.FileInLibrary{}
 
 	for _, fileInLib := range allFiles {
 		if fileInLib.File.IsForOutput() {
@@ -184,9 +190,9 @@ func (o *TemplateOptions) categorizeFiles(allFiles []workspace.FileInLibrary) ([
 	return forOutputFiles, valuesFiles, nil
 }
 
-func (o *TemplateOptions) separateValuesFiles(fs []workspace.FileInLibrary) ([]workspace.FileInLibrary, []workspace.FileInLibrary, error) {
-	var nonValuesFiles []workspace.FileInLibrary
-	var valuesFiles []workspace.FileInLibrary
+func (o *TemplateOptions) separateValuesFiles(fs []*workspace.FileInLibrary) ([]*workspace.FileInLibrary, []*workspace.FileInLibrary, error) {
+	var nonValuesFiles []*workspace.FileInLibrary
+	var valuesFiles []*workspace.FileInLibrary
 
 	for _, fileInLib := range fs {
 		if fileInLib.File.Type() == files.TypeYAML && fileInLib.File.IsTemplate() {
@@ -243,11 +249,21 @@ func (o *TemplateOptions) inspectValues(values interface{}, ui cmdcore.PlainUI) 
 	return TemplateOutput{Empty: true}
 }
 
-func (o *TemplateOptions) sortedOutputDocSetPaths(outputDocSets map[string]*yamlmeta.DocumentSet) []string {
-	var paths []string
-	for relPath, _ := range outputDocSets {
-		paths = append(paths, relPath)
+func (o *TemplateOptions) inspectFiles(rootLibrary *workspace.Library, ui cmdcore.PlainUI) TemplateOutput {
+	files := rootLibrary.ListAccessibleFiles()
+	workspace.SortFilesInLibrary(files)
+
+	for _, fileInLib := range files {
+		ui.Printf("%s\n", fileInLib.File.RelativePath())
 	}
-	sort.Strings(paths)
-	return paths
+	return TemplateOutput{Empty: true}
+}
+
+func (o *TemplateOptions) sortedOutputDocSets(outputDocSets map[*workspace.FileInLibrary]*yamlmeta.DocumentSet) []*workspace.FileInLibrary {
+	var files []*workspace.FileInLibrary
+	for file, _ := range outputDocSets {
+		files = append(files, file)
+	}
+	workspace.SortFilesInLibrary(files)
+	return files
 }

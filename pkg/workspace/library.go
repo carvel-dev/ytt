@@ -3,6 +3,7 @@ package workspace
 import (
 	"fmt"
 	"io"
+	"sort"
 	"strings"
 
 	"github.com/k14s/ytt/pkg/files"
@@ -124,10 +125,10 @@ type FileInLibrary struct {
 	Library *Library
 }
 
-func (l *Library) ListAccessibleFiles() []FileInLibrary {
-	var result []FileInLibrary
+func (l *Library) ListAccessibleFiles() []*FileInLibrary {
+	var result []*FileInLibrary
 	for _, file := range l.files {
-		result = append(result, FileInLibrary{File: file, Library: l})
+		result = append(result, &FileInLibrary{File: file, Library: l})
 	}
 	for _, lib := range l.children {
 		if !lib.private {
@@ -160,4 +161,10 @@ func (l *Library) print(out io.Writer, indent int) {
 	for _, lib := range l.children {
 		lib.print(out, indent+1)
 	}
+}
+
+func SortFilesInLibrary(files []*FileInLibrary) {
+	sort.SliceStable(files, func(i, j int) bool {
+		return files[i].File.OrderLess(files[j].File)
+	})
 }

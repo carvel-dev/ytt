@@ -72,7 +72,7 @@ func (d *OutputDirectory) removeOldFiles() error {
 		}
 
 		// TODO does not work with filtering of template files
-		if (&File{nil, walkedPath, nil, nil, nil, nil}).IsForOutput() {
+		if (&File{nil, walkedPath, nil, nil, nil, nil, 0}).IsForOutput() {
 			selectedPaths = append(selectedPaths, walkedPath)
 		}
 

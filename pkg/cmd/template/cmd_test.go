@@ -80,68 +80,6 @@ end`)
 	}
 }
 
-func TestDocumentOverlays(t *testing.T) {
-	yamlTplData := []byte(`
-array:
-- name: item1
-  subarray:
-  - item1
-`)
-
-	yamlOverlayTplData := []byte(`
-#@ load("@ytt:overlay", "overlay")
-#@ load("funcs/funcs.lib.yml", "yamlfunc")
-#@overlay/match by=overlay.all
----
-array:
-#@overlay/match by="name"
-- name: item1
-  #@overlay/match missing_ok=True
-  subarray2:
-  - #@ yamlfunc()
-`)
-
-	expectedYAMLTplData := `array:
-- name: item1
-  subarray:
-  - item1
-  subarray2:
-  - yamlfunc: yamlfunc
-`
-
-	yamlFuncsData := []byte(`
-#@ def/end yamlfunc():
-yamlfunc: yamlfunc`)
-
-	filesToProcess := []*files.File{
-		files.MustNewFileFromSource(files.NewBytesSource("tpl.yml", yamlTplData)),
-		files.MustNewFileFromSource(files.NewBytesSource("overlay.yml", yamlOverlayTplData)),
-		files.MustNewFileFromSource(files.NewBytesSource("funcs/funcs.lib.yml", yamlFuncsData)),
-	}
-
-	ui := cmdcore.NewPlainUI(false)
-	opts := cmdtpl.NewOptions()
-
-	out := opts.RunWithFiles(cmdtpl.TemplateInput{Files: filesToProcess}, ui)
-	if out.Err != nil {
-		t.Fatalf("Expected RunWithFiles to succeed, but was error: %s", out.Err)
-	}
-
-	if len(out.Files) != 1 {
-		t.Fatalf("Expected number of output files to be 1, but was %d", len(out.Files))
-	}
-
-	file := out.Files[0]
-
-	if file.RelativePath() != "tpl.yml" {
-		t.Fatalf("Expected output file to be tpl.yml, but was %#v", file.RelativePath())
-	}
-
-	if string(file.Bytes()) != expectedYAMLTplData {
-		t.Fatalf("Expected output file to have specific data, but was: >>>%s<<<", file.Bytes())
-	}
-}
-
 func TestBacktraceAcrossFiles(t *testing.T) {
 	yamlTplData := []byte(`
 #@ load("funcs/funcs.lib.yml", "some_data")

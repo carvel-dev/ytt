@@ -24,10 +24,10 @@ data_str: str
 int: 123
 str: str`)
 
-	filesToProcess := []*files.File{
+	filesToProcess := files.NewSortedFiles([]*files.File{
 		files.MustNewFileFromSource(files.NewBytesSource("tpl.yml", yamlTplData)),
 		files.MustNewFileFromSource(files.NewBytesSource("data.yml", yamlData)),
-	}
+	})
 
 	ui := cmdcore.NewPlainUI(false)
 	opts := cmdtpl.NewOptions()
@@ -84,10 +84,10 @@ another:
   nested:
     map: {"a": 123}`)
 
-	filesToProcess := []*files.File{
+	filesToProcess := files.NewSortedFiles([]*files.File{
 		files.MustNewFileFromSource(files.NewBytesSource("tpl.yml", yamlTplData)),
 		files.MustNewFileFromSource(files.NewBytesSource("data.yml", yamlData)),
-	}
+	})
 
 	ui := cmdcore.NewPlainUI(false)
 	opts := cmdtpl.NewOptions()
@@ -138,11 +138,11 @@ str: str`)
 ---
 str: str2`)
 
-	filesToProcess := []*files.File{
+	filesToProcess := files.NewSortedFiles([]*files.File{
 		files.MustNewFileFromSource(files.NewBytesSource("tpl.yml", yamlTplData)),
 		files.MustNewFileFromSource(files.NewBytesSource("data1.yml", yamlData1)),
 		files.MustNewFileFromSource(files.NewBytesSource("data2.yml", yamlData2)),
-	}
+	})
 
 	ui := cmdcore.NewPlainUI(false)
 	opts := cmdtpl.NewOptions()
@@ -188,10 +188,10 @@ str: str2
 #@overlay/match missing_ok=True
 int: 123`)
 
-	filesToProcess := []*files.File{
+	filesToProcess := files.NewSortedFiles([]*files.File{
 		files.MustNewFileFromSource(files.NewBytesSource("tpl.yml", yamlTplData)),
 		files.MustNewFileFromSource(files.NewBytesSource("data.yml", yamlData)),
-	}
+	})
 
 	ui := cmdcore.NewPlainUI(false)
 	opts := cmdtpl.NewOptions()
@@ -238,11 +238,11 @@ str: str2
 #@overlay/match missing_ok=True
 int: 123`)
 
-	filesToProcess := []*files.File{
+	filesToProcess := files.NewSortedFiles([]*files.File{
 		files.MustNewFileFromSource(files.NewBytesSource("tpl.yml", yamlTplData)),
 		files.MustNewFileFromSource(files.NewBytesSource("data1.yml", yamlData1)),
 		files.MustNewFileFromSource(files.NewBytesSource("data2.yml", yamlData2)),
-	}
+	})
 
 	ui := cmdcore.NewPlainUI(false)
 	opts := cmdtpl.NewOptions()
@@ -290,11 +290,11 @@ data:
   #@overlay/remove
   int: null`)
 
-	filesToProcess := []*files.File{
+	filesToProcess := files.NewSortedFiles([]*files.File{
 		files.MustNewFileFromSource(files.NewBytesSource("tpl.yml", yamlTplData)),
 		files.MustNewFileFromSource(files.NewBytesSource("data1.yml", yamlData1)),
 		files.MustNewFileFromSource(files.NewBytesSource("data2.yml", yamlData2)),
-	}
+	})
 
 	ui := cmdcore.NewPlainUI(false)
 	opts := cmdtpl.NewOptions()
@@ -327,9 +327,9 @@ str: str
 ---
 non-data-values-doc`)
 
-	filesToProcess := []*files.File{
+	filesToProcess := files.NewSortedFiles([]*files.File{
 		files.MustNewFileFromSource(files.NewBytesSource("data.yml", yamlData)),
-	}
+	})
 
 	ui := cmdcore.NewPlainUI(false)
 	opts := cmdtpl.NewOptions()
@@ -350,9 +350,9 @@ func TestDataValuesWithNonDocDataValuesErr(t *testing.T) {
 #@data/values
 str: str`)
 
-	filesToProcess := []*files.File{
+	filesToProcess := files.NewSortedFiles([]*files.File{
 		files.MustNewFileFromSource(files.NewBytesSource("data.yml", yamlData)),
-	}
+	})
 
 	ui := cmdcore.NewPlainUI(false)
 	opts := cmdtpl.NewOptions()
