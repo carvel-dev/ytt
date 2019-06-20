@@ -78,7 +78,7 @@ third: new-val3
 fifth: new-val5
 ```
 
-See [Multiple data values example](https://get-ytt/#example:example-multiple-data-values) in the online playground.
+See [Multiple data values example](https://get-ytt.io/#example:example-multiple-data-values) in the online playground.
 
 ### Specifying data values via command line flags
 
