@@ -169,6 +169,8 @@ See [Overlay files example](https://get-ytt.io/#example:example-overlay-files) i
 
 #### Overlay order
 
+More explicitly specified in v0.13.0.
+
 Overlay order is determined by:
 
 1. left-to-right for file flags

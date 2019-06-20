@@ -34,6 +34,8 @@ fourth: null
 
 ### Splitting data values into multiple files
 
+Available in v0.13.0.
+
 It's possible to split data values into multiple files (or specify multiple data values in the same file). `@ytt:data` library provides access to the _merged_ result. Merging is controlled via [overlay annotations](lang-ref-ytt-overlay.md) and follows same ordering as [overlays](lang-ref-ytt-overlay.md#overlay-order). Example:
 
 `values-default.yml`:
