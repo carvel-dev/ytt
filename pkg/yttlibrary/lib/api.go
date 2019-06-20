@@ -47,9 +47,14 @@ func (m libModule) load(
 	internal bool) (starlark.Value, error) {
 
 	var recursive bool = true
+	var opts eval.TemplateLoaderOpts
+	var argsvalues interface{}
 
-	if args.Len() != 1 {
-		return starlark.None, fmt.Errorf("expected exactly one argument")
+	if args.Len() < 1 || args.Len() > 2 {
+		return starlark.None, fmt.Errorf("expected one or two arguments")
+	}
+	if args.Len() >= 2 {
+		argsvalues = yamlmeta.NewASTFromInterface(core.NewStarlarkValue(args.Index(1)).AsInterface())
 	}
 
 	for _, kw := range kwargs {
@@ -68,6 +73,11 @@ func (m libModule) load(
 			if err != nil {
 				return starlark.None, err
 			}
+		case "ignore_unknown_comments":
+			opts.IgnoreUnknownComments, err = core.NewStarlarkValue(kw.Index(1)).AsBool()
+			if err != nil {
+				return starlark.None, err
+			}
 		}
 	}
 
@@ -76,56 +86,13 @@ func (m libModule) load(
 		return starlark.None, err
 	}
 
-	var lib eval.Library
+	var res *eval.Result
 
 	if internal {
-		lib, err = m.loader.LoadInternalLibrary(libPath, nil)
+		res, err = m.loader.LoadInternalLibrary(libPath, argsvalues, &opts)
 	} else {
-		lib, err = m.loader.LoadExternalLibrary([]string{libPath}, recursive, nil)
+		res, err = m.loader.LoadExternalLibrary([]string{libPath}, argsvalues, recursive, &opts)
 	}
-	if err != nil {
-		return starlark.None, err
-	}
-
-	lib2 := &library{lib, false}
-	res := map[interface{}]interface{}{
-		"eval": starlark.NewBuiltin("lib.eval", core.ErrWrapper(lib2.Eval)),
-	}
-
-	return core.NewGoValue(res, true).AsStarlarkValue(), nil
-}
-
-type library struct {
-	eval.Library
-	evaluated bool
-}
-
-func (lib *library) Eval(
-	thread *starlark.Thread, f *starlark.Builtin,
-	args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
-
-	if lib.evaluated {
-		return starlark.None, fmt.Errorf("eval() cannot be called twice on loaded library")
-	}
-
-	var argsvalues interface{}
-
-	if args.Len() == 1 {
-		argsvalues = core.NewStarlarkValue(args.Index(0)).AsInterface()
-	} else if args.Len() > 1 {
-		return starlark.None, fmt.Errorf("eval() cannot be called with more than one argument")
-	}
-
-	lib.evaluated = true
-
-	if argsvalues != nil {
-		err := lib.FilterValues(eval.NewValuesFilter(yamlmeta.NewASTFromInterface(argsvalues)))
-		if err != nil {
-			return starlark.None, err
-		}
-	}
-
-	res, err := lib.Library.Eval()
 	if err != nil {
 		return starlark.None, err
 	}

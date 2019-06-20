@@ -2,6 +2,7 @@ package tests
 
 import (
 	"github.com/k14s/ytt/pkg/cmd/core"
+	"github.com/k14s/ytt/pkg/eval"
 	"github.com/k14s/ytt/pkg/workspace"
 
 	"bytes"
@@ -18,12 +19,8 @@ type Package struct {
 
 func (p *Package) Test(t *testing.T) {
 	ui := &core.PlainUI{}
-	lib, err := workspace.LoadRootLibrary([]string{p.Location}, p.Recursive, ui)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	res, err := lib.Eval()
+	opts := eval.TemplateLoaderOpts{}
+	res, err := workspace.LoadRootLibrary([]string{p.Location}, p.Recursive, ui, nil, opts)
 	if err != nil {
 		t.Fatal(err)
 	}

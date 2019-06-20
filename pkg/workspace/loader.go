@@ -20,7 +20,7 @@ func NewLoader(lib *Library, file *files.File, ui files.UI, opts eval.TemplateLo
 	return &Loader{lib, file, ui, opts}
 }
 
-func (loader *Loader) LoadInternalLibrary(path string, opts *eval.TemplateLoaderOpts) (eval.Library, error) {
+func (loader *Loader) LoadInternalLibrary(path string, astValues interface{}, opts *eval.TemplateLoaderOpts) (*eval.Result, error) {
 	if opts == nil {
 		opts = &loader.Opts
 	}
@@ -35,17 +35,17 @@ func (loader *Loader) LoadInternalLibrary(path string, opts *eval.TemplateLoader
 		return nil, err
 	}
 
-	library, err := LoadLibrary(rootLibrary, *opts)
+	library, err := LoadLibrary(rootLibrary, *opts, astValues)
 	if err != nil {
 		return nil, err
 	}
 
 	library.UI = loader.UI
 
-	return library, nil
+	return library.Eval()
 }
 
-func (loader *Loader) LoadExternalLibrary(paths []string, recursive bool, opts *eval.TemplateLoaderOpts) (eval.Library, error) {
+func (loader *Loader) LoadExternalLibrary(paths []string, astValues interface{}, recursive bool, opts *eval.TemplateLoaderOpts) (*eval.Result, error) {
 	if opts == nil {
 		opts = &loader.Opts
 	}
@@ -60,10 +60,10 @@ func (loader *Loader) LoadExternalLibrary(paths []string, recursive bool, opts *
 		absolutePaths = append(absolutePaths, filepath.Join(filepath.Dir(sourcePath), path))
 	}
 
-	return LoadRootLibrary(absolutePaths, recursive, loader.UI, *opts)
+	return LoadRootLibrary(absolutePaths, recursive, loader.UI, astValues, *opts)
 }
 
-func LoadRootLibrary(absolutePaths []string, recursive bool, ui files.UI, opts eval.TemplateLoaderOpts) (eval.Library, error) {
+func LoadRootLibrary(absolutePaths []string, recursive bool, ui files.UI, astValues interface{}, opts eval.TemplateLoaderOpts) (*eval.Result, error) {
 	filesToProcess, err := files.NewFiles(absolutePaths, true)
 	if err != nil {
 		return nil, err
@@ -71,12 +71,12 @@ func LoadRootLibrary(absolutePaths []string, recursive bool, ui files.UI, opts e
 
 	rootLibrary := NewRootLibrary(filesToProcess, recursive)
 
-	library, err := LoadLibrary(rootLibrary, opts)
+	library, err := LoadLibrary(rootLibrary, opts, astValues)
 	if err != nil {
 		return nil, err
 	}
 
 	library.UI = ui
 
-	return library, nil
+	return library.Eval()
 }

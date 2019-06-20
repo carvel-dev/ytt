@@ -6,11 +6,11 @@
 ---
 main: true
 where: #@ data.values.where
-tmpl1_text: #@ lib.get("@tmpl1").eval({"where": "override"}).text()
-tmpl1_test: #@ lib.get("@tmpl1").eval().text("test.yml")
+tmpl1_text: #@ lib.get("@tmpl1", {"where": "override"}).text()
+tmpl1_test: #@ lib.get("@tmpl1").text("test.yml")
 
---- #@ template.replace(lib.get("@tmpl1").eval().output())
+--- #@ template.replace(lib.get("@tmpl1").output())
 
 ---
 now: "only test.yml"
---- #@ template.replace(lib.get("@tmpl1").eval().output("test.yml"))
+--- #@ template.replace(lib.get("@tmpl1").output("test.yml"))

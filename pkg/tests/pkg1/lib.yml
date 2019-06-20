@@ -1,5 +1,5 @@
 #@ load("@ytt:lib", "lib")
 ---
 lib1:
-  hello: #@ lib.get("@lib1").eval().text("hello.yml")
-  all: #@ lib.get("@lib1").eval().text()
+  hello: #@ lib.get("@lib1").text("hello.yml")
+  all: #@ lib.get("@lib1").text()

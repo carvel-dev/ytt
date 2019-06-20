@@ -95,25 +95,18 @@ func (o *TemplateOptions) RunWithFiles(in TemplateInput, ui cmdcore.PlainUI) Tem
 	rootLibrary := workspace.NewRootLibrary(in.Files, o.Recursive)
 	rootLibrary.Print(ui.DebugWriter())
 
-	loaderOpts := eval.TemplateLoaderOpts{IgnoreUnknownComments: o.IgnoreUnknownComments}
-	loadedLibrary, err := workspace.LoadLibrary(rootLibrary, loaderOpts)
-	if err != nil {
-		return TemplateOutput{Err: err}
-	}
-
-	loadedLibrary.UI = ui
-
 	astFlagValues, err := o.DataValuesFlags.ASTValues()
 	if err != nil {
 		return TemplateOutput{Err: err}
 	}
 
-	filter := eval.NewValuesFilter(astFlagValues)
-
-	loadedLibrary.Values, err = filter(loadedLibrary.Values)
+	loaderOpts := eval.TemplateLoaderOpts{IgnoreUnknownComments: o.IgnoreUnknownComments}
+	loadedLibrary, err := workspace.LoadLibrary(rootLibrary, loaderOpts, astFlagValues)
 	if err != nil {
 		return TemplateOutput{Err: err}
 	}
+
+	loadedLibrary.UI = ui
 
 	if o.DataValuesFlags.Inspect {
 		return o.inspectValues(loadedLibrary.Values, ui)
