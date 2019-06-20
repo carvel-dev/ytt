@@ -58,7 +58,7 @@ func (s BulkFilesSource) Input() (TemplateInput, error) {
 		result = append(result, file)
 	}
 
-	return TemplateInput{result}, nil
+	return TemplateInput{files.NewSortedFiles(result)}, nil
 }
 
 func (s *BulkFilesSource) Output(out TemplateOutput) error {
