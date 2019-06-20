@@ -166,3 +166,13 @@ metadata:
 ```
 
 See [Overlay files example](https://get-ytt.io/#example:example-overlay-files) in online playground.
+
+#### Overlay order
+
+Overlay order is determined by:
+
+1. left-to-right for file flags
+  - e.g. in `-f overlay1.yml -f overlay2.yml`, `overlay1.yml` will be applied first
+1. if file flag is set to a directory, files are alphanumerically sorted
+  - e.g. in `aaa/z.yml xxx/c.yml d.yml`, will be applied in following order `aaa/z.yml d.yml xxx/c.yml`
+1. top-to-bottom order for overlay YAML documents within a single file
