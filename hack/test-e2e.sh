@@ -31,4 +31,6 @@ done
 ./ytt -f examples/overlay-files > /dev/null
 ./ytt -f examples/overlay-regular-files --file-mark file.yml:type=yaml-plain > /dev/null
 
+diff <(./ytt -f examples/adjust-rbac-version) examples/adjust-rbac-version/expected.txt
+
 echo E2E SUCCESS
