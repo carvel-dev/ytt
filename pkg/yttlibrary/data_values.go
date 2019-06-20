@@ -17,46 +17,81 @@ type DataValues struct {
 	MetasOpts yamltemplate.MetasOpts
 }
 
-func (v DataValues) Find() (interface{}, bool, error) {
-	doc, found, err := v.contains(v.DocSet)
-	if !found || err != nil {
-		return nil, found, err
+func (v DataValues) Extract() ([]*yamlmeta.Document, []*yamlmeta.Document, error) {
+	err := v.checkNonDocs(v.DocSet)
+	if err != nil {
+		return nil, nil, err
 	}
 
-	return doc.AsInterface(yamlmeta.InterfaceConvertOpts{}), true, nil
+	valuesDocs, nonValuesDocs, err := v.extract(v.DocSet)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return valuesDocs, nonValuesDocs, nil
 }
 
-func (v DataValues) contains(val interface{}) (*yamlmeta.Document, bool, error) {
+func (v DataValues) extract(docSet *yamlmeta.DocumentSet) ([]*yamlmeta.Document, []*yamlmeta.Document, error) {
+	var valuesDocs []*yamlmeta.Document
+	var nonValuesDocs []*yamlmeta.Document
+
+	for _, doc := range docSet.Items {
+		var hasMatchingAnn bool
+
+		for _, meta := range doc.GetMetas() {
+			// TODO potentially use template.NewAnnotations(doc).Has(yttoverlay.AnnotationMatch)
+			// however if doc was not processed by the template, it wont have any annotations set
+			structMeta, err := yamltemplate.NewStructMetaFromMeta(meta, v.MetasOpts)
+			if err != nil {
+				return nil, nil, err
+			}
+			for _, ann := range structMeta.Annotations {
+				if ann.Name == AnnotationDataValues {
+					hasMatchingAnn = true
+				}
+			}
+		}
+
+		if hasMatchingAnn {
+			valuesDocs = append(valuesDocs, doc)
+		} else {
+			nonValuesDocs = append(nonValuesDocs, doc)
+		}
+	}
+
+	return valuesDocs, nonValuesDocs, nil
+}
+
+func (v DataValues) checkNonDocs(val interface{}) error {
 	node, ok := val.(yamlmeta.Node)
 	if !ok {
-		return nil, false, nil
+		return nil
 	}
 
 	for _, meta := range node.GetMetas() {
 		structMeta, err := yamltemplate.NewStructMetaFromMeta(meta, v.MetasOpts)
 		if err != nil {
-			return nil, false, err
+			return err
 		}
 
 		for _, ann := range structMeta.Annotations {
 			if ann.Name == AnnotationDataValues {
-				// TODO check for ann emptiness
-				doc, isDoc := node.(*yamlmeta.Document)
+				// TODO check for annotation emptiness
+				_, isDoc := node.(*yamlmeta.Document)
 				if !isDoc {
-					return nil, false, fmt.Errorf("Expected YAML doc to be annotated with %s but was %T",
-						AnnotationDataValues, node)
+					errMsg := "Expected YAML document to be annotated with %s but was %T"
+					return fmt.Errorf(errMsg, AnnotationDataValues, node)
 				}
-				return doc, true, nil
 			}
 		}
 	}
 
 	for _, childVal := range node.GetValues() {
-		doc, found, err := v.contains(childVal)
-		if found || err != nil {
-			return doc, found, err
+		err := v.checkNonDocs(childVal)
+		if err != nil {
+			return err
 		}
 	}
 
-	return nil, false, nil
+	return nil
 }

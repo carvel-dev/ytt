@@ -43,6 +43,7 @@ examples = [
   {"name": "example-replace"},
   {"name": "example-overlay"},
   {"name": "example-overlay-files"},
+  {"name": "example-multiple-data-values"},
   {"name": "example-k8s-ingress"},
   {"name": "example-k8s-ingress-with-defs"},
   {"name": "example-k8s-ingress-with-structs"},

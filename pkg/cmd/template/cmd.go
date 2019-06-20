@@ -12,9 +12,7 @@ import (
 	"github.com/k14s/ytt/pkg/yamlmeta"
 	"github.com/k14s/ytt/pkg/yamltemplate"
 	"github.com/k14s/ytt/pkg/yttlibrary"
-	yttoverlay "github.com/k14s/ytt/pkg/yttlibrary/overlay"
 	"github.com/spf13/cobra"
-	"go.starlark.net/starlark"
 )
 
 type TemplateOptions struct {
@@ -99,12 +97,15 @@ func (o *TemplateOptions) RunWithFiles(in TemplateInput, ui cmdcore.PlainUI) Tem
 	rootLibrary := workspace.NewRootLibrary(in.Files)
 	rootLibrary.Print(ui.DebugWriter())
 
-	forOutputFiles, values, err := o.categorizeFiles(rootLibrary.ListAccessibleFiles())
+	forOutputFiles, valuesFiles, err := o.categorizeFiles(rootLibrary.ListAccessibleFiles())
 	if err != nil {
 		return TemplateOutput{Err: err}
 	}
 
-	values, err = o.overlayFlagValues(values)
+	loaderOpts := workspace.TemplateLoaderOpts{IgnoreUnknownComments: o.IgnoreUnknownComments}
+	noValuesLoader := workspace.NewTemplateLoader(nil, ui, loaderOpts)
+
+	values, err := DataValuesPreProcessing{valuesFiles, o.DataValuesFlags, noValuesLoader, o.IgnoreUnknownComments}.Apply()
 	if err != nil {
 		return TemplateOutput{Err: err}
 	}
@@ -113,7 +114,6 @@ func (o *TemplateOptions) RunWithFiles(in TemplateInput, ui cmdcore.PlainUI) Tem
 		return o.inspectValues(values, ui)
 	}
 
-	loaderOpts := workspace.TemplateLoaderOpts{IgnoreUnknownComments: o.IgnoreUnknownComments}
 	loader := workspace.NewTemplateLoader(values, ui, loaderOpts)
 
 	for _, fileInLib := range forOutputFiles {
@@ -167,8 +167,8 @@ func (o *TemplateOptions) RunWithFiles(in TemplateInput, ui cmdcore.PlainUI) Tem
 	return TemplateOutput{Files: outputFiles, DocSet: combinedDocSet}
 }
 
-func (o *TemplateOptions) categorizeFiles(allFiles []workspace.FileInLibrary) ([]workspace.FileInLibrary, interface{}, error) {
-	allFiles, values, err := o.extractValues(allFiles)
+func (o *TemplateOptions) categorizeFiles(allFiles []workspace.FileInLibrary) ([]workspace.FileInLibrary, []workspace.FileInLibrary, error) {
+	allFiles, valuesFiles, err := o.separateValuesFiles(allFiles)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -181,13 +181,12 @@ func (o *TemplateOptions) categorizeFiles(allFiles []workspace.FileInLibrary) ([
 		}
 	}
 
-	return forOutputFiles, values, nil
+	return forOutputFiles, valuesFiles, nil
 }
 
-func (o *TemplateOptions) extractValues(fs []workspace.FileInLibrary) ([]workspace.FileInLibrary, interface{}, error) {
-	var foundValues interface{}
-	var valuesFile *files.File
-	var newFs []workspace.FileInLibrary
+func (o *TemplateOptions) separateValuesFiles(fs []workspace.FileInLibrary) ([]workspace.FileInLibrary, []workspace.FileInLibrary, error) {
+	var nonValuesFiles []workspace.FileInLibrary
+	var valuesFiles []workspace.FileInLibrary
 
 	for _, fileInLib := range fs {
 		if fileInLib.File.Type() == files.TypeYAML && fileInLib.File.IsTemplate() {
@@ -203,28 +202,21 @@ func (o *TemplateOptions) extractValues(fs []workspace.FileInLibrary) ([]workspa
 
 			tplOpts := yamltemplate.MetasOpts{IgnoreUnknown: o.IgnoreUnknownComments}
 
-			values, found, err := yttlibrary.DataValues{docSet, tplOpts}.Find()
+			valuesDocs, _, err := yttlibrary.DataValues{docSet, tplOpts}.Extract()
 			if err != nil {
 				return nil, nil, err
 			}
 
-			if found {
-				if valuesFile != nil {
-					// TODO until overlays are here
-					return nil, nil, fmt.Errorf(
-						"Template values could only be specified once, but found multiple (%s, %s)",
-						valuesFile.RelativePath(), fileInLib.File.RelativePath())
-				}
-				valuesFile = fileInLib.File
-				foundValues = values
+			if len(valuesDocs) > 0 {
+				valuesFiles = append(valuesFiles, fileInLib)
 				continue
 			}
 		}
 
-		newFs = append(newFs, fileInLib)
+		nonValuesFiles = append(nonValuesFiles, fileInLib)
 	}
 
-	return newFs, foundValues, nil
+	return nonValuesFiles, valuesFiles, nil
 }
 
 func (o *TemplateOptions) pickSource(srcs []FileSource, pickFunc func(FileSource) bool) FileSource {
@@ -234,39 +226,6 @@ func (o *TemplateOptions) pickSource(srcs []FileSource, pickFunc func(FileSource
 		}
 	}
 	return srcs[len(srcs)-1]
-}
-
-func (o *TemplateOptions) sortedOutputDocSetPaths(outputDocSets map[string]*yamlmeta.DocumentSet) []string {
-	var paths []string
-	for relPath, _ := range outputDocSets {
-		paths = append(paths, relPath)
-	}
-	sort.Strings(paths)
-	return paths
-}
-
-func (o *TemplateOptions) overlayFlagValues(fileValues interface{}) (interface{}, error) {
-	if fileValues == nil {
-		fileValues = map[interface{}]interface{}{}
-	}
-
-	astFlagValues, err := o.DataValuesFlags.ASTValues()
-	if err != nil {
-		return nil, err
-	}
-
-	op := yttoverlay.OverlayOp{
-		Left:   yamlmeta.NewASTFromInterface(fileValues),
-		Right:  astFlagValues,
-		Thread: &starlark.Thread{Name: "data-values-overlay-pre-processing"},
-	}
-
-	newLeft, err := op.Apply()
-	if err != nil {
-		return nil, fmt.Errorf("Overlaying data values from flags (provided via --data-value-*) on top of data values (marked as @data/values): %s", err)
-	}
-
-	return (&yamlmeta.Document{Value: newLeft}).AsInterface(yamlmeta.InterfaceConvertOpts{}), nil
 }
 
 func (o *TemplateOptions) inspectValues(values interface{}, ui cmdcore.PlainUI) TemplateOutput {
@@ -282,4 +241,13 @@ func (o *TemplateOptions) inspectValues(values interface{}, ui cmdcore.PlainUI) 
 	ui.Printf("%s", docBytes) // no newline
 
 	return TemplateOutput{Empty: true}
+}
+
+func (o *TemplateOptions) sortedOutputDocSetPaths(outputDocSets map[string]*yamlmeta.DocumentSet) []string {
+	var paths []string
+	for relPath, _ := range outputDocSets {
+		paths = append(paths, relPath)
+	}
+	sort.Strings(paths)
+	return paths
 }

@@ -24,16 +24,6 @@ func (s *DataValuesFlags) Set(cmd *cobra.Command) {
 	cmd.Flags().BoolVar(&s.Inspect, "data-values-inspect", false, "Inspect data values")
 }
 
-func (s *DataValuesFlags) ASTValues() (interface{}, error) {
-	vals, err := s.Values()
-	if err != nil {
-		return nil, err
-	}
-
-	// TODO add @overlay/match missing_ok=True
-	return yamlmeta.NewASTFromInterface(vals), nil
-}
-
 func (s *DataValuesFlags) Values() (map[interface{}]interface{}, error) {
 	result := []map[string]interface{}{}
 
