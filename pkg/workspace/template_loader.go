@@ -15,6 +15,11 @@ import (
 	"go.starlark.net/starlark"
 )
 
+const (
+	AnnotationLibPrivate   = "lib/private"
+	AnnotationLibNoRecurse = "lib/norecurse"
+)
+
 type TemplateLoader struct {
 	ui                files.UI
 	values            interface{}
@@ -163,12 +168,41 @@ func (l *TemplateLoader) EvalYAML(library *Library, file *files.File) (starlark.
 	yttLibrary := yttlibrary.NewAPI(compiledTemplate.TplReplaceNode, l.values, l, loader)
 	thread := l.newThread(library, yttLibrary, file)
 
-	globals, resultVal, err := compiledTemplate.Eval(thread, l)
+	globals, resultVal, annotations, err := compiledTemplate.Eval(thread, l)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	err = l.parseAnnotations(library, annotations)
 	if err != nil {
 		return nil, nil, err
 	}
 
 	return globals, resultVal, nil
+}
+
+func (l *TemplateLoader) parseAnnotations(library *Library, annotations []template.GlobalAnnotation) error {
+	for _, ann := range annotations {
+		if ann.Name == template.AnnotationLibNoRecurse {
+			for _, subLib := range library.children {
+				subLib.private = true
+			}
+		} else if ann.Name == template.AnnotationLibPrivate {
+			if ann.Args.Len() != 1 {
+				return fmt.Errorf("expected exactly 1 argument to annotation %s", ann.Name)
+			}
+			libname, err := core.NewStarlarkValue(ann.Args.Index(0)).AsString()
+			if err != nil {
+				return fmt.Errorf("%s: expect string argument, %e", ann.Name, err)
+			}
+			subLib, found := library.FindLibrary(libname)
+			if !found {
+				return fmt.Errorf("%s %s: cannot find library", ann.Name, libname)
+			}
+			subLib.private = true
+		}
+	}
+	return nil
 }
 
 func (l *TemplateLoader) EvalText(library *Library, file *files.File) (starlark.StringDict, interface{}, error) {
@@ -200,9 +234,14 @@ func (l *TemplateLoader) EvalText(library *Library, file *files.File) (starlark.
 	yttLibrary := yttlibrary.NewAPI(compiledTemplate.TplReplaceNode, l.values, l, loader)
 	thread := l.newThread(library, yttLibrary, file)
 
-	globals, resultVal, err := compiledTemplate.Eval(thread, l)
+	globals, resultVal, annotations, err := compiledTemplate.Eval(thread, l)
 	if err != nil {
 		return nil, nil, fmt.Errorf("Evaluating text template: %s", err)
+	}
+
+	err = l.parseAnnotations(library, annotations)
+	if err != nil {
+		return nil, nil, err
 	}
 
 	return globals, resultVal, nil
@@ -228,9 +267,14 @@ func (l *TemplateLoader) EvalStarlark(library *Library, file *files.File) (starl
 	yttLibrary := yttlibrary.NewAPI(compiledTemplate.TplReplaceNode, l.values, l, loader)
 	thread := l.newThread(library, yttLibrary, file)
 
-	globals, _, err := compiledTemplate.Eval(thread, l)
+	globals, _, annotations, err := compiledTemplate.Eval(thread, l)
 	if err != nil {
 		return nil, fmt.Errorf("Evaluating starlark template: %s", err)
+	}
+
+	err = l.parseAnnotations(library, annotations)
+	if err != nil {
+		return nil, err
 	}
 
 	return globals, nil

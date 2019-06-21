@@ -8,13 +8,21 @@ import (
 )
 
 const (
-	AnnotationComment structmeta.AnnotationName = "comment"
-	AnnotationCode    structmeta.AnnotationName = "template/code"
-	AnnotationValue   structmeta.AnnotationName = "template/value"
+	AnnotationComment      structmeta.AnnotationName = "comment"
+	AnnotationCode         structmeta.AnnotationName = "template/code"
+	AnnotationValue        structmeta.AnnotationName = "template/value"
+	AnnotationLibPrivate   structmeta.AnnotationName = "lib/private"
+	AnnotationLibNoRecurse structmeta.AnnotationName = "lib/norecurse"
 )
 
 // TODO change to struct
 type NodeAnnotations map[structmeta.AnnotationName]NodeAnnotation
+
+type GlobalAnnotation struct {
+	Name   structmeta.AnnotationName
+	Args   starlark.Tuple
+	Kwargs []starlark.Tuple
+}
 
 type NodeAnnotation struct {
 	Args   starlark.Tuple

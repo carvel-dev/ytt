@@ -22,6 +22,7 @@ type CompiledTemplate struct {
 	evalDialects EvaluationCtxDialects
 	rootCtx      *EvaluationCtx
 	ctxs         []*EvaluationCtx
+	annotations  []GlobalAnnotation
 }
 
 func NewCompiledTemplate(name string, code []TemplateLine,
@@ -77,7 +78,7 @@ func (e *CompiledTemplate) DebugCodeAsString() string {
 }
 
 func (e *CompiledTemplate) Eval(thread *starlark.Thread, loader CompiledTemplateLoader) (
-	starlark.StringDict, interface{}, error) {
+	starlark.StringDict, interface{}, []GlobalAnnotation, error) {
 
 	globals := make(starlark.StringDict)
 
@@ -100,10 +101,10 @@ func (e *CompiledTemplate) Eval(thread *starlark.Thread, loader CompiledTemplate
 
 	updatedGlobals, val, err := e.eval(thread, globals)
 	if err != nil {
-		return nil, nil, NewCompiledTemplateMultiError(err, loader)
+		return nil, nil, nil, NewCompiledTemplateMultiError(err, loader)
 	}
 
-	return updatedGlobals, val, nil
+	return updatedGlobals, val, e.annotations, nil
 }
 
 func (e *CompiledTemplate) eval(
@@ -224,7 +225,7 @@ func (e *CompiledTemplate) tplStartNodeAnnotation(
 	thread *starlark.Thread, f *starlark.Builtin,
 	args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
 
-	return e.ctxs[len(e.ctxs)-1].TplStartNodeAnnotation(thread, f, args, kwargs)
+	return e.ctxs[len(e.ctxs)-1].TplStartNodeAnnotation(e, thread, f, args, kwargs)
 }
 
 func (e *CompiledTemplate) tplCollectNodeAnnotation(

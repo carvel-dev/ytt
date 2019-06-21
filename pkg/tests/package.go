@@ -14,22 +14,22 @@ import (
 
 type Package struct {
 	Location  string
-	Recursive bool
 }
 
 func (p *Package) Test(t *testing.T) {
 	ui := &core.PlainUI{}
 	opts := eval.TemplateLoaderOpts{}
-	res, err := workspace.LoadRootLibrary([]string{p.Location}, p.Recursive, ui, nil, opts)
+	res, err := workspace.LoadRootLibrary([]string{p.Location}, true, ui, nil, opts)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	for _, f := range res.OutputFiles {
+		t.Logf("Result: %v", f.RelativePath())
 		expectedLocation := path.Join(p.Location, f.RelativePath()+".out")
 		expected, err := ioutil.ReadFile(expectedLocation)
 		if err != nil && os.IsNotExist(err) {
-			t.Logf("Missing expected file %+v, skip check", expectedLocation)
+			t.Errorf("Missing expected file %+v, skip check", expectedLocation)
 		} else if err != nil {
 			t.Error(err)
 		} else if !bytes.Equal(expected, f.Bytes()) {

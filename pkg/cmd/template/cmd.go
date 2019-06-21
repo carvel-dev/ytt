@@ -19,7 +19,6 @@ type TemplateOptions struct {
 	BulkFilesSourceOpts    BulkFilesSourceOpts
 	RegularFilesSourceOpts RegularFilesSourceOpts
 	DataValuesFlags        DataValuesFlags
-	Recursive              bool
 }
 
 type TemplateInput struct {
@@ -43,9 +42,7 @@ type FileSource interface {
 var _ []FileSource = []FileSource{&BulkFilesSource{}, &RegularFilesSource{}}
 
 func NewOptions() *TemplateOptions {
-	return &TemplateOptions{
-		Recursive: true,
-	}
+	return &TemplateOptions{}
 }
 
 func NewCmd(o *TemplateOptions) *cobra.Command {
@@ -58,7 +55,6 @@ func NewCmd(o *TemplateOptions) *cobra.Command {
 	cmd.Flags().BoolVar(&o.IgnoreUnknownComments, "ignore-unknown-comments", false,
 		"Configure whether unknown comments are considered as errors (comments that do not start with '#@' or '#!')")
 	cmd.Flags().BoolVar(&o.Debug, "debug", false, "Enable debug output")
-	cmd.Flags().BoolVarP(&o.Recursive, "recursive", "R", true, "Template subdirectories (true by default)")
 	o.BulkFilesSourceOpts.Set(cmd)
 	o.RegularFilesSourceOpts.Set(cmd)
 	o.DataValuesFlags.Set(cmd)
@@ -92,7 +88,7 @@ func (o *TemplateOptions) Run() error {
 }
 
 func (o *TemplateOptions) RunWithFiles(in TemplateInput, ui cmdcore.PlainUI) TemplateOutput {
-	rootLibrary := workspace.NewRootLibrary(in.Files, o.Recursive)
+	rootLibrary := workspace.NewRootLibrary(in.Files, true)
 	rootLibrary.Print(ui.DebugWriter())
 
 	astFlagValues, err := o.DataValuesFlags.ASTValues()
