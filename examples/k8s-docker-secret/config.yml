@@ -1,0 +1,14 @@
+#@ load("@ytt:json", "json")
+#@ load("@ytt:base64", "base64")
+#@ load("@ytt:data", "data")
+
+apiVersion: v1
+kind: Secret
+metadata:
+  name: dkr
+  namespace: default
+type: kubernetes.io/dockerconfigjson
+data:
+  #@ docker_auth = base64.encode("{}:{}".format(data.values.docker.username, data.values.docker.password))
+  #@ docker_creds = {"username": data.values.docker.username, "password": data.values.docker.password, "auth": docker_auth}
+  .dockerconfigjson: #@ base64.encode(json.encode({"auths": {data.values.docker.server: docker_creds}}))

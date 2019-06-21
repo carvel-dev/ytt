@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: dkr
+  namespace: default
+type: kubernetes.io/dockerconfigjson
+data:
+  .dockerconfigjson: eyJhdXRocyI6eyJET0NLRVJfUkVHSVNUUllfU0VSVkVSIjp7ImF1dGgiOiJSRTlEUzBWU1gxVlRSVkk2UkU5RFMwVlNYMUJCVTFOWFQxSkUiLCJwYXNzd29yZCI6IkRPQ0tFUl9QQVNTV09SRCIsInVzZXJuYW1lIjoiRE9DS0VSX1VTRVIifX19

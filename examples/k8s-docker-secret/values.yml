@@ -1,0 +1,6 @@
+#@data/values
+---
+docker:
+  server: "DOCKER_REGISTRY_SERVER"
+  username: "DOCKER_USER"
+  password: "DOCKER_PASSWORD"
