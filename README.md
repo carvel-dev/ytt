@@ -2,6 +2,8 @@
 
 - Website: https://get-ytt.io
 - Slack: [#k14s in Kubernetes slack](https://slack.kubernetes.io)
+- [Docs](docs/README.md) with topics on language, security, ytt vs other tools, _blog posts and talks_ etc.
+- Install: Grab prebuilt binaries from the [Releases page](https://github.com/k14s/ytt/releases)
 
 `ytt` (pronounced spelled out) is a templating tool that understands YAML structure allowing you to focus on your data instead of how to properly escape it.
 
@@ -18,17 +20,9 @@ Features:
 - includes *sandboxed* "fully featured" Python-like programming language
 - allows configuration modularization via functions and libraries
 
-Try out [online playground](https://get-ytt.io) or download latest binaries from [Releases](https://github.com/k14s/ytt/releases) page (playground is included via `ytt website` command).
-
-## Docs
-
-- [Docs](docs/README.md) with topics on language, security, ytt vs other tools, _blog posts and talks_ etc.
-
-## Install
-
-Grab prebuilt binaries from the [Releases page](https://github.com/k14s/ytt/releases).
-
 ## Try it
+
+Try out [online playground](https://get-ytt.io) or download latest binaries from [Releases page](https://github.com/k14s/ytt/releases) and run it locally:
 
 ```
 ytt -f examples/playground/example-demo/
