@@ -1,23 +1,22 @@
-package template
+package workspace
 
 import (
 	"fmt"
 
 	"github.com/k14s/ytt/pkg/template"
-	"github.com/k14s/ytt/pkg/workspace"
 	"github.com/k14s/ytt/pkg/yamlmeta"
 	yttoverlay "github.com/k14s/ytt/pkg/yttlibrary/overlay"
 	"go.starlark.net/starlark"
 )
 
 type OverlayPostProcessing struct {
-	docSets map[*workspace.FileInLibrary]*yamlmeta.DocumentSet
+	docSets map[*FileInLibrary]*yamlmeta.DocumentSet
 }
 
-func (o OverlayPostProcessing) Apply() (map[*workspace.FileInLibrary]*yamlmeta.DocumentSet, error) {
-	overlayDocSets := map[*workspace.FileInLibrary][]*yamlmeta.Document{}
+func (o OverlayPostProcessing) Apply() (map[*FileInLibrary]*yamlmeta.DocumentSet, error) {
+	overlayDocSets := map[*FileInLibrary][]*yamlmeta.Document{}
 	docSetsWithoutOverlays := []*yamlmeta.DocumentSet{}
-	docSetToFilesMapping := map[*yamlmeta.DocumentSet]*workspace.FileInLibrary{}
+	docSetToFilesMapping := map[*yamlmeta.DocumentSet]*FileInLibrary{}
 
 	for file, docSet := range o.docSets {
 		var newItems []*yamlmeta.Document
@@ -41,11 +40,11 @@ func (o OverlayPostProcessing) Apply() (map[*workspace.FileInLibrary]*yamlmeta.D
 	}
 
 	// Respect assigned file order for data values overlaying to succeed
-	var sortedOverlayFiles []*workspace.FileInLibrary
+	var sortedOverlayFiles []*FileInLibrary
 	for file, _ := range overlayDocSets {
 		sortedOverlayFiles = append(sortedOverlayFiles, file)
 	}
-	workspace.SortFilesInLibrary(sortedOverlayFiles)
+	SortFilesInLibrary(sortedOverlayFiles)
 
 	for _, file := range sortedOverlayFiles {
 		for _, overlay := range overlayDocSets[file] {
@@ -65,7 +64,7 @@ func (o OverlayPostProcessing) Apply() (map[*workspace.FileInLibrary]*yamlmeta.D
 		}
 	}
 
-	result := map[*workspace.FileInLibrary]*yamlmeta.DocumentSet{}
+	result := map[*FileInLibrary]*yamlmeta.DocumentSet{}
 
 	for _, docSet := range docSetsWithoutOverlays {
 		if file, ok := docSetToFilesMapping[docSet]; ok {

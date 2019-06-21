@@ -1,9 +1,8 @@
-package template
+package workspace
 
 import (
 	"fmt"
 
-	"github.com/k14s/ytt/pkg/workspace"
 	"github.com/k14s/ytt/pkg/yamlmeta"
 	"github.com/k14s/ytt/pkg/yamltemplate"
 	"github.com/k14s/ytt/pkg/yttlibrary"
@@ -12,9 +11,9 @@ import (
 )
 
 type DataValuesPreProcessing struct {
-	valuesFiles           []*workspace.FileInLibrary
-	flags                 DataValuesFlags
-	loader                *workspace.TemplateLoader
+	valuesFiles           []*FileInLibrary
+	valuesFlagsAst        interface{}
+	loader                *TemplateLoader
 	IgnoreUnknownComments bool // TODO remove?
 }
 
@@ -22,7 +21,7 @@ func (o DataValuesPreProcessing) Apply() (interface{}, error) {
 	var values *yamlmeta.Document
 
 	// Respect assigned file order for data values overlaying to succeed
-	workspace.SortFilesInLibrary(o.valuesFiles)
+	SortFilesInLibrary(o.valuesFiles)
 
 	for _, fileInLib := range o.valuesFiles {
 		valuesDocs, err := o.templateFile(fileInLib)
@@ -52,7 +51,7 @@ func (o DataValuesPreProcessing) Apply() (interface{}, error) {
 	return valuesWithFlags.AsInterface(yamlmeta.InterfaceConvertOpts{}), nil
 }
 
-func (p DataValuesPreProcessing) templateFile(fileInLib *workspace.FileInLibrary) ([]*yamlmeta.Document, error) {
+func (p DataValuesPreProcessing) templateFile(fileInLib *FileInLibrary) ([]*yamlmeta.Document, error) {
 	_, resultDocSet, err := p.loader.EvalYAML(fileInLib.Library, fileInLib.File)
 	if err != nil {
 		return nil, err
@@ -95,17 +94,12 @@ func (p DataValuesPreProcessing) overlay(valuesDoc, newValuesDoc *yamlmeta.Docum
 }
 
 func (p DataValuesPreProcessing) overlayFlags(valuesDoc *yamlmeta.Document) (*yamlmeta.Document, error) {
-	flagValues, err := p.flags.Values()
-	if err != nil {
-		return nil, err
-	}
-
 	if valuesDoc == nil {
 		// TODO get rid of assumption that data values is a map?
 		valuesDoc = &yamlmeta.Document{Value: &yamlmeta.Map{}}
 	}
 
-	astFlagValues := &yamlmeta.Document{Value: yamlmeta.NewASTFromInterface(flagValues)}
+	astFlagValues := &yamlmeta.Document{Value: p.valuesFlagsAst}
 
 	result, err := p.overlay(valuesDoc, astFlagValues)
 	if err != nil {
