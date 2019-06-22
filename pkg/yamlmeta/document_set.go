@@ -2,10 +2,7 @@ package yamlmeta
 
 import (
 	"bytes"
-	"fmt"
 	"io"
-
-	"github.com/k14s/ytt/pkg/yamlmeta/internal/yaml.v2"
 )
 
 type DocSetOpts struct {
@@ -41,26 +38,22 @@ func (d *DocumentSet) AsSourceBytes() ([]byte, bool) {
 }
 
 func (d *DocumentSet) AsBytes() ([]byte, error) {
-	buf := new(bytes.Buffer)
-	var writtenOnce bool
+	return d.AsBytesWithPrinter(nil)
+}
 
-	for i, item := range d.Items {
+func (d *DocumentSet) AsBytesWithPrinter(printerFunc func(io.Writer) DocumentPrinter) ([]byte, error) {
+	if printerFunc == nil {
+		printerFunc = func(w io.Writer) DocumentPrinter { return NewYAMLPrinter(w) }
+	}
+
+	buf := new(bytes.Buffer)
+	printer := printerFunc(buf)
+
+	for _, item := range d.Items {
 		if item.injected || item.IsEmpty() {
 			continue
 		}
-
-		if writtenOnce {
-			buf.Write([]byte("---\n")) // TODO use encoder?
-		} else {
-			writtenOnce = true
-		}
-
-		bs, err := yaml.Marshal(item.AsInterface(InterfaceConvertOpts{OrderedMap: true}))
-		if err != nil {
-			return nil, fmt.Errorf("marshaling doc %d: %s", i, err)
-		}
-
-		buf.Write(bs)
+		printer.Print(item)
 	}
 
 	return buf.Bytes(), nil

@@ -15,5 +15,9 @@ func (d *Document) IsEmpty() bool {
 }
 
 func (d *Document) AsInterface(opts InterfaceConvertOpts) interface{} {
-	return convertToLowYAML(d.Value, opts)
+	result := convertToLowYAML(d.Value, opts)
+	if opts.Plain {
+		result = convertToLowGo(result)
+	}
+	return result
 }

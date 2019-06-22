@@ -37,14 +37,18 @@ func (p *Position) Line() int {
 }
 
 func (p *Position) AsString() string {
+	return "line " + p.AsCompactString()
+}
+
+func (p *Position) AsCompactString() string {
 	filePrefix := p.file
 	if len(filePrefix) > 0 {
 		filePrefix += ":"
 	}
 	if p.IsKnown() {
-		return fmt.Sprintf("line %s%d", filePrefix, p.Line())
+		return fmt.Sprintf("%s%d", filePrefix, p.Line())
 	}
-	return fmt.Sprintf("line %s?", filePrefix)
+	return fmt.Sprintf("%s?", filePrefix)
 }
 
 func (p *Position) AsIntString() string {

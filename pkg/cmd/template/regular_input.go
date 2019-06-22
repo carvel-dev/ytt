@@ -2,19 +2,22 @@ package template
 
 import (
 	"fmt"
+	"io"
 	"regexp"
 	"strings"
 
 	cmdcore "github.com/k14s/ytt/pkg/cmd/core"
 	"github.com/k14s/ytt/pkg/files"
+	"github.com/k14s/ytt/pkg/yamlmeta"
 	"github.com/spf13/cobra"
 )
 
 type RegularFilesSourceOpts struct {
-	files     []string
-	fileMarks []string
-	recursive bool
-	output    string
+	files      []string
+	fileMarks  []string
+	recursive  bool
+	output     string
+	outputType string
 }
 
 func (s *RegularFilesSourceOpts) Set(cmd *cobra.Command) {
@@ -22,6 +25,7 @@ func (s *RegularFilesSourceOpts) Set(cmd *cobra.Command) {
 	cmd.Flags().StringArrayVar(&s.fileMarks, "file-mark", nil, "File mark (ie change file path, mark as non-template) (format: file:key=value) (can be specified multiple times)")
 	cmd.Flags().BoolVarP(&s.recursive, "recursive", "R", true, "Interpret file as directory (deprecated; set to true by default)")
 	cmd.Flags().StringVarP(&s.output, "output", "o", "", "Directory for output")
+	cmd.Flags().StringVar(&s.outputType, "output-type", "yaml", "Output type (yaml, json, pos)")
 }
 
 type RegularFilesSource struct {
@@ -59,7 +63,22 @@ func (s *RegularFilesSource) Output(out TemplateOutput) error {
 		return files.NewOutputDirectory(s.opts.output, out.Files, s.ui).Write()
 	}
 
-	combinedDocBytes, err := out.DocSet.AsBytes()
+	var printerFunc func(io.Writer) yamlmeta.DocumentPrinter
+
+	switch s.opts.outputType {
+	case "yaml":
+		printerFunc = nil
+	case "json":
+		printerFunc = func(w io.Writer) yamlmeta.DocumentPrinter { return yamlmeta.NewJSONPrinter(w) }
+	case "pos":
+		printerFunc = func(w io.Writer) yamlmeta.DocumentPrinter {
+			return yamlmeta.WrappedFilePositionPrinter{yamlmeta.NewFilePositionPrinter(w)}
+		}
+	default:
+		return fmt.Errorf("Unknown output type '%s'", s.opts.outputType)
+	}
+
+	combinedDocBytes, err := out.DocSet.AsBytesWithPrinter(printerFunc)
 	if err != nil {
 		return fmt.Errorf("Marshaling combined template result: %s", err)
 	}
