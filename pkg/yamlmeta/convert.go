@@ -10,6 +10,7 @@ import (
 
 type InterfaceConvertOpts struct {
 	OrderedMap bool
+	Plain      bool
 }
 
 func NewASTFromInterface(val interface{}) interface{} {
@@ -77,6 +78,31 @@ func convertToLowYAML(val interface{}, opts InterfaceConvertOpts) interface{} {
 			return result
 		}
 		return val
+
+	default:
+		return val
+	}
+}
+
+func convertToLowGo(val interface{}) interface{} {
+	switch typedVal := val.(type) {
+	case yaml.MapSlice:
+		result := map[string]interface{}{}
+		for _, item := range typedVal {
+			if keyStr, ok := item.Key.(string); ok {
+				result[keyStr] = convertToLowGo(item.Value)
+			} else {
+				panic(fmt.Sprintf("Unsupport map key %T", item.Key))
+			}
+		}
+		return result
+
+	case []interface{}:
+		result := []interface{}{}
+		for _, item := range typedVal {
+			result = append(result, convertToLowGo(item))
+		}
+		return result
 
 	default:
 		return val
