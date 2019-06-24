@@ -102,6 +102,7 @@ func (e *EvaluationCtx) TplCollectNodeAnnotation(
 
 // args(nodeTag, name, values)
 func (e *EvaluationCtx) TplStartNodeAnnotation(
+	compiledTemplate *CompiledTemplate,
 	thread *starlark.Thread, f *starlark.Builtin,
 	args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
 
@@ -127,14 +128,26 @@ func (e *EvaluationCtx) TplStartNodeAnnotation(
 		kwargs = append(kwargs, val.(starlark.Tuple))
 	}
 
-	if _, found := e.pendingAnnotations[nodeTag]; !found {
-		e.pendingAnnotations[nodeTag] = NodeAnnotations{}
-	}
+	switch annName {
+	case AnnotationLibPrivate:
+		fallthrough
+	case AnnotationLibNoRecurse:
+		compiledTemplate.annotations = append(compiledTemplate.annotations, GlobalAnnotation{
+			Name:   annName,
+			Args:   annVals[0].(starlark.Tuple),
+			Kwargs: kwargs,
+		})
 
-	// TODO overrides last set value
-	e.pendingAnnotations[nodeTag][annName] = NodeAnnotation{
-		Args:   annVals[0].(starlark.Tuple),
-		Kwargs: kwargs,
+	default:
+		if _, found := e.pendingAnnotations[nodeTag]; !found {
+			e.pendingAnnotations[nodeTag] = NodeAnnotations{}
+		}
+
+		// TODO overrides last set value
+		e.pendingAnnotations[nodeTag][annName] = NodeAnnotation{
+			Args:   annVals[0].(starlark.Tuple),
+			Kwargs: kwargs,
+		}
 	}
 
 	return starlark.None, nil

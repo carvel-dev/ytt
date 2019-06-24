@@ -22,7 +22,7 @@ a = hello()
 	loader := template.NoopCompiledTemplateLoader{}
 	thread := &starlark.Thread{Name: "test", Load: loader.Load}
 
-	resultGlobals, resultVal, err := compiledTemplate.Eval(thread, loader)
+	resultGlobals, resultVal, _, err := compiledTemplate.Eval(thread, loader)
 	if err != nil {
 		t.Fatalf("Evaluating starlark template: %s", err)
 	}

@@ -132,7 +132,7 @@ func evalTemplate(t *testing.T, data string) (string, *testErr) {
 	loader := stdTemplateLoader{compiledTemplate: compiledTemplate}
 	thread := &starlark.Thread{Name: "test", Load: loader.Load}
 
-	_, newVal, err := compiledTemplate.Eval(thread, loader)
+	_, newVal, _, err := compiledTemplate.Eval(thread, loader)
 	if err != nil {
 		return "", &testErr{err, fmt.Errorf("eval error: %v\ncode:\n%s", err, compiledTemplate.DebugCodeAsString())}
 	}

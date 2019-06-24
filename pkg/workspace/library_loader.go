@@ -30,6 +30,24 @@ func NewLibraryLoader(lib *Library, ui files.UI, templateLoaderOpts TemplateLoad
 	}
 }
 
+func LoadRootLibrary(absolutePaths []string, ui files.UI, astValues interface{}, opts TemplateLoaderOpts) (*EvalResult, error) {
+	filesToProcess, err := files.NewSortedFilesFromPaths(absolutePaths)
+	if err != nil {
+		return nil, err
+	}
+
+	rootLibrary := NewRootLibrary(filesToProcess)
+
+	ll := NewLibraryLoader(rootLibrary, ui, opts)
+
+	astValues, err = ll.Values(astValues)
+	if err != nil {
+		return nil, err
+	}
+
+	return ll.Eval(astValues)
+}
+
 func (ll *LibraryLoader) Values(valuesFlagsAst EvalValuesAst) (EvalValuesAst, error) {
 	valuesFiles, err := ll.valuesFiles()
 	if err != nil {
