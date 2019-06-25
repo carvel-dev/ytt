@@ -31,7 +31,8 @@ done
 ./ytt -f examples/overlay-files > /dev/null
 ./ytt -f examples/overlay-regular-files --file-mark file.yml:type=yaml-plain > /dev/null
 
-diff <(./ytt -f examples/k8s-adjust-rbac-version) examples/k8s-adjust-rbac-version/expected.txt
-diff <(./ytt -f examples/k8s-docker-secret) examples/k8s-docker-secret/expected.txt
+diff <(./ytt -f examples/k8s-adjust-rbac-version)     examples/k8s-adjust-rbac-version/expected.txt
+diff <(./ytt -f examples/k8s-docker-secret)           examples/k8s-docker-secret/expected.txt
+diff <(./ytt -f examples/k8s-relative-rolling-update) examples/k8s-relative-rolling-update/expected.txt
 
 echo E2E SUCCESS
