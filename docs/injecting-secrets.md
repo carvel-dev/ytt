@@ -12,8 +12,16 @@ This document:
 
 One common question that's asked is why not to extend ytt to allow it to shell out to other programs or why not include builtin library that can fetch secrets from outside (e.g. imagine having builtin `vault` function). We are _not_ planning to support either of these features because we want to maintain strong sandbox boundary between templating language and ytt's external environment. Our expectation is that if ytt user wants to provide specific data to templates, it should be injected into ytt rather than templates (or ytt itself) fetching it. We believe this is a good security posture and as a side effect makes templates more portable (some users may store secrets in Vault and some other in Lastpass).
 
+- [Via command line args](#via-command-line-args)
+- [Via environment variables](#via-environment-variables)
+- [Via secret references, before templating](#via-secret-references-before-templating)
+- [Via encrypted secrets, before templating](#via-encrypted-secrets-before-templating)
+- [Via secret references, after templating](#via-secret-references-after-templating)
+- [Via encrypted resources, later decrypted inside the k8s cluster](#via-encrypted-resources-later-decrypted-inside-the-k8s-cluster)
+
 There might be other ways to inject secrets into ytt that are not listed here.
 
+---
 ### Via command line args
 
 ```bash
@@ -24,6 +32,7 @@ Cons:
 
 - depending on a computing environment secret values are visible in a process tree (as part of full command line) **which typically is considered unwanted**
 
+---
 ### Via environment variables
 
 ```bash
@@ -36,6 +45,7 @@ Cons:
 
 - depending on a computing environment secret values are visible in process metadata (e.g. typically accessible to root user under `/proc/<pid>/environ`)
 
+---
 ### Via secret references, before templating
 
 Given following two files:
@@ -68,8 +78,27 @@ echo -e "#@data/values\n---\n$(spruce merge ./secrets)" | ytt -f . -f -
 Pros:
 
 - able to commit mapping of data values to secrets in your preferred secret storage (in this example Vault)
-- secrets can be inserted in the middle of a string or base64 encoded (as sometimes required by k8s)
+- actual secret values are available to templates, hence, can be inserted in the middle of a string or base64 encoded (as sometimes required by k8s)
 
+---
+### Via encrypted secrets, before templating
+
+Similar to above "Via secret references, before templating" approach, instead of storing secret references in `secrets` file one can store encrypted secret values in `secrets` next to other configuration. Various tools like [sops](https://github.com/mozilla/sops) make encrypting configuration files fairly easy:
+
+```bash
+echo -e "#@data/values\n---\n$(sops -d ./secrets)" | ytt -f . -f -
+```
+
+Pros:
+
+- provides a way to version (backup, etc) secrets next to other configuration
+- actual secret values are available to templates, hence, can be inserted in the middle of a string or base64 encoded (as sometimes required by k8s)
+
+Cons:
+
+- depending on organization requirements even encrypted secrets may not be allowed to be stored next to other configuration
+
+---
 ### Via secret references, after templating
 
 Given following two files:
@@ -107,3 +136,20 @@ Cons:
 
 - secret resolution tools may not be able to find secret references inside strings (e.g. `http://(( ... )):(( ... ))@website`)
 - secret resolution tools will not understand if secret reference was encoded (for example with `base64` encoding as wanted sometimes by k8s)
+
+---
+### Via encrypted resources, later decrypted inside the k8s cluster
+
+This approach is Kubernetes specific.
+
+[Bitnami's `sealed-secrets` project](https://github.com/bitnami-labs/sealed-secrets) provides a way to encrypt secrets hence allowing to commit them next to your other configuration. With this approach, secret values are not accessible to templates directly; however, they can be referenced by k8s resources (for example via `secretRef` in `Pod` spec). At the time of the deploy of such resources, sealed secrets controller will create appropriate `Secret` objects with decrypted secret values.
+
+Pros:
+
+- provides a way to version (backup, etc) secrets next to other configuration
+- no way to access decrypted secret values in templates directly (though, this may not be necessary in many cases)
+
+Cons:
+
+- Kubernetes specific
+- depending on organization requirements even encrypted secrets may not be allowed to be stored next to other configuration
