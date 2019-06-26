@@ -11,6 +11,7 @@
     - [overlay](lang-ref-ytt-overlay.md) describes how to perform configuration patching on top of plain templating
   - [Annotation format](lang-ref-annotation.md)
     - [@data/values annotation](ytt-data-values.md) describes how to inject input into templates
+- [Injecting secrets](injecting-secrets.md)
 - [Security](security.md)
 - [ytt vs X: How ytt is different from other tools / frameworks](ytt-vs-x.md)
 - Blog posts
