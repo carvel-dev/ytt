@@ -1,0 +1,11 @@
+resources:
+- name: booklit
+  type: git
+  source: {uri: "https://github.com/vito/booklit"}
+
+jobs:
+- name: unit
+  plan:
+  - get: booklit
+    trigger: true
+  - task: test

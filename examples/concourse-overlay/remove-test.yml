@@ -1,0 +1,11 @@
+#@ load("@ytt:overlay", "overlay")
+
+#@overlay/match by=overlay.all
+---
+jobs:
+#@overlay/match by="name"
+- name: unit
+  plan:
+  #@overlay/match by=overlay.subset({"task":"test"})
+  #@overlay/remove
+  -
