@@ -28,6 +28,9 @@ func (e GoValue) AsValueWithCheckedMapKeys(forceMapStringKeys bool) interface{} 
 }
 
 func (e GoValue) asStarlarkValue(val interface{}) starlark.Value {
+	if obj, ok := val.(starlark.Value); ok {
+		return obj
+	}
 	if obj, ok := val.(GoValueToStarlarkValueConversion); ok {
 		return obj.AsStarlarkValue()
 	}
@@ -62,6 +65,9 @@ func (e GoValue) asStarlarkValue(val interface{}) starlark.Value {
 
 	case []interface{}:
 		return e.listAsStarlarkValue(typedVal)
+
+	case *starlark.Builtin:
+		return typedVal
 
 	default:
 		panic(fmt.Sprintf("unknown type %T for conversion to starlark value", val))

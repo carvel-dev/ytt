@@ -103,7 +103,7 @@ func (p DataValuesPreProcessing) overlayFlags(valuesDoc *yamlmeta.Document) (*ya
 
 	result, err := p.overlay(valuesDoc, astFlagValues)
 	if err != nil {
-		return nil, fmt.Errorf("Overlaying data values from flags (provided via --data-value-*) on top of data values from files (marked as @data/values): %s", err)
+		return nil, fmt.Errorf("Overlaying data values from flags (provided via --data-value-* or library loading) on top of data values from files (marked as @data/values): %s", err)
 	}
 
 	return result, nil

@@ -1,0 +1,5 @@
+#@ load("@ytt:data", "data")
+---
+where: lib2
+argval: #@ data.values.arg
+arg2val: #@ data.values.arg2

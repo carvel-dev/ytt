@@ -1,0 +1,16 @@
+#! RENAME '_ytt_lib1' to '_ytt_lib' below to see example succeed
+
+#@ load("@ytt:data", "data")
+#@ load("@ytt:template", "template")
+#@ load("@ytt:lib", "lib")
+---
+main: true
+where: #@ data.values.where
+tmpl1_text: #@ lib.get("@tmpl1", {"where": "override"}).text()
+tmpl1_test: #@ lib.get("@tmpl1").text("test.yml")
+
+--- #@ template.replace(lib.get("@tmpl1").output())
+
+---
+now: "only test.yml"
+--- #@ template.replace(lib.get("@tmpl1").output("test.yml"))

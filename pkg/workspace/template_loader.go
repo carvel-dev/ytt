@@ -166,7 +166,8 @@ func (l *TemplateLoader) EvalYAML(library *Library, file *files.File) (starlark.
 	l.addCompiledTemplate(file.RelativePath(), compiledTemplate)
 	l.ui.Debugf("### template\n%s", compiledTemplate.DebugCodeAsString())
 
-	yttLibrary := yttlibrary.NewAPI(compiledTemplate.TplReplaceNode, l.values, l)
+	loader := NewLoader(library, file, l.ui, l.opts)
+	yttLibrary := yttlibrary.NewAPI(compiledTemplate.TplReplaceNode, l.values, l, loader)
 	thread := l.newThread(library, yttLibrary, file)
 
 	globals, resultVal, err := compiledTemplate.Eval(thread, l)
@@ -205,7 +206,8 @@ func (l *TemplateLoader) EvalText(library *Library, file *files.File) (starlark.
 	l.addCompiledTemplate(file.RelativePath(), compiledTemplate)
 	l.ui.Debugf("### template\n%s", compiledTemplate.DebugCodeAsString())
 
-	yttLibrary := yttlibrary.NewAPI(compiledTemplate.TplReplaceNode, l.values, l)
+	loader := NewLoader(library, file, l.ui, l.opts)
+	yttLibrary := yttlibrary.NewAPI(compiledTemplate.TplReplaceNode, l.values, l, loader)
 	thread := l.newThread(library, yttLibrary, file)
 
 	globals, resultVal, err := compiledTemplate.Eval(thread, l)
@@ -232,7 +234,8 @@ func (l *TemplateLoader) EvalStarlark(library *Library, file *files.File) (starl
 	l.addCompiledTemplate(file.RelativePath(), compiledTemplate)
 	l.ui.Debugf("### template\n%s", compiledTemplate.DebugCodeAsString())
 
-	yttLibrary := yttlibrary.NewAPI(compiledTemplate.TplReplaceNode, l.values, l)
+	loader := NewLoader(library, file, l.ui, l.opts)
+	yttLibrary := yttlibrary.NewAPI(compiledTemplate.TplReplaceNode, l.values, l, loader)
 	thread := l.newThread(library, yttLibrary, file)
 
 	globals, _, err := compiledTemplate.Eval(thread, l)

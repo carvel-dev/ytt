@@ -1,0 +1,6 @@
+#@ load("@ytt:data", "data")
+---
+foo: bar
+argval: #@ data.values.arg
+arg2val: #@ data.values.arg2
+

@@ -93,22 +93,35 @@ func (l *Library) findPrivateLibrary() (*Library, bool) {
 	return nil, false
 }
 
-func (l *Library) FindFile(path string) (*files.File, error) {
-	dirPieces, namePiece := files.SplitPath(path)
+func (l *Library) FindRecursiveLibrary(path string, allowPrivate bool) (*Library, error) {
+	return l.findRecursiveLibrary(path, strings.Split(path, "/"), allowPrivate)
+}
 
+func (l *Library) findRecursiveLibrary(path string, pieces []string, allowPrivate bool) (*Library, error) {
 	var currLibrary *Library = l
-	for i, piece := range dirPieces {
+	for i, piece := range pieces {
 		lib, found := currLibrary.FindLibrary(piece)
 		if !found {
 			return nil, fmt.Errorf("Expected to find file '%s', but did not find '%s'",
-				path, files.JoinPath(dirPieces[:i]))
+				path, files.JoinPath(pieces[:i]))
 		}
-		if lib.private {
+		if lib.private && !allowPrivate {
 			return nil, fmt.Errorf("Could not load file '%s' because it's contained in private library '%s' "+
 				"(use load(\"@lib:file\", \"symbol\") where 'lib' is library name under %s, for example, 'github.com/k14s/test')",
-				path, files.JoinPath(dirPieces[:i]), privateName)
+				path, files.JoinPath(pieces[:i]), privateName)
 		}
 		currLibrary = lib
+	}
+
+	return currLibrary, nil
+}
+
+func (l *Library) FindFile(path string) (*files.File, error) {
+	dirPieces, namePiece := files.SplitPath(path)
+
+	currLibrary, err := l.findRecursiveLibrary(path, dirPieces, false)
+	if err != nil {
+		return nil, err
 	}
 
 	for _, file := range currLibrary.files {

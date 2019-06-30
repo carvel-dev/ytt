@@ -3,6 +3,7 @@ package workspace
 import (
 	"fmt"
 
+	"github.com/k14s/ytt/pkg/eval"
 	"github.com/k14s/ytt/pkg/files"
 	"github.com/k14s/ytt/pkg/yamlmeta"
 	"github.com/k14s/ytt/pkg/yamltemplate"
@@ -15,13 +16,6 @@ type LibraryLoader struct {
 	templateLoaderOpts TemplateLoaderOpts
 }
 
-type EvalResult struct {
-	Files  []files.OutputFile
-	DocSet *yamlmeta.DocumentSet
-}
-
-type EvalValuesAst interface{}
-
 func NewLibraryLoader(lib *Library, ui files.UI, templateLoaderOpts TemplateLoaderOpts) *LibraryLoader {
 	return &LibraryLoader{
 		library:            lib,
@@ -30,7 +24,25 @@ func NewLibraryLoader(lib *Library, ui files.UI, templateLoaderOpts TemplateLoad
 	}
 }
 
-func (ll *LibraryLoader) Values(valuesFlagsAst EvalValuesAst) (EvalValuesAst, error) {
+func LoadRootLibrary(absolutePaths []string, ui files.UI, astValues interface{}, opts TemplateLoaderOpts) (*eval.Result, error) {
+	filesToProcess, err := files.NewSortedFilesFromPaths(absolutePaths)
+	if err != nil {
+		return nil, err
+	}
+
+	rootLibrary := NewRootLibrary(filesToProcess)
+
+	ll := NewLibraryLoader(rootLibrary, ui, opts)
+
+	astValues, err = ll.Values(astValues)
+	if err != nil {
+		return nil, err
+	}
+
+	return ll.Eval(astValues)
+}
+
+func (ll *LibraryLoader) Values(valuesFlagsAst eval.ValuesAst) (eval.ValuesAst, error) {
 	valuesFiles, err := ll.valuesFiles()
 	if err != nil {
 		return nil, err
@@ -78,7 +90,7 @@ func (ll *LibraryLoader) valuesFiles() ([]*FileInLibrary, error) {
 	return valuesFiles, nil
 }
 
-func (ll *LibraryLoader) Eval(values EvalValuesAst) (*EvalResult, error) {
+func (ll *LibraryLoader) Eval(values eval.ValuesAst) (*eval.Result, error) {
 	docSets, outputFiles, err := ll.eval(values)
 	if err != nil {
 		return nil, err
@@ -89,13 +101,15 @@ func (ll *LibraryLoader) Eval(values EvalValuesAst) (*EvalResult, error) {
 		return nil, err
 	}
 
-	result := &EvalResult{
-		Files:  outputFiles,
-		DocSet: &yamlmeta.DocumentSet{},
+	result := &eval.Result{
+		Files:   outputFiles,
+		DocSet:  &yamlmeta.DocumentSet{},
+		DocSets: map[string]*yamlmeta.DocumentSet{},
 	}
 
 	for _, fileInLib := range ll.sortedOutputDocSets(docSets) {
 		docSet := docSets[fileInLib]
+		result.DocSets[fileInLib.RelativePath()] = docSet
 		result.DocSet.Items = append(result.DocSet.Items, docSet.Items...)
 
 		resultDocBytes, err := docSet.AsBytes()
@@ -110,7 +124,7 @@ func (ll *LibraryLoader) Eval(values EvalValuesAst) (*EvalResult, error) {
 	return result, nil
 }
 
-func (ll *LibraryLoader) eval(values EvalValuesAst) (map[*FileInLibrary]*yamlmeta.DocumentSet, []files.OutputFile, error) {
+func (ll *LibraryLoader) eval(values eval.ValuesAst) (map[*FileInLibrary]*yamlmeta.DocumentSet, []files.OutputFile, error) {
 	loader := NewTemplateLoader(values, ll.ui, ll.templateLoaderOpts)
 
 	docSets := map[*FileInLibrary]*yamlmeta.DocumentSet{}
