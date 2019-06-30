@@ -1,8 +1,10 @@
 package yttlibrary
 
 import (
+	"github.com/k14s/ytt/pkg/eval"
 	"github.com/k14s/ytt/pkg/template"
 	tplcore "github.com/k14s/ytt/pkg/template/core"
+	"github.com/k14s/ytt/pkg/yttlibrary/lib"
 	"github.com/k14s/ytt/pkg/yttlibrary/overlay"
 	"go.starlark.net/starlark"
 )
@@ -10,7 +12,7 @@ import (
 type API map[string]starlark.StringDict
 
 func NewAPI(replaceNodeFunc tplcore.StarlarkFunc, values interface{},
-	loader template.CompiledTemplateLoader) API {
+	loader template.CompiledTemplateLoader, libLoader eval.Loader) API {
 
 	return map[string]starlark.StringDict{
 		"@ytt:assert": AssertAPI,
@@ -34,5 +36,8 @@ func NewAPI(replaceNodeFunc tplcore.StarlarkFunc, values interface{},
 		"@ytt:struct":  StructAPI,
 		"@ytt:module":  ModuleAPI,
 		"@ytt:overlay": overlay.API,
+
+		// Libraries
+		"@ytt:lib": lib.NewAPI(libLoader),
 	}
 }

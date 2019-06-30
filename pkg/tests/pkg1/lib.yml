@@ -1,0 +1,8 @@
+#@ load("@ytt:lib", "lib")
+---
+lib1:
+  hello: #@ lib.get("@lib1:").text(["hello.yml"])
+  all: #@ lib.get("@lib1:").text()
+  foo: #@ lib.get("@lib1:").data_values({"arg2": "arg2val"}).text(["foo.yml"])
+lib2:
+  all: #@ lib.get("lib2:").data_values({"arg": "argval"}).text()

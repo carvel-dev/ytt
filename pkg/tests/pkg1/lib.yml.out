@@ -1,0 +1,18 @@
+lib1:
+  hello: |
+    hello: world
+  all: |
+    foo: bar
+    argval: null
+    arg2val: default
+    ---
+    hello: world
+  foo: |
+    foo: bar
+    argval: null
+    arg2val: arg2val
+lib2:
+  all: |
+    where: lib2
+    argval: argval
+    arg2val: default-lib2

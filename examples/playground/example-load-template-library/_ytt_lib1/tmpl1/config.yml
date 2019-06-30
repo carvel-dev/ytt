@@ -1,0 +1,5 @@
+#@ load("@ytt:data", "data")
+---
+lib: tmpl1
+where: #@ data.values.where
+

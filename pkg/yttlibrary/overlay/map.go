@@ -1,6 +1,8 @@
 package overlay
 
 import (
+	"fmt"
+
 	"github.com/k14s/ytt/pkg/yamlmeta"
 )
 
@@ -19,7 +21,7 @@ func (o OverlayOp) mergeMapItem(leftMap *yamlmeta.Map, newItem *yamlmeta.MapItem
 
 	leftIdx, found, err := ann.Index(leftMap)
 	if err != nil {
-		return err
+		return fmt.Errorf("Searching in map for item: %s", err)
 	}
 
 	if !found {
@@ -49,7 +51,7 @@ func (o OverlayOp) removeMapItem(leftMap *yamlmeta.Map, newItem *yamlmeta.MapIte
 
 	leftIdx, found, err := ann.Index(leftMap)
 	if err != nil {
-		return err
+		return fmt.Errorf("Searching in map for item: %s", err)
 	}
 
 	if found {
@@ -74,7 +76,7 @@ func (o OverlayOp) replaceMapItem(leftMap *yamlmeta.Map, newItem *yamlmeta.MapIt
 
 	leftIdx, found, err := ann.Index(leftMap)
 	if err != nil {
-		return err
+		return fmt.Errorf("Searching in map for item: %s", err)
 	}
 
 	if found {

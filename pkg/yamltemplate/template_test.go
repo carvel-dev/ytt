@@ -183,7 +183,7 @@ func (l stdTemplateLoader) FindCompiledTemplate(_ string) (*template.CompiledTem
 }
 
 func (l stdTemplateLoader) Load(thread *starlark.Thread, module string) (starlark.StringDict, error) {
-	apis := yttlibrary.NewAPI(l.compiledTemplate.TplReplaceNode, defaultInput(), nil)
+	apis := yttlibrary.NewAPI(l.compiledTemplate.TplReplaceNode, defaultInput(), nil, nil)
 	if api, found := apis[module]; found {
 		return api, nil
 	}

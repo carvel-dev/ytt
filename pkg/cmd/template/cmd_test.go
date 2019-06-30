@@ -129,7 +129,7 @@ func TestDisallowDirectLibraryLoading(t *testing.T) {
 	yamlTplData := []byte(`#@ load("_ytt_lib/data.lib.star", "data")`)
 
 	expectedErr := `
-- cannot load _ytt_lib/data.lib.star: Could not load file '_ytt_lib/data.lib.star' because it's contained in private library '' (use load("@lib:file", "symbol") where 'lib' is library name under _ytt_lib, for example, 'github.com/k14s/test')
+- cannot load _ytt_lib/data.lib.star: While loading '_ytt_lib/data.lib.star', Could not load file '_ytt_lib/data.lib.star' because it's contained in private library '_ytt_lib' (use load("@lib:file", "symbol") where 'lib' is library name under _ytt_lib, for example, 'github.com/k14s/test')
     in <toplevel>
       tpl.yml:1 | #@ load("_ytt_lib/data.lib.star", "data")`
 
@@ -245,7 +245,7 @@ end`)
 
 	filesToProcess := []*files.File{
 		files.MustNewFileFromSource(files.NewBytesSource("non-top-level/tpl.yml", nonTopLevelYmlTplData)),
-		files.MustNewFileFromSource(files.NewBytesSource("non-top-level/_ytt_lib/funcs/funcs.star", nonTopLevelStarlarkFuncsLibData)),
+		files.MustNewFileFromSource(files.NewBytesSource("_ytt_lib/funcs/funcs.star", nonTopLevelStarlarkFuncsLibData)),
 	}
 
 	ui := cmdcore.NewPlainUI(false)

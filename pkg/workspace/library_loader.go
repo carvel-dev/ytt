@@ -3,6 +3,7 @@ package workspace
 import (
 	"fmt"
 
+	"github.com/k14s/ytt/pkg/eval"
 	"github.com/k14s/ytt/pkg/files"
 	"github.com/k14s/ytt/pkg/yamlmeta"
 	"github.com/k14s/ytt/pkg/yamltemplate"
@@ -13,24 +14,25 @@ type LibraryLoader struct {
 	library            *Library
 	ui                 files.UI
 	templateLoaderOpts TemplateLoaderOpts
+	libraryFiles       []*FileInLibrary
+	evalFiles          []*FileInLibrary
 }
 
-type EvalResult struct {
-	Files  []files.OutputFile
-	DocSet *yamlmeta.DocumentSet
-}
-
-type EvalValuesAst interface{}
-
-func NewLibraryLoader(lib *Library, ui files.UI, templateLoaderOpts TemplateLoaderOpts) *LibraryLoader {
+func NewLibraryLoader(lib *Library, evalFiles []*FileInLibrary, ui files.UI, templateLoaderOpts TemplateLoaderOpts) *LibraryLoader {
+	libraryFiles := lib.ListAccessibleFiles()
+	if evalFiles == nil {
+		evalFiles = libraryFiles
+	}
 	return &LibraryLoader{
 		library:            lib,
 		ui:                 ui,
 		templateLoaderOpts: templateLoaderOpts,
+		libraryFiles:       libraryFiles,
+		evalFiles:          evalFiles,
 	}
 }
 
-func (ll *LibraryLoader) Values(valuesFlagsAst EvalValuesAst) (EvalValuesAst, error) {
+func (ll *LibraryLoader) Values(valuesFlagsAst ...eval.ValuesAst) (eval.ValuesAst, error) {
 	loader := NewTemplateLoader(nil, ll.ui, ll.templateLoaderOpts)
 
 	valuesFiles, err := ll.valuesFiles(loader)
@@ -51,7 +53,7 @@ func (ll *LibraryLoader) Values(valuesFlagsAst EvalValuesAst) (EvalValuesAst, er
 func (ll *LibraryLoader) valuesFiles(loader *TemplateLoader) ([]*FileInLibrary, error) {
 	var valuesFiles []*FileInLibrary
 
-	for _, fileInLib := range ll.library.ListAccessibleFiles() {
+	for _, fileInLib := range ll.libraryFiles {
 		if fileInLib.File.Type() == files.TypeYAML && fileInLib.File.IsTemplate() {
 			docSet, err := loader.ParseYAML(fileInLib.File)
 			if err != nil {
@@ -75,8 +77,8 @@ func (ll *LibraryLoader) valuesFiles(loader *TemplateLoader) ([]*FileInLibrary, 
 	return valuesFiles, nil
 }
 
-func (ll *LibraryLoader) Eval(values EvalValuesAst) (*EvalResult, error) {
-	docSets, outputFiles, err := ll.eval(values)
+func (ll *LibraryLoader) Eval(values eval.ValuesAst) (*eval.Result, error) {
+	docSets, outputFiles, exports, err := ll.eval(values)
 	if err != nil {
 		return nil, err
 	}
@@ -86,13 +88,16 @@ func (ll *LibraryLoader) Eval(values EvalValuesAst) (*EvalResult, error) {
 		return nil, err
 	}
 
-	result := &EvalResult{
-		Files:  outputFiles,
-		DocSet: &yamlmeta.DocumentSet{},
+	result := &eval.Result{
+		Files:   outputFiles,
+		DocSet:  &yamlmeta.DocumentSet{},
+		DocSets: map[string]*yamlmeta.DocumentSet{},
+		Exports: exports,
 	}
 
 	for _, fileInLib := range ll.sortedOutputDocSets(docSets) {
 		docSet := docSets[fileInLib]
+		result.DocSets[fileInLib.RelativePath()] = docSet
 		result.DocSet.Items = append(result.DocSet.Items, docSet.Items...)
 
 		resultDocBytes, err := docSet.AsBytes()
@@ -107,43 +112,59 @@ func (ll *LibraryLoader) Eval(values EvalValuesAst) (*EvalResult, error) {
 	return result, nil
 }
 
-func (ll *LibraryLoader) eval(values EvalValuesAst) (map[*FileInLibrary]*yamlmeta.DocumentSet, []files.OutputFile, error) {
+func (ll *LibraryLoader) eval(values eval.ValuesAst) (map[*FileInLibrary]*yamlmeta.DocumentSet, []files.OutputFile, []eval.Export, error) {
 	loader := NewTemplateLoader(values, ll.ui, ll.templateLoaderOpts)
 
 	docSets := map[*FileInLibrary]*yamlmeta.DocumentSet{}
 	outputFiles := []files.OutputFile{}
+	var exports []eval.Export
 
-	for _, fileInLib := range ll.library.ListAccessibleFiles() {
-		if !fileInLib.File.IsForOutput() {
-			continue
-		}
-
+	for _, fileInLib := range ll.evalFiles {
 		switch fileInLib.File.Type() {
 		case files.TypeYAML:
-			_, resultDocSet, err := loader.EvalYAML(fileInLib.Library, fileInLib.File)
+
+			globals, resultDocSet, err := loader.EvalYAML(fileInLib)
 			if err != nil {
-				return nil, nil, err
+				return nil, nil, nil, err
 			}
 
-			docSets[fileInLib] = resultDocSet
+			exports = append(exports, eval.Export{fileInLib.RelativePath(), globals})
+
+			if fileInLib.File.IsForOutput() {
+				docSets[fileInLib] = resultDocSet
+			}
 
 		case files.TypeText:
-			_, resultVal, err := loader.EvalText(fileInLib.Library, fileInLib.File)
+			globals, resultVal, err := loader.EvalText(fileInLib)
 			if err != nil {
-				return nil, nil, err
+				return nil, nil, nil, err
 			}
 
-			resultStr := resultVal.AsString()
+			exports = append(exports, eval.Export{fileInLib.RelativePath(), globals})
 
-			ll.ui.Debugf("### %s result\n%s", fileInLib.RelativePath(), resultStr)
-			outputFiles = append(outputFiles, files.NewOutputFile(fileInLib.RelativePath(), []byte(resultStr)))
+			if fileInLib.File.IsForOutput() {
+				resultStr := resultVal.AsString()
+
+				ll.ui.Debugf("### %s result\n%s", fileInLib.RelativePath(), resultStr)
+				outputFiles = append(outputFiles, files.NewOutputFile(fileInLib.RelativePath(), []byte(resultStr)))
+			}
+
+		case files.TypeStarlark:
+			globals, err := loader.EvalStarlark(fileInLib)
+			if err != nil {
+				return nil, nil, nil, err
+			}
+
+			exports = append(exports, eval.Export{fileInLib.RelativePath(), globals})
 
 		default:
-			return nil, nil, fmt.Errorf("Unknown file type")
+			if fileInLib.File.IsForOutput() {
+				return nil, nil, nil, fmt.Errorf("Unknown file type")
+			}
 		}
 	}
 
-	return docSets, outputFiles, nil
+	return docSets, outputFiles, exports, nil
 }
 
 func (*LibraryLoader) sortedOutputDocSets(outputDocSets map[*FileInLibrary]*yamlmeta.DocumentSet) []*FileInLibrary {

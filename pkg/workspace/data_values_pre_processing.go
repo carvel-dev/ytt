@@ -3,6 +3,7 @@ package workspace
 import (
 	"fmt"
 
+	"github.com/k14s/ytt/pkg/eval"
 	"github.com/k14s/ytt/pkg/yamlmeta"
 	"github.com/k14s/ytt/pkg/yamltemplate"
 	"github.com/k14s/ytt/pkg/yttlibrary"
@@ -12,7 +13,7 @@ import (
 
 type DataValuesPreProcessing struct {
 	valuesFiles           []*FileInLibrary
-	valuesFlagsAst        interface{}
+	valuesFlagsAst        []eval.ValuesAst
 	loader                *TemplateLoader
 	IgnoreUnknownComments bool // TODO remove?
 }
@@ -52,7 +53,7 @@ func (o DataValuesPreProcessing) Apply() (interface{}, error) {
 }
 
 func (p DataValuesPreProcessing) templateFile(fileInLib *FileInLibrary) ([]*yamlmeta.Document, error) {
-	_, resultDocSet, err := p.loader.EvalYAML(fileInLib.Library, fileInLib.File)
+	_, resultDocSet, err := p.loader.EvalYAML(fileInLib)
 	if err != nil {
 		return nil, err
 	}
@@ -94,17 +95,21 @@ func (p DataValuesPreProcessing) overlay(valuesDoc, newValuesDoc *yamlmeta.Docum
 }
 
 func (p DataValuesPreProcessing) overlayFlags(valuesDoc *yamlmeta.Document) (*yamlmeta.Document, error) {
+	var err error
 	if valuesDoc == nil {
 		// TODO get rid of assumption that data values is a map?
 		valuesDoc = &yamlmeta.Document{Value: &yamlmeta.Map{}}
 	}
 
-	astFlagValues := &yamlmeta.Document{Value: p.valuesFlagsAst}
+	for i, valuesFlagsAst := range p.valuesFlagsAst {
+		astFlagValues := &yamlmeta.Document{Value: valuesFlagsAst}
 
-	result, err := p.overlay(valuesDoc, astFlagValues)
-	if err != nil {
-		return nil, fmt.Errorf("Overlaying data values from flags (provided via --data-value-*) on top of data values from files (marked as @data/values): %s", err)
+		valuesDoc, err = p.overlay(valuesDoc, astFlagValues)
+
+		if err != nil {
+			return nil, fmt.Errorf("Overlaying (%d) data values from flags (provided via --data-value-* or library loading) on top of data values from files (marked as @data/values): %s", i, err)
+		}
 	}
 
-	return result, nil
+	return valuesDoc, nil
 }

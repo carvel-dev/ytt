@@ -50,7 +50,15 @@ func (a MapItemMatchAnnotation) Index(leftMap *yamlmeta.Map) (int, bool, error) 
 		count = 1
 	}
 
-	return idx, found, a.expects.Check(count)
+	err := a.expects.Check(count)
+	if err != nil {
+		if found {
+			err = fmt.Errorf("Found item: %s", err)
+		} else {
+			err = fmt.Errorf("Item not found: %s", err)
+		}
+	}
+	return idx, found, err
 }
 
 func (a MapItemMatchAnnotation) MatchNode(leftMap *yamlmeta.Map) (int, bool) {

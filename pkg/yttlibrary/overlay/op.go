@@ -62,22 +62,26 @@ func (o OverlayOp) apply(left, right interface{}, parentMatchChildDefaults Match
 		for _, item := range typedRight.Items {
 			item := item.DeepCopy()
 
+			var errPrefix string = "Overlaying"
 			op, err := whichOp(item)
 			if err == nil {
 				switch op {
 				case AnnotationMerge:
 					err = o.mergeMapItem(typedLeft, item, parentMatchChildDefaults)
+					errPrefix = "Merging"
 				case AnnotationRemove:
 					err = o.removeMapItem(typedLeft, item, parentMatchChildDefaults)
+					errPrefix = "Removing"
 				case AnnotationReplace:
 					err = o.replaceMapItem(typedLeft, item, parentMatchChildDefaults)
+					errPrefix = "Replacing"
 				default:
 					err = fmt.Errorf("Overlay op %s is not supported on map item", op)
 				}
 			}
 			if err != nil {
-				return false, fmt.Errorf("Map item (key '%s') on %s: %s",
-					item.Key, item.Position.AsString(), err)
+				return false, fmt.Errorf("%s map item (key '%s') on %s: %s",
+					errPrefix, item.Key, item.Position.AsString(), err)
 			}
 		}
 

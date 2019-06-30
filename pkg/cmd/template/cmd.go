@@ -105,7 +105,7 @@ func (o *TemplateOptions) RunWithFiles(in TemplateInput, ui cmdcore.PlainUI) Tem
 
 	astValues := yamlmeta.NewASTFromInterface(values)
 
-	libraryLoader := workspace.NewLibraryLoader(rootLibrary, ui, workspace.TemplateLoaderOpts{
+	libraryLoader := workspace.NewLibraryLoader(rootLibrary, nil, ui, workspace.TemplateLoaderOpts{
 		IgnoreUnknownComments: o.IgnoreUnknownComments,
 		StrictYAML:            o.StrictYAML,
 	})
