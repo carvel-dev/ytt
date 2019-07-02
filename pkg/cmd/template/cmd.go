@@ -6,7 +6,6 @@ import (
 
 	cmdcore "github.com/k14s/ytt/pkg/cmd/core"
 	"github.com/k14s/ytt/pkg/files"
-	"github.com/k14s/ytt/pkg/texttemplate"
 	"github.com/k14s/ytt/pkg/workspace"
 	"github.com/k14s/ytt/pkg/yamlmeta"
 	"github.com/k14s/ytt/pkg/yamltemplate"
@@ -139,7 +138,7 @@ func (o *TemplateOptions) RunWithFiles(in TemplateInput, ui cmdcore.PlainUI) Tem
 				return TemplateOutput{Err: err}
 			}
 
-			resultStr := resultVal.(*texttemplate.NodeRoot).AsString()
+			resultStr := resultVal.AsString()
 
 			ui.Debugf("### %s result\n%s", fileInLib.File.RelativePath(), resultStr)
 			outputFiles = append(outputFiles, files.NewOutputFile(fileInLib.File.RelativePath(), []byte(resultStr)))

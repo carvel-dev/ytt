@@ -177,7 +177,7 @@ func (l *TemplateLoader) EvalYAML(library *Library, file *files.File) (starlark.
 	return globals, resultVal, nil
 }
 
-func (l *TemplateLoader) EvalText(library *Library, file *files.File) (starlark.StringDict, interface{}, error) {
+func (l *TemplateLoader) EvalText(library *Library, file *files.File) (starlark.StringDict, *texttemplate.NodeRoot, error) {
 	fileBs, err := file.Bytes()
 	if err != nil {
 		return nil, nil, err
@@ -186,7 +186,10 @@ func (l *TemplateLoader) EvalText(library *Library, file *files.File) (starlark.
 	l.ui.Debugf("## file %s\n", file.RelativePath())
 
 	if !file.IsTemplate() && !file.IsLibrary() {
-		return nil, string(fileBs), nil
+		plainRootNode := &texttemplate.NodeRoot{
+			Items: []interface{}{&texttemplate.NodeText{Content: string(fileBs)}},
+		}
+		return nil, plainRootNode, nil
 	}
 
 	textRoot, err := texttemplate.NewParser().Parse(fileBs, file.RelativePath())
@@ -210,7 +213,7 @@ func (l *TemplateLoader) EvalText(library *Library, file *files.File) (starlark.
 		return nil, nil, fmt.Errorf("Evaluating text template: %s", err)
 	}
 
-	return globals, resultVal, nil
+	return globals, resultVal.(*texttemplate.NodeRoot), nil
 }
 
 func (l *TemplateLoader) EvalStarlark(library *Library, file *files.File) (starlark.StringDict, error) {
