@@ -152,6 +152,10 @@ func (l *TemplateLoader) EvalYAML(library *Library, file *files.File) (starlark.
 	l.ui.Debugf("### ast\n")
 	docSet.Print(l.ui.DebugWriter())
 
+	if !file.IsTemplate() && !file.IsLibrary() {
+		return nil, docSet, nil
+	}
+
 	tplOpts := yamltemplate.TemplateOpts{IgnoreUnknownComments: l.opts.IgnoreUnknownComments}
 
 	compiledTemplate, err := yamltemplate.NewTemplate(file.RelativePath(), tplOpts).Compile(docSet)
