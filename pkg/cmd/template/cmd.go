@@ -124,12 +124,11 @@ func (o *TemplateOptions) RunWithFiles(in TemplateInput, ui cmdcore.PlainUI) Tem
 		// TODO find more generic way
 		switch fileInLib.File.Type() {
 		case files.TypeYAML:
-			_, resultVal, err := loader.EvalYAML(fileInLib.Library, fileInLib.File)
+			_, resultDocSet, err := loader.EvalYAML(fileInLib.Library, fileInLib.File)
 			if err != nil {
 				return TemplateOutput{Err: err}
 			}
 
-			resultDocSet := resultVal.(*yamlmeta.DocumentSet)
 			outputDocSets[fileInLib] = resultDocSet
 
 		case files.TypeText:

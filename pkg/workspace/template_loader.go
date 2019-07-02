@@ -132,7 +132,7 @@ func (l *TemplateLoader) LoadData(thread *starlark.Thread, f *starlark.Builtin,
 	return starlark.String(string(fileBs)), nil
 }
 
-func (l *TemplateLoader) EvalYAML(library *Library, file *files.File) (starlark.StringDict, interface{}, error) {
+func (l *TemplateLoader) EvalYAML(library *Library, file *files.File) (starlark.StringDict, *yamlmeta.DocumentSet, error) {
 	fileBs, err := file.Bytes()
 	if err != nil {
 		return nil, nil, err
@@ -174,7 +174,7 @@ func (l *TemplateLoader) EvalYAML(library *Library, file *files.File) (starlark.
 		return nil, nil, err
 	}
 
-	return globals, resultVal, nil
+	return globals, resultVal.(*yamlmeta.DocumentSet), nil
 }
 
 func (l *TemplateLoader) EvalText(library *Library, file *files.File) (starlark.StringDict, *texttemplate.NodeRoot, error) {

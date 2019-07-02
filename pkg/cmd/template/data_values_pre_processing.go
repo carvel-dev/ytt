@@ -53,12 +53,11 @@ func (o DataValuesPreProcessing) Apply() (interface{}, error) {
 }
 
 func (p DataValuesPreProcessing) templateFile(fileInLib *workspace.FileInLibrary) ([]*yamlmeta.Document, error) {
-	_, resultVal, err := p.loader.EvalYAML(fileInLib.Library, fileInLib.File)
+	_, resultDocSet, err := p.loader.EvalYAML(fileInLib.Library, fileInLib.File)
 	if err != nil {
 		return nil, err
 	}
 
-	resultDocSet := resultVal.(*yamlmeta.DocumentSet)
 	tplOpts := yamltemplate.MetasOpts{IgnoreUnknown: p.IgnoreUnknownComments}
 
 	// Extract _all_ data values docs from the templated result
