@@ -52,7 +52,7 @@ func NewSortedFilesFromPaths(paths []string) ([]*File, error) {
 		default:
 			fileInfo, err := os.Lstat(path)
 			if err != nil {
-				return nil, fmt.Errorf("Checking file '%s'", path)
+				return nil, fmt.Errorf("Checking file '%s': %s", path, err)
 			}
 
 			if fileInfo.IsDir() {

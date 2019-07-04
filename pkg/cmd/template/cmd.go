@@ -8,8 +8,6 @@ import (
 	"github.com/k14s/ytt/pkg/files"
 	"github.com/k14s/ytt/pkg/workspace"
 	"github.com/k14s/ytt/pkg/yamlmeta"
-	"github.com/k14s/ytt/pkg/yamltemplate"
-	"github.com/k14s/ytt/pkg/yttlibrary"
 	"github.com/spf13/cobra"
 )
 
@@ -91,9 +89,6 @@ func (o *TemplateOptions) Run() error {
 }
 
 func (o *TemplateOptions) RunWithFiles(in TemplateInput, ui cmdcore.PlainUI) TemplateOutput {
-	outputFiles := []files.OutputFile{}
-	outputDocSets := map[*workspace.FileInLibrary]*yamlmeta.DocumentSet{}
-
 	rootLibrary := workspace.NewRootLibrary(in.Files)
 	rootLibrary.Print(ui.DebugWriter())
 
@@ -101,126 +96,31 @@ func (o *TemplateOptions) RunWithFiles(in TemplateInput, ui cmdcore.PlainUI) Tem
 		return o.inspectFiles(rootLibrary, ui)
 	}
 
-	forOutputFiles, valuesFiles, err := o.categorizeFiles(rootLibrary.ListAccessibleFiles())
+	values, err := o.DataValuesFlags.Values()
 	if err != nil {
 		return TemplateOutput{Err: err}
 	}
 
-	loaderOpts := workspace.TemplateLoaderOpts{IgnoreUnknownComments: o.IgnoreUnknownComments}
-	noValuesLoader := workspace.NewTemplateLoader(nil, ui, loaderOpts)
+	astValues := yamlmeta.NewASTFromInterface(values)
 
-	values, err := DataValuesPreProcessing{valuesFiles, o.DataValuesFlags, noValuesLoader, o.IgnoreUnknownComments}.Apply()
+	loaderOpts := workspace.TemplateLoaderOpts{IgnoreUnknownComments: o.IgnoreUnknownComments}
+	libraryLoader := workspace.NewLibraryLoader(rootLibrary, ui, loaderOpts)
+
+	astValues, err = libraryLoader.LoadValues(astValues)
 	if err != nil {
 		return TemplateOutput{Err: err}
 	}
 
 	if o.DataValuesFlags.Inspect {
-		return o.inspectValues(values, ui)
+		return o.inspectValues(astValues, ui)
 	}
 
-	loader := workspace.NewTemplateLoader(values, ui, loaderOpts)
-
-	for _, fileInLib := range forOutputFiles {
-		// TODO find more generic way
-		switch fileInLib.File.Type() {
-		case files.TypeYAML:
-			_, resultDocSet, err := loader.EvalYAML(fileInLib.Library, fileInLib.File)
-			if err != nil {
-				return TemplateOutput{Err: err}
-			}
-
-			outputDocSets[fileInLib] = resultDocSet
-
-		case files.TypeText:
-			_, resultVal, err := loader.EvalText(fileInLib.Library, fileInLib.File)
-			if err != nil {
-				return TemplateOutput{Err: err}
-			}
-
-			resultStr := resultVal.AsString()
-
-			ui.Debugf("### %s result\n%s", fileInLib.File.RelativePath(), resultStr)
-			outputFiles = append(outputFiles, files.NewOutputFile(fileInLib.File.RelativePath(), []byte(resultStr)))
-
-		default:
-			return TemplateOutput{Err: fmt.Errorf("Unknown file type")}
-		}
-	}
-
-	outputDocSets, err = OverlayPostProcessing{outputDocSets}.Apply()
+	res, err := libraryLoader.Eval(astValues)
 	if err != nil {
 		return TemplateOutput{Err: err}
 	}
 
-	combinedDocSet := &yamlmeta.DocumentSet{}
-
-	for _, fileInLib := range o.sortedOutputDocSets(outputDocSets) {
-		docSet := outputDocSets[fileInLib]
-		combinedDocSet.Items = append(combinedDocSet.Items, docSet.Items...)
-
-		resultDocBytes, err := docSet.AsBytes()
-		if err != nil {
-			return TemplateOutput{Err: fmt.Errorf("Marshaling template result: %s", err)}
-		}
-
-		ui.Debugf("### %s result\n%s", fileInLib.File.RelativePath(), resultDocBytes)
-		outputFile := files.NewOutputFile(fileInLib.File.RelativePath(), resultDocBytes)
-		outputFiles = append(outputFiles, outputFile)
-	}
-
-	return TemplateOutput{Files: outputFiles, DocSet: combinedDocSet}
-}
-
-func (o *TemplateOptions) categorizeFiles(allFiles []*workspace.FileInLibrary) ([]*workspace.FileInLibrary, []*workspace.FileInLibrary, error) {
-	allFiles, valuesFiles, err := o.separateValuesFiles(allFiles)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	forOutputFiles := []*workspace.FileInLibrary{}
-
-	for _, fileInLib := range allFiles {
-		if fileInLib.File.IsForOutput() {
-			forOutputFiles = append(forOutputFiles, fileInLib)
-		}
-	}
-
-	return forOutputFiles, valuesFiles, nil
-}
-
-func (o *TemplateOptions) separateValuesFiles(fs []*workspace.FileInLibrary) ([]*workspace.FileInLibrary, []*workspace.FileInLibrary, error) {
-	var nonValuesFiles []*workspace.FileInLibrary
-	var valuesFiles []*workspace.FileInLibrary
-
-	for _, fileInLib := range fs {
-		if fileInLib.File.Type() == files.TypeYAML && fileInLib.File.IsTemplate() {
-			fileBs, err := fileInLib.File.Bytes()
-			if err != nil {
-				return nil, nil, err
-			}
-
-			docSet, err := yamlmeta.NewDocumentSetFromBytes(fileBs, fileInLib.File.RelativePath())
-			if err != nil {
-				return nil, nil, fmt.Errorf("Unmarshaling YAML template '%s': %s", fileInLib.File.RelativePath(), err)
-			}
-
-			tplOpts := yamltemplate.MetasOpts{IgnoreUnknown: o.IgnoreUnknownComments}
-
-			valuesDocs, _, err := yttlibrary.DataValues{docSet, tplOpts}.Extract()
-			if err != nil {
-				return nil, nil, err
-			}
-
-			if len(valuesDocs) > 0 {
-				valuesFiles = append(valuesFiles, fileInLib)
-				continue
-			}
-		}
-
-		nonValuesFiles = append(nonValuesFiles, fileInLib)
-	}
-
-	return nonValuesFiles, valuesFiles, nil
+	return TemplateOutput{Files: res.OutputFiles, DocSet: res.DocSet}
 }
 
 func (o *TemplateOptions) pickSource(srcs []FileSource, pickFunc func(FileSource) bool) FileSource {
@@ -255,13 +155,4 @@ func (o *TemplateOptions) inspectFiles(rootLibrary *workspace.Library, ui cmdcor
 		ui.Printf("%s\n", fileInLib.File.RelativePath())
 	}
 	return TemplateOutput{Empty: true}
-}
-
-func (o *TemplateOptions) sortedOutputDocSets(outputDocSets map[*workspace.FileInLibrary]*yamlmeta.DocumentSet) []*workspace.FileInLibrary {
-	var files []*workspace.FileInLibrary
-	for file, _ := range outputDocSets {
-		files = append(files, file)
-	}
-	workspace.SortFilesInLibrary(files)
-	return files
 }

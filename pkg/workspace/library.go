@@ -121,18 +121,38 @@ func (l *Library) FindFile(path string) (*files.File, error) {
 }
 
 type FileInLibrary struct {
-	File    *files.File
-	Library *Library
+	File            *files.File
+	Library         *Library
+	parentLibraries []*Library
+}
+
+func (fileInLib *FileInLibrary) RelativePath() string {
+	var components []string
+	for _, lib := range fileInLib.parentLibraries {
+		components = append(components, lib.name)
+	}
+	_, fileName := files.SplitPath(fileInLib.File.RelativePath())
+	components = append(components, fileName)
+	return strings.Join(components, pathSeparator)
 }
 
 func (l *Library) ListAccessibleFiles() []*FileInLibrary {
+	return l.listAccessibleFiles(nil)
+}
+
+func (l *Library) listAccessibleFiles(parents []*Library) []*FileInLibrary {
 	var result []*FileInLibrary
 	for _, file := range l.files {
-		result = append(result, &FileInLibrary{File: file, Library: l})
+		result = append(result, &FileInLibrary{
+			File:            file,
+			Library:         l,
+			parentLibraries: parents,
+		})
 	}
 	for _, lib := range l.children {
 		if !lib.private {
-			result = append(result, lib.ListAccessibleFiles()...)
+			newParents := append(append([]*Library{}, parents...), lib)
+			result = append(result, lib.listAccessibleFiles(newParents)...)
 		}
 	}
 	return result
