@@ -106,7 +106,7 @@ func (o *TemplateOptions) RunWithFiles(in TemplateInput, ui cmdcore.PlainUI) Tem
 	loaderOpts := workspace.TemplateLoaderOpts{IgnoreUnknownComments: o.IgnoreUnknownComments}
 	libraryLoader := workspace.NewLibraryLoader(rootLibrary, ui, loaderOpts)
 
-	astValues, err = libraryLoader.LoadValues(astValues)
+	astValues, err = libraryLoader.Values(astValues)
 	if err != nil {
 		return TemplateOutput{Err: err}
 	}
@@ -115,12 +115,12 @@ func (o *TemplateOptions) RunWithFiles(in TemplateInput, ui cmdcore.PlainUI) Tem
 		return o.inspectValues(astValues, ui)
 	}
 
-	res, err := libraryLoader.Eval(astValues)
+	result, err := libraryLoader.Eval(astValues)
 	if err != nil {
 		return TemplateOutput{Err: err}
 	}
 
-	return TemplateOutput{Files: res.OutputFiles, DocSet: res.DocSet}
+	return TemplateOutput{Files: result.Files, DocSet: result.DocSet}
 }
 
 func (o *TemplateOptions) pickSource(srcs []FileSource, pickFunc func(FileSource) bool) FileSource {
