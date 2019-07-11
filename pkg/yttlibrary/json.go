@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/k14s/ytt/pkg/template/core"
+	"github.com/k14s/ytt/pkg/yamlmeta"
 	"go.starlark.net/starlark"
 	"go.starlark.net/starlarkstruct"
 )
@@ -29,6 +30,7 @@ func (b jsonModule) Encode(thread *starlark.Thread, f *starlark.Builtin, args st
 	}
 
 	val := core.NewStarlarkValue(args.Index(0)).AsInterface()
+	val = yamlmeta.NewInterfaceFromAST(val)                           // convert yaml fragments into Go objects
 	val = core.NewGoValue(val, false).AsValueWithCheckedMapKeys(true) // JSON only supports string keys
 
 	valBs, err := json.Marshal(val)

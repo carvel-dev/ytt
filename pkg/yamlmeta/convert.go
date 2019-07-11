@@ -17,6 +17,10 @@ func NewASTFromInterface(val interface{}) interface{} {
 	return convertToAST(val)
 }
 
+func NewInterfaceFromAST(val interface{}) interface{} {
+	return convertToLowYAML(val, InterfaceConvertOpts{})
+}
+
 func convertToLowYAML(val interface{}, opts InterfaceConvertOpts) interface{} {
 	switch typedVal := val.(type) {
 	case *DocumentSet:
@@ -77,7 +81,12 @@ func convertToLowYAML(val interface{}, opts InterfaceConvertOpts) interface{} {
 			}
 			return result
 		}
-		return val
+
+		result := map[interface{}]interface{}{}
+		for k, v := range typedVal {
+			result[k] = convertToLowYAML(v, opts)
+		}
+		return result
 
 	default:
 		return val
@@ -101,6 +110,13 @@ func convertToLowGo(val interface{}) interface{} {
 		result := []interface{}{}
 		for _, item := range typedVal {
 			result = append(result, convertToLowGo(item))
+		}
+		return result
+
+	case map[interface{}]interface{}:
+		result := map[interface{}]interface{}{}
+		for k, v := range typedVal {
+			result[k] = convertToLowGo(v)
 		}
 		return result
 

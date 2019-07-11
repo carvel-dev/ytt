@@ -1,6 +1,15 @@
 #@ load("@ytt:json", "json")
 
+#@ def yaml_fragment():
+fragment:
+- piece1
+- piece2: true
+  piece1: false
+#@ end
+
 test1: #@ json.encode({"a": [1,2,3,{"c":456}], "b": "str"})
+test1a: #@ json.encode(yaml_fragment())
+test1b: #@ json.encode({"inside_map": yaml_fragment(), "inside_array": [yaml_fragment()]})
 test2: #@ json.encode({})
 test3: #@ json.decode("{}")
 test4: #@ json.decode('{"a":[1,2,3,{"c":456}],"b":"str"}')
@@ -8,6 +17,8 @@ test4: #@ json.decode('{"a":[1,2,3,{"c":456}],"b":"str"}')
 +++
 
 test1: '{"a":[1,2,3,{"c":456}],"b":"str"}'
+test1a: '{"fragment":["piece1",{"piece1":false,"piece2":true}]}'
+test1b: '{"inside_array":[{"fragment":["piece1",{"piece1":false,"piece2":true}]}],"inside_map":{"fragment":["piece1",{"piece1":false,"piece2":true}]}}'
 test2: '{}'
 test3: {}
 test4:
