@@ -3,13 +3,7 @@ package yamlmeta
 import (
 	"fmt"
 	"reflect"
-
-	"github.com/k14s/ytt/pkg/yamlmeta/internal/yaml.v2"
 )
-
-func PlainMarshal(in interface{}) ([]byte, error) {
-	return yaml.Marshal(in)
-}
 
 func PlainUnmarshal(data []byte, out interface{}) error {
 	docSet, err := NewParser(true).ParseBytes(data, "")
