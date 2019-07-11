@@ -1,6 +1,7 @@
 package yamlmeta
 
 import (
+	"encoding/json"
 	"fmt"
 
 	"github.com/k14s/ytt/pkg/filepos"
@@ -178,6 +179,16 @@ func (n *Map) MarshalYAML() (interface{}, error)         { panic("Unexpected mar
 func (n *MapItem) MarshalYAML() (interface{}, error)     { panic("Unexpected marshaling of mapitem") }
 func (n *Array) MarshalYAML() (interface{}, error)       { panic("Unexpected marshaling of array") }
 func (n *ArrayItem) MarshalYAML() (interface{}, error)   { panic("Unexpected marshaling of arrayitem") }
+
+// Below methods disallow marshaling of nodes directly
+var _ []json.Marshaler = []json.Marshaler{&DocumentSet{}, &Document{}, &Map{}, &MapItem{}, &Array{}, &ArrayItem{}}
+
+func (n *DocumentSet) MarshalJSON() ([]byte, error) { panic("Unexpected marshaling of docset") }
+func (n *Document) MarshalJSON() ([]byte, error)    { panic("Unexpected marshaling of doc") }
+func (n *Map) MarshalJSON() ([]byte, error)         { panic("Unexpected marshaling of map") }
+func (n *MapItem) MarshalJSON() ([]byte, error)     { panic("Unexpected marshaling of mapitem") }
+func (n *Array) MarshalJSON() ([]byte, error)       { panic("Unexpected marshaling of array") }
+func (n *ArrayItem) MarshalJSON() ([]byte, error)   { panic("Unexpected marshaling of arrayitem") }
 
 func (n *DocumentSet) _private() {}
 func (n *Document) _private()    {}
