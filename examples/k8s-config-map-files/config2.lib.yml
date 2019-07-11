@@ -1,0 +1,9 @@
+#@ def config2():
+rules2a: 123
+rules2b: #@ config2sub()
+#@ end
+
+---
+#@ def config2sub():
+[a, b, c]
+#@ end

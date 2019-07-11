@@ -34,6 +34,7 @@ done
 diff <(./ytt -f examples/k8s-adjust-rbac-version)     examples/k8s-adjust-rbac-version/expected.txt
 diff <(./ytt -f examples/k8s-docker-secret)           examples/k8s-docker-secret/expected.txt
 diff <(./ytt -f examples/k8s-relative-rolling-update) examples/k8s-relative-rolling-update/expected.txt
+diff <(./ytt -f examples/k8s-config-map-files)        examples/k8s-config-map-files/expected.txt
 diff <(./ytt -f examples/concourse-overlay)           examples/concourse-overlay/expected.txt
 
 echo E2E SUCCESS

@@ -1,0 +1,17 @@
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: configs
+data:
+  config1.yml: |
+    config1a: config1a
+    config1b: config1b
+    ---
+    config1c: config1c
+  config2.yml: |
+    rules2a: 123
+    rules2b:
+    - a
+    - b
+    - c
+  config3.json: '{"rules2a":123,"rules2b":["a","b","c"]}'

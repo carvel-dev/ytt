@@ -1,0 +1,7 @@
+#@ def config1():
+---
+config1a: config1a
+config1b: config1b
+---
+config1c: config1c
+#@ end

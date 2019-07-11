@@ -1,0 +1,14 @@
+#@ load("@ytt:yaml", "yaml")
+#@ load("@ytt:json", "json")
+#@ load("config1.lib.yml", "config1")
+#@ load("config2.lib.yml", "config2")
+
+---
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: configs
+data:
+  config1.yml: #@ yaml.encode(config1())
+  config2.yml: #@ yaml.encode(config2())
+  config3.json: #@ json.encode(config2())
