@@ -1,0 +1,6 @@
+--- #@ { "first": "is included"}
+this line: is ignored too
+
++++
+
+ERR: Expected YAML node at line stdin:1 to have either computed or YAML value, but found both
