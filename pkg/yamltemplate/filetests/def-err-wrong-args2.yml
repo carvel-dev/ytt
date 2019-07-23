@@ -14,7 +14,9 @@ test1: #@ call1(None)
 +++
 
 ERR: 
-- function call2 takes exactly 1 positional argument (0 given)
+- function call2 missing 1 argument (a)
+    stdin:2 in call2
+     L nested: #@ a
     stdin:7 in call1
      L #@     call2()
     stdin:12 in <toplevel>

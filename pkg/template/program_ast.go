@@ -44,7 +44,7 @@ func (r *ProgramAST) stmt(stmt syntax.Stmt) {
 		r.expr(stmt.RHS)
 
 	case *syntax.DefStmt:
-		r.function(stmt.Def, stmt.Name.Name, &stmt.Function)
+		r.function(stmt.Def, stmt.Name.Name, stmt)
 
 	case *syntax.ForStmt:
 		r.expr(stmt.X)
@@ -180,7 +180,7 @@ func (r *ProgramAST) expr(e syntax.Expr) {
 		}
 
 	case *syntax.LambdaExpr:
-		r.function(e.Lambda, "lambda", &e.Function)
+		r.expr(e.Body)
 
 	case *syntax.ParenExpr:
 		r.expr(e.X)
@@ -190,7 +190,7 @@ func (r *ProgramAST) expr(e syntax.Expr) {
 	}
 }
 
-func (r *ProgramAST) function(pos syntax.Position, name string, function *syntax.Function) {
+func (r *ProgramAST) function(pos syntax.Position, name string, function *syntax.DefStmt) {
 	r.defNestingUsesTpl = append(r.defNestingUsesTpl, false)
 
 	for _, param := range function.Params {
@@ -208,7 +208,7 @@ func (r *ProgramAST) function(pos syntax.Position, name string, function *syntax
 	r.defNestingUsesTpl = r.defNestingUsesTpl[:len(r.defNestingUsesTpl)-1]
 }
 
-func (r *ProgramAST) addTplCtxToFunction(function *syntax.Function) {
+func (r *ProgramAST) addTplCtxToFunction(function *syntax.DefStmt) {
 	if r.ctxType == nil {
 		panic("expected r.ctxType to be set")
 	}
