@@ -35,7 +35,7 @@ func Parse(filename string, src interface{}, mode Mode) (f *File, err error) {
 	if err != nil {
 		return nil, err
 	}
-	p := parser{in: newBlockScanner(in)}
+	p := parser{in: in}
 	defer p.in.recover(&err)
 
 	p.nextToken() // read first lookahead token
@@ -60,7 +60,7 @@ func ParseCompoundStmt(filename string, readline func() ([]byte, error)) (f *Fil
 		return nil, err
 	}
 
-	p := parser{in: newBlockScanner(in)}
+	p := parser{in: in}
 	defer p.in.recover(&err)
 
 	p.nextToken() // read first lookahead token
@@ -75,7 +75,7 @@ func ParseCompoundStmt(filename string, readline func() ([]byte, error)) (f *Fil
 		stmts = p.parseSimpleStmt(stmts, false)
 		// Require but don't consume newline, to avoid blocking again.
 		if p.tok != NEWLINE {
-			p.in.errorf(p.in.getPos(), "invalid syntax")
+			p.in.errorf(p.in.pos, "invalid syntax")
 		}
 	}
 
@@ -83,21 +83,20 @@ func ParseCompoundStmt(filename string, readline func() ([]byte, error)) (f *Fil
 }
 
 // ParseExpr parses a Starlark expression.
+// A comma-separated list of expressions is parsed as a tuple.
 // See Parse for explanation of parameters.
 func ParseExpr(filename string, src interface{}, mode Mode) (expr Expr, err error) {
 	in, err := newScanner(filename, src, mode&RetainComments != 0)
 	if err != nil {
 		return nil, err
 	}
-	p := parser{in: newBlockScanner(in)}
+	p := parser{in: in}
 	defer p.in.recover(&err)
 
 	p.nextToken() // read first lookahead token
 
-	// TODO(adonovan): Python's eval would use the equivalent of
-	// parseExpr here, which permits an unparenthesized tuple.
-	// We should too.
-	expr = p.parseTest()
+	// Use parseExpr, not parseTest, to permit an unparenthesized tuple.
+	expr = p.parseExpr(false)
 
 	// A following newline (e.g. "f()\n") appears outside any brackets,
 	// on a non-blank line, and thus results in a NEWLINE token.
@@ -106,14 +105,14 @@ func ParseExpr(filename string, src interface{}, mode Mode) (expr Expr, err erro
 	}
 
 	if p.tok != EOF {
-		p.in.errorf(p.in.getPos(), "got %#v after expression, want EOF", p.tok)
+		p.in.errorf(p.in.pos, "got %#v after expression, want EOF", p.tok)
 	}
 	p.assignComments(expr)
 	return expr, nil
 }
 
 type parser struct {
-	in     *blockScanner
+	in     *scanner
 	tok    Token
 	tokval tokenValue
 }
@@ -165,13 +164,10 @@ func (p *parser) parseDefStmt() Stmt {
 	p.consume(COLON)
 	body := p.parseSuite()
 	return &DefStmt{
-		Def:  defpos,
-		Name: id,
-		Function: Function{
-			StartPos: defpos,
-			Params:   params,
-			Body:     body,
-		},
+		Def:    defpos,
+		Name:   id,
+		Params: params,
+		Body:   body,
 	}
 }
 
@@ -322,7 +318,7 @@ func (p *parser) parseLoadStmt() *LoadStmt {
 	lparen := p.consume(LPAREN)
 
 	if p.tok != STRING {
-		p.in.errorf(p.in.getPos(), "first operand of load statement must be a string literal")
+		p.in.errorf(p.in.pos, "first operand of load statement must be a string literal")
 	}
 	module := p.parsePrimary().(*Literal)
 
@@ -349,11 +345,11 @@ func (p *parser) parseLoadStmt() *LoadStmt {
 			id := p.parseIdent()
 			to = append(to, id)
 			if p.tok != EQ {
-				p.in.errorf(p.in.getPos(), `load operand must be "%[1]s" or %[1]s="originalname" (want '=' after %[1]s)`, id.Name)
+				p.in.errorf(p.in.pos, `load operand must be "%[1]s" or %[1]s="originalname" (want '=' after %[1]s)`, id.Name)
 			}
 			p.consume(EQ)
 			if p.tok != STRING {
-				p.in.errorf(p.in.getPos(), `original name of loaded symbol must be quoted: %s="originalname"`, id.Name)
+				p.in.errorf(p.in.pos, `original name of loaded symbol must be quoted: %s="originalname"`, id.Name)
 			}
 			lit := p.parsePrimary().(*Literal)
 			from = append(from, &Ident{
@@ -362,10 +358,10 @@ func (p *parser) parseLoadStmt() *LoadStmt {
 			})
 
 		case RPAREN:
-			p.in.errorf(p.in.getPos(), "trailing comma in load statement")
+			p.in.errorf(p.in.pos, "trailing comma in load statement")
 
 		default:
-			p.in.errorf(p.in.getPos(), `load operand must be "name" or localname="name" (got %#v)`, p.tok)
+			p.in.errorf(p.in.pos, `load operand must be "name" or localname="name" (got %#v)`, p.tok)
 		}
 	}
 	rparen := p.consume(RPAREN)
@@ -401,7 +397,7 @@ func (p *parser) parseSuite() []Stmt {
 
 func (p *parser) parseIdent() *Ident {
 	if p.tok != IDENT {
-		p.in.error(p.in.getPos(), "not an identifier")
+		p.in.error(p.in.pos, "not an identifier")
 	}
 	id := &Ident{
 		NamePos: p.tokval.pos,
@@ -413,7 +409,7 @@ func (p *parser) parseIdent() *Ident {
 
 func (p *parser) consume(t Token) Position {
 	if p.tok != t {
-		p.in.errorf(p.in.getPos(), "got %#v, want %#v", p.tok, t)
+		p.in.errorf(p.in.pos, "got %#v, want %#v", p.tok, t)
 	}
 	return p.nextToken()
 }
@@ -423,15 +419,17 @@ func (p *parser) consume(t Token) Position {
 //
 // param = IDENT
 //       | IDENT EQ test
+//       | STAR
 //       | STAR IDENT
 //       | STARSTAR IDENT
 //
 // parseParams parses a parameter list.  The resulting expressions are of the form:
 //
-//      *Ident
-//      *Binary{Op: EQ, X: *Ident, Y: Expr}
-//      *Unary{Op: STAR, X: *Ident}
-//      *Unary{Op: STARSTAR, X: *Ident}
+//      *Ident                                          x
+//      *Binary{Op: EQ, X: *Ident, Y: Expr}             x=y
+//      *Unary{Op: STAR}                                *
+//      *Unary{Op: STAR, X: *Ident}                     *args
+//      *Unary{Op: STARSTAR, X: *Ident}                 **kwargs
 func (p *parser) parseParams() []Expr {
 	var params []Expr
 	stars := false
@@ -442,21 +440,24 @@ func (p *parser) parseParams() []Expr {
 		if p.tok == RPAREN {
 			// list can end with a COMMA if there is neither * nor **
 			if stars {
-				p.in.errorf(p.in.getPos(), "got %#v, want parameter", p.tok)
+				p.in.errorf(p.in.pos, "got %#v, want parameter", p.tok)
 			}
 			break
 		}
 
-		// *args or **kwargs
+		// * or *args or **kwargs
 		if p.tok == STAR || p.tok == STARSTAR {
 			stars = true
 			op := p.tok
 			pos := p.nextToken()
-			id := p.parseIdent()
+			var x Expr
+			if op == STARSTAR || p.tok == IDENT {
+				x = p.parseIdent()
+			}
 			params = append(params, &UnaryExpr{
 				OpPos: pos,
 				Op:    op,
-				X:     id,
+				X:     x,
 			})
 			continue
 		}
@@ -565,11 +566,8 @@ func (p *parser) parseLambda(allowCond bool) Expr {
 
 	return &LambdaExpr{
 		Lambda: lambda,
-		Function: Function{
-			StartPos: lambda,
-			Params:   params,
-			Body:     []Stmt{&ReturnStmt{Result: body}},
-		},
+		Params: params,
+		Body:   body,
 	}
 }
 
@@ -602,7 +600,7 @@ func (p *parser) parseBinopExpr(prec int) Expr {
 			// In this context, NOT must be followed by IN.
 			// Replace NOT IN by a single NOT_IN token.
 			if p.tok != IN {
-				p.in.errorf(p.in.getPos(), "got %#v, want in", p.tok)
+				p.in.errorf(p.in.pos, "got %#v, want in", p.tok)
 			}
 			p.tok = NOT_IN
 		}
@@ -615,7 +613,7 @@ func (p *parser) parseBinopExpr(prec int) Expr {
 
 		// Comparisons are non-associative.
 		if !first && opprec == int(precedence[EQL]) {
-			p.in.errorf(p.in.getPos(), "%s does not associate with %s (use parens)",
+			p.in.errorf(p.in.pos, "%s does not associate with %s (use parens)",
 				x.(*BinaryExpr).Op, p.tok)
 		}
 
@@ -740,7 +738,7 @@ func (p *parser) parseArgs() []Expr {
 		if p.tok == RPAREN {
 			// list can end with a COMMA if there is neither * nor **
 			if stars {
-				p.in.errorf(p.in.getPos(), `got %#v, want argument`, p.tok)
+				p.in.errorf(p.in.pos, `got %#v, want argument`, p.tok)
 			}
 			break
 		}
@@ -767,7 +765,7 @@ func (p *parser) parseArgs() []Expr {
 		if p.tok == EQ {
 			// name = value
 			if _, ok := x.(*Ident); !ok {
-				p.in.errorf(p.in.getPos(), "keyword argument must have form name=expr")
+				p.in.errorf(p.in.pos, "keyword argument must have form name=expr")
 			}
 			eq := p.nextToken()
 			y := p.parseTest()
@@ -846,7 +844,7 @@ func (p *parser) parsePrimary() Expr {
 			X:     x,
 		}
 	}
-	p.in.errorf(p.in.getPos(), "got %#v, want primary expression", p.tok)
+	p.in.errorf(p.in.pos, "got %#v, want primary expression", p.tok)
 	panic("unreachable")
 }
 
@@ -943,7 +941,7 @@ func (p *parser) parseComprehensionSuffix(lbrace Position, body Expr, endBrace T
 			cond := p.parseTestNoCond()
 			clauses = append(clauses, &IfClause{If: pos, Cond: cond})
 		} else {
-			p.in.errorf(p.in.getPos(), "got %#v, want '%s', for, or if", p.tok, endBrace)
+			p.in.errorf(p.in.pos, "got %#v, want '%s', for, or if", p.tok, endBrace)
 		}
 	}
 	rbrace := p.nextToken()
@@ -993,14 +991,14 @@ func flattenAST(root Node) (pre, post []Node) {
 // assignComments attaches comments to nearby syntax.
 func (p *parser) assignComments(n Node) {
 	// Leave early if there are no comments
-	if len(p.in.getLineComments())+len(p.in.getSuffixComments()) == 0 {
+	if len(p.in.lineComments)+len(p.in.suffixComments) == 0 {
 		return
 	}
 
 	pre, post := flattenAST(n)
 
 	// Assign line comments to syntax immediately following.
-	line := p.in.getLineComments()
+	line := p.in.lineComments
 	for _, x := range pre {
 		start, _ := x.Span()
 
@@ -1023,7 +1021,7 @@ func (p *parser) assignComments(n Node) {
 	}
 
 	// Assign suffix comments to syntax immediately before.
-	suffix := p.in.getSuffixComments()
+	suffix := p.in.suffixComments
 	for i := len(post) - 1; i >= 0; i-- {
 		x := post[i]
 

@@ -46,6 +46,11 @@ effects on the host application.
 As a result, Starlark has no need for classes, exceptions, reflection,
 concurrency, and other such features of Python.
 
+Starlark execution is _deterministic_: all functions and operators
+in the core language produce the same execution each time the program
+is run; there are no sources of random numbers, clocks, or unspecified
+iterators. This makes Starlark suitable for use in applications where
+reproducibility is paramount, such as build tools.
 
 ## Contents
 
@@ -110,6 +115,7 @@ concurrency, and other such features of Python.
     * [dict](#dict)
     * [dir](#dir)
     * [enumerate](#enumerate)
+    * [fail](#fail)
     * [float](#float)
     * [getattr](#getattr)
     * [hasattr](#hasattr)
@@ -285,7 +291,7 @@ has string, integer, and floating-point literals.
 0                               # int
 123                             # decimal int
 0x7f                            # hexadecimal int
-0755                            # octal int
+0o755                           # octal int
 0b1011                          # binary int
 
 0.0     0.       .0             # float
@@ -301,9 +307,8 @@ Integer and floating-point literal tokens are defined by the following grammar:
 
 ```grammar {.good}
 int         = decimal_lit | octal_lit | hex_lit | binary_lit .
-decimal_lit = ('1' … '9') {decimal_digit} .
-octal_lit   = '0' {octal_digit} .
-            | '0' ('o'|'O') octal_digit {octal_digit} .
+decimal_lit = ('1' … '9') {decimal_digit} | '0' .
+octal_lit   = '0' ('o'|'O') octal_digit {octal_digit} .
 hex_lit     = '0' ('x'|'X') hex_digit {hex_digit} .
 binary_lit  = '0' ('b'|'B') binary_digit {binary_digit} .
 
@@ -326,7 +331,7 @@ TODO: define string_lit, indent, outdent, semicolon, newline, eof
 
 These are the main data types built in to the interpreter:
 
-```shell
+```python
 NoneType                     # the type of None
 bool                         # True or False
 int                          # a signed integer of arbitrary magnitude
@@ -443,9 +448,6 @@ arithmetic is exact, motivated by the need for lossless manipulation
 of protocol messages which may contain signed and unsigned 64-bit
 integers.
 The Java implementation currently supports only signed 32-bit integers.
-
-The Go implementation of Starlark requires the `-bitwise` flag to
-enable support for `&`, `|`, `^`, `~`, `<<`, and `>>` operations.
 The Java implementation does not support `^`, `~`, `<<`, and `>>` operations.
 
 
@@ -713,8 +715,7 @@ values include `None`, Booleans, numbers, and strings, and tuples
 composed from hashable values.  Most mutable values, such as lists,
 dictionaries, and sets, are not hashable, even when frozen.
 Attempting to use a non-hashable value as a key in a dictionary
-results in a dynamic error, as does passing one to the built-in
-`hash` function.
+results in a dynamic error.
 
 A [dictionary expression](#dictionary-expressions) specifies a
 dictionary as a set of key/value pairs enclosed in braces:
@@ -837,8 +838,7 @@ A set used in a Boolean context is considered true if it is non-empty.
 
 <b>Implementation note:</b>
 The Go implementation of Starlark requires the `-set` flag to
-enable support for sets and the `-bitwise` flag to enable support for
-the `&`, `|`, and `^` operators.
+enable support for sets.
 The Java implementation does not support sets.
 
 
@@ -945,7 +945,7 @@ f(1, 2, 3, 4)           # (1, 2, (3, 4))
 
 <b>Keyword-variadic functions:</b> Some functions allow callers to
 provide an arbitrary sequence of `name=value` keyword arguments.
-A function definition may include a final _keyworded arguments_ or
+A function definition may include a final _keyword arguments_ or
 _kwargs_ parameter, indicated by a double-star preceding the parameter
 name: `**kwargs`.
 Any surplus named arguments that do not correspond to named parameters
@@ -963,8 +963,8 @@ f(x=2, y=1, z=3)        # (2, 1, {"z": 3})
 It is a static error if any two parameters of a function have the same name.
 
 Just as a function definition may accept an arbitrary number of
-positional or keyworded arguments, a function call may provide an
-arbitrary number of positional or keyworded arguments supplied by a
+positional or named arguments, a function call may provide an
+arbitrary number of positional or named arguments supplied by a
 list or dictionary:
 
 ```python
@@ -1070,6 +1070,12 @@ in the environment of a specific module.
 Except where noted, built-in functions accept only positional arguments.
 The parameter names serve merely as documentation.
 
+Most built-in functions that have a Boolean parameter require its
+argument to be `True` or `False`. Unlike `if` statements, other values
+are not implicitly converted to their truth value and instead cause a
+dynamic error.
+
+
 ## Name binding and variables
 
 After a Starlark file is parsed, but before its execution begins, the
@@ -1109,7 +1115,7 @@ h = [2*i for i in a]
 The environment of a Starlark program is structured as a tree of
 _lexical blocks_, each of which may contain name bindings.
 The tree of blocks is parallel to the syntax tree.
-Blocks are of four kinds.
+Blocks are of five kinds.
 
 <!-- Avoid the term "built-in" block since that's also a type. -->
 At the root of the tree is the _predeclared_ block,
@@ -1124,24 +1130,33 @@ These additional functions may have side effects on the application.
 Starlark programs cannot change the set of predeclared bindings
 or assign new values to them.
 
-Nested beneath the predeclared block is the _module_ block, which
-contains the bindings of the current file.
-Bindings in the module block (such as `a`, `b`, `c`, and `h` in the
-example) are called _global_.
+Nested beneath the predeclared block is the _module_ block,
+which contains the bindings of the current module.
+Bindings in the module block (such as `c`, and `h` in the
+example) are called _global_ and may be visible to other modules.
 The module block is empty at the start of the file
 and is populated by top-level binding statements.
 
-A module block contains a _function_ block for each top-level
-function, and a _comprehension_ block for each top-level
-comprehension.
-Bindings inside either of these kinds of block are called _local_.
+Nested beneath the module block is the _file_ block,
+which contains bindings local to the current file.
+Names in this block (such as `a` and `b` in the example)
+are bound only by `load` statements.
+The sets of names bound in the file block and in the module block do not overlap:
+it is an error for a load statement to bind the name of a global,
+or for a top-level statement to assign to a name bound by a load statement.
+
+A file block contains a _function_ block for each top-level
+function, and a _comprehension_ block for each top-level comprehension.
+Bindings in either of these kinds of block,
+and in the file block itself, are called _local_.
+(In the example, the bindings for `e`, `f`, `g`, and `i` are all local.)
 Additional functions and comprehensions, and their blocks, may be
 nested in any order, to any depth.
 
 If name is bound anywhere within a block, all uses of the name within
-the block are treated as references to that binding, even uses that
-appear before the binding.
-This is true even in the module block, unlike Python.
+the block are treated as references to that binding,
+even if the use appears before the binding.
+This is true even at the top level, unlike Python.
 The binding of `y` on the last line of the example below makes `y`
 local to the function `hello`, so the use of `y` in the print
 statement also refers to the local `y`, even though it appears
@@ -1259,7 +1274,6 @@ application-defined, implement a few basic behaviors:
 str(x)		-- return a string representation of x
 type(x)		-- return a string describing the type of x
 bool(x)		-- convert x to a Boolean truth value
-hash(x)		-- return a hash code for x
 ```
 
 ### Identity and mutation
@@ -1338,8 +1352,7 @@ third without the possibility of a race condition.
 The `dict` and `set` data types are implemented using hash tables, so
 only _hashable_ values are suitable as keys of a `dict` or elements of
 a `set`. Attempting to use a non-hashable value as the key in a hash
-table, or as the operand of the `hash` built-in function, results in a
-dynamic error.
+table results in a dynamic error.
 
 The hash of a value is an unspecified integer chosen so that two equal
 values have the same hash, in other words, `x == y => hash(x) == hash(y)`.
@@ -1544,7 +1557,7 @@ Primary = int | float | string
 
 Evaluation of a literal yields a value of the given type (string, int,
 or float) with the given value.
-See [Literals](#lexical elements) for details.
+See [Literals](#lexical-elements) for details.
 
 ### Parenthesized expressions
 
@@ -1707,7 +1720,6 @@ Starlark has the following binary operators, arranged in order of increasing pre
 ```text
 or
 and
-not
 ==   !=   <    >   <=   >=   in   not in
 |
 ^
@@ -1726,7 +1738,6 @@ BinaryExpr = Test {Binop Test} .
 
 Binop = 'or'
       | 'and'
-      | 'not'
       | '==' | '!=' | '<' | '>' | '<=' | '>=' | 'in' | 'not' 'in'
       | '|'
       | '^'
@@ -2326,6 +2337,7 @@ LambdaExpr = 'lambda' [Parameters] ':' Test .
 Parameters = Parameter {',' Parameter} .
 Parameter  = identifier
            | identifier '=' Test
+           | '*'
            | '*' identifier
            | '**' identifier
            .
@@ -2513,7 +2525,7 @@ the parameter list (which is enclosed in parentheses), a colon, and
 then an indented block of statements which form the body of the function.
 
 The parameter list is a comma-separated list whose elements are of
-four kinds.  First come zero or more required parameters, which are
+several kinds.  First come zero or more required parameters, which are
 simple identifiers; all calls must provide an argument value for these parameters.
 
 The required parameters are followed by zero or more optional
@@ -2524,11 +2536,40 @@ provide an argument value for it.
 The required parameters are optionally followed by a single parameter
 name preceded by a `*`.  This is the called the _varargs_ parameter,
 and it accumulates surplus positional arguments specified by a call.
+It is conventionally named `*args`.
+
+The varargs parameter may be followed by zero or more
+parameters, again of the forms `name` or `name=expression`,
+but these parameters differ from earlier ones in that they are
+_keyword-only_: if a call provides their values, it must do so as
+keyword arguments, not positional ones.
+
+```python
+def f(a, *, b=2, c):
+  print(a, b, c)
+
+f(1)                    # error: function f missing 1 argument (c)
+f(1, 3)                 # error: function f accepts 1 positional argument (2 given)
+f(1, c=3)               # "1 2 3"
+
+def g(a, *args, b=2, c):
+  print(a, b, c, args)
+
+g(1, 3)                 # error: function g missing 1 argument (c)
+g(1, 4, c=3)            # "1 2 3 (4,)"
+
+```
+
+A non-variadic function may also declare keyword-only parameters,
+by using a bare `*` in place of the `*args` parameter.
+This form does not declare a parameter but marks the boundary
+between the earlier parameters and the keyword-only parameters.
+This form must be followed by at least one optional parameter.
 
 Finally, there may be an optional parameter name preceded by `**`.
 This is called the _keyword arguments_ parameter, and accumulates in a
 dictionary any surplus `name=value` arguments that do not match a
-prior parameter.
+prior parameter. It is conventionally named `**kwargs`.
 
 Here are some example parameter lists:
 
@@ -2539,6 +2580,7 @@ def f(a, b, c=1): pass
 def f(a, b, c=1, *args): pass
 def f(a, b, c=1, *args, **kwargs): pass
 def f(**kwargs): pass
+def f(a, b, c=1, *, d=1): pass
 ```
 
 Execution of a `def` statement creates a new function object.  The
@@ -2850,12 +2892,12 @@ application-specific dialect) without breaking existing programs.
 
 ### any
 
-`any(x)` returns `True` if any element of the iterable sequence x is true.
+`any(x)` returns `True` if any element of the iterable sequence x has a truth value of true.
 If the iterable is empty, it returns `False`.
 
 ### all
 
-`all(x)` returns `False` if any element of the iterable sequence x is false.
+`all(x)` returns `False` if any element of the iterable sequence x has a truth value of false.
 If the iterable is empty, it returns `True`.
 
 ### bool
@@ -2907,7 +2949,7 @@ With no arguments, `dict()` returns a new empty dictionary.
 
 ### dir
 
-`dir(x)` returns a list of the names of the attributes (fields and methods) of its operand.
+`dir(x)` returns a new sorted list of the names of the attributes (fields and methods) of its operand.
 The attributes of a value `x` are the names `f` such that `x.f` is a valid expression.
 
 For example,
@@ -2936,6 +2978,19 @@ add to each index.
 ```python
 enumerate(["zero", "one", "two"])               # [(0, "zero"), (1, "one"), (2, "two")]
 enumerate(["one", "two"], 1)                    # [(1, "one"), (2, "two")]
+```
+
+### fail
+
+The `fail(*args, sep=" ")` function causes execution to fail
+with the specified error message.
+Like `print`, arguments are formatted as if by `str(x)` and
+separated by a space, unless an alternative separator is
+specified by a `sep` named argument.
+
+```python
+fail("oops")				# "fail: oops"
+fail("oops", 1, False, sep='/')		# "fail: oops/1/False"
 ```
 
 ### float
@@ -2972,12 +3027,20 @@ getattr("banana", "split")("a")	       # ["b", "n", "n", ""], equivalent to "ban
 
 ### hash
 
-`hash(x)` returns an integer hash value for x such that `x == y` implies `hash(x) == hash(y)`.
+`hash(x)` returns an integer hash of a string x
+such that two equal strings have the same hash.
+In other words `x == y` implies `hash(x) == hash(y)`.
 
-`hash` fails if x, or any value upon which its hash depends, is unhashable.
+In the interests of reproducibility of Starlark program behavior over time and
+across implementations, the specific hash function is the same as that implemented by
+[java.lang.String.hashCode](https://docs.oracle.com/javase/7/docs/api/java/lang/String.html#hashCode),
+a simple polynomial accumulator over the UTF-16 transcoding of the string:
+ ```
+s[0]*31^(n-1) + s[1]*31^(n-2) + ... + s[n-1]
+```
 
-<b>Implementation note:</b> the Java implementation of the `hash`
-function accepts only strings.
+`hash` fails if given a non-string operand,
+even if the value is hashable and thus suitable as the key of dictionary.
 
 ### int
 
@@ -3068,7 +3131,6 @@ See also: `chr`.
 `print(*args, sep=" ")` prints its arguments, followed by a newline.
 Arguments are formatted as if by `str(x)` and separated with a space,
 unless an alternative separator is specified by a `sep` named argument.
-Keyword arguments are preceded by their name.
 
 Example:
 
@@ -3789,8 +3851,12 @@ are strings.
 
 `S.lstrip()` returns a copy of the string S with leading whitespace removed.
 
+Like `strip`, it accepts an optional string parameter that specifies an
+alternative set of Unicode code points to remove.
+
 ```python
-"  hello  ".lstrip()                    # "  hello"
+"  hello  ".lstrip()                    # "hello  "
+"  hello  ".lstrip("h o")               # "ello  "
 ```
 
 <a id='string·partition'></a>
@@ -3866,6 +3932,7 @@ rightmost splits.
 "banana".rsplit("n")                         # ["ba", "a", "a"]
 "banana".rsplit("n", 1)                      # ["bana", "a"]
 "one two  three".rsplit(None, 1)             # ["one two", "three"]
+"".rsplit("n")                               # [""]
 ```
 
 <a id='string·rstrip'></a>
@@ -3873,8 +3940,12 @@ rightmost splits.
 
 `S.rstrip()` returns a copy of the string S with trailing whitespace removed.
 
+Like `strip`, it accepts an optional string parameter that specifies an
+alternative set of Unicode code points to remove.
+
 ```python
-"  hello  ".rstrip()                    # "hello  "
+"  hello  ".rstrip()                    # "  hello"
+"  hello  ".rstrip("h o")               # "  hell"
 ```
 
 <a id='string·split'></a>
@@ -3893,8 +3964,7 @@ algorithm: it removes all leading spaces from S
 (or trailing spaces in the case of `rsplit`),
 then splits the string around each consecutive non-empty sequence of
 Unicode white space characters.
-
-If S consists only of white space, `split` returns the empty list.
+If S consists only of white space, `S.split()` returns the empty list.
 
 If `maxsplit` is given and non-negative, it specifies a maximum number of splits.
 
@@ -3904,6 +3974,7 @@ If `maxsplit` is given and non-negative, it specifies a maximum number of splits
 "one two  three".split(None, 1)             # ["one", "two  three"]
 "banana".split("n")                         # ["ba", "a", "a"]
 "banana".split("n", 1)                      # ["ba", "ana"]
+"".split("n")                               # [""]
 ```
 
 <a id='string·elems'></a>
@@ -3959,11 +4030,14 @@ The optional argument, `keepends`, is interpreted as a Boolean.
 If true, line terminators are preserved in the result, though
 the final element does not necessarily end with a line terminator.
 
+As a special case, if S is the empty string,
+`splitlines` returns the empty list.
+
 ```python
 "one\n\ntwo".splitlines()       # ["one", "", "two"]
 "one\n\ntwo".splitlines(True)   # ["one\n", "\n", "two"]
+"".splitlines()                 # [] -- a special case
 ```
-
 
 <a id='string·startswith'></a>
 ### string·startswith
@@ -3989,8 +4063,13 @@ function reports whether any one of them is a prefix.
 
 `S.strip()` returns a copy of the string S with leading and trailing whitespace removed.
 
+It accepts an optional string argument:
+`S.strip(cutset)` instead removes all leading
+and trailing Unicode code points contained in `cutset`.
+
 ```python
 "  hello  ".strip()                     # "hello"
+"  hello  ".strip("h o")                # "ell"
 ```
 
 <a id='string·title'></a>
@@ -4025,7 +4104,6 @@ See [Starlark spec issue 20](https://github.com/bazelbuild/starlark/issues/20).
 
 * Integers are represented with infinite precision.
 * Integer arithmetic is exact.
-* Integers support bitwise operators `&`, `|`, `<<`, `>>`, `^`, `~`, and their assignment forms.
 * Floating-point literals are supported (option: `-float`).
 * The `float` built-in function is provided (option: `-float`).
 * Real division using `float / float` is supported (option: `-float`).
@@ -4041,7 +4119,6 @@ See [Starlark spec issue 20](https://github.com/bazelbuild/starlark/issues/20).
 * The parser accepts unary `+` expressions.
 * A method call `x.f()` may be separated into two steps: `y = x.f; y()`.
 * Dot expressions may appear on the left side of an assignment: `x.f = 1`.
-* `hash` accepts operands besides strings.
 * `sorted` accepts the additional parameters `key` and `reverse`.
 * `type(x)` returns `"builtin_function_or_method"` for built-in functions.
 * `if`, `for`, and `while` are permitted at top level (option: `-globalreassign`).

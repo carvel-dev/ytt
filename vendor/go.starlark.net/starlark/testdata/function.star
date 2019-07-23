@@ -110,11 +110,9 @@ yang(True)
 assert.eq(calls, ["yang", "yin"])
 
 
-# hash(builtin_function_or_method) should be deterministic.
+# builtin_function_or_method use identity equivalence.
 closures = set(["".count for _ in range(10)])
 assert.eq(len(closures), 10)
-hashes = set([hash("".count) for _ in range(10)])
-assert.eq(len(hashes), 1)
 
 ---
 # Default values of function parameters are mutable.
@@ -175,7 +173,7 @@ assert.fails(lambda: f(
     33, 34, 35, 36, 37, 38, 39, 40,
     41, 42, 43, 44, 45, 46, 47, 48,
     49, 50, 51, 52, 53, 54, 55, 56,
-    57, 58, 59, 60, 61, 62, 63, 64), "takes exactly 65 positional arguments .64 given.")
+    57, 58, 59, 60, 61, 62, 63, 64), "missing 1 argument \(mm\)")
 
 assert.fails(lambda: f(
     1, 2, 3, 4, 5, 6, 7, 8,
@@ -186,7 +184,7 @@ assert.fails(lambda: f(
     41, 42, 43, 44, 45, 46, 47, 48,
     49, 50, 51, 52, 53, 54, 55, 56,
     57, 58, 59, 60, 61, 62, 63, 64, 65,
-    mm = 100), 'multiple values for keyword argument "mm"')
+    mm = 100), 'multiple values for parameter "mm"')
 
 ---
 # Regression test for github.com/google/starlark-go/issues/21,
@@ -200,13 +198,13 @@ def f(*args, **kwargs):
   return args, kwargs
 
 assert.eq(f(x=1, y=2), ((), {"x": 1, "y": 2}))
-assert.fails(lambda: f(x=1, **dict(x=2)), 'multiple values for keyword argument "x"')
+assert.fails(lambda: f(x=1, **dict(x=2)), 'multiple values for parameter "x"')
 
 def g(x, y):
   return x, y
 
 assert.eq(g(1, y=2), (1, 2))
-assert.fails(lambda: g(1, y=2, **{'y': 3}), 'multiple values for keyword argument "y"')
+assert.fails(lambda: g(1, y=2, **{'y': 3}), 'multiple values for parameter "y"')
 
 ---
 # Regression test for a bug in CALL_VAR_KW.
@@ -238,3 +236,54 @@ assert.eq(y, ((1, 2, 4), dict(x=3, y=5, z=6)))
 # *args and *kwargs are evaluated last.
 # See github.com/bazelbuild/starlark#13 for pending spec change.
 assert.eq(r, [1, 2, 3, 5, 4, 6])
+
+
+---
+# option:nesteddef option:recursion
+# See github.com/bazelbuild/starlark#170
+load("assert.star", "assert")
+
+def a():
+    list = []
+    def b(n):
+        list.append(n)
+        if n > 0:
+            b(n - 1) # recursive reference to b
+
+    b(3)
+    return list
+
+assert.eq(a(), [3, 2, 1, 0])
+
+def c():
+    list = []
+    x = 1
+    def d():
+      list.append(x) # this use of x observes both assignments
+    d()
+    x = 2
+    d()
+    return list
+
+assert.eq(c(), [1, 2])
+
+def e():
+    def f():
+      return x # forward reference ok: x is a closure cell
+    x = 1
+    return f()
+
+assert.eq(e(), 1)
+
+---
+# option:nesteddef
+load("assert.star", "assert")
+
+def e():
+    x = 1
+    def f():
+      print(x) # this reference to x fails
+      x = 3    # because this assignment makes x local to f
+    f()
+
+assert.fails(e, "local variable x referenced before assignment")

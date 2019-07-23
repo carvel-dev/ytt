@@ -1,5 +1,5 @@
 # Tests of Starlark 'string'
-# option:float option:bitwise option:set
+# option:float option:set
 
 load("assert.star", "assert")
 
@@ -142,6 +142,17 @@ assert.fails(lambda: "" in 1, "unknown binary op: string in int")
 assert.eq("hello", "he"+"llo")
 assert.ne("hello", "Hello")
 
+# hash must follow java.lang.String.hashCode.
+wanthash = {
+    "": 0,
+    "\0" * 100: 0,
+    "hello": 99162322,
+    "world": 113318802,
+    "Hello, 世界!": 417292677,
+}
+gothash = {s: hash(s) for s in wanthash}
+assert.eq(gothash, wanthash)
+
 # TODO(adonovan): ordered comparisons
 
 # string % tuple formatting
@@ -207,6 +218,8 @@ assert.eq("a.b.c.d".split(".", 1), ["a", "b.c.d"])
 assert.eq("a.b.c.d".rsplit(".", 1), ["a.b.c", "d"])
 assert.eq("a.b.c.d".split(".", 2), ["a", "b", "c.d"])
 assert.eq("a.b.c.d".rsplit(".", 2), ["a.b", "c", "d"])
+assert.eq("  ".split("."), ["  "])
+assert.eq("  ".rsplit("."), ["  "])
 
 # {,r}split on white space:
 assert.eq(" a bc\n  def \t  ghi".split(), ["a", "bc", "def", "ghi"])
@@ -243,14 +256,30 @@ assert.eq('--aa--bb--cc--'.split('-', -1), ['', '', 'aa', '', 'bb', '', 'cc', ''
 assert.eq('--aa--bb--cc--'.rsplit('-', -1), ['', '', 'aa', '', 'bb', '', 'cc', '', ''])
 assert.eq('  aa  bb  cc  '.split(None, -1), ['aa', 'bb', 'cc'])
 assert.eq('  aa  bb  cc  '.rsplit(None, -1), ['aa', 'bb', 'cc'])
+assert.eq('  '.split(None), [])
+assert.eq('  '.rsplit(None), [])
 
 assert.eq("localhost:80".rsplit(":", 1)[-1], "80")
 
 # str.splitlines
-assert.eq("\nabc\ndef".splitlines(), ["", "abc", "def"])
-assert.eq("\nabc\ndef\n".splitlines(), ["", "abc", "def"])
-assert.eq("\nabc\ndef".splitlines(True), ["\n", "abc\n", "def"])
-assert.eq("\nabc\ndef\n".splitlines(True), ["\n", "abc\n", "def\n"])
+assert.eq('\nabc\ndef'.splitlines(), ['', 'abc', 'def'])
+assert.eq('\nabc\ndef'.splitlines(True), ['\n', 'abc\n', 'def'])
+assert.eq('\nabc\ndef\n'.splitlines(), ['', 'abc', 'def'])
+assert.eq('\nabc\ndef\n'.splitlines(True), ['\n', 'abc\n', 'def\n'])
+assert.eq(''.splitlines(), []) #
+assert.eq(''.splitlines(True), []) #
+assert.eq('a'.splitlines(), ['a'])
+assert.eq('a'.splitlines(True), ['a'])
+assert.eq('\n'.splitlines(), [''])
+assert.eq('\n'.splitlines(True), ['\n'])
+assert.eq('a\n'.splitlines(), ['a'])
+assert.eq('a\n'.splitlines(True), ['a\n'])
+assert.eq('a\n\nb'.splitlines(), ['a', '', 'b'])
+assert.eq('a\n\nb'.splitlines(True), ['a\n', '\n', 'b'])
+assert.eq('a\nb\nc'.splitlines(), ['a', 'b', 'c'])
+assert.eq('a\nb\nc'.splitlines(True), ['a\n', 'b\n', 'c'])
+assert.eq('a\nb\nc\n'.splitlines(), ['a', 'b', 'c'])
+assert.eq('a\nb\nc\n'.splitlines(True), ['a\n', 'b\n', 'c\n'])
 
 # str.{,l,r}strip
 assert.eq(" \tfoo\n ".strip(), "foo")
@@ -373,7 +402,17 @@ assert.fails(lambda: any("abc"), "got string, want iterable") # any
 assert.fails(lambda: reversed("abc"), "got string, want iterable") # reversed
 assert.fails(lambda: zip("ab", "cd"), "not iterable: string") # zip
 
-# TODO(adonovan): tests for: {,r}index join
+# str.join
+assert.eq(','.join([]), '')
+assert.eq(','.join(["a"]), 'a')
+assert.eq(','.join(["a", "b"]), 'a,b')
+assert.eq(','.join(["a", "b", "c"]), 'a,b,c')
+assert.eq(','.join(("a", "b", "c")), 'a,b,c')
+assert.eq(''.join(("a", "b", "c")), 'abc')
+assert.fails(lambda: ''.join(None), 'got NoneType, want iterable')
+assert.fails(lambda: ''.join(["one", 2]), 'join: in list, want string, got int')
+
+# TODO(adonovan): tests for: {,r}index
 
 # str.capitalize
 assert.eq("hElLo, WoRlD!".capitalize(), "Hello, world!")
@@ -401,3 +440,8 @@ assert.eq("¿Por qué?".title(), "¿Por Qué?")
 assert.eq("ǉubović".title(), "ǈubović")
 assert.true("ǅenan ǈubović".istitle())
 assert.true(not "Ǆenan Ǉubović".istitle())
+
+# method spell check
+assert.fails(lambda: "".starts_with, "no .starts_with field.*did you mean .startswith")
+assert.fails(lambda: "".StartsWith, "no .StartsWith field.*did you mean .startswith")
+assert.fails(lambda: "".fin, "no .fin field.*.did you mean .find")

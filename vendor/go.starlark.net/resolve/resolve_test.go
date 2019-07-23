@@ -15,13 +15,13 @@ import (
 )
 
 func setOptions(src string) {
-	resolve.AllowBitwise = option(src, "bitwise")
 	resolve.AllowFloat = option(src, "float")
 	resolve.AllowGlobalReassign = option(src, "globalreassign")
 	resolve.AllowLambda = option(src, "lambda")
 	resolve.AllowNestedDef = option(src, "nesteddef")
 	resolve.AllowRecursion = option(src, "recursion")
 	resolve.AllowSet = option(src, "set")
+	resolve.LoadBindsGlobally = option(src, "loadbindsglobally")
 }
 
 func option(chunk, name string) bool {
@@ -59,7 +59,7 @@ func TestDefVarargsAndKwargsSet(t *testing.T) {
 	if err := resolve.File(file, isPredeclared, isUniversal); err != nil {
 		t.Fatal(err)
 	}
-	fn := file.Stmts[0].(*syntax.DefStmt)
+	fn := file.Stmts[0].(*syntax.DefStmt).Function.(*resolve.Function)
 	if !fn.HasVarargs {
 		t.Error("HasVarargs not set")
 	}
@@ -78,7 +78,7 @@ func TestLambdaVarargsAndKwargsSet(t *testing.T) {
 	if err := resolve.File(file, isPredeclared, isUniversal); err != nil {
 		t.Fatal(err)
 	}
-	lam := file.Stmts[0].(*syntax.AssignStmt).RHS.(*syntax.LambdaExpr)
+	lam := file.Stmts[0].(*syntax.AssignStmt).RHS.(*syntax.LambdaExpr).Function.(*resolve.Function)
 	if !lam.HasVarargs {
 		t.Error("HasVarargs not set")
 	}

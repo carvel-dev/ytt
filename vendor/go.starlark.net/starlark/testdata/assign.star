@@ -153,14 +153,16 @@ g = 1
 
 ---
 # option:nesteddef
-# free variable captured before assignment
+# Free variables are captured by reference, so this is ok.
+load("assert.star", "assert")
 
 def f():
-   def g(): ### "local variable outer referenced before assignment"
+   def g():
      return outer
    outer = 1
+   return g()
 
-f()
+assert.eq(f(), 1)
 
 ---
 load("assert.star", "assert")
@@ -299,3 +301,35 @@ assert.eq(a, 8)
 # parenthesized LHS in augmented assignment (error)
 
 (a) += 5 ### "global variable a referenced before assignment"
+
+---
+# option:globalreassign
+load("assert.star", "assert")
+assert = 1
+load("assert.star", "assert")
+
+---
+# option:globalreassign option:loadbindsglobally
+load("assert.star", "assert")
+assert = 1
+load("assert.star", "assert")
+
+---
+# option:loadbindsglobally
+_ = assert ### "global variable assert referenced before assignment"
+load("assert.star", "assert")
+
+---
+_ = assert ### "local variable assert referenced before assignment"
+load("assert.star", "assert")
+
+---
+def f(): assert.eq(1, 1) # forward ref OK
+load("assert.star", "assert")
+f()
+
+---
+# option:loadbindsglobally
+def f(): assert.eq(1, 1) # forward ref OK
+load("assert.star", "assert")
+f()

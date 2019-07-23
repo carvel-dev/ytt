@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"math"
 	"path/filepath"
+	"sort"
 	"strings"
 	"testing"
 
@@ -21,9 +22,9 @@ import (
 
 // A test may enable non-standard options by containing (e.g.) "option:recursion".
 func setOptions(src string) {
-	resolve.AllowBitwise = option(src, "bitwise")
 	resolve.AllowFloat = option(src, "float")
 	resolve.AllowGlobalReassign = option(src, "globalreassign")
+	resolve.LoadBindsGlobally = option(src, "loadbindsglobally")
 	resolve.AllowLambda = option(src, "lambda")
 	resolve.AllowNestedDef = option(src, "nesteddef")
 	resolve.AllowRecursion = option(src, "recursion")
@@ -62,6 +63,7 @@ func TestEvalExpr(t *testing.T) {
 		{`(1,)`, `(1,)`},
 		{`(1, 2)`, `(1, 2)`},
 		{`(1, 2, 3, 4, 5)`, `(1, 2, 3, 4, 5)`},
+		{`1, 2`, `(1, 2)`},
 		// dicts
 		{`{}`, `{}`},
 		{`{"a": 1}`, `{"a": 1}`},
@@ -134,8 +136,8 @@ func TestExecFile(t *testing.T) {
 			switch err := err.(type) {
 			case *starlark.EvalError:
 				found := false
-				for _, fr := range err.Stack() {
-					posn := fr.Position()
+				for i := range err.CallStack {
+					posn := err.CallStack.At(i).Pos
 					if posn.Filename() == filename {
 						chunk.GotError(int(posn.Line), err.Error())
 						found = true
@@ -181,11 +183,14 @@ func load(thread *starlark.Thread, module string) (starlark.StringDict, error) {
 	}
 
 	// TODO(adonovan): test load() using this execution path.
-	filename := filepath.Join(filepath.Dir(thread.Caller().Position().Filename()), module)
+	filename := filepath.Join(filepath.Dir(thread.CallFrame(0).Pos.Filename()), module)
 	return starlark.ExecFile(thread, filename, nil, nil)
 }
 
-func newHasFields(thread *starlark.Thread, _ *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
+func newHasFields(thread *starlark.Thread, b *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
+	if len(args)+len(kwargs) > 0 {
+		return nil, fmt.Errorf("%s: unexpected arguments", b.Name())
+	}
 	return &hasfields{attrs: make(map[string]starlark.Value)}, nil
 }
 
@@ -223,6 +228,9 @@ func (hf *hasfields) SetField(name string, val starlark.Value) error {
 	if hf.frozen {
 		return fmt.Errorf("cannot set field on a frozen hasfields")
 	}
+	if strings.HasPrefix(name, "no") { // for testing
+		return starlark.NoSuchAttrError(fmt.Sprintf("no .%s field", name))
+	}
 	hf.attrs[name] = val
 	return nil
 }
@@ -232,6 +240,7 @@ func (hf *hasfields) AttrNames() []string {
 	for key := range hf.attrs {
 		names = append(names, key)
 	}
+	sort.Strings(names)
 	return names
 }
 
@@ -261,6 +270,14 @@ def e(**kwargs):
 	return kwargs
 def f(a, b=42, *args, **kwargs):
 	return a, b, args, kwargs
+def g(a, b=42, *args, c=123, **kwargs):
+	return a, b, args, c, kwargs
+def h(a, b=42, *, c=123, **kwargs):
+	return a, b, c, kwargs
+def i(a, b=42, *, c, d=123, e, **kwargs):
+	return a, b, c, d, e, kwargs
+def j(a, b=42, *args, c, d=123, e, **kwargs):
+	return a, b, args, c, d, e, kwargs
 `
 
 	thread := new(starlark.Thread)
@@ -270,38 +287,51 @@ def f(a, b=42, *args, **kwargs):
 	}
 
 	for _, test := range []struct{ src, want string }{
+		// a()
 		{`a()`, `None`},
-		{`a(1)`, `function a takes no arguments (1 given)`},
-		{`b()`, `function b takes exactly 2 positional arguments (0 given)`},
-		{`b(1)`, `function b takes exactly 2 positional arguments (1 given)`},
+		{`a(1)`, `function a accepts no arguments (1 given)`},
+
+		// b(a, b)
+		{`b()`, `function b missing 2 arguments (a, b)`},
+		{`b(1)`, `function b missing 1 argument (b)`},
+		{`b(a=1)`, `function b missing 1 argument (b)`},
+		{`b(b=1)`, `function b missing 1 argument (a)`},
 		{`b(1, 2)`, `(1, 2)`},
 		{`b`, `<function b>`}, // asserts that b's parameter b was treated as a local variable
-		{`b(1, 2, 3)`, `function b takes exactly 2 positional arguments (3 given)`},
+		{`b(1, 2, 3)`, `function b accepts 2 positional arguments (3 given)`},
 		{`b(1, b=2)`, `(1, 2)`},
-		{`b(1, a=2)`, `function b got multiple values for keyword argument "a"`},
+		{`b(1, a=2)`, `function b got multiple values for parameter "a"`},
 		{`b(1, x=2)`, `function b got an unexpected keyword argument "x"`},
 		{`b(a=1, b=2)`, `(1, 2)`},
 		{`b(b=1, a=2)`, `(2, 1)`},
 		{`b(b=1, a=2, x=1)`, `function b got an unexpected keyword argument "x"`},
 		{`b(x=1, b=1, a=2)`, `function b got an unexpected keyword argument "x"`},
-		{`c()`, `function c takes at least 1 positional argument (0 given)`},
+
+		// c(a, b=42)
+		{`c()`, `function c missing 1 argument (a)`},
 		{`c(1)`, `(1, 42)`},
 		{`c(1, 2)`, `(1, 2)`},
-		{`c(1, 2, 3)`, `function c takes at most 2 positional arguments (3 given)`},
+		{`c(1, 2, 3)`, `function c accepts at most 2 positional arguments (3 given)`},
 		{`c(1, b=2)`, `(1, 2)`},
-		{`c(1, a=2)`, `function c got multiple values for keyword argument "a"`},
+		{`c(1, a=2)`, `function c got multiple values for parameter "a"`},
 		{`c(a=1, b=2)`, `(1, 2)`},
 		{`c(b=1, a=2)`, `(2, 1)`},
+
+		// d(*args)
 		{`d()`, `()`},
 		{`d(1)`, `(1,)`},
 		{`d(1, 2)`, `(1, 2)`},
 		{`d(1, 2, k=3)`, `function d got an unexpected keyword argument "k"`},
 		{`d(args=[])`, `function d got an unexpected keyword argument "args"`},
+
+		// e(**kwargs)
 		{`e()`, `{}`},
-		{`e(1)`, `function e takes exactly 0 positional arguments (1 given)`},
+		{`e(1)`, `function e accepts 0 positional arguments (1 given)`},
 		{`e(k=1)`, `{"k": 1}`},
 		{`e(kwargs={})`, `{"kwargs": {}}`},
-		{`f()`, `function f takes at least 1 positional argument (0 given)`},
+
+		// f(a, b=42, *args, **kwargs)
+		{`f()`, `function f missing 1 argument (a)`},
 		{`f(0)`, `(0, 42, (), {})`},
 		{`f(0)`, `(0, 42, (), {})`},
 		{`f(0, 1)`, `(0, 1, (), {})`},
@@ -309,10 +339,69 @@ def f(a, b=42, *args, **kwargs):
 		{`f(0, 1, 2, 3)`, `(0, 1, (2, 3), {})`},
 		{`f(a=0)`, `(0, 42, (), {})`},
 		{`f(0, b=1)`, `(0, 1, (), {})`},
-		{`f(0, a=1)`, `function f got multiple values for keyword argument "a"`},
+		{`f(0, a=1)`, `function f got multiple values for parameter "a"`},
 		{`f(0, b=1, c=2)`, `(0, 1, (), {"c": 2})`},
 		{`f(0, 1, x=2, *[3, 4], y=5, **dict(z=6))`, // github.com/google/skylark/issues/135
 			`(0, 1, (3, 4), {"x": 2, "y": 5, "z": 6})`},
+
+		// g(a, b=42, *args, c=123, **kwargs)
+		{`g()`, `function g missing 1 argument (a)`},
+		{`g(0)`, `(0, 42, (), 123, {})`},
+		{`g(0, 1)`, `(0, 1, (), 123, {})`},
+		{`g(0, 1, 2)`, `(0, 1, (2,), 123, {})`},
+		{`g(0, 1, 2, 3)`, `(0, 1, (2, 3), 123, {})`},
+		{`g(a=0)`, `(0, 42, (), 123, {})`},
+		{`g(0, b=1)`, `(0, 1, (), 123, {})`},
+		{`g(0, a=1)`, `function g got multiple values for parameter "a"`},
+		{`g(0, b=1, c=2, d=3)`, `(0, 1, (), 2, {"d": 3})`},
+		{`g(0, 1, x=2, *[3, 4], y=5, **dict(z=6))`,
+			`(0, 1, (3, 4), 123, {"x": 2, "y": 5, "z": 6})`},
+
+		// h(a, b=42, *, c=123, **kwargs)
+		{`h()`, `function h missing 1 argument (a)`},
+		{`h(0)`, `(0, 42, 123, {})`},
+		{`h(0, 1)`, `(0, 1, 123, {})`},
+		{`h(0, 1, 2)`, `function h accepts at most 2 positional arguments (3 given)`},
+		{`h(a=0)`, `(0, 42, 123, {})`},
+		{`h(0, b=1)`, `(0, 1, 123, {})`},
+		{`h(0, a=1)`, `function h got multiple values for parameter "a"`},
+		{`h(0, b=1, c=2)`, `(0, 1, 2, {})`},
+		{`h(0, b=1, d=2)`, `(0, 1, 123, {"d": 2})`},
+		{`h(0, b=1, c=2, d=3)`, `(0, 1, 2, {"d": 3})`},
+		{`h(0, b=1, c=2, d=3)`, `(0, 1, 2, {"d": 3})`},
+
+		// i(a, b=42, *, c, d=123, e, **kwargs)
+		{`i()`, `function i missing 3 arguments (a, c, e)`},
+		{`i(0)`, `function i missing 2 arguments (c, e)`},
+		{`i(0, 1)`, `function i missing 2 arguments (c, e)`},
+		{`i(0, 1, 2)`, `function i accepts at most 2 positional arguments (3 given)`},
+		{`i(0, 1, e=2)`, `function i missing 1 argument (c)`},
+		{`i(0, 1, 2, 3)`, `function i accepts at most 2 positional arguments (4 given)`},
+		{`i(a=0)`, `function i missing 2 arguments (c, e)`},
+		{`i(0, b=1)`, `function i missing 2 arguments (c, e)`},
+		{`i(0, a=1)`, `function i got multiple values for parameter "a"`},
+		{`i(0, b=1, c=2)`, `function i missing 1 argument (e)`},
+		{`i(0, b=1, d=2)`, `function i missing 2 arguments (c, e)`},
+		{`i(0, b=1, c=2, d=3)`, `function i missing 1 argument (e)`},
+		{`i(0, b=1, c=2, d=3, e=4)`, `(0, 1, 2, 3, 4, {})`},
+		{`i(0, 1, b=1, c=2, d=3, e=4)`, `function i got multiple values for parameter "b"`},
+
+		// j(a, b=42, *args, c, d=123, e, **kwargs)
+		{`j()`, `function j missing 3 arguments (a, c, e)`},
+		{`j(0)`, `function j missing 2 arguments (c, e)`},
+		{`j(0, 1)`, `function j missing 2 arguments (c, e)`},
+		{`j(0, 1, 2)`, `function j missing 2 arguments (c, e)`},
+		{`j(0, 1, e=2)`, `function j missing 1 argument (c)`},
+		{`j(0, 1, 2, 3)`, `function j missing 2 arguments (c, e)`},
+		{`j(a=0)`, `function j missing 2 arguments (c, e)`},
+		{`j(0, b=1)`, `function j missing 2 arguments (c, e)`},
+		{`j(0, a=1)`, `function j got multiple values for parameter "a"`},
+		{`j(0, b=1, c=2)`, `function j missing 1 argument (e)`},
+		{`j(0, b=1, d=2)`, `function j missing 2 arguments (c, e)`},
+		{`j(0, b=1, c=2, d=3)`, `function j missing 1 argument (e)`},
+		{`j(0, b=1, c=2, d=3, e=4)`, `(0, 1, (), 2, 3, 4, {})`},
+		{`j(0, 1, b=1, c=2, d=3, e=4)`, `function j got multiple values for parameter "b"`},
+		{`j(0, 1, 2, c=3, e=4)`, `(0, 1, (2,), 3, 123, 4, {})`},
 	} {
 		var got string
 		if v, err := starlark.Eval(thread, "<expr>", test.src, globals); err != nil {
@@ -336,16 +425,15 @@ f()
 `
 	buf := new(bytes.Buffer)
 	print := func(thread *starlark.Thread, msg string) {
-		caller := thread.Caller()
-		fmt.Fprintf(buf, "%s: %s: %s\n",
-			caller.Position(), caller.Callable().Name(), msg)
+		caller := thread.CallFrame(1)
+		fmt.Fprintf(buf, "%s: %s: %s\n", caller.Pos, caller.Name, msg)
 	}
 	thread := &starlark.Thread{Print: print}
 	if _, err := starlark.ExecFile(thread, "foo.star", src, nil); err != nil {
 		t.Fatal(err)
 	}
-	want := "foo.star:2: <toplevel>: hello\n" +
-		"foo.star:3: f: hello, world\n"
+	want := "foo.star:2:6: <toplevel>: hello\n" +
+		"foo.star:3:15: f: hello, world\n"
 	if got := buf.String(); got != want {
 		t.Errorf("output was %s, want %s", got, want)
 	}
@@ -394,9 +482,20 @@ func TestInt(t *testing.T) {
 }
 
 func TestBacktrace(t *testing.T) {
+	getBacktrace := func(err error) string {
+		switch err := err.(type) {
+		case *starlark.EvalError:
+			return err.Backtrace()
+		case nil:
+			t.Fatalf("ExecFile succeeded unexpectedly")
+		default:
+			t.Fatalf("ExecFile failed with %v, wanted *EvalError", err)
+		}
+		panic("unreachable")
+	}
+
 	// This test ensures continuity of the stack of active Starlark
-	// functions, including propagation through built-ins such as 'min'
-	// (though min does not itself appear in the stack).
+	// functions, including propagation through built-ins such as 'min'.
 	const src = `
 def f(x): return 1//x
 def g(x): f(x)
@@ -406,25 +505,44 @@ i()
 `
 	thread := new(starlark.Thread)
 	_, err := starlark.ExecFile(thread, "crash.star", src, nil)
-	switch err := err.(type) {
-	case *starlark.EvalError:
-		got := err.Backtrace()
-		// Compiled code currently has no column information.
-		const want = `Traceback (most recent call last):
-  crash.star:6: in <toplevel>
-  crash.star:5: in i
-  crash.star:4: in h
-  <builtin>:1: in min
-  crash.star:3: in g
-  crash.star:2: in f
+	// Compiled code currently has no column information.
+	const want = `Traceback (most recent call last):
+  crash.star:6:2: in <toplevel>
+  crash.star:5:18: in i
+  crash.star:4:20: in h
+  <builtin>: in min
+  crash.star:3:12: in g
+  crash.star:2:19: in f
 Error: floored division by zero`
-		if got != want {
+	if got := getBacktrace(err); got != want {
+		t.Errorf("error was %s, want %s", got, want)
+	}
+
+	// Additionally, ensure that errors originating in
+	// Starlark and/or Go each have an accurate frame.
+	//
+	// This program fails in Starlark (f) if x==0,
+	// or in Go (string.join) if x is non-zero.
+	const src2 = `
+def f(): ''.join([1//i])
+f()
+`
+	for i, want := range []string{
+		0: `Traceback (most recent call last):
+  crash.star:3:2: in <toplevel>
+  crash.star:2:20: in f
+Error: floored division by zero`,
+		1: `Traceback (most recent call last):
+  crash.star:3:2: in <toplevel>
+  crash.star:2:17: in f
+  <builtin>: in join
+Error: join: in list, want string, got int`,
+	} {
+		globals := starlark.StringDict{"i": starlark.MakeInt(i)}
+		_, err := starlark.ExecFile(thread, "crash.star", src2, globals)
+		if got := getBacktrace(err); got != want {
 			t.Errorf("error was %s, want %s", got, want)
 		}
-	case nil:
-		t.Error("ExecFile succeeded unexpectedly")
-	default:
-		t.Errorf("ExecFile failed with %v, wanted *EvalError", err)
 	}
 }
 
@@ -486,7 +604,7 @@ func TestUnpackUserDefined(t *testing.T) {
 
 	// failure
 	err := starlark.UnpackArgs("unpack", starlark.Tuple{starlark.MakeInt(42)}, nil, "x", &x)
-	if want := "unpack: for parameter 1: got int, want hasfields"; fmt.Sprint(err) != want {
+	if want := "unpack: for parameter x: got int, want hasfields"; fmt.Sprint(err) != want {
 		t.Errorf("unpack args error = %q, want %q", err, want)
 	}
 }
@@ -508,7 +626,8 @@ func TestFrameLocals(t *testing.T) {
 	// values of calls to Starlark functions.
 	trace := func(thread *starlark.Thread) string {
 		buf := new(bytes.Buffer)
-		for fr := thread.TopFrame(); fr != nil; fr = fr.Parent() {
+		for i := 0; i < thread.CallStackDepth(); i++ {
+			fr := thread.DebugFrame(i)
 			fmt.Fprintf(buf, "%s(", fr.Callable().Name())
 			if fn, ok := fr.Callable().(*starlark.Function); ok {
 				for i := 0; i < fn.NumParams(); i++ {
