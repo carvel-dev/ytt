@@ -551,21 +551,21 @@ func settableValueOf(i interface{}) reflect.Value {
 }
 
 func (d *decoder) sequence(n *node, out reflect.Value) (good bool) {
-	newChildren := []*node{}
+	// If aliased content contains sequence this function will be called multiple times
+	childrenWithoutPosNodes := []*node{}
 	lineNums := []int{}
 	for _, child := range n.children {
 		if child.kind == sequenceItemNode {
 			lineNums = append(lineNums, child.line)
 			continue
 		}
-		newChildren = append(newChildren, child)
+		childrenWithoutPosNodes = append(childrenWithoutPosNodes, child)
 	}
-	n.children = newChildren
-	if len(n.children) != len(lineNums) {
-		panic("expected len of sequence children to match len of children line nums")
+	if len(childrenWithoutPosNodes) != len(lineNums) {
+		panic(fmt.Sprintf("expected len of sequence children to match len of children line nums: %d != %d", len(childrenWithoutPosNodes), len(lineNums)))
 	}
 
-	l := len(n.children)
+	l := len(childrenWithoutPosNodes)
 
 	var iface reflect.Value
 	switch out.Kind() {
@@ -587,7 +587,7 @@ func (d *decoder) sequence(n *node, out reflect.Value) (good bool) {
 	j := 0
 	for i := 0; i < l; i++ {
 		e := reflect.New(et).Elem()
-		if ok := d.unmarshal(n.children[i], e); ok {
+		if ok := d.unmarshal(childrenWithoutPosNodes[i], e); ok {
 			eItem := reflect.ValueOf(ArrayItem{Value: e.Interface(), Line: lineNums[i]})
 			out.Index(j).Set(eItem)
 			j++
