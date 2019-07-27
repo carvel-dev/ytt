@@ -1,0 +1,9 @@
+#@ for x in [1,2,3]:
+(@= "key"+str(x) @): #@ x
+#@ end
+
++++
+
+key1: 1
+key2: 2
+key3: 3

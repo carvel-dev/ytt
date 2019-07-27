@@ -15,6 +15,7 @@ type InstructionSet struct {
 	CollectNodeAnnotation InstructionOp
 	StartNode             InstructionOp
 	SetNode               InstructionOp
+	SetMapItemKey         InstructionOp
 	ReplaceNode           InstructionOp
 }
 
@@ -33,6 +34,7 @@ func NewInstructionSet() *InstructionSet {
 		CollectNodeAnnotation: InstructionOp{fmt.Sprintf("__ytt_tpl%d_collect_node_annotation", uniqueId)},
 		StartNode:             InstructionOp{fmt.Sprintf("__ytt_tpl%d_start_node", uniqueId)},
 		SetNode:               InstructionOp{fmt.Sprintf("__ytt_tpl%d_set_node", uniqueId)},
+		SetMapItemKey:         InstructionOp{fmt.Sprintf("__ytt_tpl%d_set_map_item_key", uniqueId)},
 		ReplaceNode:           InstructionOp{fmt.Sprintf("__ytt_tpl%d_replace_node", uniqueId)},
 	}
 }
@@ -68,6 +70,10 @@ func (is *InstructionSet) NewSetNode(nodeTag NodeTag) Instruction {
 
 func (is *InstructionSet) NewSetNodeValue(nodeTag NodeTag, code string) Instruction {
 	return is.SetNode.WithArgs(nodeTag.AsString(), "("+code+")")
+}
+
+func (is *InstructionSet) NewSetMapItemKey(nodeTag NodeTag, code string) Instruction {
+	return is.SetMapItemKey.WithArgs(nodeTag.AsString(), "("+code+")")
 }
 
 func (is *InstructionSet) NewCode(code string) Instruction {

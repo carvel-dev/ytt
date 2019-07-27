@@ -57,7 +57,7 @@ func (e *Template) build(val interface{}, parentNode yamlmeta.Node, parentTag te
 	node, ok := val.(yamlmeta.Node)
 	if !ok {
 		if valStr, ok := val.(string); ok {
-			return e.buildString(valStr, parentNode, parentTag)
+			return e.buildString(valStr, parentNode, parentTag, e.instructions.NewSetNodeValue)
 		}
 
 		return []template.TemplateLine{{
@@ -93,6 +93,16 @@ func (e *Template) build(val interface{}, parentNode yamlmeta.Node, parentTag te
 		SourceLine:  e.newSourceLine(node.GetPosition()),
 	})
 
+	if typedNode, ok := val.(*yamlmeta.MapItem); ok {
+		if keyStr, ok := typedNode.Key.(string); ok {
+			templateLines, err := e.buildString(keyStr, parentNode, parentTag, e.instructions.NewSetMapItemKey)
+			if err != nil {
+				return nil, err
+			}
+			code = append(code, templateLines...)
+		}
+	}
+
 	if len(metas.Values) > 0 {
 		for _, val := range metas.Values {
 			code = append(code, template.TemplateLine{
@@ -119,9 +129,8 @@ func (e *Template) build(val interface{}, parentNode yamlmeta.Node, parentTag te
 
 	return code, nil
 }
-
-func (e *Template) buildString(val string, parentNode yamlmeta.Node,
-	parentTag template.NodeTag) ([]template.TemplateLine, error) {
+func (e *Template) buildString(val string, parentNode yamlmeta.Node, parentTag template.NodeTag,
+	instruction func(template.NodeTag, string) template.Instruction) ([]template.TemplateLine, error) {
 
 	// TODO line numbers for inlined template
 	name := fmt.Sprintf("%s (%s)", e.name, parentNode.GetPosition().AsString())
@@ -142,9 +151,8 @@ func (e *Template) buildString(val string, parentNode yamlmeta.Node,
 	}
 
 	code[len(code)-1] = template.TemplateLine{
-		Instruction: e.instructions.NewSetNodeValue(
-			parentTag, lastInstruction.AsString()).WithDebug(e.debugComment(parentNode)),
-		SourceLine: e.newSourceLine(parentNode.GetPosition()),
+		Instruction: instruction(parentTag, lastInstruction.AsString()).WithDebug(e.debugComment(parentNode)),
+		SourceLine:  e.newSourceLine(parentNode.GetPosition()),
 	}
 
 	code = append(code, e.resetCtxType())
