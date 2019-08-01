@@ -115,9 +115,9 @@ func (e CompiledTemplateMultiError) Error() string {
 func (e CompiledTemplateMultiError) buildEvalErr(err *starlark.EvalError) CompiledTemplateError {
 	// fmt.Printf("frame:\n%s\n", err.Backtrace())
 	result := CompiledTemplateError{Msg: err.Msg}
-	for _, frame := range err.Stack() {
-		pos := e.buildPos(frame.Position())
-		pos.ContextName = frame.Callable().Name()
+	for i := len(err.CallStack) - 1; i >= 0; i-- {
+		pos := e.buildPos(err.CallStack[i].Pos)
+		pos.ContextName = err.CallStack[i].Name
 		result.Positions = append(result.Positions, pos)
 	}
 	return result

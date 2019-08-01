@@ -56,6 +56,7 @@ assert.eq(sorted(pairs, key=lambda x: x[0]),
            (2, 3), (2, 6),
            (3, 1), (3, 4), (3, 7),
            (4, 0), (4, 2)])
+assert.fails(lambda: sorted(1), 'sorted: for parameter iterable: got int, want iterable')
 
 # reversed
 assert.eq(reversed([1, 144, 81, 16]), [16, 81, 144, 1])
@@ -186,7 +187,38 @@ assert.eq(str(getattr(myset, "union")), "<built-in method union of set value>")
 assert.fails(lambda: getattr(myset, "onion"), "no .onion field or method")
 assert.eq(getattr(myset, "onion", 42), 42)
 
+# dir returns a new, sorted, mutable list
+assert.eq(sorted(dir("")), dir("")) # sorted
+dir("").append("!") # mutable
+assert.true("!" not in dir("")) # new
+
+# error messages should suggest spelling corrections
+hf.one = 1
+hf.two = 2
+hf.three = 3
+hf.forty_five = 45
+assert.fails(lambda: hf.One, 'no .One field.*did you mean .one')
+assert.fails(lambda: hf.oone, 'no .oone field.*did you mean .one')
+assert.fails(lambda: hf.FortyFive, 'no .FortyFive field.*did you mean .forty_five')
+assert.fails(lambda: hf.trhee, 'no .trhee field.*did you mean .three')
+assert.fails(lambda: hf.thirty, 'no .thirty field or method$') # no suggestion
+
+# spell check in setfield too
+def setfield(): hf.noForty_Five = 46  # "no" prefix => SetField returns NoSuchField
+assert.fails(setfield, 'no .noForty_Five field.*did you mean .forty_five')
+
 # repr
 assert.eq(repr(1), "1")
 assert.eq(repr("x"), '"x"')
 assert.eq(repr(["x", 1]), '["x", 1]')
+
+# fail
+---
+fail() ### `fail: $`
+x = 1//0 # unreachable
+---
+fail(1) ### `fail: 1`
+---
+fail(1, 2, 3) ### `fail: 1 2 3`
+---
+fail(1, 2, 3, sep="/") ### `fail: 1/2/3`

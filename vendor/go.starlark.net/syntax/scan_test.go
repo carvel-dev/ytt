@@ -183,9 +183,7 @@ pass`, "pass newline pass EOF"}, // consecutive newlines are consolidated
 		{"0o12934e1", `10 9.340000e+03 EOF`},
 		{"0o123.", `83 . EOF`},
 		{"0o123.1", `83 1.000000e-01 EOF`},
-		// TODO(adonovan): reenable later.
-		// {"0123", `obsolete form of octal literal; use 0o123`},
-		{"0123", `83 EOF`},
+		{"0123", `foo.star:1:5: obsolete form of octal literal; use 0o123`},
 		{"012834", `foo.star:1:1: invalid int literal`},
 		{"012934", `foo.star:1:1: invalid int literal`},
 		{"i = 012934", `foo.star:1:5: invalid int literal`},
@@ -209,6 +207,9 @@ pass`, "pass newline pass EOF"}, // consecutive newlines are consolidated
 		// github.com/google/starlark-go/issues/80
 		{"([{<>}])", "( [ { < > } ] ) EOF"},
 		{"f();", "f ( ) ; EOF"},
+		// github.com/google/starlark-go/issues/104
+		{"def f():\n  if x:\n    pass\n  ", `def f ( ) : newline indent if x : newline indent pass newline outdent outdent EOF`},
+		{`while cond: pass`, "while cond : pass EOF"},
 		// github.com/google/starlark-go/issues/107
 		{"~= ~= 5", "~ = ~ = 5 EOF"},
 	} {

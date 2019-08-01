@@ -13,11 +13,11 @@
 package starlarktest // import "go.starlark.net/starlarktest"
 
 import (
-	"bytes"
 	"fmt"
 	"go/build"
 	"path/filepath"
 	"regexp"
+	"strings"
 	"sync"
 
 	"go.starlark.net/starlark"
@@ -104,9 +104,10 @@ func error_(thread *starlark.Thread, _ *starlark.Builtin, args starlark.Tuple, k
 	if len(args) != 1 {
 		return nil, fmt.Errorf("error: got %d arguments, want 1", len(args))
 	}
-	var buf bytes.Buffer
-	thread.Caller().WriteBacktrace(&buf)
-	buf.WriteString("Error: ")
+	buf := new(strings.Builder)
+	stk := thread.CallStack()
+	stk.Pop()
+	fmt.Fprintf(buf, "%sError: ", stk)
 	if s, ok := starlark.AsString(args[0]); ok {
 		buf.WriteString(s)
 	} else {

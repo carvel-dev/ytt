@@ -224,7 +224,7 @@ def f(x=1, y): pass ### `required parameter may not follow optional`
 def f(**kwargs, x): ### `parameter may not follow \*\*kwargs`
   pass
 
-def g(**kwargs, *args): ### `\*args parameter may not follow \*\*kwargs`
+def g(**kwargs, *args): ### `\* parameter may not follow \*\*kwargs`
   pass
 
 def h(**kwargs1, **kwargs2): ### `multiple \*\* parameters not allowed`
@@ -233,13 +233,33 @@ def h(**kwargs1, **kwargs2): ### `multiple \*\* parameters not allowed`
 ---
 # Only keyword-only params and **kwargs may follow *args in a declaration.
 
-def f(*args, x): ### `required parameter may not follow \* parameter`
+def f(*args, x): # ok
   pass
 
 def g(*args1, *args2): ### `multiple \* parameters not allowed`
   pass
 
-def h(*args, a=1, **kwargs): ### `optional parameter may not follow \*args`
+def h(*, ### `bare \* must be followed by keyword-only parameters`
+      *): ### `multiple \* parameters not allowed`
+  pass
+
+def i(*args, *): ### `multiple \* parameters not allowed`
+  pass
+
+def j(*,      ### `bare \* must be followed by keyword-only parameters`
+      *args): ### `multiple \* parameters not allowed`
+  pass
+
+def k(*, **kwargs): ### `bare \* must be followed by keyword-only parameters`
+  pass
+
+def l(*): ### `bare \* must be followed by keyword-only parameters`
+  pass
+
+def m(*args, a=1, **kwargs): # ok
+  pass
+
+def n(*, a=1, **kwargs): # ok
   pass
 
 ---
@@ -310,3 +330,43 @@ U = 1 # ok (legacy)
 # https://github.com/bazelbuild/starlark/starlark/issues/21
 def f(**kwargs): pass
 f(a=1, a=1) ### `keyword argument a repeated`
+
+
+---
+# spelling
+
+print = U
+
+hello = 1
+print(hollo) ### `undefined: hollo \(did you mean hello\?\)`
+
+def f(abc):
+   print(abd) ### `undefined: abd \(did you mean abc\?\)`
+   print(goodbye) ### `undefined: goodbye$`
+
+---
+load("module", "x") # ok
+x = 1 ### `cannot reassign local x`
+load("module", "x") ### `cannot reassign top-level x`
+
+---
+# option:loadbindsglobally
+load("module", "x") # ok
+x = 1 ### `cannot reassign global x`
+load("module", "x") ### `cannot reassign global x`
+
+---
+# option:globalreassign
+load("module", "x") # ok
+x = 1 # ok
+load("module", "x") # ok
+
+---
+# option:globalreassign option:loadbindsglobally
+load("module", "x") # ok
+x = 1
+load("module", "x") # ok
+
+---
+_ = x # forward ref to file-local
+load("module", "x") # ok

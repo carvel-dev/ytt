@@ -88,7 +88,28 @@ $ starlark
 >>>
 ```
 
-When you have finished, type `Ctrl-D` to close the REPL's input stream. 
+When you have finished, type `Ctrl-D` to close the REPL's input stream.
+
+Embed the interpreter in your Go program:
+
+```
+import "go.starlark.net/starlark"
+
+// Execute Starlark program in a file.
+thread := &starlark.Thread{Name: "my thread"}
+globals, err := starlark.ExecFile(thread, "fibonacci.star", nil, nil)
+if err != nil { ... }
+
+// Retrieve a module global.
+fibonacci := globals["fibonacci"]
+
+// Call Starlark function from Go.
+v, err := starlark.Call(thread, fibonacci, starlark.Tuple{starlark.MakeInt(10)}, nil)
+if err != nil { ... }
+fmt.Printf("fibonacci(10) = %v\n", v) // fibonacci(10) = [0, 1, 1, 2, 3, 5, 8, 13, 21, 34]
+```
+
+See [starlark/example_test.go](starlark/example_test.go) for more examples.
 
 ### Contributing
 
