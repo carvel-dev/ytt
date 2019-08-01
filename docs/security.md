@@ -25,5 +25,5 @@ This section is a work-in-progress...
     - A: TBD
 
 - CLI output directory
-  - user is tricked to set --output directory to a sensitive filesystem location
-    - A: template output is constrained to stdout or specified output directory via --output flag. if user is tricked to point --output directory to a sensitive filesystem location such as ~/.ssh/, attacker may be able to write templates (for example ~/.ssh/authorized_keys) that can be intepreted by the system as configuration/executable files.
+  - user is tricked to set --output-dir flag to a sensitive filesystem location
+    - A: template output is constrained to stdout or specified output directory via --output-dir flag. if user is tricked to point --output-dir flag to a sensitive filesystem location such as ~/.ssh/, attacker may be able to write templates (for example ~/.ssh/authorized_keys) that can be intepreted by the system as configuration/executable files.

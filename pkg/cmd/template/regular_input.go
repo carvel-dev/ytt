@@ -16,7 +16,7 @@ type RegularFilesSourceOpts struct {
 	files      []string
 	fileMarks  []string
 	recursive  bool
-	output     string
+	outputDir  string
 	outputType string
 }
 
@@ -24,8 +24,8 @@ func (s *RegularFilesSourceOpts) Set(cmd *cobra.Command) {
 	cmd.Flags().StringArrayVarP(&s.files, "file", "f", nil, "File (ie local path, HTTP URL, -) (can be specified multiple times)")
 	cmd.Flags().StringArrayVar(&s.fileMarks, "file-mark", nil, "File mark (ie change file path, mark as non-template) (format: file:key=value) (can be specified multiple times)")
 	cmd.Flags().BoolVarP(&s.recursive, "recursive", "R", true, "Interpret file as directory (deprecated; set to true by default)")
-	cmd.Flags().StringVarP(&s.output, "output", "o", "", "Directory for output")
-	cmd.Flags().StringVar(&s.outputType, "output-type", "yaml", "Output type (yaml, json, pos)")
+	cmd.Flags().StringVar(&s.outputDir, "output-dir", "", "Output destination directory")
+	cmd.Flags().StringVarP(&s.outputType, "output", "o", "yaml", "Output type (yaml, json, pos)")
 }
 
 type RegularFilesSource struct {
@@ -59,8 +59,8 @@ func (s *RegularFilesSource) Output(out TemplateOutput) error {
 		return out.Err
 	}
 
-	if len(s.opts.output) > 0 {
-		return files.NewOutputDirectory(s.opts.output, out.Files, s.ui).Write()
+	if len(s.opts.outputDir) > 0 {
+		return files.NewOutputDirectory(s.opts.outputDir, out.Files, s.ui).Write()
 	}
 
 	var printerFunc func(io.Writer) yamlmeta.DocumentPrinter
