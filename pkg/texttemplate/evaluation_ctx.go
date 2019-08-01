@@ -14,6 +14,16 @@ type EvaluationCtx struct{}
 
 var _ template.EvaluationCtxDialect = EvaluationCtx{}
 
+func (e EvaluationCtx) PrepareNode(
+	parentNode template.EvaluationNode, node template.EvaluationNode) error {
+
+	return nil
+}
+
+func (e EvaluationCtx) SetMapItemKey(node template.EvaluationNode, val interface{}) error {
+	return fmt.Errorf("unsupported operation")
+}
+
 func (e EvaluationCtx) Replace(
 	parentNodes []template.EvaluationNode, val interface{}) error {
 
@@ -30,10 +40,4 @@ func (e EvaluationCtx) WrapRootValue(val interface{}) interface{} {
 		return typedVal.AsString()
 	}
 	panic(fmt.Sprintf("Unexpected root value %T", val))
-}
-
-func (e EvaluationCtx) PrepareNode(
-	parentNode template.EvaluationNode, node template.EvaluationNode) error {
-
-	return nil
 }

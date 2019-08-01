@@ -27,6 +27,15 @@ func (e EvaluationCtx) PrepareNode(
 	return nil
 }
 
+func (e EvaluationCtx) SetMapItemKey(node template.EvaluationNode, val interface{}) error {
+	if item, ok := node.(*yamlmeta.MapItem); ok {
+		item.Key = val
+		return nil
+	}
+
+	panic(fmt.Sprintf("expected node '%T' to be MapItem", node))
+}
+
 func (e EvaluationCtx) Replace(
 	parentNodes []template.EvaluationNode, val interface{}) error {
 

@@ -5,8 +5,8 @@ import (
 
 	"github.com/k14s/ytt/pkg/structmeta"
 	"github.com/k14s/ytt/pkg/template/core"
-	"github.com/k14s/ytt/pkg/yamlmeta"
 	"go.starlark.net/starlark"
+	// Should not import template specific packages here (like yamlmeta)
 )
 
 type EvaluationCtx struct {
@@ -35,6 +35,7 @@ type EvaluationNode interface {
 
 type EvaluationCtxDialect interface {
 	PrepareNode(parentNode EvaluationNode, val EvaluationNode) error
+	SetMapItemKey(node EvaluationNode, val interface{}) error
 	Replace(parentNodes []EvaluationNode, val interface{}) error
 	ShouldWrapRootValue(val interface{}) bool
 	WrapRootValue(val interface{}) interface{}
@@ -90,17 +91,14 @@ func (e *EvaluationCtx) TplSetNode(thread *starlark.Thread, _ *starlark.Builtin,
 }
 
 // args(nodeTag, value Value)
-func (e *EvaluationCtx) TplSetMapItemKey(thread *starlark.Thread, _ *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
+func (e *EvaluationCtx) TplSetMapItemKey(
+	thread *starlark.Thread, _ *starlark.Builtin,
+	args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
+
 	if args.Len() > 1 {
 		node := e.parentNodes[len(e.parentNodes)-1]
-		if item, ok := node.(*yamlmeta.MapItem); ok {
-			item.Key = core.NewStarlarkValue(args.Index(1)).AsInterface()
-			return starlark.None, nil
-		}
-
-		panic(fmt.Sprintf("expected node '%T' to be MapItem", node))
+		return starlark.None, e.dialect.SetMapItemKey(node, core.NewStarlarkValue(args.Index(1)).AsInterface())
 	}
-
 	return starlark.None, nil
 }
 
