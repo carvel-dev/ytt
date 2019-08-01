@@ -130,7 +130,7 @@ func (e *Template) build(val interface{}, parentNode yamlmeta.Node, parentTag te
 	return code, nil
 }
 
-func (e *Template) buildString(val string, node yamlmeta.Node, parentTag template.NodeTag,
+func (e *Template) buildString(val string, node yamlmeta.Node, nodeTag template.NodeTag,
 	instruction func(template.NodeTag, string) template.Instruction) ([]template.TemplateLine, error) {
 
 	// TODO line numbers for inlined template are somewhat correct
@@ -153,7 +153,7 @@ func (e *Template) buildString(val string, node yamlmeta.Node, parentTag templat
 	}
 
 	code[len(code)-1] = template.TemplateLine{
-		Instruction: instruction(parentTag, lastInstruction.AsString()).WithDebug(e.debugComment(node)),
+		Instruction: instruction(nodeTag, lastInstruction.AsString()).WithDebug(e.debugComment(node)),
 		SourceLine:  e.newSourceLine(node.GetPosition()),
 	}
 
