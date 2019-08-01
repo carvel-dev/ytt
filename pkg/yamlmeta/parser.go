@@ -21,13 +21,18 @@ var (
 	lineErrRegexp = regexp.MustCompile(`^(?P<prefix>yaml: line )(?P<num>\d+)(?P<suffix>: .+)$`)
 )
 
+type ParserOpts struct {
+	WithoutMeta bool
+	Strict      bool
+}
+
 type Parser struct {
-	withoutMeta    bool
+	opts           ParserOpts
 	associatedName string
 }
 
-func NewParser(withoutMeta bool) *Parser {
-	return &Parser{withoutMeta, ""}
+func NewParser(opts ParserOpts) *Parser {
+	return &Parser{opts, ""}
 }
 
 func (p *Parser) ParseBytes(data []byte, associatedName string) (*DocumentSet, error) {
@@ -72,6 +77,10 @@ func (p *Parser) parseBytes(data []byte, lineCorrection int) (*DocumentSet, erro
 
 	dec := yaml.NewDecoder(bytes.NewReader(data))
 	dec.SetForceMapSlice(true)
+
+	if p.opts.Strict {
+		dec.SetStrictScalarResolve()
+	}
 
 	for {
 		var rawVal interface{}
@@ -147,7 +156,7 @@ func (p *Parser) parse(val interface{}, lineCorrection int) interface{} {
 }
 
 func (p *Parser) assignMetas(val interface{}, comments []yaml.Comment, lineCorrection int) ([]*Meta, []*Meta) {
-	if p.withoutMeta {
+	if p.opts.WithoutMeta {
 		return nil, nil
 	}
 

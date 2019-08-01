@@ -234,11 +234,12 @@ func (p *parser) mapping() *node {
 // Decoder, unmarshals a node into a provided value.
 
 type decoder struct {
-	doc     *node
-	aliases map[*node]bool
-	mapType reflect.Type
-	terrors []string
-	strict  bool
+	doc         *node
+	aliases     map[*node]bool
+	mapType     reflect.Type
+	terrors     []string
+	strict      bool
+	resolveFunc func(tag string, in string) (rtag string, out interface{})
 }
 
 var (
@@ -251,7 +252,7 @@ var (
 )
 
 func newDecoder(strict bool) *decoder {
-	d := &decoder{mapType: defaultMapType, strict: strict}
+	d := &decoder{mapType: defaultMapType, strict: strict, resolveFunc: resolve}
 	d.aliases = make(map[*node]bool)
 	return d
 }
@@ -383,7 +384,7 @@ func (d *decoder) scalar(n *node, out reflect.Value) bool {
 		tag = yaml_STR_TAG
 		resolved = n.value
 	} else {
-		tag, resolved = resolve(n.tag, n.value)
+		tag, resolved = d.resolveFunc(n.tag, n.value)
 		if tag == yaml_BINARY_TAG {
 			data, err := base64.StdEncoding.DecodeString(resolved.(string))
 			if err != nil {

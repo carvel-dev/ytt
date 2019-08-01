@@ -13,6 +13,7 @@ import (
 
 type TemplateOptions struct {
 	IgnoreUnknownComments bool
+	StrictYAML            bool
 	Debug                 bool
 	InspectFiles          bool
 
@@ -54,6 +55,7 @@ func NewCmd(o *TemplateOptions) *cobra.Command {
 	}
 	cmd.Flags().BoolVar(&o.IgnoreUnknownComments, "ignore-unknown-comments", false,
 		"Configure whether unknown comments are considered as errors (comments that do not start with '#@' or '#!')")
+	cmd.Flags().BoolVarP(&o.StrictYAML, "strict", "s", false, "Configure to use _strict_ YAML subset")
 	cmd.Flags().BoolVar(&o.Debug, "debug", false, "Enable debug output")
 	cmd.Flags().BoolVar(&o.InspectFiles, "files-inspect", false, "Inspect files")
 	o.BulkFilesSourceOpts.Set(cmd)
@@ -103,8 +105,10 @@ func (o *TemplateOptions) RunWithFiles(in TemplateInput, ui cmdcore.PlainUI) Tem
 
 	astValues := yamlmeta.NewASTFromInterface(values)
 
-	loaderOpts := workspace.TemplateLoaderOpts{IgnoreUnknownComments: o.IgnoreUnknownComments}
-	libraryLoader := workspace.NewLibraryLoader(rootLibrary, ui, loaderOpts)
+	libraryLoader := workspace.NewLibraryLoader(rootLibrary, ui, workspace.TemplateLoaderOpts{
+		IgnoreUnknownComments: o.IgnoreUnknownComments,
+		StrictYAML:            o.StrictYAML,
+	})
 
 	astValues, err = libraryLoader.Values(astValues)
 	if err != nil {

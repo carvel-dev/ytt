@@ -107,6 +107,7 @@ type Decoder struct {
 	useMapSlice           bool
 	parser                *parser
 	lastDocumentStartLine *int
+	resolveFunc           func(tag string, in string) (string, interface{})
 }
 
 // NewDecoder returns a new decoder that reads from r.
@@ -129,6 +130,10 @@ func (dec *Decoder) SetForceMapSlice(useMapSlice bool) {
 	dec.useMapSlice = useMapSlice
 }
 
+func (dec *Decoder) SetStrictScalarResolve() {
+	dec.resolveFunc = strictScalarResolve
+}
+
 // Decode reads the next YAML-encoded value from its input
 // and stores it in the value pointed to by v.
 //
@@ -140,6 +145,9 @@ func (dec *Decoder) Decode(v interface{}) (err error) {
 	d := newDecoder(dec.strict)
 	if dec.useMapSlice {
 		d.mapType = reflect.TypeOf(MapSlice{})
+	}
+	if dec.resolveFunc != nil {
+		d.resolveFunc = dec.resolveFunc
 	}
 	defer handleErr(&err)
 	node := dec.parser.parse()

@@ -7,12 +7,15 @@ import (
 
 type DocSetOpts struct {
 	WithoutMeta bool
+	Strict      bool
 	// associatedName is typically a file name where data came from
 	AssociatedName string
 }
 
 func NewDocumentSetFromBytesWithOpts(data []byte, opts DocSetOpts) (*DocumentSet, error) {
-	docSet, err := NewParser(opts.WithoutMeta).ParseBytes(data, opts.AssociatedName)
+	parserOpts := ParserOpts{WithoutMeta: opts.WithoutMeta, Strict: opts.Strict}
+
+	docSet, err := NewParser(parserOpts).ParseBytes(data, opts.AssociatedName)
 	if err != nil {
 		return nil, err
 	}

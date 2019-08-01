@@ -23,6 +23,7 @@ type TemplateLoader struct {
 
 type TemplateLoaderOpts struct {
 	IgnoreUnknownComments bool
+	StrictYAML            bool
 }
 
 func NewTemplateLoader(values interface{}, ui files.UI, opts TemplateLoaderOpts) *TemplateLoader {
@@ -141,6 +142,7 @@ func (l *TemplateLoader) EvalYAML(library *Library, file *files.File) (starlark.
 	docSetOpts := yamlmeta.DocSetOpts{
 		AssociatedName: file.RelativePath(),
 		WithoutMeta:    !file.IsTemplate() && !file.IsLibrary(),
+		Strict:         l.opts.StrictYAML,
 	}
 	l.ui.Debugf("## file %s (opts %#v)\n", file.RelativePath(), docSetOpts)
 

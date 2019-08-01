@@ -6,7 +6,7 @@ import (
 )
 
 func PlainUnmarshal(data []byte, out interface{}) error {
-	docSet, err := NewParser(true).ParseBytes(data, "")
+	docSet, err := NewParser(ParserOpts{WithoutMeta: true}).ParseBytes(data, "")
 	if err != nil {
 		return err
 	}
