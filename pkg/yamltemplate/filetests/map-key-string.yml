@@ -1,0 +1,16 @@
+#@ for x in [1,2,3]:
+(@= "key"+str(x) @): #@ x
+#@ end
+
+#@ for x in [1,2,3]:
+key(@ "noop" @)(@= str(x) @)-(@= str(x) @): #@ x
+#@ end
+
++++
+
+key1: 1
+key2: 2
+key3: 3
+key1-1: 1
+key2-2: 2
+key3-3: 3
