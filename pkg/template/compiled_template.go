@@ -91,6 +91,7 @@ func (e *CompiledTemplate) Eval(thread *starlark.Thread, loader CompiledTemplate
 			e.instructions.CollectNodeAnnotation.Name: e.tplCollectNodeAnnotation,
 			e.instructions.StartNode.Name:             e.tplStartNode,
 			e.instructions.SetNode.Name:               e.tplSetNode,
+			e.instructions.SetMapItemKey.Name:         e.tplSetMapItemKey,
 		}
 
 		for name, f := range instructionBindings {
@@ -218,6 +219,13 @@ func (e *CompiledTemplate) tplSetNode(
 	args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
 
 	return e.ctxs[len(e.ctxs)-1].TplSetNode(thread, f, args, kwargs)
+}
+
+func (e *CompiledTemplate) tplSetMapItemKey(
+	thread *starlark.Thread, f *starlark.Builtin,
+	args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
+
+	return e.ctxs[len(e.ctxs)-1].TplSetMapItemKey(thread, f, args, kwargs)
 }
 
 func (e *CompiledTemplate) tplStartNodeAnnotation(
