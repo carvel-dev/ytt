@@ -15,14 +15,26 @@ func NewParser() *Parser {
 }
 
 func (p *Parser) Parse(dataBs []byte, associatedName string) (*NodeRoot, error) {
-	p.associatedName = associatedName
+	return p.parse(dataBs, associatedName, filepos.NewPosition(1))
+}
 
-	var lastNode interface{} = &NodeText{Position: p.newPosition(1)}
-	var nodes []interface{}
+func (p *Parser) ParseWithPosition(dataBs []byte, associatedName string, startPos *filepos.Position) (*NodeRoot, error) {
+	return p.parse(dataBs, associatedName, startPos)
+}
+
+func (p *Parser) parse(dataBs []byte, associatedName string, startPos *filepos.Position) (*NodeRoot, error) {
+	p.associatedName = associatedName
 
 	var lastChar rune
 	var currLine int = 1
 	var currCol int = 1
+
+	if startPos.IsKnown() {
+		currLine = startPos.Line()
+	}
+
+	var lastNode interface{} = &NodeText{Position: p.newPosition(currLine)}
+	var nodes []interface{}
 
 	data := string(dataBs)
 

@@ -95,7 +95,7 @@ func (e *Template) build(val interface{}, parentNode yamlmeta.Node, parentTag te
 
 	if typedNode, ok := val.(*yamlmeta.MapItem); ok {
 		if keyStr, ok := typedNode.Key.(string); ok {
-			templateLines, err := e.buildString(keyStr, parentNode, parentTag, e.instructions.NewSetMapItemKey)
+			templateLines, err := e.buildString(keyStr, node, nodeTag, e.instructions.NewSetMapItemKey)
 			if err != nil {
 				return nil, err
 			}
@@ -129,13 +129,15 @@ func (e *Template) build(val interface{}, parentNode yamlmeta.Node, parentTag te
 
 	return code, nil
 }
-func (e *Template) buildString(val string, parentNode yamlmeta.Node, parentTag template.NodeTag,
+
+func (e *Template) buildString(val string, node yamlmeta.Node, parentTag template.NodeTag,
 	instruction func(template.NodeTag, string) template.Instruction) ([]template.TemplateLine, error) {
 
-	// TODO line numbers for inlined template
-	name := fmt.Sprintf("%s (%s)", e.name, parentNode.GetPosition().AsString())
+	// TODO line numbers for inlined template are somewhat correct
+	// (does not handle pipe-multi-line string format - off by 1)
+	name := fmt.Sprintf("%s (%s)", e.name, node.GetPosition().AsString())
 
-	textRoot, err := texttemplate.NewParser().Parse([]byte(val), name)
+	textRoot, err := texttemplate.NewParser().ParseWithPosition([]byte(val), name, node.GetPosition())
 	if err != nil {
 		return nil, err
 	}
@@ -151,8 +153,8 @@ func (e *Template) buildString(val string, parentNode yamlmeta.Node, parentTag t
 	}
 
 	code[len(code)-1] = template.TemplateLine{
-		Instruction: instruction(parentTag, lastInstruction.AsString()).WithDebug(e.debugComment(parentNode)),
-		SourceLine:  e.newSourceLine(parentNode.GetPosition()),
+		Instruction: instruction(parentTag, lastInstruction.AsString()).WithDebug(e.debugComment(node)),
+		SourceLine:  e.newSourceLine(node.GetPosition()),
 	}
 
 	code = append(code, e.resetCtxType())

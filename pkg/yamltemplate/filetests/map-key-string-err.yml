@@ -1,0 +1,10 @@
+key1: val1
+
+key(@= "1"+3 @): val2
+
++++
+
+ERR: 
+- unknown binary op: string + int
+    stdin:3 in <toplevel>
+     L = "1"+3 
