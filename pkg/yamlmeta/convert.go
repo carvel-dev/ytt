@@ -101,7 +101,7 @@ func convertToLowGo(val interface{}) interface{} {
 			if keyStr, ok := item.Key.(string); ok {
 				result[keyStr] = convertToLowGo(item.Value)
 			} else {
-				panic(fmt.Sprintf("Unsupport map key %T", item.Key))
+				panic(fmt.Sprintf("Unsupported map key %T", item.Key))
 			}
 		}
 		return result

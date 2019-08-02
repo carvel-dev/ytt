@@ -2,23 +2,45 @@ package yaml
 
 import (
 	"fmt"
+	"reflect"
 	"regexp"
 	"strconv"
 	"strings"
 	"unicode"
 )
 
-var _ = fmt.Printf
+var (
+	_                = fmt.Printf // debug
+	strictStyleInt   = regexp.MustCompile(`^\-?(0|[1-9][0-9]*)$`)
+	strictStyleFloat = regexp.MustCompile(`^\-?(0|[1-9][0-9]*)(\.[0-9]*)?([eE][-+]?[0-9]+)?$`)
+)
 
-var yamlStyleInt = regexp.MustCompile(`^[-+]?[0-9]+([eE][-+][0-9]+)?$`)
-
-func strictScalarResolve(tag string, in string) (string, interface{}) {
+func strictScalarResolve(tag, in string) (string, interface{}) {
 	// fmt.Printf("resolve: '%s' '%s'\n", tag, in)
 
+	nativeTag, nativeVal := resolve(tag, in)
 	if len(tag) > 0 {
-		return resolve(tag, in)
+		return nativeTag, nativeVal
 	}
 
+	conTag, conVal := strictScalarResolveConservative(in)
+
+	if conTag != nativeTag {
+		failf("Strict parsing: Found '%s' ambigious (could be %s or %s)",
+			in, shortTag(conTag), shortTag(nativeTag))
+		panic("Unreachable")
+	}
+
+	if !reflect.DeepEqual(conVal, nativeVal) {
+		failf("Strict parsing: Found '%s' ambigious (could be '%s' or '%s')",
+			in, conVal, nativeVal)
+		panic("Unreachable")
+	}
+
+	return conTag, conVal
+}
+
+func strictScalarResolveConservative(in string) (string, interface{}) {
 	switch in {
 	case "":
 		return yaml_NULL_TAG, nil
@@ -29,28 +51,36 @@ func strictScalarResolve(tag string, in string) (string, interface{}) {
 
 	default:
 		switch {
-		case yamlStyleInt.MatchString(in):
+		case strictStyleInt.MatchString(in):
 			intv, err := strconv.ParseInt(in, 0, 64)
 			if err != nil {
-				failf("Parsing int '%s': %s", in, err)
+				uintv, err := strconv.ParseUint(in, 0, 64)
+				if err == nil {
+					return yaml_INT_TAG, uintv
+				}
+
+				failf("Strict parsing: Parsing int '%s': %s", in, err)
 				panic("Unreachable")
+			}
+			if intv == int64(int(intv)) {
+				return yaml_INT_TAG, int(intv)
 			}
 			return yaml_INT_TAG, intv
 
-		case yamlStyleFloat.MatchString(in):
+		case strictStyleFloat.MatchString(in):
 			floatv, err := strconv.ParseFloat(in, 64)
 			if err != nil {
-				failf("Parsing float '%s': %s", in, err)
+				failf("Strict parsing: Parsing float '%s': %s", in, err)
 				panic("Unreachable")
 			}
 			return yaml_FLOAT_TAG, floatv
 
 		case strings.IndexFunc(in, unicode.IsSpace) != -1:
-			failf("Strings with whitespace must be explicitly quoted: '%s'", in)
+			failf("Strict parsing: Strings with whitespace must be explicitly quoted: '%s'", in)
 			panic("Unreachable")
 
 		case strings.Contains(in, ":"):
-			failf("Strings with colon must be explicitly quoted: '%s'", in)
+			failf("Strict parsing: Strings with colon must be explicitly quoted: '%s'", in)
 			panic("Unreachable")
 
 		default:
