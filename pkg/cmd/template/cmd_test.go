@@ -484,7 +484,8 @@ data_str: yes`)
 		t.Fatalf("Expected RunWithFiles to fail")
 	}
 
-	expectedErr := "Unmarshaling YAML template 'tpl.yml': yaml: Strict parsing: Found 'yes' ambigious (could be !!str or !!bool)"
+	expectedErr := "Unmarshaling YAML template 'tpl.yml': yaml: Strict parsing: " +
+		"Found 'yes' ambigious (could be !!str or !!bool)"
 
 	if out.Err.Error() != expectedErr {
 		t.Fatalf("Expected RunWithFiles to fail with err: %s", out.Err)
@@ -517,7 +518,45 @@ str: yes`)
 		t.Fatalf("Expected RunWithFiles to fail")
 	}
 
-	expectedErr := "Unmarshaling YAML template 'data.yml': yaml: Strict parsing: Found 'yes' ambigious (could be !!str or !!bool)"
+	expectedErr := "Unmarshaling YAML template 'data.yml': yaml: Strict parsing: " +
+		"Found 'yes' ambigious (could be !!str or !!bool)"
+
+	if out.Err.Error() != expectedErr {
+		t.Fatalf("Expected RunWithFiles to fail with err: %s", out.Err)
+	}
+}
+
+func TestStrictInDataValueFlags(t *testing.T) {
+	yamlTplData := []byte(`
+#@ load("@ytt:data", "data")
+data_int: #@ data.values.int
+data_str: #@ data.values.str`)
+
+	yamlData := []byte(`
+#@data/values
+---
+int:
+str: `)
+
+	filesToProcess := files.NewSortedFiles([]*files.File{
+		files.MustNewFileFromSource(files.NewBytesSource("tpl.yml", yamlTplData)),
+		files.MustNewFileFromSource(files.NewBytesSource("data.yml", yamlData)),
+	})
+
+	ui := cmdcore.NewPlainUI(false)
+	opts := cmdtpl.NewOptions()
+	opts.StrictYAML = true
+	opts.DataValuesFlags = cmdtpl.DataValuesFlags{
+		KVs: []string{"str=yes"},
+	}
+
+	out := opts.RunWithFiles(cmdtpl.TemplateInput{Files: filesToProcess}, ui)
+	if out.Err == nil {
+		t.Fatalf("Expected RunWithFiles to fail")
+	}
+
+	expectedErr := "Extracting data value from KV: Deserializing value for key 'str' as YAML value: " +
+		"yaml: Strict parsing: Found 'yes' ambigious (could be !!str or !!bool)"
 
 	if out.Err.Error() != expectedErr {
 		t.Fatalf("Expected RunWithFiles to fail with err: %s", out.Err)

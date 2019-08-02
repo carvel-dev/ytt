@@ -98,7 +98,7 @@ func (o *TemplateOptions) RunWithFiles(in TemplateInput, ui cmdcore.PlainUI) Tem
 		return o.inspectFiles(rootLibrary, ui)
 	}
 
-	values, err := o.DataValuesFlags.Values()
+	values, err := o.DataValuesFlags.Values(o.StrictYAML)
 	if err != nil {
 		return TemplateOutput{Err: err}
 	}

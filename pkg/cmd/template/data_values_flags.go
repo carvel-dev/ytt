@@ -24,11 +24,11 @@ func (s *DataValuesFlags) Set(cmd *cobra.Command) {
 	cmd.Flags().BoolVar(&s.Inspect, "data-values-inspect", false, "Inspect data values")
 }
 
-func (s *DataValuesFlags) Values() (map[interface{}]interface{}, error) {
+func (s *DataValuesFlags) Values(strict bool) (map[interface{}]interface{}, error) {
 	result := []map[string]interface{}{}
 
 	for _, envPrefix := range s.Env {
-		vals, err := s.env(envPrefix)
+		vals, err := s.env(envPrefix, strict)
 		if err != nil {
 			return nil, fmt.Errorf("Extracting data values from env under prefix '%s': %s", envPrefix, err)
 		}
@@ -37,7 +37,7 @@ func (s *DataValuesFlags) Values() (map[interface{}]interface{}, error) {
 
 	// KVs and files take precedence over environment variables
 	for _, kv := range s.KVs {
-		vals, err := s.kv(kv)
+		vals, err := s.kv(kv, strict)
 		if err != nil {
 			return nil, fmt.Errorf("Extracting data value from KV: %s", err)
 		}
@@ -55,7 +55,7 @@ func (s *DataValuesFlags) Values() (map[interface{}]interface{}, error) {
 	return s.convertIntoNestedMap(result)
 }
 
-func (s *DataValuesFlags) env(prefix string) (map[string]interface{}, error) {
+func (s *DataValuesFlags) env(prefix string, strict bool) (map[string]interface{}, error) {
 	result := map[string]interface{}{}
 	envVars := os.Environ()
 
@@ -69,9 +69,7 @@ func (s *DataValuesFlags) env(prefix string) (map[string]interface{}, error) {
 			continue
 		}
 
-		var val interface{}
-
-		err := yamlmeta.PlainUnmarshal([]byte(pieces[1]), &val)
+		val, err := s.parseYAML(pieces[1], strict)
 		if err != nil {
 			return nil, fmt.Errorf("Deserializing env variable '%s' as YAML value: %s", pieces[0], err)
 		}
@@ -83,7 +81,7 @@ func (s *DataValuesFlags) env(prefix string) (map[string]interface{}, error) {
 	return result, nil
 }
 
-func (s *DataValuesFlags) kv(kv string) (map[string]interface{}, error) {
+func (s *DataValuesFlags) kv(kv string, strict bool) (map[string]interface{}, error) {
 	result := map[string]interface{}{}
 
 	pieces := strings.SplitN(kv, "=", 2)
@@ -91,9 +89,7 @@ func (s *DataValuesFlags) kv(kv string) (map[string]interface{}, error) {
 		return nil, fmt.Errorf("Expected format key=value")
 	}
 
-	var val interface{}
-
-	err := yamlmeta.PlainUnmarshal([]byte(pieces[1]), &val)
+	val, err := s.parseYAML(pieces[1], strict)
 	if err != nil {
 		return nil, fmt.Errorf("Deserializing value for key '%s' as YAML value: %s", pieces[0], err)
 	}
@@ -101,6 +97,14 @@ func (s *DataValuesFlags) kv(kv string) (map[string]interface{}, error) {
 	result[pieces[0]] = val
 
 	return result, nil
+}
+
+func (s *DataValuesFlags) parseYAML(data string, strict bool) (interface{}, error) {
+	docSet, err := yamlmeta.NewParser(yamlmeta.ParserOpts{Strict: strict}).ParseBytes([]byte(data), "")
+	if err != nil {
+		return nil, err
+	}
+	return docSet.Items[0].Value, nil
 }
 
 func (s *DataValuesFlags) file(kv string) (map[string]interface{}, error) {
