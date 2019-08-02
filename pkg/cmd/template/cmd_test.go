@@ -464,3 +464,62 @@ func TestPlainTextNoTemplateProcessing(t *testing.T) {
 		t.Fatalf("Expected output file to have specific data, but was: >>>%s<<<", file.Bytes())
 	}
 }
+
+func TestStrictInTemplate(t *testing.T) {
+	yamlTplData := []byte(`
+#@ load("@ytt:data", "data")
+data_int: #@ data.values.int
+data_str: yes`)
+
+	filesToProcess := files.NewSortedFiles([]*files.File{
+		files.MustNewFileFromSource(files.NewBytesSource("tpl.yml", yamlTplData)),
+	})
+
+	ui := cmdcore.NewPlainUI(false)
+	opts := cmdtpl.NewOptions()
+	opts.StrictYAML = true
+
+	out := opts.RunWithFiles(cmdtpl.TemplateInput{Files: filesToProcess}, ui)
+	if out.Err == nil {
+		t.Fatalf("Expected RunWithFiles to fail")
+	}
+
+	expectedErr := "Unmarshaling YAML template 'tpl.yml': yaml: Strict parsing: Found 'yes' ambigious (could be !!str or !!bool)"
+
+	if out.Err.Error() != expectedErr {
+		t.Fatalf("Expected RunWithFiles to fail with err: %s", out.Err)
+	}
+}
+
+func TestStrictInDataValues(t *testing.T) {
+	yamlTplData := []byte(`
+#@ load("@ytt:data", "data")
+data_int: #@ data.values.int
+data_str: #@ data.values.str`)
+
+	yamlData := []byte(`
+#@data/values
+---
+int: 123
+str: yes`)
+
+	filesToProcess := files.NewSortedFiles([]*files.File{
+		files.MustNewFileFromSource(files.NewBytesSource("tpl.yml", yamlTplData)),
+		files.MustNewFileFromSource(files.NewBytesSource("data.yml", yamlData)),
+	})
+
+	ui := cmdcore.NewPlainUI(false)
+	opts := cmdtpl.NewOptions()
+	opts.StrictYAML = true
+
+	out := opts.RunWithFiles(cmdtpl.TemplateInput{Files: filesToProcess}, ui)
+	if out.Err == nil {
+		t.Fatalf("Expected RunWithFiles to fail")
+	}
+
+	expectedErr := "Unmarshaling YAML template 'data.yml': yaml: Strict parsing: Found 'yes' ambigious (could be !!str or !!bool)"
+
+	if out.Err.Error() != expectedErr {
+		t.Fatalf("Expected RunWithFiles to fail with err: %s", out.Err)
+	}
+}
