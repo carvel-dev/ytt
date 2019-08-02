@@ -133,10 +133,10 @@ func (l *TemplateLoader) LoadData(thread *starlark.Thread, f *starlark.Builtin,
 	return starlark.String(string(fileBs)), nil
 }
 
-func (l *TemplateLoader) EvalYAML(library *Library, file *files.File) (starlark.StringDict, *yamlmeta.DocumentSet, error) {
+func (l *TemplateLoader) ParseYAML(file *files.File) (*yamlmeta.DocumentSet, error) {
 	fileBs, err := file.Bytes()
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
 	docSetOpts := yamlmeta.DocSetOpts{
@@ -146,9 +146,18 @@ func (l *TemplateLoader) EvalYAML(library *Library, file *files.File) (starlark.
 	}
 	l.ui.Debugf("## file %s (opts %#v)\n", file.RelativePath(), docSetOpts)
 
-	docSet, err := yamlmeta.NewDocumentSetFromBytesWithOpts(fileBs, docSetOpts)
+	docSet, err := yamlmeta.NewDocumentSetFromBytes(fileBs, docSetOpts)
 	if err != nil {
-		return nil, nil, fmt.Errorf("Unmarshaling YAML template '%s': %s", file.RelativePath(), err)
+		return nil, fmt.Errorf("Unmarshaling YAML template '%s': %s", file.RelativePath(), err)
+	}
+
+	return docSet, nil
+}
+
+func (l *TemplateLoader) EvalYAML(library *Library, file *files.File) (starlark.StringDict, *yamlmeta.DocumentSet, error) {
+	docSet, err := l.ParseYAML(file)
+	if err != nil {
+		return nil, nil, err
 	}
 
 	l.ui.Debugf("### ast\n")

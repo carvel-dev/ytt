@@ -12,7 +12,7 @@ type DocSetOpts struct {
 	AssociatedName string
 }
 
-func NewDocumentSetFromBytesWithOpts(data []byte, opts DocSetOpts) (*DocumentSet, error) {
+func NewDocumentSetFromBytes(data []byte, opts DocSetOpts) (*DocumentSet, error) {
 	parserOpts := ParserOpts{WithoutMeta: opts.WithoutMeta, Strict: opts.Strict}
 
 	docSet, err := NewParser(parserOpts).ParseBytes(data, opts.AssociatedName)
@@ -21,10 +21,6 @@ func NewDocumentSetFromBytesWithOpts(data []byte, opts DocSetOpts) (*DocumentSet
 	}
 	docSet.originalBytes = &data
 	return docSet, nil
-}
-
-func NewDocumentSetFromBytes(data []byte, associatedName string) (*DocumentSet, error) {
-	return NewDocumentSetFromBytesWithOpts(data, DocSetOpts{AssociatedName: associatedName})
 }
 
 func (d *DocumentSet) Print(writer io.Writer) {

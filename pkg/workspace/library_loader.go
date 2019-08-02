@@ -31,7 +31,9 @@ func NewLibraryLoader(lib *Library, ui files.UI, templateLoaderOpts TemplateLoad
 }
 
 func (ll *LibraryLoader) Values(valuesFlagsAst EvalValuesAst) (EvalValuesAst, error) {
-	valuesFiles, err := ll.valuesFiles()
+	loader := NewTemplateLoader(nil, ll.ui, ll.templateLoaderOpts)
+
+	valuesFiles, err := ll.valuesFiles(loader)
 	if err != nil {
 		return nil, err
 	}
@@ -39,26 +41,21 @@ func (ll *LibraryLoader) Values(valuesFlagsAst EvalValuesAst) (EvalValuesAst, er
 	dvpp := DataValuesPreProcessing{
 		valuesFiles:           valuesFiles,
 		valuesFlagsAst:        valuesFlagsAst,
-		loader:                NewTemplateLoader(nil, ll.ui, ll.templateLoaderOpts),
+		loader:                loader,
 		IgnoreUnknownComments: ll.templateLoaderOpts.IgnoreUnknownComments,
 	}
 
 	return dvpp.Apply()
 }
 
-func (ll *LibraryLoader) valuesFiles() ([]*FileInLibrary, error) {
+func (ll *LibraryLoader) valuesFiles(loader *TemplateLoader) ([]*FileInLibrary, error) {
 	var valuesFiles []*FileInLibrary
 
 	for _, fileInLib := range ll.library.ListAccessibleFiles() {
 		if fileInLib.File.Type() == files.TypeYAML && fileInLib.File.IsTemplate() {
-			fileBs, err := fileInLib.File.Bytes()
+			docSet, err := loader.ParseYAML(fileInLib.File)
 			if err != nil {
 				return nil, err
-			}
-
-			docSet, err := yamlmeta.NewDocumentSetFromBytes(fileBs, fileInLib.File.RelativePath())
-			if err != nil {
-				return nil, fmt.Errorf("Unmarshaling YAML template '%s': %s", fileInLib.File.RelativePath(), err)
 			}
 
 			tplOpts := yamltemplate.MetasOpts{IgnoreUnknown: ll.templateLoaderOpts.IgnoreUnknownComments}

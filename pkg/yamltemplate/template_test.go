@@ -112,7 +112,7 @@ func (e testErr) UserErr() error { return e.realErr }
 func (e testErr) TestErr() error { return e.testErr }
 
 func evalTemplate(t *testing.T, data string) (string, *testErr) {
-	docSet, err := yamlmeta.NewDocumentSetFromBytes([]byte(data), "stdin")
+	docSet, err := yamlmeta.NewDocumentSetFromBytes([]byte(data), yamlmeta.DocSetOpts{AssociatedName: "stdin"})
 	if err != nil {
 		return "", &testErr{err, fmt.Errorf("unmarshal error: %v", err)}
 	}
