@@ -1,0 +1,28 @@
+test1:
+#@ for i in range(0,3):
+#@annotation
+#@other/annotation
+- #@ i
+- #@ i+1
+#@ end
+
+test2:
+#@annotation
+#@other/annotation
+#@ for i in range(0,3):
+- #@ i
+#@ end
+
++++
+
+test1:
+- 0
+- 1
+- 1
+- 2
+- 2
+- 3
+test2:
+- 0
+- 1
+- 2

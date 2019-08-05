@@ -181,7 +181,7 @@ func (e *EvaluationCtx) startNode(nodeTag NodeTag) error {
 	nodeVal.ResetValue()
 
 	if nodeAnns, found := e.pendingAnnotations[nodeTag]; found {
-		e.pendingAnnotations[nodeTag] = nil
+		delete(e.pendingAnnotations, nodeTag)
 		nodeVal.SetAnnotations(nodeAnns)
 	}
 
