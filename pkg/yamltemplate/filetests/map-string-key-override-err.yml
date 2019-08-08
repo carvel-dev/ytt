@@ -9,5 +9,5 @@ test(@= str(1) @): third
 
 ERR: 
 - __ytt_tplXXX_start_node: disallowed to override key 'test1' value
-    stdin:6 in <toplevel>
-     L test(@= str(1) @): third
+    in <toplevel>
+      stdin:6 | test(@= str(1) @): third

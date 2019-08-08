@@ -14,9 +14,9 @@ test1: #@ call1(None)
 
 ERR: 
 - function call2 missing 1 argument (a)
-    stdin:1 in call2
-     L #@ def call2(a):
-    stdin:6 in call1
-     L #@     call2()
-    stdin:11 in <toplevel>
-     L test1: #@ call1(None)
+    in call2
+      stdin:1 | #@ def call2(a):
+    in call1
+      stdin:6 | #@     call2()
+    in <toplevel>
+      stdin:11 | test1: #@ call1(None)

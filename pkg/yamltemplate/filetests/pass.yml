@@ -5,5 +5,4 @@
 
 ERR: 
 - keyword pass is not supported
-    stdin:2
-     L #@   pass
+    stdin:2 | #@   pass

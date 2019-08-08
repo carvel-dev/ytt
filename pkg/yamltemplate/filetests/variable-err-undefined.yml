@@ -11,11 +11,8 @@ metadata:
 
 ERR: 
 - undefined: missing1
-    stdin:1
-     L #@ missing1
+    stdin:1 | #@ missing1
 - undefined: missing2
-    stdin:5
-     L   labels: #@ missing2
+    stdin:5 |   labels: #@ missing2
 - undefined: missing3
-    stdin:8
-     L #@ missing3
+    stdin:8 | #@ missing3

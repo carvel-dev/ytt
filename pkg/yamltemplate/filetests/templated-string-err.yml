@@ -15,9 +15,9 @@ metadata:
 
 ERR: 
 - unknown binary op: int + string
-    stdin:10 in textfunc
-     L = 1+"1" 
-    stdin:2 in yamlfunc
-     L key: #@ textfunc()
-    stdin:11 in <toplevel>
-     L = yamlfunc() 
+    in textfunc
+      stdin:10 | = 1+"1" 
+    in yamlfunc
+      stdin:2 | key: #@ textfunc()
+    in <toplevel>
+      stdin:11 | = yamlfunc() 

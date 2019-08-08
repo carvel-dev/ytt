@@ -14,6 +14,5 @@ metadata:
 
 ERR: 
 - mismatched set of block openings (if/else/elif/for/def) and closing (end)
-    stdin:?
-     L 
-     L __ytt_tplXXX_end_ctx(None) (generated)
+    stdin:11 |       #@ end
+    stdin:? | __ytt_tplXXX_end_ctx(None) (generated)

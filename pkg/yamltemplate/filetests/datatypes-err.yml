@@ -10,5 +10,5 @@ metadata:
 
 ERR: 
 - unknown binary op: int + string
-    stdin:5 in <toplevel>
-     L     int: #@ 123 + "124"
+    in <toplevel>
+      stdin:5 |     int: #@ 123 + "124"

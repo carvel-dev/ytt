@@ -106,7 +106,7 @@ func (e testErr) UserErr() error { return e.realErr }
 func (e testErr) TestErr() error { return e.testErr }
 
 func evalTemplate(t *testing.T, data string) (string, *testErr) {
-	textRoot, err := texttemplate.NewParser().Parse([]byte(data), "stdin-file")
+	textRoot, err := texttemplate.NewParser().Parse([]byte(data), "stdin")
 	if err != nil {
 		return "", &testErr{err, fmt.Errorf("template parse error: %v", err)}
 	}

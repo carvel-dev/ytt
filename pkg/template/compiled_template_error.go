@@ -86,28 +86,33 @@ func (e CompiledTemplateMultiError) Error() string {
 				continue
 			}
 
-			ctx := ""
-			if len(pos.ContextName) > 0 {
-				ctx = " in " + pos.ContextName
-			}
+			linePad := "    "
 
-			// TODO show column information
-			result = append(result, fmt.Sprintf("    %s:%s%s",
-				pos.Filename, pos.TemplateLine.Position().AsIntString(), ctx))
+			if len(pos.ContextName) > 0 {
+				result = append(result, linePad+"in "+pos.ContextName)
+				linePad += "  "
+			}
 
 			if pos.TemplateLine.SourceLine != nil {
 				if pos.TemplateLine.SourceLine.Selection != nil {
-					result = append(result, fmt.Sprintf("     L %s", pos.TemplateLine.SourceLine.Selection.Content))
+					result = append(result, fmt.Sprintf("%s%s%s",
+						linePad, e.posPrefixStr(pos.TemplateLine.SourceLine.Selection), pos.TemplateLine.SourceLine.Selection.Content))
 				} else {
-					result = append(result, fmt.Sprintf("     L %s", pos.TemplateLine.SourceLine.Content))
+					result = append(result, fmt.Sprintf("%s%s%s",
+						linePad, e.posPrefixStr(pos.TemplateLine.SourceLine), pos.TemplateLine.SourceLine.Content))
 				}
 			} else {
 				if pos.BeforeTemplateLine != nil && pos.BeforeTemplateLine.SourceLine != nil {
-					result = append(result, fmt.Sprintf("     L %s", pos.BeforeTemplateLine.SourceLine.Content))
+					result = append(result, fmt.Sprintf("%s%s%s",
+						linePad, e.posPrefixStr(pos.BeforeTemplateLine.SourceLine), pos.BeforeTemplateLine.SourceLine.Content))
 				}
-				result = append(result, fmt.Sprintf("     L %s (generated)", pos.TemplateLine.Instruction.AsString()))
+
+				result = append(result, fmt.Sprintf("%s%s:? | %s (generated)",
+					linePad, pos.Filename, pos.TemplateLine.Instruction.AsString()))
+
 				if pos.AfterTemplateLine != nil && pos.AfterTemplateLine.SourceLine != nil {
-					result = append(result, fmt.Sprintf("     L %s", pos.AfterTemplateLine.SourceLine.Content))
+					result = append(result, fmt.Sprintf("%s%s%s",
+						linePad, e.posPrefixStr(pos.AfterTemplateLine.SourceLine), pos.AfterTemplateLine.SourceLine.Content))
 				}
 			}
 		}
@@ -121,6 +126,11 @@ func (e CompiledTemplateMultiError) Error() string {
 	}
 
 	return strings.Join(result, "\n")
+}
+
+func (e CompiledTemplateMultiError) posPrefixStr(srcLine *SourceLine) string {
+	// TODO show column information
+	return fmt.Sprintf("%s | ", srcLine.Position.AsCompactString())
 }
 
 func (e CompiledTemplateMultiError) buildEvalErr(err *starlark.EvalError) CompiledTemplateError {

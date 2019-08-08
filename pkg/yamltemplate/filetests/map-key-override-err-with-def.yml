@@ -12,5 +12,5 @@ _: #@ template.replace(tpl())
 
 ERR: 
 - template.replace: disallowed to override key 'test3' value
-    stdin:9 in <toplevel>
-     L _: #@ template.replace(tpl())
+    in <toplevel>
+      stdin:9 | _: #@ template.replace(tpl())

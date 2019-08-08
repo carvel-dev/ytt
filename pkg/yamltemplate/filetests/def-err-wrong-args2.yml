@@ -15,11 +15,11 @@ test1: #@ call1(None)
 
 ERR: 
 - function call2 missing 1 argument (a)
-    stdin:? in call2
-     L #@ def call2(a):
-     L __ytt_tplXXX_set_ctx_type("text") (generated)
-     L nested: #@ a
-    stdin:7 in call1
-     L #@     call2()
-    stdin:12 in <toplevel>
-     L test1: #@ call1(None)
+    in call2
+      stdin:1 | #@ def call2(a):
+      stdin:? | __ytt_tplXXX_set_ctx_type("text") (generated)
+      stdin:2 | nested: #@ a
+    in call1
+      stdin:7 | #@     call2()
+    in <toplevel>
+      stdin:12 | test1: #@ call1(None)

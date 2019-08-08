@@ -100,12 +100,12 @@ simple_key: #@ another_data()
 
 	expectedErr := `
 - unknown binary op: int + string
-    funcs/funcs.lib.yml:3 in some_data
-     L #@   return 1+"2"
-    tpl.yml:7 in another_data
-     L #@   return some_data()
-    tpl.yml:9 in <toplevel>
-     L simple_key: #@ another_data()`
+    in some_data
+      funcs/funcs.lib.yml:3 | #@   return 1+"2"
+    in another_data
+      tpl.yml:7 | #@   return some_data()
+    in <toplevel>
+      tpl.yml:9 | simple_key: #@ another_data()`
 
 	filesToProcess := []*files.File{
 		files.MustNewFileFromSource(files.NewBytesSource("tpl.yml", yamlTplData)),
@@ -130,8 +130,8 @@ func TestDisallowDirectLibraryLoading(t *testing.T) {
 
 	expectedErr := `
 - cannot load _ytt_lib/data.lib.star: Could not load file '_ytt_lib/data.lib.star' because it's contained in private library '' (use load("@lib:file", "symbol") where 'lib' is library name under _ytt_lib, for example, 'github.com/k14s/test')
-    tpl.yml:1 in <toplevel>
-     L #@ load("_ytt_lib/data.lib.star", "data")`
+    in <toplevel>
+      tpl.yml:1 | #@ load("_ytt_lib/data.lib.star", "data")`
 
 	filesToProcess := []*files.File{
 		files.MustNewFileFromSource(files.NewBytesSource("tpl.yml", yamlTplData)),

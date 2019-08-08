@@ -11,5 +11,4 @@ singleline
 
 ERR:
 - undefined: a
-    stdin:3
-     L = str(a) 
+    stdin:3 | = str(a) 

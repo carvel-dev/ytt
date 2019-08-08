@@ -14,7 +14,7 @@ singleline
 
 ERR:
 - __ytt_tplXXX_set_node: cannot set non-string value (int64)
-    stdin:3 in lines
-     L = i 
-    stdin:11 in <toplevel>
-     L  lines(5) 
+    in lines
+      stdin:3 | = i 
+    in <toplevel>
+      stdin:11 |  lines(5) 
