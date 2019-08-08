@@ -40,3 +40,6 @@ array:
 
 - `@yaml/map-key-override` (no args)
   - necessary to indicate that map key is being intentionally overriden
+
+- `@yaml/text-templated-strings` (no args)
+  - necessary to indicate that node contents (including map key and map value) should be text templated (ie `(@` indicate start of text templating)

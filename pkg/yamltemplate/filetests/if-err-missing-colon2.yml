@@ -1,0 +1,19 @@
+#@yaml/text-templated-strings
+---
+apiVersion: apps/v1beta1
+#@ if True:
+t: #@ 123
+t2:
+  #@ if True
+  t: #@ 456
+  t2: #@ 456
+  #@ end
+#@ end
+
++++
+
+ERR: 
+- got newline, want ':'
+    stdin:7 |   #@ if True
+    stdin:? | __ytt_tplXXX_set_ctx_type("text") (generated)
+    stdin:8 |   t: #@ 456

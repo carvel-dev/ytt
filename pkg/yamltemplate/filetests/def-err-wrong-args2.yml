@@ -16,8 +16,6 @@ test1: #@ call1(None)
 ERR: 
 - function call2 missing 1 argument (a)
     in call2
-      stdin:1 | #@ def call2(a):
-      stdin:? | __ytt_tplXXX_set_ctx_type("text") (generated)
       stdin:2 | nested: #@ a
     in call1
       stdin:7 | #@     call2()

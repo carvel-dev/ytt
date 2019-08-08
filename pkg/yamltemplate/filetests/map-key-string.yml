@@ -1,8 +1,10 @@
 #@ for x in [1,2,3]:
+#@yaml/text-templated-strings
 (@= "key"+str(x) @): #@ x
 #@ end
 
 #@ for x in [1,2,3]:
+#@yaml/text-templated-strings
 key(@ "noop" @)(@= str(x) @)-(@= str(x) @): #@ x
 #@ end
 

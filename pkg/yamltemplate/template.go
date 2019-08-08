@@ -5,9 +5,14 @@ import (
 	"fmt"
 
 	"github.com/k14s/ytt/pkg/filepos"
+	"github.com/k14s/ytt/pkg/structmeta"
 	"github.com/k14s/ytt/pkg/template"
 	"github.com/k14s/ytt/pkg/texttemplate"
 	"github.com/k14s/ytt/pkg/yamlmeta"
+)
+
+const (
+	AnnotationTextTemplatedStrings structmeta.AnnotationName = "yaml/text-templated-strings"
 )
 
 type Template struct {
@@ -33,7 +38,7 @@ func (e *Template) Compile(docSet *yamlmeta.DocumentSet) (*template.CompiledTemp
 	e.docSet = docSet
 	e.nodes = template.NewNodes()
 
-	code, err := e.build(docSet, nil, template.NodeTagRoot)
+	code, err := e.build(docSet, nil, template.NodeTagRoot, buildOpts{})
 	if err != nil {
 		return nil, err
 	}
@@ -53,10 +58,14 @@ func (e *Template) Compile(docSet *yamlmeta.DocumentSet) (*template.CompiledTemp
 	}), nil
 }
 
-func (e *Template) build(val interface{}, parentNode yamlmeta.Node, parentTag template.NodeTag) ([]template.TemplateLine, error) {
+type buildOpts struct {
+	TextTemplatedStrings bool
+}
+
+func (e *Template) build(val interface{}, parentNode yamlmeta.Node, parentTag template.NodeTag, opts buildOpts) ([]template.TemplateLine, error) {
 	node, ok := val.(yamlmeta.Node)
 	if !ok {
-		if valStr, ok := val.(string); ok {
+		if valStr, ok := val.(string); ok && opts.TextTemplatedStrings {
 			return e.buildString(valStr, parentNode, parentTag, e.instructions.NewSetNodeValue)
 		}
 
@@ -74,6 +83,10 @@ func (e *Template) build(val interface{}, parentNode yamlmeta.Node, parentTag te
 		return nil, err
 	}
 
+	if e.allowsTextTemplatedStrings(metas) {
+		opts.TextTemplatedStrings = true
+	}
+
 	for _, blk := range metas.Block {
 		code = append(code, template.TemplateLine{
 			Instruction: e.instructions.NewCode(blk.Data),
@@ -89,7 +102,7 @@ func (e *Template) build(val interface{}, parentNode yamlmeta.Node, parentTag te
 	}
 
 	if typedNode, ok := val.(*yamlmeta.MapItem); ok {
-		if keyStr, ok := typedNode.Key.(string); ok {
+		if keyStr, ok := typedNode.Key.(string); ok && opts.TextTemplatedStrings {
 			templateLines, err := e.buildString(keyStr, node, nodeTag, e.instructions.NewSetMapItemKey)
 			if err != nil {
 				return nil, err
@@ -112,7 +125,7 @@ func (e *Template) build(val interface{}, parentNode yamlmeta.Node, parentTag te
 		}
 	} else {
 		for _, childVal := range node.GetValues() {
-			childCode, err := e.build(childVal, node, nodeTag)
+			childCode, err := e.build(childVal, node, nodeTag, opts)
 			if err != nil {
 				return nil, err
 			}
@@ -128,6 +141,17 @@ func (e *Template) build(val interface{}, parentNode yamlmeta.Node, parentTag te
 	}
 
 	return code, nil
+}
+
+func (e *Template) allowsTextTemplatedStrings(metas Metas) bool {
+	// TODO potentially use template.NewAnnotations(node).Has(AnnotationTextTemplatedStrings)
+	// however if node was not processed by the template, it wont have any annotations set
+	for _, metaAndAnn := range metas.Annotations {
+		if metaAndAnn.Annotation.Name == AnnotationTextTemplatedStrings {
+			return true
+		}
+	}
+	return false
 }
 
 func (e *Template) buildString(val string, node yamlmeta.Node, nodeTag template.NodeTag,

@@ -7,6 +7,7 @@ kind: Deployment
 metadata:
   labels:
     #! TODO stacktrace is still not correct
+    #@yaml/text-templated-strings
     test3: |
       (@- def textfunc(): @)(@= 1+"1" @)(@ end -@)
       fromtext=(@= yamlfunc() @)
@@ -16,8 +17,8 @@ metadata:
 ERR: 
 - unknown binary op: int + string
     in textfunc
-      stdin:10 | = 1+"1" 
+      stdin:11 | = 1+"1" 
     in yamlfunc
       stdin:2 | key: #@ textfunc()
     in <toplevel>
-      stdin:11 | = yamlfunc() 
+      stdin:12 | = yamlfunc() 

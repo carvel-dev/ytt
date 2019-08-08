@@ -12,6 +12,4 @@ t2:
 
 ERR: 
 - got newline, want ':'
-    stdin:5 |   #@ if True
-    stdin:? | __ytt_tplXXX_set_ctx_type("text") (generated)
     stdin:6 |   t: #@ 456

@@ -1,0 +1,26 @@
+#@yaml/text-templated-strings
+---
+#@ def call2(a):
+nested1: line-after
+nested2: #@ a
+#@ end
+
+#@ def call1(v):
+#@   call2()
+#@   return v
+#@ end
+
+test1: #@ call1(None)
+
++++
+
+ERR: 
+- function call2 missing 1 argument (a)
+    in call2
+      stdin:3 | #@ def call2(a):
+      stdin:? | __ytt_tplXXX_set_ctx_type("text") (generated)
+      stdin:4 | nested1: line-after
+    in call1
+      stdin:9 | #@   call2()
+    in <toplevel>
+      stdin:13 | test1: #@ call1(None)

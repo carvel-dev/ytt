@@ -8,12 +8,28 @@ kind: Deployment
 metadata:
   labels:
     #! should not be templated
-    test1: #@ "string(@= str(5) @)"
-    test2: "string(@= str(5) @)"
+    test1: #@ "string(@= str(1) @)"
+
+    #@yaml/text-templated-strings
+    test2: "string(@= str(2) @)"
+
+    #@yaml/text-templated-strings
     test3: |
       (@- def textfunc(): @)textfuncresult(@ end -@)
       fromyaml=(@= yamlfunc() @)
       fromtext=(@= textfunc() @)
+
+#@yaml/text-templated-strings
+#@yaml/map-key-override
+---
+test4: "string(@= str(4) @)"
+test5:
+  test(@= str(5) @): "string(@= str(5) @)"
+
+---
+test6: "string(@= str(6) @)"
+test7:
+  test(@= str(7) @): "string(@= str(7) @)"
 
 +++
 
@@ -21,8 +37,16 @@ apiVersion: apps/v1beta1
 kind: Deployment
 metadata:
   labels:
-    test1: string(@= str(5) @)
-    test2: string5
+    test1: string(@= str(1) @)
+    test2: string2
     test3: |
       fromyaml=yamlfuncresult
       fromtext=textfuncresult
+---
+test4: string4
+test5:
+  test5: string5
+---
+test6: string(@= str(6) @)
+test7:
+  test(@= str(7) @): string(@= str(7) @)
