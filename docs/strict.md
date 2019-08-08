@@ -13,7 +13,7 @@ Unlike full YAML, strict subset:
 
 ### Example
 
-Non-strict
+Non-strict:
 
 ```bash
 $ echo 'key: yes'|ytt -f-

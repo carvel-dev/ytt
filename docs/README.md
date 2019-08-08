@@ -11,13 +11,21 @@
     - [overlay](lang-ref-ytt-overlay.md) describes how to perform configuration patching on top of plain templating
   - [Annotation format](lang-ref-annotation.md)
     - [@data/values annotation](ytt-data-values.md) describes how to inject input into templates
+  - [Text templating](ytt-text-templating.md) describes how to deal with complex text templating
 - [Injecting secrets](injecting-secrets.md)
 - [Security](security.md)
 - [ytt vs X: How ytt is different from other tools / frameworks](ytt-vs-x.md)
-- Blog posts
-  - [ytt: The YAML Templating Tool that simplifies complex configuration management](https://developer.ibm.com/blogs/yaml-templating-tool-to-simplify-complex-configuration-management/)
-  - [Introducing k14s (Kubernetes Tools): Simple and Composable Tools for Application Deployment](https://content.pivotal.io/blog/introducing-k14s-kubernetes-tools-simple-and-composable-tools-for-application-deployment)
-- Talks
-  - [Introducing the YAML Templating Tool (ytt)](https://www.youtube.com/watch?v=KbB5tI_g3bo) on IBM Developer podcast
-  - [TGI Kubernetes 079: YTT and Kapp](https://www.youtube.com/watch?v=CSglwNTQiYg) with Joe Beda
+
+### Blog posts
+
+- [ytt: The YAML Templating Tool that simplifies complex configuration management](https://developer.ibm.com/blogs/yaml-templating-tool-to-simplify-complex-configuration-management/)
+- [Introducing k14s (Kubernetes Tools): Simple and Composable Tools for Application Deployment](https://content.pivotal.io/blog/introducing-k14s-kubernetes-tools-simple-and-composable-tools-for-application-deployment)
+
+### Talks
+
+- [Introducing the YAML Templating Tool (ytt)](https://www.youtube.com/watch?v=KbB5tI_g3bo) on IBM Developer podcast
+- [TGI Kubernetes 079: YTT and Kapp](https://www.youtube.com/watch?v=CSglwNTQiYg) with Joe Beda
+
+### Misc
+
 - [Development details](dev.md)
