@@ -88,11 +88,6 @@ func (e *Template) build(val interface{}, parentNode yamlmeta.Node, parentTag te
 		})
 	}
 
-	code = append(code, template.TemplateLine{
-		Instruction: e.instructions.NewStartNode(nodeTag).WithDebug(e.debugComment(node)),
-		SourceLine:  e.newSourceLine(node.GetPosition()),
-	})
-
 	if typedNode, ok := val.(*yamlmeta.MapItem); ok {
 		if keyStr, ok := typedNode.Key.(string); ok {
 			templateLines, err := e.buildString(keyStr, node, nodeTag, e.instructions.NewSetMapItemKey)
@@ -102,6 +97,11 @@ func (e *Template) build(val interface{}, parentNode yamlmeta.Node, parentTag te
 			code = append(code, templateLines...)
 		}
 	}
+
+	code = append(code, template.TemplateLine{
+		Instruction: e.instructions.NewStartNode(nodeTag).WithDebug(e.debugComment(node)),
+		SourceLine:  e.newSourceLine(node.GetPosition()),
+	})
 
 	if len(metas.Values) > 0 {
 		for _, val := range metas.Values {

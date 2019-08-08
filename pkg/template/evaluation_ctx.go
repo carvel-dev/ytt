@@ -16,6 +16,7 @@ type EvaluationCtx struct {
 	ancestors Ancestors
 
 	pendingAnnotations map[NodeTag]NodeAnnotations
+	pendingMapItemKeys map[NodeTag]interface{}
 
 	rootInit       bool
 	rootNode       EvaluationNode
@@ -95,10 +96,21 @@ func (e *EvaluationCtx) TplSetMapItemKey(
 	thread *starlark.Thread, _ *starlark.Builtin,
 	args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
 
-	if args.Len() > 1 {
-		node := e.parentNodes[len(e.parentNodes)-1]
-		return starlark.None, e.dialect.SetMapItemKey(node, core.NewStarlarkValue(args.Index(1)).AsInterface())
+	if args.Len() != 2 {
+		return starlark.None, fmt.Errorf("expected exactly 2 arguments")
 	}
+
+	nodeTag, err := NewNodeTagFromStarlarkValue(args.Index(0))
+	if err != nil {
+		return starlark.None, err
+	}
+
+	if _, found := e.pendingMapItemKeys[nodeTag]; found {
+		panic(fmt.Sprintf("expected to find not map item key for node %s", nodeTag))
+	}
+
+	e.pendingMapItemKeys[nodeTag] = core.NewStarlarkValue(args.Index(1)).AsInterface()
+
 	return starlark.None, nil
 }
 
@@ -183,6 +195,11 @@ func (e *EvaluationCtx) startNode(nodeTag NodeTag) error {
 	if nodeAnns, found := e.pendingAnnotations[nodeTag]; found {
 		delete(e.pendingAnnotations, nodeTag)
 		nodeVal.SetAnnotations(nodeAnns)
+	}
+
+	if mapItemKey, found := e.pendingMapItemKeys[nodeTag]; found {
+		delete(e.pendingMapItemKeys, nodeTag)
+		e.dialect.SetMapItemKey(nodeVal, mapItemKey)
 	}
 
 	if !e.rootInit {

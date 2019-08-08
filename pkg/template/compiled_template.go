@@ -168,6 +168,7 @@ func (e *CompiledTemplate) newCtx(ctxType EvaluationCtxDialectName) *EvaluationC
 		dialect:   e.evalDialects[ctxType],
 
 		pendingAnnotations: map[NodeTag]NodeAnnotations{},
+		pendingMapItemKeys: map[NodeTag]interface{}{},
 	}
 }
 
