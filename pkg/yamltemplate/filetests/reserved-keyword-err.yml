@@ -1,0 +1,7 @@
+test1: #@ data.values.and.key
+
++++
+
+ERR: 
+- use of reserved keyword 'and' is not allowed (expected identifier)
+    stdin:1 | test1: #@ data.values.and.key

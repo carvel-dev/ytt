@@ -1,0 +1,7 @@
+test1: #@ data.values.pass.key
+
++++
+
+ERR: 
+- use of reserved keyword 'pass' is not allowed
+    stdin:1 | test1: #@ data.values.pass.key

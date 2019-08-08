@@ -4,5 +4,5 @@
 +++
 
 ERR: 
-- keyword pass is not supported
+- use of reserved keyword 'pass' is not allowed
     stdin:2 | #@   pass

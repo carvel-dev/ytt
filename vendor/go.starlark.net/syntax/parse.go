@@ -397,7 +397,12 @@ func (p *parser) parseSuite() []Stmt {
 
 func (p *parser) parseIdent() *Ident {
 	if p.tok != IDENT {
-		p.in.error(p.in.getPos(), "not an identifier")
+		for _, v := range keywordToken {
+			if p.tok == v {
+				p.in.errorf(p.in.getPos(), "use of reserved keyword '%s' is not allowed (expected identifier)", p.tokval.raw)
+			}
+		}
+		p.in.errorf(p.in.getPos(), "not an identifier")
 	}
 	id := &Ident{
 		NamePos: p.tokval.pos,
