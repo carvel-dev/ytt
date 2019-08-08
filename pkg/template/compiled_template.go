@@ -67,10 +67,14 @@ func (e *CompiledTemplate) CodeAsString() string {
 }
 
 func (e *CompiledTemplate) DebugCodeAsString() string {
-	result := []string{"src:  tmpl: code"}
+	result := []string{"src:  tmpl: code: srccode"}
 	for i, line := range e.code {
-		result = append(result, fmt.Sprintf("%s: %4d: %s",
-			line.Position().As4DigitString(), i+1, line.Instruction.AsString()))
+		src := ""
+		if line.SourceLine != nil {
+			src = line.SourceLine.Content
+		}
+		result = append(result, fmt.Sprintf("%s: %4d: %s | %s",
+			line.Position().As4DigitString(), i+1, line.Instruction.AsString(), src))
 	}
 	// Do not add any unnecessary newlines to match code lines
 	return strings.Join(result, "\n")
