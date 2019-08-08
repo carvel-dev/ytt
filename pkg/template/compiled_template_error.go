@@ -26,6 +26,9 @@ type CompiledTemplateErrorPosition struct {
 	Filename     string
 	ContextName  string
 	TemplateLine *TemplateLine
+
+	BeforeTemplateLine *TemplateLine
+	AfterTemplateLine  *TemplateLine
 }
 
 func NewCompiledTemplateMultiError(err error, loader CompiledTemplateLoader) error {
@@ -93,11 +96,19 @@ func (e CompiledTemplateMultiError) Error() string {
 				pos.Filename, pos.TemplateLine.Position().AsIntString(), ctx))
 
 			if pos.TemplateLine.SourceLine != nil {
-				result = append(result, fmt.Sprintf("     L %s",
-					pos.TemplateLine.SourceLine.Content))
+				if pos.TemplateLine.SourceLine.Selection != nil {
+					result = append(result, fmt.Sprintf("     L %s", pos.TemplateLine.SourceLine.Selection.Content))
+				} else {
+					result = append(result, fmt.Sprintf("     L %s", pos.TemplateLine.SourceLine.Content))
+				}
 			} else {
-				result = append(result, fmt.Sprintf("     L %s (generated)",
-					pos.TemplateLine.Instruction.AsString()))
+				if pos.BeforeTemplateLine != nil && pos.BeforeTemplateLine.SourceLine != nil {
+					result = append(result, fmt.Sprintf("     L %s", pos.BeforeTemplateLine.SourceLine.Content))
+				}
+				result = append(result, fmt.Sprintf("     L %s (generated)", pos.TemplateLine.Instruction.AsString()))
+				if pos.AfterTemplateLine != nil && pos.AfterTemplateLine.SourceLine != nil {
+					result = append(result, fmt.Sprintf("     L %s", pos.AfterTemplateLine.SourceLine.Content))
+				}
 			}
 		}
 
@@ -137,12 +148,25 @@ func (e CompiledTemplateMultiError) buildPos(pos syntax.Position) CompiledTempla
 	}
 
 	line := ct.CodeAtLine(filepos.NewPosition(int(pos.Line)))
-	if line != nil {
-		return CompiledTemplateErrorPosition{
-			Filename:     pos.Filename(),
-			TemplateLine: line,
-		}
+	if line == nil {
+		panic(fmt.Errorf("Expected to find compiled template line %d", pos.Line))
 	}
 
-	panic(fmt.Errorf("Expected to find compiled template line %d", pos.Line))
+	return CompiledTemplateErrorPosition{
+		Filename:           pos.Filename(),
+		TemplateLine:       line,
+		BeforeTemplateLine: e.findClosestLine(ct, int(pos.Line), -1),
+		AfterTemplateLine:  e.findClosestLine(ct, int(pos.Line), 1),
+	}
+}
+
+func (CompiledTemplateMultiError) findClosestLine(ct *CompiledTemplate, posLine int, lineInc int) *TemplateLine {
+	currPosLine := posLine
+	for {
+		currPosLine += lineInc
+		line := ct.CodeAtLine(filepos.NewPosition(currPosLine))
+		if line == nil || line.SourceLine != nil {
+			return line
+		}
+	}
 }

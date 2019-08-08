@@ -12,8 +12,9 @@ type TemplateLine struct {
 }
 
 type SourceLine struct {
-	Position *filepos.Position
-	Content  string
+	Position  *filepos.Position
+	Content   string
+	Selection *SourceLine
 }
 
 func NewCodeFromBytes(bs []byte, instructions *InstructionSet) []TemplateLine {

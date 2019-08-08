@@ -159,6 +159,8 @@ func (e *Template) buildString(val string, node yamlmeta.Node, nodeTag template.
 
 	code = append(code, e.resetCtxType())
 
+	code = e.wrapCodeWithSourceLines(code)
+
 	return code, nil
 }
 
@@ -209,4 +211,17 @@ func (e *Template) sourceCodeLines() map[int]*template.SourceLine {
 	}
 
 	return e.srcLinesByLine
+}
+
+func (e *Template) wrapCodeWithSourceLines(code []template.TemplateLine) []template.TemplateLine {
+	var wrappedCode []template.TemplateLine
+	for _, line := range code {
+		if line.SourceLine != nil {
+			newSrcLine := e.newSourceLine(line.SourceLine.Position)
+			newSrcLine.Selection = line.SourceLine
+			line.SourceLine = newSrcLine
+		}
+		wrappedCode = append(wrappedCode, line)
+	}
+	return wrappedCode
 }

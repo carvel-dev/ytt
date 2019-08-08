@@ -1,5 +1,6 @@
 #@ def call2(a):
-nested: #@ a
+nested1: line-after
+nested2: #@ a
 #@ end
 
 #@ def call1(v):
@@ -13,9 +14,11 @@ test1: #@ call1(None)
 
 ERR: 
 - function call2 missing 1 argument (a)
-    stdin:2 in call2
-     L nested: #@ a
-    stdin:6 in call1
+    stdin:? in call2
+     L #@ def call2(a):
+     L __ytt_tplXXX_set_ctx_type("text") (generated)
+     L nested1: line-after
+    stdin:7 in call1
      L #@   call2()
-    stdin:10 in <toplevel>
+    stdin:11 in <toplevel>
      L test1: #@ call1(None)
