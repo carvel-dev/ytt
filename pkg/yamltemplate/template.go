@@ -18,7 +18,7 @@ type Template struct {
 	instructions *template.InstructionSet
 
 	// memoized source lines
-	srcLinesByLine map[int]*template.SourceLine
+	srcLinesByLine map[int]string
 }
 
 type TemplateOpts struct {
@@ -183,28 +183,23 @@ func (e *Template) debugComment(node yamlmeta.Node) string {
 
 func (e *Template) newSourceLine(pos *filepos.Position) *template.SourceLine {
 	if pos.IsKnown() {
-		if sourceLine, ok := e.sourceCodeLines()[pos.Line()]; ok {
-			return &template.SourceLine{
-				Position: pos,
-				Content:  sourceLine.Content,
-			}
+		if content, ok := e.sourceCodeLines()[pos.Line()]; ok {
+			return template.NewSourceLine(pos, content)
 		}
 	}
 	return nil
 }
 
-func (e *Template) sourceCodeLines() map[int]*template.SourceLine {
+func (e *Template) sourceCodeLines() map[int]string {
 	if e.srcLinesByLine != nil {
 		return e.srcLinesByLine
 	}
 
-	e.srcLinesByLine = map[int]*template.SourceLine{}
+	e.srcLinesByLine = map[int]string{}
 
-	sourceCode, present := e.docSet.AsSourceBytes()
-	if present {
+	if sourceCode, present := e.docSet.AsSourceBytes(); present {
 		for i, line := range bytes.Split(sourceCode, []byte("\n")) {
-			srcLine := &template.SourceLine{Content: string(line)}
-			e.srcLinesByLine[filepos.NewPosition(i+1).Line()] = srcLine
+			e.srcLinesByLine[filepos.NewPosition(i+1).Line()] = string(line)
 		}
 	}
 

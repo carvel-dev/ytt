@@ -65,18 +65,12 @@ func (e *Template) compile(rootNode *NodeRoot,
 
 			code = append(code, template.TemplateLine{
 				Instruction: instructions.NewStartNode(nodeTag),
-				SourceLine: &template.SourceLine{
-					Position: typedNode.Position,
-					Content:  typedNode.Content,
-				},
+				SourceLine:  template.NewSourceLine(typedNode.Position, typedNode.Content),
 			})
 
 			code = append(code, template.TemplateLine{
 				Instruction: instructions.NewSetNode(nodeTag),
-				SourceLine: &template.SourceLine{
-					Position: typedNode.Position,
-					Content:  typedNode.Content,
-				},
+				SourceLine:  template.NewSourceLine(typedNode.Position, typedNode.Content),
 			})
 
 		case *NodeCode:
@@ -95,18 +89,12 @@ func (e *Template) compile(rootNode *NodeRoot,
 
 				code = append(code, template.TemplateLine{
 					Instruction: instructions.NewStartNode(nodeTag),
-					SourceLine: &template.SourceLine{
-						Position: typedNode.Position,
-						Content:  typedNode.Content,
-					},
+					SourceLine:  template.NewSourceLine(typedNode.Position, typedNode.Content),
 				})
 
 				code = append(code, template.TemplateLine{
 					Instruction: instructions.NewSetNodeValue(nodeTag, meta.Code()),
-					SourceLine: &template.SourceLine{
-						Position: typedNode.Position,
-						Content:  typedNode.Content,
-					},
+					SourceLine:  template.NewSourceLine(typedNode.Position, typedNode.Content),
 				})
 			} else {
 				code = append(code, template.NewCodeFromBytesAtPosition(

@@ -27,12 +27,16 @@ func NewCodeFromBytesAtPosition(bs []byte, pos *filepos.Position, instructions *
 	for i, line := range bytes.Split(bs, []byte("\n")) {
 		result = append(result, TemplateLine{
 			Instruction: instructions.NewCode(string(line)),
-			SourceLine: &SourceLine{
-				Position: pos.DeepCopyWithLineOffset(i),
-				Content:  string(line),
-			},
+			SourceLine:  NewSourceLine(pos.DeepCopyWithLineOffset(i), string(line)),
 		})
 	}
 
 	return result
+}
+
+func NewSourceLine(pos *filepos.Position, content string) *SourceLine {
+	if !pos.IsKnown() {
+		panic("Expected source line position to be known")
+	}
+	return &SourceLine{Position: pos, Content: content}
 }
