@@ -36,10 +36,3 @@ func NewCodeFromBytesAtPosition(bs []byte, pos *filepos.Position, instructions *
 
 	return result
 }
-
-func (l *TemplateLine) Position() *filepos.Position {
-	if l.SourceLine != nil {
-		return l.SourceLine.Position
-	}
-	return filepos.NewUnknownPosition()
-}
