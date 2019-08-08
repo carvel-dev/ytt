@@ -190,7 +190,7 @@ func (e *Template) newSourceLine(pos *filepos.Position) *template.SourceLine {
 			}
 		}
 	}
-	return &template.SourceLine{Position: pos}
+	return nil
 }
 
 func (e *Template) sourceCodeLines() map[int]*template.SourceLine {
@@ -216,6 +216,9 @@ func (e *Template) wrapCodeWithSourceLines(code []template.TemplateLine) []templ
 	for _, line := range code {
 		if line.SourceLine != nil {
 			newSrcLine := e.newSourceLine(line.SourceLine.Position)
+			if newSrcLine == nil {
+				panic("Expected to find associated source line")
+			}
 			newSrcLine.Selection = line.SourceLine
 			line.SourceLine = newSrcLine
 		}
