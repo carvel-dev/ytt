@@ -135,14 +135,12 @@ func (e *Template) buildString(val string, node yamlmeta.Node, nodeTag template.
 
 	// TODO line numbers for inlined template are somewhat correct
 	// (does not handle pipe-multi-line string format - off by 1)
-	name := fmt.Sprintf("%s (%s)", e.name, node.GetPosition().AsString())
-
-	textRoot, err := texttemplate.NewParser().ParseWithPosition([]byte(val), name, node.GetPosition())
+	textRoot, err := texttemplate.NewParser().ParseWithPosition([]byte(val), e.name, node.GetPosition())
 	if err != nil {
 		return nil, err
 	}
 
-	code, err := texttemplate.NewTemplate(name).CompileInline(textRoot, e.instructions, e.nodes)
+	code, err := texttemplate.NewTemplate(e.name).CompileInline(textRoot, e.instructions, e.nodes)
 	if err != nil {
 		return nil, err
 	}
