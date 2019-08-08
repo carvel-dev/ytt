@@ -12,6 +12,7 @@
   - [Annotation format](lang-ref-annotation.md)
     - [@data/values annotation](ytt-data-values.md) describes how to inject input into templates
   - [Text templating](ytt-text-templating.md) describes how to deal with complex text templating
+  - [Starlark specification](https://github.com/google/starlark-go/blob/master/doc/spec.md#contents) from google/starlark-go repo
 - [Injecting secrets](injecting-secrets.md)
 - [Security](security.md)
 - [ytt vs X: How ytt is different from other tools / frameworks](ytt-vs-x.md)

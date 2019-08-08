@@ -1,6 +1,6 @@
 ### Dictionaries
 
-Copied here for convenience from (Starlark specification)[https://github.com/google/starlark-go/blob/master/doc/spec.md#built-in-methods].
+Copied here for convenience from [Starlark specification](https://github.com/google/starlark-go/blob/master/doc/spec.md#built-in-methods).
 
 - [dict·clear](https://github.com/google/starlark-go/blob/master/doc/spec.md#dict·clear) (`D.clear()`)
 ```python

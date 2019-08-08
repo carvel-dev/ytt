@@ -1,6 +1,6 @@
 ### Lists
 
-Copied here for convenience from (Starlark specification)[https://github.com/google/starlark-go/blob/master/doc/spec.md#built-in-methods].
+Copied here for convenience from [Starlark specification](https://github.com/google/starlark-go/blob/master/doc/spec.md#built-in-methods).
 
 - [list·append](https://github.com/google/starlark-go/blob/master/doc/spec.md#list·append) (`L.append(x)`)
 ```python
