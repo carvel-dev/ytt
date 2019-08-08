@@ -17,8 +17,8 @@ spec:
   - name: apple-app
     image: hashicorp/http-echo
     args:
-    - -listen=:(@= str(data.values.port) @)
-    - -text=(@= data.values.text @)
+    - #@ "-listen=:" + str(data.values.port)
+    - #@ "-text=" + data.values.text
 ---
 kind: Service
 apiVersion: v1

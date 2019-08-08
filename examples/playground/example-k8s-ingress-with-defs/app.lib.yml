@@ -23,8 +23,9 @@ spec:
   - name: app
     image: hashicorp/http-echo
     args:
-    - -listen=:(@= str(app.port) @)
-    - -text=(@= app.text @)
+    - #@ "-listen=:" + str(app.port)
+    - #@ "-text=" + app.text
+
 ---
 kind: Service
 apiVersion: v1

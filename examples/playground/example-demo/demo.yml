@@ -20,8 +20,8 @@ spec:
   - name: #@ name(echo)
     image: hashicorp/http-echo
     args:
-    - -listen=:(@= str(echo.port) @)
-    - -text=(@= echo.text @)
+    - #@ "-listen=:" + str(echo.port)
+    - #@ "-text=" + echo.text
 
 #@ if/end data.values.service.enabled:
 ---
