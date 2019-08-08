@@ -28,7 +28,7 @@ func NewCodeFromBytesAtPosition(bs []byte, pos *filepos.Position, instructions *
 		result = append(result, TemplateLine{
 			Instruction: instructions.NewCode(string(line)),
 			SourceLine: &SourceLine{
-				Position: filepos.NewPosition(pos.Line() + i),
+				Position: pos.DeepCopyWithLineOffset(i),
 				Content:  string(line),
 			},
 		})

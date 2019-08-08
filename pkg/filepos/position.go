@@ -11,7 +11,7 @@ type Position struct {
 }
 
 func NewPosition(line int) *Position {
-	if line == 0 {
+	if line <= 0 {
 		panic("Lines are 1 based")
 	}
 	return &Position{line: &line, known: true}
@@ -74,5 +74,17 @@ func (p *Position) DeepCopy() *Position {
 		lineVal := *p.line
 		newPos.line = &lineVal
 	}
+	return newPos
+}
+
+func (p *Position) DeepCopyWithLineOffset(offset int) *Position {
+	if !p.IsKnown() {
+		panic("Position is unknown")
+	}
+	if offset < 0 {
+		panic("Unexpected line offset")
+	}
+	newPos := p.DeepCopy()
+	*newPos.line += offset
 	return newPos
 }
