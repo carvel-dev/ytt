@@ -25,7 +25,7 @@ build_values_path="../../${BUILD_VALUES:-./hack/build-values-default.yml}"
 		--file-mark 'alt-example**/*:type=data' \
 		--file-mark 'example**/*:type=data' \
 		--file-mark 'generated.go.txt:exclusive-for-output=true' \
-		--output-dir ../../tmp/
+		--output-directory ../../tmp/
 )
 mv tmp/generated.go.txt pkg/website/generated.go
 

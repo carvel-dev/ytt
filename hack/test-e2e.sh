@@ -17,7 +17,7 @@ diff ./tmp/config.yml examples/eirini/config-result.yml
 diff ./tmp/config-alt1.yml examples/eirini/config-result.yml
 
 # check directory reading
-./ytt -f examples/eirini/ --output-dir=tmp/eirini
+./ytt -f examples/eirini/ --output-directory=tmp/eirini
 diff ./tmp/eirini/config-alt2.yml examples/eirini/config-result.yml
 
 # check playground examples

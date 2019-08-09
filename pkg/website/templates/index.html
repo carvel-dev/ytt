@@ -41,8 +41,8 @@ $ <span class="green">ytt -f examples/playground/example-demo/</span> | kubectl 
 <span class="gray"># Input customized on command line or file configuration</span>
 $ <span class="green">ytt -f examples/playground/example-demo/ -v service.enabled=false</span> | kapp -y deploy -a app1 -f-
 
-<span class="gray"># Output template results into a directory</span>
-$ <span class="green">ytt -f examples/playground/example-demo/ -o /tmp/output-dir</span>
+<span class="gray"># Output template results as json</span>
+$ <span class="green">ytt -f examples/playground/example-demo/ -o json</span>
 </pre>
       </div>
 

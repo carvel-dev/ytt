@@ -26,7 +26,7 @@ Try out [online playground](https://get-ytt.io) or download latest binaries from
 
 ```
 ytt -f examples/playground/example-demo/
-ytt -f examples/playground/example-demo/ --output-dir tmp/
+ytt -f examples/playground/example-demo/ --output-directory tmp/
 ```
 
 See [examples/playground/](examples/playground/) for examples shown on [get-ytt.io](https://get-ytt.io).
