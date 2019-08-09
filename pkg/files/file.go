@@ -37,17 +37,44 @@ type File struct {
 }
 
 func NewSortedFilesFromPaths(paths []string) ([]*File, error) {
-	var groupedFileSrcs [][]Source
+	var groupedFiles [][]*File
 
 	for _, path := range paths {
-		var fileSrcs []Source
+		var files []*File
+
+		relativePath := ""
+		pathPieces := strings.Split(path, "=")
+
+		switch len(pathPieces) {
+		case 1:
+			// do nothing
+		case 2:
+			relativePath = pathPieces[0]
+			path = pathPieces[1]
+		default:
+			return nil, fmt.Errorf("Expected file '%s' to only have single '=' sign to for relative path assignment", path)
+		}
 
 		switch {
 		case path == "-":
-			fileSrcs = append(fileSrcs, NewStdinSource())
+			file, err := NewFileFromSource(NewCachedSource(NewStdinSource()))
+			if err != nil {
+				return nil, err
+			}
+			if len(relativePath) > 0 {
+				file.MarkRelativePath(relativePath)
+			}
+			files = append(files, file)
 
 		case strings.HasPrefix(path, "http://") || strings.HasPrefix(path, "https://"):
-			fileSrcs = append(fileSrcs, NewHTTPSource(path))
+			file, err := NewFileFromSource(NewCachedSource(NewHTTPSource(path)))
+			if err != nil {
+				return nil, err
+			}
+			if len(relativePath) > 0 {
+				file.MarkRelativePath(relativePath)
+			}
+			files = append(files, file)
 
 		default:
 			fileInfo, err := os.Lstat(path)
@@ -64,7 +91,12 @@ func NewSortedFilesFromPaths(paths []string) ([]*File, error) {
 					if err != nil {
 						return err
 					}
-					fileSrcs = append(fileSrcs, regLocalSource)
+					file, err := NewFileFromSource(NewCachedSource(regLocalSource))
+					if err != nil {
+						return err
+					}
+					// TODO relative path for directories?
+					files = append(files, file)
 					return nil
 				})
 				if err != nil {
@@ -75,27 +107,24 @@ func NewSortedFilesFromPaths(paths []string) ([]*File, error) {
 				if err != nil {
 					return nil, err
 				}
-				fileSrcs = append(fileSrcs, regLocalSource)
+				file, err := NewFileFromSource(NewCachedSource(regLocalSource))
+				if err != nil {
+					return nil, err
+				}
+				if len(relativePath) > 0 {
+					file.MarkRelativePath(relativePath)
+				}
+				files = append(files, file)
 			}
 		}
 
-		groupedFileSrcs = append(groupedFileSrcs, fileSrcs)
+		groupedFiles = append(groupedFiles, files)
 	}
 
 	var allFiles []*File
 	currOrder := 1
 
-	for _, fileSrcs := range groupedFileSrcs {
-		var files []*File
-
-		for _, fileSrc := range fileSrcs {
-			file, err := NewFileFromSource(fileSrc)
-			if err != nil {
-				return nil, err
-			}
-			files = append(files, file)
-		}
-
+	for _, files := range groupedFiles {
 		// Only sort files alphanum within a group
 		sort.Slice(files, func(i, j int) bool {
 			return files[i].RelativePath() < files[j].RelativePath()

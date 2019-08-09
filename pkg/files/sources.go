@@ -16,7 +16,8 @@ type Source interface {
 	Bytes() ([]byte, error)
 }
 
-var _ []Source = []Source{BytesSource{}, StdinSource{}, LocalSource{}, HTTPSource{}}
+var _ []Source = []Source{BytesSource{}, StdinSource{},
+	LocalSource{}, HTTPSource{}, &CachedSource{}}
 
 type BytesSource struct {
 	path string
@@ -105,4 +106,28 @@ func (s HTTPSource) Bytes() ([]byte, error) {
 	}
 
 	return result, nil
+}
+
+type CachedSource struct {
+	src Source
+
+	bytesFetched bool
+	bytes        []byte
+	bytesErr     error
+}
+
+func NewCachedSource(src Source) *CachedSource { return &CachedSource{src: src} }
+
+func (s *CachedSource) Description() string           { return s.src.Description() }
+func (s *CachedSource) RelativePath() (string, error) { return s.src.RelativePath() }
+
+func (s *CachedSource) Bytes() ([]byte, error) {
+	if s.bytesFetched {
+		return s.bytes, s.bytesErr
+	}
+
+	s.bytesFetched = true
+	s.bytes, s.bytesErr = s.src.Bytes()
+
+	return s.bytes, s.bytesErr
 }

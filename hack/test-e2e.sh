@@ -37,4 +37,10 @@ diff <(./ytt -f examples/k8s-relative-rolling-update) examples/k8s-relative-roll
 diff <(./ytt -f examples/k8s-config-map-files)        examples/k8s-config-map-files/expected.txt
 diff <(./ytt -f examples/concourse-overlay)           examples/concourse-overlay/expected.txt
 
+# test pipe stdin
+diff <(cat examples/k8s-relative-rolling-update/config.yml | ./ytt -f-) examples/k8s-relative-rolling-update/expected.txt
+
+# test pipe redirect
+diff <(./ytt -f pipe.yml=<(cat examples/k8s-relative-rolling-update/config.yml)) examples/k8s-relative-rolling-update/expected.txt
+
 echo E2E SUCCESS
