@@ -1,6 +1,6 @@
 ### For loop
 
-Iterating with values:
+- iterating with values
 
 ```yaml
 array:
@@ -10,7 +10,7 @@ array:
 #@ end
 ```
 
-Iterating with index:
+- iterating with index
 
 ```yaml
 array:
@@ -21,7 +21,7 @@ array:
 #@ end 
 ```
 
-Use of `continue/break`:
+- use of `continue/break`
 
 ```yaml
 array:

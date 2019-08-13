@@ -37,3 +37,17 @@ test2: 124
 test2: 125
 #@ end
 ```
+
+- single line if
+
+```yaml
+#@ passwd = "..."
+test1: #@ passwd if passwd else assert.fail("password must be set")
+```
+
+- implicit if
+
+```yaml
+#@ passwd = "..."
+test1: #@ passwd or assert.fail("password must be set")
+```

@@ -35,6 +35,7 @@ calc.add(3) # 126
 - `load("@ytt:assert", "assert")`
 ```python
 assert.fail("expected value foo, but was {}".format(value)) # stops execution
+x = data.values.env.mysql_password or assert.fail("missing env.mysql_password")
 ```
 
 - `load("@ytt:data", "data")` (see [ytt @data/values](ytt-data-values.md) for more details)
