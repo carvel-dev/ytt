@@ -547,7 +547,7 @@ str: `)
 	opts := cmdtpl.NewOptions()
 	opts.StrictYAML = true
 	opts.DataValuesFlags = cmdtpl.DataValuesFlags{
-		KVs: []string{"str=yes"},
+		KVsFromYAML: []string{"str=yes"},
 	}
 
 	out := opts.RunWithFiles(cmdtpl.TemplateInput{Files: filesToProcess}, ui)

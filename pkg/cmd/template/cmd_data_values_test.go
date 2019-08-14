@@ -94,7 +94,7 @@ another:
 
 	opts.DataValuesFlags = cmdtpl.DataValuesFlags{
 		// TODO env and files?
-		KVs: []string{"int=124", "boolean=true", "nested.value=\"str\"", "another.nested.map=567"},
+		KVsFromYAML: []string{"int=124", "boolean=true", "nested.value=\"str\"", "another.nested.map=567"},
 	}
 
 	out := opts.RunWithFiles(cmdtpl.TemplateInput{Files: filesToProcess}, ui)

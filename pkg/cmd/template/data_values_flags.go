@@ -11,11 +11,11 @@ import (
 )
 
 type DataValuesFlags struct {
-	Env          []string
-	EnvAsStrings []string
+	EnvFromStrings []string
+	EnvFromYAML    []string
 
-	KVs          []string
-	KVsAsStrings []string
+	KVsFromStrings []string
+	KVsFromYAML    []string
 
 	Files []string
 
@@ -23,11 +23,14 @@ type DataValuesFlags struct {
 }
 
 func (s *DataValuesFlags) Set(cmd *cobra.Command) {
-	cmd.Flags().StringArrayVar(&s.Env, "data-values-env", nil, "Extract _yaml_ data values from environment with given prefix (format: PREFIX for vars like PREFIX_all__key1=\"str\") (can be specified multiple times)")
-	cmd.Flags().StringArrayVar(&s.EnvAsStrings, "data-values-env-as-strings", nil, "Extract _string_ data values from environment with given prefix (format: PREFIX for vars like PREFIX_all__key1=\"str\") (can be specified multiple times)")
-	cmd.Flags().StringArrayVarP(&s.KVs, "data-value", "v", nil, "Set specific data value to given _yaml_ value (format: all.key1.subkey=123, all.key2=\"str\") (can be specified multiple times)")
-	cmd.Flags().StringArrayVar(&s.KVsAsStrings, "data-value-as-string", nil, "Set specific data value to given _string_ value (format: all.key1.subkey=123) (can be specified multiple times)")
+	cmd.Flags().StringArrayVar(&s.EnvFromStrings, "data-values-env", nil, "Extract _string_ data values from environment with given prefix (format: PREFIX for vars like PREFIX_all__key1=str) (can be specified multiple times)")
+	cmd.Flags().StringArrayVar(&s.EnvFromYAML, "data-values-env-from-yaml", nil, "Extract _yaml_ data values from environment with given prefix (format: PREFIX for vars like PREFIX_all__key1=123) (can be specified multiple times)")
+
+	cmd.Flags().StringArrayVarP(&s.KVsFromStrings, "data-value", "v", nil, "Set specific data value to given _string_ value (format: all.key1.subkey=123) (can be specified multiple times)")
+	cmd.Flags().StringArrayVar(&s.KVsFromYAML, "data-value-from-yaml", nil, "Set specific data value to given _yaml_ value (format: all.key1.subkey=123, all.key2=\"str\") (can be specified multiple times)")
+
 	cmd.Flags().StringArrayVar(&s.Files, "data-value-file", nil, "Set specific data value to given file contents as string (format: all.key1.subkey=/file/path) (can be specified multiple times)")
+
 	cmd.Flags().BoolVar(&s.Inspect, "data-values-inspect", false, "Inspect data values")
 }
 
@@ -49,7 +52,7 @@ func (s *DataValuesFlags) Values(strict bool) (map[interface{}]interface{}, erro
 
 	result := []map[string]interface{}{}
 
-	for _, src := range []dataValuesFlagsSource{{s.Env, yamlValFunc}, {s.EnvAsStrings, plainValFunc}} {
+	for _, src := range []dataValuesFlagsSource{{s.EnvFromStrings, plainValFunc}, {s.EnvFromYAML, yamlValFunc}} {
 		for _, envPrefix := range src.Values {
 			vals, err := s.env(envPrefix, src.TransformFunc)
 			if err != nil {
@@ -60,7 +63,7 @@ func (s *DataValuesFlags) Values(strict bool) (map[interface{}]interface{}, erro
 	}
 
 	// KVs and files take precedence over environment variables
-	for _, src := range []dataValuesFlagsSource{{s.KVs, yamlValFunc}, {s.KVsAsStrings, plainValFunc}} {
+	for _, src := range []dataValuesFlagsSource{{s.KVsFromStrings, plainValFunc}, {s.KVsFromYAML, yamlValFunc}} {
 		for _, kv := range src.Values {
 			vals, err := s.kv(kv, src.TransformFunc)
 			if err != nil {
