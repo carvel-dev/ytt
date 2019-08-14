@@ -23,11 +23,11 @@ type DataValuesFlags struct {
 }
 
 func (s *DataValuesFlags) Set(cmd *cobra.Command) {
-	cmd.Flags().StringArrayVar(&s.EnvFromStrings, "data-values-env", nil, "Extract _string_ data values from environment with given prefix (format: PREFIX for vars like PREFIX_all__key1=str) (can be specified multiple times)")
-	cmd.Flags().StringArrayVar(&s.EnvFromYAML, "data-values-env-from-yaml", nil, "Extract _yaml_ data values from environment with given prefix (format: PREFIX for vars like PREFIX_all__key1=123) (can be specified multiple times)")
+	cmd.Flags().StringArrayVar(&s.EnvFromStrings, "data-values-env", nil, "Extract data values (as strings) from prefixed env vars (format: PREFIX for PREFIX_all__key1=str) (can be specified multiple times)")
+	cmd.Flags().StringArrayVar(&s.EnvFromYAML, "data-values-env-yaml", nil, "Extract data values (parsed as YAML) from prefixed env vars (format: PREFIX for PREFIX_all__key1=true) (can be specified multiple times)")
 
-	cmd.Flags().StringArrayVarP(&s.KVsFromStrings, "data-value", "v", nil, "Set specific data value to given _string_ value (format: all.key1.subkey=123) (can be specified multiple times)")
-	cmd.Flags().StringArrayVar(&s.KVsFromYAML, "data-value-from-yaml", nil, "Set specific data value to given _yaml_ value (format: all.key1.subkey=123, all.key2=\"str\") (can be specified multiple times)")
+	cmd.Flags().StringArrayVarP(&s.KVsFromStrings, "data-value", "v", nil, "Set specific data value to given value, as string (format: all.key1.subkey=123) (can be specified multiple times)")
+	cmd.Flags().StringArrayVar(&s.KVsFromYAML, "data-value-yaml", nil, "Set specific data value to given value, parsed as YAML (format: all.key1.subkey=true) (can be specified multiple times)")
 
 	cmd.Flags().StringArrayVar(&s.Files, "data-value-file", nil, "Set specific data value to given file contents as string (format: all.key1.subkey=/file/path) (can be specified multiple times)")
 

@@ -12,11 +12,11 @@ set -e
 echo '***'
 
 ./ytt -f examples/data-values/config.yml -f examples/data-values/values.yml \
-  --data-value-from-yaml nothing=null \
-  --data-value-from-yaml string=str \
-  --data-value-from-yaml bool=true \
-  --data-value-from-yaml int=123 \
-  --data-value-from-yaml float=123.123
+  --data-value-yaml nothing=null \
+  --data-value-yaml string=str \
+  --data-value-yaml bool=true \
+  --data-value-yaml int=123 \
+  --data-value-yaml float=123.123
 
 echo '***'
 
@@ -28,4 +28,4 @@ export YAML_VAL_float=123.123
 
 ./ytt -f examples/data-values/config.yml -f examples/data-values/values.yml \
   --data-values-env STR_VAL \
-  --data-values-env-from-yaml YAML_VAL
+  --data-values-env-yaml YAML_VAL

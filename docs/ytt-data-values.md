@@ -84,22 +84,22 @@ See [Multiple data values example](https://get-ytt.io/#example:example-multiple-
 
 ### Specifying data values via command line flags
 
-(As of v0.17.0+ `--data-value` interprets values as strigns by default. Use `--data-value-from-yaml` to get previous behaviour.)
+(As of v0.17.0+ `--data-value` parses value as string by default. Use `--data-value-yaml` to get previous behaviour.)
 
 ytt CLI allows to override input data via several CLI flags:
 
-- `--data-value` (format: `key=val`) can be used to set a specific key to plain string value
+- `--data-value` (format: `key=val`) can be used to set a specific key to string value
   - dotted keys (e.g. `key2.nested=val`) are interpreted as nested maps
   - examples: `key=123`, `key=string`, `key=true`, all set to strings
-- `--data-value-from-yaml` (format: `key=yaml-encoded-value`) same as `--data-value` but interprets value as YAML
+- `--data-value-yaml` (format: `key=yaml-encoded-value`) same as `--data-value` but parses value as YAML
   - examples: `key=123` sets as integer, `key=string` as string, `key=true` as bool
 - `--data-value-file` (format: `key=/file-path`) can be used to set a specific key to a string value of given file contents
   - dotted keys (e.g. `key2.nested=val`) are interpreted as nested maps
-  - this flag can be very useful when loading values from secret files such as private and public key files, certificates
+  - this flag can be very useful when loading multine line string values from files such as private and public key files, certificates
 - `--data-values-env` (format: `DVAL`) can be used to pull out multiple keys from environment variables based on a prefix
   - given two environment variables `DVAL_key1=val1-env` and `DVAL_key2__nested=val2-env`, ytt will pull out `key1=val1-env` and `key2.nested=val2-env` variables
-  - interprets values as plain strings
-- `--data-values-env-from-yaml` (format: `DVAL`) same as `--data-values-env` but interprets values as YAML
+  - interprets values as strings
+- `--data-values-env-yaml` (format: `DVAL`) same as `--data-values-env` but parses values as YAML
 
 These flags can be repeated multiple times and used together. Flag values are merged into data values last.
 
@@ -109,9 +109,9 @@ export YAML_VALS_key6=true # will be boolean true
 
 ytt -f . \
   --data-value key1=val1-arg \
-  --data-value-from-yaml key2.nested=123 \ # will be int 123
-  --data-value-from-yaml 'key3.other={"nested": true}' \
+  --data-value-yaml key2.nested=123 \ # will be int 123
+  --data-value-yaml 'key3.other={"nested": true}' \
   --data-value-file key4=/path \
   --data-values-env STR_VALS \
-  --data-values-env-from-yaml YAML_VALS
+  --data-values-env-yaml YAML_VALS
 ```
