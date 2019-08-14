@@ -11,37 +11,63 @@ import (
 )
 
 type DataValuesFlags struct {
-	Env     []string
-	KVs     []string
-	Files   []string
+	Env          []string
+	EnvAsStrings []string
+
+	KVs          []string
+	KVsAsStrings []string
+
+	Files []string
+
 	Inspect bool
 }
 
 func (s *DataValuesFlags) Set(cmd *cobra.Command) {
-	cmd.Flags().StringArrayVar(&s.Env, "data-values-env", nil, "Extract data values from environment with given prefix (format: PREFIX for vars like PREFIX_all__key1=\"str\") (can be specified multiple times)")
-	cmd.Flags().StringArrayVarP(&s.KVs, "data-value", "v", nil, "Set specific data value to given value (format: all.key1.subkey=123, all.key2=\"str\") (can be specified multiple times)")
+	cmd.Flags().StringArrayVar(&s.Env, "data-values-env", nil, "Extract _yaml_ data values from environment with given prefix (format: PREFIX for vars like PREFIX_all__key1=\"str\") (can be specified multiple times)")
+	cmd.Flags().StringArrayVar(&s.EnvAsStrings, "data-values-env-as-strings", nil, "Extract _string_ data values from environment with given prefix (format: PREFIX for vars like PREFIX_all__key1=\"str\") (can be specified multiple times)")
+	cmd.Flags().StringArrayVarP(&s.KVs, "data-value", "v", nil, "Set specific data value to given _yaml_ value (format: all.key1.subkey=123, all.key2=\"str\") (can be specified multiple times)")
+	cmd.Flags().StringArrayVar(&s.KVsAsStrings, "data-value-as-string", nil, "Set specific data value to given _string_ value (format: all.key1.subkey=123) (can be specified multiple times)")
 	cmd.Flags().StringArrayVar(&s.Files, "data-value-file", nil, "Set specific data value to given file contents as string (format: all.key1.subkey=/file/path) (can be specified multiple times)")
 	cmd.Flags().BoolVar(&s.Inspect, "data-values-inspect", false, "Inspect data values")
 }
 
+type dataValuesFlagsSource struct {
+	Values        []string
+	TransformFunc func(string) (interface{}, error)
+}
+
 func (s *DataValuesFlags) Values(strict bool) (map[interface{}]interface{}, error) {
+	plainValFunc := func(rawVal string) (interface{}, error) { return rawVal, nil }
+
+	yamlValFunc := func(rawVal string) (interface{}, error) {
+		val, err := s.parseYAML(rawVal, strict)
+		if err != nil {
+			return nil, fmt.Errorf("Deserializing YAML value: %s", err)
+		}
+		return val, nil
+	}
+
 	result := []map[string]interface{}{}
 
-	for _, envPrefix := range s.Env {
-		vals, err := s.env(envPrefix, strict)
-		if err != nil {
-			return nil, fmt.Errorf("Extracting data values from env under prefix '%s': %s", envPrefix, err)
+	for _, src := range []dataValuesFlagsSource{{s.Env, yamlValFunc}, {s.EnvAsStrings, plainValFunc}} {
+		for _, envPrefix := range src.Values {
+			vals, err := s.env(envPrefix, src.TransformFunc)
+			if err != nil {
+				return nil, fmt.Errorf("Extracting data values from env under prefix '%s': %s", envPrefix, err)
+			}
+			result = append(result, vals)
 		}
-		result = append(result, vals)
 	}
 
 	// KVs and files take precedence over environment variables
-	for _, kv := range s.KVs {
-		vals, err := s.kv(kv, strict)
-		if err != nil {
-			return nil, fmt.Errorf("Extracting data value from KV: %s", err)
+	for _, src := range []dataValuesFlagsSource{{s.KVs, yamlValFunc}, {s.KVsAsStrings, plainValFunc}} {
+		for _, kv := range src.Values {
+			vals, err := s.kv(kv, src.TransformFunc)
+			if err != nil {
+				return nil, fmt.Errorf("Extracting data value from KV: %s", err)
+			}
+			result = append(result, vals)
 		}
-		result = append(result, vals)
 	}
 
 	for _, file := range s.Files {
@@ -55,7 +81,7 @@ func (s *DataValuesFlags) Values(strict bool) (map[interface{}]interface{}, erro
 	return s.convertIntoNestedMap(result)
 }
 
-func (s *DataValuesFlags) env(prefix string, strict bool) (map[string]interface{}, error) {
+func (s *DataValuesFlags) env(prefix string, valueFunc func(string) (interface{}, error)) (map[string]interface{}, error) {
 	result := map[string]interface{}{}
 	envVars := os.Environ()
 
@@ -69,9 +95,9 @@ func (s *DataValuesFlags) env(prefix string, strict bool) (map[string]interface{
 			continue
 		}
 
-		val, err := s.parseYAML(pieces[1], strict)
+		val, err := valueFunc(pieces[1])
 		if err != nil {
-			return nil, fmt.Errorf("Deserializing env variable '%s' as YAML value: %s", pieces[0], err)
+			return nil, fmt.Errorf("Extracting data value from env variable '%s': %s", pieces[0], err)
 		}
 
 		// '__' gets translated into a '.' since periods may not be liked by shells
@@ -81,7 +107,7 @@ func (s *DataValuesFlags) env(prefix string, strict bool) (map[string]interface{
 	return result, nil
 }
 
-func (s *DataValuesFlags) kv(kv string, strict bool) (map[string]interface{}, error) {
+func (s *DataValuesFlags) kv(kv string, valueFunc func(string) (interface{}, error)) (map[string]interface{}, error) {
 	result := map[string]interface{}{}
 
 	pieces := strings.SplitN(kv, "=", 2)
@@ -89,9 +115,9 @@ func (s *DataValuesFlags) kv(kv string, strict bool) (map[string]interface{}, er
 		return nil, fmt.Errorf("Expected format key=value")
 	}
 
-	val, err := s.parseYAML(pieces[1], strict)
+	val, err := valueFunc(pieces[1])
 	if err != nil {
-		return nil, fmt.Errorf("Deserializing value for key '%s' as YAML value: %s", pieces[0], err)
+		return nil, fmt.Errorf("Deserializing value for key '%s': %s", pieces[0], err)
 	}
 
 	result[pieces[0]] = val

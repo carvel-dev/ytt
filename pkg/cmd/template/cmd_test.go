@@ -555,8 +555,8 @@ str: `)
 		t.Fatalf("Expected RunWithFiles to fail")
 	}
 
-	expectedErr := "Extracting data value from KV: Deserializing value for key 'str' as YAML value: " +
-		"yaml: Strict parsing: Found 'yes' ambigious (could be !!str or !!bool)"
+	expectedErr := "Extracting data value from KV: Deserializing value for key 'str': " +
+		"Deserializing YAML value: yaml: Strict parsing: Found 'yes' ambigious (could be !!str or !!bool)"
 
 	if out.Err.Error() != expectedErr {
 		t.Fatalf("Expected RunWithFiles to fail with err: %s", out.Err)
