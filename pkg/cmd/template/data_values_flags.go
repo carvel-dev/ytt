@@ -16,8 +16,7 @@ type DataValuesFlags struct {
 
 	KVsFromStrings []string
 	KVsFromYAML    []string
-
-	Files []string
+	KVsFromFiles   []string
 
 	Inspect bool
 }
@@ -28,8 +27,7 @@ func (s *DataValuesFlags) Set(cmd *cobra.Command) {
 
 	cmd.Flags().StringArrayVarP(&s.KVsFromStrings, "data-value", "v", nil, "Set specific data value to given value, as string (format: all.key1.subkey=123) (can be specified multiple times)")
 	cmd.Flags().StringArrayVar(&s.KVsFromYAML, "data-value-yaml", nil, "Set specific data value to given value, parsed as YAML (format: all.key1.subkey=true) (can be specified multiple times)")
-
-	cmd.Flags().StringArrayVar(&s.Files, "data-value-file", nil, "Set specific data value to given file contents as string (format: all.key1.subkey=/file/path) (can be specified multiple times)")
+	cmd.Flags().StringArrayVar(&s.KVsFromFiles, "data-value-file", nil, "Set specific data value to given file contents, as string (format: all.key1.subkey=/file/path) (can be specified multiple times)")
 
 	cmd.Flags().BoolVar(&s.Inspect, "data-values-inspect", false, "Inspect data values")
 }
@@ -73,7 +71,7 @@ func (s *DataValuesFlags) Values(strict bool) (map[interface{}]interface{}, erro
 		}
 	}
 
-	for _, file := range s.Files {
+	for _, file := range s.KVsFromFiles {
 		vals, err := s.file(file)
 		if err != nil {
 			return nil, fmt.Errorf("Extracting data value from file: %s", err)
