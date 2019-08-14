@@ -27,7 +27,7 @@ func NewYttCmd(o *YttOptions) *cobra.Command {
 	cmd.Short = "ytt performs YAML templating"
 	cmd.Long = `ytt performs YAML templating.
 
-Docs: https://github.com/k14s/ytt/docs`
+Docs: https://github.com/k14s/ytt/tree/master/docs`
 
 	// Affects children as well
 	cmd.SilenceErrors = true
