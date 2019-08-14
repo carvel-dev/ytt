@@ -1,0 +1,7 @@
+#@data/values
+---
+nothing: "something"
+string: ""
+bool: false
+int: 0
+float: 0.0

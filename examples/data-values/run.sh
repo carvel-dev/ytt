@@ -1,0 +1,31 @@
+#!/bin/bash
+
+set -e
+
+./ytt -f examples/data-values/config.yml -f examples/data-values/values.yml \
+  --data-value nothing=null \
+  --data-value string=str \
+  --data-value bool=true \
+  --data-value int=123 \
+  --data-value float=123.123
+
+echo '***'
+
+./ytt -f examples/data-values/config.yml -f examples/data-values/values.yml \
+  --data-value-from-yaml nothing=null \
+  --data-value-from-yaml string=str \
+  --data-value-from-yaml bool=true \
+  --data-value-from-yaml int=123 \
+  --data-value-from-yaml float=123.123
+
+echo '***'
+
+export STR_VAL_nothing=null
+export YAML_VAL_string=str
+export YAML_VAL_bool=true
+export YAML_VAL_int=123
+export YAML_VAL_float=123.123
+
+./ytt -f examples/data-values/config.yml -f examples/data-values/values.yml \
+  --data-values-env STR_VAL \
+  --data-values-env-from-yaml YAML_VAL

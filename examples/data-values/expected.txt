@@ -1,0 +1,17 @@
+nothing: "null"
+string: str
+bool: "true"
+int: "123"
+float: "123.123"
+***
+nothing: null
+string: str
+bool: true
+int: 123
+float: 123.123
+***
+nothing: "null"
+string: str
+bool: true
+int: 123
+float: 123.123
