@@ -15,7 +15,6 @@ import (
 type RegularFilesSourceOpts struct {
 	files     []string
 	fileMarks []string
-	recursive bool
 
 	outputDir  string
 	outputType string
@@ -26,7 +25,6 @@ type RegularFilesSourceOpts struct {
 func (s *RegularFilesSourceOpts) Set(cmd *cobra.Command) {
 	cmd.Flags().StringArrayVarP(&s.files, "file", "f", nil, "File (ie local path, HTTP URL, -) (can be specified multiple times)")
 	cmd.Flags().StringArrayVar(&s.fileMarks, "file-mark", nil, "File mark (ie change file path, mark as non-template) (format: file:key=value) (can be specified multiple times)")
-	cmd.Flags().BoolVarP(&s.recursive, "recursive", "R", true, "Interpret file as directory (deprecated; set to true by default)")
 
 	cmd.Flags().StringVar(&s.outputDir, "output-directory", "", "Output destination directory")
 	cmd.Flags().StringVarP(&s.outputType, "output", "o", "yaml", "Output type (yaml, json, pos)")
