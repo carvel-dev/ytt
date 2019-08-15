@@ -36,7 +36,7 @@ type File struct {
 	order int // lowest comes first; 0 is used to indicate unsorted
 }
 
-func NewSortedFilesFromPaths(paths []string) ([]*File, error) {
+func NewSortedFilesFromPaths(paths []string, opts SymlinkAllowOpts) ([]*File, error) {
 	var groupedFiles [][]*File
 
 	for _, path := range paths {
@@ -87,7 +87,7 @@ func NewSortedFilesFromPaths(paths []string) ([]*File, error) {
 					if err != nil || fi.IsDir() {
 						return err
 					}
-					regLocalSource, err := NewRegularFileLocalSource(walkedPath, path, fi)
+					regLocalSource, err := NewRegularFileLocalSource(walkedPath, path, fi, opts)
 					if err != nil {
 						return err
 					}
@@ -103,7 +103,7 @@ func NewSortedFilesFromPaths(paths []string) ([]*File, error) {
 					return nil, fmt.Errorf("Listing files '%s': %s", path, err)
 				}
 			} else {
-				regLocalSource, err := NewRegularFileLocalSource(path, "", fileInfo)
+				regLocalSource, err := NewRegularFileLocalSource(path, "", fileInfo, opts)
 				if err != nil {
 					return nil, err
 				}
@@ -258,13 +258,25 @@ func (r *File) OrderLess(otherFile *File) bool {
 	return r.order < otherFile.order
 }
 
-func NewRegularFileLocalSource(path, dir string, fi os.FileInfo) (LocalSource, error) {
-	// support pipes (`ytt -f <(echo "---")`)
-	namedPipe := (fi.Mode() & os.ModeNamedPipe) != 0
+func NewRegularFileLocalSource(path, dir string, fi os.FileInfo, opts SymlinkAllowOpts) (LocalSource, error) {
+	isRegFile := (fi.Mode() & os.ModeType) == 0
+	isSymlink := (fi.Mode() & os.ModeSymlink) != 0
+	isNamedPipe := (fi.Mode() & os.ModeNamedPipe) != 0 // allow pipes (`ytt -f <(echo "---")`)
 
-	if !namedPipe && (fi.Mode()&os.ModeType) != 0 {
+	switch {
+	case isRegFile || isSymlink || isNamedPipe:
+		// do nothing
+	default:
 		return LocalSource{}, fmt.Errorf("Expected file '%s' to be a regular file, but was not", path)
 	}
+
+	if isSymlink {
+		err := Symlink{path}.IsAllowed(opts)
+		if err != nil {
+			return LocalSource{}, fmt.Errorf("Checking symlink file '%s': %s", path, err)
+		}
+	}
+
 	return NewLocalSource(path, dir), nil
 }
 

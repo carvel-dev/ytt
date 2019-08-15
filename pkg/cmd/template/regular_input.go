@@ -13,19 +13,28 @@ import (
 )
 
 type RegularFilesSourceOpts struct {
-	files      []string
-	fileMarks  []string
-	recursive  bool
+	files     []string
+	fileMarks []string
+	recursive bool
+
 	outputDir  string
 	outputType string
+
+	files.SymlinkAllowOpts
 }
 
 func (s *RegularFilesSourceOpts) Set(cmd *cobra.Command) {
 	cmd.Flags().StringArrayVarP(&s.files, "file", "f", nil, "File (ie local path, HTTP URL, -) (can be specified multiple times)")
 	cmd.Flags().StringArrayVar(&s.fileMarks, "file-mark", nil, "File mark (ie change file path, mark as non-template) (format: file:key=value) (can be specified multiple times)")
 	cmd.Flags().BoolVarP(&s.recursive, "recursive", "R", true, "Interpret file as directory (deprecated; set to true by default)")
+
 	cmd.Flags().StringVar(&s.outputDir, "output-directory", "", "Output destination directory")
 	cmd.Flags().StringVarP(&s.outputType, "output", "o", "yaml", "Output type (yaml, json, pos)")
+
+	cmd.Flags().BoolVar(&s.SymlinkAllowOpts.AllowAll, "dangerous-allow-all-symlink-destinations", false,
+		"Symlinks to all destinations are allowed")
+	cmd.Flags().StringSliceVar(&s.SymlinkAllowOpts.AllowedDstPaths, "allow-symlink-destination", nil,
+		"File paths to which symlinks are allowed (can be specified multiple times)")
 }
 
 type RegularFilesSource struct {
@@ -41,7 +50,7 @@ func (s *RegularFilesSource) HasInput() bool  { return len(s.opts.files) > 0 }
 func (s *RegularFilesSource) HasOutput() bool { return true }
 
 func (s *RegularFilesSource) Input() (TemplateInput, error) {
-	filesToProcess, err := files.NewSortedFilesFromPaths(s.opts.files)
+	filesToProcess, err := files.NewSortedFilesFromPaths(s.opts.files, s.opts.SymlinkAllowOpts)
 	if err != nil {
 		return TemplateInput{}, err
 	}
