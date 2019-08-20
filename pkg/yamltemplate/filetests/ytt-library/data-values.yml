@@ -14,6 +14,11 @@ metadata:
     map: #@ data.values.map
     list: #@ data.values.list
 
+    list_for:
+    #! can loop over a list
+    #@ for/end i in data.values.list:
+    - #@ i
+
 +++
 
 apiVersion: apps/v1beta1
@@ -30,6 +35,10 @@ metadata:
     map:
       a: 123
     list:
+    - a
+    - 123
+    - a: 123
+    list_for:
     - a
     - 123
     - a: 123
