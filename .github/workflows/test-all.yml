@@ -11,5 +11,11 @@ jobs:
         go-version: 1.12
     - name: Check out code into the Go module directory
       uses: actions/checkout@v1
-    - name: Build
-      run: ./hack/test-all.sh
+      with:
+        path: src/github.com/k14s/ytt
+    - name: Run Tests
+      run: |
+        set -e -x
+        pwd
+        export GOPATH=$(echo `pwd`/../../../../)
+        ./hack/test-all.sh

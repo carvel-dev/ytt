@@ -4,7 +4,9 @@ set -e -x
 
 go fmt github.com/k14s/ytt/...
 
-go clean -testcache
+if [ -z "$GITHUB_ACTION" ]; then
+  go clean -testcache
+fi
 
 go test -v `go list ./...|grep -v yaml.v2` "$@"
 
