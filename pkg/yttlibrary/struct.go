@@ -16,6 +16,9 @@ var (
 				"make":          starlark.NewBuiltin("struct.make", core.ErrWrapper(starlarkstruct.Make)),
 				"make_and_bind": starlark.NewBuiltin("struct.make_and_bind", core.ErrWrapper(structModule{}.MakeAndBind)),
 				"bind":          starlark.NewBuiltin("struct.bind", core.ErrWrapper(structModule{}.Bind)),
+
+				"encode": starlark.NewBuiltin("struct.encode", core.ErrWrapper(structModule{}.Encode)),
+				"decode": starlark.NewBuiltin("struct.decode", core.ErrWrapper(structModule{}.Decode)),
 			},
 		},
 	}
@@ -61,4 +64,24 @@ func (b structModule) Bind(thread *starlark.Thread, f *starlark.Builtin,
 	}
 
 	return starlark.NewBuiltin("struct.bind_result", core.ErrWrapper(resultFunc)), nil
+}
+
+func (b structModule) Encode(thread *starlark.Thread, f *starlark.Builtin,
+	args starlark.Tuple, _ []starlark.Tuple) (starlark.Value, error) {
+
+	if args.Len() != 1 {
+		return starlark.None, fmt.Errorf("expected exactly one argument")
+	}
+
+	return core.NewGoValue(core.NewStarlarkValue(args.Index(0)).AsInterface(), true).AsStarlarkValue(), nil
+}
+
+func (b structModule) Decode(thread *starlark.Thread, f *starlark.Builtin,
+	args starlark.Tuple, _ []starlark.Tuple) (starlark.Value, error) {
+
+	if args.Len() != 1 {
+		return starlark.None, fmt.Errorf("expected exactly one argument")
+	}
+
+	return core.NewGoValue(core.NewStarlarkValue(args.Index(0)).AsInterface(), false).AsStarlarkValue(), nil
 }

@@ -1,0 +1,29 @@
+#@ load("@ytt:data", "data")
+#@ load("@ytt:struct", "struct")
+
+test1: #@ struct.decode(data.values)
+test2: #@ struct.decode(data.values.map)
+test3: #@ struct.decode(data.values.list)
+
++++
+
+test1:
+  f: false
+  float: 123.123
+  int: 123
+  intNeg: -49
+  list:
+  - a
+  - 123
+  - a: 123
+  map:
+    a: 123
+  nullz: null
+  string: string
+  t: true
+test2:
+  a: 123
+test3:
+- a
+- 123
+- a: 123

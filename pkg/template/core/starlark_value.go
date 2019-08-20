@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"go.starlark.net/starlark"
+	"go.starlark.net/starlarkstruct"
 )
 
 type StarlarkValueToGoValueConversion interface {
@@ -92,6 +93,9 @@ func (e StarlarkValue) asInterface(val starlark.Value) interface{} {
 	case *starlark.Set:
 		return e.itearableAsInterface(typedVal)
 
+	case *starlarkstruct.Struct:
+		return e.nativeStructAsInterface(typedVal)
+
 	default:
 		panic(fmt.Sprintf("unknown type %T for conversion to go value", val))
 	}
@@ -104,6 +108,17 @@ func (e StarlarkValue) dictAsInterface(val *starlark.Dict) interface{} {
 			panic("dict item is not KV")
 		}
 		result[e.asInterface(item.Index(0))] = e.asInterface(item.Index(1))
+	}
+	return result
+}
+
+func (e StarlarkValue) nativeStructAsInterface(val *starlarkstruct.Struct) interface{} {
+	equivDict := starlark.StringDict{}
+	val.ToStringDict(equivDict)
+
+	result := map[interface{}]interface{}{}
+	for k, v := range equivDict {
+		result[k] = e.asInterface(v)
 	}
 	return result
 }

@@ -48,6 +48,15 @@ object:
   test5: #@ obj.test5()
   test6: #@ obj.test6("other")
 
+---
+#@ val = struct.encode({"a": [1,2,3,{"c":456}], "b": "str", "c": {"d": 123}})
+test1: #@ val.a
+test2: #@ val.b
+test3: #@ val.c.d
+---
+test1: #@ struct.decode(struct.make(a=[1,2,3], b="str", c={"d": 123}))
+test2: #@ struct.decode(struct.make(a=[1,2,3], b="str", c=struct.make(d=123)))
+
 +++
 
 struct:
@@ -64,3 +73,28 @@ object:
   test3: bound-obj
   test5: bound-obj
   test6: bound-obj-other
+---
+test1:
+- 1
+- 2
+- 3
+- c: 456
+test2: str
+test3: 123
+---
+test1:
+  a:
+  - 1
+  - 2
+  - 3
+  b: str
+  c:
+    d: 123
+test2:
+  a:
+  - 1
+  - 2
+  - 3
+  b: str
+  c:
+    d: 123
