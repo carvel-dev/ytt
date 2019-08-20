@@ -56,13 +56,24 @@ func (o OverlayOp) replaceMapItem(leftMap *yamlmeta.Map, newItem *yamlmeta.MapIt
 		return err
 	}
 
+	replaceAnn, err := NewReplaceAnnotation(newItem, o.Thread)
+	if err != nil {
+		return err
+	}
+
 	leftIdx, found, err := ann.Index(leftMap)
 	if err != nil {
 		return err
 	}
 
 	if found {
-		leftMap.Items[leftIdx] = newItem
+		newVal, err := replaceAnn.Value(leftMap.Items[leftIdx])
+		if err != nil {
+			return err
+		}
+
+		leftMap.Items[leftIdx] = newItem.DeepCopy()
+		leftMap.Items[leftIdx].SetValue(newVal)
 	}
 
 	return nil

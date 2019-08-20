@@ -73,13 +73,24 @@ func (o OverlayOp) replaceArrayItem(
 		return err
 	}
 
+	replaceAnn, err := NewReplaceAnnotation(newItem, o.Thread)
+	if err != nil {
+		return err
+	}
+
 	leftIdxs, err := ann.Indexes(leftArray)
 	if err != nil {
 		return err
 	}
 
 	for _, leftIdx := range leftIdxs {
+		newVal, err := replaceAnn.Value(leftArray.Items[leftIdx])
+		if err != nil {
+			return err
+		}
+
 		leftArray.Items[leftIdx] = newItem.DeepCopy()
+		leftArray.Items[leftIdx].SetValue(newVal)
 	}
 
 	return nil

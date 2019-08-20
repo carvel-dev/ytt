@@ -71,13 +71,24 @@ func (o OverlayOp) replaceDocument(
 		return err
 	}
 
+	replaceAnn, err := NewReplaceAnnotation(newDoc, o.Thread)
+	if err != nil {
+		return err
+	}
+
 	leftIdxs, err := ann.IndexTuples(leftDocSets)
 	if err != nil {
 		return err
 	}
 
 	for _, leftIdx := range leftIdxs {
+		newVal, err := replaceAnn.Value(leftDocSets[leftIdx[0]].Items[leftIdx[1]])
+		if err != nil {
+			return err
+		}
+
 		leftDocSets[leftIdx[0]].Items[leftIdx[1]] = newDoc.DeepCopy()
+		leftDocSets[leftIdx[0]].Items[leftIdx[1]].SetValue(newVal)
 	}
 
 	return nil

@@ -1,0 +1,76 @@
+#@ load("@ytt:overlay", "overlay")
+#@ load("@ytt:template", "template")
+
+#@ def prefixed_combined(prefix):
+#@   def prefixed_inner(left, right): return prefix+"-"+left+"-"+right
+#@   return prefixed_inner
+#@ end
+
+#@ def test1_left():
+key1: val1
+#@ end
+
+#@ def test1_right():
+#@overlay/replace via=prefixed_combined("prefix")
+key1: val2
+#@ end
+
+test1: #@ overlay.apply(test1_left(), test1_right())
+
+#@ def test1a_left():
+key1: val1
+#@ end
+
+#@ def test1a_right():
+#@overlay/replace via=lambda a,b: "prefix-"+a+"-"+b
+key1: val2
+#@ end
+
+test1a: #@ overlay.apply(test1a_left(), test1a_right())
+
+---
+#@ def test2_left():
+- val1
+- val11
+#@ end
+
+#@ def test2_right():
+#@overlay/match by=overlay.all,expects=2
+#@overlay/replace via=prefixed_combined("prefix")
+- val2
+#@ end
+
+---
+test2: #@ overlay.apply(test2_left(), test2_right())
+
+---
+#@ def test3_left():
+---
+val1
+---
+val11
+#@ end
+
+#@ def test3_right():
+#@overlay/match by=overlay.all,expects=2
+#@overlay/replace via=prefixed_combined("test3-prefix")
+---
+val2
+#@ end
+
+--- #@ template.replace(overlay.apply(test3_left(), test3_right()))
+
++++
+
+test1:
+  key1: prefix-val1-val2
+test1a:
+  key1: prefix-val1-val2
+---
+test2:
+- prefix-val1-val2
+- prefix-val11-val2
+---
+test3-prefix-val1-val2
+---
+test3-prefix-val11-val2
