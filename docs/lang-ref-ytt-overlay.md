@@ -106,9 +106,13 @@ Annotations on the "right-side" nodes:
 - `@overlay/remove`
   - valid for both map and array items
   - removes "left-side" node ("right-side" node value is ignored)
-- `@overlay/replace`
+- `@overlay/replace` [via=Function]
   - valid for both map and array items
   - replaces "left-side" node value with "right-side" node value
+  - `via` (optional) keyword argument takes a function which will receive two arguments (left and right value) and expects to return single value
+  - Examples:
+    - `#@overlay/replace`: (default)
+    - `#@overlay/replace via=lambda a,b: "prefix-"+a`: prefix value with `prefix-` string
 - `@overlay/insert [before=Bool,after=Bool]`
 	- valid only for array items
   - inserts array item at the matched index, before matched index, or after
