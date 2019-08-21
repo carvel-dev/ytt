@@ -5,6 +5,16 @@ test1: #@ struct.decode(data.values)
 test2: #@ struct.decode(data.values.map)
 test3: #@ struct.decode(data.values.list)
 
+test4:
+#@ for/end v in struct.decode(data.values.list):
+- value: #@ v
+
+test5:
+#@ kvs = struct.decode(data.values.map)
+#@ for/end k in kvs:
+- key: #@ k
+  value: #@ kvs[k]
+
 +++
 
 test1:
@@ -27,3 +37,11 @@ test3:
 - a
 - 123
 - a: 123
+test4:
+- value: a
+- value: 123
+- value:
+    a: 123
+test5:
+- key: a
+  value: 123
