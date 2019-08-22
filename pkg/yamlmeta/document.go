@@ -1,5 +1,9 @@
 package yamlmeta
 
+import (
+	"github.com/k14s/ytt/pkg/yamlmeta/internal/yaml.v2"
+)
+
 func (d *Document) IsEmpty() bool {
 	if d.Value == nil {
 		return true
@@ -14,10 +18,10 @@ func (d *Document) IsEmpty() bool {
 	return false
 }
 
-func (d *Document) AsInterface(opts InterfaceConvertOpts) interface{} {
-	result := convertToLowYAML(d.Value, opts)
-	if opts.Plain {
-		result = convertToLowGo(result)
-	}
-	return result
+func (d *Document) AsYAMLBytes() ([]byte, error) {
+	return yaml.Marshal(convertToLowYAML(convertToGo(d.Value)))
+}
+
+func (d *Document) AsInterface() interface{} {
+	return convertToGo(d.Value)
 }

@@ -18,19 +18,19 @@ test5:
 +++
 
 test1:
-  f: false
-  float: 123.123
   int: 123
   intNeg: -49
+  float: 123.123
+  t: true
+  f: false
+  nullz: null
+  string: string
+  map:
+    a: 123
   list:
   - a
   - 123
   - a: 123
-  map:
-    a: 123
-  nullz: null
-  string: string
-  t: true
 test2:
   a: 123
 test3:

@@ -38,12 +38,12 @@ test1a: |
   - piece1
   - piece2: true
 test1b: |
-  inside_array:
-  - fragment:
-    - piece1
-    - piece2: true
   inside_map:
     fragment:
+    - piece1
+    - piece2: true
+  inside_array:
+  - fragment:
     - piece1
     - piece2: true
 test1c: |

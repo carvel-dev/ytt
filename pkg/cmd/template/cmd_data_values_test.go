@@ -62,14 +62,14 @@ values: #@ data.values`)
 	expectedYAMLTplData := `data_int: 124
 data_str: str
 values:
+  int: 124
+  str: str
+  boolean: true
+  nested:
+    value: str
   another:
     nested:
       map: 567
-  boolean: true
-  int: 124
-  nested:
-    value: str
-  str: str
 `
 
 	yamlData := []byte(`
@@ -113,7 +113,7 @@ another:
 	}
 
 	if string(file.Bytes()) != expectedYAMLTplData {
-		t.Fatalf("Expected output file to have specific data, but was: >>>%s<<<", file.Bytes())
+		t.Fatalf("Expected output file to have specific data, but was: >>>%s<<< vs >>>%s<<<", file.Bytes(), expectedYAMLTplData)
 	}
 }
 

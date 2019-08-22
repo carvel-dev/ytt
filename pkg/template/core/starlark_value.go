@@ -3,6 +3,7 @@ package core
 import (
 	"fmt"
 
+	"github.com/k14s/ytt/pkg/orderedmap"
 	"go.starlark.net/starlark"
 	"go.starlark.net/starlarkstruct"
 )
@@ -102,33 +103,35 @@ func (e StarlarkValue) asInterface(val starlark.Value) interface{} {
 }
 
 func (e StarlarkValue) dictAsInterface(val *starlark.Dict) interface{} {
-	result := map[interface{}]interface{}{}
+	result := orderedmap.NewMap()
 	for _, item := range val.Items() {
 		if item.Len() != 2 {
 			panic("dict item is not KV")
 		}
-		result[e.asInterface(item.Index(0))] = e.asInterface(item.Index(1))
+		result.Set(e.asInterface(item.Index(0)), e.asInterface(item.Index(1)))
 	}
 	return result
 }
 
 func (e StarlarkValue) nativeStructAsInterface(val *starlarkstruct.Struct) interface{} {
-	equivDict := starlark.StringDict{}
-	val.ToStringDict(equivDict)
-
-	result := map[interface{}]interface{}{}
-	for k, v := range equivDict {
-		result[k] = e.asInterface(v)
+	// struct's ToStringDict uses map, hence ordering is not deterministic
+	result := orderedmap.NewMap()
+	for _, key := range val.AttrNames() {
+		v, err := val.Attr(key)
+		if err != nil {
+			panic("expected Attr() to succeed for *starlarkstruct.Struct")
+		}
+		result.Set(key, e.asInterface(v))
 	}
 	return result
 }
 
 func (e StarlarkValue) structAsInterface(val *StarlarkStruct) interface{} {
 	// TODO accessing privates
-	result := map[interface{}]interface{}{}
-	for k, v := range val.data {
-		result[k] = e.asInterface(v)
-	}
+	result := orderedmap.NewMap()
+	val.data.Iterate(func(k, v interface{}) {
+		result.Set(k, e.asInterface(v.(starlark.Value)))
+	})
 	return result
 }
 

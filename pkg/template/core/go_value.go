@@ -3,6 +3,7 @@ package core
 import (
 	"fmt"
 
+	"github.com/k14s/ytt/pkg/orderedmap"
 	"go.starlark.net/starlark"
 )
 
@@ -57,7 +58,13 @@ func (e GoValue) asStarlarkValue(val interface{}) starlark.Value {
 	case float64:
 		return starlark.Float(typedVal)
 
+	case map[string]interface{}:
+		panic("Expected *orderedmap.Map instead of map[string]interface{} for conversion to starlark value")
+
 	case map[interface{}]interface{}:
+		panic("Expected *orderedmap.Map instead of map[interface{}]interface{} for conversion to starlark value")
+
+	case *orderedmap.Map:
 		return e.dictAsStarlarkValue(typedVal)
 
 	case []interface{}:
@@ -68,23 +75,23 @@ func (e GoValue) asStarlarkValue(val interface{}) starlark.Value {
 	}
 }
 
-func (e GoValue) dictAsStarlarkValue(val map[interface{}]interface{}) starlark.Value {
+func (e GoValue) dictAsStarlarkValue(val *orderedmap.Map) starlark.Value {
 	if e.mapIsStruct {
-		data := map[string]starlark.Value{}
-		for k, v := range val {
+		data := orderedmap.NewMap()
+		val.Iterate(func(k, v interface{}) {
 			if keyStr, ok := k.(string); ok {
-				data[keyStr] = e.asStarlarkValue(v)
+				data.Set(keyStr, e.asStarlarkValue(v))
 			} else {
 				panic(fmt.Sprintf("expected struct key %s to be string", k)) // TODO
 			}
-		}
+		})
 		return &StarlarkStruct{data}
 	}
 
 	result := &starlark.Dict{}
-	for k, v := range val {
+	val.Iterate(func(k, v interface{}) {
 		result.SetKey(e.asStarlarkValue(k), e.asStarlarkValue(v))
-	}
+	})
 	return result
 }
 

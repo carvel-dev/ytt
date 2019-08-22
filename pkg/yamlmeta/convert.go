@@ -1,90 +1,41 @@
 package yamlmeta
 
 import (
-	"fmt"
-	"sort"
-
 	"github.com/k14s/ytt/pkg/filepos"
+	"github.com/k14s/ytt/pkg/orderedmap"
 	"github.com/k14s/ytt/pkg/yamlmeta/internal/yaml.v2"
 )
-
-type InterfaceConvertOpts struct {
-	OrderedMap bool
-	Plain      bool
-}
 
 func NewASTFromInterface(val interface{}) interface{} {
 	return convertToAST(val)
 }
 
-func NewInterfaceFromAST(val interface{}) interface{} {
-	return convertToLowYAML(val, InterfaceConvertOpts{})
+func NewGoFromAST(val interface{}) interface{} {
+	return convertToGo(val)
 }
 
-func convertToLowYAML(val interface{}, opts InterfaceConvertOpts) interface{} {
+func convertToLowYAML(val interface{}) interface{} {
 	switch typedVal := val.(type) {
-	case *DocumentSet:
-		panic("Unexpected docset value within document")
+	case map[interface{}]interface{}:
+		panic("Expected *orderedmap.Map instead of map[interface{}]interface{} in convertToLowYAML")
 
-	case *Document:
-		panic("Unexpected document within document")
+	case map[string]interface{}:
+		panic("Expected *orderedmap.Map instead of map[string]interface{} in convertToLowYAML")
 
-	case *Map:
-		if opts.OrderedMap {
-			result := yaml.MapSlice{}
-			itemIndex := map[interface{}]int{}
-			for idx, item := range typedVal.Items {
-				// TODO do not blindly override previously set items
-				if prevIdx, ok := itemIndex[item.Key]; ok {
-					result[prevIdx].Value = convertToLowYAML(item.Value, opts)
-				} else {
-					itemIndex[item.Key] = idx
-					result = append(result, yaml.MapItem{
-						Key:   item.Key,
-						Value: convertToLowYAML(item.Value, opts),
-					})
-				}
-			}
-			return result
-		}
-
-		result := map[interface{}]interface{}{}
-		for _, item := range typedVal.Items {
-			result[item.Key] = convertToLowYAML(item.Value, opts)
-		}
-		return result
-
-	case *Array:
-		result := []interface{}{}
-		for _, item := range typedVal.Items {
-			result = append(result, convertToLowYAML(item.Value, opts))
-		}
+	case *orderedmap.Map:
+		result := yaml.MapSlice{}
+		typedVal.Iterate(func(k, v interface{}) {
+			result = append(result, yaml.MapItem{
+				Key:   k,
+				Value: convertToLowYAML(v),
+			})
+		})
 		return result
 
 	case []interface{}:
 		result := []interface{}{}
 		for _, item := range typedVal {
-			result = append(result, convertToLowYAML(item, opts))
-		}
-		return result
-
-	case map[interface{}]interface{}:
-		// TODO ideally we wouldnt have to be sorting maps here
-		// as it implies that upstream code didnt preserve order
-		if opts.OrderedMap {
-			result := yaml.MapSlice{}
-			for _, key := range sortedMapKeys(typedVal) {
-				result = append(result, yaml.MapItem{
-					Key:   key,
-					Value: convertToLowYAML(typedVal[key], opts),
-				})
-			}
-			return result
-		}
-
-		result := map[interface{}]interface{}{}
-		for k, v := range typedVal {
-			result[k] = convertToLowYAML(v, opts)
+			result = append(result, convertToLowYAML(item))
 		}
 		return result
 
@@ -93,31 +44,46 @@ func convertToLowYAML(val interface{}, opts InterfaceConvertOpts) interface{} {
 	}
 }
 
-func convertToLowGo(val interface{}) interface{} {
+func convertToGo(val interface{}) interface{} {
 	switch typedVal := val.(type) {
-	case yaml.MapSlice:
-		result := map[string]interface{}{}
-		for _, item := range typedVal {
-			if keyStr, ok := item.Key.(string); ok {
-				result[keyStr] = convertToLowGo(item.Value)
-			} else {
-				panic(fmt.Sprintf("Unsupported map key %T", item.Key))
-			}
+	case *DocumentSet:
+		panic("Unexpected docset value within document")
+
+	case *Document:
+		panic("Unexpected document within document")
+
+	case *Map:
+		result := orderedmap.NewMap()
+		for _, item := range typedVal.Items {
+			result.Set(item.Key, convertToGo(item.Value))
+		}
+		return result
+
+	case *Array:
+		result := []interface{}{}
+		for _, item := range typedVal.Items {
+			result = append(result, convertToGo(item.Value))
 		}
 		return result
 
 	case []interface{}:
 		result := []interface{}{}
 		for _, item := range typedVal {
-			result = append(result, convertToLowGo(item))
+			result = append(result, convertToGo(item))
 		}
 		return result
 
 	case map[interface{}]interface{}:
-		result := map[interface{}]interface{}{}
-		for k, v := range typedVal {
-			result[k] = convertToLowGo(v)
-		}
+		panic("Expected *orderedmap.Map instead of map[interface{}]interface{} in convertToGo")
+
+	case map[string]interface{}:
+		panic("Expected *orderedmap.Map instead of map[string]interface{} in convertToGo")
+
+	case *orderedmap.Map:
+		result := orderedmap.NewMap()
+		typedVal.Iterate(func(k, v interface{}) {
+			result.Set(k, convertToGo(v))
+		})
 		return result
 
 	default:
@@ -176,30 +142,23 @@ func convertToAST(val interface{}) interface{} {
 		return result
 
 	case map[interface{}]interface{}:
+		panic("Expected *orderedmap.Map instead of map[interface{}]interface{} in convertToAST")
+
+	case map[string]interface{}:
+		panic("Expected *orderedmap.Map instead of map[string]interface{} in convertToAST")
+
+	case *orderedmap.Map:
 		result := &Map{Position: filepos.NewUnknownPosition()}
-		for _, k := range sortedMapKeys(typedVal) {
+		typedVal.Iterate(func(k, v interface{}) {
 			result.Items = append(result.Items, &MapItem{
 				Key:      k,
-				Value:    convertToAST(typedVal[k]),
+				Value:    convertToAST(v),
 				Position: filepos.NewUnknownPosition(),
 			})
-		}
+		})
 		return result
 
 	default:
 		return val
 	}
-}
-
-func sortedMapKeys(m map[interface{}]interface{}) []interface{} {
-	var keys []interface{}
-	for k, _ := range m {
-		keys = append(keys, k)
-	}
-	sort.Slice(keys, func(i, j int) bool {
-		iStr := fmt.Sprintf("%s", keys[i])
-		jStr := fmt.Sprintf("%s", keys[j])
-		return iStr < jStr
-	})
-	return keys
 }

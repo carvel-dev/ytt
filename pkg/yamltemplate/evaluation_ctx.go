@@ -2,8 +2,8 @@ package yamltemplate
 
 import (
 	"fmt"
-	"sort"
 
+	"github.com/k14s/ytt/pkg/orderedmap"
 	"github.com/k14s/ytt/pkg/template"
 	"github.com/k14s/ytt/pkg/yamlmeta"
 )
@@ -156,12 +156,11 @@ func (e EvaluationCtx) replaceItemInMap(
 
 func (e EvaluationCtx) convertValToMapItems(val interface{}) ([]*yamlmeta.MapItem, bool, error) {
 	switch typedVal := val.(type) {
-	case map[interface{}]interface{}:
-		// TODO figure out how to avoid sorting
+	case *orderedmap.Map:
 		result := []*yamlmeta.MapItem{}
-		for _, k := range e.sortedMapKeys(typedVal) {
-			result = append(result, &yamlmeta.MapItem{Key: k, Value: typedVal[k]})
-		}
+		typedVal.Iterate(func(k, v interface{}) {
+			result = append(result, &yamlmeta.MapItem{Key: k, Value: v})
+		})
 		return result, false, nil
 
 	case *yamlmeta.Map:
@@ -221,17 +220,4 @@ func (e EvaluationCtx) ShouldWrapRootValue(nodeVal interface{}) bool {
 
 func (e EvaluationCtx) WrapRootValue(val interface{}) interface{} {
 	return &StarlarkFragment{val}
-}
-
-func (e EvaluationCtx) sortedMapKeys(m map[interface{}]interface{}) []interface{} {
-	var keys []interface{}
-	for k, _ := range m {
-		keys = append(keys, k)
-	}
-	sort.Slice(keys, func(i, j int) bool {
-		iStr := fmt.Sprintf("%s", keys[i])
-		jStr := fmt.Sprintf("%s", keys[j])
-		return iStr < jStr
-	})
-	return keys
 }

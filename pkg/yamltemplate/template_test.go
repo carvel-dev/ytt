@@ -9,6 +9,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/k14s/ytt/pkg/orderedmap"
 	"github.com/k14s/ytt/pkg/template"
 	"github.com/k14s/ytt/pkg/yamlmeta"
 	"github.com/k14s/ytt/pkg/yamltemplate"
@@ -190,21 +191,15 @@ func (l stdTemplateLoader) Load(thread *starlark.Thread, module string) (starlar
 }
 
 func defaultInput() interface{} {
-	return map[interface{}]interface{}{
-		"int":    123,
-		"intNeg": -49,
-		"float":  123.123,
-		"t":      true,
-		"f":      false,
-		"nullz":  nil,
-		"string": "string",
-		"map": map[interface{}]interface{}{
-			"a": 123,
-		},
-		"list": []interface{}{
-			"a",
-			123,
-			map[interface{}]interface{}{"a": 123},
-		},
-	}
+	return orderedmap.NewMapWithItems([]orderedmap.MapItem{
+		{Key: "int", Value: 123},
+		{Key: "intNeg", Value: -49},
+		{Key: "float", Value: 123.123},
+		{Key: "t", Value: true},
+		{Key: "f", Value: false},
+		{Key: "nullz", Value: nil},
+		{Key: "string", Value: "string"},
+		{Key: "map", Value: orderedmap.NewMapWithItems([]orderedmap.MapItem{{Key: "a", Value: 123}})},
+		{Key: "list", Value: []interface{}{"a", 123, orderedmap.NewMapWithItems([]orderedmap.MapItem{{Key: "a", Value: 123}})}},
+	})
 }

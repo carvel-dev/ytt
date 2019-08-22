@@ -6,6 +6,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/k14s/ytt/pkg/orderedmap"
 	"github.com/k14s/ytt/pkg/yamlmeta"
 	"github.com/spf13/cobra"
 )
@@ -37,7 +38,7 @@ type dataValuesFlagsSource struct {
 	TransformFunc func(string) (interface{}, error)
 }
 
-func (s *DataValuesFlags) Values(strict bool) (map[interface{}]interface{}, error) {
+func (s *DataValuesFlags) Values(strict bool) (*orderedmap.Map, error) {
 	plainValFunc := func(rawVal string) (interface{}, error) { return rawVal, nil }
 
 	yamlValFunc := func(rawVal string) (interface{}, error) {
@@ -48,7 +49,7 @@ func (s *DataValuesFlags) Values(strict bool) (map[interface{}]interface{}, erro
 		return val, nil
 	}
 
-	result := []map[string]interface{}{}
+	result := []*orderedmap.Map{}
 
 	for _, src := range []dataValuesFlagsSource{{s.EnvFromStrings, plainValFunc}, {s.EnvFromYAML, yamlValFunc}} {
 		for _, envPrefix := range src.Values {
@@ -82,8 +83,8 @@ func (s *DataValuesFlags) Values(strict bool) (map[interface{}]interface{}, erro
 	return s.convertIntoNestedMap(result)
 }
 
-func (s *DataValuesFlags) env(prefix string, valueFunc func(string) (interface{}, error)) (map[string]interface{}, error) {
-	result := map[string]interface{}{}
+func (s *DataValuesFlags) env(prefix string, valueFunc func(string) (interface{}, error)) (*orderedmap.Map, error) {
+	result := orderedmap.NewMap()
 	envVars := os.Environ()
 
 	for _, envVar := range envVars {
@@ -102,14 +103,14 @@ func (s *DataValuesFlags) env(prefix string, valueFunc func(string) (interface{}
 		}
 
 		// '__' gets translated into a '.' since periods may not be liked by shells
-		result[strings.Replace(strings.TrimPrefix(pieces[0], prefix+"_"), "__", ".", -1)] = val
+		result.Set(strings.Replace(strings.TrimPrefix(pieces[0], prefix+"_"), "__", ".", -1), val)
 	}
 
 	return result, nil
 }
 
-func (s *DataValuesFlags) kv(kv string, valueFunc func(string) (interface{}, error)) (map[string]interface{}, error) {
-	result := map[string]interface{}{}
+func (s *DataValuesFlags) kv(kv string, valueFunc func(string) (interface{}, error)) (*orderedmap.Map, error) {
+	result := orderedmap.NewMap()
 
 	pieces := strings.SplitN(kv, "=", 2)
 	if len(pieces) != 2 {
@@ -121,7 +122,7 @@ func (s *DataValuesFlags) kv(kv string, valueFunc func(string) (interface{}, err
 		return nil, fmt.Errorf("Deserializing value for key '%s': %s", pieces[0], err)
 	}
 
-	result[pieces[0]] = val
+	result.Set(pieces[0], val)
 
 	return result, nil
 }
@@ -134,8 +135,8 @@ func (s *DataValuesFlags) parseYAML(data string, strict bool) (interface{}, erro
 	return docSet.Items[0].Value, nil
 }
 
-func (s *DataValuesFlags) file(kv string) (map[string]interface{}, error) {
-	result := map[string]interface{}{}
+func (s *DataValuesFlags) file(kv string) (*orderedmap.Map, error) {
+	result := orderedmap.NewMap()
 
 	pieces := strings.SplitN(kv, "=", 2)
 	if len(pieces) != 2 {
@@ -147,31 +148,36 @@ func (s *DataValuesFlags) file(kv string) (map[string]interface{}, error) {
 		return nil, fmt.Errorf("Reading file '%s'", pieces[1])
 	}
 
-	result[pieces[0]] = string(contents)
+	result.Set(pieces[0], string(contents))
 
 	return result, nil
 }
 
-func (s *DataValuesFlags) convertIntoNestedMap(multipleVals []map[string]interface{}) (map[interface{}]interface{}, error) {
-	result := map[interface{}]interface{}{}
+func (s *DataValuesFlags) convertIntoNestedMap(multipleVals []*orderedmap.Map) (*orderedmap.Map, error) {
+	result := orderedmap.NewMap()
 	for _, vals := range multipleVals {
-		for key, val := range vals {
-			keyPieces := strings.Split(key, ".")
+		err := vals.IterateErr(func(key, val interface{}) error {
+			keyPieces := strings.Split(key.(string), ".")
 			currMap := result
 			for _, keyPiece := range keyPieces[:len(keyPieces)-1] {
-				if subMap, found := currMap[keyPiece]; found {
-					if typedSubMap, ok := subMap.(map[interface{}]interface{}); ok {
+				subMap, found := currMap.Get(keyPiece)
+				if found {
+					if typedSubMap, ok := subMap.(*orderedmap.Map); ok {
 						currMap = typedSubMap
 					} else {
-						return nil, fmt.Errorf("Expected key '%s' to not conflict with other data values at piece '%s'", key, keyPiece)
+						return fmt.Errorf("Expected key '%s' to not conflict with other data values at piece '%s'", key, keyPiece)
 					}
 				} else {
-					newCurrMap := map[interface{}]interface{}{}
-					currMap[keyPiece] = newCurrMap
+					newCurrMap := orderedmap.NewMap()
+					currMap.Set(keyPiece, newCurrMap)
 					currMap = newCurrMap
 				}
 			}
-			currMap[keyPieces[len(keyPieces)-1]] = val
+			currMap.Set(keyPieces[len(keyPieces)-1], val)
+			return nil
+		})
+		if err != nil {
+			return nil, err
 		}
 	}
 	return result, nil

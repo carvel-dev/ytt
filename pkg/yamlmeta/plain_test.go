@@ -5,6 +5,7 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/k14s/ytt/pkg/orderedmap"
 	"github.com/k14s/ytt/pkg/yamlmeta"
 )
 
@@ -41,7 +42,7 @@ func TestPlainUnmarshalMap(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Expected to succeed: %s", err)
 	}
-	if !reflect.DeepEqual(val, map[interface{}]interface{}{"a": 123}) {
+	if !reflect.DeepEqual(val, orderedmap.NewMapWithItems([]orderedmap.MapItem{{Key: "a", Value: 123}})) {
 		t.Fatalf("Expected to be nil: val=%#v type=%T", val, val)
 	}
 }

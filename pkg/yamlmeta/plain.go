@@ -15,7 +15,7 @@ func PlainUnmarshal(data []byte, out interface{}) error {
 		return fmt.Errorf("Expected to find exactly one YAML document")
 	}
 
-	newVal := docSet.Items[0].AsInterface(InterfaceConvertOpts{})
+	newVal := docSet.Items[0].AsInterface()
 
 	outVal := reflect.ValueOf(out)
 	if newVal == nil {

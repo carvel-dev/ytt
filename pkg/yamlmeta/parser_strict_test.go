@@ -6,6 +6,7 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/k14s/ytt/pkg/orderedmap"
 	"github.com/k14s/ytt/pkg/yamlmeta"
 )
 
@@ -103,10 +104,10 @@ func (ex parserStrictExample) checkVal(t *testing.T, docSet *yamlmeta.DocumentSe
 		t.Fatalf("[%s] expected one doc", ex.Description)
 	}
 
-	val := docSet.Items[0].AsInterface(yamlmeta.InterfaceConvertOpts{})
+	val := docSet.Items[0].AsInterface()
 
 	// Assume that all examples are json
-	valBs, _ := json.Marshal(val)
+	valBs, _ := json.Marshal(orderedmap.Conversion{val}.AsUnorderedMaps())
 	expectedValBs, _ := json.Marshal(ex.ExpectedVal)
 
 	if !reflect.DeepEqual(valBs, expectedValBs) {

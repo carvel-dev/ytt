@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/k14s/ytt/pkg/orderedmap"
 	"github.com/k14s/ytt/pkg/template/core"
 	"github.com/k14s/ytt/pkg/yamlmeta"
 	"go.starlark.net/starlark"
@@ -30,7 +31,8 @@ func (b jsonModule) Encode(thread *starlark.Thread, f *starlark.Builtin, args st
 	}
 
 	val := core.NewStarlarkValue(args.Index(0)).AsInterface()
-	val = yamlmeta.NewInterfaceFromAST(val)                           // convert yaml fragments into Go objects
+	val = yamlmeta.NewGoFromAST(val) // convert yaml fragments into Go objects
+	val = orderedmap.Conversion{val}.AsUnorderedMaps()
 	val = core.NewGoValue(val, false).AsValueWithCheckedMapKeys(true) // JSON only supports string keys
 
 	valBs, err := json.Marshal(val)
@@ -58,7 +60,7 @@ func (b jsonModule) Decode(thread *starlark.Thread, f *starlark.Builtin, args st
 		return starlark.None, err
 	}
 
-	valDecoded = core.NewGoValue(valDecoded, false).AsValueWithCheckedMapKeys(false)
+	valDecoded = orderedmap.Conversion{valDecoded}.FromUnorderedMaps()
 
 	return core.NewGoValue(valDecoded, false).AsStarlarkValue(), nil
 }

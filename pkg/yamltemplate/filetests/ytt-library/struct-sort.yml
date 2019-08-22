@@ -1,0 +1,15 @@
+#@ load("@ytt:struct", "struct")
+
+#! array and sub-structs cause more ordering "entrophy" in the failure case
+test1: #@ struct.decode(struct.make(a=[1,2,3], b="str", c=struct.make(d=123)))
+
++++
+
+test1:
+  a:
+  - 1
+  - 2
+  - 3
+  b: str
+  c:
+    d: 123

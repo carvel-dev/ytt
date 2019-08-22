@@ -48,7 +48,7 @@ func (o DataValuesPreProcessing) Apply() (interface{}, error) {
 		return nil, err
 	}
 
-	return valuesWithFlags.AsInterface(yamlmeta.InterfaceConvertOpts{}), nil
+	return valuesWithFlags.AsInterface(), nil
 }
 
 func (p DataValuesPreProcessing) templateFile(fileInLib *FileInLibrary) ([]*yamlmeta.Document, error) {

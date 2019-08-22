@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/k14s/ytt/pkg/yamlmeta/internal/yaml.v2"
+	"github.com/k14s/ytt/pkg/orderedmap"
 )
 
 type DocumentPrinter interface {
@@ -30,7 +30,7 @@ func (p *YAMLPrinter) Print(item *Document) error {
 		p.writtenOnce = true
 	}
 
-	bs, err := yaml.Marshal(item.AsInterface(InterfaceConvertOpts{OrderedMap: true}))
+	bs, err := item.AsYAMLBytes()
 	if err != nil {
 		return fmt.Errorf("marshaling doc: %s", err)
 	}
@@ -49,7 +49,9 @@ func NewJSONPrinter(writer io.Writer) JSONPrinter {
 }
 
 func (p JSONPrinter) Print(item *Document) error {
-	bs, err := json.Marshal(item.AsInterface(InterfaceConvertOpts{OrderedMap: true, Plain: true}))
+	val := item.AsInterface()
+
+	bs, err := json.Marshal(orderedmap.Conversion{val}.AsUnorderedMaps())
 	if err != nil {
 		return fmt.Errorf("marshaling doc: %s", err)
 	}
