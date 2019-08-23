@@ -1,0 +1,37 @@
+int: 123
+intNeg: -49
+float: 123.123
+t: true
+f: false
+nullz: null
+string: "string"
+map_flow: {"a":123}
+map_block:
+  a: 123
+list_flow: ["a", 123, {"a":123}]
+list_block:
+- a
+- 123
+- {"a":123}
+
++++
+
+int: 123
+intNeg: -49
+float: 123.123
+t: true
+f: false
+nullz: null
+string: string
+map_flow:
+  a: 123
+map_block:
+  a: 123
+list_flow:
+  - a
+  - 123
+  - a: 123
+list_block:
+  - a
+  - 123
+  - a: 123

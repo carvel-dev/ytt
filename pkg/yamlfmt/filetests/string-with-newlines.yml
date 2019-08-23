@@ -1,0 +1,21 @@
+test1: "string\nstring\nstring"
+test2: "string\nstring\nstring\n"
+test3: "string\nstring\nstring\n\n"
+test4: "string\nstring\nstring\n\n "
+
++++
+
+test1: |-
+  string
+  string
+  string
+test2: |
+  string
+  string
+  string
+test3: |+
+  string
+  string
+  string
+
+test4: "string\nstring\nstring\n\n "

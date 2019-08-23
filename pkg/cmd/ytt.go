@@ -41,6 +41,7 @@ Docs for data values: https://github.com/k14s/ytt/blob/master/docs/ytt-data-valu
 
 	cmd.AddCommand(NewVersionCmd(NewVersionOptions()))
 	cmd.AddCommand(cmdtpl.NewCmd(cmdtpl.NewOptions())) // for backwards compat
+	cmd.AddCommand(NewFmtCmd(NewFmtOptions()))
 	cmd.AddCommand(NewWebsiteCmd(NewWebsiteOptions()))
 
 	// Last one runs first

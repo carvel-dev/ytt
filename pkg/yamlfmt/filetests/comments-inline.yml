@@ -1,0 +1,40 @@
+# before
+test1: val # inline1
+# middle
+test2: val      # inline2
+# after
+test3:
+- # inline3
+- val # inline3
+- # inline3a
+  test3a: val
+- test4:              # inline4
+  nested:
+    nested:
+      test5: # inline5
+
+
+
+
+--- # inline6
+
++++
+
+# before
+test1: val # inline1
+
+# middle
+test2: val # inline2
+
+# after
+test3:
+  - # inline3
+  - val # inline3
+  - # inline3a
+    test3a: val
+  - test4: # inline4
+    nested:
+      nested:
+        test5: # inline5
+
+--- # inline6

@@ -1,0 +1,31 @@
+# before
+test1: val
+# middle
+test2: val
+# after
+
+nested:
+  # nested-before
+  test3: val
+  # nested-middle
+  test4: val
+  # nested-after
+
++++
+
+# before
+test1: val
+
+# middle
+test2: val
+
+# after
+nested:
+  # nested-before
+  test3: val
+
+  # nested-middle
+  test4: val
+
+# nested-after
+---
