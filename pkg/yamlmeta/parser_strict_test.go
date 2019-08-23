@@ -107,7 +107,7 @@ func (ex parserStrictExample) checkVal(t *testing.T, docSet *yamlmeta.DocumentSe
 	val := docSet.Items[0].AsInterface()
 
 	// Assume that all examples are json
-	valBs, _ := json.Marshal(orderedmap.Conversion{val}.AsUnorderedMaps())
+	valBs, _ := json.Marshal(orderedmap.Conversion{val}.AsUnorderedStringMaps())
 	expectedValBs, _ := json.Marshal(ex.ExpectedVal)
 
 	if !reflect.DeepEqual(valBs, expectedValBs) {

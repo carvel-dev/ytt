@@ -51,7 +51,7 @@ func NewJSONPrinter(writer io.Writer) JSONPrinter {
 func (p JSONPrinter) Print(item *Document) error {
 	val := item.AsInterface()
 
-	bs, err := json.Marshal(orderedmap.Conversion{val}.AsUnorderedMaps())
+	bs, err := json.Marshal(orderedmap.Conversion{val}.AsUnorderedStringMaps())
 	if err != nil {
 		return fmt.Errorf("marshaling doc: %s", err)
 	}

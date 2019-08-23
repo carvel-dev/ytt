@@ -31,9 +31,7 @@ func (b jsonModule) Encode(thread *starlark.Thread, f *starlark.Builtin, args st
 	}
 
 	val := core.NewStarlarkValue(args.Index(0)).AsInterface()
-	val = yamlmeta.NewGoFromAST(val) // convert yaml fragments into Go objects
-	val = orderedmap.Conversion{val}.AsUnorderedMaps()
-	val = core.NewGoValue(val, false).AsValueWithCheckedMapKeys(true) // JSON only supports string keys
+	val = orderedmap.Conversion{yamlmeta.NewGoFromAST(val)}.AsUnorderedStringMaps()
 
 	valBs, err := json.Marshal(val)
 	if err != nil {

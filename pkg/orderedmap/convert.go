@@ -9,28 +9,32 @@ type Conversion struct {
 	Object interface{}
 }
 
-func (c Conversion) AsUnorderedMaps() interface{} {
-	return c.asUnorderedMaps(c.Object)
+func (c Conversion) AsUnorderedStringMaps() interface{} {
+	return c.asUnorderedStringMaps(c.Object)
 }
 
-func (c Conversion) asUnorderedMaps(object interface{}) interface{} {
+func (c Conversion) asUnorderedStringMaps(object interface{}) interface{} {
 	switch typedObj := object.(type) {
 	case map[interface{}]interface{}:
-		panic("Expected *orderedmap.Map instead of map[interface{}]interface{} in asUnorderedMaps")
+		panic("Expected *orderedmap.Map instead of map[interface{}]interface{} in asUnorderedStringMaps")
 
 	case map[string]interface{}:
-		panic("Expected *orderedmap.Map instead of map[string]interface{} in asUnorderedMaps")
+		panic("Expected *orderedmap.Map instead of map[string]interface{} in asUnorderedStringMaps")
 
 	case *Map:
-		result := map[interface{}]interface{}{}
+		result := map[string]interface{}{}
 		typedObj.Iterate(func(k, v interface{}) {
-			result[k] = c.asUnorderedMaps(v)
+			if strK, ok := k.(string); ok {
+				result[strK] = c.asUnorderedStringMaps(v)
+			} else {
+				panic("Expected key to be string")
+			}
 		})
 		return result
 
 	case []interface{}:
 		for i, item := range typedObj {
-			typedObj[i] = c.asUnorderedMaps(item)
+			typedObj[i] = c.asUnorderedStringMaps(item)
 		}
 		return typedObj
 

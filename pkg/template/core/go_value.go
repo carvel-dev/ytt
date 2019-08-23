@@ -24,10 +24,6 @@ func (e GoValue) AsStarlarkValue() starlark.Value {
 	return e.asStarlarkValue(e.val)
 }
 
-func (e GoValue) AsValueWithCheckedMapKeys(forceMapStringKeys bool) interface{} {
-	return e.convertMaps(e.val, forceMapStringKeys)
-}
-
 func (e GoValue) asStarlarkValue(val interface{}) starlark.Value {
 	if obj, ok := val.(GoValueToStarlarkValueConversion); ok {
 		return obj.AsStarlarkValue()
@@ -101,51 +97,4 @@ func (e GoValue) listAsStarlarkValue(val []interface{}) *starlark.List {
 		result = append(result, e.asStarlarkValue(v))
 	}
 	return starlark.NewList(result)
-}
-
-func (e GoValue) convertMaps(val interface{}, forceMapStringKeys bool) interface{} {
-	switch typedVal := val.(type) {
-	case []interface{}:
-		for i, v := range typedVal {
-			typedVal[i] = e.convertMaps(v, forceMapStringKeys)
-		}
-		return typedVal
-
-	case map[string]interface{}:
-		if forceMapStringKeys {
-			// keep type as is
-			for k, v := range typedVal {
-				typedVal[k] = e.convertMaps(v, forceMapStringKeys)
-			}
-			return typedVal
-		}
-
-		result := map[interface{}]interface{}{}
-		for k, v := range typedVal {
-			result[k] = e.convertMaps(v, forceMapStringKeys)
-		}
-		return result
-
-	case map[interface{}]interface{}:
-		if forceMapStringKeys {
-			result := map[string]interface{}{}
-			for k, v := range typedVal {
-				strK, ok := k.(string)
-				if !ok {
-					panic("expected key to be string")
-				}
-				result[strK] = e.convertMaps(v, forceMapStringKeys)
-			}
-			return result
-		}
-
-		// keep type as is
-		for k, v := range typedVal {
-			typedVal[k] = e.convertMaps(v, forceMapStringKeys)
-		}
-		return typedVal
-
-	default:
-		return val
-	}
 }
