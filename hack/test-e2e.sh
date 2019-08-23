@@ -38,7 +38,7 @@ diff <(./ytt -f examples/k8s-config-map-files)        examples/k8s-config-map-fi
 diff <(./ytt -f examples/concourse-overlay)           examples/concourse-overlay/expected.txt
 
 # test json output
-./ytt -f examples/k8s-adjust-rbac-version -o json
+./ytt -f examples/k8s-adjust-rbac-version -o json > /dev/null
 
 # test pipe stdin
 diff <(cat examples/k8s-relative-rolling-update/config.yml | ./ytt -f-) examples/k8s-relative-rolling-update/expected.txt
