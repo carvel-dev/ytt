@@ -7,6 +7,7 @@
   - [If conditional](lang-ref-if.md)
   - [For loop](lang-ref-for.md)
   - [Functions](lang-ref-def.md)
+  - [Load statement](lang-ref-load.md)
   - [@ytt library](lang-ref-ytt.md)
     - [overlay](lang-ref-ytt-overlay.md) describes how to perform configuration patching on top of plain templating
   - [Annotation format](lang-ref-annotation.md)
