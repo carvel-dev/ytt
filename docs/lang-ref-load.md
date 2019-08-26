@@ -16,14 +16,14 @@ load("@project:dir/helpers.lib.txt", "func1")  # load func1 from a project locat
 `load` arguments are as follows:
 
 1. location which takes following shape `[@[library]:][package/]{0,n}module`, where,
-  - `library` could be `ytt` or local path under `_ytt_lib` directory
-    - examples: [`ytt`](lang-ref-ytt.md), `github.com/k14s/k8s-lib`, `common`
-  - `package` could be a directory path
-    - examples: `overlay`, `regexp`, `app/`
-  - `module` is a file name or predefined name (included in `ytt` library)
-    - examples: `module.lib.yml`
+    - `library` could be `ytt` or local path under `_ytt_lib` directory
+      - examples: [`ytt`](lang-ref-ytt.md), `github.com/k14s/k8s-lib`, `common`
+    - `package` could be a directory path
+      - examples: `overlay`, `regexp`, `app/`
+    - `module` is a file name or predefined name (included in `ytt` library)
+      - examples: `module.lib.yml`
 1. one or more symbols to import with optional aliases
-  - examples: `func1`, `func1="as_func1"`
+    - examples: `func1`, `func1="as_func1"`
 
 #### Files
 
