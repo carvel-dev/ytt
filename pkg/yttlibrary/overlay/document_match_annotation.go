@@ -18,7 +18,10 @@ type DocumentMatchAnnotation struct {
 	expects MatchAnnotationExpectsKwarg
 }
 
-func NewDocumentMatchAnnotation(newDoc *yamlmeta.Document, thread *starlark.Thread) (DocumentMatchAnnotation, error) {
+func NewDocumentMatchAnnotation(newDoc *yamlmeta.Document,
+	defaults MatchChildDefaultsAnnotation,
+	thread *starlark.Thread) (DocumentMatchAnnotation, error) {
+
 	annotation := DocumentMatchAnnotation{
 		newDoc:  newDoc,
 		thread:  thread,
@@ -46,6 +49,8 @@ func NewDocumentMatchAnnotation(newDoc *yamlmeta.Document, thread *starlark.Thre
 				"Unknown '%s' annotation keyword argument '%s'", AnnotationMatch, kwargName)
 		}
 	}
+
+	annotation.expects.FillInDefaults(defaults)
 
 	return annotation, nil
 }

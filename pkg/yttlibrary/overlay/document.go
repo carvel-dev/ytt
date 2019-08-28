@@ -5,9 +5,15 @@ import (
 )
 
 func (o OverlayOp) mergeDocument(
-	leftDocSets []*yamlmeta.DocumentSet, newDoc *yamlmeta.Document) error {
+	leftDocSets []*yamlmeta.DocumentSet, newDoc *yamlmeta.Document,
+	parentMatchChildDefaults MatchChildDefaultsAnnotation) error {
 
-	ann, err := NewDocumentMatchAnnotation(newDoc, o.Thread)
+	matchChildDefaults, err := NewMatchChildDefaultsAnnotation(newDoc, parentMatchChildDefaults)
+	if err != nil {
+		return err
+	}
+
+	ann, err := NewDocumentMatchAnnotation(newDoc, parentMatchChildDefaults, o.Thread)
 	if err != nil {
 		return err
 	}
@@ -18,7 +24,7 @@ func (o OverlayOp) mergeDocument(
 	}
 
 	for _, leftIdx := range leftIdxs {
-		replace, err := o.apply(leftDocSets[leftIdx[0]].Items[leftIdx[1]].Value, newDoc.Value)
+		replace, err := o.apply(leftDocSets[leftIdx[0]].Items[leftIdx[1]].Value, newDoc.Value, matchChildDefaults)
 		if err != nil {
 			return err
 		}
@@ -31,9 +37,10 @@ func (o OverlayOp) mergeDocument(
 }
 
 func (o OverlayOp) removeDocument(
-	leftDocSets []*yamlmeta.DocumentSet, newDoc *yamlmeta.Document) error {
+	leftDocSets []*yamlmeta.DocumentSet, newDoc *yamlmeta.Document,
+	parentMatchChildDefaults MatchChildDefaultsAnnotation) error {
 
-	ann, err := NewDocumentMatchAnnotation(newDoc, o.Thread)
+	ann, err := NewDocumentMatchAnnotation(newDoc, parentMatchChildDefaults, o.Thread)
 	if err != nil {
 		return err
 	}
@@ -64,9 +71,10 @@ func (o OverlayOp) removeDocument(
 }
 
 func (o OverlayOp) replaceDocument(
-	leftDocSets []*yamlmeta.DocumentSet, newDoc *yamlmeta.Document) error {
+	leftDocSets []*yamlmeta.DocumentSet, newDoc *yamlmeta.Document,
+	parentMatchChildDefaults MatchChildDefaultsAnnotation) error {
 
-	ann, err := NewDocumentMatchAnnotation(newDoc, o.Thread)
+	ann, err := NewDocumentMatchAnnotation(newDoc, parentMatchChildDefaults, o.Thread)
 	if err != nil {
 		return err
 	}
@@ -95,9 +103,10 @@ func (o OverlayOp) replaceDocument(
 }
 
 func (o OverlayOp) insertDocument(
-	leftDocSets []*yamlmeta.DocumentSet, newDoc *yamlmeta.Document) error {
+	leftDocSets []*yamlmeta.DocumentSet, newDoc *yamlmeta.Document,
+	parentMatchChildDefaults MatchChildDefaultsAnnotation) error {
 
-	ann, err := NewDocumentMatchAnnotation(newDoc, o.Thread)
+	ann, err := NewDocumentMatchAnnotation(newDoc, parentMatchChildDefaults, o.Thread)
 	if err != nil {
 		return err
 	}

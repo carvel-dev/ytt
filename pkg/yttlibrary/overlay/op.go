@@ -20,7 +20,7 @@ func (o OverlayOp) Apply() (interface{}, error) {
 	leftObj := yamlmeta.NewASTFromInterface(o.Left)
 	rightObj := yamlmeta.NewASTFromInterface(o.Right)
 
-	_, err := o.apply(leftObj, rightObj)
+	_, err := o.apply(leftObj, rightObj, NewEmptyMatchChildDefaultsAnnotation())
 	if err != nil {
 		return nil, err
 	}
@@ -29,7 +29,7 @@ func (o OverlayOp) Apply() (interface{}, error) {
 	return leftObj, nil
 }
 
-func (o OverlayOp) apply(left, right interface{}) (bool, error) {
+func (o OverlayOp) apply(left, right interface{}, parentMatchChildDefaults MatchChildDefaultsAnnotation) (bool, error) {
 	switch typedRight := right.(type) {
 	case *yamlmeta.DocumentSet:
 		var docSetArray []*yamlmeta.DocumentSet
@@ -48,7 +48,7 @@ func (o OverlayOp) apply(left, right interface{}) (bool, error) {
 			docSetArray = []*yamlmeta.DocumentSet{typedLeft}
 		}
 
-		return o.applyDocSet(docSetArray, typedRight)
+		return o.applyDocSet(docSetArray, typedRight, parentMatchChildDefaults)
 
 	case *yamlmeta.Document:
 		panic("Unexpected doc")
@@ -66,11 +66,11 @@ func (o OverlayOp) apply(left, right interface{}) (bool, error) {
 			if err == nil {
 				switch op {
 				case AnnotationMerge:
-					err = o.mergeMapItem(typedLeft, item)
+					err = o.mergeMapItem(typedLeft, item, parentMatchChildDefaults)
 				case AnnotationRemove:
-					err = o.removeMapItem(typedLeft, item)
+					err = o.removeMapItem(typedLeft, item, parentMatchChildDefaults)
 				case AnnotationReplace:
-					err = o.replaceMapItem(typedLeft, item)
+					err = o.replaceMapItem(typedLeft, item, parentMatchChildDefaults)
 				default:
 					err = fmt.Errorf("Overlay op %s is not supported on map item", op)
 				}
@@ -97,13 +97,13 @@ func (o OverlayOp) apply(left, right interface{}) (bool, error) {
 			if err == nil {
 				switch op {
 				case AnnotationMerge:
-					err = o.mergeArrayItem(typedLeft, item)
+					err = o.mergeArrayItem(typedLeft, item, parentMatchChildDefaults)
 				case AnnotationRemove:
-					err = o.removeArrayItem(typedLeft, item)
+					err = o.removeArrayItem(typedLeft, item, parentMatchChildDefaults)
 				case AnnotationReplace:
-					err = o.replaceArrayItem(typedLeft, item)
+					err = o.replaceArrayItem(typedLeft, item, parentMatchChildDefaults)
 				case AnnotationInsert:
-					err = o.insertArrayItem(typedLeft, item)
+					err = o.insertArrayItem(typedLeft, item, parentMatchChildDefaults)
 				case AnnotationAppend:
 					err = o.appendArrayItem(typedLeft, item)
 				default:
@@ -125,7 +125,10 @@ func (o OverlayOp) apply(left, right interface{}) (bool, error) {
 	return false, nil
 }
 
-func (o OverlayOp) applyDocSet(typedLeft []*yamlmeta.DocumentSet, typedRight *yamlmeta.DocumentSet) (bool, error) {
+func (o OverlayOp) applyDocSet(
+	typedLeft []*yamlmeta.DocumentSet, typedRight *yamlmeta.DocumentSet,
+	parentMatchChildDefaults MatchChildDefaultsAnnotation) (bool, error) {
+
 	for _, doc := range typedRight.Items {
 		doc := doc.DeepCopy()
 
@@ -133,13 +136,13 @@ func (o OverlayOp) applyDocSet(typedLeft []*yamlmeta.DocumentSet, typedRight *ya
 		if err == nil {
 			switch op {
 			case AnnotationMerge:
-				err = o.mergeDocument(typedLeft, doc)
+				err = o.mergeDocument(typedLeft, doc, parentMatchChildDefaults)
 			case AnnotationRemove:
-				err = o.removeDocument(typedLeft, doc)
+				err = o.removeDocument(typedLeft, doc, parentMatchChildDefaults)
 			case AnnotationReplace:
-				err = o.replaceDocument(typedLeft, doc)
+				err = o.replaceDocument(typedLeft, doc, parentMatchChildDefaults)
 			case AnnotationInsert:
-				err = o.insertDocument(typedLeft, doc)
+				err = o.insertDocument(typedLeft, doc, parentMatchChildDefaults)
 			case AnnotationAppend:
 				err = o.appendDocument(typedLeft, doc)
 			default:

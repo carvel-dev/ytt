@@ -5,9 +5,15 @@ import (
 )
 
 func (o OverlayOp) mergeArrayItem(
-	leftArray *yamlmeta.Array, newItem *yamlmeta.ArrayItem) error {
+	leftArray *yamlmeta.Array, newItem *yamlmeta.ArrayItem,
+	parentMatchChildDefaults MatchChildDefaultsAnnotation) error {
 
-	ann, err := NewArrayItemMatchAnnotation(newItem, o.Thread)
+	matchChildDefaults, err := NewMatchChildDefaultsAnnotation(newItem, parentMatchChildDefaults)
+	if err != nil {
+		return err
+	}
+
+	ann, err := NewArrayItemMatchAnnotation(newItem, parentMatchChildDefaults, o.Thread)
 	if err != nil {
 		return err
 	}
@@ -22,7 +28,7 @@ func (o OverlayOp) mergeArrayItem(
 	}
 
 	for _, leftIdx := range leftIdxs {
-		replace, err := o.apply(leftArray.Items[leftIdx].Value, newItem.Value)
+		replace, err := o.apply(leftArray.Items[leftIdx].Value, newItem.Value, matchChildDefaults)
 		if err != nil {
 			return err
 		}
@@ -35,9 +41,10 @@ func (o OverlayOp) mergeArrayItem(
 }
 
 func (o OverlayOp) removeArrayItem(
-	leftArray *yamlmeta.Array, newItem *yamlmeta.ArrayItem) error {
+	leftArray *yamlmeta.Array, newItem *yamlmeta.ArrayItem,
+	parentMatchChildDefaults MatchChildDefaultsAnnotation) error {
 
-	ann, err := NewArrayItemMatchAnnotation(newItem, o.Thread)
+	ann, err := NewArrayItemMatchAnnotation(newItem, parentMatchChildDefaults, o.Thread)
 	if err != nil {
 		return err
 	}
@@ -66,9 +73,10 @@ func (o OverlayOp) removeArrayItem(
 }
 
 func (o OverlayOp) replaceArrayItem(
-	leftArray *yamlmeta.Array, newItem *yamlmeta.ArrayItem) error {
+	leftArray *yamlmeta.Array, newItem *yamlmeta.ArrayItem,
+	parentMatchChildDefaults MatchChildDefaultsAnnotation) error {
 
-	ann, err := NewArrayItemMatchAnnotation(newItem, o.Thread)
+	ann, err := NewArrayItemMatchAnnotation(newItem, parentMatchChildDefaults, o.Thread)
 	if err != nil {
 		return err
 	}
@@ -97,9 +105,10 @@ func (o OverlayOp) replaceArrayItem(
 }
 
 func (o OverlayOp) insertArrayItem(
-	leftArray *yamlmeta.Array, newItem *yamlmeta.ArrayItem) error {
+	leftArray *yamlmeta.Array, newItem *yamlmeta.ArrayItem,
+	parentMatchChildDefaults MatchChildDefaultsAnnotation) error {
 
-	ann, err := NewArrayItemMatchAnnotation(newItem, o.Thread)
+	ann, err := NewArrayItemMatchAnnotation(newItem, parentMatchChildDefaults, o.Thread)
 	if err != nil {
 		return err
 	}

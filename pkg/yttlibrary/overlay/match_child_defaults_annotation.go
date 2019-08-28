@@ -1,0 +1,45 @@
+package overlay
+
+import (
+	"fmt"
+
+	"github.com/k14s/ytt/pkg/template"
+	"go.starlark.net/starlark"
+)
+
+type MatchChildDefaultsAnnotation struct {
+	expects MatchAnnotationExpectsKwarg
+}
+
+func NewEmptyMatchChildDefaultsAnnotation() MatchChildDefaultsAnnotation {
+	return MatchChildDefaultsAnnotation{
+		expects: MatchAnnotationExpectsKwarg{},
+	}
+}
+
+func NewMatchChildDefaultsAnnotation(node template.EvaluationNode,
+	parentMatchChildDefaults MatchChildDefaultsAnnotation) (MatchChildDefaultsAnnotation, error) {
+
+	annotation := MatchChildDefaultsAnnotation{
+		// TODO do we need to propagate thread?
+		expects: MatchAnnotationExpectsKwarg{},
+	}
+	kwargs := template.NewAnnotations(node).Kwargs(AnnotationMatchChildDefaults)
+
+	for _, kwarg := range kwargs {
+		kwargName := string(kwarg[0].(starlark.String))
+		switch kwargName {
+		case "expects":
+			annotation.expects.expects = &kwarg[1]
+		case "missing_ok":
+			annotation.expects.missingOK = &kwarg[1]
+		default:
+			return annotation, fmt.Errorf(
+				"Unknown '%s' annotation keyword argument '%s'", AnnotationMatchChildDefaults, kwargName)
+		}
+	}
+
+	annotation.expects.FillInDefaults(parentMatchChildDefaults)
+
+	return annotation, nil
+}

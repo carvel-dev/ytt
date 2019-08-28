@@ -85,7 +85,7 @@ spec:
 Annotations on the "right-side" nodes:
 
 - `@overlay/match [by=matcher,expects=Int|String|List|Function,missing_ok=Bool]`
-  - valid for both map and array items
+  - valid for documents, map and array items
   - specifies how to find node on the "left-side"
   - Defaults:
     - for array items, there is no default matcher
@@ -100,6 +100,10 @@ Annotations on the "right-side" nodes:
     - `#@overlay/match expects="2+"`: expects to find 2 or more "left-side" nodes
     - `#@overlay/match expects=[0,1,4]`: expects to find 0, 1 or 4 "left-side" nodes
     - `#@overlay/match expects=lambda x: return x < 10`: expects to less than 10 "left-side" nodes
+- `@overlay/match-child-defaults [expects=...,missing_ok=Bool]`
+  - valid for documents, map and array items
+  - specifies `overlay/match` defaults for child nodes (does not apply to current node)
+    - useful to avoid repeating `@overlay/match missing_ok=True` on each child node in maps
 - `@overlay/merge` (*default operation*)
   - valid for both map and array items
   - merges node content recursively

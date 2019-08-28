@@ -18,7 +18,10 @@ type ArrayItemMatchAnnotation struct {
 	expects MatchAnnotationExpectsKwarg
 }
 
-func NewArrayItemMatchAnnotation(newItem *yamlmeta.ArrayItem, thread *starlark.Thread) (ArrayItemMatchAnnotation, error) {
+func NewArrayItemMatchAnnotation(newItem *yamlmeta.ArrayItem,
+	defaults MatchChildDefaultsAnnotation,
+	thread *starlark.Thread) (ArrayItemMatchAnnotation, error) {
+
 	annotation := ArrayItemMatchAnnotation{
 		newItem: newItem,
 		thread:  thread,
@@ -51,6 +54,8 @@ func NewArrayItemMatchAnnotation(newItem *yamlmeta.ArrayItem, thread *starlark.T
 				"Unknown '%s' annotation keyword argument '%s'", AnnotationMatch, kwargName)
 		}
 	}
+
+	annotation.expects.FillInDefaults(defaults)
 
 	return annotation, nil
 }

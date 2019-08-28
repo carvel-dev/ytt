@@ -14,6 +14,15 @@ type MatchAnnotationExpectsKwarg struct {
 	thread    *starlark.Thread
 }
 
+func (a *MatchAnnotationExpectsKwarg) FillInDefaults(defaults MatchChildDefaultsAnnotation) {
+	if a.expects == nil {
+		a.expects = defaults.expects.expects
+	}
+	if a.missingOK == nil {
+		a.missingOK = defaults.expects.missingOK
+	}
+}
+
 func (a MatchAnnotationExpectsKwarg) Check(num int) error {
 	switch {
 	case a.missingOK != nil && a.expects != nil:

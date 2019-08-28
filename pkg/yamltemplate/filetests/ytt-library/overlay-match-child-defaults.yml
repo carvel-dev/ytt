@@ -1,0 +1,84 @@
+#@ load("@ytt:overlay", "overlay")
+#@ load("@ytt:template", "template")
+
+#@ def test1_left():
+key2:
+  key2d: {}
+#@ end
+
+#@ def test1_right():
+#@overlay/match missing_ok=True
+#@overlay/match-child-defaults missing_ok=True
+key2:
+  key2a: val2a
+  key2b: val2b
+  key2c:
+    key2ca: val2ca
+  #@overlay/match-child-defaults missing_ok=False
+  key2d:
+    #@overlay/match missing_ok=True
+    key2da: val2ca
+#@ end
+
+test1: #@ overlay.apply(test1_left(), test1_right())
+
+---
+#@ def test2_left():
+key2:
+- name: val1
+- name: val2
+#@ end
+
+#@ def test2_right():
+#@overlay/match-child-defaults missing_ok=True
+key2:
+#@overlay/match by="name"
+- name: val3
+#@overlay/match by="name"
+- name: val4
+#@overlay/match by="name"
+- name: val5
+#@ end
+
+test2: #@ overlay.apply(test2_left(), test2_right())
+
+---
+#@ def test3_left():
+---
+key2:
+- name: val1
+#@ end
+
+#@ def test3_right():
+#@overlay/match-child-defaults missing_ok=True
+#@overlay/match by=overlay.all
+---
+key2:
+#@overlay/match by="name"
+- name: val3
+#@ end
+
+--- #@ template.replace(overlay.apply(test3_left(), test3_right()))
+
++++
+
+test1:
+  key2:
+    key2d:
+      key2da: val2ca
+    key2a: val2a
+    key2b: val2b
+    key2c:
+      key2ca: val2ca
+---
+test2:
+  key2:
+  - name: val1
+  - name: val2
+  - name: val3
+  - name: val4
+  - name: val5
+---
+key2:
+- name: val1
+- name: val3

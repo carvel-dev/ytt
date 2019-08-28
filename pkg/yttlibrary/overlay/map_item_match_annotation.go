@@ -14,7 +14,10 @@ type MapItemMatchAnnotation struct {
 	expects MatchAnnotationExpectsKwarg
 }
 
-func NewMapItemMatchAnnotation(newItem *yamlmeta.MapItem, thread *starlark.Thread) (MapItemMatchAnnotation, error) {
+func NewMapItemMatchAnnotation(newItem *yamlmeta.MapItem,
+	defaults MatchChildDefaultsAnnotation,
+	thread *starlark.Thread) (MapItemMatchAnnotation, error) {
+
 	annotation := MapItemMatchAnnotation{
 		newItem: newItem,
 		expects: MatchAnnotationExpectsKwarg{thread: thread},
@@ -33,6 +36,8 @@ func NewMapItemMatchAnnotation(newItem *yamlmeta.MapItem, thread *starlark.Threa
 				"Unknown '%s' annotation keyword argument '%s'", AnnotationMatch, kwargName)
 		}
 	}
+
+	annotation.expects.FillInDefaults(defaults)
 
 	return annotation, nil
 }

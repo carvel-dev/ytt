@@ -4,8 +4,15 @@ import (
 	"github.com/k14s/ytt/pkg/yamlmeta"
 )
 
-func (o OverlayOp) mergeMapItem(leftMap *yamlmeta.Map, newItem *yamlmeta.MapItem) error {
-	ann, err := NewMapItemMatchAnnotation(newItem, o.Thread)
+func (o OverlayOp) mergeMapItem(leftMap *yamlmeta.Map, newItem *yamlmeta.MapItem,
+	parentMatchChildDefaults MatchChildDefaultsAnnotation) error {
+
+	matchChildDefaults, err := NewMatchChildDefaultsAnnotation(newItem, parentMatchChildDefaults)
+	if err != nil {
+		return err
+	}
+
+	ann, err := NewMapItemMatchAnnotation(newItem, parentMatchChildDefaults, o.Thread)
 	if err != nil {
 		return err
 	}
@@ -21,7 +28,7 @@ func (o OverlayOp) mergeMapItem(leftMap *yamlmeta.Map, newItem *yamlmeta.MapItem
 		return nil
 	}
 
-	replace, err := o.apply(leftMap.Items[leftIdx].Value, newItem.Value)
+	replace, err := o.apply(leftMap.Items[leftIdx].Value, newItem.Value, matchChildDefaults)
 	if err != nil {
 		return err
 	}
@@ -32,8 +39,10 @@ func (o OverlayOp) mergeMapItem(leftMap *yamlmeta.Map, newItem *yamlmeta.MapItem
 	return nil
 }
 
-func (o OverlayOp) removeMapItem(leftMap *yamlmeta.Map, newItem *yamlmeta.MapItem) error {
-	ann, err := NewMapItemMatchAnnotation(newItem, o.Thread)
+func (o OverlayOp) removeMapItem(leftMap *yamlmeta.Map, newItem *yamlmeta.MapItem,
+	parentMatchChildDefaults MatchChildDefaultsAnnotation) error {
+
+	ann, err := NewMapItemMatchAnnotation(newItem, parentMatchChildDefaults, o.Thread)
 	if err != nil {
 		return err
 	}
@@ -50,8 +59,10 @@ func (o OverlayOp) removeMapItem(leftMap *yamlmeta.Map, newItem *yamlmeta.MapIte
 	return nil
 }
 
-func (o OverlayOp) replaceMapItem(leftMap *yamlmeta.Map, newItem *yamlmeta.MapItem) error {
-	ann, err := NewMapItemMatchAnnotation(newItem, o.Thread)
+func (o OverlayOp) replaceMapItem(leftMap *yamlmeta.Map, newItem *yamlmeta.MapItem,
+	parentMatchChildDefaults MatchChildDefaultsAnnotation) error {
+
+	ann, err := NewMapItemMatchAnnotation(newItem, parentMatchChildDefaults, o.Thread)
 	if err != nil {
 		return err
 	}

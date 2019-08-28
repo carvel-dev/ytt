@@ -17,7 +17,8 @@ const (
 	AnnotationInsert  structmeta.AnnotationName = "overlay/insert" // array only
 	AnnotationAppend  structmeta.AnnotationName = "overlay/append" // array only
 
-	AnnotationMatch structmeta.AnnotationName = "overlay/match"
+	AnnotationMatch              structmeta.AnnotationName = "overlay/match"
+	AnnotationMatchChildDefaults structmeta.AnnotationName = "overlay/match-child-defaults"
 )
 
 var (
