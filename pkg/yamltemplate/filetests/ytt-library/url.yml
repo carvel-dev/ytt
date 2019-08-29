@@ -1,0 +1,45 @@
+#@ load("@ytt:url", "url")
+
+path_segment:
+  test1: #@ url.path_segment_encode("path path/other")
+  test2: #@ url.path_segment_decode("path%20path%2Fother")
+  test3: #@ url.path_segment_encode("")
+  test4: #@ url.path_segment_decode("")
+
+query_param_value:
+  test1: #@ url.query_param_value_encode("val val/other")
+  test2: #@ url.query_param_value_decode("val+val%2Fother")
+  test3: #@ url.query_param_value_encode("")
+  test4: #@ url.query_param_value_decode("")
+
+query_params:
+  #! keys are sorted
+  test1: #@ url.query_params_encode({"y":["2","3"],"x":["1"],"z":[""],"w":[]})
+  test2: #@ url.query_params_decode("y=2&x=1&y=3;z")
+  test3: #@ url.query_params_encode({"w":[]})
+  test4: #@ url.query_params_decode("")
+
++++
+
+path_segment:
+  test1: path%20path%2Fother
+  test2: path path/other
+  test3: ""
+  test4: ""
+query_param_value:
+  test1: val+val%2Fother
+  test2: val val/other
+  test3: ""
+  test4: ""
+query_params:
+  test1: x=1&y=2&y=3&z=
+  test2:
+    x:
+    - "1"
+    "y":
+    - "2"
+    - "3"
+    z:
+    - ""
+  test3: ""
+  test4: {}

@@ -24,6 +24,7 @@ func NewAPI(replaceNodeFunc tplcore.StarlarkFunc, values interface{},
 		"@ytt:base64": Base64API,
 		"@ytt:json":   JSONAPI,
 		"@ytt:yaml":   YAMLAPI,
+		"@ytt:url":    URLAPI,
 
 		// Templating
 		"@ytt:template": NewTemplateModule(replaceNodeFunc).AsModule(),
