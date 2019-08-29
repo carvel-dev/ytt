@@ -96,7 +96,7 @@ func TestYAMLTemplate(t *testing.T) {
 	}
 
 	if len(errs) > 0 {
-		t.Errorf(errs[0].Error())
+		t.Errorf("%s", errs[0].Error())
 	}
 
 	if len(selectedFileTestPath) > 0 {
