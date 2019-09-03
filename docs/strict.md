@@ -10,6 +10,7 @@ Unlike full YAML, strict subset:
   - prefix, suffix, octal notation, etc are not supported
 - requires strings with whitespace to be explicitly quoted
 - requires strings with colon to be explicitly quoted
+- requires strings with triple-dash (document start) to be explicitly quoted
 
 ### Example
 
