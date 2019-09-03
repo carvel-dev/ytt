@@ -83,6 +83,11 @@ func strictScalarResolveConservative(in string) (string, interface{}) {
 			failf("Strict parsing: Strings with colon must be explicitly quoted: '%s'", in)
 			panic("Unreachable")
 
+		// Catch missing new line before document start
+		case strings.Contains(in, "---"):
+			failf("Strict parsing: Strings with triple-dash must be explicitly quoted: '%s'", in)
+			panic("Unreachable")
+
 		default:
 			return yaml_STR_TAG, in
 		}

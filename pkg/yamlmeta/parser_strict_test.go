@@ -69,6 +69,14 @@ func TestParserStrict(t *testing.T) {
 			Data:        "!!int 0b0010",
 			ExpectedVal: 2,
 		},
+		{Description: "ambigious document start",
+			Data:        "---key: value",
+			ExpectedErr: "yaml: Strict parsing: Strings with triple-dash must be explicitly quoted: '---key'",
+		},
+		{Description: "ambigious document start middle",
+			Data:        "prevval---key: value",
+			ExpectedErr: "yaml: Strict parsing: Strings with triple-dash must be explicitly quoted: 'prevval---key'",
+		},
 	}.Check(t)
 }
 
