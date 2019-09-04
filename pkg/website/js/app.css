@@ -256,11 +256,14 @@ body {
   background: none;
 }
 .content-wrapper .terminal {
-  border: 1px dashed #333;
+  border-radius: 0;
+  border-width: 0;
+  border-left: 3px solid #333;
+  padding-left: 15px;
   font-size: 100%;
   color: #ccc;
 }
-.content-wrapper .hero { border-bottom: 1px solid #333; }
+.content-wrapper .hero { border-width: 0; }
 .content-wrapper #features { border-width: 0; }
 .content-wrapper #features .highlight {
   background: #333;
