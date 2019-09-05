@@ -1,5 +1,13 @@
 ### Load Statement
 
+#### Terminology
+
+- `module`: single file; can export variables, functions, or be templated => some type of result e.g. yaml structure, or string, or None)
+- `package`: single directory; contains modules
+- `library`: collection of packages
+
+#### Usage
+
 Load statement allows to load functions from other modules (such as ones from (builtin `ytt` library](lang-ref-ytt.md)).
 
 - [load](https://github.com/google/starlark-go/blob/master/doc/spec.md#load-statements)
@@ -24,6 +32,10 @@ load("@project:dir/helpers.lib.txt", "func1")  # load func1 from a project locat
       - examples: `module.lib.yml`
 1. one or more symbols to import with optional aliases
     - examples: `func1`, `func1="as_func1"`
+
+At the moment file can only load files from current or child directories.
+
+Note that _currently_ there is no distinction between using `load("@project:dir/helpers.lib.txt", "func1")` or `load("@project/dir:helpers.lib.txt", "func1")`; however, it's recommended to use `:` at the boundary of what is considered a library by us, humans (e.g. a single GitHub project). In future releases ytt may rely on this information to understand where the root of the library to be able to load modules from sibling packages.
 
 #### Files
 
