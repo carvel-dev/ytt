@@ -1,5 +1,11 @@
 ## ytt @data/values
 
+- [Defining data values]()
+- [Splitting data values into multiple files]()
+- [Overriding data values via command line flags]()
+
+### Defining data values
+
 One way to inject input data into templates is to include a YAML document annotated with `@data/values`. Example:
 
 ```yaml
@@ -82,7 +88,7 @@ fifth: new-val5
 
 See [Multiple data values example](https://get-ytt.io/#example:example-multiple-data-values) in the online playground.
 
-### Specifying data values via command line flags
+### Overriding data values via command line flags
 
 (As of v0.17.0+ `--data-value` parses value as string by default. Use `--data-value-yaml` to get previous behaviour.)
 
@@ -102,6 +108,8 @@ ytt CLI allows to override input data via several CLI flags:
 - `--data-values-env-yaml` (format: `DVAL`) same as `--data-values-env` but parses values as YAML
 
 These flags can be repeated multiple times and used together. Flag values are merged into data values last.
+
+Note that for override to work data values must be defined in at least one `@data/values` YAML document.
 
 ```bash
 export STR_VALS_key6=true # will be string 'true'
