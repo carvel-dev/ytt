@@ -1,8 +1,8 @@
 ## ytt @data/values
 
-- [Defining data values]()
-- [Splitting data values into multiple files]()
-- [Overriding data values via command line flags]()
+- [Defining data values](#defining-data-values)
+- [Splitting data values into multiple files](#splitting-data-values-into-multiple-files)
+- [Overriding data values via command line flags](#overriding-data-values-via-command-line-flags)
 
 ### Defining data values
 
