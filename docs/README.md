@@ -15,6 +15,7 @@
   - [Text templating](ytt-text-templating.md) describes how to deal with complex text templating
   - [Starlark specification](https://github.com/google/starlark-go/blob/master/doc/spec.md#contents) from google/starlark-go repo
 - [Injecting secrets](injecting-secrets.md)
+- [Outputs](outputs.md)
 - [Security](security.md)
 - [FAQ](faq.md)
 - [ytt vs X: How ytt is different from other tools / frameworks](ytt-vs-x.md)
