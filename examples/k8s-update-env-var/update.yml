@@ -1,0 +1,14 @@
+#@ load("@ytt:overlay", "overlay")
+
+#@overlay/match by=overlay.subset({"kind": "Deployment", "metadata": {"name": "strimzi-topic-operator"}})
+---
+spec:
+  template:
+    spec:
+      containers:
+      #@overlay/match by="name"
+      - name: app
+        env:
+        #@overlay/match by="name"
+        - name: STRIMZI_KAFKA_BOOTSTRAP_SERVERS
+          value: NEW-my-cluster-kafka-bootstrap:9092

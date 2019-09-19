@@ -35,6 +35,7 @@ diff <(./ytt -f examples/k8s-adjust-rbac-version)     examples/k8s-adjust-rbac-v
 diff <(./ytt -f examples/k8s-docker-secret)           examples/k8s-docker-secret/expected.txt
 diff <(./ytt -f examples/k8s-relative-rolling-update) examples/k8s-relative-rolling-update/expected.txt
 diff <(./ytt -f examples/k8s-config-map-files)        examples/k8s-config-map-files/expected.txt
+diff <(./ytt -f examples/k8s-update-env-var)          examples/k8s-update-env-var/expected.txt
 diff <(./ytt -f examples/concourse-overlay)           examples/concourse-overlay/expected.txt
 
 # test json output
