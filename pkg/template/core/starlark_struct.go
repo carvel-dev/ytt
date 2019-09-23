@@ -22,8 +22,11 @@ func (s *StarlarkStruct) Hash() (uint32, error) { return 0, fmt.Errorf("unhashab
 
 // returns (nil, nil) if attribute not present
 func (s *StarlarkStruct) Attr(name string) (starlark.Value, error) {
-	val, _ := s.data.Get(name)
-	return val.(starlark.Value), nil
+	val, found := s.data.Get(name)
+	if found {
+		return val.(starlark.Value), nil
+	}
+	return nil, nil
 }
 
 // callers must not modify the result.

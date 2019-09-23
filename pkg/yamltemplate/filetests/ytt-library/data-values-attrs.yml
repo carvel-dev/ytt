@@ -1,0 +1,11 @@
+#@ load("@ytt:data", "data")
+
+test1: #@ hasattr(data.values, "int")
+test1a: #@ getattr(data.values, "int")
+test2: #@ hasattr(data.values, "int-not-here")
+
++++
+
+test1: true
+test1a: 123
+test2: false
