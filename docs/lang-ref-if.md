@@ -9,6 +9,14 @@ test2: 124
 #@ end
 ```
 
+- if (negative)
+
+```yaml
+#@ if not True:
+test1: 123
+#@ end
+```
+
 - single-node if
 
 ```yaml
