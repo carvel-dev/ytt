@@ -24,12 +24,13 @@
 
 - [ytt: The YAML Templating Tool that simplifies complex configuration management](https://developer.ibm.com/blogs/yaml-templating-tool-to-simplify-complex-configuration-management/)
 - [Introducing k14s (Kubernetes Tools): Simple and Composable Tools for Application Deployment](https://content.pivotal.io/blog/introducing-k14s-kubernetes-tools-simple-and-composable-tools-for-application-deployment)
-- [Helm Summit 2019 - ytt (slides)](https://github.com/k14s/meetups/blob/master/ytt-2019-sep-helm-summit.pdf)
 
 ### Talks
 
 - [Introducing the YAML Templating Tool (ytt)](https://www.youtube.com/watch?v=KbB5tI_g3bo) on IBM Developer podcast
 - [TGI Kubernetes 079: YTT and Kapp](https://www.youtube.com/watch?v=CSglwNTQiYg) with Joe Beda
+- [Helm Summit 2019 - ytt: An Alternative to Text Templating of YAML Configuration](https://www.youtube.com/watch?v=7-PqgpkxC7E)
+  - [presentation slides](https://github.com/k14s/meetups/blob/master/ytt-2019-sep-helm-summit.pdf)
 
 ### Misc
 
