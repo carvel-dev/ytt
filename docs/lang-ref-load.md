@@ -37,21 +37,6 @@ At the moment file can only load files from current or child directories.
 
 Note that _currently_ there is no distinction between using `load("@project:dir/helpers.lib.txt", "func1")` or `load("@project/dir:helpers.lib.txt", "func1")`; however, it's recommended to use `:` at the boundary of what is considered a library by us, humans (e.g. a single GitHub project). In future releases ytt may rely on this information to understand where the root of the library to be able to load modules from sibling packages.
 
-#### Files
-
-To make files available to `load` statement they have to be given to ytt CLI via `--file` (-f) flag.
-
-For example given following directory structure:
-
-```
-app1.yml
-helpers.lib.yml
-_ytt_lib/apps/apps.lib.yml
-```
-
-- `ytt -f .` will make it possible for `app1.yml` to load `helpers.lib.yml` and `@apps:apps.lib.yml`
-- equivalently, `ytt -f app1.yml -f helpers.lib.yml -f _ytt_lib/apps/apps.lib.yml` will also make above possible
-
 #### _ytt_lib directory
 
 `_ytt_lib` directory allows to keep private dependencies from consumers of libraries.
@@ -69,6 +54,31 @@ _ytt_lib/big-corp/_ytt_lib/big-corp/common/services.lib.yml
 - `app1.yml` _cannot_ load `big-corp/_ytt_lib/big-corp/common/services.lib.yml` as it is a private dependency of anything inside `_ytt_lib/big-corp/` directory (e.g. `sre.lib.yml`)
 
 hence making it possible for `big-corp/sre.lib.yml` module to keep its `big-corp/common` library dependency private.
+#### Files
+
+To make files available to `load` statement they have to be given to ytt CLI via `--file` (`-f`) option. The argument of that option can be a path to either of:
+
+- a **file**: in which case the file can be loaded by its name.
+- a **directory**: in which case all the files found can be loaded by using paths relative to the directory. If the directory contains a `_ytt_lib` folder, then libraries in it can also be loaded.
+
+For example, given following directory structure:
+
+```
+app1.yml
+helpers.lib.yml
+_ytt_lib/apps/apps.lib.yml
+sub-dir/more-helpers.lib.yml
+sub-dir/_ytt_lib/weird-lib/funcs.lib.yml
+```
+
+- `ytt -f .` will make it possible for `app1.yml` to load:
+  - `helpers.lib.yml`
+  - `@apps:apps.lib.yml`
+  - `sub-dir/more-helpers.lib.yml`
+- `ytt -f helpers.lib.yml -f sub-dir -f app1.yml` will make it possible for `app1.yml` to load:
+  - `helpers.lib.yml`
+  - `more-helpers.lib.yml` (not `sub-dir/more-helpers.lib.yml`)
+  - `@weird-lib:funcs.lib.yml`
 
 #### Examples
 
