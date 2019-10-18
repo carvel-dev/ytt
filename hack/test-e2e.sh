@@ -50,4 +50,9 @@ diff <(./ytt -f pipe.yml=<(cat examples/k8s-relative-rolling-update/config.yml) 
 # test data values
 diff <(./examples/data-values/run.sh) examples/data-values/expected.txt
 
+# test data values required
+diff <(./ytt -f examples/data-values-required/inline -v version=123) examples/data-values-required/expected.txt
+diff <(./ytt -f examples/data-values-required/function -v version=123) examples/data-values-required/expected.txt
+diff <(./ytt -f examples/data-values-required/bulk -v version=123) examples/data-values-required/expected.txt
+
 echo E2E SUCCESS

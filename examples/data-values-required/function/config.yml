@@ -1,0 +1,6 @@
+#@ load("values.star", "version", "port")
+
+app_config:
+  version: #@ version()
+  ports:
+  - #@ port()

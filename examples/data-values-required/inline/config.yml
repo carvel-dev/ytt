@@ -1,0 +1,7 @@
+#@ load("@ytt:data", "data")
+#@ load("@ytt:assert", "assert")
+
+app_config:
+  version: #@ data.values.version or assert.fail("missing version")
+  ports:
+  - #@ data.values.port if data.values.port > 0 else assert.fail("port must be > 0")
