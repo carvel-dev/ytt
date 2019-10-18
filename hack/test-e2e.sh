@@ -55,4 +55,7 @@ diff <(./ytt -f examples/data-values-required/inline -v version=123) examples/da
 diff <(./ytt -f examples/data-values-required/function -v version=123) examples/data-values-required/expected.txt
 diff <(./ytt -f examples/data-values-required/bulk -v version=123) examples/data-values-required/expected.txt
 
+# test data values multiple envs
+diff <(./examples/data-values-multiple-envs/run.sh) examples/data-values-multiple-envs/expected.txt
+
 echo E2E SUCCESS

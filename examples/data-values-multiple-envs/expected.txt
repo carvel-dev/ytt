@@ -1,0 +1,19 @@
+app_config:
+  version: "123"
+  ports:
+  - 8080
+***
+app_config:
+  version: v1alpha1
+  ports:
+  - 8080
+***
+app_config:
+  version: v1beta1
+  ports:
+  - 8081
+***
+app_config:
+  version: v1
+  ports:
+  - 80
