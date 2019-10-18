@@ -1,0 +1,4 @@
+#@data/values
+---
+version: v1beta1
+port: 8081
