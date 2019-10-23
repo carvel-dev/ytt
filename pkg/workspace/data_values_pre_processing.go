@@ -3,6 +3,7 @@ package workspace
 import (
 	"fmt"
 
+	"github.com/k14s/ytt/pkg/filepos"
 	"github.com/k14s/ytt/pkg/yamlmeta"
 	"github.com/k14s/ytt/pkg/yamltemplate"
 	"github.com/k14s/ytt/pkg/yttlibrary"
@@ -80,9 +81,11 @@ func (p DataValuesPreProcessing) templateFile(fileInLib *FileInLibrary) ([]*yaml
 
 func (p DataValuesPreProcessing) overlay(valuesDoc, newValuesDoc *yamlmeta.Document) (*yamlmeta.Document, error) {
 	op := yttoverlay.OverlayOp{
-		Left:   valuesDoc.Value,
-		Right:  newValuesDoc.Value,
+		Left:   &yamlmeta.DocumentSet{Items: []*yamlmeta.Document{valuesDoc}},
+		Right:  &yamlmeta.DocumentSet{Items: []*yamlmeta.Document{newValuesDoc}},
 		Thread: &starlark.Thread{Name: "data-values-pre-processing"},
+
+		ExactMatch: true,
 	}
 
 	newLeft, err := op.Apply()
@@ -90,16 +93,16 @@ func (p DataValuesPreProcessing) overlay(valuesDoc, newValuesDoc *yamlmeta.Docum
 		return nil, err
 	}
 
-	return &yamlmeta.Document{Value: newLeft}, nil
+	return newLeft.(*yamlmeta.DocumentSet).Items[0], nil
 }
 
 func (p DataValuesPreProcessing) overlayFlags(valuesDoc *yamlmeta.Document) (*yamlmeta.Document, error) {
 	if valuesDoc == nil {
 		// TODO get rid of assumption that data values is a map?
-		valuesDoc = &yamlmeta.Document{Value: &yamlmeta.Map{}}
+		valuesDoc = &yamlmeta.Document{Value: &yamlmeta.Map{}, Position: filepos.NewUnknownPosition()}
 	}
 
-	astFlagValues := &yamlmeta.Document{Value: p.valuesFlagsAst}
+	astFlagValues := &yamlmeta.Document{Value: p.valuesFlagsAst, Position: filepos.NewUnknownPosition()}
 
 	result, err := p.overlay(valuesDoc, astFlagValues)
 	if err != nil {

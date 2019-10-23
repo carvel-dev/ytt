@@ -12,6 +12,7 @@ import (
 
 type DocumentMatchAnnotation struct {
 	newDoc *yamlmeta.Document
+	exact  bool
 	thread *starlark.Thread
 
 	matcher *starlark.Value
@@ -20,17 +21,18 @@ type DocumentMatchAnnotation struct {
 
 func NewDocumentMatchAnnotation(newDoc *yamlmeta.Document,
 	defaults MatchChildDefaultsAnnotation,
-	thread *starlark.Thread) (DocumentMatchAnnotation, error) {
+	exact bool, thread *starlark.Thread) (DocumentMatchAnnotation, error) {
 
 	annotation := DocumentMatchAnnotation{
 		newDoc:  newDoc,
+		exact:   exact,
 		thread:  thread,
 		expects: MatchAnnotationExpectsKwarg{thread: thread},
 	}
 	anns := template.NewAnnotations(newDoc)
 
 	kwargs := anns.Kwargs(AnnotationMatch)
-	if len(kwargs) == 0 {
+	if !exact && len(kwargs) == 0 {
 		return annotation, fmt.Errorf("Expected '%s' annotation to have "+
 			"at least one keyword argument (by=..., expects=...)", AnnotationMatch)
 	}
@@ -65,6 +67,13 @@ func (a DocumentMatchAnnotation) IndexTuples(leftDocSets []*yamlmeta.DocumentSet
 }
 
 func (a DocumentMatchAnnotation) MatchNodes(leftDocSets []*yamlmeta.DocumentSet) ([][]int, error) {
+	if a.exact {
+		if len(leftDocSets) != 1 && len(leftDocSets[0].Items) != 1 {
+			return nil, fmt.Errorf("Expected to find exactly one left doc when merging exactly two documents")
+		}
+		return [][]int{{0, 0}}, nil
+	}
+
 	if a.matcher == nil {
 		return nil, fmt.Errorf("Expected '%s' annotation "+
 			"keyword argument 'by'  to be specified", AnnotationMatch)

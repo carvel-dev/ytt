@@ -13,7 +13,7 @@ func (o OverlayOp) mergeDocument(
 		return err
 	}
 
-	ann, err := NewDocumentMatchAnnotation(newDoc, parentMatchChildDefaults, o.Thread)
+	ann, err := NewDocumentMatchAnnotation(newDoc, parentMatchChildDefaults, o.ExactMatch, o.Thread)
 	if err != nil {
 		return err
 	}
@@ -40,7 +40,7 @@ func (o OverlayOp) removeDocument(
 	leftDocSets []*yamlmeta.DocumentSet, newDoc *yamlmeta.Document,
 	parentMatchChildDefaults MatchChildDefaultsAnnotation) error {
 
-	ann, err := NewDocumentMatchAnnotation(newDoc, parentMatchChildDefaults, o.Thread)
+	ann, err := NewDocumentMatchAnnotation(newDoc, parentMatchChildDefaults, o.ExactMatch, o.Thread)
 	if err != nil {
 		return err
 	}
@@ -74,7 +74,7 @@ func (o OverlayOp) replaceDocument(
 	leftDocSets []*yamlmeta.DocumentSet, newDoc *yamlmeta.Document,
 	parentMatchChildDefaults MatchChildDefaultsAnnotation) error {
 
-	ann, err := NewDocumentMatchAnnotation(newDoc, parentMatchChildDefaults, o.Thread)
+	ann, err := NewDocumentMatchAnnotation(newDoc, parentMatchChildDefaults, o.ExactMatch, o.Thread)
 	if err != nil {
 		return err
 	}
@@ -106,7 +106,7 @@ func (o OverlayOp) insertDocument(
 	leftDocSets []*yamlmeta.DocumentSet, newDoc *yamlmeta.Document,
 	parentMatchChildDefaults MatchChildDefaultsAnnotation) error {
 
-	ann, err := NewDocumentMatchAnnotation(newDoc, parentMatchChildDefaults, o.Thread)
+	ann, err := NewDocumentMatchAnnotation(newDoc, parentMatchChildDefaults, o.ExactMatch, o.Thread)
 	if err != nil {
 		return err
 	}

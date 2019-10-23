@@ -14,6 +14,8 @@ type OverlayOp struct {
 	Right interface{}
 
 	Thread *starlark.Thread
+
+	ExactMatch bool
 }
 
 func (o OverlayOp) Apply() (interface{}, error) {
