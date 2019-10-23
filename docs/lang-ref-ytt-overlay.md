@@ -111,9 +111,10 @@ Annotations on the "right-side" nodes:
   - valid for both map and array items
   - removes "left-side" node ("right-side" node value is ignored)
 - `@overlay/replace` [via=Function]
-  - valid for both map and array items
+  - valid for documents, map and array items
   - replaces "left-side" node value with "right-side" node value
   - `via` (optional) keyword argument takes a function which will receive two arguments (left and right value) and expects to return single value
+    - does not currently work with non-scalar values
   - Examples:
     - `#@overlay/replace`: (default)
     - `#@overlay/replace via=lambda a,b: "prefix-"+a`: prefix value with `prefix-` string
