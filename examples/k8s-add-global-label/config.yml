@@ -1,0 +1,11 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dep1
+#! ...
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dep2
+#! ...

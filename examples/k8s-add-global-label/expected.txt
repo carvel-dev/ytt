@@ -1,0 +1,13 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dep1
+  annotations:
+    build: unknown
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dep2
+  annotations:
+    build: unknown
