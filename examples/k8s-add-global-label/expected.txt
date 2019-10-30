@@ -2,12 +2,12 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: dep1
-  annotations:
+  labels:
     build: unknown
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: dep2
-  annotations:
+  labels:
     build: unknown
