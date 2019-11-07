@@ -1,0 +1,6 @@
+#@ load("@ytt:overlay","overlay")
+#@ load("misc.star","not_matcher")
+
+#@overlay/match by=not_matcher(overlay.subset({"kind":"CustomResourceDefinition"})),expects="1+"
+#@overlay/remove
+---

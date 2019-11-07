@@ -1,0 +1,8 @@
+apiVersion: "..."
+kind: CustomResourceDefinition
+---
+apiVersion: "..."
+kind: Deployment
+---
+apiVersion: "..."
+kind: Deployment
