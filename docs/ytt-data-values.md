@@ -68,6 +68,8 @@ key4:
 key5: new-val5
 ```
 
+Note that `key4` is being removed, and `key5` is marked as `missing_ok=True` because it doesn't exist in `values-default.yml` (this is a safety feature to prevent accidental typos in keys).
+
 `config.yml`:
 
 ```yaml
@@ -78,7 +80,7 @@ third: #@ data.values.key3
 fifth: #@ data.values.key5
 ```
 
-Results in
+Running `ytt -f .` (or `ytt -f config.yml -f values-default.yml -f values-produciton.yml`) results in:
 
 ```yaml
 first: val1
