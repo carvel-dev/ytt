@@ -32,7 +32,7 @@ fourth: #@ data.values.key4
 Resulting in
 
 ```yaml
-first: val
+first: val1
 second: val2
 third: null
 fourth: null
