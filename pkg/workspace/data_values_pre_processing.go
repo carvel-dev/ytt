@@ -19,6 +19,11 @@ type DataValuesPreProcessing struct {
 }
 
 func (o DataValuesPreProcessing) Apply() (interface{}, error) {
+	if o.valuesFlagsAst == nil {
+		// TODO should we allow this case at all?
+		panic("Expected valuesFlagsAst to be non-nil")
+	}
+
 	var values *yamlmeta.Document
 
 	// Respect assigned file order for data values overlaying to succeed

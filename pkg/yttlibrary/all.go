@@ -10,7 +10,7 @@ import (
 type API map[string]starlark.StringDict
 
 func NewAPI(replaceNodeFunc tplcore.StarlarkFunc, values interface{},
-	loader template.CompiledTemplateLoader) API {
+	loader template.CompiledTemplateLoader, libraryMod starlark.StringDict) API {
 
 	return map[string]starlark.StringDict{
 		"@ytt:assert": AssertAPI,
@@ -34,5 +34,7 @@ func NewAPI(replaceNodeFunc tplcore.StarlarkFunc, values interface{},
 		"@ytt:struct":  StructAPI,
 		"@ytt:module":  ModuleAPI,
 		"@ytt:overlay": overlay.API,
+
+		"@ytt:library": libraryMod,
 	}
 }

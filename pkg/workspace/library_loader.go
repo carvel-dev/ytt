@@ -13,6 +13,7 @@ type LibraryLoader struct {
 	library            *Library
 	ui                 files.UI
 	templateLoaderOpts TemplateLoaderOpts
+	libraryExecFactory *LibraryExecutionFactory
 }
 
 type EvalResult struct {
@@ -22,16 +23,19 @@ type EvalResult struct {
 
 type EvalValuesAst interface{}
 
-func NewLibraryLoader(lib *Library, ui files.UI, templateLoaderOpts TemplateLoaderOpts) *LibraryLoader {
+func NewLibraryLoader(library *Library, ui files.UI, templateLoaderOpts TemplateLoaderOpts,
+	libraryExecFactory *LibraryExecutionFactory) *LibraryLoader {
+
 	return &LibraryLoader{
-		library:            lib,
+		library:            library,
 		ui:                 ui,
 		templateLoaderOpts: templateLoaderOpts,
+		libraryExecFactory: libraryExecFactory,
 	}
 }
 
 func (ll *LibraryLoader) Values(valuesFlagsAst EvalValuesAst) (EvalValuesAst, error) {
-	loader := NewTemplateLoader(nil, ll.ui, ll.templateLoaderOpts)
+	loader := NewTemplateLoader(nil, ll.ui, ll.templateLoaderOpts, ll.libraryExecFactory)
 
 	valuesFiles, err := ll.valuesFiles(loader)
 	if err != nil {
@@ -113,7 +117,7 @@ func (ll *LibraryLoader) Eval(values EvalValuesAst) (*EvalResult, error) {
 }
 
 func (ll *LibraryLoader) eval(values EvalValuesAst) (map[*FileInLibrary]*yamlmeta.DocumentSet, []files.OutputFile, error) {
-	loader := NewTemplateLoader(values, ll.ui, ll.templateLoaderOpts)
+	loader := NewTemplateLoader(values, ll.ui, ll.templateLoaderOpts, ll.libraryExecFactory)
 
 	docSets := map[*FileInLibrary]*yamlmeta.DocumentSet{}
 	outputFiles := []files.OutputFile{}

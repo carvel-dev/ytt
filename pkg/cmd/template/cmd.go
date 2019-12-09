@@ -103,12 +103,14 @@ func (o *TemplateOptions) RunWithFiles(in TemplateInput, ui cmdcore.PlainUI) Tem
 		return TemplateOutput{Err: err}
 	}
 
-	astValues := yamlmeta.NewASTFromInterface(values)
-
-	libraryLoader := workspace.NewLibraryLoader(rootLibrary, ui, workspace.TemplateLoaderOpts{
+	libraryExecutionFactory := workspace.NewLibraryExecutionFactory(ui, workspace.TemplateLoaderOpts{
 		IgnoreUnknownComments: o.IgnoreUnknownComments,
 		StrictYAML:            o.StrictYAML,
 	})
+
+	libraryLoader := libraryExecutionFactory.New(rootLibrary)
+
+	astValues := yamlmeta.NewASTFromInterface(values)
 
 	astValues, err = libraryLoader.Values(astValues)
 	if err != nil {
