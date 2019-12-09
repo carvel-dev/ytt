@@ -1,0 +1,5 @@
+#@ load("@ytt:data", "data")
+
+---
+app_msg: #@ data.values.msg
+app_msg2: #@ data.values.msg2

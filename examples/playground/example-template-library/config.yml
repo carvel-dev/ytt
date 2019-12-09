@@ -1,0 +1,8 @@
+#@ load("@ytt:template", "template")
+#@ load("@ytt:library", "library")
+#@ load("@ytt:data", "data")
+
+--- #@ template.replace(library.get("app").result())
+
+---
+config_msg: #@ data.values.msg

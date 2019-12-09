@@ -36,6 +36,7 @@ examples = [
   {"name": "example-load"},
   {"name": "example-load-ytt-library"},
   {"name": "example-load-custom-library"},
+  {"name": "example-template-library"},
   {"name": "example-assert"},
   {"name": "example-load-data-values"},
   {"name": "example-load-data-files"},
