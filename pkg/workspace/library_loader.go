@@ -34,7 +34,7 @@ func NewLibraryLoader(library *Library, ui files.UI, templateLoaderOpts Template
 	}
 }
 
-func (ll *LibraryLoader) Values(valuesFlagsAst EvalValuesAst) (EvalValuesAst, error) {
+func (ll *LibraryLoader) Values(valuesAsts []EvalValuesAst) (EvalValuesAst, error) {
 	loader := NewTemplateLoader(nil, ll.ui, ll.templateLoaderOpts, ll.libraryExecFactory)
 
 	valuesFiles, err := ll.valuesFiles(loader)
@@ -44,7 +44,7 @@ func (ll *LibraryLoader) Values(valuesFlagsAst EvalValuesAst) (EvalValuesAst, er
 
 	dvpp := DataValuesPreProcessing{
 		valuesFiles:           valuesFiles,
-		valuesFlagsAst:        valuesFlagsAst,
+		valuesAsts:            valuesAsts,
 		loader:                loader,
 		IgnoreUnknownComments: ll.templateLoaderOpts.IgnoreUnknownComments,
 	}

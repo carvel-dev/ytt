@@ -13,17 +13,12 @@ import (
 
 type DataValuesPreProcessing struct {
 	valuesFiles           []*FileInLibrary
-	valuesFlagsAst        interface{}
+	valuesAsts            []EvalValuesAst
 	loader                *TemplateLoader
 	IgnoreUnknownComments bool // TODO remove?
 }
 
 func (o DataValuesPreProcessing) Apply() (interface{}, error) {
-	if o.valuesFlagsAst == nil {
-		// TODO should we allow this case at all?
-		panic("Expected valuesFlagsAst to be non-nil")
-	}
-
 	var values *yamlmeta.Document
 
 	// Respect assigned file order for data values overlaying to succeed
@@ -49,12 +44,12 @@ func (o DataValuesPreProcessing) Apply() (interface{}, error) {
 		}
 	}
 
-	valuesWithFlags, err := o.overlayFlags(values)
+	finalValues, err := o.overlayAsts(values)
 	if err != nil {
 		return nil, err
 	}
 
-	return valuesWithFlags.AsInterface(), nil
+	return finalValues.AsInterface(), nil
 }
 
 func (p DataValuesPreProcessing) templateFile(fileInLib *FileInLibrary) ([]*yamlmeta.Document, error) {
@@ -101,17 +96,34 @@ func (p DataValuesPreProcessing) overlay(valuesDoc, newValuesDoc *yamlmeta.Docum
 	return newLeft.(*yamlmeta.DocumentSet).Items[0], nil
 }
 
-func (p DataValuesPreProcessing) overlayFlags(valuesDoc *yamlmeta.Document) (*yamlmeta.Document, error) {
+func (p DataValuesPreProcessing) overlayAsts(valuesDoc *yamlmeta.Document) (*yamlmeta.Document, error) {
 	if valuesDoc == nil {
 		// TODO get rid of assumption that data values is a map?
-		valuesDoc = &yamlmeta.Document{Value: &yamlmeta.Map{}, Position: filepos.NewUnknownPosition()}
+		valuesDoc = &yamlmeta.Document{
+			Value:    &yamlmeta.Map{},
+			Position: filepos.NewUnknownPosition(),
+		}
 	}
 
-	astFlagValues := &yamlmeta.Document{Value: p.valuesFlagsAst, Position: filepos.NewUnknownPosition()}
+	var result *yamlmeta.Document
 
-	result, err := p.overlay(valuesDoc, astFlagValues)
-	if err != nil {
-		return nil, fmt.Errorf("Overlaying data values from flags (provided via --data-value-*) on top of data values from files (marked as @data/values): %s", err)
+	// by default return itself
+	result = valuesDoc
+
+	for _, valuesAst := range p.valuesAsts {
+		var err error
+
+		astFlagValues := &yamlmeta.Document{
+			Value:    valuesAst,
+			Position: filepos.NewUnknownPosition(),
+		}
+
+		result, err = p.overlay(result, astFlagValues)
+		if err != nil {
+			// TODO improve error message?
+			return nil, fmt.Errorf("Overlaying additional data values on top of "+
+				"data values from files (marked as @data/values): %s", err)
+		}
 	}
 
 	return result, nil

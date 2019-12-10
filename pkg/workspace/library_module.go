@@ -3,7 +3,6 @@ package workspace
 import (
 	"fmt"
 
-	"github.com/k14s/ytt/pkg/orderedmap"
 	"github.com/k14s/ytt/pkg/template/core"
 	"github.com/k14s/ytt/pkg/yamlmeta"
 	"github.com/k14s/ytt/pkg/yamltemplate"
@@ -48,11 +47,12 @@ func (l LibraryModule) Get(thread *starlark.Thread, f *starlark.Builtin,
 		return starlark.None, err
 	}
 
-	return (&libraryValue{foundLib, l.libraryExecutionFactory}).AsStarlarkValue(), nil
+	return (&libraryValue{foundLib, nil, l.libraryExecutionFactory}).AsStarlarkValue(), nil
 }
 
 type libraryValue struct {
 	library                 *Library
+	dataValuess             []EvalValuesAst
 	libraryExecutionFactory *LibraryExecutionFactory
 }
 
@@ -71,17 +71,29 @@ func (l *libraryValue) AsStarlarkValue() starlark.Value {
 func (l *libraryValue) WithDataValues(thread *starlark.Thread, f *starlark.Builtin,
 	args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
 
-	panic("TODO")
+	if args.Len() != 1 {
+		return starlark.None, fmt.Errorf("expected exactly one argument")
+	}
 
-	return nil, nil
+	dataValues := core.NewStarlarkValue(args.Index(0)).AsInterface()
+
+	libVal := &libraryValue{l.library, nil, l.libraryExecutionFactory}
+	libVal.dataValuess = append([]EvalValuesAst{}, l.dataValuess...)
+	libVal.dataValuess = append(libVal.dataValuess, yamlmeta.NewASTFromInterface(dataValues))
+
+	return libVal.AsStarlarkValue(), nil
 }
 
 func (l *libraryValue) Result(thread *starlark.Thread, f *starlark.Builtin,
 	args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
 
+	if args.Len() != 0 {
+		return starlark.None, fmt.Errorf("expected no arguments")
+	}
+
 	libraryLoader := l.libraryExecutionFactory.New(l.library)
 
-	astValues, err := libraryLoader.Values(yamlmeta.NewASTFromInterface(orderedmap.NewMap()))
+	astValues, err := libraryLoader.Values(l.dataValuess)
 	if err != nil {
 		return starlark.None, err
 	}

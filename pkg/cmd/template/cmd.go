@@ -112,7 +112,7 @@ func (o *TemplateOptions) RunWithFiles(in TemplateInput, ui cmdcore.PlainUI) Tem
 
 	astValues := yamlmeta.NewASTFromInterface(values)
 
-	astValues, err = libraryLoader.Values(astValues)
+	astValues, err = libraryLoader.Values([]workspace.EvalValuesAst{astValues})
 	if err != nil {
 		return TemplateOutput{Err: err}
 	}
