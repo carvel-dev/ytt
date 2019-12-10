@@ -5,4 +5,18 @@
 --- #@ template.replace(library.get("app").result())
 
 ---
+#@ def additional_vals():
+#@overlay/match missing_ok=True
+msg3: app5
+#@ end
+
+#@ app = library.get("app")
+#@ app = app.with_data_values({"msg2": "app3"})
+#@ app = app.with_data_values({"msg": "app4"})
+#@ app2 = app.with_data_values(additional_vals())
+
+--- #@ template.replace(app.result())
+--- #@ template.replace(app2.result())
+
+---
 config_msg: #@ data.values.msg
