@@ -18,5 +18,7 @@ msg3: app5
 --- #@ template.replace(app.result())
 --- #@ template.replace(app2.result())
 
+--- #@ app.export("msgs")()
+
 ---
 config_msg: #@ data.values.msg

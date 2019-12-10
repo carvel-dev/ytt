@@ -1,0 +1,7 @@
+#@ load("@ytt:data", "data")
+
+#@ def msgs():
+app_msg: #@ data.values.msg
+app_msg2: #@ data.values.msg2
+app_msgs: #@ data.values
+#@ end
