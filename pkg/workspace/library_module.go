@@ -110,17 +110,14 @@ func (l *libraryValue) Result(thread *starlark.Thread, f *starlark.Builtin,
 func (l *libraryValue) Export(thread *starlark.Thread, f *starlark.Builtin,
 	args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
 
-	if args.Len() != 1 {
-		return starlark.None, fmt.Errorf("expected exactly one argument")
-	}
-
-	symbolName, err := core.NewStarlarkValue(args.Index(0)).AsString()
+	symbolName, locationPath, err := l.exportArgs(args, kwargs)
 	if err != nil {
 		return starlark.None, err
 	}
 
 	if strings.HasPrefix(symbolName, "_") {
-		return starlark.None, fmt.Errorf("Symbols starting with '_' are private, and cannot be exported")
+		return starlark.None, fmt.Errorf(
+			"Symbols starting with '_' are private, and cannot be exported")
 	}
 
 	libraryLoader := l.libraryExecutionFactory.New(l.library)
@@ -139,13 +136,16 @@ func (l *libraryValue) Export(thread *starlark.Thread, f *starlark.Builtin,
 
 	for _, exp := range result.Exports {
 		if _, found := exp.Symbols[symbolName]; found {
-			foundExports = append(foundExports, exp)
+			if len(locationPath) == 0 || locationPath == exp.Path {
+				foundExports = append(foundExports, exp)
+			}
 		}
 	}
 
 	switch len(foundExports) {
 	case 0:
-		return starlark.None, fmt.Errorf("Expected to find exported symbol '%s', but did not", symbolName)
+		return starlark.None, fmt.Errorf(
+			"Expected to find exported symbol '%s', but did not", symbolName)
 
 	case 1:
 		return foundExports[0].Symbols[symbolName], nil
@@ -155,7 +155,40 @@ func (l *libraryValue) Export(thread *starlark.Thread, f *starlark.Builtin,
 		for _, exp := range foundExports {
 			paths = append(paths, exp.Path)
 		}
-		return starlark.None, fmt.Errorf("Expected to find exactly one exported "+
-			"symbol '%s', but found multiple across files: %s", symbolName, strings.Join(paths, ", "))
+
+		return starlark.None, fmt.Errorf("Expected to find exactly "+
+			"one exported symbol '%s', but found multiple across files: %s",
+			symbolName, strings.Join(paths, ", "))
 	}
+}
+
+func (l *libraryValue) exportArgs(args starlark.Tuple, kwargs []starlark.Tuple) (string, string, error) {
+	if args.Len() != 1 {
+		return "", "", fmt.Errorf("expected exactly one argument")
+	}
+
+	symbolName, err := core.NewStarlarkValue(args.Index(0)).AsString()
+	if err != nil {
+		return "", "", err
+	}
+
+	var locationPath string
+
+	for _, kwarg := range kwargs {
+		kwargName := string(kwarg[0].(starlark.String))
+
+		switch kwargName {
+		case "path":
+			var err error
+			locationPath, err = core.NewStarlarkValue(kwarg[1]).AsString()
+			if err != nil {
+				return "", "", err
+			}
+
+		default:
+			return "", "", fmt.Errorf("Unexpected keyword argument '%s'", kwargName)
+		}
+	}
+
+	return symbolName, locationPath, nil
 }
