@@ -2,6 +2,7 @@ package workspace
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/k14s/ytt/pkg/template/core"
 	"github.com/k14s/ytt/pkg/yamlmeta"
@@ -63,7 +64,7 @@ func (l *libraryValue) AsStarlarkValue() starlark.Value {
 		Members: starlark.StringDict{
 			"with_data_values": starlark.NewBuiltin("library.with_data_values", core.ErrWrapper(l.WithDataValues)),
 			"result":           starlark.NewBuiltin("library.result", core.ErrWrapper(l.Result)),
-			"defs":             starlark.NewBuiltin("library.defs", core.ErrWrapper(l.Defs)),
+			"export":           starlark.NewBuiltin("library.export", core.ErrWrapper(l.Export)),
 		},
 	}
 }
@@ -106,10 +107,55 @@ func (l *libraryValue) Result(thread *starlark.Thread, f *starlark.Builtin,
 	return yamltemplate.NewStarlarkFragment(result.DocSet), nil
 }
 
-func (l *libraryValue) Defs(thread *starlark.Thread, f *starlark.Builtin,
+func (l *libraryValue) Export(thread *starlark.Thread, f *starlark.Builtin,
 	args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
 
-	panic("TODO")
+	if args.Len() != 1 {
+		return starlark.None, fmt.Errorf("expected exactly one argument")
+	}
 
-	return nil, nil
+	symbolName, err := core.NewStarlarkValue(args.Index(0)).AsString()
+	if err != nil {
+		return starlark.None, err
+	}
+
+	if strings.HasPrefix(symbolName, "_") {
+		return starlark.None, fmt.Errorf("Symbols starting with '_' are private, and cannot be exported")
+	}
+
+	libraryLoader := l.libraryExecutionFactory.New(l.library)
+
+	astValues, err := libraryLoader.Values(l.dataValuess)
+	if err != nil {
+		return starlark.None, err
+	}
+
+	result, err := libraryLoader.Eval(astValues)
+	if err != nil {
+		return starlark.None, err
+	}
+
+	foundExports := []EvalExport{}
+
+	for _, exp := range result.Exports {
+		if _, found := exp.Symbols[symbolName]; found {
+			foundExports = append(foundExports, exp)
+		}
+	}
+
+	switch len(foundExports) {
+	case 0:
+		return starlark.None, fmt.Errorf("Expected to find exported symbol '%s', but did not", symbolName)
+
+	case 1:
+		return foundExports[0].Symbols[symbolName], nil
+
+	default:
+		var paths []string
+		for _, exp := range foundExports {
+			paths = append(paths, exp.Path)
+		}
+		return starlark.None, fmt.Errorf("Expected to find exactly one exported "+
+			"symbol '%s', but found multiple across files: %s", symbolName, strings.Join(paths, ", "))
+	}
 }
