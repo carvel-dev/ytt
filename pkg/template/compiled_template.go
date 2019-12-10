@@ -114,6 +114,10 @@ func (e *CompiledTemplate) Eval(thread *starlark.Thread, loader CompiledTemplate
 		return nil, nil, NewCompiledTemplateMultiError(err, loader)
 	}
 
+	// Since load statement does not allow importing
+	// symbols starting with '_'; do not export them, i.e. consider private
+	e.hidePrivateGlobals(updatedGlobals)
+
 	return updatedGlobals, val, nil
 }
 
@@ -165,6 +169,20 @@ func (e *CompiledTemplate) eval(
 	}
 
 	return updatedGlobals, resultVal, nil
+}
+
+func (e *CompiledTemplate) hidePrivateGlobals(globals starlark.StringDict) {
+	var privateKeys []string
+
+	for k, _ := range globals {
+		if strings.HasPrefix(k, "_") {
+			privateKeys = append(privateKeys, k)
+		}
+	}
+
+	for _, k := range privateKeys {
+		delete(globals, k)
+	}
 }
 
 func (e *CompiledTemplate) newCtx(ctxType EvaluationCtxDialectName) *EvaluationCtx {
