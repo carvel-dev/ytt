@@ -65,10 +65,10 @@ type libraryValue struct {
 func (l *libraryValue) AsStarlarkValue() starlark.Value {
 	// TODO technically not a module; switch to struct?
 	return &starlarkstruct.Module{
-		Name: "library instance",
+		Name: "library",
 		Members: starlark.StringDict{
 			"with_data_values": starlark.NewBuiltin("library.with_data_values", core.ErrWrapper(l.WithDataValues)),
-			"result":           starlark.NewBuiltin("library.result", core.ErrWrapper(l.Result)),
+			"eval":             starlark.NewBuiltin("library.eval", core.ErrWrapper(l.Eval)),
 			"export":           starlark.NewBuiltin("library.export", core.ErrWrapper(l.Export)),
 		},
 	}
@@ -90,7 +90,7 @@ func (l *libraryValue) WithDataValues(thread *starlark.Thread, f *starlark.Built
 	return libVal.AsStarlarkValue(), nil
 }
 
-func (l *libraryValue) Result(thread *starlark.Thread, f *starlark.Builtin,
+func (l *libraryValue) Eval(thread *starlark.Thread, f *starlark.Builtin,
 	args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
 
 	if args.Len() != 0 {

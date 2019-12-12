@@ -12,7 +12,7 @@ func TestLibraryModule(t *testing.T) {
 	configTplData := []byte(`
 #@ load("@ytt:template", "template")
 #@ load("@ytt:library", "library")
---- #@ template.replace(library.get("lib").result())`)
+--- #@ template.replace(library.get("lib").eval())`)
 
 	libConfig1TplData := []byte(`
 lib_config_1: true`)
@@ -64,7 +64,7 @@ func TestLibraryModuleNested(t *testing.T) {
 	configTplData := []byte(`
 #@ load("@ytt:template", "template")
 #@ load("@ytt:library", "library")
---- #@ template.replace(library.get("lib").result())`)
+--- #@ template.replace(library.get("lib").eval())`)
 
 	libConfig1TplData := []byte(`
 lib_config_1: true`)
@@ -77,7 +77,7 @@ lib_config_2: true`)
 #@ load("@ytt:library", "library")
 
 lib_config_3: true
---- #@ template.replace(library.get("nested-lib").result())`)
+--- #@ template.replace(library.get("nested-lib").eval())`)
 
 	nestedLibConfigTplData := []byte(`
 lib_config_nested: true`)
@@ -136,9 +136,9 @@ str: string
 #@ lib = library.get("lib")
 #@ lib2 = lib.with_data_values({"int": 123})
 #@ lib3 = lib.with_data_values(additional_vals())
---- #@ template.replace(lib2.result())
---- #@ template.replace(lib3.result())
---- #@ template.replace(lib.result())`)
+--- #@ template.replace(lib2.eval())
+--- #@ template.replace(lib3.eval())
+--- #@ template.replace(lib.eval())`)
 
 	libValuesTplData := []byte(`
 #@data/values
