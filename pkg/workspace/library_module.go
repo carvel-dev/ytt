@@ -43,6 +43,11 @@ func (l LibraryModule) Get(thread *starlark.Thread, f *starlark.Builtin,
 		return starlark.None, err
 	}
 
+	if strings.HasPrefix(libPath, "@") {
+		return starlark.None, fmt.Errorf(
+			"Expected library '%s' to be specified without '@'", libPath)
+	}
+
 	foundLib, err := l.library.FindAccessibleLibrary(libPath)
 	if err != nil {
 		return starlark.None, err
