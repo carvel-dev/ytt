@@ -1,0 +1,35 @@
+#@ load("@ytt:data", "data")
+#@ load("@ytt:assert", "assert")
+
+#@ def labels():
+app: #@ data.values.name
+#@ end
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: #@ data.values.name
+  namespace: #@ data.values.namespace
+spec:
+  selector:
+    matchLabels: #@ labels()
+  replicas: #@ data.values.replicas
+  template:
+    metadata:
+      labels: #@ labels()
+    spec:
+      containers:
+      - name: default
+        image: #@ data.values.image
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: #@ data.values.name
+  namespace: #@ data.values.namespace
+spec:
+  ports:
+  - port: #@ data.values.port
+    protocol: TCP
+  selector: #@ labels()

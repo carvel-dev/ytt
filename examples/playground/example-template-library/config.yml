@@ -1,24 +1,53 @@
+#! RENAME '_ytt_lib1' to '_ytt_lib' below to see example succeed
+
+#! any custom library that contains templates could be
+#! used to produce its result programmatically.
+#! in this example we are using generic app library
+#! (found under _ytt_lib/app) to produce configuration
+#! for two apps: backend and frontend. frontend needs
+#! to know backend url to communicate with it.
+
 #@ load("@ytt:template", "template")
 #@ load("@ytt:library", "library")
+#@ load("@ytt:overlay", "overlay")
 #@ load("@ytt:data", "data")
 
---- #@ template.replace(library.get("app").result())
+#! build configuration for the backend app
 
----
-#@ def additional_vals():
-#@overlay/match missing_ok=True
-msg3: app5
+#@ def backend():
+name: backend
+image: user/backend
 #@ end
 
-#@ app = library.get("app")
-#@ app = app.with_data_values({"msg2": "app3"})
-#@ app = app.with_data_values({"msg": "app4"})
-#@ app2 = app.with_data_values(additional_vals())
+#@ backend = library.get("app").with_data_values(backend())
 
---- #@ template.replace(app.result())
---- #@ template.replace(app2.result())
+#@ def frontend():
+name: frontend
+image: user/frontend
+#@ end
 
---- #@ app.export("msgs")()
+#! frontend updates will be overlayed on top of
+#! frontend app configuration to inject backend url as
+#! an environment variable
 
+#@ def frontend_updates():
+#@overlay/match by=overlay.subset({"kind":"Deployment"})
 ---
-config_msg: #@ data.values.msg
+spec:
+  template:
+    spec:
+      containers:
+      #@overlay/match by="name"
+      - name: default
+        #@overlay/match missing_ok=True
+        env:
+        - name: BACKEND_URL
+          value: #@ backend.export("svc_url")()
+#@ end
+
+#! build configuration for the frontend app
+
+#@ frontend = library.get("app").with_data_values(frontend())
+
+--- #@ template.replace(backend.eval())
+--- #@ template.replace(overlay.apply(frontend.eval(), frontend_updates()))

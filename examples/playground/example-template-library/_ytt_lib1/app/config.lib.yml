@@ -1,0 +1,3 @@
+#@ load("@ytt:data", "data")
+
+#@ def svc_url(): return data.values.name+"."+data.values.namespace+".svc.cluster.local"
