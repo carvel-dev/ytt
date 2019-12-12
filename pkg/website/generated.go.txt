@@ -105,7 +105,7 @@ func init() {
       Files: []File{
         (@ for file in example["files"]: @)
         {
-          Name: "(@= file.replace(example["name"]+"/", "", 1) @)",
+          Name: "(@= file.replace(example["name"]+"/", "", 1).replace("_ytt_lib1", "_ytt_lib") @)",
           Content: `(@= golang_escape_tick(data.read(file)) @)`,
         },
         (@ end @)

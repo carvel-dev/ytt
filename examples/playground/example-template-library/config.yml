@@ -1,5 +1,3 @@
-#! RENAME '_ytt_lib1' to '_ytt_lib' below to see example succeed
-
 #! any custom library that contains templates could be
 #! used to produce its result programmatically.
 #! in this example we are using generic app library

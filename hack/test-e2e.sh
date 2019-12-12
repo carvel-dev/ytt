@@ -22,8 +22,10 @@ diff ./tmp/eirini/config-alt2.yml examples/eirini/config-result.yml
 
 # check playground examples
 for name in $(ls examples/playground/); do
-  if [ "$name" != "example-assert" ] && [ "$name" != "example-load-custom-library" ]; then
-    ./ytt -f examples/playground/${name} > /dev/null
+  if [ "$name" != "example-assert" ] && \
+    [ "$name" != "example-load-custom-library" ] && \
+    [ "$name" != "example-template-library" ]; then
+      ./ytt -f examples/playground/${name} > /dev/null
   fi
 done
 
