@@ -31,4 +31,5 @@ Templating language used in `ytt` is a slightly modified version of [Starlark](h
 ### Libraries
 
 - [@ytt Library](lang-ref-ytt.md)
-  - [@ytt:overlay Library](lang-ref-ytt-overlay.md)
+  - [@ytt:overlay module](lang-ref-ytt-overlay.md)
+  - [@ytt:library module](lang-ref-ytt-library.md)

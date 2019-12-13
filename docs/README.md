@@ -1,6 +1,6 @@
 ## Documentation
 
-- [Language](lang.md)
+- [Language](lang.md) includes description of types
   - [Strings](lang-ref-string.md)
   - [Lists](lang-ref-list.md)
   - [Dictionaries (a.k.a.: maps, hashes)](lang-ref-dict.md)
@@ -9,10 +9,10 @@
   - [Functions](lang-ref-def.md)
   - [Load statement](lang-ref-load.md)
   - [Starlark specification](https://github.com/google/starlark-go/blob/master/doc/spec.md#contents) from google/starlark-go repo
-  - [@ytt library](lang-ref-ytt.md)
+  - [@ytt library](lang-ref-ytt.md) describes builtin modules in ytt
     - [overlay module](lang-ref-ytt-overlay.md) describes how to perform configuration patching on top of plain templating
     - [library module](lang-ref-ytt-library.md) describes how to programmatically template libraries
-  - [Annotation format](lang-ref-annotation.md)
+  - [Annotation format](lang-ref-annotation.md) describes how annotations are built
     - [@data/values annotation](ytt-data-values.md) describes how to inject input into templates
   - [Text templating](ytt-text-templating.md) describes how to deal with complex text templating
 - [Injecting secrets](injecting-secrets.md)
