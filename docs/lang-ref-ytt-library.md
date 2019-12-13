@@ -41,3 +41,7 @@ env_vars:
 ```python
 url_func = app1_with_vals.export("url", path="config.lib.yml")
 ```
+
+#### Examples
+
+See [ytt-library-module example](../examples/playground/example-ytt-library-module).
