@@ -104,6 +104,7 @@ func init() {
       DisplayName: "(@= example["name"].replace("example-", "").replace("-", " ").capitalize() @)",
       Files: []File{
         (@ for file in example["files"]: @)
+        (@ if file.endswith("README.md"): @)(@ continue @)(@ end @)
         {
           Name: "(@= file.replace(example["name"]+"/", "", 1).replace("_ytt_lib1", "_ytt_lib") @)",
           Content: `(@= golang_escape_tick(data.read(file)) @)`,
