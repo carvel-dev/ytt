@@ -204,6 +204,66 @@ lib_vals:
 	}
 }
 
+func TestLibraryModuleWithDataValuesStruct(t *testing.T) {
+	valuesTplData := []byte(`
+#@data/values
+---
+int: 100
+str: string`)
+
+	configTplData := []byte(`
+#@ load("@ytt:data", "data")
+#@ load("@ytt:template", "template")
+#@ load("@ytt:library", "library")
+
+#@ lib = library.get("lib").with_data_values(data.values)
+--- #@ template.replace(lib.eval())`)
+
+	libValuesTplData := []byte(`
+#@data/values
+---
+int: 10
+str: str`)
+
+	libConfigTplData := []byte(`
+#@ load("@ytt:data", "data")
+vals: #@ data.values`)
+
+	expectedYAMLTplData := `vals:
+  int: 100
+  str: string
+`
+
+	filesToProcess := files.NewSortedFiles([]*files.File{
+		files.MustNewFileFromSource(files.NewBytesSource("values.yml", valuesTplData)),
+		files.MustNewFileFromSource(files.NewBytesSource("config.yml", configTplData)),
+		files.MustNewFileFromSource(files.NewBytesSource("_ytt_lib/lib/values.yml", libValuesTplData)),
+		files.MustNewFileFromSource(files.NewBytesSource("_ytt_lib/lib/config.yml", libConfigTplData)),
+	})
+
+	ui := cmdcore.NewPlainUI(false)
+	opts := cmdtpl.NewOptions()
+
+	out := opts.RunWithFiles(cmdtpl.TemplateInput{Files: filesToProcess}, ui)
+	if out.Err != nil {
+		t.Fatalf("Expected RunWithFiles to succeed, but was error: %s", out.Err)
+	}
+
+	if len(out.Files) != 1 {
+		t.Fatalf("Expected number of output files to be 1, but was %d", len(out.Files))
+	}
+
+	file := out.Files[0]
+
+	if file.RelativePath() != "config.yml" {
+		t.Fatalf("Expected output file to be config.yml, but was %#v", file.RelativePath())
+	}
+
+	if string(file.Bytes()) != expectedYAMLTplData {
+		t.Fatalf("Expected output file to have specific data, but was: >>>%s<<<", file.Bytes())
+	}
+}
+
 func TestLibraryModuleWithExports(t *testing.T) {
 	configTplData := []byte(`
 #@ load("@ytt:template", "template")
