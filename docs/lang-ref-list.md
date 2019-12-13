@@ -1,6 +1,11 @@
 ### Lists
 
-Copied here for convenience from [Starlark specification](https://github.com/google/starlark-go/blob/master/doc/spec.md#built-in-methods).
+```yaml
+#@ nums = [123, 374, 490]
+first: #@ nums[0]
+```
+
+Copied here for convenience from [Starlark specification](https://github.com/google/starlark-go/blob/master/doc/spec.md#listappend).
 
 - [list·append](https://github.com/google/starlark-go/blob/master/doc/spec.md#list·append) (`L.append(x)`)
 ```python

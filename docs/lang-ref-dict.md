@@ -1,6 +1,11 @@
 ### Dictionaries
 
-Copied here for convenience from [Starlark specification](https://github.com/google/starlark-go/blob/master/doc/spec.md#built-in-methods).
+```yaml
+#@ color = {"red": 123, "yellow": 100, "blue": "245"}
+red: #@ color["red"]
+```
+
+Copied here for convenience from [Starlark specification](https://github.com/google/starlark-go/blob/master/doc/spec.md#dictclear).
 
 - [dict·clear](https://github.com/google/starlark-go/blob/master/doc/spec.md#dict·clear) (`D.clear()`)
 ```python

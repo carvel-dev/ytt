@@ -1,6 +1,11 @@
 ### Strings
 
-Copied here for convenience from [Starlark specification](https://github.com/google/starlark-go/blob/master/doc/spec.md#built-in-methods).
+```yaml
+name1: #@ name + "-deployment"
+name2: #@ "{}-deployment".format("name")
+```
+
+Copied here for convenience from [Starlark specification](https://github.com/google/starlark-go/blob/master/doc/spec.md#stringelem_ords).
 
 - [string·elem_ords](https://github.com/google/starlark-go/blob/master/doc/spec.md#string·elem_ords)
 - [string·capitalize](https://github.com/google/starlark-go/blob/master/doc/spec.md#string·capitalize) (`S.capitalize()`)

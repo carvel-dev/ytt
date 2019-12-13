@@ -3,18 +3,18 @@
 - [Language](lang.md)
   - [Strings](lang-ref-string.md)
   - [Lists](lang-ref-list.md)
-  - [Dictionaries](lang-ref-dict.md)
+  - [Dictionaries (a.k.a.: maps, hashes)](lang-ref-dict.md)
   - [If conditional](lang-ref-if.md)
   - [For loop](lang-ref-for.md)
   - [Functions](lang-ref-def.md)
   - [Load statement](lang-ref-load.md)
+  - [Starlark specification](https://github.com/google/starlark-go/blob/master/doc/spec.md#contents) from google/starlark-go repo
   - [@ytt library](lang-ref-ytt.md)
     - [overlay module](lang-ref-ytt-overlay.md) describes how to perform configuration patching on top of plain templating
     - [library module](lang-ref-ytt-library.md) describes how to programmatically template libraries
   - [Annotation format](lang-ref-annotation.md)
     - [@data/values annotation](ytt-data-values.md) describes how to inject input into templates
   - [Text templating](ytt-text-templating.md) describes how to deal with complex text templating
-  - [Starlark specification](https://github.com/google/starlark-go/blob/master/doc/spec.md#contents) from google/starlark-go repo
 - [Injecting secrets](injecting-secrets.md)
 - [Outputs](outputs.md)
 - [Security](security.md)

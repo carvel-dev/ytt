@@ -1,5 +1,7 @@
 ### If conditional
 
+Refer to [Starlark if statement specification](https://github.com/google/starlark-go/blob/master/doc/spec.md#if-statements) for details.
+
 - if
 
 ```yaml
