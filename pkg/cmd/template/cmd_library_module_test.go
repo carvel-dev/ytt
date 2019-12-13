@@ -37,27 +37,7 @@ lib_config_3: true
 		files.MustNewFileFromSource(files.NewBytesSource("_ytt_lib/lib/dir/config3.yml", libConfig3TplData)),
 	})
 
-	ui := cmdcore.NewPlainUI(false)
-	opts := cmdtpl.NewOptions()
-
-	out := opts.RunWithFiles(cmdtpl.TemplateInput{Files: filesToProcess}, ui)
-	if out.Err != nil {
-		t.Fatalf("Expected RunWithFiles to succeed, but was error: %s", out.Err)
-	}
-
-	if len(out.Files) != 1 {
-		t.Fatalf("Expected number of output files to be 1, but was %d", len(out.Files))
-	}
-
-	file := out.Files[0]
-
-	if file.RelativePath() != "config.yml" {
-		t.Fatalf("Expected output file to be config.yml, but was %#v", file.RelativePath())
-	}
-
-	if string(file.Bytes()) != expectedYAMLTplData {
-		t.Fatalf("Expected output file to have specific data, but was: >>>%s<<<", file.Bytes())
-	}
+	runAndCompare(t, filesToProcess, expectedYAMLTplData)
 }
 
 func TestLibraryModuleNested(t *testing.T) {
@@ -99,27 +79,7 @@ lib_config_nested: true
 		files.MustNewFileFromSource(files.NewBytesSource("_ytt_lib/lib/dir/_ytt_lib/nested-lib/config.yml", nestedLibConfigTplData)),
 	})
 
-	ui := cmdcore.NewPlainUI(false)
-	opts := cmdtpl.NewOptions()
-
-	out := opts.RunWithFiles(cmdtpl.TemplateInput{Files: filesToProcess}, ui)
-	if out.Err != nil {
-		t.Fatalf("Expected RunWithFiles to succeed, but was error: %s", out.Err)
-	}
-
-	if len(out.Files) != 1 {
-		t.Fatalf("Expected number of output files to be 1, but was %d", len(out.Files))
-	}
-
-	file := out.Files[0]
-
-	if file.RelativePath() != "config.yml" {
-		t.Fatalf("Expected output file to be config.yml, but was %#v", file.RelativePath())
-	}
-
-	if string(file.Bytes()) != expectedYAMLTplData {
-		t.Fatalf("Expected output file to have specific data, but was: >>>%s<<<", file.Bytes())
-	}
+	runAndCompare(t, filesToProcess, expectedYAMLTplData)
 }
 
 func TestLibraryModuleWithDataValues(t *testing.T) {
@@ -181,27 +141,7 @@ lib_vals:
 		files.MustNewFileFromSource(files.NewBytesSource("_ytt_lib/lib/config2.yml", libConfig2TplData)),
 	})
 
-	ui := cmdcore.NewPlainUI(false)
-	opts := cmdtpl.NewOptions()
-
-	out := opts.RunWithFiles(cmdtpl.TemplateInput{Files: filesToProcess}, ui)
-	if out.Err != nil {
-		t.Fatalf("Expected RunWithFiles to succeed, but was error: %s", out.Err)
-	}
-
-	if len(out.Files) != 1 {
-		t.Fatalf("Expected number of output files to be 1, but was %d", len(out.Files))
-	}
-
-	file := out.Files[0]
-
-	if file.RelativePath() != "config.yml" {
-		t.Fatalf("Expected output file to be config.yml, but was %#v", file.RelativePath())
-	}
-
-	if string(file.Bytes()) != expectedYAMLTplData {
-		t.Fatalf("Expected output file to have specific data, but was: >>>%s<<<", file.Bytes())
-	}
+	runAndCompare(t, filesToProcess, expectedYAMLTplData)
 }
 
 func TestLibraryModuleWithDataValuesStruct(t *testing.T) {
@@ -241,27 +181,7 @@ vals: #@ data.values`)
 		files.MustNewFileFromSource(files.NewBytesSource("_ytt_lib/lib/config.yml", libConfigTplData)),
 	})
 
-	ui := cmdcore.NewPlainUI(false)
-	opts := cmdtpl.NewOptions()
-
-	out := opts.RunWithFiles(cmdtpl.TemplateInput{Files: filesToProcess}, ui)
-	if out.Err != nil {
-		t.Fatalf("Expected RunWithFiles to succeed, but was error: %s", out.Err)
-	}
-
-	if len(out.Files) != 1 {
-		t.Fatalf("Expected number of output files to be 1, but was %d", len(out.Files))
-	}
-
-	file := out.Files[0]
-
-	if file.RelativePath() != "config.yml" {
-		t.Fatalf("Expected output file to be config.yml, but was %#v", file.RelativePath())
-	}
-
-	if string(file.Bytes()) != expectedYAMLTplData {
-		t.Fatalf("Expected output file to have specific data, but was: >>>%s<<<", file.Bytes())
-	}
+	runAndCompare(t, filesToProcess, expectedYAMLTplData)
 }
 
 func TestLibraryModuleWithExports(t *testing.T) {
@@ -299,27 +219,7 @@ int: 100`)
 		files.MustNewFileFromSource(files.NewBytesSource("_ytt_lib/lib/config.lib.yml", libConfigLibData)),
 	})
 
-	ui := cmdcore.NewPlainUI(false)
-	opts := cmdtpl.NewOptions()
-
-	out := opts.RunWithFiles(cmdtpl.TemplateInput{Files: filesToProcess}, ui)
-	if out.Err != nil {
-		t.Fatalf("Expected RunWithFiles to succeed, but was error: %s", out.Err)
-	}
-
-	if len(out.Files) != 1 {
-		t.Fatalf("Expected number of output files to be 1, but was %d", len(out.Files))
-	}
-
-	file := out.Files[0]
-
-	if file.RelativePath() != "config.yml" {
-		t.Fatalf("Expected output file to be config.yml, but was %#v", file.RelativePath())
-	}
-
-	if string(file.Bytes()) != expectedYAMLTplData {
-		t.Fatalf("Expected output file to have specific data, but was: >>>%s<<<", file.Bytes())
-	}
+	runAndCompare(t, filesToProcess, expectedYAMLTplData)
 }
 
 func TestLibraryModuleWithExportByPath(t *testing.T) {
@@ -355,27 +255,7 @@ vals2: 144
 		files.MustNewFileFromSource(files.NewBytesSource("_ytt_lib/lib/config2.lib.yml", libConfig2LibData)),
 	})
 
-	ui := cmdcore.NewPlainUI(false)
-	opts := cmdtpl.NewOptions()
-
-	out := opts.RunWithFiles(cmdtpl.TemplateInput{Files: filesToProcess}, ui)
-	if out.Err != nil {
-		t.Fatalf("Expected RunWithFiles to succeed, but was error: %s", out.Err)
-	}
-
-	if len(out.Files) != 1 {
-		t.Fatalf("Expected number of output files to be 1, but was %d", len(out.Files))
-	}
-
-	file := out.Files[0]
-
-	if file.RelativePath() != "config.yml" {
-		t.Fatalf("Expected output file to be config.yml, but was %#v", file.RelativePath())
-	}
-
-	if string(file.Bytes()) != expectedYAMLTplData {
-		t.Fatalf("Expected output file to have specific data, but was: >>>%s<<<", file.Bytes())
-	}
+	runAndCompare(t, filesToProcess, expectedYAMLTplData)
 }
 
 func TestLibraryModuleWithExportConflicts(t *testing.T) {
@@ -444,5 +324,29 @@ func TestLibraryModuleWithExportPrivate(t *testing.T) {
 
 	if out.Err.Error() != expectedErr {
 		t.Fatalf("Expected RunWithFiles to fail, but was '%s'", out.Err)
+	}
+}
+
+func runAndCompare(t *testing.T, filesToProcess []*files.File, expectedYAMLTplData string) {
+	ui := cmdcore.NewPlainUI(false)
+	opts := cmdtpl.NewOptions()
+
+	out := opts.RunWithFiles(cmdtpl.TemplateInput{Files: filesToProcess}, ui)
+	if out.Err != nil {
+		t.Fatalf("Expected RunWithFiles to succeed, but was error: %s", out.Err)
+	}
+
+	if len(out.Files) != 1 {
+		t.Fatalf("Expected number of output files to be 1, but was %d", len(out.Files))
+	}
+
+	file := out.Files[0]
+
+	if file.RelativePath() != "config.yml" {
+		t.Fatalf("Expected output file to be config.yml, but was %#v", file.RelativePath())
+	}
+
+	if string(file.Bytes()) != expectedYAMLTplData {
+		t.Fatalf("Expected output file to have specific data, but was: >>>%s<<<", file.Bytes())
 	}
 }
