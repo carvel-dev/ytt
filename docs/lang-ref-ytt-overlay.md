@@ -1,6 +1,6 @@
-### ytt Library: Overlay
+### ytt Library: Overlay module
 
-Overlay package provides a way to combine two structures together with the help of annotations.
+Overlay module provides a way to combine two structures together with the help of annotations.
 
 ```yaml
 #@ load("@ytt:overlay", "overlay")

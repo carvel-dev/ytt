@@ -9,7 +9,8 @@
   - [Functions](lang-ref-def.md)
   - [Load statement](lang-ref-load.md)
   - [@ytt library](lang-ref-ytt.md)
-    - [overlay](lang-ref-ytt-overlay.md) describes how to perform configuration patching on top of plain templating
+    - [overlay module](lang-ref-ytt-overlay.md) describes how to perform configuration patching on top of plain templating
+    - [library module](lang-ref-ytt-library.md) describes how to programmatically template libraries
   - [Annotation format](lang-ref-annotation.md)
     - [@data/values annotation](ytt-data-values.md) describes how to inject input into templates
   - [Text templating](ytt-text-templating.md) describes how to deal with complex text templating

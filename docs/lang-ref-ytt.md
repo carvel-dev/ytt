@@ -8,7 +8,7 @@ Following modules are included with `ytt`. Example usage:
 regex: #@ regexp.match("[a-z]+[0-9]+", "__hello123__")
 ```
 
-#### General
+#### General modules
 
 <a id="struct"></a>
 
@@ -68,7 +68,7 @@ url.query_params_encode({"x":["1"],"y":["2","3"],"z":[""]}) # "x=1&y=2&y=3&z="
 url.query_params_decode("x=1&y=2&y=3;z")                    # {"x":["1"],"y":["2","3"],"z":[""]}
 ```
 
-#### Serialization
+#### Serialization modules
 
 - `load("@ytt:base64", "base64")`
 ```python
@@ -88,7 +88,7 @@ yaml.encode({"a": [1,2,3,{"c":456}], "b": "str"})
 yaml.decode('{"a":[1,2,3,{"c":456}],"b":"str"}')
 ```
 
-#### Hashes
+#### Hashing modules
 
 - `load("@ytt:md5", "md5")`
 ```python
@@ -100,6 +100,10 @@ md5.sum("data") # "8d777f385d3dfec8815d20f7496026dc"
 sha256.sum("data") # "3a6eb0790f39ac87c94f3856b2dd2c5d110e6811602261a9a923d3bb23adc8b7"
 ```
 
-#### Overlay
+#### Overlay module
 
 See [Overlay specific docs](lang-ref-ytt-overlay.md).
+
+#### Library module
+
+See [Library specific docs](lang-ref-ytt-library.md).
