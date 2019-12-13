@@ -24,7 +24,7 @@ diff ./tmp/eirini/config-alt2.yml examples/eirini/config-result.yml
 for name in $(ls examples/playground/); do
   if [ "$name" != "example-assert" ] && \
     [ "$name" != "example-load-custom-library" ] && \
-    [ "$name" != "example-template-library" ]; then
+    [ "$name" != "example-ytt-library-module" ]; then
       ./ytt -f examples/playground/${name} > /dev/null
   fi
 done
