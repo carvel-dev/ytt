@@ -50,11 +50,6 @@ func (l LibraryModule) Get(thread *starlark.Thread, f *starlark.Builtin,
 			"Expected library '%s' to be specified without '@'", libPath)
 	}
 
-	if libPath == "" {
-		return starlark.None, fmt.Errorf(
-			"Expected library '%s' to be non-empty (loading root library is not allowed)", libPath)
-	}
-
 	foundLib, err := l.libraryCtx.Current.FindAccessibleLibrary(libPath)
 	if err != nil {
 		return starlark.None, err

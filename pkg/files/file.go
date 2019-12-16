@@ -299,3 +299,7 @@ func JoinPath(pieces []string) string {
 func IsRootPath(path string) bool {
 	return strings.HasPrefix(path, pathSeparator)
 }
+
+func StripRootPath(path string) string {
+	return path[len(pathSeparator):]
+}

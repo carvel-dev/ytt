@@ -52,7 +52,10 @@ func (l *TemplateLoader) Load(thread *starlark.Thread, module string) (starlark.
 		return api, nil
 	}
 
-	libraryCtx := LibraryExecutionContext{Current: l.getCurrentLibrary(thread), Root: l.getRootLibrary(thread)}
+	libraryCtx := LibraryExecutionContext{
+		Current: l.getCurrentLibrary(thread),
+		Root:    l.getRootLibrary(thread),
+	}
 	filePath := module
 
 	if strings.HasPrefix(module, "@") {
@@ -62,21 +65,22 @@ func (l *TemplateLoader) Load(thread *starlark.Thread, module string) (starlark.
 				" for example, '@github.com/k14s/test:test.star'")
 		}
 
-		if pieces[0] == "" {
-			libraryCtx.Current = libraryCtx.Root
-		} else {
-			foundLib, err := libraryCtx.Current.FindAccessibleLibrary(pieces[0])
-			if err != nil {
-				return nil, err
-			}
-			libraryCtx.Current = foundLib
-			libraryCtx.Root = foundLib
+		foundLib, err := libraryCtx.Current.FindAccessibleLibrary(pieces[0])
+		if err != nil {
+			return nil, err
 		}
 
+		libraryCtx = LibraryExecutionContext{Current: foundLib, Root: foundLib}
 		filePath = pieces[1]
 	}
 
 	var libraryWithFile *Library = libraryCtx.Current
+
+	// If path starts from a root, then it should be relative to root library
+	if files.IsRootPath(filePath) {
+		libraryWithFile = libraryCtx.Root
+		filePath = files.StripRootPath(filePath)
+	}
 
 	fileInLib, err := libraryWithFile.FindFile(filePath)
 	if err != nil {

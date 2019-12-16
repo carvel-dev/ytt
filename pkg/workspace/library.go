@@ -1,6 +1,7 @@
 package workspace
 
 import (
+	"bytes"
 	"fmt"
 	"io"
 	"sort"
@@ -160,6 +161,12 @@ func (l *Library) listAccessibleFiles(parents []*Library) []*FileInLibrary {
 
 func (l *Library) Print(out io.Writer) {
 	l.print(out, 0)
+}
+
+func (l *Library) PrintStr() string {
+	var buf bytes.Buffer
+	l.print(&buf, 0)
+	return buf.String()
 }
 
 func (l *Library) print(out io.Writer, indent int) {
