@@ -76,10 +76,16 @@ func (l *TemplateLoader) Load(thread *starlark.Thread, module string) (starlark.
 		filePath = pieces[1]
 	}
 
-	file, err := libraryCtx.Current.FindFile(filePath)
+	var libraryWithFile *Library = libraryCtx.Current
+
+	fileInLib, err := libraryWithFile.FindFile(filePath)
 	if err != nil {
 		return nil, err
 	}
+
+	// File might be inside nested libraries, make sure to update current library
+	libraryCtx = LibraryExecutionContext{Current: fileInLib.Library, Root: libraryCtx.Root}
+	file := fileInLib.File
 
 	if !file.IsLibrary() {
 		return nil, fmt.Errorf("File '%s' is not a library file "+
@@ -129,12 +135,12 @@ func (l *TemplateLoader) LoadData(thread *starlark.Thread, f *starlark.Builtin,
 		return starlark.None, err
 	}
 
-	file, err := l.getCurrentLibrary(thread).FindFile(path)
+	fileInLib, err := l.getCurrentLibrary(thread).FindFile(path)
 	if err != nil {
 		return nil, err
 	}
 
-	fileBs, err := file.Bytes()
+	fileBs, err := fileInLib.File.Bytes()
 	if err != nil {
 		return nil, err
 	}

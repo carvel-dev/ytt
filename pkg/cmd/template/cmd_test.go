@@ -562,3 +562,34 @@ str: `)
 		t.Fatalf("Expected RunWithFiles to fail with err: %s", out.Err)
 	}
 }
+
+func TestLoadNestedYttLib(t *testing.T) {
+	configTplData := []byte(`
+#@ load("@dir:dir2/config.lib.yml", "func1")
+func1: #@ func1()`)
+
+	dir2ConfigLibData := []byte(`
+#@ load("@dir3:funcs.lib.yml", "func2")
+#@ def func1():
+func2: #@ func2()
+#@ end`)
+
+	dir3FuncsLibData := []byte(`
+#@ def func2():
+func2: true
+#@ end`)
+
+	expectedYAMLTplData := `func1:
+  func2:
+    func2: true
+`
+
+	filesToProcess := files.NewSortedFiles([]*files.File{
+		files.MustNewFileFromSource(files.NewBytesSource("config.yml", configTplData)),
+		// Note that config.lib.yml is under another directory level
+		files.MustNewFileFromSource(files.NewBytesSource("_ytt_lib/dir/dir2/config.lib.yml", dir2ConfigLibData)),
+		files.MustNewFileFromSource(files.NewBytesSource("_ytt_lib/dir/dir2/_ytt_lib/dir3/funcs.lib.yml", dir3FuncsLibData)),
+	})
+
+	runAndCompare(t, filesToProcess, expectedYAMLTplData)
+}

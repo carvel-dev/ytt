@@ -92,18 +92,18 @@ func (l *Library) findPrivateLibrary() (*Library, bool) {
 	return nil, false
 }
 
-func (l *Library) FindFile(path string) (*files.File, error) {
+func (l *Library) FindFile(path string) (FileInLibrary, error) {
 	dirPieces, namePiece := files.SplitPath(path)
 
 	var currLibrary *Library = l
 	for i, piece := range dirPieces {
 		lib, found := currLibrary.FindLibrary(piece)
 		if !found {
-			return nil, fmt.Errorf("Expected to find file '%s', but did not find '%s'",
+			return FileInLibrary{}, fmt.Errorf("Expected to find file '%s', but did not find '%s'",
 				path, files.JoinPath(dirPieces[:i]))
 		}
 		if lib.private {
-			return nil, fmt.Errorf("Could not load file '%s' because it's contained in private library '%s' "+
+			return FileInLibrary{}, fmt.Errorf("Could not load file '%s' because it's contained in private library '%s' "+
 				"(use load(\"@lib:file\", \"symbol\") where 'lib' is library name under %s, for example, 'github.com/k14s/test')",
 				path, files.JoinPath(dirPieces[:i]), privateName)
 		}
@@ -113,10 +113,11 @@ func (l *Library) FindFile(path string) (*files.File, error) {
 	for _, file := range currLibrary.files {
 		_, fileNamePiece := files.SplitPath(file.RelativePath())
 		if fileNamePiece == namePiece {
-			return file, nil
+			return FileInLibrary{File: file, Library: currLibrary}, nil
 		}
 	}
-	return nil, fmt.Errorf("Expected to find file %s", path)
+
+	return FileInLibrary{}, fmt.Errorf("Expected to find file %s", path)
 }
 
 type FileInLibrary struct {
