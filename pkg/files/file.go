@@ -280,8 +280,12 @@ func NewRegularFileLocalSource(path, dir string, fi os.FileInfo, opts SymlinkAll
 	return NewLocalSource(path, dir), nil
 }
 
+const (
+	pathSeparator = "/"
+)
+
 func SplitPath(path string) ([]string, string) {
-	pieces := strings.Split(path, "/")
+	pieces := strings.Split(path, pathSeparator)
 	if len(pieces) == 1 {
 		return nil, pieces[0]
 	}
@@ -289,5 +293,9 @@ func SplitPath(path string) ([]string, string) {
 }
 
 func JoinPath(pieces []string) string {
-	return strings.Join(pieces, "/")
+	return strings.Join(pieces, pathSeparator)
+}
+
+func IsRootPath(path string) bool {
+	return strings.HasPrefix(path, pathSeparator)
 }

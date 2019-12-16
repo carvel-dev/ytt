@@ -10,8 +10,7 @@ import (
 )
 
 const (
-	privateName   = "_ytt_lib"
-	pathSeparator = "/"
+	privateName = "_ytt_lib"
 )
 
 type Library struct {
@@ -133,7 +132,7 @@ func (fileInLib *FileInLibrary) RelativePath() string {
 	}
 	_, fileName := files.SplitPath(fileInLib.File.RelativePath())
 	components = append(components, fileName)
-	return strings.Join(components, pathSeparator)
+	return files.JoinPath(components)
 }
 
 func (l *Library) ListAccessibleFiles() []*FileInLibrary {
