@@ -11,7 +11,7 @@ import (
 )
 
 type LibraryLoader struct {
-	library            *Library
+	libraryCtx         LibraryExecutionContext
 	ui                 files.UI
 	templateLoaderOpts TemplateLoaderOpts
 	libraryExecFactory *LibraryExecutionFactory
@@ -30,11 +30,12 @@ type EvalExport struct {
 
 type EvalValuesAst interface{}
 
-func NewLibraryLoader(library *Library, ui files.UI, templateLoaderOpts TemplateLoaderOpts,
+func NewLibraryLoader(libraryCtx LibraryExecutionContext,
+	ui files.UI, templateLoaderOpts TemplateLoaderOpts,
 	libraryExecFactory *LibraryExecutionFactory) *LibraryLoader {
 
 	return &LibraryLoader{
-		library:            library,
+		libraryCtx:         libraryCtx,
 		ui:                 ui,
 		templateLoaderOpts: templateLoaderOpts,
 		libraryExecFactory: libraryExecFactory,
@@ -67,7 +68,7 @@ func (ll *LibraryLoader) Values(valuesAsts []EvalValuesAst) (EvalValuesAst, erro
 func (ll *LibraryLoader) valuesFiles(loader *TemplateLoader) ([]*FileInLibrary, error) {
 	var valuesFiles []*FileInLibrary
 
-	for _, fileInLib := range ll.library.ListAccessibleFiles() {
+	for _, fileInLib := range ll.libraryCtx.Current.ListAccessibleFiles() {
 		if fileInLib.File.Type() == files.TypeYAML && fileInLib.File.IsTemplate() {
 			docSet, err := loader.ParseYAML(fileInLib.File)
 			if err != nil {
@@ -133,13 +134,15 @@ func (ll *LibraryLoader) eval(values EvalValuesAst) ([]EvalExport,
 	docSets := map[*FileInLibrary]*yamlmeta.DocumentSet{}
 	outputFiles := []files.OutputFile{}
 
-	for _, fileInLib := range ll.library.ListAccessibleFiles() {
+	for _, fileInLib := range ll.libraryCtx.Current.ListAccessibleFiles() {
+		libraryCtx := LibraryExecutionContext{Current: fileInLib.Library, Root: ll.libraryCtx.Root}
+
 		switch {
 		case fileInLib.File.IsForOutput():
 			// Do not collect globals produced by templates
 			switch fileInLib.File.Type() {
 			case files.TypeYAML:
-				_, resultDocSet, err := loader.EvalYAML(fileInLib.Library, fileInLib.File)
+				_, resultDocSet, err := loader.EvalYAML(libraryCtx, fileInLib.File)
 				if err != nil {
 					return nil, nil, nil, err
 				}
@@ -147,7 +150,7 @@ func (ll *LibraryLoader) eval(values EvalValuesAst) ([]EvalExport,
 				docSets[fileInLib] = resultDocSet
 
 			case files.TypeText:
-				_, resultVal, err := loader.EvalText(fileInLib.Library, fileInLib.File)
+				_, resultVal, err := loader.EvalText(libraryCtx, fileInLib.File)
 				if err != nil {
 					return nil, nil, nil, err
 				}
@@ -163,18 +166,18 @@ func (ll *LibraryLoader) eval(values EvalValuesAst) ([]EvalExport,
 
 		case fileInLib.File.IsLibrary():
 			// Collect globals produced by library files
-			var evalFunc func(*Library, *files.File) (starlark.StringDict, error)
+			var evalFunc func(LibraryExecutionContext, *files.File) (starlark.StringDict, error)
 
 			switch fileInLib.File.Type() {
 			case files.TypeYAML:
-				evalFunc = func(library *Library, file *files.File) (starlark.StringDict, error) {
-					globals, _, err := loader.EvalYAML(fileInLib.Library, fileInLib.File)
+				evalFunc = func(libraryCtx LibraryExecutionContext, file *files.File) (starlark.StringDict, error) {
+					globals, _, err := loader.EvalYAML(libraryCtx, fileInLib.File)
 					return globals, err
 				}
 
 			case files.TypeText:
-				evalFunc = func(library *Library, file *files.File) (starlark.StringDict, error) {
-					globals, _, err := loader.EvalText(fileInLib.Library, fileInLib.File)
+				evalFunc = func(libraryCtx LibraryExecutionContext, file *files.File) (starlark.StringDict, error) {
+					globals, _, err := loader.EvalText(libraryCtx, fileInLib.File)
 					return globals, err
 				}
 
@@ -187,7 +190,7 @@ func (ll *LibraryLoader) eval(values EvalValuesAst) ([]EvalExport,
 			}
 
 			if evalFunc != nil {
-				globals, err := evalFunc(fileInLib.Library, fileInLib.File)
+				globals, err := evalFunc(libraryCtx, fileInLib.File)
 				if err != nil {
 					return nil, nil, nil, err
 				}

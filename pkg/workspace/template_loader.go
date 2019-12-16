@@ -52,7 +52,7 @@ func (l *TemplateLoader) Load(thread *starlark.Thread, module string) (starlark.
 		return api, nil
 	}
 
-	library := l.getLibrary(thread)
+	libraryCtx := LibraryExecutionContext{Current: l.getCurrentLibrary(thread), Root: l.getRootLibrary(thread)}
 	filePath := module
 
 	if strings.HasPrefix(module, "@") {
@@ -62,16 +62,21 @@ func (l *TemplateLoader) Load(thread *starlark.Thread, module string) (starlark.
 				" for example, '@github.com/k14s/test:test.star'")
 		}
 
-		foundLib, err := library.FindAccessibleLibrary(pieces[0])
-		if err != nil {
-			return nil, err
+		if pieces[0] == "" {
+			libraryCtx.Current = libraryCtx.Root
+		} else {
+			foundLib, err := libraryCtx.Current.FindAccessibleLibrary(pieces[0])
+			if err != nil {
+				return nil, err
+			}
+			libraryCtx.Current = foundLib
+			libraryCtx.Root = foundLib
 		}
 
-		library = foundLib
 		filePath = pieces[1]
 	}
 
-	file, err := library.FindFile(filePath)
+	file, err := libraryCtx.Current.FindFile(filePath)
 	if err != nil {
 		return nil, err
 	}
@@ -83,14 +88,14 @@ func (l *TemplateLoader) Load(thread *starlark.Thread, module string) (starlark.
 
 	switch file.Type() {
 	case files.TypeYAML:
-		globals, _, err := l.EvalYAML(library, file)
+		globals, _, err := l.EvalYAML(libraryCtx, file)
 		return globals, err
 
 	case files.TypeStarlark:
-		return l.EvalStarlark(library, file)
+		return l.EvalStarlark(libraryCtx, file)
 
 	case files.TypeText:
-		globals, _, err := l.EvalText(library, file)
+		globals, _, err := l.EvalText(libraryCtx, file)
 		return globals, err
 
 	default:
@@ -106,7 +111,7 @@ func (l *TemplateLoader) ListData(thread *starlark.Thread, f *starlark.Builtin,
 	}
 
 	result := []starlark.Value{}
-	for _, fileInLib := range l.getLibrary(thread).ListAccessibleFiles() {
+	for _, fileInLib := range l.getCurrentLibrary(thread).ListAccessibleFiles() {
 		result = append(result, starlark.String(fileInLib.File.RelativePath()))
 	}
 	return starlark.NewList(result), nil
@@ -124,7 +129,7 @@ func (l *TemplateLoader) LoadData(thread *starlark.Thread, f *starlark.Builtin,
 		return starlark.None, err
 	}
 
-	file, err := l.getLibrary(thread).FindFile(path)
+	file, err := l.getCurrentLibrary(thread).FindFile(path)
 	if err != nil {
 		return nil, err
 	}
@@ -158,7 +163,7 @@ func (l *TemplateLoader) ParseYAML(file *files.File) (*yamlmeta.DocumentSet, err
 	return docSet, nil
 }
 
-func (l *TemplateLoader) EvalYAML(library *Library, file *files.File) (starlark.StringDict, *yamlmeta.DocumentSet, error) {
+func (l *TemplateLoader) EvalYAML(libraryCtx LibraryExecutionContext, file *files.File) (starlark.StringDict, *yamlmeta.DocumentSet, error) {
 	docSet, err := l.ParseYAML(file)
 	if err != nil {
 		return nil, nil, err
@@ -182,9 +187,9 @@ func (l *TemplateLoader) EvalYAML(library *Library, file *files.File) (starlark.
 	l.ui.Debugf("### template\n%s", compiledTemplate.DebugCodeAsString())
 
 	yttLibrary := yttlibrary.NewAPI(compiledTemplate.TplReplaceNode,
-		l.values, l, NewLibraryModule(library, l.libraryExecFactory).AsModule())
+		l.values, l, NewLibraryModule(libraryCtx, l.libraryExecFactory).AsModule())
 
-	thread := l.newThread(library, yttLibrary, file)
+	thread := l.newThread(libraryCtx, yttLibrary, file)
 
 	globals, resultVal, err := compiledTemplate.Eval(thread, l)
 	if err != nil {
@@ -194,7 +199,7 @@ func (l *TemplateLoader) EvalYAML(library *Library, file *files.File) (starlark.
 	return globals, resultVal.(*yamlmeta.DocumentSet), nil
 }
 
-func (l *TemplateLoader) EvalText(library *Library, file *files.File) (starlark.StringDict, *texttemplate.NodeRoot, error) {
+func (l *TemplateLoader) EvalText(libraryCtx LibraryExecutionContext, file *files.File) (starlark.StringDict, *texttemplate.NodeRoot, error) {
 	fileBs, err := file.Bytes()
 	if err != nil {
 		return nil, nil, err
@@ -223,9 +228,9 @@ func (l *TemplateLoader) EvalText(library *Library, file *files.File) (starlark.
 	l.ui.Debugf("### template\n%s", compiledTemplate.DebugCodeAsString())
 
 	yttLibrary := yttlibrary.NewAPI(compiledTemplate.TplReplaceNode,
-		l.values, l, NewLibraryModule(library, l.libraryExecFactory).AsModule())
+		l.values, l, NewLibraryModule(libraryCtx, l.libraryExecFactory).AsModule())
 
-	thread := l.newThread(library, yttLibrary, file)
+	thread := l.newThread(libraryCtx, yttLibrary, file)
 
 	globals, resultVal, err := compiledTemplate.Eval(thread, l)
 	if err != nil {
@@ -235,7 +240,7 @@ func (l *TemplateLoader) EvalText(library *Library, file *files.File) (starlark.
 	return globals, resultVal.(*texttemplate.NodeRoot), nil
 }
 
-func (l *TemplateLoader) EvalStarlark(library *Library, file *files.File) (starlark.StringDict, error) {
+func (l *TemplateLoader) EvalStarlark(libraryCtx LibraryExecutionContext, file *files.File) (starlark.StringDict, error) {
 	fileBs, err := file.Bytes()
 	if err != nil {
 		return nil, err
@@ -252,9 +257,9 @@ func (l *TemplateLoader) EvalStarlark(library *Library, file *files.File) (starl
 	l.ui.Debugf("### template\n%s", compiledTemplate.DebugCodeAsString())
 
 	yttLibrary := yttlibrary.NewAPI(compiledTemplate.TplReplaceNode,
-		l.values, l, NewLibraryModule(library, l.libraryExecFactory).AsModule())
+		l.values, l, NewLibraryModule(libraryCtx, l.libraryExecFactory).AsModule())
 
-	thread := l.newThread(library, yttLibrary, file)
+	thread := l.newThread(libraryCtx, yttLibrary, file)
 
 	globals, _, err := compiledTemplate.Eval(thread, l)
 	if err != nil {
@@ -265,20 +270,33 @@ func (l *TemplateLoader) EvalStarlark(library *Library, file *files.File) (starl
 }
 
 const (
-	threadLibraryKey    = "ytt.library_key"
-	threadYTTLibraryKey = "ytt.ytt_library_key"
+	threadCurrentLibraryKey = "ytt.curr_library_key"
+	threadRootLibraryKey    = "ytt.root_library_key"
+	threadYTTLibraryKey     = "ytt.ytt_library_key"
 )
 
-func (l *TemplateLoader) getLibrary(thread *starlark.Thread) *Library {
-	lib, ok := thread.Local(threadLibraryKey).(*Library)
-	if !ok {
+func (l *TemplateLoader) getCurrentLibrary(thread *starlark.Thread) *Library {
+	lib, ok := thread.Local(threadCurrentLibraryKey).(*Library)
+	if !ok || lib == nil {
 		panic("Expected to find library associated with thread")
 	}
 	return lib
 }
 
-func (l *TemplateLoader) setLibrary(thread *starlark.Thread, library *Library) {
-	thread.SetLocal(threadLibraryKey, library)
+func (l *TemplateLoader) setCurrentLibrary(thread *starlark.Thread, library *Library) {
+	thread.SetLocal(threadCurrentLibraryKey, library)
+}
+
+func (l *TemplateLoader) getRootLibrary(thread *starlark.Thread) *Library {
+	lib, ok := thread.Local(threadRootLibraryKey).(*Library)
+	if !ok || lib == nil {
+		panic("Expected to find root library associated with thread")
+	}
+	return lib
+}
+
+func (l *TemplateLoader) setRootLibrary(thread *starlark.Thread, library *Library) {
+	thread.SetLocal(threadRootLibraryKey, library)
 }
 
 func (l *TemplateLoader) getYTTLibrary(thread *starlark.Thread) yttlibrary.API {
@@ -293,9 +311,12 @@ func (l *TemplateLoader) setYTTLibrary(thread *starlark.Thread, yttLibrary yttli
 	thread.SetLocal(threadYTTLibraryKey, yttLibrary)
 }
 
-func (l *TemplateLoader) newThread(library *Library, yttLibrary yttlibrary.API, file *files.File) *starlark.Thread {
+func (l *TemplateLoader) newThread(libraryCtx LibraryExecutionContext,
+	yttLibrary yttlibrary.API, file *files.File) *starlark.Thread {
+
 	thread := &starlark.Thread{Name: "template=" + file.RelativePath(), Load: l.Load}
-	l.setLibrary(thread, library)
+	l.setCurrentLibrary(thread, libraryCtx.Current)
+	l.setRootLibrary(thread, libraryCtx.Root)
 	l.setYTTLibrary(thread, yttLibrary)
 	return thread
 }

@@ -53,7 +53,9 @@ func (o DataValuesPreProcessing) Apply() (interface{}, error) {
 }
 
 func (p DataValuesPreProcessing) templateFile(fileInLib *FileInLibrary) ([]*yamlmeta.Document, error) {
-	_, resultDocSet, err := p.loader.EvalYAML(fileInLib.Library, fileInLib.File)
+	libraryCtx := LibraryExecutionContext{Current: fileInLib.Library, Root: NewRootLibrary(nil)}
+
+	_, resultDocSet, err := p.loader.EvalYAML(libraryCtx, fileInLib.File)
 	if err != nil {
 		return nil, err
 	}

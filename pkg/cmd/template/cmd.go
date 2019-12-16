@@ -108,7 +108,8 @@ func (o *TemplateOptions) RunWithFiles(in TemplateInput, ui cmdcore.PlainUI) Tem
 		StrictYAML:            o.StrictYAML,
 	})
 
-	libraryLoader := libraryExecutionFactory.New(rootLibrary)
+	libraryCtx := workspace.LibraryExecutionContext{Current: rootLibrary, Root: rootLibrary}
+	libraryLoader := libraryExecutionFactory.New(libraryCtx)
 
 	astValues := yamlmeta.NewASTFromInterface(values)
 

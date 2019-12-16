@@ -12,12 +12,14 @@ import (
 )
 
 type LibraryModule struct {
-	library                 *Library
+	libraryCtx              LibraryExecutionContext
 	libraryExecutionFactory *LibraryExecutionFactory
 }
 
-func NewLibraryModule(library *Library, libraryExecutionFactory *LibraryExecutionFactory) LibraryModule {
-	return LibraryModule{library, libraryExecutionFactory}
+func NewLibraryModule(libraryCtx LibraryExecutionContext,
+	libraryExecutionFactory *LibraryExecutionFactory) LibraryModule {
+
+	return LibraryModule{libraryCtx, libraryExecutionFactory}
 }
 
 func (b LibraryModule) AsModule() starlark.StringDict {
@@ -48,16 +50,23 @@ func (l LibraryModule) Get(thread *starlark.Thread, f *starlark.Builtin,
 			"Expected library '%s' to be specified without '@'", libPath)
 	}
 
-	foundLib, err := l.library.FindAccessibleLibrary(libPath)
+	if libPath == "" {
+		return starlark.None, fmt.Errorf(
+			"Expected library '%s' to be non-empty (loading root library is not allowed)", libPath)
+	}
+
+	foundLib, err := l.libraryCtx.Current.FindAccessibleLibrary(libPath)
 	if err != nil {
 		return starlark.None, err
 	}
 
-	return (&libraryValue{foundLib, nil, l.libraryExecutionFactory}).AsStarlarkValue(), nil
+	libraryCtx := LibraryExecutionContext{Current: foundLib, Root: foundLib}
+
+	return (&libraryValue{libraryCtx, nil, l.libraryExecutionFactory}).AsStarlarkValue(), nil
 }
 
 type libraryValue struct {
-	library                 *Library
+	libraryCtx              LibraryExecutionContext
 	dataValuess             []EvalValuesAst
 	libraryExecutionFactory *LibraryExecutionFactory
 }
@@ -83,7 +92,7 @@ func (l *libraryValue) WithDataValues(thread *starlark.Thread, f *starlark.Built
 
 	dataValues := core.NewStarlarkValue(args.Index(0)).AsInterface()
 
-	libVal := &libraryValue{l.library, nil, l.libraryExecutionFactory}
+	libVal := &libraryValue{l.libraryCtx, nil, l.libraryExecutionFactory}
 	libVal.dataValuess = append([]EvalValuesAst{}, l.dataValuess...)
 	libVal.dataValuess = append(libVal.dataValuess, yamlmeta.NewASTFromInterface(dataValues))
 
@@ -97,7 +106,7 @@ func (l *libraryValue) Eval(thread *starlark.Thread, f *starlark.Builtin,
 		return starlark.None, fmt.Errorf("expected no arguments")
 	}
 
-	libraryLoader := l.libraryExecutionFactory.New(l.library)
+	libraryLoader := l.libraryExecutionFactory.New(l.libraryCtx)
 
 	astValues, err := libraryLoader.Values(l.dataValuess)
 	if err != nil {
@@ -125,7 +134,7 @@ func (l *libraryValue) Export(thread *starlark.Thread, f *starlark.Builtin,
 			"Symbols starting with '_' are private, and cannot be exported")
 	}
 
-	libraryLoader := l.libraryExecutionFactory.New(l.library)
+	libraryLoader := l.libraryExecutionFactory.New(l.libraryCtx)
 
 	astValues, err := libraryLoader.Values(l.dataValuess)
 	if err != nil {
