@@ -1,6 +1,10 @@
 ## Building
 
 ```bash
+git clone https://github.com/k14s/ytt ./src/github.com/k14s/ytt
+export GOPATH=$PWD
+cd ./src/github.com/k14s/ytt
+
 ./hack/build.sh
 ./hack/test-unit.sh
 ./hack/test-e2e.sh
