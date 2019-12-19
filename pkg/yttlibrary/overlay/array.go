@@ -157,3 +157,32 @@ func (o OverlayOp) appendArrayItem(
 	leftArray.Items = append(leftArray.Items, newItem.DeepCopy())
 	return nil
 }
+
+func (o OverlayOp) testArrayItem(
+	leftArray *yamlmeta.Array, newItem *yamlmeta.ArrayItem,
+	parentMatchChildDefaults MatchChildDefaultsAnnotation) error {
+
+	ann, err := NewArrayItemMatchAnnotation(newItem, parentMatchChildDefaults, o.Thread)
+	if err != nil {
+		return err
+	}
+
+	testAnn, err := NewTestAnnotation(newItem, o.Thread)
+	if err != nil {
+		return err
+	}
+
+	leftIdxs, err := ann.Indexes(leftArray)
+	if err != nil {
+		return err
+	}
+
+	for _, leftIdx := range leftIdxs {
+		err := testAnn.Check(leftArray.Items[leftIdx])
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}

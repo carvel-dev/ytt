@@ -16,6 +16,7 @@ const (
 	AnnotationReplace structmeta.AnnotationName = "overlay/replace"
 	AnnotationInsert  structmeta.AnnotationName = "overlay/insert" // array only
 	AnnotationAppend  structmeta.AnnotationName = "overlay/append" // array only
+	AnnotationTest    structmeta.AnnotationName = "overlay/test"
 
 	AnnotationMatch              structmeta.AnnotationName = "overlay/match"
 	AnnotationMatchChildDefaults structmeta.AnnotationName = "overlay/match-child-defaults"
@@ -28,6 +29,7 @@ var (
 		AnnotationReplace,
 		AnnotationInsert,
 		AnnotationAppend,
+		AnnotationTest,
 	}
 )
 

@@ -89,3 +89,28 @@ func (o OverlayOp) replaceMapItem(leftMap *yamlmeta.Map, newItem *yamlmeta.MapIt
 
 	return nil
 }
+
+func (o OverlayOp) testMapItem(leftMap *yamlmeta.Map, newItem *yamlmeta.MapItem,
+	parentMatchChildDefaults MatchChildDefaultsAnnotation) error {
+
+	ann, err := NewMapItemMatchAnnotation(newItem, parentMatchChildDefaults, o.Thread)
+	if err != nil {
+		return err
+	}
+
+	testAnn, err := NewTestAnnotation(newItem, o.Thread)
+	if err != nil {
+		return err
+	}
+
+	leftIdx, found, err := ann.Index(leftMap)
+	if err != nil {
+		return err
+	}
+
+	if found {
+		return testAnn.Check(leftMap.Items[leftIdx])
+	}
+
+	return nil
+}

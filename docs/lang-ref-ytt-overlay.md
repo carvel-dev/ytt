@@ -124,6 +124,15 @@ Annotations on the "right-side" nodes:
 - `@overlay/append`
   - valid only for array items
   - appends array item to the end of "left-side" array
+- `@overlay/test` [via=Function]
+  - valid for documents, map and array items
+  - tests equality of "left-side" node value with "right-side" node value
+  - `via` (optional) keyword argument takes a function which will receive two arguments (left and right value) and expects to NoneType, Bool, or Tuple(Bool,String)
+    - does not currently work with non-scalar values
+  - Examples:
+    - `#@overlay/test`: (default)
+    - `#@overlay/test via=lambda a,b: a > 0 and a < 1000`: check that value is within certain numeric constraint
+    - `#@overlay/test via=lambda a,b: regexp.match("[a-z0-9]+", a)`: check that value is lowercase alphanumeric
 
 #### Overlays as files
 

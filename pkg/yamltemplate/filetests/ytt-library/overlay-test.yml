@@ -1,0 +1,99 @@
+#@ load("@ytt:overlay", "overlay")
+#@ load("@ytt:template", "template")
+#@ load("@ytt:assert", "assert")
+
+#@ def test1_left():
+key1: val1
+#@ end
+
+#@ def test1_right():
+#@overlay/test
+key1: val1
+#@ end
+
+test1: #@ overlay.apply(test1_left(), test1_right())
+
+#@ def test1a_left():
+key1: val1
+#@ end
+
+#@ def test1a_right():
+#@overlay/test via=lambda a,b: a == "val1" or assert.fail("test1a_right: not val1 {}".format(a))
+key1:
+#@ end
+
+test1a: #@ overlay.apply(test1a_left(), test1a_right())
+
+#@ def test1b_left():
+key1:
+  key2: true
+  key3: string
+  key4:
+  - abc
+  - null
+#@ end
+
+#@ def test1b_right():
+#@overlay/test
+key1:
+  key2: true
+  key3: string
+  key4:
+  - abc
+  - null
+#@ end
+
+test1b: #@ overlay.apply(test1b_left(), test1b_right())
+
+---
+#@ def test2_left():
+- val1
+- val11
+#@ end
+
+#@ def test2_right():
+#@overlay/match by=overlay.all,expects=2
+#@overlay/test via=lambda a,b: a.startswith("val") or assert.fail("test2: not val*")
+-
+#@ end
+
+---
+test2: #@ overlay.apply(test2_left(), test2_right())
+
+---
+#@ def test3_left():
+---
+val1
+---
+val11
+#@ end
+
+#@ def test3_right():
+#@overlay/match by=overlay.all,expects=2
+#@overlay/test via=lambda a,b: a.startswith("val") or assert.fail("test3: not val*")
+---
+#@ end
+
+--- #@ template.replace(overlay.apply(test3_left(), test3_right()))
+
++++
+
+test1:
+  key1: val1
+test1a:
+  key1: val1
+test1b:
+  key1:
+    key2: true
+    key3: string
+    key4:
+    - abc
+    - null
+---
+test2:
+- val1
+- val11
+---
+val1
+---
+val11

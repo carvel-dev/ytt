@@ -157,3 +157,32 @@ func (o OverlayOp) appendDocument(
 	leftDocSets[len(leftDocSets)-1].Items = append(leftDocSets[len(leftDocSets)-1].Items, newDoc.DeepCopy())
 	return nil
 }
+
+func (o OverlayOp) testDocument(
+	leftDocSets []*yamlmeta.DocumentSet, newDoc *yamlmeta.Document,
+	parentMatchChildDefaults MatchChildDefaultsAnnotation) error {
+
+	ann, err := NewDocumentMatchAnnotation(newDoc, parentMatchChildDefaults, o.ExactMatch, o.Thread)
+	if err != nil {
+		return err
+	}
+
+	testAnn, err := NewTestAnnotation(newDoc, o.Thread)
+	if err != nil {
+		return err
+	}
+
+	leftIdxs, err := ann.IndexTuples(leftDocSets)
+	if err != nil {
+		return err
+	}
+
+	for _, leftIdx := range leftIdxs {
+		err := testAnn.Check(leftDocSets[leftIdx[0]].Items[leftIdx[1]])
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}

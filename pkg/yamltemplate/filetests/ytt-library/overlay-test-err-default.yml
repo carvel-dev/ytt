@@ -1,0 +1,19 @@
+#@ load("@ytt:overlay", "overlay")
+
+#@ def test1_left():
+key1: val1
+#@ end
+
+#@ def test1_right():
+#@overlay/test
+key1: val2
+#@ end
+
+test1: #@ overlay.apply(test1_left(), test1_right())
+
++++
+
+ERR: 
+- overlay.apply: Map item (key 'key1') on line stdin:9: Expected objects to equal, but did not: Expected leaf values to match string string
+    in <toplevel>
+      stdin:12 | test1: #@ overlay.apply(test1_left(), test1_right())

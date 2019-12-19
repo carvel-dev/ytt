@@ -1,0 +1,20 @@
+#@ load("@ytt:overlay", "overlay")
+#@ load("@ytt:assert", "assert")
+
+#@ def test1_left():
+key1: val1
+#@ end
+
+#@ def test1_right():
+#@overlay/test via=lambda a,b: (a == b, "vals not equal")
+key1: val2
+#@ end
+
+test1: #@ overlay.apply(test1_left(), test1_right())
+
++++
+
+ERR: 
+- overlay.apply: Map item (key 'key1') on line stdin:10: Expected via invocation to return true, but was false with message: vals not equal
+    in <toplevel>
+      stdin:13 | test1: #@ overlay.apply(test1_left(), test1_right())
