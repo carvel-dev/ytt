@@ -327,6 +327,71 @@ func TestLibraryModuleWithExportPrivate(t *testing.T) {
 	}
 }
 
+func TestLibraryModuleWithOverlays(t *testing.T) {
+	valuesTplData := []byte(`
+#@data/values
+---
+int: 100
+str: string`)
+
+	configTplData := []byte(`
+#@ load("@ytt:data", "data")
+#@ load("@ytt:template", "template")
+#@ load("@ytt:library", "library")
+#@ load("@ytt:yaml", "yaml")
+
+---
+overlay_unaffected: true
+---
+#@ lib = library.get("lib").with_data_values(data.values)
+lib: #@ yaml.encode(lib.eval())`)
+
+	libValuesTplData := []byte(`
+#@data/values
+---
+int: 10
+str: str`)
+
+	libConfigTplData := []byte(`
+#@ load("@ytt:data", "data")
+vals: #@ data.values`)
+
+	libOverlay1TplData := []byte(`
+#@ load("@ytt:overlay", "overlay")
+#@overlay/match by=overlay.all
+---
+vals:
+  str: string-over`)
+
+	libOverlay2TplData := []byte(`
+#@ load("@ytt:overlay", "overlay")
+#@overlay/match by=overlay.all
+---
+vals:
+  #@overlay/match missing_ok=True
+  bool: true`)
+
+	expectedYAMLTplData := `overlay_unaffected: true
+---
+lib: |
+  vals:
+    int: 100
+    str: string-over
+    bool: true
+`
+
+	filesToProcess := files.NewSortedFiles([]*files.File{
+		files.MustNewFileFromSource(files.NewBytesSource("values.yml", valuesTplData)),
+		files.MustNewFileFromSource(files.NewBytesSource("config.yml", configTplData)),
+		files.MustNewFileFromSource(files.NewBytesSource("_ytt_lib/lib/values.yml", libValuesTplData)),
+		files.MustNewFileFromSource(files.NewBytesSource("_ytt_lib/lib/config.yml", libConfigTplData)),
+		files.MustNewFileFromSource(files.NewBytesSource("_ytt_lib/lib/overlay1.yml", libOverlay1TplData)),
+		files.MustNewFileFromSource(files.NewBytesSource("_ytt_lib/lib/overlay2.yml", libOverlay2TplData)),
+	})
+
+	runAndCompare(t, filesToProcess, expectedYAMLTplData)
+}
+
 func runAndCompare(t *testing.T, filesToProcess []*files.File, expectedYAMLTplData string) {
 	ui := cmdcore.NewPlainUI(false)
 	opts := cmdtpl.NewOptions()
