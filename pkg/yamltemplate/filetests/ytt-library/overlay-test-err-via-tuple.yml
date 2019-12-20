@@ -6,7 +6,7 @@ key1: val1
 #@ end
 
 #@ def test1_right():
-#@overlay/test via=lambda a,b: (a == b, "vals not equal")
+#@overlay/assert via=lambda a,b: (a == b, "vals not equal")
 key1: val2
 #@ end
 

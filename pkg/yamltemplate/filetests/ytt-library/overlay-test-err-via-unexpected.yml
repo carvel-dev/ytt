@@ -6,7 +6,7 @@ key1: val1
 #@ end
 
 #@ def test1_right():
-#@overlay/test via=lambda a,b: 1
+#@overlay/assert via=lambda a,b: 1
 key1: val2
 #@ end
 

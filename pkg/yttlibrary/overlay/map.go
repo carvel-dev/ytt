@@ -98,7 +98,7 @@ func (o OverlayOp) testMapItem(leftMap *yamlmeta.Map, newItem *yamlmeta.MapItem,
 		return err
 	}
 
-	testAnn, err := NewTestAnnotation(newItem, o.Thread)
+	testAnn, err := NewAssertAnnotation(newItem, o.Thread)
 	if err != nil {
 		return err
 	}

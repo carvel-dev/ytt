@@ -167,7 +167,7 @@ func (o OverlayOp) testArrayItem(
 		return err
 	}
 
-	testAnn, err := NewTestAnnotation(newItem, o.Thread)
+	testAnn, err := NewAssertAnnotation(newItem, o.Thread)
 	if err != nil {
 		return err
 	}

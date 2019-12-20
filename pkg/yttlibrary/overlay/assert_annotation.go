@@ -9,18 +9,18 @@ import (
 	"go.starlark.net/starlark"
 )
 
-type TestAnnotation struct {
+type AssertAnnotation struct {
 	newNode template.EvaluationNode
 	thread  *starlark.Thread
 	via     *starlark.Value
 }
 
-func NewTestAnnotation(newNode template.EvaluationNode, thread *starlark.Thread) (TestAnnotation, error) {
-	annotation := TestAnnotation{
+func NewAssertAnnotation(newNode template.EvaluationNode, thread *starlark.Thread) (AssertAnnotation, error) {
+	annotation := AssertAnnotation{
 		newNode: newNode,
 		thread:  thread,
 	}
-	kwargs := template.NewAnnotations(newNode).Kwargs(AnnotationTest)
+	kwargs := template.NewAnnotations(newNode).Kwargs(AnnotationAssert)
 
 	for _, kwarg := range kwargs {
 		kwargName := string(kwarg[0].(starlark.String))
@@ -29,14 +29,14 @@ func NewTestAnnotation(newNode template.EvaluationNode, thread *starlark.Thread)
 			annotation.via = &kwarg[1]
 		default:
 			return annotation, fmt.Errorf(
-				"Unknown '%s' annotation keyword argument '%s'", AnnotationTest, kwargName)
+				"Unknown '%s' annotation keyword argument '%s'", AnnotationAssert, kwargName)
 		}
 	}
 
 	return annotation, nil
 }
 
-func (a TestAnnotation) Check(existingNode template.EvaluationNode) error {
+func (a AssertAnnotation) Check(existingNode template.EvaluationNode) error {
 	// Make sure original nodes are not affected in any way
 	existingNode = existingNode.DeepCopyAsInterface().(template.EvaluationNode)
 	newNode := a.newNode.DeepCopyAsInterface().(template.EvaluationNode)
@@ -104,6 +104,6 @@ func (a TestAnnotation) Check(existingNode template.EvaluationNode) error {
 
 	default:
 		return fmt.Errorf("Expected '%s' annotation keyword argument 'via'"+
-			" to be function, but was %T", AnnotationTest, typedVal)
+			" to be function, but was %T", AnnotationAssert, typedVal)
 	}
 }

@@ -167,7 +167,7 @@ func (o OverlayOp) testDocument(
 		return err
 	}
 
-	testAnn, err := NewTestAnnotation(newDoc, o.Thread)
+	testAnn, err := NewAssertAnnotation(newDoc, o.Thread)
 	if err != nil {
 		return err
 	}

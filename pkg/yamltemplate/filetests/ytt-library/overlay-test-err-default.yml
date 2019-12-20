@@ -5,7 +5,7 @@ key1: val1
 #@ end
 
 #@ def test1_right():
-#@overlay/test
+#@overlay/assert
 key1: val2
 #@ end
 

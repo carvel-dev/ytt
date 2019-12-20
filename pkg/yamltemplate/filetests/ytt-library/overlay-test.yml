@@ -7,7 +7,7 @@ key1: val1
 #@ end
 
 #@ def test1_right():
-#@overlay/test
+#@overlay/assert
 key1: val1
 #@ end
 
@@ -18,7 +18,7 @@ key1: val1
 #@ end
 
 #@ def test1a_right():
-#@overlay/test via=lambda a,b: a == "val1" or assert.fail("test1a_right: not val1 {}".format(a))
+#@overlay/assert via=lambda a,b: a == "val1" or assert.fail("test1a_right: not val1 {}".format(a))
 key1:
 #@ end
 
@@ -34,7 +34,7 @@ key1:
 #@ end
 
 #@ def test1b_right():
-#@overlay/test
+#@overlay/assert
 key1:
   key2: true
   key3: string
@@ -53,7 +53,7 @@ test1b: #@ overlay.apply(test1b_left(), test1b_right())
 
 #@ def test2_right():
 #@overlay/match by=overlay.all,expects=2
-#@overlay/test via=lambda a,b: a.startswith("val") or assert.fail("test2: not val*")
+#@overlay/assert via=lambda a,b: a.startswith("val") or assert.fail("test2: not val*")
 -
 #@ end
 
@@ -70,7 +70,7 @@ val11
 
 #@ def test3_right():
 #@overlay/match by=overlay.all,expects=2
-#@overlay/test via=lambda a,b: a.startswith("val") or assert.fail("test3: not val*")
+#@overlay/assert via=lambda a,b: a.startswith("val") or assert.fail("test3: not val*")
 ---
 #@ end
 
