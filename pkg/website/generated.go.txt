@@ -47,7 +47,6 @@ examples = [
   {"name": "example-ytt-library-module"},
   {"name": "example-k8s-ingress"},
   {"name": "example-k8s-ingress-with-defs"},
-  {"name": "example-k8s-ingress-with-structs"},
   {"name": "example-k8s-helm-ish"},
   {"name": "example-demo"},
 ]
