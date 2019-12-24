@@ -204,6 +204,32 @@ function NewExamples(parentEl, templates, exampleLocation, blocker) {
   }
 }
 
+function NewGist(parentEl, templates, gistLocation, blocker) {
+  function load(id, opts){
+    blocker.on();
+
+    $.get('https://api.github.com/gists/' + id, function(data) {
+      if (opts.preDoneCallback) opts.preDoneCallback(id);
+
+      templates.resetFiles();
+      for (var j in data.files) {
+        templates.addFile(null, {
+          name: data.files[j].filename,
+          text: data.files[j].content
+        });
+      }
+      templates.evaluate();
+
+      blocker.off();
+      if (opts.scrollIntoView) parentEl[0].scrollIntoView();
+    });
+  }
+
+  return {
+    load: load,
+  }
+}
+
 function NewLoadingIndicator(opts) {
   var loading = $('<div class="loading"></div>').appendTo($('body'));
   var lastReqId = -1;
@@ -256,6 +282,27 @@ function NewExampleLocation() {
   }
 }
 
+function NewGistLocation() {
+  var prefix = "#gist:";
+  return {
+    isSet: function() {
+      return window.location.hash && window.location.hash.startsWith(prefix);
+    },
+    get: function() {
+      var id = null;
+      if (window.location.hash) {
+        if (window.location.hash.startsWith(prefix)) {
+          id = window.location.hash.replace(prefix, "", 1)
+        }
+      }
+      return id
+    },
+    set: function(id) {
+      window.location.hash = prefix+id
+    }
+  }
+}
+
 function NewGoogleAnalytics() {
   return {
     recordExampleClick: function(name) {
@@ -281,18 +328,32 @@ $(document).ready(function() {
   });
 
   var googAnalytics = NewGoogleAnalytics();
-  var examplesBlocker = NewBlocker($("#playground .blocker"));
-  var exampleLocation = NewExampleLocation();
-  var examples = NewExamples(
-    $("#playground"), templates, exampleLocation, examplesBlocker);
+  var uiBlocker = NewBlocker($("#playground .blocker"));
 
-  examples.load(exampleLocation.get(), {
-    scrollIntoView: exampleLocation.isSet(),
-    preDoneCallback: function(exampleId) {
-      $("#playground").show();
-      googAnalytics.recordExampleClick(exampleId);
-    }
-  });
+  var exampleLocation = NewExampleLocation();
+  var examples = NewExamples($("#playground"),
+    templates, exampleLocation, uiBlocker);
+
+  var gistLocation = NewGistLocation();
+  var gist = NewGist($("#playground"),
+    templates, gistLocation, uiBlocker);
+
+  if (gistLocation.isSet()) {
+    gist.load(gistLocation.get(), {
+      scrollIntoView: true,
+      preDoneCallback: function(exampleId) {
+        $("#playground").show();
+      }
+    });
+  } else {
+    examples.load(exampleLocation.get(), {
+      scrollIntoView: exampleLocation.isSet(),
+      preDoneCallback: function(exampleId) {
+        $("#playground").show();
+        googAnalytics.recordExampleClick(exampleId);
+      }
+    });
+  }
 
   $("#playground .add-config").click(function() {
     templates.addFile(null, {focus: true});
