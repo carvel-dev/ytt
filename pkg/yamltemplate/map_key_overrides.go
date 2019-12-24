@@ -29,7 +29,8 @@ func (d MapItemOverride) Apply(
 			return nil
 		}
 
-		return fmt.Errorf("disallowed to override key '%s' value", newItem.Key)
+		return fmt.Errorf("expected key '%s' to not be specified again "+
+			"(unless '%s' annotation is added)", newItem.Key, AnnotationMapKeyOverride)
 	}
 
 	return nil

@@ -11,6 +11,6 @@ _: #@ template.replace(tpl())
 +++
 
 ERR: 
-- template.replace: disallowed to override key 'test3' value
+- template.replace: expected key 'test3' to not be specified again (unless 'yaml/map-key-override' annotation is added)
     in <toplevel>
       stdin:9 | _: #@ template.replace(tpl())
