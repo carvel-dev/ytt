@@ -204,7 +204,7 @@ code, .terminal, .logo {
   color: red;
 }
 .output-errors {
-  white-space: pre;
+  white-space: pre-wrap;
   font-family: monospace;
 }
 
