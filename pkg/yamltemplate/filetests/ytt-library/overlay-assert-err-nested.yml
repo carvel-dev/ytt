@@ -1,0 +1,32 @@
+#@ load("@ytt:overlay", "overlay")
+#@ load("@ytt:assert", "assert")
+
+#@ def test1_left():
+key1:
+  key1a: val1
+  keys:
+  - 1
+  - 2
+#@ end
+
+#@ def test1_right():
+#@overlay/assert
+key1:
+  #@overlay/assert via=lambda a,b: a == "val1"
+  key1a: val1
+  keys:
+  #@overlay/match by=overlay.index(0)
+  #@overlay/assert via=lambda a,b: a == 2
+  - 1
+  #@overlay/match by=overlay.index(1)
+  - 2
+#@ end
+
+test1: #@ overlay.apply(test1_left(), test1_right())
+
++++
+
+ERR: 
+- overlay.apply: Map item (key 'key1') on line stdin:14: Map item (key 'keys') on line stdin:17: Array item on line stdin:20: Expected via invocation to return true, but was false
+    in <toplevel>
+      stdin:25 | test1: #@ overlay.apply(test1_left(), test1_right())

@@ -162,6 +162,11 @@ func (o OverlayOp) assertArrayItem(
 	leftArray *yamlmeta.Array, newItem *yamlmeta.ArrayItem,
 	parentMatchChildDefaults MatchChildDefaultsAnnotation) error {
 
+	matchChildDefaults, err := NewMatchChildDefaultsAnnotation(newItem, parentMatchChildDefaults)
+	if err != nil {
+		return err
+	}
+
 	ann, err := NewArrayItemMatchAnnotation(newItem, parentMatchChildDefaults, o.Thread)
 	if err != nil {
 		return err
@@ -179,6 +184,11 @@ func (o OverlayOp) assertArrayItem(
 
 	for _, leftIdx := range leftIdxs {
 		err := testAnn.Check(leftArray.Items[leftIdx])
+		if err != nil {
+			return err
+		}
+
+		_, err = o.apply(leftArray.Items[leftIdx].Value, newItem.Value, matchChildDefaults)
 		if err != nil {
 			return err
 		}

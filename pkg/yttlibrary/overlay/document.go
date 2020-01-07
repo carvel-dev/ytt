@@ -162,6 +162,11 @@ func (o OverlayOp) assertDocument(
 	leftDocSets []*yamlmeta.DocumentSet, newDoc *yamlmeta.Document,
 	parentMatchChildDefaults MatchChildDefaultsAnnotation) error {
 
+	matchChildDefaults, err := NewMatchChildDefaultsAnnotation(newDoc, parentMatchChildDefaults)
+	if err != nil {
+		return err
+	}
+
 	ann, err := NewDocumentMatchAnnotation(newDoc, parentMatchChildDefaults, o.ExactMatch, o.Thread)
 	if err != nil {
 		return err
@@ -179,6 +184,11 @@ func (o OverlayOp) assertDocument(
 
 	for _, leftIdx := range leftIdxs {
 		err := testAnn.Check(leftDocSets[leftIdx[0]].Items[leftIdx[1]])
+		if err != nil {
+			return err
+		}
+
+		_, err = o.apply(leftDocSets[leftIdx[0]].Items[leftIdx[1]].Value, newDoc.Value, matchChildDefaults)
 		if err != nil {
 			return err
 		}

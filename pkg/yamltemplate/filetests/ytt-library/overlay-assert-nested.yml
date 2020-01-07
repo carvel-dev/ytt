@@ -1,0 +1,58 @@
+#@ load("@ytt:overlay", "overlay")
+#@ load("@ytt:assert", "assert")
+
+#@ def test1_left():
+key1:
+  key1a: val1
+  key2a:
+    key2aa: val2
+  keys:
+  - 1
+  - 2
+#@ end
+
+#@ def test1_right():
+#@overlay/assert
+key1:
+  #@overlay/assert via=lambda a,b: a == "val1"
+  key1a: val1
+  key2a:
+    key2aa: val2
+  keys:
+  #@overlay/match by=overlay.index(0)
+  #@overlay/assert via=lambda a,b: a > 0
+  - 1
+  #@overlay/match by=overlay.index(1)
+  #@overlay/assert via=lambda a,b: a > 0
+  - 2
+#@ end
+
+#@ def test2_right():
+key1:
+  keys:
+  #@overlay/match by=overlay.all,expects="1+"
+  #@overlay/assert via=lambda a,b: a > 0
+  -
+#@ end
+
+test1: #@ overlay.apply(test1_left(), test1_right())
+test2: #@ overlay.apply(test1_left(), test2_right())
+
++++
+
+test1:
+  key1:
+    key1a: val1
+    key2a:
+      key2aa: val2
+    keys:
+    - 1
+    - 2
+test2:
+  key1:
+    key1a: val1
+    key2a:
+      key2aa: val2
+    keys:
+    - 1
+    - 2

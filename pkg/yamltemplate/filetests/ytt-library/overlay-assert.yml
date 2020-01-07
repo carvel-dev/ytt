@@ -39,7 +39,9 @@ key1:
   key2: true
   key3: string
   key4:
+  #@overlay/match by=overlay.index(0)
   - abc
+  #@overlay/match by=overlay.index(1)
   - null
 #@ end
 

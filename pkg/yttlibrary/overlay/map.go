@@ -93,6 +93,11 @@ func (o OverlayOp) replaceMapItem(leftMap *yamlmeta.Map, newItem *yamlmeta.MapIt
 func (o OverlayOp) assertMapItem(leftMap *yamlmeta.Map, newItem *yamlmeta.MapItem,
 	parentMatchChildDefaults MatchChildDefaultsAnnotation) error {
 
+	matchChildDefaults, err := NewMatchChildDefaultsAnnotation(newItem, parentMatchChildDefaults)
+	if err != nil {
+		return err
+	}
+
 	ann, err := NewMapItemMatchAnnotation(newItem, parentMatchChildDefaults, o.Thread)
 	if err != nil {
 		return err
@@ -109,7 +114,15 @@ func (o OverlayOp) assertMapItem(leftMap *yamlmeta.Map, newItem *yamlmeta.MapIte
 	}
 
 	if found {
-		return testAnn.Check(leftMap.Items[leftIdx])
+		err := testAnn.Check(leftMap.Items[leftIdx])
+		if err != nil {
+			return err
+		}
+
+		_, err = o.apply(leftMap.Items[leftIdx].Value, newItem.Value, matchChildDefaults)
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
