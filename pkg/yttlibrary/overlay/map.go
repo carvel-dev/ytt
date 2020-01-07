@@ -90,7 +90,7 @@ func (o OverlayOp) replaceMapItem(leftMap *yamlmeta.Map, newItem *yamlmeta.MapIt
 	return nil
 }
 
-func (o OverlayOp) testMapItem(leftMap *yamlmeta.Map, newItem *yamlmeta.MapItem,
+func (o OverlayOp) assertMapItem(leftMap *yamlmeta.Map, newItem *yamlmeta.MapItem,
 	parentMatchChildDefaults MatchChildDefaultsAnnotation) error {
 
 	ann, err := NewMapItemMatchAnnotation(newItem, parentMatchChildDefaults, o.Thread)

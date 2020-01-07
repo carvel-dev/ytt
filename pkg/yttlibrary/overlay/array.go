@@ -158,7 +158,7 @@ func (o OverlayOp) appendArrayItem(
 	return nil
 }
 
-func (o OverlayOp) testArrayItem(
+func (o OverlayOp) assertArrayItem(
 	leftArray *yamlmeta.Array, newItem *yamlmeta.ArrayItem,
 	parentMatchChildDefaults MatchChildDefaultsAnnotation) error {
 

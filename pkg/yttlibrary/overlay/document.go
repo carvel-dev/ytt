@@ -158,7 +158,7 @@ func (o OverlayOp) appendDocument(
 	return nil
 }
 
-func (o OverlayOp) testDocument(
+func (o OverlayOp) assertDocument(
 	leftDocSets []*yamlmeta.DocumentSet, newDoc *yamlmeta.Document,
 	parentMatchChildDefaults MatchChildDefaultsAnnotation) error {
 

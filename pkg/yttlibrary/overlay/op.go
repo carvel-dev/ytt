@@ -74,7 +74,7 @@ func (o OverlayOp) apply(left, right interface{}, parentMatchChildDefaults Match
 				case AnnotationReplace:
 					err = o.replaceMapItem(typedLeft, item, parentMatchChildDefaults)
 				case AnnotationAssert:
-					err = o.testMapItem(typedLeft, item, parentMatchChildDefaults)
+					err = o.assertMapItem(typedLeft, item, parentMatchChildDefaults)
 				default:
 					err = fmt.Errorf("Overlay op %s is not supported on map item", op)
 				}
@@ -111,7 +111,7 @@ func (o OverlayOp) apply(left, right interface{}, parentMatchChildDefaults Match
 				case AnnotationAppend:
 					err = o.appendArrayItem(typedLeft, item)
 				case AnnotationAssert:
-					err = o.testArrayItem(typedLeft, item, parentMatchChildDefaults)
+					err = o.assertArrayItem(typedLeft, item, parentMatchChildDefaults)
 				default:
 					err = fmt.Errorf("Overlay op %s is not supported on array item", op)
 				}
@@ -152,7 +152,7 @@ func (o OverlayOp) applyDocSet(
 			case AnnotationAppend:
 				err = o.appendDocument(typedLeft, doc)
 			case AnnotationAssert:
-				err = o.testDocument(typedLeft, doc, parentMatchChildDefaults)
+				err = o.assertDocument(typedLeft, doc, parentMatchChildDefaults)
 			default:
 				err = fmt.Errorf("Overlay op %s is not supported on document", op)
 			}
