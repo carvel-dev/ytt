@@ -292,15 +292,36 @@ function NewGistLocation() {
       var id = null;
       if (window.location.hash) {
         if (window.location.hash.startsWith(prefix)) {
-          id = window.location.hash.replace(prefix, "", 1)
+          id = window.location.hash.replace(prefix, "", 1);
         }
+      }
+      // Gist URL looks like this: https://gist.github.com/cppforlife/ed41c0e8ab19029347732ba247a6c460
+      if (id && id.startsWith("https://")) {
+        id = id.split("/").slice(-1)[0];
       }
       return id
     },
     set: function(id) {
-      window.location.hash = prefix+id
+      window.location.hash = prefix+id;
     }
   }
+}
+
+function NewGistForm(formEl, gistLocation, gist) {
+  formEl.submit(function(event) {
+    event.preventDefault();
+    gistLocation.set($("input", formEl).val());
+    console.log(gistLocation.get());
+    gist.load(gistLocation.get(), {
+      scrollIntoView: true,
+      preDoneCallback: function(exampleId) {
+        $("#playground").show();
+      }
+    });
+    return false;
+  });
+
+  return {}
 }
 
 function NewGoogleAnalytics() {
@@ -337,6 +358,7 @@ $(document).ready(function() {
   var gistLocation = NewGistLocation();
   var gist = NewGist($("#playground"),
     templates, gistLocation, uiBlocker);
+  var gistForm = NewGistForm($("#show-gist"), gistLocation, gist);
 
   if (gistLocation.isSet()) {
     gist.load(gistLocation.get(), {
