@@ -17,6 +17,7 @@ load("@ytt:overlay", "overlay"=ov)             # load overlay symbol under a dif
 load("helpers.star", "func1", "func2")         # load func1, func2 from Starlark file
 load("helpers.lib.yml", "func1", "func2")      # load func1, func2 from YAML file
 load("helpers.lib.txt", "func1", "func2")      # load func1, func2 from text file
+load("/dir/helpers.lib.yml", "func1")          # load func1 from file relative to root of library
 load("sub-dir/helpers.lib.txt", "func1")       # load func1 from a sub-directory
 load("@project:dir/helpers.lib.txt", "func1")  # load func1 from a project located under _ytt_lib
 ```
@@ -27,15 +28,15 @@ load("@project:dir/helpers.lib.txt", "func1")  # load func1 from a project locat
     - `library` could be `ytt` or local path under `_ytt_lib` directory
       - examples: [`ytt`](lang-ref-ytt.md), `github.com/k14s/k8s-lib`, `common`
     - `package` could be a directory path
-      - examples: `overlay`, `regexp`, `app/`
+      - examples: `overlay`, `regexp`, `app/`, `/app/something`
     - `module` is a file name or predefined name (included in `ytt` library)
       - examples: `module.lib.yml`
 1. one or more symbols to import with optional aliases
     - examples: `func1`, `func1="as_func1"`
 
-At the moment file can only load files from current or child directories.
+Files can be loaded from current or child directories. As of ytt v0.24.0, `/` package prefix can be used to load files relative to the root of the current library.
 
-Note that _currently_ there is no distinction between using `load("@project:dir/helpers.lib.txt", "func1")` or `load("@project/dir:helpers.lib.txt", "func1")`; however, it's recommended to use `:` at the boundary of what is considered a library by us, humans (e.g. a single GitHub project). In future releases ytt may rely on this information to understand where the root of the library to be able to load modules from sibling packages.
+Note that there is a distinction between using `load("@project:dir/helpers.lib.txt", "func1")` or `load("@project/dir:helpers.lib.txt", "func1")`, in that, `:` signifies what ytt considers a self-contained library (i.e. is `dir` simply a package in `project` or `project/dir` a standalone library). This allows files to load other files relative to the library root.
 
 #### _ytt_lib directory
 
