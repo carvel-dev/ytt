@@ -1,86 +1,11 @@
 ### ytt Library: Overlay module
 
-Overlay module provides a way to combine two structures together with the help of annotations.
+Overlay module provides a way to combine two structures together with the help of annotations. You can use overlay functionality:
 
-```yaml
-#@ load("@ytt:overlay", "overlay")
+- [programmatically via `overlay.apply` function](#programmatic-access)
+- [by specifying overlays as standalone YAML documents](#overlays-as-files)
 
-#@ def left():
-key1: val1
-key2:
-  key3:
-    key4: val4
-  key5:
-  - name: item1
-    key6: val6
-  - name: item2
-    key7: val7
-#@ end
-
-#@ def right():
-#@overlay/remove
-key1: val1
-key2:
-  key3:
-    key4: val4
-  key5:
-  #@overlay/match by="name"
-  - name: item2
-    #@overlay/match missing_ok=True
-    key8: new-val8
-#@ end
-
-result: #@ overlay.apply(left(), right())
-```
-
-with the result of
-
-```yaml
-result:
-  key2:
-    key3:
-      key4: val4
-    key5:
-    - name: item1
-      key6: val6
-    - name: item2
-      key7: val7
-      key8: new-val8
-```
-
-Functions:
-
-- `apply(left, right1[, rightX...])`
-```python
-overlay.apply(left(), right())
-overlay.apply(left(), one(), two())
-```
-
-- `map_key(name)` matcher matches array items based on the value of map key `name`; in the below example it will succesfully match array items that have a map with a key `name` of value `item2`
-```yaml
-#@overlay/match by=overlay.map_key("name")
-- name: item2
-```
-
-- `index(i)` matcher matches array item at given index
-```yaml
-#@overlay/match by=overlay.index(0)
-- item10
-```
-
-- `all` matcher matches all documents or array items
-```yaml
-#@overlay/match by=overlay.all
-- item10
-```
-
-- `subset` matcher matches document or array item that has content that matches given map
-```yaml
-#@overlay/match by=overlay.subset({"metadata":{"name":"example-ingress1"}})
----
-spec:
-  enabled: true
-```
+When combining two structures together we refer to the structure is modified as "left-side" (or base) and to the structure that specifies modifications as "right-side" (or overlay). Modifications are described via overlay annotations on the right-side structures.
 
 Annotations on the "right-side" nodes:
 
@@ -136,6 +61,90 @@ Annotations on the "right-side" nodes:
     - `#@overlay/assert`: (default)
     - `#@overlay/assert via=lambda a,b: a > 0 and a < 1000`: check that value is within certain numeric constraint
     - `#@overlay/assert via=lambda a,b: regexp.match("[a-z0-9]+", a)`: check that value is lowercase alphanumeric
+    
+#### Functions
+
+Several functions are provided by overlay module that are useful for executing overlay operation, and matching various structures.
+
+- `apply(left, right1[, rightX...])` to combine two or more structures (see [Programmatic access](#programmatic-access) below for details)
+```python
+overlay.apply(left(), right())
+overlay.apply(left(), one(), two())
+```
+
+- `map_key(name)` matcher matches array items based on the value of map key `name`; in the below example it will succesfully match array items that have a map with a key `name` of value `item2`
+```yaml
+#@overlay/match by=overlay.map_key("name")
+- name: item2
+```
+
+- `index(i)` matcher matches array item at given index
+```yaml
+#@overlay/match by=overlay.index(0)
+- item10
+```
+
+- `all` matcher matches all documents or array items
+```yaml
+#@overlay/match by=overlay.all
+- item10
+```
+
+- `subset` matcher matches document or array item that has content that matches given map
+```yaml
+#@overlay/match by=overlay.subset({"metadata":{"name":"example-ingress1"}})
+---
+spec:
+  enabled: true
+```
+
+#### Programmatic access
+
+```yaml
+#@ load("@ytt:overlay", "overlay")
+
+#@ def left():
+key1: val1
+key2:
+  key3:
+    key4: val4
+  key5:
+  - name: item1
+    key6: val6
+  - name: item2
+    key7: val7
+#@ end
+
+#@ def right():
+#@overlay/remove
+key1: val1
+key2:
+  key3:
+    key4: val4
+  key5:
+  #@overlay/match by="name"
+  - name: item2
+    #@overlay/match missing_ok=True
+    key8: new-val8
+#@ end
+
+result: #@ overlay.apply(left(), right())
+```
+
+with the result of
+
+```yaml
+result:
+  key2:
+    key3:
+      key4: val4
+    key5:
+    - name: item1
+      key6: val6
+    - name: item2
+      key7: val7
+      key8: new-val8
+```
 
 #### Overlays as files
 
