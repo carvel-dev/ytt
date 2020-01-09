@@ -100,6 +100,8 @@ spec:
 
 #### Programmatic access
 
+In this example we have `left()` function that returns left-side structure and `right()` that returns right-side structure that specifies modifications. `overlay.apply(...)` will execute modifications and return a new structure.
+
 ```yaml
 #@ load("@ytt:overlay", "overlay")
 
