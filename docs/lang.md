@@ -3,6 +3,7 @@
 Templating language used in `ytt` is a slightly modified version of [Starlark](https://github.com/google/starlark-go/blob/master/doc/spec.md). Following modifications were made:
 
 - requires `end` keyword for block closing
+  - hence no longer whitespace sensitive (except new line breaks)
 - does not allow use of `pass` keyword
 
 ## Reference
