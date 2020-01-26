@@ -16,7 +16,7 @@ func main() {
 
 	err := command.Execute()
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		fmt.Fprintf(os.Stderr, "ytt: Error: %v\n", err)
 		os.Exit(1)
 	}
 }
