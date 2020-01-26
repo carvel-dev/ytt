@@ -17,6 +17,7 @@
   - [Text templating](ytt-text-templating.md) describes how to deal with complex text templating
 - [Injecting secrets](injecting-secrets.md)
 - [Outputs](outputs.md)
+- [File marks](file-marks.md)
 - [Security](security.md)
 - [FAQ](faq.md)
 - [ytt vs X: How ytt is different from other tools / frameworks](ytt-vs-x.md)
