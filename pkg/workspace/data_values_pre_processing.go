@@ -20,21 +20,24 @@ type DataValuesPreProcessing struct {
 }
 
 func (o DataValuesPreProcessing) Apply() (interface{}, error) {
-	// Respect assigned file order for data values overlaying to succeed
-	SortFilesInLibrary(o.valuesFiles)
+	files := append([]*FileInLibrary{}, o.valuesFiles...)
 
-	result, err := o.apply()
+	// Respect assigned file order for data values overlaying to succeed
+	SortFilesInLibrary(files)
+
+	result, err := o.apply(files)
 	if err != nil {
-		return nil, fmt.Errorf("Overlaying data values (in following order: %s): %s", o.allFileDescs(), err)
+		errMsg := "Overlaying data values (in following order: %s): %s"
+		return nil, fmt.Errorf(errMsg, o.allFileDescs(files), err)
 	}
 
 	return result, nil
 }
 
-func (o DataValuesPreProcessing) apply() (interface{}, error) {
+func (o DataValuesPreProcessing) apply(files []*FileInLibrary) (interface{}, error) {
 	var values *yamlmeta.Document
 
-	for _, fileInLib := range o.valuesFiles {
+	for _, fileInLib := range files {
 		valuesDocs, err := o.templateFile(fileInLib)
 		if err != nil {
 			return nil, fmt.Errorf("Templating file '%s': %s", fileInLib.File.RelativePath(), err)
@@ -62,17 +65,14 @@ func (o DataValuesPreProcessing) apply() (interface{}, error) {
 	return finalValues.AsInterface(), nil
 }
 
-func (p DataValuesPreProcessing) allFileDescs() string {
+func (p DataValuesPreProcessing) allFileDescs(files []*FileInLibrary) string {
 	var result []string
-
-	for _, fileInLib := range p.valuesFiles {
+	for _, fileInLib := range files {
 		result = append(result, fileInLib.File.RelativePath())
 	}
-
 	if len(p.valuesAsts) > 0 {
 		result = append(result, "additional data values")
 	}
-
 	return strings.Join(result, ", ")
 }
 
