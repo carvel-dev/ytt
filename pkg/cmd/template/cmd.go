@@ -19,6 +19,7 @@ type TemplateOptions struct {
 
 	BulkFilesSourceOpts    BulkFilesSourceOpts
 	RegularFilesSourceOpts RegularFilesSourceOpts
+	FileMarksOpts          FileMarksOpts
 	DataValuesFlags        DataValuesFlags
 }
 
@@ -60,6 +61,7 @@ func NewCmd(o *TemplateOptions) *cobra.Command {
 	cmd.Flags().BoolVar(&o.InspectFiles, "files-inspect", false, "Inspect files")
 	o.BulkFilesSourceOpts.Set(cmd)
 	o.RegularFilesSourceOpts.Set(cmd)
+	o.FileMarksOpts.Set(cmd)
 	o.DataValuesFlags.Set(cmd)
 	return cmd
 }
@@ -91,6 +93,13 @@ func (o *TemplateOptions) Run() error {
 }
 
 func (o *TemplateOptions) RunWithFiles(in TemplateInput, ui cmdcore.PlainUI) TemplateOutput {
+	var err error
+
+	in.Files, err = o.FileMarksOpts.Apply(in.Files)
+	if err != nil {
+		return TemplateOutput{Err: err}
+	}
+
 	rootLibrary := workspace.NewRootLibrary(in.Files)
 	rootLibrary.Print(ui.DebugWriter())
 
