@@ -339,7 +339,7 @@ non-data-values-doc`)
 		t.Fatalf("Expected RunWithFiles to fail, but was no error")
 	}
 
-	if out.Err.Error() != "Processing data values: Expected data values file 'data.yml' to only have data values documents" {
+	if out.Err.Error() != "Overlaying data values (in following order: data.yml, additional data values): Templating file 'data.yml': Expected data values file 'data.yml' to only have data values documents" {
 		t.Fatalf("Expected RunWithFiles to fail, but was '%s'", out.Err)
 	}
 }

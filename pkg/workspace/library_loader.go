@@ -57,12 +57,7 @@ func (ll *LibraryLoader) Values(valuesAsts []EvalValuesAst) (EvalValuesAst, erro
 		IgnoreUnknownComments: ll.templateLoaderOpts.IgnoreUnknownComments,
 	}
 
-	vals, err := dvpp.Apply()
-	if err != nil {
-		return nil, fmt.Errorf("Processing data values: %s", err)
-	}
-
-	return vals, nil
+	return dvpp.Apply()
 }
 
 func (ll *LibraryLoader) valuesFiles(loader *TemplateLoader) ([]*FileInLibrary, error) {
