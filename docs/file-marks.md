@@ -22,8 +22,8 @@ Path can be following:
 
 ```bash
 ytt -f . \
-	--file-mark 'alt-example**/*:type=data' \
-	--file-mark 'example**/*:type=data' \
-	--file-mark 'generated.go.txt:exclusive-for-output=true' \
-	--output-directory ../../tmp/
+  --file-mark 'alt-example**/*:type=data' \
+  --file-mark 'example**/*:type=data' \
+  --file-mark 'generated.go.txt:exclusive-for-output=true' \
+  --output-directory ../../tmp/
 ```
