@@ -145,3 +145,52 @@ yamlfunc: yamlfunc`)
 		t.Fatalf("Expected output file to have specific data, but was: >>>%s<<<", file.Bytes())
 	}
 }
+
+func TestDocumentOverlayDescriptiveError(t *testing.T) {
+	yamlTplData := []byte(`
+array:
+- name: item1
+  subarray:
+  - item1
+`)
+
+	yamlOverlay1TplData := []byte(`
+#@ load("@ytt:overlay", "overlay")
+#@overlay/match by=overlay.all
+---
+array:
+#@overlay/match by="name"
+- name: item1
+  #@overlay/match missing_ok=True
+  subarray2: 2
+`)
+
+	yamlOverlay2TplData := []byte(`
+#@ load("@ytt:overlay", "overlay")
+#@overlay/match by=overlay.all
+---
+map: {}
+`)
+
+	filesToProcess := files.NewSortedFiles([]*files.File{
+		files.MustNewFileFromSource(files.NewBytesSource("tpl.yml", yamlTplData)),
+		files.MustNewFileFromSource(files.NewBytesSource("overlay1.yml", yamlOverlay1TplData)),
+		files.MustNewFileFromSource(files.NewBytesSource("overlay2.yml", yamlOverlay2TplData)),
+	})
+
+	ui := cmdcore.NewPlainUI(false)
+	opts := cmdtpl.NewOptions()
+
+	out := opts.RunWithFiles(cmdtpl.TemplateInput{Files: filesToProcess}, ui)
+	if out.Err == nil {
+		t.Fatalf("Expected RunWithFiles to error")
+	}
+
+	expectedErr := "Overlaying (in following order: overlay1.yml, overlay2.yml): " +
+		"Document on line overlay2.yml:4: Map item (key 'map') on line overlay2.yml:5: " +
+		"Expected number of matched nodes to be 1, but was 0"
+
+	if out.Err.Error() != expectedErr {
+		t.Fatalf("Expected error to match string but was '%s'", out.Err.Error())
+	}
+}

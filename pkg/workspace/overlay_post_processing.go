@@ -2,6 +2,7 @@ package workspace
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/k14s/ytt/pkg/template"
 	"github.com/k14s/ytt/pkg/yamlmeta"
@@ -58,7 +59,8 @@ func (o OverlayPostProcessing) Apply() (map[*FileInLibrary]*yamlmeta.DocumentSet
 			}
 			newLeft, err := op.Apply()
 			if err != nil {
-				return nil, err
+				return nil, fmt.Errorf("Overlaying (in following order: %s): %s",
+					o.allFileDescs(sortedOverlayFiles), err)
 			}
 			docSetsWithoutOverlays = newLeft.([]*yamlmeta.DocumentSet)
 		}
@@ -75,4 +77,12 @@ func (o OverlayPostProcessing) Apply() (map[*FileInLibrary]*yamlmeta.DocumentSet
 	}
 
 	return result, nil
+}
+
+func (o OverlayPostProcessing) allFileDescs(files []*FileInLibrary) string {
+	var result []string
+	for _, fileInLib := range files {
+		result = append(result, fileInLib.File.RelativePath())
+	}
+	return strings.Join(result, ", ")
 }
