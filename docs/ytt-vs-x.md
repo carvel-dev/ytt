@@ -26,7 +26,20 @@ Dhall language is a configuration language that can output YAML, and JSON. One o
 - [Kustomize](https://kubernetes.io/blog/2018/05/29/introducing-kustomize-template-free-configuration-customization-for-kubernetes/)
 - [CF BOSH's ops files](https://bosh.io/docs/cli-ops-files)
 
-Configuration customization tools are unique in a sense that they don't allow templating but rather build upon "base" configuration. ytt offers its own take on configuration customization via the ['overlay' feature](https://github.com/k14s/ytt/blob/master/docs/lang-ref-ytt-overlay.md). Unlike other tools, overlay operations (remove, replace, merge) in `ytt` mimic structure of the base configuration. For example in Kustomize to remove a particular map key, one has to use JSON patch syntax which is quite different from the normal document structure. On the other hand, `ytt` uses its ability to annotate YAML structures, hence it can mark map key that should be deleted. All in all, we think that `ytt`'s approach is superior.
+Configuration customization tools are unique in a sense that they don't allow templating but rather build upon "base" configuration. `ytt` offers its own take on configuration customization via the ['overlay' feature](https://github.com/k14s/ytt/blob/master/docs/lang-ref-ytt-overlay.md). Unlike other tools, overlay operations (remove, replace, merge) in `ytt` mimic structure of the base configuration. For example in Kustomize to remove a particular map key, one has to use JSON patch syntax which is quite different from the normal document structure. On the other hand, `ytt` uses its ability to annotate YAML structures, hence it can mark map key that should be deleted. All in all, we think that `ytt`'s approach is superior.
+
+Here are a few more detailed differences:
+
+- `ytt` overlays
+
+  - are not Kubernetes-specific so various types of configurations are covered that kustomize cannot deal with.
+  - cover all CRUD operations in one consistent style whereas kustomize needs varied syntaxes for varied types of modification (SMP vs jsonPatch, etc.).
+  - do not care about native kinds, CRDs vs something else since they are generic.
+
+- `ytt` is not just an overlay tool; it supports overlaying _and_ templating. We see configuration writing split into two categories: configuration authors, and configuration consumers. Configuration _authors_ are best supported by templating; however, configuration _consumers_ typically need more than just templating inputs. Overlaying provides the rest. Having one tool with consistent functionality across templating and overlays is powerful.
+- `ytt` is more explicit about missing map keys, etc (avoids a lot of unnecessary typos early on).
+- `ytt` allows you to define variables.
+- `ytt` has facilties to inject data into overlays from a variety of inputs including command line arguments, environment variables, and files.
 
 ### ytt vs Orchestration Tools (Pulumi / HELM)
 
