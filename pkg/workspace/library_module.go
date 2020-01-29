@@ -57,23 +57,27 @@ func (l LibraryModule) Get(thread *starlark.Thread, f *starlark.Builtin,
 
 	libraryCtx := LibraryExecutionContext{Current: foundLib, Root: foundLib}
 
-	return (&libraryValue{libraryCtx, nil, l.libraryExecutionFactory}).AsStarlarkValue(), nil
+	return (&libraryValue{libPath, libraryCtx, nil, l.libraryExecutionFactory}).AsStarlarkValue(), nil
 }
 
 type libraryValue struct {
+	desc                    string // used in error messages
 	libraryCtx              LibraryExecutionContext
 	dataValuess             []EvalValuesAst
 	libraryExecutionFactory *LibraryExecutionFactory
 }
 
 func (l *libraryValue) AsStarlarkValue() starlark.Value {
+	evalErrMsg := fmt.Sprintf("Evaluating library '%s'", l.desc)
+	exportErrMsg := fmt.Sprintf("Exporting from library '%s'", l.desc)
+
 	// TODO technically not a module; switch to struct?
 	return &starlarkstruct.Module{
 		Name: "library",
 		Members: starlark.StringDict{
 			"with_data_values": starlark.NewBuiltin("library.with_data_values", core.ErrWrapper(l.WithDataValues)),
-			"eval":             starlark.NewBuiltin("library.eval", core.ErrWrapper(l.Eval)),
-			"export":           starlark.NewBuiltin("library.export", core.ErrWrapper(l.Export)),
+			"eval":             starlark.NewBuiltin("library.eval", core.ErrWrapper(core.ErrDescWrapper(evalErrMsg, l.Eval))),
+			"export":           starlark.NewBuiltin("library.export", core.ErrWrapper(core.ErrDescWrapper(exportErrMsg, l.Export))),
 		},
 	}
 }
@@ -87,7 +91,7 @@ func (l *libraryValue) WithDataValues(thread *starlark.Thread, f *starlark.Built
 
 	dataValues := core.NewStarlarkValue(args.Index(0)).AsInterface()
 
-	libVal := &libraryValue{l.libraryCtx, nil, l.libraryExecutionFactory}
+	libVal := &libraryValue{l.desc, l.libraryCtx, nil, l.libraryExecutionFactory}
 	libVal.dataValuess = append([]EvalValuesAst{}, l.dataValuess...)
 	libVal.dataValuess = append(libVal.dataValuess, yamlmeta.NewASTFromInterface(dataValues))
 

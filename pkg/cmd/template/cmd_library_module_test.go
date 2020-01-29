@@ -286,7 +286,7 @@ func TestLibraryModuleWithExportConflicts(t *testing.T) {
 	}
 
 	expectedErr := `
-- library.export: Expected to find exactly one exported symbol 'vals', but found multiple across files: config1.lib.yml, config2.lib.yml
+- library.export: Exporting from library 'lib': Expected to find exactly one exported symbol 'vals', but found multiple across files: config1.lib.yml, config2.lib.yml
     in <toplevel>
       config.yml:3 | #@ library.get("lib").export("vals")`
 
@@ -318,7 +318,7 @@ func TestLibraryModuleWithExportPrivate(t *testing.T) {
 	}
 
 	expectedErr := `
-- library.export: Symbols starting with '_' are private, and cannot be exported
+- library.export: Exporting from library 'lib': Symbols starting with '_' are private, and cannot be exported
     in <toplevel>
       config.yml:3 | #@ library.get("lib").export("_vals")`
 

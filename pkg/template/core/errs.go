@@ -30,3 +30,13 @@ func ErrWrapper(wrappedFunc StarlarkFunc) StarlarkFunc {
 		return val, nil
 	}
 }
+
+func ErrDescWrapper(desc string, wrappedFunc StarlarkFunc) StarlarkFunc {
+	return func(thread *starlark.Thread, f *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
+		val, err := wrappedFunc(thread, f, args, kwargs)
+		if err != nil {
+			return val, fmt.Errorf("%s: %s", desc, err)
+		}
+		return val, nil
+	}
+}
