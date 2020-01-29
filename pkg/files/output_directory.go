@@ -4,6 +4,11 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
+)
+
+var (
+	suspiciousOutputDirectoryPaths = []string{"/", ".", ""}
 )
 
 type OutputDirectory struct {
@@ -29,12 +34,19 @@ func (d *OutputDirectory) Write() error {
 		filePaths[path] = struct{}{}
 	}
 
-	err := os.MkdirAll(d.path, 0700)
+	for _, path := range suspiciousOutputDirectoryPaths {
+		if d.path == path {
+			return fmt.Errorf("Expected output directory path to not be one of '%s'",
+				strings.Join(suspiciousOutputDirectoryPaths, "', '"))
+		}
+	}
+
+	err := os.RemoveAll(d.path)
 	if err != nil {
 		return err
 	}
 
-	err = d.removeOldFiles()
+	err = os.MkdirAll(d.path, 0700)
 	if err != nil {
 		return err
 	}

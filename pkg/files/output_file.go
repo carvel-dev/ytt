@@ -29,7 +29,7 @@ func (f OutputFile) Create(dirPath string) error {
 		return err
 	}
 
-	fd, err := os.OpenFile(resultPath, os.O_WRONLY|os.O_CREATE, 0700)
+	fd, err := os.OpenFile(resultPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0700)
 	if err != nil {
 		return err
 	}
