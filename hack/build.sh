@@ -14,8 +14,6 @@ go fmt ./cmd/... ./pkg/...
 go build -o ytt ./cmd/ytt/...
 ./ytt version
 
-mkdir -p tmp
-
 build_values_path="../../${BUILD_VALUES:-./hack/build-values-default.yml}"
 
 (
