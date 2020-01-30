@@ -35,7 +35,7 @@ Annotations on the "right-side" nodes:
 - `@overlay/remove`
   - valid for both map and array items
   - removes "left-side" node ("right-side" node value is ignored)
-- `@overlay/replace` [via=Function]
+- `@overlay/replace [via=Function]`
   - valid for documents, map and array items
   - replaces "left-side" node value with "right-side" node value
   - `via` (optional) keyword argument takes a function which will receive two arguments (left and right value) and expects to return single value
@@ -49,7 +49,7 @@ Annotations on the "right-side" nodes:
 - `@overlay/append`
   - valid only for array items
   - appends array item to the end of "left-side" array
-- `@overlay/assert` [via=Function] (available in v0.24.0+)
+- `@overlay/assert [via=Function]` (available in v0.24.0+)
   - valid for documents, map and array items
   - tests equality of "left-side" node value with "right-side" node value
   - `via` (optional) keyword argument takes a function which will receive two arguments (left and right value) and expects to return NoneType, Bool, or Tuple(Bool,String)
