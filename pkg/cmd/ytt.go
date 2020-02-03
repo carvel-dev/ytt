@@ -24,6 +24,7 @@ func NewYttCmd(o *YttOptions) *cobra.Command {
 
 	cmd.Use = "ytt"
 	cmd.Aliases = nil
+	cmd.Version = Version
 	cmd.Short = "ytt performs YAML templating"
 	cmd.Long = `ytt performs YAML templating.
 

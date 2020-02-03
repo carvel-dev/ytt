@@ -26,7 +26,7 @@ func NewVersionCmd(o *VersionOptions) *cobra.Command {
 }
 
 func (o *VersionOptions) Run() error {
-	fmt.Printf("Version: %s\n", Version)
+	fmt.Printf("ytt version %s\n", Version)
 
 	return nil
 }
