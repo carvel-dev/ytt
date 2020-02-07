@@ -2,7 +2,7 @@ package overlay
 
 import (
 	"fmt"
-
+	"github.com/k14s/ytt/pkg/filepos"
 	"github.com/k14s/ytt/pkg/template"
 	tplcore "github.com/k14s/ytt/pkg/template/core"
 	"github.com/k14s/ytt/pkg/yamlmeta"
@@ -58,24 +58,24 @@ func NewDocumentMatchAnnotation(newDoc *yamlmeta.Document,
 }
 
 func (a DocumentMatchAnnotation) IndexTuples(leftDocSets []*yamlmeta.DocumentSet) ([][]int, error) {
-	idxs, err := a.MatchNodes(leftDocSets)
+	idxs, matches, err := a.MatchNodes(leftDocSets)
 	if err != nil {
 		return nil, err
 	}
 
-	return idxs, a.expects.Check(len(idxs))
+	return idxs, a.expects.Check(matches)
 }
 
-func (a DocumentMatchAnnotation) MatchNodes(leftDocSets []*yamlmeta.DocumentSet) ([][]int, error) {
+func (a DocumentMatchAnnotation) MatchNodes(leftDocSets []*yamlmeta.DocumentSet) ([][]int, []*filepos.Position, error) {
 	if a.exact {
 		if len(leftDocSets) != 1 && len(leftDocSets[0].Items) != 1 {
-			return nil, fmt.Errorf("Expected to find exactly one left doc when merging exactly two documents")
+			return nil, nil, fmt.Errorf("Expected to find exactly one left doc when merging exactly two documents")
 		}
-		return [][]int{{0, 0}}, nil
+		return [][]int{{0, 0}}, []*filepos.Position{filepos.NewUnknownPosition()}, nil
 	}
 
 	if a.matcher == nil {
-		return nil, fmt.Errorf("Expected '%s' annotation "+
+		return nil, nil, fmt.Errorf("Expected '%s' annotation "+
 			"keyword argument 'by'  to be specified", AnnotationMatch)
 	}
 
@@ -83,6 +83,7 @@ func (a DocumentMatchAnnotation) MatchNodes(leftDocSets []*yamlmeta.DocumentSet)
 	case starlark.Callable:
 		var leftIdxs [][]int
 		var combinedIdx int
+		var matches []*filepos.Position
 
 		for i, leftDocSet := range leftDocSets {
 			for j, item := range leftDocSet.Items {
@@ -95,25 +96,26 @@ func (a DocumentMatchAnnotation) MatchNodes(leftDocSets []*yamlmeta.DocumentSet)
 				// TODO check thread correctness
 				result, err := starlark.Call(a.thread, *a.matcher, matcherArgs, []starlark.Tuple{})
 				if err != nil {
-					return nil, err
+					return nil, nil, err
 				}
 
 				resultBool, err := tplcore.NewStarlarkValue(result).AsBool()
 				if err != nil {
-					return nil, err
+					return nil, nil, err
 				}
 				if resultBool {
 					leftIdxs = append(leftIdxs, []int{i, j})
+					matches = append(matches, item.Position)
 				}
 
 				combinedIdx += 1
 			}
 		}
 
-		return leftIdxs, nil
+		return leftIdxs, matches, nil
 
 	default:
-		return nil, fmt.Errorf("Expected '%s' annotation keyword argument 'by'"+
+		return nil, nil, fmt.Errorf("Expected '%s' annotation keyword argument 'by'"+
 			" to be function, but was %T", AnnotationMatch, typedVal)
 	}
 }

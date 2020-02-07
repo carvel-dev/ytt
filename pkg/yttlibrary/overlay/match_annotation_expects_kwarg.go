@@ -2,6 +2,7 @@ package overlay
 
 import (
 	"fmt"
+	"github.com/k14s/ytt/pkg/filepos"
 	"strconv"
 	"strings"
 
@@ -23,7 +24,7 @@ func (a *MatchAnnotationExpectsKwarg) FillInDefaults(defaults MatchChildDefaults
 	}
 }
 
-func (a MatchAnnotationExpectsKwarg) Check(num int) error {
+func (a MatchAnnotationExpectsKwarg) Check(matches []*filepos.Position) error {
 	switch {
 	case a.missingOK != nil && a.expects != nil:
 		return fmt.Errorf("Expected only one of keyword arguments ('missing_ok', 'expects') specified")
@@ -32,33 +33,33 @@ func (a MatchAnnotationExpectsKwarg) Check(num int) error {
 		if typedResult, ok := (*a.missingOK).(starlark.Bool); ok {
 			if typedResult {
 				allowedVals := []starlark.Value{starlark.MakeInt(0), starlark.MakeInt(1)}
-				return a.checkValue(starlark.NewList(allowedVals), num)
+				return a.checkValue(starlark.NewList(allowedVals), matches)
 			}
-			return a.checkValue(starlark.MakeInt(1), num)
+			return a.checkValue(starlark.MakeInt(1), matches)
 		}
 		return fmt.Errorf("Expected keyword argument 'missing_ok' to be a boolean")
 
 	case a.expects != nil:
-		return a.checkValue(*a.expects, num)
+		return a.checkValue(*a.expects, matches)
 
 	default:
-		return a.checkValue(starlark.MakeInt(1), num)
+		return a.checkValue(starlark.MakeInt(1), matches)
 	}
 }
 
-func (a MatchAnnotationExpectsKwarg) checkValue(val interface{}, num int) error {
+func (a MatchAnnotationExpectsKwarg) checkValue(val interface{}, matches []*filepos.Position) error {
 	switch typedVal := val.(type) {
 	case starlark.Int:
-		return a.checkInt(typedVal, num)
+		return a.checkInt(typedVal, matches)
 
 	case starlark.String:
-		return a.checkString(typedVal, num)
+		return a.checkString(typedVal, matches)
 
 	case *starlark.List:
-		return a.checkList(typedVal, num)
+		return a.checkList(typedVal, matches)
 
 	case starlark.Callable:
-		result, err := starlark.Call(a.thread, typedVal, starlark.Tuple{starlark.MakeInt(num)}, []starlark.Tuple{})
+		result, err := starlark.Call(a.thread, typedVal, starlark.Tuple{starlark.MakeInt(len(matches))}, []starlark.Tuple{})
 		if err != nil {
 			return err
 		}
@@ -76,19 +77,21 @@ func (a MatchAnnotationExpectsKwarg) checkValue(val interface{}, num int) error 
 	}
 }
 
-func (a MatchAnnotationExpectsKwarg) checkInt(typedVal starlark.Int, num int) error {
+func (a MatchAnnotationExpectsKwarg) checkInt(typedVal starlark.Int, matches []*filepos.Position) error {
 	i1, ok := typedVal.Int64()
 	if ok {
-		if i1 != int64(num) {
-			return fmt.Errorf("Expected number of matched nodes to be %d, but was %d", i1, num)
+		if i1 != int64(len(matches)) {
+			return fmt.Errorf("Expected number of matched nodes to be %d, but was %d%s",
+				i1, len(matches), formatPositions(matches))
 		}
 		return nil
 	}
 
 	i2, ok := typedVal.Uint64()
 	if ok {
-		if i2 != uint64(num) {
-			return fmt.Errorf("Expected number of matched nodes to be %d, but was %d", i2, num)
+		if i2 != uint64(len(matches)) {
+			return fmt.Errorf("Expected number of matched nodes to be %d, but was %d%s",
+				i2, len(matches), formatPositions(matches))
 		}
 		return nil
 	}
@@ -96,7 +99,7 @@ func (a MatchAnnotationExpectsKwarg) checkInt(typedVal starlark.Int, num int) er
 	panic("Unsure how to convert starlark.Int to int")
 }
 
-func (a MatchAnnotationExpectsKwarg) checkString(typedVal starlark.String, num int) error {
+func (a MatchAnnotationExpectsKwarg) checkString(typedVal starlark.String, matches []*filepos.Position) error {
 	typedValStr := string(typedVal)
 
 	if strings.HasSuffix(typedValStr, "+") {
@@ -105,8 +108,9 @@ func (a MatchAnnotationExpectsKwarg) checkString(typedVal starlark.String, num i
 			return fmt.Errorf("Expected '%s' to be in format 'i+' where i is an integer", typedValStr)
 		}
 
-		if num < typedInt {
-			return fmt.Errorf("Expected number of matched nodes to be >= %d, but was %d", typedInt, num)
+		if len(matches) < typedInt {
+			return fmt.Errorf("Expected number of matched nodes to be >= %d, but was %d%s",
+				typedInt, len(matches), formatPositions(matches))
 		}
 
 		return nil
@@ -115,7 +119,7 @@ func (a MatchAnnotationExpectsKwarg) checkString(typedVal starlark.String, num i
 	return fmt.Errorf("Expected '%s' to be in format 'i+' where i is an integer", typedValStr)
 }
 
-func (a MatchAnnotationExpectsKwarg) checkList(typedVal *starlark.List, num int) error {
+func (a MatchAnnotationExpectsKwarg) checkList(typedVal *starlark.List, matches []*filepos.Position) error {
 	var lastErr error
 	var val starlark.Value
 
@@ -123,10 +127,21 @@ func (a MatchAnnotationExpectsKwarg) checkList(typedVal *starlark.List, num int)
 	defer iter.Done()
 
 	for iter.Next(&val) {
-		lastErr = a.checkValue(val, num)
+		lastErr = a.checkValue(val, matches)
 		if lastErr == nil {
 			return nil
 		}
 	}
 	return lastErr
+}
+
+func formatPositions(pos []*filepos.Position) string {
+	if pos == nil {
+		return ""
+	}
+	lines := []string{""}
+	for _, p := range pos {
+		lines = append(lines, p.AsString())
+	}
+	return strings.Join(lines, "\n")
 }

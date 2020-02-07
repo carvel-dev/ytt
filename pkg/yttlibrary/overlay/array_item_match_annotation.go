@@ -2,6 +2,7 @@ package overlay
 
 import (
 	"fmt"
+	"github.com/k14s/ytt/pkg/filepos"
 
 	"github.com/k14s/ytt/pkg/template"
 	tplcore "github.com/k14s/ytt/pkg/template/core"
@@ -61,38 +62,41 @@ func NewArrayItemMatchAnnotation(newItem *yamlmeta.ArrayItem,
 }
 
 func (a ArrayItemMatchAnnotation) Indexes(leftArray *yamlmeta.Array) ([]int, error) {
-	idxs, err := a.MatchNodes(leftArray)
+	idxs, matches, err := a.MatchNodes(leftArray)
 	if err != nil {
 		return nil, err
 	}
 
-	return idxs, a.expects.Check(len(idxs))
+	return idxs, a.expects.Check(matches)
 }
 
-func (a ArrayItemMatchAnnotation) MatchNodes(leftArray *yamlmeta.Array) ([]int, error) {
+func (a ArrayItemMatchAnnotation) MatchNodes(leftArray *yamlmeta.Array) ([]int, []*filepos.Position, error) {
 	if a.matcher == nil {
-		return nil, fmt.Errorf("Expected '%s' annotation "+
+		return nil, nil, fmt.Errorf("Expected '%s' annotation "+
 			"keyword argument 'by'  to be specified", AnnotationMatch)
 	}
 
 	switch typedVal := (*a.matcher).(type) {
 	case starlark.String:
 		var leftIdxs []int
+		var matches []*filepos.Position
 
 		for i, item := range leftArray.Items {
 			result, err := overlayModule{}.compareByMapKey(string(typedVal), item, a.newItem)
 			if err != nil {
-				return nil, err
+				return nil, nil, err
 			}
 			if result {
 				leftIdxs = append(leftIdxs, i)
+				matches = append(matches, item.Position)
 			}
 		}
 
-		return leftIdxs, nil
+		return leftIdxs, matches, nil
 
 	case starlark.Callable:
 		var leftIdxs []int
+		var matches []*filepos.Position
 
 		for i, item := range leftArray.Items {
 			matcherArgs := starlark.Tuple{
@@ -104,22 +108,23 @@ func (a ArrayItemMatchAnnotation) MatchNodes(leftArray *yamlmeta.Array) ([]int, 
 			// TODO check thread correctness
 			result, err := starlark.Call(a.thread, *a.matcher, matcherArgs, []starlark.Tuple{})
 			if err != nil {
-				return nil, err
+				return nil, nil, err
 			}
 
 			resultBool, err := tplcore.NewStarlarkValue(result).AsBool()
 			if err != nil {
-				return nil, err
+				return nil, nil, err
 			}
 			if resultBool {
 				leftIdxs = append(leftIdxs, i)
+				matches = append(matches, item.Position)
 			}
 		}
 
-		return leftIdxs, nil
+		return leftIdxs, matches, nil
 
 	default:
-		return nil, fmt.Errorf("Expected '%s' annotation keyword argument 'by'"+
+		return nil, nil, fmt.Errorf("Expected '%s' annotation keyword argument 'by'"+
 			" to be either string (for map key) or function, but was %T", AnnotationMatch, typedVal)
 	}
 }

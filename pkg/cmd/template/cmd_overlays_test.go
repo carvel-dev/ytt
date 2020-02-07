@@ -194,3 +194,45 @@ map: {}
 		t.Fatalf("Expected error to match string but was '%s'", out.Err.Error())
 	}
 }
+
+func TestDocumentOverlayMultipleMatchesDescriptiveError(t *testing.T) {
+	yamlTplData := []byte(`
+---
+id: 1
+name: foo
+
+---
+id: 2
+name: foo
+`)
+
+	yamlOverlayTplData := []byte(`
+#@ load("@ytt:overlay", "overlay")
+#@overlay/match by=overlay.all
+---
+overlayed: true
+`)
+
+	filesToProcess := files.NewSortedFiles([]*files.File{
+		files.MustNewFileFromSource(files.NewBytesSource("tpl.yml", yamlTplData)),
+		files.MustNewFileFromSource(files.NewBytesSource("overlay.yml", yamlOverlayTplData)),
+	})
+
+	ui := cmdcore.NewPlainUI(false)
+	opts := cmdtpl.NewOptions()
+
+	out := opts.RunWithFiles(cmdtpl.TemplateInput{Files: filesToProcess}, ui)
+	if out.Err == nil {
+		t.Fatalf("Expected RunWithFiles to error")
+	}
+
+	expectedErr := "Overlaying (in following order: overlay.yml): " +
+		"Document on line overlay.yml:4: " +
+		"Expected number of matched nodes to be 1, but was 2\n" +
+		"line tpl.yml:2\n" +
+		"line tpl.yml:6"
+
+	if out.Err.Error() != expectedErr {
+		t.Fatalf("Expected error to match '%s' but was '%s'", expectedErr, out.Err.Error())
+	}
+}

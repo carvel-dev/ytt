@@ -2,6 +2,7 @@ package overlay
 
 import (
 	"fmt"
+	"github.com/k14s/ytt/pkg/filepos"
 	"reflect"
 
 	"github.com/k14s/ytt/pkg/template"
@@ -43,21 +44,21 @@ func NewMapItemMatchAnnotation(newItem *yamlmeta.MapItem,
 }
 
 func (a MapItemMatchAnnotation) Index(leftMap *yamlmeta.Map) (int, bool, error) {
-	idx, found := a.MatchNode(leftMap)
+	idx, match, found := a.MatchNode(leftMap)
 
-	count := 0
+	matches := []*filepos.Position{}
 	if found {
-		count = 1
+		matches = append(matches, match)
 	}
 
-	return idx, found, a.expects.Check(count)
+	return idx, found, a.expects.Check(matches)
 }
 
-func (a MapItemMatchAnnotation) MatchNode(leftMap *yamlmeta.Map) (int, bool) {
+func (a MapItemMatchAnnotation) MatchNode(leftMap *yamlmeta.Map) (int, *filepos.Position, bool) {
 	for i, item := range leftMap.Items {
 		if reflect.DeepEqual(item.Key, a.newItem.Key) {
-			return i, true
+			return i, item.Position, true
 		}
 	}
-	return 0, false
+	return 0, filepos.NewUnknownPosition(), false
 }
