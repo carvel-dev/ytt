@@ -13,7 +13,7 @@ singleline
 +++
 
 ERR:
-- __ytt_tplXXX_set_node: cannot set non-string value (int64)
+- __ytt_tplXXX_set_node: cannot set non-string value (int64), consider using str(...) to convert to string
     in lines
       stdin:3 | = i 
     in <toplevel>

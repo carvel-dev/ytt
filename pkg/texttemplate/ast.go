@@ -80,7 +80,7 @@ func (n *NodeText) SetValue(val interface{}) error {
 		n.Content = typedVal
 		return nil
 	}
-	return fmt.Errorf("cannot set non-string value (%T)", val)
+	return fmt.Errorf("cannot set non-string value (%T), consider using str(...) to convert to string", val)
 }
 
 func (n *NodeText) AddValue(val interface{}) error { n.Content = val.(string); return nil }
