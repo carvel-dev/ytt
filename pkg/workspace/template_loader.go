@@ -16,7 +16,7 @@ import (
 
 type TemplateLoader struct {
 	ui                 files.UI
-	values             interface{}
+	values             *yamlmeta.Document
 	opts               TemplateLoaderOpts
 	compiledTemplates  map[string]*template.CompiledTemplate
 	libraryExecFactory *LibraryExecutionFactory
@@ -27,8 +27,12 @@ type TemplateLoaderOpts struct {
 	StrictYAML            bool
 }
 
-func NewTemplateLoader(values interface{}, ui files.UI, opts TemplateLoaderOpts,
+func NewTemplateLoader(values *yamlmeta.Document, ui files.UI, opts TemplateLoaderOpts,
 	libraryExecFactory *LibraryExecutionFactory) *TemplateLoader {
+
+	if values == nil {
+		panic("Expected values to be non-nil")
+	}
 
 	return &TemplateLoader{
 		ui:                 ui,

@@ -63,7 +63,7 @@ func (l LibraryModule) Get(thread *starlark.Thread, f *starlark.Builtin,
 type libraryValue struct {
 	desc                    string // used in error messages
 	libraryCtx              LibraryExecutionContext
-	dataValuess             []EvalValuesAst
+	dataValuess             []*yamlmeta.Document
 	libraryExecutionFactory *LibraryExecutionFactory
 }
 
@@ -92,8 +92,10 @@ func (l *libraryValue) WithDataValues(thread *starlark.Thread, f *starlark.Built
 	dataValues := core.NewStarlarkValue(args.Index(0)).AsInterface()
 
 	libVal := &libraryValue{l.desc, l.libraryCtx, nil, l.libraryExecutionFactory}
-	libVal.dataValuess = append([]EvalValuesAst{}, l.dataValuess...)
-	libVal.dataValuess = append(libVal.dataValuess, yamlmeta.NewASTFromInterface(dataValues))
+	libVal.dataValuess = append([]*yamlmeta.Document{}, l.dataValuess...)
+	libVal.dataValuess = append(libVal.dataValuess, &yamlmeta.Document{
+		Value: yamlmeta.NewASTFromInterface(dataValues),
+	})
 
 	return libVal.AsStarlarkValue(), nil
 }

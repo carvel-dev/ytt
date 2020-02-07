@@ -15,3 +15,15 @@ string: str
 bool: true
 int: 123
 float: 123.123
+***
+nothing:
+- 1
+- 2
+- 3
+string:
+- 1
+- 2
+- 4
+bool: true
+int: 123
+float: 123.123

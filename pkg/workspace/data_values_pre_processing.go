@@ -14,12 +14,12 @@ import (
 
 type DataValuesPreProcessing struct {
 	valuesFiles           []*FileInLibrary
-	valuesAsts            []EvalValuesAst
+	valuesOverlays        []*yamlmeta.Document
 	loader                *TemplateLoader
 	IgnoreUnknownComments bool // TODO remove?
 }
 
-func (o DataValuesPreProcessing) Apply() (interface{}, error) {
+func (o DataValuesPreProcessing) Apply() (*yamlmeta.Document, error) {
 	files := append([]*FileInLibrary{}, o.valuesFiles...)
 
 	// Respect assigned file order for data values overlaying to succeed
@@ -34,7 +34,7 @@ func (o DataValuesPreProcessing) Apply() (interface{}, error) {
 	return result, nil
 }
 
-func (o DataValuesPreProcessing) apply(files []*FileInLibrary) (interface{}, error) {
+func (o DataValuesPreProcessing) apply(files []*FileInLibrary) (*yamlmeta.Document, error) {
 	var values *yamlmeta.Document
 
 	for _, fileInLib := range files {
@@ -57,12 +57,12 @@ func (o DataValuesPreProcessing) apply(files []*FileInLibrary) (interface{}, err
 		}
 	}
 
-	finalValues, err := o.overlayAsts(values)
+	values, err := o.overlayValuesOverlays(values)
 	if err != nil {
 		return nil, err
 	}
 
-	return finalValues.AsInterface(), nil
+	return values, nil
 }
 
 func (p DataValuesPreProcessing) allFileDescs(files []*FileInLibrary) string {
@@ -70,7 +70,7 @@ func (p DataValuesPreProcessing) allFileDescs(files []*FileInLibrary) string {
 	for _, fileInLib := range files {
 		result = append(result, fileInLib.File.RelativePath())
 	}
-	if len(p.valuesAsts) > 0 {
+	if len(p.valuesOverlays) > 0 {
 		result = append(result, "additional data values")
 	}
 	return strings.Join(result, ", ")
@@ -122,7 +122,7 @@ func (p DataValuesPreProcessing) overlay(valuesDoc, newValuesDoc *yamlmeta.Docum
 	return newLeft.(*yamlmeta.DocumentSet).Items[0], nil
 }
 
-func (p DataValuesPreProcessing) overlayAsts(valuesDoc *yamlmeta.Document) (*yamlmeta.Document, error) {
+func (p DataValuesPreProcessing) overlayValuesOverlays(valuesDoc *yamlmeta.Document) (*yamlmeta.Document, error) {
 	if valuesDoc == nil {
 		// TODO get rid of assumption that data values is a map?
 		valuesDoc = &yamlmeta.Document{
@@ -136,15 +136,10 @@ func (p DataValuesPreProcessing) overlayAsts(valuesDoc *yamlmeta.Document) (*yam
 	// by default return itself
 	result = valuesDoc
 
-	for _, valuesAst := range p.valuesAsts {
+	for _, valuesOverlay := range p.valuesOverlays {
 		var err error
 
-		astFlagValues := &yamlmeta.Document{
-			Value:    valuesAst,
-			Position: filepos.NewUnknownPosition(),
-		}
-
-		result, err = p.overlay(result, astFlagValues)
+		result, err = p.overlay(result, valuesOverlay)
 		if err != nil {
 			// TODO improve error message?
 			return nil, fmt.Errorf("Overlaying additional data values on top of "+

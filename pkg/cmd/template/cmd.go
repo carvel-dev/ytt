@@ -107,7 +107,7 @@ func (o *TemplateOptions) RunWithFiles(in TemplateInput, ui cmdcore.PlainUI) Tem
 		return o.inspectFiles(rootLibrary, ui)
 	}
 
-	values, err := o.DataValuesFlags.Values(o.StrictYAML)
+	valuesOverlays, err := o.DataValuesFlags.AsOverlays(o.StrictYAML)
 	if err != nil {
 		return TemplateOutput{Err: err}
 	}
@@ -120,18 +120,16 @@ func (o *TemplateOptions) RunWithFiles(in TemplateInput, ui cmdcore.PlainUI) Tem
 	libraryCtx := workspace.LibraryExecutionContext{Current: rootLibrary, Root: rootLibrary}
 	libraryLoader := libraryExecutionFactory.New(libraryCtx)
 
-	astValues := yamlmeta.NewASTFromInterface(values)
-
-	astValues, err = libraryLoader.Values([]workspace.EvalValuesAst{astValues})
+	values, err := libraryLoader.Values(valuesOverlays)
 	if err != nil {
 		return TemplateOutput{Err: err}
 	}
 
 	if o.DataValuesFlags.Inspect {
-		return o.inspectValues(astValues, ui)
+		return o.inspectValues(values, ui)
 	}
 
-	result, err := libraryLoader.Eval(astValues)
+	result, err := libraryLoader.Eval(values)
 	if err != nil {
 		return TemplateOutput{Err: err}
 	}
@@ -148,9 +146,9 @@ func (o *TemplateOptions) pickSource(srcs []FileSource, pickFunc func(FileSource
 	return srcs[len(srcs)-1]
 }
 
-func (o *TemplateOptions) inspectValues(values interface{}, ui cmdcore.PlainUI) TemplateOutput {
+func (o *TemplateOptions) inspectValues(values *yamlmeta.Document, ui cmdcore.PlainUI) TemplateOutput {
 	docSet := &yamlmeta.DocumentSet{
-		Items: []*yamlmeta.Document{{Value: values}},
+		Items: []*yamlmeta.Document{values},
 	}
 
 	docBytes, err := docSet.AsBytes()

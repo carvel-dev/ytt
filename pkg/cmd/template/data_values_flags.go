@@ -6,8 +6,10 @@ import (
 	"os"
 	"strings"
 
-	"github.com/k14s/ytt/pkg/orderedmap"
+	"github.com/k14s/ytt/pkg/filepos"
+	"github.com/k14s/ytt/pkg/template"
 	"github.com/k14s/ytt/pkg/yamlmeta"
+	yttoverlay "github.com/k14s/ytt/pkg/yttlibrary/overlay"
 	"github.com/spf13/cobra"
 )
 
@@ -38,7 +40,7 @@ type dataValuesFlagsSource struct {
 	TransformFunc func(string) (interface{}, error)
 }
 
-func (s *DataValuesFlags) Values(strict bool) (*orderedmap.Map, error) {
+func (s *DataValuesFlags) AsOverlays(strict bool) ([]*yamlmeta.Document, error) {
 	plainValFunc := func(rawVal string) (interface{}, error) { return rawVal, nil }
 
 	yamlValFunc := func(rawVal string) (interface{}, error) {
@@ -49,7 +51,7 @@ func (s *DataValuesFlags) Values(strict bool) (*orderedmap.Map, error) {
 		return val, nil
 	}
 
-	result := []*orderedmap.Map{}
+	var result []*yamlmeta.Document
 
 	for _, src := range []dataValuesFlagsSource{{s.EnvFromStrings, plainValFunc}, {s.EnvFromYAML, yamlValFunc}} {
 		for _, envPrefix := range src.Values {
@@ -57,34 +59,34 @@ func (s *DataValuesFlags) Values(strict bool) (*orderedmap.Map, error) {
 			if err != nil {
 				return nil, fmt.Errorf("Extracting data values from env under prefix '%s': %s", envPrefix, err)
 			}
-			result = append(result, vals)
+			result = append(result, vals...)
 		}
 	}
 
 	// KVs and files take precedence over environment variables
 	for _, src := range []dataValuesFlagsSource{{s.KVsFromStrings, plainValFunc}, {s.KVsFromYAML, yamlValFunc}} {
 		for _, kv := range src.Values {
-			vals, err := s.kv(kv, src.TransformFunc)
+			val, err := s.kv(kv, src.TransformFunc)
 			if err != nil {
 				return nil, fmt.Errorf("Extracting data value from KV: %s", err)
 			}
-			result = append(result, vals)
+			result = append(result, val)
 		}
 	}
 
 	for _, file := range s.KVsFromFiles {
-		vals, err := s.file(file)
+		val, err := s.file(file)
 		if err != nil {
 			return nil, fmt.Errorf("Extracting data value from file: %s", err)
 		}
-		result = append(result, vals)
+		result = append(result, val)
 	}
 
-	return s.convertIntoNestedMap(result)
+	return result, nil
 }
 
-func (s *DataValuesFlags) env(prefix string, valueFunc func(string) (interface{}, error)) (*orderedmap.Map, error) {
-	result := orderedmap.NewMap()
+func (s *DataValuesFlags) env(prefix string, valueFunc func(string) (interface{}, error)) ([]*yamlmeta.Document, error) {
+	result := []*yamlmeta.Document{}
 	envVars := os.Environ()
 
 	for _, envVar := range envVars {
@@ -103,15 +105,15 @@ func (s *DataValuesFlags) env(prefix string, valueFunc func(string) (interface{}
 		}
 
 		// '__' gets translated into a '.' since periods may not be liked by shells
-		result.Set(strings.Replace(strings.TrimPrefix(pieces[0], prefix+"_"), "__", ".", -1), val)
+		keyPieces := strings.Split(strings.TrimPrefix(pieces[0], prefix+"_"), "__")
+
+		result = append(result, s.buildOverlay(keyPieces, val, "env var"))
 	}
 
 	return result, nil
 }
 
-func (s *DataValuesFlags) kv(kv string, valueFunc func(string) (interface{}, error)) (*orderedmap.Map, error) {
-	result := orderedmap.NewMap()
-
+func (s *DataValuesFlags) kv(kv string, valueFunc func(string) (interface{}, error)) (*yamlmeta.Document, error) {
 	pieces := strings.SplitN(kv, "=", 2)
 	if len(pieces) != 2 {
 		return nil, fmt.Errorf("Expected format key=value")
@@ -122,9 +124,7 @@ func (s *DataValuesFlags) kv(kv string, valueFunc func(string) (interface{}, err
 		return nil, fmt.Errorf("Deserializing value for key '%s': %s", pieces[0], err)
 	}
 
-	result.Set(pieces[0], val)
-
-	return result, nil
+	return s.buildOverlay(strings.Split(pieces[0], "."), val, "kv arg"), nil
 }
 
 func (s *DataValuesFlags) parseYAML(data string, strict bool) (interface{}, error) {
@@ -135,9 +135,7 @@ func (s *DataValuesFlags) parseYAML(data string, strict bool) (interface{}, erro
 	return docSet.Items[0].Value, nil
 }
 
-func (s *DataValuesFlags) file(kv string) (*orderedmap.Map, error) {
-	result := orderedmap.NewMap()
-
+func (s *DataValuesFlags) file(kv string) (*yamlmeta.Document, error) {
 	pieces := strings.SplitN(kv, "=", 2)
 	if len(pieces) != 2 {
 		return nil, fmt.Errorf("Expected format key=/file/path")
@@ -148,37 +146,37 @@ func (s *DataValuesFlags) file(kv string) (*orderedmap.Map, error) {
 		return nil, fmt.Errorf("Reading file '%s'", pieces[1])
 	}
 
-	result.Set(pieces[0], string(contents))
-
-	return result, nil
+	return s.buildOverlay(strings.Split(pieces[0], "."), string(contents), "key=file arg"), nil
 }
 
-func (s *DataValuesFlags) convertIntoNestedMap(multipleVals []*orderedmap.Map) (*orderedmap.Map, error) {
-	result := orderedmap.NewMap()
-	for _, vals := range multipleVals {
-		err := vals.IterateErr(func(key, val interface{}) error {
-			keyPieces := strings.Split(key.(string), ".")
-			currMap := result
-			for _, keyPiece := range keyPieces[:len(keyPieces)-1] {
-				subMap, found := currMap.Get(keyPiece)
-				if found {
-					if typedSubMap, ok := subMap.(*orderedmap.Map); ok {
-						currMap = typedSubMap
-					} else {
-						return fmt.Errorf("Expected key '%s' to not conflict with other data values at piece '%s'", key, keyPiece)
-					}
-				} else {
-					newCurrMap := orderedmap.NewMap()
-					currMap.Set(keyPiece, newCurrMap)
-					currMap = newCurrMap
-				}
-			}
-			currMap.Set(keyPieces[len(keyPieces)-1], val)
-			return nil
-		})
-		if err != nil {
-			return nil, err
-		}
+func (s *DataValuesFlags) buildOverlay(keyPieces []string, value interface{}, desc string) *yamlmeta.Document {
+	resultMap := &yamlmeta.Map{}
+	currMap := resultMap
+	var lastMapItem *yamlmeta.MapItem
+
+	pos := filepos.NewPosition(1)
+	pos.SetFile(fmt.Sprintf("key '%s' (%s)", strings.Join(keyPieces, "."), desc))
+
+	for _, piece := range keyPieces {
+		newMap := &yamlmeta.Map{}
+		lastMapItem = &yamlmeta.MapItem{Key: piece, Value: newMap, Position: pos}
+		currMap.Items = append(currMap.Items, lastMapItem)
+		currMap = newMap
 	}
-	return result, nil
+
+	lastMapItem.Value = yamlmeta.NewASTFromInterface(value)
+
+	// Explicitly replace entire value at given key
+	// (this allows to specify non-scalar data values)
+	nodeAnns := template.NodeAnnotations{
+		yttoverlay.AnnotationReplace: template.NodeAnnotation{},
+	}
+	lastMapItem.SetAnnotations(nodeAnns)
+
+	doc := &yamlmeta.Document{
+		Value:    resultMap,
+		Position: pos,
+	}
+
+	return doc
 }

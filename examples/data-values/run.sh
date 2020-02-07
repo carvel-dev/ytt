@@ -29,3 +29,11 @@ export YAML_VAL_float=123.123
 ./ytt -f examples/data-values/config.yml -f examples/data-values/values.yml \
   --data-values-env STR_VAL \
   --data-values-env-yaml YAML_VAL
+
+echo '***'
+
+export YAML_VAL_string=[1,2,4]
+
+./ytt -f examples/data-values/config.yml -f examples/data-values/values.yml \
+  --data-value-yaml nothing=[1,2,3] \
+  --data-values-env-yaml YAML_VAL

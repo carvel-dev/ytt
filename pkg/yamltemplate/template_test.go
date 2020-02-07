@@ -190,16 +190,18 @@ func (l stdTemplateLoader) Load(thread *starlark.Thread, module string) (starlar
 	return nil, fmt.Errorf("Unknown module '%s'", module)
 }
 
-func defaultInput() interface{} {
-	return orderedmap.NewMapWithItems([]orderedmap.MapItem{
-		{Key: "int", Value: 123},
-		{Key: "intNeg", Value: -49},
-		{Key: "float", Value: 123.123},
-		{Key: "t", Value: true},
-		{Key: "f", Value: false},
-		{Key: "nullz", Value: nil},
-		{Key: "string", Value: "string"},
-		{Key: "map", Value: orderedmap.NewMapWithItems([]orderedmap.MapItem{{Key: "a", Value: 123}})},
-		{Key: "list", Value: []interface{}{"a", 123, orderedmap.NewMapWithItems([]orderedmap.MapItem{{Key: "a", Value: 123}})}},
-	})
+func defaultInput() *yamlmeta.Document {
+	return &yamlmeta.Document{
+		Value: orderedmap.NewMapWithItems([]orderedmap.MapItem{
+			{Key: "int", Value: 123},
+			{Key: "intNeg", Value: -49},
+			{Key: "float", Value: 123.123},
+			{Key: "t", Value: true},
+			{Key: "f", Value: false},
+			{Key: "nullz", Value: nil},
+			{Key: "string", Value: "string"},
+			{Key: "map", Value: orderedmap.NewMapWithItems([]orderedmap.MapItem{{Key: "a", Value: 123}})},
+			{Key: "list", Value: []interface{}{"a", 123, orderedmap.NewMapWithItems([]orderedmap.MapItem{{Key: "a", Value: 123}})}},
+		}),
+	}
 }

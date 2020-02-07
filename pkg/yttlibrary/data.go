@@ -3,6 +3,7 @@ package yttlibrary
 import (
 	"github.com/k14s/ytt/pkg/template"
 	"github.com/k14s/ytt/pkg/template/core"
+	"github.com/k14s/ytt/pkg/yamlmeta"
 	"go.starlark.net/starlark"
 	"go.starlark.net/starlarkstruct"
 )
@@ -12,8 +13,8 @@ type dataModule struct {
 	loader template.CompiledTemplateLoader
 }
 
-func NewDataModule(values interface{}, loader template.CompiledTemplateLoader) dataModule {
-	return dataModule{core.NewGoValue(values, true).AsStarlarkValue(), loader}
+func NewDataModule(values *yamlmeta.Document, loader template.CompiledTemplateLoader) dataModule {
+	return dataModule{core.NewGoValue(values.AsInterface(), true).AsStarlarkValue(), loader}
 }
 
 func (b dataModule) AsModule() starlark.StringDict {

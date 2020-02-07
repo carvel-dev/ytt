@@ -28,8 +28,6 @@ type EvalExport struct {
 	Symbols starlark.StringDict
 }
 
-type EvalValuesAst interface{}
-
 func NewLibraryLoader(libraryCtx LibraryExecutionContext,
 	ui files.UI, templateLoaderOpts TemplateLoaderOpts,
 	libraryExecFactory *LibraryExecutionFactory) *LibraryLoader {
@@ -42,8 +40,9 @@ func NewLibraryLoader(libraryCtx LibraryExecutionContext,
 	}
 }
 
-func (ll *LibraryLoader) Values(valuesAsts []EvalValuesAst) (EvalValuesAst, error) {
-	loader := NewTemplateLoader(nil, ll.ui, ll.templateLoaderOpts, ll.libraryExecFactory)
+func (ll *LibraryLoader) Values(valuesOverlays []*yamlmeta.Document) (*yamlmeta.Document, error) {
+	loader := NewTemplateLoader(&yamlmeta.Document{},
+		ll.ui, ll.templateLoaderOpts, ll.libraryExecFactory)
 
 	valuesFiles, err := ll.valuesFiles(loader)
 	if err != nil {
@@ -52,7 +51,7 @@ func (ll *LibraryLoader) Values(valuesAsts []EvalValuesAst) (EvalValuesAst, erro
 
 	dvpp := DataValuesPreProcessing{
 		valuesFiles:           valuesFiles,
-		valuesAsts:            valuesAsts,
+		valuesOverlays:        valuesOverlays,
 		loader:                loader,
 		IgnoreUnknownComments: ll.templateLoaderOpts.IgnoreUnknownComments,
 	}
@@ -87,7 +86,7 @@ func (ll *LibraryLoader) valuesFiles(loader *TemplateLoader) ([]*FileInLibrary, 
 	return valuesFiles, nil
 }
 
-func (ll *LibraryLoader) Eval(values EvalValuesAst) (*EvalResult, error) {
+func (ll *LibraryLoader) Eval(values *yamlmeta.Document) (*EvalResult, error) {
 	exports, docSets, outputFiles, err := ll.eval(values)
 	if err != nil {
 		return nil, err
@@ -120,7 +119,7 @@ func (ll *LibraryLoader) Eval(values EvalValuesAst) (*EvalResult, error) {
 	return result, nil
 }
 
-func (ll *LibraryLoader) eval(values EvalValuesAst) ([]EvalExport,
+func (ll *LibraryLoader) eval(values *yamlmeta.Document) ([]EvalExport,
 	map[*FileInLibrary]*yamlmeta.DocumentSet, []files.OutputFile, error) {
 
 	loader := NewTemplateLoader(values, ll.ui, ll.templateLoaderOpts, ll.libraryExecFactory)
