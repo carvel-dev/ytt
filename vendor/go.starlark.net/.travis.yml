@@ -1,9 +1,0 @@
-sudo: false
-
-language: go
-
-go_import_path: go.starlark.net
-
-go:
-    - 1.10.x
-    - master
