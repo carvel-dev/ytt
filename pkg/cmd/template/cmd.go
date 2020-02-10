@@ -1,7 +1,6 @@
 package template
 
 import (
-	"fmt"
 	"time"
 
 	cmdcore "github.com/k14s/ytt/pkg/cmd/core"
@@ -31,7 +30,6 @@ type TemplateOutput struct {
 	Files  []files.OutputFile
 	DocSet *yamlmeta.DocumentSet
 	Err    error
-	Empty  bool
 }
 
 type FileSource interface {
@@ -85,9 +83,6 @@ func (o *TemplateOptions) Run() error {
 	}
 
 	out := o.RunWithFiles(in, ui)
-	if out.Empty {
-		return nil
-	}
 
 	return o.pickSource(srcs, func(s FileSource) bool { return s.HasOutput() }).Output(out)
 }
@@ -126,7 +121,11 @@ func (o *TemplateOptions) RunWithFiles(in TemplateInput, ui cmdcore.PlainUI) Tem
 	}
 
 	if o.DataValuesFlags.Inspect {
-		return o.inspectValues(values, ui)
+		return TemplateOutput{
+			DocSet: &yamlmeta.DocumentSet{
+				Items: []*yamlmeta.Document{values},
+			},
+		}
 	}
 
 	result, err := libraryLoader.Eval(values)
@@ -146,27 +145,21 @@ func (o *TemplateOptions) pickSource(srcs []FileSource, pickFunc func(FileSource
 	return srcs[len(srcs)-1]
 }
 
-func (o *TemplateOptions) inspectValues(values *yamlmeta.Document, ui cmdcore.PlainUI) TemplateOutput {
-	docSet := &yamlmeta.DocumentSet{
-		Items: []*yamlmeta.Document{values},
-	}
-
-	docBytes, err := docSet.AsBytes()
-	if err != nil {
-		return TemplateOutput{Err: fmt.Errorf("Marshaling data values: %s", err)}
-	}
-
-	ui.Printf("%s", docBytes) // no newline
-
-	return TemplateOutput{Empty: true}
-}
-
 func (o *TemplateOptions) inspectFiles(rootLibrary *workspace.Library, ui cmdcore.PlainUI) TemplateOutput {
 	files := rootLibrary.ListAccessibleFiles()
 	workspace.SortFilesInLibrary(files)
 
+	paths := &yamlmeta.Array{}
+
 	for _, fileInLib := range files {
-		ui.Printf("%s\n", fileInLib.File.RelativePath())
+		paths.Items = append(paths.Items, &yamlmeta.ArrayItem{
+			Value: fileInLib.File.RelativePath(),
+		})
 	}
-	return TemplateOutput{Empty: true}
+
+	return TemplateOutput{
+		DocSet: &yamlmeta.DocumentSet{
+			Items: []*yamlmeta.Document{{Value: paths}},
+		},
+	}
 }
