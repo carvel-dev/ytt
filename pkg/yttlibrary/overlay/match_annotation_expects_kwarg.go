@@ -82,7 +82,7 @@ func (a MatchAnnotationExpectsKwarg) checkInt(typedVal starlark.Int, matches []*
 	if ok {
 		if i1 != int64(len(matches)) {
 			return fmt.Errorf("Expected number of matched nodes to be %d, but was %d%s",
-				i1, len(matches), formatPositions(matches))
+				i1, len(matches), a.formatPositions(matches))
 		}
 		return nil
 	}
@@ -91,7 +91,7 @@ func (a MatchAnnotationExpectsKwarg) checkInt(typedVal starlark.Int, matches []*
 	if ok {
 		if i2 != uint64(len(matches)) {
 			return fmt.Errorf("Expected number of matched nodes to be %d, but was %d%s",
-				i2, len(matches), formatPositions(matches))
+				i2, len(matches), a.formatPositions(matches))
 		}
 		return nil
 	}
@@ -110,7 +110,7 @@ func (a MatchAnnotationExpectsKwarg) checkString(typedVal starlark.String, match
 
 		if len(matches) < typedInt {
 			return fmt.Errorf("Expected number of matched nodes to be >= %d, but was %d%s",
-				typedInt, len(matches), formatPositions(matches))
+				typedInt, len(matches), a.formatPositions(matches))
 		}
 
 		return nil
@@ -135,13 +135,13 @@ func (a MatchAnnotationExpectsKwarg) checkList(typedVal *starlark.List, matches 
 	return lastErr
 }
 
-func formatPositions(pos []*filepos.Position) string {
-	if pos == nil {
+func (a MatchAnnotationExpectsKwarg) formatPositions(pos []*filepos.Position) string {
+	if len(pos) == 0 {
 		return ""
 	}
-	lines := []string{""}
+	lines := []string{}
 	for _, p := range pos {
-		lines = append(lines, p.AsString())
+		lines = append(lines, p.AsCompactString())
 	}
-	return strings.Join(lines, "\n")
+	return " (lines: " + strings.Join(lines, ", ") + ")"
 }

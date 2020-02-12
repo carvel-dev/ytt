@@ -228,9 +228,7 @@ overlayed: true
 
 	expectedErr := "Overlaying (in following order: overlay.yml): " +
 		"Document on line overlay.yml:4: " +
-		"Expected number of matched nodes to be 1, but was 2\n" +
-		"line tpl.yml:2\n" +
-		"line tpl.yml:6"
+		"Expected number of matched nodes to be 1, but was 2 (lines: tpl.yml:2, tpl.yml:6)"
 
 	if out.Err.Error() != expectedErr {
 		t.Fatalf("Expected error to match '%s' but was '%s'", expectedErr, out.Err.Error())
