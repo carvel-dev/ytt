@@ -12,6 +12,9 @@ import (
 
 type MapItemMatchAnnotation struct {
 	newItem *yamlmeta.MapItem
+	thread  *starlark.Thread
+
+	matcher *starlark.Value
 	expects MatchAnnotationExpectsKwarg
 }
 
@@ -21,6 +24,7 @@ func NewMapItemMatchAnnotation(newItem *yamlmeta.MapItem,
 
 	annotation := MapItemMatchAnnotation{
 		newItem: newItem,
+		thread:  thread,
 		expects: MatchAnnotationExpectsKwarg{thread: thread},
 	}
 	kwargs := template.NewAnnotations(newItem).Kwargs(AnnotationMatch)
@@ -28,6 +32,8 @@ func NewMapItemMatchAnnotation(newItem *yamlmeta.MapItem,
 	for _, kwarg := range kwargs {
 		kwargName := string(kwarg[0].(starlark.String))
 		switch kwargName {
+		case MatchAnnotationKwargBy:
+			annotation.matcher = &kwarg[1]
 		case MatchAnnotationKwargExpects:
 			annotation.expects.expects = &kwarg[1]
 		case MatchAnnotationKwargMissingOK:
@@ -43,22 +49,25 @@ func NewMapItemMatchAnnotation(newItem *yamlmeta.MapItem,
 	return annotation, nil
 }
 
-func (a MapItemMatchAnnotation) Index(leftMap *yamlmeta.Map) (int, bool, error) {
-	idx, match, found := a.MatchNode(leftMap)
-
-	matches := []*filepos.Position{}
-	if found {
-		matches = append(matches, match)
+func (a MapItemMatchAnnotation) Indexes(leftMap *yamlmeta.Map) ([]int, error) {
+	idxs, matches, err := a.MatchNodes(leftMap)
+	if err != nil {
+		return []int{}, err
 	}
 
-	return idx, found, a.expects.Check(matches)
+	return idxs, a.expects.Check(matches)
 }
 
-func (a MapItemMatchAnnotation) MatchNode(leftMap *yamlmeta.Map) (int, *filepos.Position, bool) {
+func (a MapItemMatchAnnotation) MatchNodes(leftMap *yamlmeta.Map) ([]int, []*filepos.Position, error) {
+	var leftIdxs []int
+	var matches []*filepos.Position
+
 	for i, item := range leftMap.Items {
 		if reflect.DeepEqual(item.Key, a.newItem.Key) {
-			return i, item.Position, true
+			leftIdxs = append(leftIdxs, i)
+			matches = append(matches, item.Position)
 		}
 	}
-	return 0, filepos.NewUnknownPosition(), false
+
+	return leftIdxs, matches, nil
 }

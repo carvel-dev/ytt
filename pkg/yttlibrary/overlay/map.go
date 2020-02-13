@@ -17,23 +17,25 @@ func (o OverlayOp) mergeMapItem(leftMap *yamlmeta.Map, newItem *yamlmeta.MapItem
 		return err
 	}
 
-	leftIdx, found, err := ann.Index(leftMap)
+	leftIdxs, err := ann.Indexes(leftMap)
 	if err != nil {
 		return err
 	}
 
-	if !found {
+	if len(leftIdxs) == 0 {
 		// No need to traverse further
 		leftMap.Items = append(leftMap.Items, newItem)
 		return nil
 	}
 
-	replace, err := o.apply(leftMap.Items[leftIdx].Value, newItem.Value, matchChildDefaults)
-	if err != nil {
-		return err
-	}
-	if replace {
-		leftMap.Items[leftIdx].Value = newItem.Value
+	for _, leftIdx := range leftIdxs {
+		replace, err := o.apply(leftMap.Items[leftIdx].Value, newItem.Value, matchChildDefaults)
+		if err != nil {
+			return err
+		}
+		if replace {
+			leftMap.Items[leftIdx].Value = newItem.Value
+		}
 	}
 
 	return nil
@@ -47,14 +49,25 @@ func (o OverlayOp) removeMapItem(leftMap *yamlmeta.Map, newItem *yamlmeta.MapIte
 		return err
 	}
 
-	leftIdx, found, err := ann.Index(leftMap)
+	leftIdxs, err := ann.Indexes(leftMap)
 	if err != nil {
 		return err
 	}
 
-	if found {
-		leftMap.Items = append(leftMap.Items[:leftIdx], leftMap.Items[leftIdx+1:]...)
+	for _, leftIdx := range leftIdxs {
+		leftMap.Items[leftIdx] = nil
 	}
+
+	// Prune out all nil items
+	updatedItems := []*yamlmeta.MapItem{}
+
+	for _, item := range leftMap.Items {
+		if item != nil {
+			updatedItems = append(updatedItems, item)
+		}
+	}
+
+	leftMap.Items = updatedItems
 
 	return nil
 }
@@ -72,12 +85,12 @@ func (o OverlayOp) replaceMapItem(leftMap *yamlmeta.Map, newItem *yamlmeta.MapIt
 		return err
 	}
 
-	leftIdx, found, err := ann.Index(leftMap)
+	leftIdxs, err := ann.Indexes(leftMap)
 	if err != nil {
 		return err
 	}
 
-	if found {
+	for _, leftIdx := range leftIdxs {
 		newVal, err := replaceAnn.Value(leftMap.Items[leftIdx])
 		if err != nil {
 			return err
@@ -108,12 +121,12 @@ func (o OverlayOp) assertMapItem(leftMap *yamlmeta.Map, newItem *yamlmeta.MapIte
 		return err
 	}
 
-	leftIdx, found, err := ann.Index(leftMap)
+	leftIdxs, err := ann.Indexes(leftMap)
 	if err != nil {
 		return err
 	}
 
-	if found {
+	for _, leftIdx := range leftIdxs {
 		err := testAnn.Check(leftMap.Items[leftIdx])
 		if err != nil {
 			return err
