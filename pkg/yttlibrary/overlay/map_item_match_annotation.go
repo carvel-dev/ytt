@@ -6,7 +6,9 @@ import (
 
 	"github.com/k14s/ytt/pkg/filepos"
 	"github.com/k14s/ytt/pkg/template"
+	tplcore "github.com/k14s/ytt/pkg/template/core"
 	"github.com/k14s/ytt/pkg/yamlmeta"
+	"github.com/k14s/ytt/pkg/yamltemplate"
 	"go.starlark.net/starlark"
 )
 
@@ -59,15 +61,49 @@ func (a MapItemMatchAnnotation) Indexes(leftMap *yamlmeta.Map) ([]int, error) {
 }
 
 func (a MapItemMatchAnnotation) MatchNodes(leftMap *yamlmeta.Map) ([]int, []*filepos.Position, error) {
-	var leftIdxs []int
-	var matches []*filepos.Position
+	if a.matcher == nil {
+		var leftIdxs []int
+		var matches []*filepos.Position
 
-	for i, item := range leftMap.Items {
-		if reflect.DeepEqual(item.Key, a.newItem.Key) {
-			leftIdxs = append(leftIdxs, i)
-			matches = append(matches, item.Position)
+		for i, item := range leftMap.Items {
+			if reflect.DeepEqual(item.Key, a.newItem.Key) {
+				leftIdxs = append(leftIdxs, i)
+				matches = append(matches, item.Position)
+			}
 		}
+		return leftIdxs, matches, nil
 	}
 
-	return leftIdxs, matches, nil
+	switch typedVal := (*a.matcher).(type) {
+	case starlark.Callable:
+		var leftIdxs []int
+		var matches []*filepos.Position
+
+		for i, item := range leftMap.Items {
+			matcherArgs := starlark.Tuple{
+				starlark.MakeInt(i),
+				yamltemplate.NewStarlarkFragment(item),
+				yamltemplate.NewStarlarkFragment(a.newItem),
+			}
+
+			// TODO check thread correctness
+			result, err := starlark.Call(a.thread, *a.matcher, matcherArgs, []starlark.Tuple{})
+			if err != nil {
+				return nil, nil, err
+			}
+
+			resultBool, err := tplcore.NewStarlarkValue(result).AsBool()
+			if err != nil {
+				return nil, nil, err
+			}
+			if resultBool {
+				leftIdxs = append(leftIdxs, i)
+				matches = append(matches, item.Position)
+			}
+		}
+		return leftIdxs, matches,nil
+	default:
+		return nil, nil, fmt.Errorf("Expected '%s' annotation keyword argument 'by'"+
+			" to be either string (for map key) or function, but was %T", AnnotationMatch, typedVal)
+	}
 }
