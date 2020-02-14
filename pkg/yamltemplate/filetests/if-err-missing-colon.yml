@@ -11,5 +11,5 @@ t2:
 +++
 
 ERR: 
-- got newline, want ':'
+- got newline, want ':' (hint: missing colon at the end of if/for/def statement?)
     stdin:6 |   t: #@ 456

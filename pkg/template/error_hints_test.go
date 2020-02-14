@@ -26,6 +26,22 @@ func TestErrorHints(t *testing.T) {
 - undefined: false (hint: use 'False' instead of 'false' for boolean assignment)
     2 | v = false`,
 		},
+		{
+			Input: `if True
+  v = 123
+end`,
+			ErrMsg: `
+- got newline, want ':' (hint: missing colon at the end of if/for/def statement?)
+    3 |   v = 123`,
+		},
+		{
+			Input: `def foo()
+  return 123
+end`,
+			ErrMsg: `
+- got newline, want ':' (hint: missing colon at the end of if/for/def statement?)
+    3 |   return 123`,
+		},
 	}
 
 	for _, cs := range cases {
