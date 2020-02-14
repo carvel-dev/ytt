@@ -190,6 +190,12 @@ func (CompiledTemplateMultiError) hintMsg(errMsg string) string {
 		hintMsg = "use 'False' instead of 'false' for boolean assignment"
 	case "got newline, want ':'":
 		hintMsg = "missing colon at the end of if/for/def statement?"
+	case "undefined: null":
+		hintMsg = "use 'None' instead of 'null' to indicate no value"
+	case "undefined: nil":
+		hintMsg = "use 'None' instead of 'nil' to indicate no value"
+	case "undefined: none":
+		hintMsg = "use 'None' instead of 'none' to indicate no value"
 	}
 
 	if len(hintMsg) > 0 {

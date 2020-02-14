@@ -27,6 +27,24 @@ func TestErrorHints(t *testing.T) {
     2 | v = false`,
 		},
 		{
+			Input: `v = null`,
+			ErrMsg: `
+- undefined: null (hint: use 'None' instead of 'null' to indicate no value)
+    2 | v = null`,
+		},
+		{
+			Input: `v = none`,
+			ErrMsg: `
+- undefined: none (hint: use 'None' instead of 'none' to indicate no value)
+    2 | v = none`,
+		},
+		{
+			Input: `v = nil`,
+			ErrMsg: `
+- undefined: nil (hint: use 'None' instead of 'nil' to indicate no value)
+    2 | v = nil`,
+		},
+		{
 			Input: `if True
   v = 123
 end`,
