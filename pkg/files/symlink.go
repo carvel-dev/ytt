@@ -3,6 +3,7 @@ package files
 import (
 	"fmt"
 	"path/filepath"
+	"regexp"
 	"strings"
 )
 
@@ -15,15 +16,24 @@ type SymlinkAllowOpts struct {
 	AllowedDstPaths []string
 }
 
+var (
+	symlinkPipeErrMsg = regexp.QuoteMeta("lstat /proc/NUM/fd/pipe:[NUM]: no such file or directory")
+	symlinkPipeErr    = regexp.MustCompile("^" + strings.Replace(symlinkPipeErrMsg, "NUM", "\\d+", -1) + "$")
+)
+
 func (s Symlink) IsAllowed(opts SymlinkAllowOpts) error {
 	if opts.AllowAll {
 		return nil
 	}
 
-	// Note that on Linux resolving symlink /dev/fd/3 fails:
-	// lstat /proc/3719/fd/pipe:[903476724]: no such file or directory
 	dstPath, err := filepath.EvalSymlinks(s.path)
 	if err != nil {
+		// Note that on Linux resolving symlink /dev/fd/3 fails:
+		// "lstat /proc/3719/fd/pipe:[903476724]: no such file or directory"
+		// Since file doesnt actually exist on FS, it could not have been tricked to be included.
+		if symlinkPipeErr.MatchString(err.Error()) {
+			return nil
+		}
 		return fmt.Errorf("Eval symlink: %s", err)
 	}
 

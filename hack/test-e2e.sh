@@ -48,8 +48,8 @@ diff <(./ytt -f examples/overlay-not-matcher)         examples/overlay-not-match
 # test pipe stdin
 diff <(cat examples/k8s-relative-rolling-update/config.yml | ./ytt -f-) examples/k8s-relative-rolling-update/expected.txt
 
-# test pipe redirect (on Linux named piped is symlinked, hence dangerous flag)
-diff <(./ytt -f pipe.yml=<(cat examples/k8s-relative-rolling-update/config.yml) --dangerous-allow-all-symlink-destinations) examples/k8s-relative-rolling-update/expected.txt
+# test pipe redirect (on Linux, pipe is symlinked)
+diff <(./ytt -f pipe.yml=<(cat examples/k8s-relative-rolling-update/config.yml)) examples/k8s-relative-rolling-update/expected.txt
 
 # test data values
 diff <(./examples/data-values/run.sh) examples/data-values/expected.txt
