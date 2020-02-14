@@ -2,9 +2,9 @@ package overlay
 
 import (
 	"fmt"
-	"github.com/k14s/ytt/pkg/filepos"
 	"reflect"
 
+	"github.com/k14s/ytt/pkg/filepos"
 	"github.com/k14s/ytt/pkg/template"
 	"github.com/k14s/ytt/pkg/yamlmeta"
 	"go.starlark.net/starlark"

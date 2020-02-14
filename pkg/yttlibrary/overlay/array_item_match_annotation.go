@@ -2,8 +2,8 @@ package overlay
 
 import (
 	"fmt"
-	"github.com/k14s/ytt/pkg/filepos"
 
+	"github.com/k14s/ytt/pkg/filepos"
 	"github.com/k14s/ytt/pkg/template"
 	tplcore "github.com/k14s/ytt/pkg/template/core"
 	"github.com/k14s/ytt/pkg/yamlmeta"
@@ -73,7 +73,7 @@ func (a ArrayItemMatchAnnotation) Indexes(leftArray *yamlmeta.Array) ([]int, err
 func (a ArrayItemMatchAnnotation) MatchNodes(leftArray *yamlmeta.Array) ([]int, []*filepos.Position, error) {
 	if a.matcher == nil {
 		return nil, nil, fmt.Errorf("Expected '%s' annotation "+
-			"keyword argument 'by'  to be specified", AnnotationMatch)
+			"keyword argument 'by' to be specified", AnnotationMatch)
 	}
 
 	switch typedVal := (*a.matcher).(type) {

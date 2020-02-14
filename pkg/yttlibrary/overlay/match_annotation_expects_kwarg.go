@@ -2,10 +2,10 @@ package overlay
 
 import (
 	"fmt"
-	"github.com/k14s/ytt/pkg/filepos"
 	"strconv"
 	"strings"
 
+	"github.com/k14s/ytt/pkg/filepos"
 	"go.starlark.net/starlark"
 )
 
