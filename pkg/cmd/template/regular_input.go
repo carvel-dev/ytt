@@ -10,6 +10,12 @@ import (
 	"github.com/spf13/cobra"
 )
 
+const (
+	regularFilesOutputTypeYAML = "yaml"
+	regularFilesOutputTypeJSON = "json"
+	regularFilesOutputTypePos  = "pos"
+)
+
 type RegularFilesSourceOpts struct {
 	files     []string
 	fileMarks []string
@@ -24,7 +30,7 @@ func (s *RegularFilesSourceOpts) Set(cmd *cobra.Command) {
 	cmd.Flags().StringArrayVarP(&s.files, "file", "f", nil, "File (ie local path, HTTP URL, -) (can be specified multiple times)")
 
 	cmd.Flags().StringVar(&s.outputDir, "output-directory", "", "Output destination directory")
-	cmd.Flags().StringVarP(&s.outputType, "output", "o", "yaml", "Output type (yaml, json, pos)")
+	cmd.Flags().StringVarP(&s.outputType, "output", "o", regularFilesOutputTypeYAML, "Output type (yaml, json, pos)")
 
 	cmd.Flags().BoolVar(&s.SymlinkAllowOpts.AllowAll, "dangerous-allow-all-symlink-destinations", false,
 		"Symlinks to all destinations are allowed")
@@ -65,11 +71,11 @@ func (s *RegularFilesSource) Output(out TemplateOutput) error {
 	var printerFunc func(io.Writer) yamlmeta.DocumentPrinter
 
 	switch s.opts.outputType {
-	case "yaml":
+	case regularFilesOutputTypeYAML:
 		printerFunc = nil
-	case "json":
+	case regularFilesOutputTypeJSON:
 		printerFunc = func(w io.Writer) yamlmeta.DocumentPrinter { return yamlmeta.NewJSONPrinter(w) }
-	case "pos":
+	case regularFilesOutputTypePos:
 		printerFunc = func(w io.Writer) yamlmeta.DocumentPrinter {
 			return yamlmeta.WrappedFilePositionPrinter{yamlmeta.NewFilePositionPrinter(w)}
 		}
