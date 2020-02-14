@@ -78,7 +78,7 @@ func (e CompiledTemplateMultiError) Error() string {
 			}
 		}
 
-		result = append(result, fmt.Sprintf("- %s", topicLine))
+		result = append(result, fmt.Sprintf("- %s%s", topicLine, e.hintMsg(topicLine)))
 
 		for _, pos := range err.Positions {
 			// TODO do better
@@ -179,4 +179,19 @@ func (CompiledTemplateMultiError) findClosestLine(ct *CompiledTemplate, posLine 
 			return line
 		}
 	}
+}
+
+func (CompiledTemplateMultiError) hintMsg(errMsg string) string {
+	hintMsg := ""
+	switch errMsg {
+	case "undefined: true":
+		hintMsg = "use 'True' instead of 'true' for boolean assignment"
+	case "undefined: false":
+		hintMsg = "use 'False' instead of 'false' for boolean assignment"
+	}
+
+	if len(hintMsg) > 0 {
+		hintMsg = fmt.Sprintf(" (hint: %s)", hintMsg)
+	}
+	return hintMsg
 }

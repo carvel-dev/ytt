@@ -1,0 +1,7 @@
+#@ var = true
+
++++
+
+ERR: 
+- undefined: true (hint: use 'True' instead of 'true' for boolean assignment)
+    stdin:1 | #@ var = true

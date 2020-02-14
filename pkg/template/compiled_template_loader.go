@@ -13,11 +13,20 @@ type CompiledTemplateLoader interface {
 	ListData(*starlark.Thread, *starlark.Builtin, starlark.Tuple, []starlark.Tuple) (starlark.Value, error)
 }
 
-type NoopCompiledTemplateLoader struct{}
+type NoopCompiledTemplateLoader struct {
+	tpl *CompiledTemplate
+}
+
+func NewNoopCompiledTemplateLoader(tpl *CompiledTemplate) NoopCompiledTemplateLoader {
+	return NoopCompiledTemplateLoader{tpl}
+}
 
 var _ CompiledTemplateLoader = NoopCompiledTemplateLoader{}
 
 func (l NoopCompiledTemplateLoader) FindCompiledTemplate(_ string) (*CompiledTemplate, error) {
+	if l.tpl != nil {
+		return l.tpl, nil
+	}
 	return nil, fmt.Errorf("FindCompiledTemplate is not supported")
 }
 
