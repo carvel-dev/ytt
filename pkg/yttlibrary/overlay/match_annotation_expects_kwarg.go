@@ -135,7 +135,7 @@ func (a MatchAnnotationExpectsKwarg) checkList(typedVal *starlark.List, matches 
 	return lastErr
 }
 
-func (a MatchAnnotationExpectsKwarg) formatPositions(pos []*filepos.Position) string {
+func (MatchAnnotationExpectsKwarg) formatPositions(pos []*filepos.Position) string {
 	if len(pos) == 0 {
 		return ""
 	}
