@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: conf1
+data:
+  contents.yml: |
+    some_key: true
+    another_key: true
+    shared_conf: val
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: conf1
+data:
+  contents.yml: |
+    other_key: true
+    shared_conf: val

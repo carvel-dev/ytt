@@ -39,7 +39,8 @@ diff <(./ytt -f examples/k8s-docker-secret)           examples/k8s-docker-secret
 diff <(./ytt -f examples/k8s-relative-rolling-update) examples/k8s-relative-rolling-update/expected.txt
 diff <(./ytt -f examples/k8s-config-map-files)        examples/k8s-config-map-files/expected.txt
 diff <(./ytt -f examples/k8s-update-env-var)          examples/k8s-update-env-var/expected.txt
-diff <(./ytt -f examples/k8s-overlay-all-containers) examples/k8s-overlay-all-containers/expected.txt
+diff <(./ytt -f examples/k8s-overlay-all-containers)  examples/k8s-overlay-all-containers/expected.txt
+diff <(./ytt -f examples/k8s-overlay-in-config-map)   examples/k8s-overlay-in-config-map/expected.txt
 diff <(./ytt -f examples/concourse-overlay)           examples/concourse-overlay/expected.txt
 diff <(./ytt -f examples/overlay-not-matcher)         examples/overlay-not-matcher/expected.txt
 

@@ -1,0 +1,18 @@
+#@ load("@ytt:overlay", "overlay")
+#@ load("@ytt:data", "data")
+#@ load("@ytt:yaml", "yaml")
+
+#@ def shared_conf():
+#@overlay/match missing_ok=True
+shared_conf: val
+#@ end
+
+#@ def add_shared_conf(old, new):
+#@   return yaml.encode(overlay.apply(yaml.decode(old), shared_conf()))
+#@ end
+
+#@overlay/match by=overlay.subset({"kind": "ConfigMap"}),expects="1+"
+---
+data:
+  #@overlay/replace via=add_shared_conf
+  contents.yml:
