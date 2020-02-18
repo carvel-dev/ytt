@@ -98,6 +98,10 @@ spec:
   enabled: true
 ```
 
+- `and_op` matcher takes one or more matchers and returns true if all matchers return true
+- `or_op` matcher takes one or more matchers and returns true if any matchers return true
+- `not_op` matcher takes another matcher and returns opposite result
+
 #### Programmatic access
 
 In this example we have `left()` function that returns left-side structure and `right()` that returns right-side structure that specifies modifications. `overlay.apply(...)` will execute modifications and return a new structure.

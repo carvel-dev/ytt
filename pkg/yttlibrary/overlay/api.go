@@ -210,14 +210,16 @@ func (b overlayModule) AndOp(
 	thread *starlark.Thread, f *starlark.Builtin,
 	andArgs starlark.Tuple, andKwargs []starlark.Tuple) (starlark.Value, error) {
 
+	if andArgs.Len() < 1 {
+		return starlark.None, fmt.Errorf("expected at least one argument")
+	}
+
 	matchFunc := func(thread *starlark.Thread, f *starlark.Builtin,
 		args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
 
 		if args.Len() != 3 {
 			return starlark.None, fmt.Errorf("expected exactly 3 arguments")
 		}
-
-		matchedAll := true
 
 		for _, andArg := range andArgs {
 			result, err := starlark.Call(thread, andArg, args, kwargs)
@@ -229,11 +231,11 @@ func (b overlayModule) AndOp(
 				return nil, err
 			}
 			if !resultBool {
-				matchedAll = false
+				return starlark.Bool(false), nil
 			}
 		}
 
-		return starlark.Bool(matchedAll), nil
+		return starlark.Bool(true), nil
 	}
 
 	return starlark.NewBuiltin("overlay.and_op", core.ErrWrapper(matchFunc)), nil
@@ -242,6 +244,10 @@ func (b overlayModule) AndOp(
 func (b overlayModule) OrOp(
 	thread *starlark.Thread, f *starlark.Builtin,
 	orArgs starlark.Tuple, orKwargs []starlark.Tuple) (starlark.Value, error) {
+
+	if orArgs.Len() < 1 {
+		return starlark.None, fmt.Errorf("expected at least one argument")
+	}
 
 	matchFunc := func(thread *starlark.Thread, f *starlark.Builtin,
 		args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
