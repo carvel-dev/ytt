@@ -1,4 +1,6 @@
 #@ load("@ytt:yaml", "yaml")
+#@ load("@ytt:overlay", "overlay")
+#@ load("@ytt:template", "template")
 
 #@ def yaml_fragment():
 fragment:
@@ -23,6 +25,30 @@ test1c: #@ yaml.encode(yaml_fragment_with_docset())
 test2: #@ yaml.encode({})
 test3: #@ yaml.decode("{}")
 test4: #@ yaml.decode('{"a":[1,2,3,{"c":456}],"b":"str"}')
+
+#@ def test5_left():
+---
+metadata:
+  name: first
+---
+metadata:
+  name: second
+#@ end
+
+#@ def test5_right():
+#! overlay matching mechanism is pretty much the only way to get
+#! single doc to be an argument to yaml.encode(...)
+#@ rawify_doc = lambda doc: yaml.decode(yaml.encode(doc))
+
+#@overlay/match by=lambda i, a, b: rawify_doc(a)["metadata"]["name"] == "first"
+---
+metadata:
+  name: updated
+#@ end
+
+---
+test5
+--- #@ template.replace(overlay.apply(test5_left(), test5_right()))
 
 +++
 
@@ -62,3 +88,11 @@ test4:
   - 3
   - c: 456
   b: str
+---
+test5
+---
+metadata:
+  name: updated
+---
+metadata:
+  name: second

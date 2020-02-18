@@ -1,5 +1,6 @@
 #@ load("@ytt:template", "template")
 #@ load("@ytt:overlay", "overlay")
+#@ load("@ytt:yaml", "yaml")
 
 #@ def test1_left():
 ---
@@ -63,6 +64,26 @@ key1:
 test2
 --- #@ template.replace(overlay.apply(test2_left(), test2_right()))
 
+#@ def test3_left():
+---
+metadata:
+  name: first
+---
+metadata:
+  name: second
+#@ end
+
+#@ def test3_right():
+#@overlay/match by=lambda i, a, b: yaml.decode(yaml.encode(a))["metadata"]["name"] == "first"
+---
+metadata:
+  name: updated
+#@ end
+
+---
+test3
+--- #@ template.replace(overlay.apply(test3_left(), test3_right()))
+
 +++
 
 test1
@@ -96,3 +117,11 @@ key1:
 ---
 metadata:
 - other: key
+---
+test3
+---
+metadata:
+  name: updated
+---
+metadata:
+  name: second

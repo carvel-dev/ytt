@@ -29,11 +29,7 @@ func (b yamlModule) Encode(thread *starlark.Thread, f *starlark.Builtin, args st
 	}
 
 	val := core.NewStarlarkValue(args.Index(0)).AsInterface()
-
-	docSet, ok := val.(*yamlmeta.DocumentSet)
-	if !ok {
-		docSet = &yamlmeta.DocumentSet{Items: []*yamlmeta.Document{{Value: val}}}
-	}
+	docSet := yamlmeta.NewDocumentSetFromInterface(val)
 
 	valBs, err := docSet.AsBytes()
 	if err != nil {
