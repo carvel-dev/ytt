@@ -1,0 +1,94 @@
+#@ load("@ytt:overlay", "overlay")
+
+#@ def test_left():
+- name: first
+- name: second
+- name: third
+#@ end
+
+#@ def test1_right():
+#@overlay/match by=overlay.and_op(overlay.subset({"name": "first"}), overlay.subset({"name": "third"})),expects=0
+- 
+  #@overlay/match missing_ok=True
+  found: true
+#@ end
+
+#@ def test1a_right():
+#@overlay/match by=overlay.and_op(overlay.subset({"name": "first"}))
+- 
+  #@overlay/match missing_ok=True
+  found: true
+#@ end
+
+#@ def test1b_right():
+#@overlay/match by=overlay.and_op(overlay.subset({}), overlay.all),expects=3
+- 
+  #@overlay/match missing_ok=True
+  found: true
+#@ end
+
+#@ def test2_right():
+#@overlay/match by=overlay.or_op(overlay.subset({"name": "first"}), overlay.subset({"name": "third"})),expects=2
+- 
+  #@overlay/match missing_ok=True
+  found: true
+#@ end
+
+#@ def test3_right():
+#@overlay/match by=overlay.not_op(overlay.subset({"name": "first"})),expects=2
+- 
+  #@overlay/match missing_ok=True
+  found: true
+#@ end
+
+#@ def test3a_right():
+#@overlay/match by=overlay.not_op(overlay.all),expects=0
+- 
+  #@overlay/match missing_ok=True
+  found: true
+#@ end
+
+---
+test1: #@ overlay.apply(test_left(), test1_right())
+test1a: #@ overlay.apply(test_left(), test1a_right())
+test1b: #@ overlay.apply(test_left(), test1b_right())
+test2: #@ overlay.apply(test_left(), test2_right())
+test3: #@ overlay.apply(test_left(), test3_right())
+test3a: #@ overlay.apply(test_left(), test3a_right())
+
++++
+
+test1:
+- name: first
+- name: second
+- name: third
+- found: true
+test1a:
+- name: first
+  found: true
+- name: second
+- name: third
+test1b:
+- name: first
+  found: true
+- name: second
+  found: true
+- name: third
+  found: true
+test2:
+- name: first
+  found: true
+- name: second
+- name: third
+  found: true
+test3:
+- name: first
+- name: second
+  found: true
+- name: third
+  found: true
+test3a:
+- name: first
+- name: second
+- name: third
+- found: true

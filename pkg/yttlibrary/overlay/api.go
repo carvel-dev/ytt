@@ -21,6 +21,10 @@ var (
 				"all":     starlark.NewBuiltin("overlay.all", core.ErrWrapper(overlayModule{}.All)),
 				"map_key": starlark.NewBuiltin("overlay.map_key", core.ErrWrapper(overlayModule{}.MapKey)),
 				"subset":  starlark.NewBuiltin("overlay.subset", core.ErrWrapper(overlayModule{}.Subset)),
+
+				"and_op": starlark.NewBuiltin("overlay.and_op", core.ErrWrapper(overlayModule{}.AndOp)),
+				"or_op":  starlark.NewBuiltin("overlay.or_op", core.ErrWrapper(overlayModule{}.OrOp)),
+				"not_op": starlark.NewBuiltin("overlay.not_op", core.ErrWrapper(overlayModule{}.NotOp)),
 			},
 		},
 	}
@@ -200,4 +204,97 @@ func (b overlayModule) Subset(
 	}
 
 	return starlark.NewBuiltin("overlay.subset_matcher", core.ErrWrapper(matchFunc)), nil
+}
+
+func (b overlayModule) AndOp(
+	thread *starlark.Thread, f *starlark.Builtin,
+	andArgs starlark.Tuple, andKwargs []starlark.Tuple) (starlark.Value, error) {
+
+	matchFunc := func(thread *starlark.Thread, f *starlark.Builtin,
+		args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
+
+		if args.Len() != 3 {
+			return starlark.None, fmt.Errorf("expected exactly 3 arguments")
+		}
+
+		matchedAll := true
+
+		for _, andArg := range andArgs {
+			result, err := starlark.Call(thread, andArg, args, kwargs)
+			if err != nil {
+				return nil, err
+			}
+			resultBool, err := core.NewStarlarkValue(result).AsBool()
+			if err != nil {
+				return nil, err
+			}
+			if !resultBool {
+				matchedAll = false
+			}
+		}
+
+		return starlark.Bool(matchedAll), nil
+	}
+
+	return starlark.NewBuiltin("overlay.and_op", core.ErrWrapper(matchFunc)), nil
+}
+
+func (b overlayModule) OrOp(
+	thread *starlark.Thread, f *starlark.Builtin,
+	orArgs starlark.Tuple, orKwargs []starlark.Tuple) (starlark.Value, error) {
+
+	matchFunc := func(thread *starlark.Thread, f *starlark.Builtin,
+		args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
+
+		if args.Len() != 3 {
+			return starlark.None, fmt.Errorf("expected exactly 3 arguments")
+		}
+
+		for _, orArg := range orArgs {
+			result, err := starlark.Call(thread, orArg, args, kwargs)
+			if err != nil {
+				return nil, err
+			}
+			resultBool, err := core.NewStarlarkValue(result).AsBool()
+			if err != nil {
+				return nil, err
+			}
+			if resultBool {
+				return starlark.Bool(true), nil
+			}
+		}
+
+		return starlark.Bool(false), nil
+	}
+
+	return starlark.NewBuiltin("overlay.or_op", core.ErrWrapper(matchFunc)), nil
+}
+
+func (b overlayModule) NotOp(
+	thread *starlark.Thread, f *starlark.Builtin,
+	notArgs starlark.Tuple, notKwargs []starlark.Tuple) (starlark.Value, error) {
+
+	if notArgs.Len() != 1 {
+		return starlark.None, fmt.Errorf("expected exactly one argument")
+	}
+
+	matchFunc := func(thread *starlark.Thread, f *starlark.Builtin,
+		args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
+
+		if args.Len() != 3 {
+			return starlark.None, fmt.Errorf("expected exactly 3 arguments")
+		}
+
+		result, err := starlark.Call(thread, notArgs[0], args, kwargs)
+		if err != nil {
+			return nil, err
+		}
+		resultBool, err := core.NewStarlarkValue(result).AsBool()
+		if err != nil {
+			return nil, err
+		}
+		return starlark.Bool(!resultBool), nil
+	}
+
+	return starlark.NewBuiltin("overlay.or_op", core.ErrWrapper(matchFunc)), nil
 }
