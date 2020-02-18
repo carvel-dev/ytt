@@ -1,0 +1,64 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: two-containers
+spec:
+  template:
+    spec:
+      volumes:
+      - name: shared-data
+        emptyDir: {}
+      containers:
+      - name: nginx-container
+        image: nginx
+        volumeMounts:
+        - name: shared-data
+          mountPath: /usr/share/nginx/html
+        resources:
+          limits:
+            cpu: 100m
+          requests:
+            cpu: 100m
+      - name: debian-container
+        image: debian
+        volumeMounts:
+        - name: shared-data
+          mountPath: /pod-data
+        command:
+        - /bin/sh
+        args:
+        - -c
+        - echo Hello > /pod-data/index.html
+        resources:
+          limits:
+            cpu: 100m
+          requests:
+            cpu: 100m
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: another-two-containers
+spec:
+  template:
+    spec:
+      containers:
+      - name: nginx-container
+        image: nginx
+        resources:
+          limits:
+            cpu: 100m
+          requests:
+            cpu: 100m
+      - name: debian-container
+        image: debian
+        command:
+        - /bin/sh
+        args:
+        - -c
+        - echo Hello
+        resources:
+          limits:
+            cpu: 100m
+          requests:
+            cpu: 100m

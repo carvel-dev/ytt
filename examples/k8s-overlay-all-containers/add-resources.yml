@@ -1,0 +1,15 @@
+#@ load("@ytt:overlay", "overlay")
+
+#@overlay/match by=overlay.subset({"kind": "Deployment"}),expects="1+"
+---
+spec:
+  template:
+    spec:
+      containers:
+      #@overlay/match by=overlay.all,expects="1+"
+      #@overlay/match-child-defaults missing_ok=True
+      - resources:
+          limits:
+            cpu: 100m
+          requests:
+            cpu: 100m
