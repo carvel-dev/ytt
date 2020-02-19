@@ -9,6 +9,11 @@ import (
 	"go.starlark.net/starlark"
 )
 
+const (
+	MatchAnnotationKwargExpects   string = "expects"
+	MatchAnnotationKwargMissingOK string = "missing_ok"
+)
+
 type MatchAnnotationExpectsKwarg struct {
 	expects   *starlark.Value
 	missingOK *starlark.Value
@@ -27,7 +32,8 @@ func (a *MatchAnnotationExpectsKwarg) FillInDefaults(defaults MatchChildDefaults
 func (a MatchAnnotationExpectsKwarg) Check(matches []*filepos.Position) error {
 	switch {
 	case a.missingOK != nil && a.expects != nil:
-		return fmt.Errorf("Expected only one of keyword arguments ('missing_ok', 'expects') specified")
+		return fmt.Errorf("Expected only one of keyword arguments ('%s', '%s') specified",
+			MatchAnnotationKwargMissingOK, MatchAnnotationKwargExpects)
 
 	case a.missingOK != nil:
 		if typedResult, ok := (*a.missingOK).(starlark.Bool); ok {
@@ -37,7 +43,8 @@ func (a MatchAnnotationExpectsKwarg) Check(matches []*filepos.Position) error {
 			}
 			return a.checkValue(starlark.MakeInt(1), matches)
 		}
-		return fmt.Errorf("Expected keyword argument 'missing_ok' to be a boolean")
+		return fmt.Errorf("Expected keyword argument '%s' to be a boolean",
+			MatchAnnotationKwargMissingOK)
 
 	case a.expects != nil:
 		return a.checkValue(*a.expects, matches)

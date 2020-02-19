@@ -28,9 +28,9 @@ func NewMapItemMatchAnnotation(newItem *yamlmeta.MapItem,
 	for _, kwarg := range kwargs {
 		kwargName := string(kwarg[0].(starlark.String))
 		switch kwargName {
-		case "expects":
+		case MatchAnnotationKwargExpects:
 			annotation.expects.expects = &kwarg[1]
-		case "missing_ok":
+		case MatchAnnotationKwargMissingOK:
 			annotation.expects.missingOK = &kwarg[1]
 		default:
 			return annotation, fmt.Errorf(

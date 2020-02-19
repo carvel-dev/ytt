@@ -43,9 +43,9 @@ func NewDocumentMatchAnnotation(newDoc *yamlmeta.Document,
 		switch kwargName {
 		case "by":
 			annotation.matcher = &kwarg[1]
-		case "expects":
+		case MatchAnnotationKwargExpects:
 			annotation.expects.expects = &kwarg[1]
-		case "missing_ok":
+		case MatchAnnotationKwargMissingOK:
 			annotation.expects.missingOK = &kwarg[1]
 		default:
 			return annotation, fmt.Errorf(
