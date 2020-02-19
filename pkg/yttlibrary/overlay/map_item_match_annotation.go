@@ -6,10 +6,10 @@ import (
 
 	"github.com/k14s/ytt/pkg/filepos"
 	"github.com/k14s/ytt/pkg/template"
-	tplcore "github.com/k14s/ytt/pkg/template/core"
 	"github.com/k14s/ytt/pkg/yamlmeta"
 	"github.com/k14s/ytt/pkg/yamltemplate"
 	"go.starlark.net/starlark"
+	tplcore "github.com/k14s/ytt/pkg/template/core"
 )
 
 type MapItemMatchAnnotation struct {
@@ -75,15 +75,33 @@ func (a MapItemMatchAnnotation) MatchNodes(leftMap *yamlmeta.Map) ([]int, []*fil
 	}
 
 	switch typedVal := (*a.matcher).(type) {
+	case starlark.String:
+		var leftIdxs []int
+		var matches []*filepos.Position
+
+		for i, item := range leftMap.Items {
+			result, err := overlayModule{}.compareByMapKey(string(typedVal), item, a.newItem)
+			if err != nil {
+				return nil, nil,err
+			}
+			if result {
+				leftIdxs = append(leftIdxs, i)
+				matches = append(matches, item.Position)
+			}
+		}
+
+		return leftIdxs, matches, nil
+
 	case starlark.Callable:
 		var leftIdxs []int
 		var matches []*filepos.Position
 
 		for i, item := range leftMap.Items {
+			imposter := &yamlmeta.MapItem{Key: item.Key, Value: a.newItem.Value}
 			matcherArgs := starlark.Tuple{
 				starlark.MakeInt(i),
 				yamltemplate.NewStarlarkFragment(item),
-				yamltemplate.NewStarlarkFragment(a.newItem),
+				yamltemplate.NewStarlarkFragment(imposter),
 			}
 
 			// TODO check thread correctness

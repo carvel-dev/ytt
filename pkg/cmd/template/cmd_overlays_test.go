@@ -149,7 +149,6 @@ yamlfunc: yamlfunc`)
 func TestDocumentOverlaysMapItems(t *testing.T) {
 	yamlTplData := []byte(`
 ---
-uaa: true
 clients:
   client1:
     secret: foo
@@ -161,11 +160,11 @@ clients:
 
 	yamlOverlayTplData := []byte(`
 #@ load("@ytt:overlay", "overlay")
-#@overlay/match by=overlay.subset({"uaa": True})
+#@overlay/match by=overlay.all
 ---
 clients:
   #@overlay/match by=overlay.all,expects="1+"
-  _add_secret_:
+  _:
     #@overlay/match missing_ok=True
     secret: ree
     #@overlay/match missing_ok=True
@@ -173,8 +172,7 @@ clients:
     needsSecret: true
 `)
 
-	expectedYAMLTplData := `uaa: true
-clients:
+	expectedYAMLTplData := `clients:
   client1:
     secret: ree
   client2:
@@ -185,8 +183,132 @@ clients:
 
 	filesToProcess := files.NewSortedFiles([]*files.File{
 		files.MustNewFileFromSource(files.NewBytesSource("tpl.yml", yamlTplData)),
-		// Note that overlay1 is alphanumerically before overlay2
-		// but sorting of the files puts them in overlay2 then overlay1 order
+		files.MustNewFileFromSource(files.NewBytesSource("overlay.yml", yamlOverlayTplData)),
+	})
+
+	ui := cmdcore.NewPlainUI(false)
+	opts := cmdtpl.NewOptions()
+
+	out := opts.RunWithFiles(cmdtpl.TemplateInput{Files: filesToProcess}, ui)
+	if out.Err != nil {
+		t.Fatalf("Expected RunWithFiles to succeed, but was error: %s", out.Err)
+	}
+
+	if len(out.Files) != 1 {
+		t.Fatalf("Expected number of output files to be 1, but was %d", len(out.Files))
+	}
+
+	file := out.Files[0]
+
+	if file.RelativePath() != "tpl.yml" {
+		t.Fatalf("Expected output file to be tpl.yml, but was %#v", file.RelativePath())
+	}
+
+	if string(file.Bytes()) != expectedYAMLTplData {
+		t.Fatalf("Expected output file to have specific data, but was: >>>%s<<<", file.Bytes())
+	}
+}
+
+func TestDocumentOverlaysMapItemsBySubset(t *testing.T) {
+	yamlTplData := []byte(`
+---
+clients:
+  client1:
+    secret: foo
+  client2:
+    secret: bar
+  client3:
+    needsSecret: true
+`)
+
+	yamlOverlayTplData := []byte(`
+#@ load("@ytt:overlay", "overlay")
+#@overlay/match by=overlay.all
+---
+clients:
+  #@overlay/match by=overlay.subset({"client3": {"needsSecret": True}})
+  _client_:
+    #@overlay/match missing_ok=True
+    secret: ree
+    #@overlay/remove
+    needsSecret: true
+`)
+
+	expectedYAMLTplData := `clients:
+  client1:
+    secret: foo
+  client2:
+    secret: bar
+  client3:
+    secret: ree
+`
+
+	filesToProcess := files.NewSortedFiles([]*files.File{
+		files.MustNewFileFromSource(files.NewBytesSource("tpl.yml", yamlTplData)),
+		files.MustNewFileFromSource(files.NewBytesSource("overlay.yml", yamlOverlayTplData)),
+	})
+
+	ui := cmdcore.NewPlainUI(false)
+	opts := cmdtpl.NewOptions()
+
+	out := opts.RunWithFiles(cmdtpl.TemplateInput{Files: filesToProcess}, ui)
+	if out.Err != nil {
+		t.Fatalf("Expected RunWithFiles to succeed, but was error: %s", out.Err)
+	}
+
+	if len(out.Files) != 1 {
+		t.Fatalf("Expected number of output files to be 1, but was %d", len(out.Files))
+	}
+
+	file := out.Files[0]
+
+	if file.RelativePath() != "tpl.yml" {
+		t.Fatalf("Expected output file to be tpl.yml, but was %#v", file.RelativePath())
+	}
+
+	if string(file.Bytes()) != expectedYAMLTplData {
+		t.Fatalf("Expected output file to have specific data, but was: >>>%s<<<", file.Bytes())
+	}
+}
+
+func TestDocumentOverlaysMapItemsByKey(t *testing.T) {
+	yamlTplData := []byte(`
+---
+clients:
+  client1:
+    needsSecret: true
+  client2:
+    secret: bar
+    needsSecret: false
+  client3:
+    needsSecret: true
+`)
+
+	yamlOverlayTplData := []byte(`
+#@ load("@ytt:overlay", "overlay")
+#@overlay/match by=overlay.all
+---
+clients:
+  #@overlay/match by="needsSecret",expects="1+"
+  _client_:
+    #@overlay/match missing_ok=True
+    secret: ree
+    #@overlay/remove
+    needsSecret: true
+`)
+
+	expectedYAMLTplData := `clients:
+  client1:
+    secret: ree
+  client2:
+    secret: bar
+    needsSecret: false
+  client3:
+    secret: ree
+`
+
+	filesToProcess := files.NewSortedFiles([]*files.File{
+		files.MustNewFileFromSource(files.NewBytesSource("tpl.yml", yamlTplData)),
 		files.MustNewFileFromSource(files.NewBytesSource("overlay.yml", yamlOverlayTplData)),
 	})
 

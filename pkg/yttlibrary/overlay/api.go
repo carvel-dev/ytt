@@ -150,14 +150,22 @@ func (b overlayModule) compareByMapKey(keyName string, oldVal, newVal interface{
 }
 
 func (b overlayModule) pullOutMapValue(keyName string, newVal interface{}) (interface{}, error) {
-	typedArrayItem, ok := newVal.(*yamlmeta.ArrayItem)
-	if !ok {
-		return starlark.None, fmt.Errorf("Expected new item to be arrayitem, but was %T", newVal)
-	}
+	var ok bool
+	var typedMap *yamlmeta.Map
 
-	typedMap, ok := typedArrayItem.Value.(*yamlmeta.Map)
-	if !ok {
-		return starlark.None, fmt.Errorf("Expected arrayitem to contain map, but was %T", typedArrayItem.Value)
+	switch typedVal := newVal.(type) {
+	case *yamlmeta.ArrayItem:
+		typedMap, ok = typedVal.Value.(*yamlmeta.Map)
+		if !ok {
+			return starlark.None, fmt.Errorf("Expected arrayitem to contain map, but was %T", typedVal.Value)
+		}
+	case *yamlmeta.MapItem:
+		typedMap, ok = typedVal.Value.(*yamlmeta.Map)
+		if !ok {
+			return starlark.None, fmt.Errorf("Expected mapitem to contain map, but was %T", typedVal.Value)
+		}
+	default:
+		return starlark.None, fmt.Errorf("Expected new item to be arrayitem or mapitem, but was %T", typedVal)
 	}
 
 	for _, item := range typedMap.Items {
@@ -198,12 +206,22 @@ func (b overlayModule) Subset(
 		if _, ok := actualObj.(*yamlmeta.Document); ok {
 			expectedObj = &yamlmeta.Document{Value: expectedObj}
 		}
+		if _, ok := actualObj.(*yamlmeta.MapItem); ok {
+			expectedObj = b.itemFromMap(expectedObj.(*yamlmeta.Map))
+		}
 
 		result, _ := Comparison{}.Compare(actualObj, expectedObj)
 		return starlark.Bool(result), nil
 	}
 
 	return starlark.NewBuiltin("overlay.subset_matcher", core.ErrWrapper(matchFunc)), nil
+}
+
+func (b overlayModule) itemFromMap(m *yamlmeta.Map) *yamlmeta.MapItem {
+	if len(m.Items) == 0 {
+		return &yamlmeta.MapItem{}
+	}
+	return m.Items[0]
 }
 
 func (b overlayModule) AndOp(
