@@ -117,6 +117,58 @@ another:
 	}
 }
 
+func TestDataValuesWithFlagsMarkedMissingOk(t *testing.T) {
+	yamlTplData := []byte(`
+#@ load("@ytt:data", "data")
+values: #@ data.values`)
+
+	expectedYAMLTplData := `values:
+  nested:
+    value: str
+  another_nested:
+    other_value: str2
+`
+
+	yamlData := []byte(`
+#@data/values
+---
+nested:
+  value: str
+`)
+
+	filesToProcess := files.NewSortedFiles([]*files.File{
+		files.MustNewFileFromSource(files.NewBytesSource("tpl.yml", yamlTplData)),
+		files.MustNewFileFromSource(files.NewBytesSource("data.yml", yamlData)),
+	})
+
+	ui := cmdcore.NewPlainUI(false)
+	opts := cmdtpl.NewOptions()
+
+	opts.DataValuesFlags = cmdtpl.DataValuesFlags{
+		// TODO add nested.value2*=str2 since replace with 0 nodes does not do anything
+		KVsFromYAML: []string{"another_nested+.other_value=str2"},
+	}
+
+	out := opts.RunWithFiles(cmdtpl.TemplateInput{Files: filesToProcess}, ui)
+	if out.Err != nil {
+		t.Fatalf("Expected RunWithFiles to succeed, but was error: %s", out.Err)
+	}
+
+	if len(out.Files) != 1 {
+		t.Fatalf("Expected number of output files to be 1, but was %d", len(out.Files))
+	}
+
+	file := out.Files[0]
+
+	if file.RelativePath() != "tpl.yml" {
+		t.Fatalf("Expected output file to be tpl.yml, but was %#v", file.RelativePath())
+	}
+
+	if string(file.Bytes()) != expectedYAMLTplData {
+		t.Fatalf("Expected output file to have specific data, but was: >>>%s<<< vs >>>%s<<<", file.Bytes(), expectedYAMLTplData)
+	}
+}
+
 func TestDataValuesMultipleFiles(t *testing.T) {
 	yamlTplData := []byte(`
 #@ load("@ytt:data", "data")

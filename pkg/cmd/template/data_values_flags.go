@@ -11,6 +11,7 @@ import (
 	"github.com/k14s/ytt/pkg/yamlmeta"
 	yttoverlay "github.com/k14s/ytt/pkg/yttlibrary/overlay"
 	"github.com/spf13/cobra"
+	"go.starlark.net/starlark"
 )
 
 type DataValuesFlags struct {
@@ -150,6 +151,10 @@ func (s *DataValuesFlags) file(kv string) (*yamlmeta.Document, error) {
 }
 
 func (s *DataValuesFlags) buildOverlay(keyPieces []string, value interface{}, desc string) *yamlmeta.Document {
+	const (
+		missingOkSuffix = "+"
+	)
+
 	resultMap := &yamlmeta.Map{}
 	currMap := resultMap
 	var lastMapItem *yamlmeta.MapItem
@@ -159,7 +164,23 @@ func (s *DataValuesFlags) buildOverlay(keyPieces []string, value interface{}, de
 
 	for _, piece := range keyPieces {
 		newMap := &yamlmeta.Map{}
+		nodeAnns := template.NodeAnnotations{}
+
+		if strings.HasSuffix(piece, missingOkSuffix) {
+			piece = piece[:len(piece)-1]
+			nodeAnns = template.NodeAnnotations{
+				yttoverlay.AnnotationMatch: template.NodeAnnotation{
+					Kwargs: []starlark.Tuple{{
+						starlark.String(yttoverlay.MatchAnnotationKwargMissingOK),
+						starlark.Bool(true),
+					}},
+				},
+			}
+		}
+
 		lastMapItem = &yamlmeta.MapItem{Key: piece, Value: newMap, Position: pos}
+		lastMapItem.SetAnnotations(nodeAnns)
+
 		currMap.Items = append(currMap.Items, lastMapItem)
 		currMap = newMap
 	}
@@ -168,15 +189,9 @@ func (s *DataValuesFlags) buildOverlay(keyPieces []string, value interface{}, de
 
 	// Explicitly replace entire value at given key
 	// (this allows to specify non-scalar data values)
-	nodeAnns := template.NodeAnnotations{
-		yttoverlay.AnnotationReplace: template.NodeAnnotation{},
-	}
-	lastMapItem.SetAnnotations(nodeAnns)
+	existingAnns := template.NewAnnotations(lastMapItem)
+	existingAnns[yttoverlay.AnnotationReplace] = template.NodeAnnotation{}
+	lastMapItem.SetAnnotations(existingAnns)
 
-	doc := &yamlmeta.Document{
-		Value:    resultMap,
-		Position: pos,
-	}
-
-	return doc
+	return &yamlmeta.Document{Value: resultMap, Position: pos}
 }
