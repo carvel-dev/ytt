@@ -44,7 +44,7 @@ func NewArrayItemMatchAnnotation(newItem *yamlmeta.ArrayItem,
 	for _, kwarg := range kwargs {
 		kwargName := string(kwarg[0].(starlark.String))
 		switch kwargName {
-		case "by":
+		case MatchAnnotationKwargBy:
 			annotation.matcher = &kwarg[1]
 		case MatchAnnotationKwargExpects:
 			annotation.expects.expects = &kwarg[1]
