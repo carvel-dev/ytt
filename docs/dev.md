@@ -31,3 +31,9 @@ For those interested in extending and improving `ytt`, below is a quick referenc
   - `CompiledTemplate` uses [Starlark Go library](https://github.com/google/starlark-go) to evaluate Starlark code
 - [pkg/yttlibrary](https://github.com/k14s/ytt/tree/master/pkg/yttlibrary) is bundled `@ytt` library
   - you can also make your own libraries as exemplified by [k14s/k8s-lib](https://github.com/k14s/k8s-lib)
+
+## Website changes
+
+`pkg/website` contains HTML/JS/CSS source for get-ytt.io. `./hack/build.sh` combines those assets into a single file `pkg/website/generated.go` (using ytt itself ;) ) before building final binary. `ytt website` command can serve website locally. `./hack/build.sh && ytt website` can be used for pretty quick local iteration.
+
+Ultimately `get-ytt.io` runs on AWS Lambda, hence is wrapped with Lambda specific library. See `cmd/ytt-lambda-website/main.go` for details.
