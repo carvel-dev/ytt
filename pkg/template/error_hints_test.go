@@ -49,7 +49,7 @@ func TestErrorHints(t *testing.T) {
   v = 123
 end`,
 			ErrMsg: `
-- got newline, want ':' (hint: missing colon at the end of if/for/def statement?)
+- got newline, want ':' (hint: missing colon at the end of 'if/for/def' statement?)
     3 |   v = 123`,
 		},
 		{
@@ -57,7 +57,7 @@ end`,
   return 123
 end`,
 			ErrMsg: `
-- got newline, want ':' (hint: missing colon at the end of if/for/def statement?)
+- got newline, want ':' (hint: missing colon at the end of 'if/for/def' statement?)
     3 |   return 123`,
 		},
 	}
