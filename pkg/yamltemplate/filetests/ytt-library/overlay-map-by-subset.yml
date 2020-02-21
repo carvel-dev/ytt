@@ -1,0 +1,39 @@
+#@ load("@ytt:overlay", "overlay")
+#@ load("@ytt:template", "template")
+
+#@ def/end test_left():
+---
+clients:
+  client1:
+    needsSecret: true
+  client2:
+    secret: bar
+  client3:
+    needsSecret: true
+
+#@ def/end test_right():
+#@overlay/match by=overlay.all
+---
+clients:
+  #@overlay/match by=overlay.subset({"needsSecret": True}),expects="1+"
+  _client_:
+    #@overlay/match missing_ok=True
+    secret: ree
+    #@overlay/remove
+    needsSecret: true
+
+---
+test
+--- #@ template.replace(overlay.apply(test_left(), test_right()))
+
++++
+
+test
+---
+clients:
+  client1:
+    secret: ree
+  client2:
+    secret: bar
+  client3:
+    secret: ree

@@ -206,22 +206,12 @@ func (b overlayModule) Subset(
 		if _, ok := actualObj.(*yamlmeta.Document); ok {
 			expectedObj = &yamlmeta.Document{Value: expectedObj}
 		}
-		if _, ok := actualObj.(*yamlmeta.MapItem); ok {
-			expectedObj = b.itemFromMap(expectedObj.(*yamlmeta.Map))
-		}
 
 		result, _ := Comparison{}.Compare(actualObj, expectedObj)
 		return starlark.Bool(result), nil
 	}
 
 	return starlark.NewBuiltin("overlay.subset_matcher", core.ErrWrapper(matchFunc)), nil
-}
-
-func (b overlayModule) itemFromMap(m *yamlmeta.Map) *yamlmeta.MapItem {
-	if len(m.Items) == 0 {
-		return &yamlmeta.MapItem{}
-	}
-	return m.Items[0]
 }
 
 func (b overlayModule) AndOp(
