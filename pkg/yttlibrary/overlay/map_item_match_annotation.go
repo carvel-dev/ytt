@@ -6,12 +6,17 @@ import (
 
 	"github.com/k14s/ytt/pkg/filepos"
 	"github.com/k14s/ytt/pkg/template"
+	tplcore "github.com/k14s/ytt/pkg/template/core"
 	"github.com/k14s/ytt/pkg/yamlmeta"
+	"github.com/k14s/ytt/pkg/yamltemplate"
 	"go.starlark.net/starlark"
 )
 
 type MapItemMatchAnnotation struct {
 	newItem *yamlmeta.MapItem
+	thread  *starlark.Thread
+
+	matcher *starlark.Value
 	expects MatchAnnotationExpectsKwarg
 }
 
@@ -21,6 +26,7 @@ func NewMapItemMatchAnnotation(newItem *yamlmeta.MapItem,
 
 	annotation := MapItemMatchAnnotation{
 		newItem: newItem,
+		thread:  thread,
 		expects: MatchAnnotationExpectsKwarg{thread: thread},
 	}
 	kwargs := template.NewAnnotations(newItem).Kwargs(AnnotationMatch)
@@ -28,6 +34,8 @@ func NewMapItemMatchAnnotation(newItem *yamlmeta.MapItem,
 	for _, kwarg := range kwargs {
 		kwargName := string(kwarg[0].(starlark.String))
 		switch kwargName {
+		case MatchAnnotationKwargBy:
+			annotation.matcher = &kwarg[1]
 		case MatchAnnotationKwargExpects:
 			annotation.expects.expects = &kwarg[1]
 		case MatchAnnotationKwargMissingOK:
@@ -43,22 +51,76 @@ func NewMapItemMatchAnnotation(newItem *yamlmeta.MapItem,
 	return annotation, nil
 }
 
-func (a MapItemMatchAnnotation) Index(leftMap *yamlmeta.Map) (int, bool, error) {
-	idx, match, found := a.MatchNode(leftMap)
-
-	matches := []*filepos.Position{}
-	if found {
-		matches = append(matches, match)
+func (a MapItemMatchAnnotation) Indexes(leftMap *yamlmeta.Map) ([]int, error) {
+	idxs, matches, err := a.MatchNodes(leftMap)
+	if err != nil {
+		return []int{}, err
 	}
 
-	return idx, found, a.expects.Check(matches)
+	return idxs, a.expects.Check(matches)
 }
 
-func (a MapItemMatchAnnotation) MatchNode(leftMap *yamlmeta.Map) (int, *filepos.Position, bool) {
-	for i, item := range leftMap.Items {
-		if reflect.DeepEqual(item.Key, a.newItem.Key) {
-			return i, item.Position, true
+func (a MapItemMatchAnnotation) MatchNodes(leftMap *yamlmeta.Map) ([]int, []*filepos.Position, error) {
+	if a.matcher == nil {
+		var leftIdxs []int
+		var matches []*filepos.Position
+
+		for i, item := range leftMap.Items {
+			if reflect.DeepEqual(item.Key, a.newItem.Key) {
+				leftIdxs = append(leftIdxs, i)
+				matches = append(matches, item.Position)
+			}
 		}
+		return leftIdxs, matches, nil
 	}
-	return 0, filepos.NewUnknownPosition(), false
+
+	switch typedVal := (*a.matcher).(type) {
+	case starlark.String:
+		var leftIdxs []int
+		var matches []*filepos.Position
+
+		for i, item := range leftMap.Items {
+			result, err := overlayModule{}.compareByMapKey(string(typedVal), item, a.newItem)
+			if err != nil {
+				return nil, nil, err
+			}
+			if result {
+				leftIdxs = append(leftIdxs, i)
+				matches = append(matches, item.Position)
+			}
+		}
+
+		return leftIdxs, matches, nil
+
+	case starlark.Callable:
+		var leftIdxs []int
+		var matches []*filepos.Position
+
+		for i, item := range leftMap.Items {
+			matcherArgs := starlark.Tuple{
+				yamltemplate.NewStarlarkFragment(item.Key),
+				yamltemplate.NewStarlarkFragment(item.Value),
+				yamltemplate.NewStarlarkFragment(a.newItem.Value),
+			}
+
+			// TODO check thread correctness
+			result, err := starlark.Call(a.thread, *a.matcher, matcherArgs, []starlark.Tuple{})
+			if err != nil {
+				return nil, nil, err
+			}
+
+			resultBool, err := tplcore.NewStarlarkValue(result).AsBool()
+			if err != nil {
+				return nil, nil, err
+			}
+			if resultBool {
+				leftIdxs = append(leftIdxs, i)
+				matches = append(matches, item.Position)
+			}
+		}
+		return leftIdxs, matches, nil
+	default:
+		return nil, nil, fmt.Errorf("Expected '%s' annotation keyword argument 'by'"+
+			" to be either string (for map key) or function, but was %T", AnnotationMatch, typedVal)
+	}
 }

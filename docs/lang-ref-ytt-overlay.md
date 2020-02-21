@@ -67,30 +67,55 @@ Annotations on the "right-side" nodes:
 Several functions are provided by overlay module that are useful for executing overlay operation, and matching various structures.
 
 - `apply(left, right1[, rightX...])` to combine two or more structures (see [Programmatic access](#programmatic-access) below for details)
-```python
-overlay.apply(left(), right())
-overlay.apply(left(), one(), two())
-```
 
-- `map_key(name)` matcher matches array items based on the value of map key `name`; in the below example it will succesfully match array items that have a map with a key `name` of value `item2`
-```yaml
-#@overlay/match by=overlay.map_key("name")
-- name: item2
-```
+    ```python
+    overlay.apply(left(), right())
+    overlay.apply(left(), one(), two())
+    ```
+  
+- `map_key(name)` matcher matches array items or maps based on the value of map key `name`:
+   
+   this example will successfully match array items that have a map with a key `name` of value `item2`;
+    ```yaml
+    #@overlay/match by=overlay.map_key("name")
+    - name: item2
+    ```
+   likewise, this example matches items in a map that have a key `name` of value `item2` (note: the key name `_` is arbitrary and ignored);
+    ```yaml
+    #@overlay/match by=overlay.map_key("name")
+    _:
+      name: item2
+    ```
 
 - `index(i)` matcher matches array item at given index
-```yaml
-#@overlay/match by=overlay.index(0)
-- item10
-```
 
-- `all` matcher matches all documents or array items
-```yaml
-#@overlay/match by=overlay.all
-- item10
-```
+    ```yaml
+    #@overlay/match by=overlay.index(0)
+    - item10
+    ```
 
-- `subset` matcher matches document or array item that has content that matches given map
+- `all` matcher matches all:
+ 
+    documents;
+    ```yaml
+    #@overlay/match by=overlay.all
+    ---
+    metadata:
+     annotations: ...
+    ```
+    array items;
+    ```yaml
+    #@overlay/match by=overlay.all
+    - item10
+    ```
+    or items in maps (note: the key name `_` is arbitrary and ignored)
+    ```yaml
+    #@overlay/match by=overlay.all
+    _:
+      name: item10
+    ```
+
+- `subset` matcher matches document, array item, or map item that has content that matches given map
 ```yaml
 #@overlay/match by=overlay.subset({"metadata":{"name":"example-ingress1"}})
 ---

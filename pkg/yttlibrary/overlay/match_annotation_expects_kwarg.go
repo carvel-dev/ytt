@@ -10,6 +10,7 @@ import (
 )
 
 const (
+	MatchAnnotationKwargBy        string = "by"
 	MatchAnnotationKwargExpects   string = "expects"
 	MatchAnnotationKwargMissingOK string = "missing_ok"
 )
