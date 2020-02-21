@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/k14s/ytt/pkg/filepos"
 	"github.com/k14s/ytt/pkg/template/core"
 	"github.com/k14s/ytt/pkg/yamlmeta"
 	"github.com/k14s/ytt/pkg/yamltemplate"
@@ -94,7 +95,8 @@ func (l *libraryValue) WithDataValues(thread *starlark.Thread, f *starlark.Built
 	libVal := &libraryValue{l.desc, l.libraryCtx, nil, l.libraryExecutionFactory}
 	libVal.dataValuess = append([]*yamlmeta.Document{}, l.dataValuess...)
 	libVal.dataValuess = append(libVal.dataValuess, &yamlmeta.Document{
-		Value: yamlmeta.NewASTFromInterface(dataValues),
+		Value:    yamlmeta.NewASTFromInterface(dataValues),
+		Position: filepos.NewUnknownPosition(),
 	})
 
 	return libVal.AsStarlarkValue(), nil
