@@ -21,7 +21,7 @@ func (e EvaluationCtx) PrepareNode(
 
 	if typedMap, ok := parentNode.(*yamlmeta.Map); ok {
 		if typedMapItem, ok := val.(*yamlmeta.MapItem); ok {
-			return MapItemOverride{}.Apply(typedMap, typedMapItem)
+			return MapItemOverride{}.Apply(typedMap, typedMapItem, true)
 		}
 	}
 	return nil
@@ -132,12 +132,10 @@ func (e EvaluationCtx) replaceItemInMap(
 
 	// If map items does not carry metadata
 	// we cannot check for override conflicts
-	if carryMeta {
-		for _, newItem := range insertItems {
-			err := MapItemOverride{}.Apply(dstMap, newItem)
-			if err != nil {
-				return err
-			}
+	for _, newItem := range insertItems {
+		err := MapItemOverride{}.Apply(dstMap, newItem, carryMeta)
+		if err != nil {
+			return err
 		}
 	}
 

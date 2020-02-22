@@ -42,10 +42,10 @@ middle:
   a: 127
   b: 123
   test3: multiple-items
-  test4: replaced-next3
   c: 124
   key1: val1
   key2: val2
+  test4: replaced-next3
 end:
   a: 126
   b: 123

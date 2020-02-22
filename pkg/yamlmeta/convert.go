@@ -1,6 +1,8 @@
 package yamlmeta
 
 import (
+	"fmt"
+
 	"github.com/k14s/ytt/pkg/filepos"
 	"github.com/k14s/ytt/pkg/orderedmap"
 	"github.com/k14s/ytt/pkg/yamlmeta/internal/yaml.v2"
@@ -55,6 +57,10 @@ func convertToGo(val interface{}) interface{} {
 	case *Map:
 		result := orderedmap.NewMap()
 		for _, item := range typedVal.Items {
+			// Catch any cases where unique key invariant is violated
+			if _, found := result.Get(item.Key); found {
+				panic(fmt.Sprintf("Unexpected duplicate key: %s", item.Key))
+			}
 			result.Set(item.Key, convertToGo(item.Value))
 		}
 		return result

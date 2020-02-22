@@ -15,7 +15,7 @@ const (
 type MapItemOverride struct{}
 
 func (d MapItemOverride) Apply(
-	typedMap *yamlmeta.Map, newItem *yamlmeta.MapItem) error {
+	typedMap *yamlmeta.Map, newItem *yamlmeta.MapItem, strict bool) error {
 
 	itemIndex := map[interface{}]int{}
 
@@ -24,7 +24,7 @@ func (d MapItemOverride) Apply(
 	}
 
 	if prevIdx, ok := itemIndex[newItem.Key]; ok {
-		if template.NewAnnotations(newItem).Has(AnnotationMapKeyOverride) {
+		if template.NewAnnotations(newItem).Has(AnnotationMapKeyOverride) || !strict {
 			typedMap.Items = append(typedMap.Items[:prevIdx], typedMap.Items[prevIdx+1:]...)
 			return nil
 		}
