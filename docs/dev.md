@@ -32,6 +32,18 @@ For those interested in extending and improving `ytt`, below is a quick referenc
 - [pkg/yttlibrary](https://github.com/k14s/ytt/tree/master/pkg/yttlibrary) is bundled `@ytt` library
   - you can also make your own libraries as exemplified by [k14s/k8s-lib](https://github.com/k14s/k8s-lib)
 
+### Tests
+
+- `./hack/test-unit.sh` executes various basic validation tests
+  - Notable test locations:
+    - `pkg/cmd/template/*_test.go`: functional testing of `ytt` command (as a combination of various high level features e.g. data values, overlays, templating)
+    - `pkg/template/*_test.go`: mostly generic templating functionality
+    - `pkg/yamlmeta/*_test.go`: mostly YAML parsing tests
+    - `pkg/texttemplate/filetests/*`: functional testing of text templating (e.g. function definition, control flow)
+    - `pkg/yamltemplate/filetests/*`: functional testing of YAML templating (e.g. function definition, control flow)
+    - `pkg/yamltemplate/filetests/ytt-library/*`: functional testing of ytt provided modules (e.g. `base64`, `regexp`)
+- `./hack/test-e2e.sh` executes various `examples/` directory content as end-to-end tests
+
 ## Website changes
 
 `pkg/website` contains HTML/JS/CSS source for get-ytt.io. `./hack/build.sh` combines those assets into a single file `pkg/website/generated.go` (using ytt itself ;) ) before building final binary. `ytt website` command can serve website locally. `./hack/build.sh && ytt website` can be used for pretty quick local iteration.
