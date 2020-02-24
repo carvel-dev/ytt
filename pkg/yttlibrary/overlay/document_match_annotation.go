@@ -90,8 +90,8 @@ func (a DocumentMatchAnnotation) MatchNodes(leftDocSets []*yamlmeta.DocumentSet)
 			for j, item := range leftDocSet.Items {
 				matcherArgs := starlark.Tuple{
 					starlark.MakeInt(combinedIdx),
-					yamltemplate.NewStarlarkFragment(item),
-					yamltemplate.NewStarlarkFragment(a.newDoc),
+					yamltemplate.NewStarlarkFragment(item.Value),
+					yamltemplate.NewStarlarkFragment(a.newDoc.Value),
 				}
 
 				// TODO check thread correctness

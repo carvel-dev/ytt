@@ -101,8 +101,8 @@ func (a ArrayItemMatchAnnotation) MatchNodes(leftArray *yamlmeta.Array) ([]int, 
 		for i, item := range leftArray.Items {
 			matcherArgs := starlark.Tuple{
 				starlark.MakeInt(i),
-				yamltemplate.NewStarlarkFragment(item),
-				yamltemplate.NewStarlarkFragment(a.newItem),
+				yamltemplate.NewStarlarkFragment(item.Value),
+				yamltemplate.NewStarlarkFragment(a.newItem.Value),
 			}
 
 			// TODO check thread correctness

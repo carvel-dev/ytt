@@ -29,7 +29,18 @@ func (b yamlModule) Encode(thread *starlark.Thread, f *starlark.Builtin, args st
 	}
 
 	val := core.NewStarlarkValue(args.Index(0)).AsInterface()
-	docSet := yamlmeta.NewDocumentSetFromInterface(val)
+
+	var docSet *yamlmeta.DocumentSet
+
+	switch typedVal := val.(type) {
+	case *yamlmeta.DocumentSet:
+		docSet = typedVal
+	case *yamlmeta.Document:
+		// Documents should be part of DocumentSet by the time it makes it here
+		panic("Unexpected document")
+	default:
+		docSet = &yamlmeta.DocumentSet{Items: []*yamlmeta.Document{{Value: typedVal}}}
+	}
 
 	valBs, err := docSet.AsBytes()
 	if err != nil {

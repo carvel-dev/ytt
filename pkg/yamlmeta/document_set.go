@@ -23,17 +23,6 @@ func NewDocumentSetFromBytes(data []byte, opts DocSetOpts) (*DocumentSet, error)
 	return docSet, nil
 }
 
-func NewDocumentSetFromInterface(val interface{}) *DocumentSet {
-	switch typedVal := val.(type) {
-	case *DocumentSet:
-		return typedVal
-	case *Document:
-		return &DocumentSet{Items: []*Document{typedVal}}
-	default:
-		return &DocumentSet{Items: []*Document{{Value: typedVal}}}
-	}
-}
-
 func (d *DocumentSet) Print(writer io.Writer) {
 	NewPrinter(writer).Print(d)
 }
