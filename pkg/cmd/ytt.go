@@ -6,6 +6,7 @@ import (
 
 	"github.com/cppforlife/cobrautil"
 	cmdtpl "github.com/k14s/ytt/pkg/cmd/template"
+	"github.com/k14s/ytt/pkg/version"
 	"github.com/spf13/cobra"
 )
 
@@ -24,7 +25,7 @@ func NewYttCmd(o *YttOptions) *cobra.Command {
 
 	cmd.Use = "ytt"
 	cmd.Aliases = nil
-	cmd.Version = Version
+	cmd.Version = version.Version
 	cmd.Short = "ytt performs YAML templating"
 	cmd.Long = `ytt performs YAML templating.
 

@@ -3,11 +3,8 @@ package cmd
 import (
 	"fmt"
 
+	"github.com/k14s/ytt/pkg/version"
 	"github.com/spf13/cobra"
-)
-
-const (
-	Version = "0.25.0"
 )
 
 type VersionOptions struct{}
@@ -26,7 +23,7 @@ func NewVersionCmd(o *VersionOptions) *cobra.Command {
 }
 
 func (o *VersionOptions) Run() error {
-	fmt.Printf("ytt version %s\n", Version)
+	fmt.Printf("ytt version %s\n", version.Version)
 
 	return nil
 }
