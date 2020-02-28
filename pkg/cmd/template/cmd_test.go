@@ -593,3 +593,24 @@ func2: true
 
 	runAndCompare(t, filesToProcess, expectedYAMLTplData)
 }
+
+func TestLoadYTTModuleFailEarly(t *testing.T) {
+	configTplData := []byte(`#@ load("@ytt:not-exist", "a")`)
+
+	filesToProcess := files.NewSortedFiles([]*files.File{
+		files.MustNewFileFromSource(files.NewBytesSource("config.yml", configTplData)),
+	})
+
+	ui := cmdcore.NewPlainUI(false)
+	opts := cmdtpl.NewOptions()
+
+	out := opts.RunWithFiles(cmdtpl.TemplateInput{Files: filesToProcess}, ui)
+	if out.Err == nil {
+		t.Fatalf("Expected RunWithFiles to fail")
+	}
+
+	if !strings.Contains(out.Err.Error(), "cannot load @ytt:not-exist: builtin ytt library does not have module not-exist") {
+		t.Fatalf("Expected RunWithFiles to fail with error, but was '%s'", out.Err.Error())
+	}
+
+}

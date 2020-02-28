@@ -52,8 +52,11 @@ func (l *TemplateLoader) FindCompiledTemplate(path string) (*template.CompiledTe
 }
 
 func (l *TemplateLoader) Load(thread *starlark.Thread, module string) (starlark.StringDict, error) {
-	if api, found := l.getYTTLibrary(thread)[module]; found {
-		return api, nil
+	if strings.HasPrefix(module, "@ytt") {
+		if api, found := l.getYTTLibrary(thread)[module]; found {
+			return api, nil
+		}
+		return nil, fmt.Errorf("builtin ytt library does not have module %s", strings.TrimPrefix(module, "@ytt:"))
 	}
 
 	libraryCtx := LibraryExecutionContext{
