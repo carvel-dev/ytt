@@ -3,6 +3,7 @@ module github.com/k14s/ytt
 go 1.13
 
 require (
+	github.com/Masterminds/semver v1.5.0
 	github.com/aws/aws-lambda-go v1.8.2
 	github.com/cppforlife/cobrautil v0.0.0-20180924214100-a39a1714c920
 	github.com/inconshreveable/mousetrap v1.0.0 // indirect

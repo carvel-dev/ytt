@@ -36,6 +36,9 @@ func NewAPI(replaceNodeFunc tplcore.StarlarkFunc, values *yamlmeta.Document,
 		"@ytt:module":  ModuleAPI,
 		"@ytt:overlay": overlay.API,
 
+		// Versioning
+		"@ytt:version": VersionAPI,
+
 		"@ytt:library": libraryMod,
 	}
 }

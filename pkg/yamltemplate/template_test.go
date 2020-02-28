@@ -11,6 +11,7 @@ import (
 
 	"github.com/k14s/ytt/pkg/orderedmap"
 	"github.com/k14s/ytt/pkg/template"
+	"github.com/k14s/ytt/pkg/version"
 	"github.com/k14s/ytt/pkg/yamlmeta"
 	"github.com/k14s/ytt/pkg/yamltemplate"
 	"github.com/k14s/ytt/pkg/yttlibrary"
@@ -73,7 +74,7 @@ func TestYAMLTemplate(t *testing.T) {
 			} else {
 				resultStr := testErr.UserErr().Error()
 				resultStr = regexp.MustCompile("__ytt_tpl\\d+_").ReplaceAllString(resultStr, "__ytt_tplXXX_")
-				err = expectEquals(t, resultStr, strings.TrimPrefix(expectedStr, "ERR: "))
+				err = expectEquals(t, resultStr, strings.ReplaceAll(strings.TrimPrefix(expectedStr, "ERR: "), "__YTT_VERSION__", version.Version))
 			}
 		} else {
 			if testErr == nil {
