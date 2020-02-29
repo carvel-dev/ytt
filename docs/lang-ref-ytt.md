@@ -68,6 +68,11 @@ url.query_params_encode({"x":["1"],"y":["2","3"],"z":[""]}) # "x=1&y=2&y=3&z="
 url.query_params_decode("x=1&y=2&y=3;z")                    # {"x":["1"],"y":["2","3"],"z":[""]}
 ```
 
+- `load("@ytt:version", "version")` (available in v0.26.0)
+```python
+version.require_at_least("2.0") # stops execution if current ytt binary's version is less than 2.0 (uses semver for comparison)
+```
+
 #### Serialization modules
 
 - `load("@ytt:base64", "base64")`
