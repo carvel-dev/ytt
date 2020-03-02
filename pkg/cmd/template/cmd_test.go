@@ -609,8 +609,7 @@ func TestLoadYTTModuleFailEarly(t *testing.T) {
 		t.Fatalf("Expected RunWithFiles to fail")
 	}
 
-	if !strings.Contains(out.Err.Error(), "cannot load @ytt:not-exist: builtin ytt library does not have module not-exist") {
+	if !strings.Contains(out.Err.Error(), "cannot load @ytt:not-exist: builtin ytt library does not have module 'not-exist'") {
 		t.Fatalf("Expected RunWithFiles to fail with error, but was '%s'", out.Err.Error())
 	}
-
 }

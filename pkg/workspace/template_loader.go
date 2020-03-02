@@ -52,13 +52,6 @@ func (l *TemplateLoader) FindCompiledTemplate(path string) (*template.CompiledTe
 }
 
 func (l *TemplateLoader) Load(thread *starlark.Thread, module string) (starlark.StringDict, error) {
-	if strings.HasPrefix(module, "@ytt") {
-		if api, found := l.getYTTLibrary(thread)[module]; found {
-			return api, nil
-		}
-		return nil, fmt.Errorf("builtin ytt library does not have module %s", strings.TrimPrefix(module, "@ytt:"))
-	}
-
 	libraryCtx := LibraryExecutionContext{
 		Current: l.getCurrentLibrary(thread),
 		Root:    l.getRootLibrary(thread),
@@ -68,8 +61,12 @@ func (l *TemplateLoader) Load(thread *starlark.Thread, module string) (starlark.
 	if strings.HasPrefix(module, "@") {
 		pieces := strings.SplitN(module[1:], ":", 2)
 		if len(pieces) != 2 {
-			return nil, fmt.Errorf("Expected library path to be in format '@name:path', " +
-				" for example, '@github.com/k14s/test:test.star'")
+			return nil, fmt.Errorf("Expected library path to be in format '@name:path' " +
+				"e.g. '@github.com/k14s/test:test.star' or '@ytt:base64'")
+		}
+
+		if pieces[0] == "ytt" {
+			return l.getYTTLibrary(thread).FindModule(pieces[1])
 		}
 
 		foundLib, err := libraryCtx.Current.FindAccessibleLibrary(pieces[0])
