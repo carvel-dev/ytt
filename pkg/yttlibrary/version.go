@@ -2,12 +2,19 @@ package yttlibrary
 
 import (
 	"fmt"
+	"regexp"
 
-	"github.com/Masterminds/semver"
+	semver "github.com/hashicorp/go-version"
 	"github.com/k14s/ytt/pkg/template/core"
 	"github.com/k14s/ytt/pkg/version"
 	"go.starlark.net/starlark"
 	"go.starlark.net/starlarkstruct"
+)
+
+const (
+	SemverRegex string = `^(?P<major>0|[1-9]\d*)\.(?P<minor>0|[1-9]\d*)\.(?P<patch>0|[1-9]\d*)` +
+		`(?:-(?P<prerelease>(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))` +
+		`?(?:\+(?P<buildmetadata>[0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$`
 )
 
 var (
@@ -33,6 +40,11 @@ func (b versionModule) RequireAtLeast(thread *starlark.Thread, f *starlark.Built
 		return starlark.None, err
 	}
 
+	r := regexp.MustCompile(SemverRegex)
+	if !r.MatchString(val) {
+		return starlark.None, fmt.Errorf("version string '%s' must be a valid semver", val)
+	}
+
 	userConstraint, err := semver.NewConstraint(">=" + val)
 	if err != nil {
 		return starlark.None, err
@@ -45,7 +57,7 @@ func (b versionModule) RequireAtLeast(thread *starlark.Thread, f *starlark.Built
 
 	satisfied := userConstraint.Check(yttVersion)
 	if !satisfied {
-		return starlark.None, fmt.Errorf("ytt version %s does not meet the minimum required version %s", version.Version, val)
+		return starlark.None, fmt.Errorf("ytt version '%s' does not meet the minimum required version '%s'", version.Version, val)
 	}
 
 	return starlark.None, nil

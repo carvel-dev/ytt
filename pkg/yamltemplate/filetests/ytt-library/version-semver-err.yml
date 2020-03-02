@@ -1,0 +1,11 @@
+#@ load("@ytt:version", "version")
+#@ load("@ytt:overlay", "overlay")
+
+#@ version.require_at_least("v1")
+
++++
+
+ERR: 
+- version.require_at_least: version string 'v1' must be a valid semver
+    in <toplevel>
+      stdin:4 | #@ version.require_at_least("v1")

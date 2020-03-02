@@ -1,0 +1,11 @@
+#@ load("@ytt:version", "version")
+#@ load("@ytt:overlay", "overlay")
+
+#@ version.require_at_least("1000000.0.0")
+
++++
+
+ERR: 
+- version.require_at_least: ytt version '__YTT_VERSION__' does not meet the minimum required version '1000000.0.0'
+    in <toplevel>
+      stdin:4 | #@ version.require_at_least("1000000.0.0")
