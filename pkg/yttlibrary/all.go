@@ -51,5 +51,6 @@ func (a API) FindModule(module string) (starlark.StringDict, error) {
 	if module, found := a.modules[module]; found {
 		return module, nil
 	}
-	return nil, fmt.Errorf("builtin ytt library does not have module '%s'", module)
+	return nil, fmt.Errorf("builtin ytt library does not have module '%s' "+
+		"(hint: is it available in newer version of ytt?)", module)
 }
