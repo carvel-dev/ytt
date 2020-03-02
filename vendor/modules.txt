@@ -5,6 +5,8 @@ github.com/aws/aws-lambda-go/lambda/messages
 github.com/aws/aws-lambda-go/lambdacontext
 # github.com/cppforlife/cobrautil v0.0.0-20180924214100-a39a1714c920
 github.com/cppforlife/cobrautil
+# github.com/hashicorp/go-version v1.2.0
+github.com/hashicorp/go-version
 # github.com/inconshreveable/mousetrap v1.0.0
 github.com/inconshreveable/mousetrap
 # github.com/kr/pretty v0.1.0
