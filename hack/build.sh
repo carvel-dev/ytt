@@ -9,6 +9,8 @@ repro_flags="-ldflags=-buildid= -trimpath"
 rm -f website/generated.go
 
 go fmt ./cmd/... ./pkg/...
+go mod vendor
+go mod tidy
 
 # build without website assets
 go build -o ytt ./cmd/ytt/...
