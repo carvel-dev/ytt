@@ -171,10 +171,13 @@ func (e CompiledTemplateMultiError) buildPos(pos syntax.Position) CompiledTempla
 }
 
 func (CompiledTemplateMultiError) findClosestLine(ct *CompiledTemplate, posLine int, lineInc int) *TemplateLine {
-	currPosLine := posLine
 	for {
-		currPosLine += lineInc
-		line := ct.CodeAtLine(filepos.NewPosition(currPosLine))
+		posLine += lineInc
+		if posLine < 1 {
+			return nil
+		}
+
+		line := ct.CodeAtLine(filepos.NewPosition(posLine))
 		if line == nil || line.SourceLine != nil {
 			return line
 		}
