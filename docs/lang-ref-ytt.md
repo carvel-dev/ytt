@@ -70,7 +70,9 @@ url.query_params_decode("x=1&y=2&y=3;z")                    # {"x":["1"],"y":["2
 
 - `load("@ytt:version", "version")` (available in v0.26.0)
 ```python
-version.require_at_least("2.0") # stops execution if current ytt binary's version is less than 2.0 (uses semver for comparison)
+# stops execution if ytt binary's version is less than 0.20.0
+# (uses semver for comparison)
+version.require_at_least("0.20.0")
 ```
 
 #### Serialization modules
