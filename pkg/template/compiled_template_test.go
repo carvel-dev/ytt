@@ -48,7 +48,6 @@ func TestLine1StarlarkError(t *testing.T) {
 	thread := &starlark.Thread{Name: "test", Load: loader.Load}
 
 	_, _, err := compiledTemplate.Eval(thread, loader)
-
 	if err == nil {
 		t.Fatalf("Expected eval to return err")
 	}
