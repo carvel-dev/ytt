@@ -67,5 +67,5 @@ func (b yamlModule) Decode(thread *starlark.Thread, f *starlark.Builtin, args st
 		return starlark.None, err
 	}
 
-	return core.NewGoValue(valDecoded, false).AsStarlarkValue(), nil
+	return core.NewGoValue(valDecoded).AsStarlarkValue(), nil
 }

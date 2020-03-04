@@ -21,8 +21,8 @@ type GoValueOpts struct {
 	Convert     func(interface{}) (starlark.Value, bool)
 }
 
-func NewGoValue(val interface{}, mapIsStruct bool) GoValue {
-	return GoValue{val, GoValueOpts{MapIsStruct: mapIsStruct}}
+func NewGoValue(val interface{}) GoValue {
+	return GoValue{val, GoValueOpts{}}
 }
 
 func NewGoValueWithOpts(val interface{}, opts GoValueOpts) GoValue {

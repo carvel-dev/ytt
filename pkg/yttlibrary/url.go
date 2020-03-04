@@ -164,7 +164,7 @@ func (b urlModule) QueryParamsDecode(thread *starlark.Thread, f *starlark.Builti
 		result.Set(key, val)
 	}
 
-	return core.NewGoValue(result, false).AsStarlarkValue(), nil
+	return core.NewGoValue(result).AsStarlarkValue(), nil
 }
 
 func (b urlModule) sortedKeys(vals url.Values) []string {

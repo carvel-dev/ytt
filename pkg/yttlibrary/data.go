@@ -14,7 +14,8 @@ type dataModule struct {
 }
 
 func NewDataModule(values *yamlmeta.Document, loader template.CompiledTemplateLoader) dataModule {
-	return dataModule{core.NewGoValue(values.AsInterface(), true).AsStarlarkValue(), loader}
+	val := core.NewGoValueWithOpts(values.AsInterface(), core.GoValueOpts{MapIsStruct: true})
+	return dataModule{val.AsStarlarkValue(), loader}
 }
 
 func (b dataModule) AsModule() starlark.StringDict {

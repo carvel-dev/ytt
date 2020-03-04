@@ -60,5 +60,5 @@ func (b jsonModule) Decode(thread *starlark.Thread, f *starlark.Builtin, args st
 
 	valDecoded = orderedmap.Conversion{valDecoded}.FromUnorderedMaps()
 
-	return core.NewGoValue(valDecoded, false).AsStarlarkValue(), nil
+	return core.NewGoValue(valDecoded).AsStarlarkValue(), nil
 }

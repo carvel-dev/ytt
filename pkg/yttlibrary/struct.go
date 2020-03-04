@@ -73,7 +73,8 @@ func (b structModule) Encode(thread *starlark.Thread, f *starlark.Builtin,
 		return starlark.None, fmt.Errorf("expected exactly one argument")
 	}
 
-	return core.NewGoValue(core.NewStarlarkValue(args.Index(0)).AsInterface(), true).AsStarlarkValue(), nil
+	val := core.NewStarlarkValue(args.Index(0)).AsInterface()
+	return core.NewGoValueWithOpts(val, core.GoValueOpts{MapIsStruct: true}).AsStarlarkValue(), nil
 }
 
 func (b structModule) Decode(thread *starlark.Thread, f *starlark.Builtin,
@@ -83,5 +84,6 @@ func (b structModule) Decode(thread *starlark.Thread, f *starlark.Builtin,
 		return starlark.None, fmt.Errorf("expected exactly one argument")
 	}
 
-	return core.NewGoValue(core.NewStarlarkValue(args.Index(0)).AsInterface(), false).AsStarlarkValue(), nil
+	val := core.NewStarlarkValue(args.Index(0)).AsInterface()
+	return core.NewGoValue(val).AsStarlarkValue(), nil
 }

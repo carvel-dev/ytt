@@ -243,7 +243,7 @@ func (e *EvaluationCtx) RootNodeAsStarlarkValue() starlark.Value {
 	if typedVal, ok := val.(starlark.Value); ok {
 		return typedVal
 	}
-	return core.NewGoValue(val, false).AsStarlarkValue()
+	return core.NewGoValue(val).AsStarlarkValue()
 }
 
 func (e *EvaluationCtx) unwindToNode(node EvaluationNode) {
