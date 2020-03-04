@@ -25,6 +25,13 @@ test4:
 #@ end
 
 test5: #@ splat_kwargs(**map())
+test5a: #@ dict(**map())
+test5b: #@ type(dict(**map())["test2"])
+
+test6: #@ len(map())
+
+test7: #@ "test1" in map()
+test7a: #@ "test3" in map()
 
 +++
 
@@ -49,3 +56,11 @@ test4:
 test5:
 - str
 - sub_key: 123
+test5a:
+  test1: str
+  test2:
+    sub_key: 123
+test5b: yamlfragment
+test6: 2
+test7: true
+test7a: false

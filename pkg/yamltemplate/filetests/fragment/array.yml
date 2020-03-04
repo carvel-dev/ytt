@@ -19,6 +19,12 @@ test4:
 #@ for/end val in array():
 - #@ val
 
+test5: #@ len(array())
+
+#! checks for indexes
+test6: #@ 0 in array()
+test6a: #@ 3 in array()
+
 +++
 
 test1:
@@ -37,3 +43,6 @@ test4:
 - str
 - 123
 - key: 123
+test5: 3
+test6: true
+test6a: false

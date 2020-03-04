@@ -24,6 +24,12 @@ test4
 #@ for/end val in docs():
 --- #@ val
 
+---
+test5: #@ len(docs())
+
+test6: #@ 0 in docs()
+test6a: #@ 3 in docs()
+
 +++
 
 test1:
@@ -46,3 +52,7 @@ str
 123
 ---
 key: 123
+---
+test5: 3
+test6: true
+test6a: false
