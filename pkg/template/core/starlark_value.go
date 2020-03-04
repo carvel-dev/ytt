@@ -20,8 +20,7 @@ func NewStarlarkValue(val starlark.Value) StarlarkValue {
 	return StarlarkValue{val}
 }
 
-// TODO rename AsGoValue()
-func (e StarlarkValue) AsInterface() interface{} {
+func (e StarlarkValue) AsGoValue() interface{} {
 	return e.asInterface(e.val)
 }
 

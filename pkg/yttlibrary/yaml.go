@@ -28,7 +28,7 @@ func (b yamlModule) Encode(thread *starlark.Thread, f *starlark.Builtin, args st
 		return starlark.None, fmt.Errorf("expected exactly one argument")
 	}
 
-	val := core.NewStarlarkValue(args.Index(0)).AsInterface()
+	val := core.NewStarlarkValue(args.Index(0)).AsGoValue()
 
 	var docSet *yamlmeta.DocumentSet
 

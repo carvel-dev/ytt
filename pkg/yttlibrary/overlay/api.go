@@ -40,7 +40,7 @@ func (b overlayModule) Apply(
 		return starlark.None, fmt.Errorf("expected exactly at least argument")
 	}
 
-	typedVals := core.NewStarlarkValue(args).AsInterface().([]interface{})
+	typedVals := core.NewStarlarkValue(args).AsGoValue().([]interface{})
 	var result interface{} = typedVals[0]
 
 	for _, right := range typedVals[1:] {
@@ -120,8 +120,8 @@ func (b overlayModule) MapKey(
 			return starlark.None, fmt.Errorf("expected exactly 3 arguments")
 		}
 
-		oldVal := core.NewStarlarkValue(args.Index(1)).AsInterface()
-		newVal := core.NewStarlarkValue(args.Index(2)).AsInterface()
+		oldVal := core.NewStarlarkValue(args.Index(1)).AsGoValue()
+		newVal := core.NewStarlarkValue(args.Index(2)).AsGoValue()
 
 		result, err := b.compareByMapKey(keyName, oldVal, newVal)
 		if err != nil {
@@ -194,8 +194,8 @@ func (b overlayModule) Subset(
 			return starlark.None, fmt.Errorf("expected exactly 3 arguments")
 		}
 
-		leftVal := core.NewStarlarkValue(args.Index(1)).AsInterface()
-		expectedVal := core.NewStarlarkValue(expectedArg).AsInterface()
+		leftVal := core.NewStarlarkValue(args.Index(1)).AsGoValue()
+		expectedVal := core.NewStarlarkValue(expectedArg).AsGoValue()
 
 		actualObj := yamlmeta.NewASTFromInterface(leftVal)
 		expectedObj := yamlmeta.NewASTFromInterface(expectedVal)

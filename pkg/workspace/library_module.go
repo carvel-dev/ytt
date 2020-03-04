@@ -90,7 +90,7 @@ func (l *libraryValue) WithDataValues(thread *starlark.Thread, f *starlark.Built
 		return starlark.None, fmt.Errorf("expected exactly one argument")
 	}
 
-	dataValues := core.NewStarlarkValue(args.Index(0)).AsInterface()
+	dataValues := core.NewStarlarkValue(args.Index(0)).AsGoValue()
 
 	libVal := &libraryValue{l.desc, l.libraryCtx, nil, l.libraryExecutionFactory}
 	libVal.dataValuess = append([]*yamlmeta.Document{}, l.dataValuess...)

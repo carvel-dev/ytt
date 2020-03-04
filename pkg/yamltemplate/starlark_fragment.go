@@ -49,7 +49,7 @@ func (s *StarlarkFragment) CompareSameType(op syntax.Token, y starlark.Value, de
 }
 
 func (s *StarlarkFragment) Get(k starlark.Value) (v starlark.Value, found bool, err error) {
-	wantedKey := tplcore.NewStarlarkValue(k).AsInterface()
+	wantedKey := tplcore.NewStarlarkValue(k).AsGoValue()
 
 	switch typedData := s.data.(type) {
 	case *yamlmeta.Map:

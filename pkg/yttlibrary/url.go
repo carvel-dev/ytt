@@ -98,7 +98,7 @@ func (b urlModule) QueryParamsEncode(thread *starlark.Thread, f *starlark.Builti
 		return starlark.None, fmt.Errorf("expected exactly one argument")
 	}
 
-	val := core.NewStarlarkValue(args.Index(0)).AsInterface()
+	val := core.NewStarlarkValue(args.Index(0)).AsGoValue()
 
 	typedVal, ok := val.(*orderedmap.Map)
 	if !ok {
