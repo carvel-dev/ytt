@@ -20,7 +20,7 @@ Templating language used in `ytt` is a slightly modified version of [Starlark](h
 - Tuple: `(1, 2, "a")`
 - Struct: `struct.make(field1=123, field2="val2")` [Reference](lang-ref-ytt.md#struct)
 - TODO Set?
-- TODO YAMLFragment?
+- YAMLFragment: [Reference](lang-ref-yaml-fragment.md)
 - Annotation: `@name arg1,arg2,keyword_arg3=123` [Reference](lang-ref-annotation.md)
 
 ### Control flow
