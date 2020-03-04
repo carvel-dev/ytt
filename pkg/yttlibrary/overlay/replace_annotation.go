@@ -5,6 +5,7 @@ import (
 
 	"github.com/k14s/ytt/pkg/template"
 	tplcore "github.com/k14s/ytt/pkg/template/core"
+	"github.com/k14s/ytt/pkg/yamltemplate"
 	"go.starlark.net/starlark"
 )
 
@@ -48,8 +49,8 @@ func (a ReplaceAnnotation) Value(existingNode template.EvaluationNode) (interfac
 	switch typedVal := (*a.via).(type) {
 	case starlark.Callable:
 		viaArgs := starlark.Tuple{
-			tplcore.NewGoValue(existingNode.GetValues()[0], false).AsStarlarkValue(),
-			tplcore.NewGoValue(newNode.GetValues()[0], false).AsStarlarkValue(),
+			yamltemplate.NewGoValueWithYAML(existingNode.GetValues()[0]).AsStarlarkValue(),
+			yamltemplate.NewGoValueWithYAML(newNode.GetValues()[0]).AsStarlarkValue(),
 		}
 
 		// TODO check thread correctness

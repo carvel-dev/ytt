@@ -6,6 +6,7 @@ import (
 	"github.com/k14s/ytt/pkg/template"
 	tplcore "github.com/k14s/ytt/pkg/template/core"
 	"github.com/k14s/ytt/pkg/yamlmeta"
+	"github.com/k14s/ytt/pkg/yamltemplate"
 	"go.starlark.net/starlark"
 )
 
@@ -60,8 +61,8 @@ func (a AssertAnnotation) Check(existingNode template.EvaluationNode) error {
 	switch typedVal := (*a.via).(type) {
 	case starlark.Callable:
 		viaArgs := starlark.Tuple{
-			tplcore.NewGoValue(existingVal, false).AsStarlarkValue(),
-			tplcore.NewGoValue(newVal, false).AsStarlarkValue(),
+			yamltemplate.NewGoValueWithYAML(existingVal).AsStarlarkValue(),
+			yamltemplate.NewGoValueWithYAML(newVal).AsStarlarkValue(),
 		}
 
 		result, err := starlark.Call(a.thread, *a.via, viaArgs, []starlark.Tuple{})

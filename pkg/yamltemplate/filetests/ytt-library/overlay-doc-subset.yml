@@ -84,6 +84,26 @@ metadata:
 test3
 --- #@ template.replace(overlay.apply(test3_left(), test3_right()))
 
+#@ def test4_left():
+---
+metadata:
+  name: first
+---
+metadata:
+  name: second
+#@ end
+
+#@ def test4_right():
+#@overlay/match by=lambda i, a, b: a["metadata"]["name"] == "first" and b["metadata"]["name"] == "updated"
+---
+metadata:
+  name: updated
+#@ end
+
+---
+test4
+--- #@ template.replace(overlay.apply(test4_left(), test4_right()))
+
 +++
 
 test1
@@ -119,6 +139,14 @@ metadata:
 - other: key
 ---
 test3
+---
+metadata:
+  name: updated
+---
+metadata:
+  name: second
+---
+test4
 ---
 metadata:
   name: updated

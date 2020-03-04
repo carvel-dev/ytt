@@ -28,6 +28,18 @@ key1: val2
 
 test1a: #@ overlay.apply(test1a_left(), test1a_right())
 
+#@ def test1b_left():
+key1:
+  subkey: val1
+#@ end
+
+#@ def test1b_right():
+#@overlay/replace via=lambda a,b: a["subkey"] + b
+key1: val2
+#@ end
+
+test1b: #@ overlay.apply(test1b_left(), test1b_right())
+
 ---
 #@ def test2_left():
 - val1
@@ -66,6 +78,8 @@ test1:
   key1: prefix-val1-val2
 test1a:
   key1: prefix-val1-val2
+test1b:
+  key1: val1val2
 ---
 test2:
 - prefix-val1-val2
