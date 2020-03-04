@@ -1,0 +1,39 @@
+#@ def array():
+- str
+- 123
+- key: 123
+#@ end
+
+---
+#@ result = array()[0]
+test1: #@ [result, type(result), result == "str"]
+
+#@ result = array()[1]
+test2: #@ [result, type(result), result == 123]
+
+#@ result = array()[2]
+#! TODO comparison
+test3: #@ [result, type(result), result == 123]
+
+test4:
+#@ for/end val in array():
+- #@ val
+
++++
+
+test1:
+- str
+- string
+- true
+test2:
+- 123
+- int
+- true
+test3:
+- key: 123
+- yamlfragment
+- false
+test4:
+- str
+- 123
+- key: 123

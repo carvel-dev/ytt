@@ -1,0 +1,51 @@
+#@ def map():
+test1: str
+test2:
+  sub_key: 123
+#@ end
+
+#@ result = map()["test1"]
+test1: #@ [result, type(result), result == "str"]
+
+#@ result = map()["test2"]
+#! TODO comparison
+test2: #@ [result, type(result), result == "str"]
+
+#@ result = map()["test2"]["sub_key"]
+test3: #@ [result, type(result), result == 123]
+
+test4:
+#@ result = map()
+#@ for/end k in result:
+- key: #@ k
+  value: #@ result[k]
+
+#@ def splat_kwargs(test1=None, test2=None):
+#@   return [test1, test2]
+#@ end
+
+test5: #@ splat_kwargs(**map())
+
++++
+
+test1:
+- str
+- string
+- true
+test2:
+- sub_key: 123
+- yamlfragment
+- false
+test3:
+- 123
+- int
+- true
+test4:
+- key: test1
+  value: str
+- key: test2
+  value:
+    sub_key: 123
+test5:
+- str
+- sub_key: 123

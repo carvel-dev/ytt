@@ -12,12 +12,21 @@ type GoValueToStarlarkValueConversion interface {
 }
 
 type GoValue struct {
-	val         interface{}
-	mapIsStruct bool
+	val  interface{}
+	opts GoValueOpts
+}
+
+type GoValueOpts struct {
+	MapIsStruct bool
+	Convert     func(interface{}) (starlark.Value, bool)
 }
 
 func NewGoValue(val interface{}, mapIsStruct bool) GoValue {
-	return GoValue{val, mapIsStruct}
+	return GoValue{val, GoValueOpts{MapIsStruct: mapIsStruct}}
+}
+
+func NewGoValueWithOpts(val interface{}, opts GoValueOpts) GoValue {
+	return GoValue{val, opts}
 }
 
 func (e GoValue) AsStarlarkValue() starlark.Value {
@@ -25,6 +34,13 @@ func (e GoValue) AsStarlarkValue() starlark.Value {
 }
 
 func (e GoValue) asStarlarkValue(val interface{}) starlark.Value {
+	if e.opts.Convert != nil {
+		converted, ok := e.opts.Convert(val)
+		if ok {
+			return converted
+		}
+	}
+
 	if obj, ok := val.(GoValueToStarlarkValueConversion); ok {
 		return obj.AsStarlarkValue()
 	}
@@ -72,7 +88,7 @@ func (e GoValue) asStarlarkValue(val interface{}) starlark.Value {
 }
 
 func (e GoValue) dictAsStarlarkValue(val *orderedmap.Map) starlark.Value {
-	if e.mapIsStruct {
+	if e.opts.MapIsStruct {
 		data := orderedmap.NewMap()
 		val.Iterate(func(k, v interface{}) {
 			if keyStr, ok := k.(string); ok {
