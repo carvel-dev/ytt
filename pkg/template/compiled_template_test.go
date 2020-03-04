@@ -1,6 +1,7 @@
 package template_test
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/k14s/ytt/pkg/template"
@@ -33,5 +34,27 @@ a = hello()
 
 	if resultVal != nil {
 		t.Fatalf("Expected result val to be nil, but was %#v", resultVal)
+	}
+}
+
+func TestLine1StarlarkError(t *testing.T) {
+	data := `badsyntax`
+	instructions := template.NewInstructionSet()
+	compiledTemplate := template.NewCompiledTemplate(
+		"stdin", template.NewCodeFromBytes([]byte(data), instructions),
+		instructions, template.NewNodes(), template.EvaluationCtxDialects{})
+
+	loader := template.NewNoopCompiledTemplateLoader(compiledTemplate)
+	thread := &starlark.Thread{Name: "test", Load: loader.Load}
+
+	_, _, err := compiledTemplate.Eval(thread, loader)
+
+	if err == nil {
+		t.Fatalf("Expected eval to return err")
+	}
+
+	matchString := "undefined: badsyntax"
+	if !strings.Contains(err.Error(), matchString) {
+		t.Fatalf("\nExpected:\n%s\n\nto contain:\n\n%s\n", err.Error(), matchString)
 	}
 }
