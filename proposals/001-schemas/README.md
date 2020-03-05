@@ -3,6 +3,13 @@
 - Issue: https://github.com/k14s/ytt/issues/103
 - Status: **Being written** | Being implemented | Included in release | Rejected
 
+### Examples
+
+- Schemas for [cf-for-k8s's values](cf-for-k8s/values.yml)
+  - [JSON schema (as json)](cf-for-k8s/json-schema.json)
+  - [JSON schema (as yaml)](cf-for-k8s/json-schema.yml)
+  - [ytt native schema](cf-for-k8s/ytt-schema.yml)
+
 ### Defining a schema document and what type of documents to apply it to
 
 ```yaml
