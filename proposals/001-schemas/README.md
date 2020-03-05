@@ -1,5 +1,8 @@
 ## Schemas
 
+Issue: https://github.com/k14s/ytt/issues/103
+Status: ++Being written++ | Being implemented | Included in release | Rejected
+
 ### Defining a schema document and what type of documents to apply it to
 
 ```yaml
