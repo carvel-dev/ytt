@@ -35,8 +35,8 @@ func NewStarlarkFragment(data interface{}) *StarlarkFragment {
 
 func (s *StarlarkFragment) String() string       { return fmt.Sprintf("%s(%T)", starlarkFragmentType, s.data) }
 func (s *StarlarkFragment) Type() string         { return starlarkFragmentType }
-func (s *StarlarkFragment) Freeze()              {}              // TODO
-func (s *StarlarkFragment) Truth() starlark.Bool { return true } // TODO
+func (s *StarlarkFragment) Freeze()              {} // TODO
+func (s *StarlarkFragment) Truth() starlark.Bool { return starlark.Bool(s.Len() > 0) }
 func (s *StarlarkFragment) Hash() (uint32, error) {
 	return 0, fmt.Errorf("unhashable type: %s", starlarkFragmentType)
 }
@@ -52,6 +52,9 @@ func (s *StarlarkFragment) Get(k starlark.Value) (v starlark.Value, found bool, 
 	wantedKey := tplcore.NewStarlarkValue(k).AsGoValue()
 
 	switch typedData := s.data.(type) {
+	case nil:
+		// do nothing
+
 	case *yamlmeta.Map:
 		for _, item := range typedData.Items {
 			if reflect.DeepEqual(item.Key, wantedKey) {
@@ -114,6 +117,8 @@ func (s *StarlarkFragment) SetIndex(index int, v starlark.Value) error {
 
 func (s *StarlarkFragment) Len() int {
 	switch typedData := s.data.(type) {
+	case nil:
+		return 0
 	case *yamlmeta.Map:
 		return len(typedData.Items)
 	case *yamlmeta.Array:
@@ -127,21 +132,23 @@ func (s *StarlarkFragment) Len() int {
 
 // Items seems to be only used for splatting kwargs
 func (s *StarlarkFragment) Items() []starlark.Tuple {
-	typedMap, ok := s.data.(*yamlmeta.Map)
-	if !ok {
+	switch typedData := s.data.(type) {
+	case nil:
+		return []starlark.Tuple{}
+
+	case *yamlmeta.Map:
+		var result []starlark.Tuple
+		for _, item := range typedData.Items {
+			result = append(result, starlark.Tuple{
+				NewGoValueWithYAML(item.Key).AsStarlarkValue(),
+				NewGoValueWithYAML(item.Value).AsStarlarkValue(),
+			})
+		}
+		return result
+
+	default:
 		panic(fmt.Sprintf("%s.Items: Expected value to be a map, but was %T", starlarkFragmentType, s.data))
 	}
-
-	var result []starlark.Tuple
-
-	for _, item := range typedMap.Items {
-		result = append(result, starlark.Tuple{
-			NewGoValueWithYAML(item.Key).AsStarlarkValue(),
-			NewGoValueWithYAML(item.Value).AsStarlarkValue(),
-		})
-	}
-
-	return result
 }
 
 func (s *StarlarkFragment) Slice(start, end, step int) starlark.Value {
@@ -150,6 +157,8 @@ func (s *StarlarkFragment) Slice(start, end, step int) starlark.Value {
 
 func (s *StarlarkFragment) Iterate() starlark.Iterator {
 	switch typedData := s.data.(type) {
+	case nil:
+		return StarlarkFragmentNilIterator{}
 	case *yamlmeta.Map:
 		return &StarlarkFragmentKeysIterator{data: typedData}
 	case *yamlmeta.Array:
@@ -160,6 +169,11 @@ func (s *StarlarkFragment) Iterate() starlark.Iterator {
 		panic(fmt.Sprintf("%s.Iterate: Expected value to be a map, array or docset, but was %T", starlarkFragmentType, s.data))
 	}
 }
+
+type StarlarkFragmentNilIterator struct{}
+
+func (s StarlarkFragmentNilIterator) Next(p *starlark.Value) bool { return false }
+func (s StarlarkFragmentNilIterator) Done()                       {}
 
 type StarlarkFragmentKeysIterator struct {
 	data *yamlmeta.Map

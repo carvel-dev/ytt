@@ -1,0 +1,53 @@
+#@ def empty_array():
+#@ if/end False:
+- 123
+#@ end
+
+---
+#@ def empty_map():
+#@ if/end False:
+key1: val1
+#@ end
+
+---
+#@ def empty_docs():
+#@ if/end False:
+---
+#@ end
+
+---
+test1a: #@ 1 if empty_array() else 0
+test1b: #@ 1 if empty_map() else 0
+test1c: #@ 1 if empty_docs() else 0
+
+test2a: #@ type(empty_array())
+test2b: #@ type(empty_map())
+test2c: #@ type(empty_docs())
+
+test3a: #@ "test3" in empty_array()
+test3b: #@ "test3" in empty_map()
+test3c: #@ "test3" in empty_docs()
+
+test4: not-looped
+#@ for/end val in empty_array():
+test4: looped
+#@ for/end val in empty_map():
+test4: looped
+#@ for/end val in empty_docs():
+test4: looped
+
+test5: #@ dict(**empty_map())
+
++++
+
+test1a: 0
+test1b: 0
+test1c: 0
+test2a: yamlfragment
+test2b: yamlfragment
+test2c: yamlfragment
+test3a: false
+test3b: false
+test3c: false
+test4: not-looped
+test5: {}
