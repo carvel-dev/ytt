@@ -34,20 +34,18 @@ The attach argument will default to `data/values` if none is provided.
 - `@schema/validate`
   This annotation can be used in order to run a validation function on the value of the key it is applied to. For example,
   ```yaml
-  #@schema/validate  number_is_even, max=10
-  foo: 5
+  #@schema/validate number_is_even, min=2
+  replicas: 6
   ```
-  will use the `max` predefined validator as well as the user provided `number_is_even` function to validate the value of `foo`. The funtion signature should match what gets passed to overlay/assert annotations.
+  will use the `min` predefined validator as well as the user provided `number_is_even` function to validate the value of `replicas`. The funtion signature should match what gets passed to overlay/assert annotations.
 
-- `@schema/non-empty`
-  This annotation asserts that a key cannot have any empty value of its type i.e. "", [], 0, etc. This is useful for defining keys that are not optional and must
-  be provided as data values.
+- `@schema/allow-empty`
+  This annotation asserts that a key can have an empty value of its type i.e. "", [], 0, etc. This is useful for defining keys that are optional and could be avoided as data values.
   ```yaml
-  #@schema/non-empty
+  #@schema/allow-empty
   system_domain: ""
   ```
-  Because the schema values are extracted and used as defaults, by setting the value of `sytem_domain` to empty string and requiring it to not be empty after interpolating the data values,
-  the user is forced to provide a non-empty `system_domain` through their data values. ytt uses starlark [type truth values](https://github.com/google/starlark-go/blob/master/doc/spec.md#data-types) to determine if a value is empty.
+  Because the schema values are extracted and used as defaults, by setting the value of `sytem_domain` to allow empty string, the user is allowed to provide a empty `system_domain` through their data values (or not provide it at all since it's an empty string by default). ytt uses starlark [type truth values](https://github.com/google/starlark-go/blob/master/doc/spec.md#data-types) to determine if a value is empty.
 
 #### Describing annotations
 
