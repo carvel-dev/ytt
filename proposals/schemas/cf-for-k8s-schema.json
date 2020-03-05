@@ -1,0 +1,480 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema",
+    "type": "object",
+    "title": "The Root Schema",
+    "properties": {
+        "app_domains": {
+            "type": "array",
+            "title": "The App_domains Schema",
+            "default": []
+        },
+        "capi": {
+            "type": "object",
+            "title": "The Capi Schema",
+            "default": {},
+            "properties": {
+                "blobstore": {
+                    "type": "object",
+                    "title": "The Blobstore Schema",
+                    "default": {},
+                    "properties": {
+                        "endpoint": {
+                            "type": "string",
+                            "title": "The Endpoint Schema",
+                            "default": ""
+                        }
+                    }
+                },
+                "database": {
+                    "type": "object",
+                    "title": "The Database Schema",
+                    "default": {},
+                    "properties": {
+                        "adapter": {
+                            "type": "string",
+                            "title": "The Adapter Schema",
+                            "default": ""
+                        },
+                        "host": {
+                            "type": "string",
+                            "title": "The Host Schema",
+                            "default": ""
+                        },
+                        "name": {
+                            "type": "string",
+                            "title": "The Name Schema",
+                            "default": ""
+                        },
+                        "password": {
+                            "type": "string",
+                            "title": "The Password Schema",
+                            "default": ""
+                        },
+                        "port": {
+                            "type": "integer",
+                            "title": "The Port Schema",
+                            "default": 0
+                        },
+                        "user": {
+                            "type": "string",
+                            "title": "The User Schema",
+                            "default": ""
+                        }
+                    }
+                }
+            }
+        },
+        "cf_admin_password": {
+            "title": "The Cf_admin_password Schema",
+            "default": null
+        },
+        "cf_blobstore": {
+            "type": "object",
+            "title": "The Cf_blobstore Schema",
+            "default": {},
+            "properties": {
+                "access_key": {
+                    "type": "string",
+                    "title": "The Access_key Schema",
+                    "default": ""
+                },
+                "secret_key": {
+                    "type": "string",
+                    "title": "The Secret_key Schema",
+                    "default": ""
+                }
+            }
+        },
+        "cf_db": {
+            "type": "object",
+            "title": "The Cf_db Schema",
+            "default": {},
+            "properties": {
+                "admin_password": {
+                    "type": "string",
+                    "title": "The Admin_password Schema",
+                    "default": ""
+                },
+                "enabled": {
+                    "type": "boolean",
+                    "title": "The Enabled Schema",
+                    "default": false
+                }
+            }
+        },
+        "docker_registry": {
+            "type": "object",
+            "title": "The Docker_registry Schema",
+            "default": {},
+            "properties": {
+                "http_secret": {
+                    "type": "string",
+                    "title": "The Http_secret Schema",
+                    "default": ""
+                }
+            }
+        },
+        "doppler": {
+            "type": "object",
+            "title": "The Doppler Schema",
+            "default": {},
+            "properties": {
+                "tls": {
+                    "type": "object",
+                    "title": "The Tls Schema",
+                    "default": {},
+                    "properties": {
+                        "crt": {
+                            "type": "string",
+                            "title": "The Crt Schema",
+                            "default": ""
+                        },
+                        "key": {
+                            "type": "string",
+                            "title": "The Key Schema",
+                            "default": ""
+                        }
+                    }
+                }
+            }
+        },
+        "eirini": {
+            "type": "object",
+            "title": "The Eirini Schema",
+            "default": {},
+            "properties": {
+                "tls": {
+                    "type": "object",
+                    "title": "The Tls Schema",
+                    "default": {},
+                    "properties": {
+                        "crt": {
+                            "type": "string",
+                            "title": "The Crt Schema",
+                            "default": ""
+                        },
+                        "key": {
+                            "type": "string",
+                            "title": "The Key Schema",
+                            "default": ""
+                        }
+                    }
+                }
+            }
+        },
+        "images": {
+            "type": "object",
+            "title": "The Images Schema",
+            "default": {},
+            "properties": {
+                "capi": {
+                    "type": "string",
+                    "title": "The Capi Schema",
+                    "default": ""
+                },
+                "cfroutesync": {
+                    "type": "string",
+                    "title": "The Cfroutesync Schema",
+                    "default": ""
+                },
+                "fluent": {
+                    "type": "string",
+                    "title": "The Fluent Schema",
+                    "default": ""
+                },
+                "log_cache": {
+                    "type": "string",
+                    "title": "The Log_cache Schema",
+                    "default": ""
+                },
+                "log_cache_gateway": {
+                    "type": "string",
+                    "title": "The Log_cache_gateway Schema",
+                    "default": ""
+                },
+                "nginx": {
+                    "type": "string",
+                    "title": "The Nginx Schema",
+                    "default": ""
+                },
+                "syslog_server": {
+                    "type": "string",
+                    "title": "The Syslog_server Schema",
+                    "default": ""
+                }
+            }
+        },
+        "log_cache": {
+            "type": "object",
+            "title": "The Log_cache Schema",
+            "default": {},
+            "properties": {
+                "crt": {
+                    "type": "string",
+                    "title": "The Crt Schema",
+                    "default": ""
+                },
+                "key": {
+                    "type": "string",
+                    "title": "The Key Schema",
+                    "default": ""
+                }
+            }
+        },
+        "log_cache_ca": {
+            "type": "object",
+            "title": "The Log_cache_ca Schema",
+            "default": {},
+            "properties": {
+                "crt": {
+                    "type": "string",
+                    "title": "The Crt Schema",
+                    "default": ""
+                },
+                "key": {
+                    "type": "string",
+                    "title": "The Key Schema",
+                    "default": ""
+                }
+            }
+        },
+        "log_cache_client": {
+            "type": "object",
+            "title": "The Log_cache_client Schema",
+            "default": {},
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "title": "The Id Schema",
+                    "default": ""
+                },
+                "secret": {
+                    "type": "string",
+                    "title": "The Secret Schema",
+                    "default": ""
+                }
+            }
+        },
+        "log_cache_gateway": {
+            "type": "object",
+            "title": "The Log_cache_gateway Schema",
+            "default": {},
+            "properties": {
+                "crt": {
+                    "type": "string",
+                    "title": "The Crt Schema",
+                    "default": ""
+                },
+                "key": {
+                    "type": "string",
+                    "title": "The Key Schema",
+                    "default": ""
+                }
+            }
+        },
+        "log_cache_metrics": {
+            "type": "object",
+            "title": "The Log_cache_metrics Schema",
+            "default": {},
+            "properties": {
+                "crt": {
+                    "type": "string",
+                    "title": "The Crt Schema",
+                    "default": ""
+                },
+                "key": {
+                    "type": "string",
+                    "title": "The Key Schema",
+                    "default": ""
+                }
+            }
+        },
+        "log_cache_syslog": {
+            "type": "object",
+            "title": "The Log_cache_syslog Schema",
+            "default": {},
+            "properties": {
+                "crt": {
+                    "type": "string",
+                    "title": "The Crt Schema",
+                    "default": ""
+                },
+                "key": {
+                    "type": "string",
+                    "title": "The Key Schema",
+                    "default": ""
+                }
+            }
+        },
+        "system_certificate": {
+            "type": "object",
+            "title": "The System_certificate Schema",
+            "default": {},
+            "properties": {
+                "ca": {
+                    "type": "string",
+                    "title": "The Ca Schema",
+                    "default": ""
+                },
+                "crt": {
+                    "type": "string",
+                    "title": "The Crt Schema",
+                    "default": ""
+                },
+                "key": {
+                    "type": "string",
+                    "title": "The Key Schema",
+                    "default": ""
+                }
+            }
+        },
+        "system_domain": {
+            "title": "The System_domain Schema",
+            "default": null
+        },
+        "system_namespace": {
+            "type": "string",
+            "title": "The System_namespace Schema",
+            "default": ""
+        },
+        "uaa": {
+            "type": "object",
+            "title": "The Uaa Schema",
+            "default": {},
+            "properties": {
+                "admin_client_secret": {
+                    "type": "string",
+                    "title": "The Admin_client_secret Schema",
+                    "default": ""
+                },
+                "certificate": {
+                    "type": "object",
+                    "title": "The Certificate Schema",
+                    "default": {},
+                    "properties": {
+                        "crt": {
+                            "type": "string",
+                            "title": "The Crt Schema",
+                            "default": ""
+                        },
+                        "key": {
+                            "type": "string",
+                            "title": "The Key Schema",
+                            "default": ""
+                        }
+                    }
+                },
+                "database": {
+                    "type": "object",
+                    "title": "The Database Schema",
+                    "default": {},
+                    "properties": {
+                        "adapter": {
+                            "type": "string",
+                            "title": "The Adapter Schema",
+                            "default": ""
+                        },
+                        "host": {
+                            "type": "string",
+                            "title": "The Host Schema",
+                            "default": ""
+                        },
+                        "name": {
+                            "type": "string",
+                            "title": "The Name Schema",
+                            "default": ""
+                        },
+                        "password": {
+                            "type": "string",
+                            "title": "The Password Schema",
+                            "default": ""
+                        },
+                        "port": {
+                            "type": "integer",
+                            "title": "The Port Schema",
+                            "default": 0
+                        },
+                        "user": {
+                            "type": "string",
+                            "title": "The User Schema",
+                            "default": ""
+                        }
+                    }
+                },
+                "encryption_key": {
+                    "type": "object",
+                    "title": "The Encryption_key Schema",
+                    "default": {},
+                    "properties": {
+                        "label": {
+                            "type": "string",
+                            "title": "The Label Schema",
+                            "default": ""
+                        },
+                        "passphrase": {
+                            "type": "string",
+                            "title": "The Passphrase Schema",
+                            "default": ""
+                        }
+                    }
+                },
+                "jwt_policy": {
+                    "type": "object",
+                    "title": "The Jwt_policy Schema",
+                    "default": {},
+                    "properties": {
+                        "key_id": {
+                            "type": "string",
+                            "title": "The Key_id Schema",
+                            "default": ""
+                        },
+                        "signing_key": {
+                            "type": "string",
+                            "title": "The Signing_key Schema",
+                            "default": ""
+                        }
+                    }
+                },
+                "login": {
+                    "type": "object",
+                    "title": "The Login Schema",
+                    "default": {},
+                    "properties": {
+                        "service_provider": {
+                            "type": "object",
+                            "title": "The Service_provider Schema",
+                            "default": {},
+                            "properties": {
+                                "certificate": {
+                                    "type": "string",
+                                    "title": "The Certificate Schema",
+                                    "default": ""
+                                },
+                                "key": {
+                                    "type": "string",
+                                    "title": "The Key Schema",
+                                    "default": ""
+                                },
+                                "key_password": {
+                                    "type": "string",
+                                    "title": "The Key_password Schema",
+                                    "default": ""
+                                }
+                            }
+                        }
+                    }
+                },
+                "login_secret_name": {
+                    "type": "string",
+                    "title": "The Login_secret_name Schema",
+                    "default": ""
+                }
+            }
+        },
+        "workloads_namespace": {
+            "type": "string",
+            "title": "The Workloads_namespace Schema",
+            "default": ""
+        }
+    }
+}

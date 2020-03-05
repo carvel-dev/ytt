@@ -1,0 +1,222 @@
+#@schema
+
+missing key == "" -> error
+---
+system_namespace: ""
+workloads_namespace: cf-workloads
+
+#! your system domain, e.g., "system.cf.example.com"
+#@schame/type string
+system_domain:
+
+data/values
+system_domain: ""
+
+system_domain: ""
+
+#! list of app domains, e.g., ["apps.cf.example.com"]
+#@schema/type array
+app_domains:
+  #@schema/type string
+  -
+
+#@ def app_domains_map():
+domain_name: ""
+#@ end
+
+#! data.values.domain_map
+#@ def check_length(val):
+    if type(val) == "array":
+
+def schema1():
+  #@schema/type string
+  #@schema/validate max=5
+  domains:
+    -
+    -
+end
+
+#@schema/type array, app_domains_map()
+#@schema/validate check_length()
+#@shema/any_of schema1() schema2()
+app_domains:
+  - 
+    domain: ""
+    weight: ""
+  - 
+    domain: ""
+    weight: ""
+  #@schema/type foo()
+  - "domain-name"
+
+data/values
+app_domains:
+  - weight: 80
+  
+
+template
+
+data.values.app_domains[0].domain == "abc"
+
+metadata:
+  #@schema/type map
+  annotations:
+    #@schema/type string
+    #@schema/key required
+    key: value
+
+
+#! password for admin user in plain text
+cf_admin_password:
+
+#! control deployment of a blobstore for CF
+cf_blobstore:
+  access_key: "admin"
+  secret_key: ""
+
+#! control optional deployment of a database for CF
+cf_db:
+  admin_password: ""
+  enabled: true
+
+images:
+#! NOTE: the CAPI image reference below is needed temporarily to address a build break.
+#! See https://www.pivotaltracker.com/story/show/171522062 and https://www.pivotaltracker.com/story/show/171549565 for details
+  capi: "cloudfoundry/cloud-controller-ng@sha256:402932286e330049ea8e6562db615080b26388d849c8bb4aa2eed544b33e2c2a"
+  nginx: "nginx@sha256:4a50ed86d8c86e35f530d4a168173677a192177eed14146fbb5728b1b3a2d4de"
+  cfroutesync: "gcr.io/cf-networking-images/cf-k8s-networking/cfroutesync@sha256:758abd1b6144596cef74ad4805bc7e1a6055142cab5719f0d42d0321a14a190d"
+  log_cache: "logcache/log-cache@sha256:0bc1ee1934ecd2145a3372dc838747c7977d50ca58bd5c28db7f70b28b1021b4"
+  syslog_server: "logcache/syslog-server@sha256:f1f6def4af1261e4cafe4745d5bab8258a2e1ff9fd835c5021e00957ea42d7d4"
+  log_cache_gateway: "logcache/log-cache-gateway@sha256:dd639d3c4cbb120cbbd00850b319bc0c60fcc003979f8f8d6f5198ef985e6a8c"
+  fluent: "logcache/cf-k8s-logging@sha256:8107d5923e630f792631c21e6c862bc027cc1ae275202ac1be3f9b19f4991698"
+
+system_certificate:
+  #! Base64-encoded certificate for the wildcard
+  #! subdomain of the system domain (e.g., CN=*.system.cf.example.com)
+  crt: ""
+  #! Base64-encoded private key for the cert above
+  key: ""
+  #! Base64-encoded CA certificate used to sign the system certifcate
+  ca: ""
+
+capi:
+  blobstore:
+    endpoint: "http://cf-blobstore-minio.cf-blobstore.svc.cluster.local:9000"
+
+  #@ def mysql_prod_example():
+    #! or mysql2, as needed
+    adapter: postgres
+    host: ""
+    port: 5432
+    user: cloud_controller
+    #! DB user password in plain text
+    password: ""
+    name: cloud_controller
+  #@ end
+
+#@ def mysql_dev_example():
+    #! or mysql2, as needed
+    adapter: postgres
+    host: ""
+    port: 5432
+    user: cloud_controller
+    #! DB user password in plain text
+    password: ""
+    name: cloud_controller
+  #@ end
+
+  #@schema/example Title, mysql_prod_example())
+  database:
+    #! or mysql2, as needed
+    adapter: postgres
+    host: ""
+    port: 5432
+    user: cloud_controller
+    #! DB user password in plain text
+    password: ""
+    name: cloud_controller
+
+uaa:
+  #! client secret for uaa admin client in plain text
+  admin_client_secret: ""
+
+  database:
+    #! or mysql2, as needed
+    adapter: postgresql
+    host: ""
+    port: 5432
+    user: uaa
+    #! DB user password in plain text
+    password: ""
+    name: uaa
+
+  certificate:
+    #! Base64-encoded certificate for the uaa service inside
+    #! the kubernetes cluster (i.e., CN=uaa.cf-system.svc.cluster.local)
+    crt: ""
+    #! Base64-encoded private key for the cert above
+    key: ""
+
+  jwt_policy:
+    key_id: "default_jwt_policy_key"
+    #! Plain text private key
+    signing_key: ""
+
+  encryption_key:
+    label: "default_encryption_key"
+    #! Plain text passphrase
+    passphrase: ""
+
+  login:
+    service_provider:
+      #! Plain text private key
+      key: ""
+      #! Plain text password
+      key_password: ""
+      #! Plain text certificate
+      certificate: ""
+
+  login_secret_name: "uaa-login-secret"
+
+doppler:
+  tls:
+    #! Base64-encoded certificate for the doppler service inside
+    #! the kubernetes cluster (i.e., CN=doppler.cf-system.svc.cluster.local)
+    crt: ""
+    #! Base64-encoded private key for the cert above
+    key: ""
+
+eirini:
+  tls:
+    #! Base64-encoded certificate for the eirini service inside
+    #! the kubernetes cluster (i.e., CN=eirini.cf-system.svc.cluster.local)
+    crt: ""
+    #! Base64-encoded private key for the cert above
+    key: ""
+
+log_cache_ca:
+  crt: "" #! Base64-encoded ca for the log cache
+  key: "" #! Base64-encoded private key for the cert above
+
+log_cache:
+  crt: "" #! Base64-encoded cert for the log cache requires CN of log-cache
+  key: "" #! Base64-encoded private key for the cert above
+
+log_cache_metrics:
+  crt: "" #! Base64-encoded cert for the log cache metrics requires CN of log-cache-metrics
+  key: "" #! Base64-encoded private key for the cert above
+
+log_cache_gateway:
+  crt: "" #! Base64-encoded cert for the log cache gateway requires CN of log-cache-gateway
+  key: "" #! Base64-encoded private key for the cert above
+
+log_cache_syslog:
+  crt: "" #! Base64-encoded cert for the log cache syslog server requires CN of log-cache-syslog
+  key: "" #! Base64-encoded private key for the cert above
+
+log_cache_client:
+  id: "" #! comment
+  secret: "" #! comment
+
+docker_registry:
+  http_secret: "" #! A random piece of data used to sign state that may be stored with the client to protect against tampering. For production environments you should generate a random piece of data using a cryptographically secure random generator.
