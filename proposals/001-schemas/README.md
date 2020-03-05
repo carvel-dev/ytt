@@ -1,9 +1,11 @@
 ### Defining a schema document and what type of documents to apply it to
+
 ```yaml
 #@schema attach="data/values"
 ---
-#Schema contents
+#! Schema contents
 ```
+
 Will create a new schema document. The attach keyword is used to specify what types of documents the schema will apply to, in this case, `data/values` documents.
 The attach argument will default to `data/values` if none is provided.
 
