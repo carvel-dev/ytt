@@ -1,0 +1,157 @@
+#@schema attach="data/values"
+---
+system_namespace: cf-system
+workloads_namespace: cf-workloads
+
+#@schema/doc "Your system domain"
+#@schema/example "system.cf.example.com"
+system_domain: ""
+
+#@schema/doc "list of app domains"
+#@schema/allow-empty
+app_domains:
+#@schema/example "apps.cf.example.com"
+- ""
+
+#@schema/doc "password for admin user in plain text"
+cf_admin_password: ""
+
+#@schema/doc "control deployment of a blobstore for CF"
+cf_blobstore:
+  access_key: "admin"
+  secret_key: ""
+
+#@schema/doc "control optional deployment of a database for CF"
+cf_db:
+  #@schema/allow-empty
+  #! TODO allow empty if enabled == false
+  admin_password: ""
+  #@schema/allow-empty
+  enabled: true
+
+images:
+  #! NOTE: the CAPI image reference below is needed temporarily to address a build break.
+  #! See https://www.pivotaltracker.com/story/show/171522062 and https://www.pivotaltracker.com/story/show/171549565 for details
+  capi: "cloudfoundry/cloud-controller-ng@sha256:f6c25891fcd272543773dbcfd1c5387703b01e53146b8ef173be012e8055089e"
+  nginx: "cloudfoundry/capi@sha256:51e4e48c457d5cb922cf0f569e145054e557e214afa78fb2b312a39bb2f938b6"
+  cfroutesync: "gcr.io/cf-networking-images/cf-k8s-networking/cfroutesync@sha256:758abd1b6144596cef74ad4805bc7e1a6055142cab5719f0d42d0321a14a190d"
+  log_cache: "logcache/log-cache@sha256:0bc1ee1934ecd2145a3372dc838747c7977d50ca58bd5c28db7f70b28b1021b4"
+  syslog_server: "logcache/syslog-server@sha256:f1f6def4af1261e4cafe4745d5bab8258a2e1ff9fd835c5021e00957ea42d7d4"
+  log_cache_gateway: "logcache/log-cache-gateway@sha256:dd639d3c4cbb120cbbd00850b319bc0c60fcc003979f8f8d6f5198ef985e6a8c"
+  fluent: "logcache/cf-k8s-logging@sha256:8107d5923e630f792631c21e6c862bc027cc1ae275202ac1be3f9b19f4991698"
+
+system_certificate:
+  #@schema/doc "Base64-encoded certificate for the wildcard subdomain of the system domain (e.g., CN=*.system.cf.example.com)"
+  crt: ""
+  #@schema/doc "Base64-encoded private key for the cert above"
+  key: ""
+  #@schema/doc "Base64-encoded CA certificate used to sign the system certifcate"
+  ca: ""
+
+capi:
+  blobstore:
+    endpoint: "http://cf-blobstore-minio.cf-blobstore.svc.cluster.local:9000"
+  database:
+    #@schema/examples ("Mysql", "mysql2"), ("Postgres", "postgres")
+    adapter: postgres
+    #@schema/allow-empty
+    host: ""
+    port: 5432
+    user: cloud_controller
+    #@schema/doc "DB user password in plain text"
+    password: ""
+    name: cloud_controller
+
+uaa:
+  #@schema/doc "client secret for uaa admin client in plain text"
+  admin_client_secret: ""
+
+  database:
+    #@schema/examples ("Mysql", "mysql"), ("Postgres", "postgres")
+    adapter: postgresql
+    #@schema/allow-empty
+    host: ""
+    port: 5432
+    user: uaa
+    #@schema/doc "DB user password in plain text"
+    password: ""
+    name: uaa
+
+  certificate:
+    #@schema/doc "Base64-encoded certificate for the uaa service inside the kubernetes cluster (i.e., CN=uaa.cf-system.svc.cluster.local)"
+    crt: ""
+    #@schema/doc "Base64-encoded private key for the cert above"
+    key: ""
+
+  jwt_policy:
+    key_id: "default_jwt_policy_key"
+    #@schema/doc "Plain text private key"
+    signing_key: ""
+
+  encryption_key:
+    label: "default_encryption_key"
+    #@schema/doc "Plain text passphrase"
+    passphrase: ""
+
+  login:
+    service_provider:
+      #@schema/doc "Plain text private key"
+      key: ""
+      #@schema/doc "Plain text password"
+      key_password: ""
+      #@schema/doc "Plain text certificate"
+      certificate: ""
+
+  login_secret_name: "uaa-login-secret"
+
+doppler:
+  tls:
+    #@schema/doc "Base64-encoded certificate for the doppler service inside the kubernetes cluster (i.e., CN=doppler.cf-system.svc.cluster.local)"
+    crt: ""
+    #@schema/doc "Base64-encoded private key for the cert above"
+    key: ""
+
+eirini:
+  tls:
+    #@schema/doc "Base64-encoded certificate for the eirini service inside the kubernetes cluster (i.e., CN=eirini.cf-system.svc.cluster.local)"
+    crt: ""
+    #@schema/doc "Base64-encoded private key for the cert above"
+    key: ""
+
+log_cache_ca:
+  #@schema/doc "Base64-encoded ca for the log cache"
+  crt: "" 
+  #@schema/doc "Base64-encoded private key for the cert above"
+  key: ""
+
+log_cache:
+  #@schema/doc "Base64-encoded cert for the log cache requires CN of log-cache"
+  crt: "" 
+  #@schema/doc "Base64-encoded private key for the cert above"
+  key: "" 
+
+log_cache_metrics:
+  #@schema/doc "Base64-encoded cert for the log cache metrics requires CN of log-cache-metrics"
+  crt: "" 
+  #@schema/doc "Base64-encoded private key for the cert above"
+  key: "" 
+
+log_cache_gateway:
+  #@schema/doc "Base64-encoded cert for the log cache gateway requires CN of log-cache-gateway"
+  crt: "" 
+  #@schema/doc "Base64-encoded private key for the cert above"
+  key: "" 
+
+log_cache_syslog:
+  #@schema/doc "Base64-encoded cert for the log cache syslog server requires CN of log-cache-syslog"
+  crt: "" 
+  #@schema/doc "Base64-encoded private key for the cert above"
+  key: "" 
+
+log_cache_client:
+  id: ""
+  secret: ""
+
+docker_registry:
+  #@schema/doc "A random piece of data used to sign state that may be stored with the client to protect against tampering. For production environments you should generate a random piece of data using a cryptographically secure random generator."
+  http_secret: ""
