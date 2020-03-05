@@ -1,7 +1,7 @@
 ## Schemas
 
-Issue: https://github.com/k14s/ytt/issues/103
-Status: ++Being written++ | Being implemented | Included in release | Rejected
+- Issue: https://github.com/k14s/ytt/issues/103
+- Status: **Being written** | Being implemented | Included in release | Rejected
 
 ### Defining a schema document and what type of documents to apply it to
 
@@ -21,21 +21,21 @@ The attach argument will default to `data/values` if none is provided.
 - `@schema/type`
   This annotation asserts on the type of a keys value. For example,
   ```yaml
-    #@schema/type "array"
-    app_domains: []
+  #@schema/type "array"
+  app_domains: []
   ```
   will validate that any data value `app_domain` will be of type array. These strings are a predefined set: string, array, int, etc...
   ytt will also infer the type based on the key's value given in a schema document if the annotation is not provided. For example,
   ```yaml
-    app_domains: []
+  app_domains: []
   ```
   will also result in the `app_domains` key requiring value type array
 
 - `@schema/validate`
   This annotation can be used in order to run a validation function on the value of the key it is applied to. For example,
   ```yaml
-    #@schema/validate  number_is_even, max=10
-    foo: 5
+  #@schema/validate  number_is_even, max=10
+  foo: 5
   ```
   will use the `max` predefined validator as well as the user provided `number_is_even` function to validate the value of `foo`. The funtion signature should match what gets passed to overlay/assert annotations.
 
@@ -54,31 +54,31 @@ The attach argument will default to `data/values` if none is provided.
 - `@schema/title -> title for node (can maybe infer from the key name ie app_domain -> App domain)`
   This annotation provides a way to add a short title to the schema applied to a key.
   ```yaml
-    #@schema/title "User Password"
-    user_password: ""
+  #@schema/title "User Password"
+  user_password: ""
   ```
   If the annotation is not present, the title will be infered from the key name by replacing special characters with spaces and capitalizing the first letter similar to rails humanize functionality.
 
 - `@schema/doc`
   This annotation is a way to add a longer description of the schema applied to a key, similar to the JSON Schema description field.
   ```yaml
-    #@schema/doc "The user password used to log in to the system"
-    user_password: ""
+  #@schema/doc "The user password used to log in to the system"
+  user_password: ""
   ```
 
 - `@schema/example`
   Examples will take one arguments which consist of the example
   ```yaml
-    #@schema/example "my_domain.example.com"
-    system_domain: ""
+  #@schema/example "my_domain.example.com"
+  system_domain: ""
   ```
   In this example, the example string "my_domain.example.com" will be attached to the `system_domain` key.
 
 - `@schema/examples`
   Examples will take one or more tuple arguments which consist of {Title, Example value}
   ```yaml
-    #@schema/examples ("Title 1", value1), ("Title 2", title2_example())
-    foo: bar
+  #@schema/examples ("Title 1", value1), ("Title 2", title2_example())
+  foo: bar
   ```
   In this example, the Title 1 and Title 2 examples and their values are attached with the key `foo`.
 
@@ -88,10 +88,10 @@ The attach argument will default to `data/values` if none is provided.
   Applies to items of a map. Allows users to assert on structure while maintaining freedom to have any key
   Allows a schema to assert on the structure of map items without making any assertions on the value of the key
   ```yaml
-    foo:
-      #@schema/any-key
-      _: 
-      - ""
+  connection_options:
+    #@schema/any-key
+    _: 
+    - ""
   ```
   This example will allow the map to contain any key names that is an array of strings.
 
@@ -111,24 +111,24 @@ The attach argument will default to `data/values` if none is provided.
 - `@schema/any-of`
   Requires the key to satisy _at least one_ of the provided schemas
   ```yaml
-    #@schema/any-of schema1, schema2()
-    foo: ""
+  #@schema/any-of schema1(), schema2()
+  foo: ""
   ```
   Note, any values passed to the `any-of` call will be interpreted as schema documents.
 
 - `@schema/all-of`
   Requires the key to satisy _every_ provided schema
   ```yaml
-    #@schema/all-of schema1, schema2()
-    foo: ""
+  #@schema/all-of schema1(), schema2()
+  foo: ""
   ```
   Note, any values passed to the `all-of` call will be interpreted as schema documents.
 
 - `@schema/one-of`
   Requires the key to satisy _exactly one_ of provided schema
   ```yaml
-    #@schema/one-of schema1, schema2()
-    foo: ""
+  #@schema/one-of schema1(), schema2()
+  foo: ""
   ```
   Note, any values passed to the `one-of` call will be interpreted as schema documents.
 
