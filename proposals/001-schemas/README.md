@@ -16,15 +16,7 @@ The attach argument will default to `data/values` if none is provided.
 
 ### Schema annotations
 
-- `@schema/non-empty`
-  This annotation asserts that a key cannot have any empty value of its type i.e. "", [], 0, etc. This is useful for defining keys that are not optional and must
-  be provided as data values.
-  ```yaml
-  #@schema/non-empty
-  system_domain: ""
-  ```
-  Because the schema values are extracted and used as defaults, by setting the value of `sytem_domain` to empty string and requiring it to not be empty after interpolating the data values,
-  the user is forced to provide a non-empty `system_domain` through their data values. ytt uses starlark [type truth values](https://github.com/google/starlark-go/blob/master/doc/spec.md#data-types) to determine if a value is empty.
+#### Basic annotations
 
 - `@schema/type`
   This annotation asserts on the type of a keys value. For example,
@@ -47,6 +39,33 @@ The attach argument will default to `data/values` if none is provided.
   ```
   will use the `max` predefined validator as well as the user provided `number_is_even` function to validate the value of `foo`. The funtion signature should match what gets passed to overlay/assert annotations.
 
+- `@schema/non-empty`
+  This annotation asserts that a key cannot have any empty value of its type i.e. "", [], 0, etc. This is useful for defining keys that are not optional and must
+  be provided as data values.
+  ```yaml
+  #@schema/non-empty
+  system_domain: ""
+  ```
+  Because the schema values are extracted and used as defaults, by setting the value of `sytem_domain` to empty string and requiring it to not be empty after interpolating the data values,
+  the user is forced to provide a non-empty `system_domain` through their data values. ytt uses starlark [type truth values](https://github.com/google/starlark-go/blob/master/doc/spec.md#data-types) to determine if a value is empty.
+
+#### Describing annotations
+
+- `@schema/title -> title for node (can maybe infer from the key name ie app_domain -> App domain)`
+  This annotation provides a way to add a short title to the schema applied to a key.
+  ```yaml
+    #@schema/title "User Password"
+    user_password: ""
+  ```
+  If the annotation is not present, the title will be infered from the key name by replacing special characters with spaces and capitalizing the first letter similar to rails humanize functionality.
+
+- `@schema/doc`
+  This annotation is a way to add a longer description of the schema applied to a key, similar to the JSON Schema description field.
+  ```yaml
+    #@schema/doc "The user password used to log in to the system"
+    user_password: ""
+  ```
+
 - `@schema/example`
   Examples will take one arguments which consist of the example
   ```yaml
@@ -63,20 +82,31 @@ The attach argument will default to `data/values` if none is provided.
   ```
   In this example, the Title 1 and Title 2 examples and their values are attached with the key `foo`.
 
-- `@schema/title -> title for node (can maybe infer from the key name ie app_domain -> App domain)`
-  This annotation provides a way to add a short title to the schema applied to a key.
-  ```yaml
-    #@schema/title "User Password"
-    user_password: ""
-  ```
-  If the annotation is not present, the title will be infered from the key name by replacing special characters with spaces and capitalizing the first letter similar to rails humanize functionality.
+#### Map key presence annotations
 
-- `@schema/doc`
-  This annotation is a way to add a longer description of the schema applied to a key, similar to the JSON Schema description field.
+- `@schema/any-key`
+  Applies to items of a map. Allows users to assert on structure while maintaining freedom to have any key
+  Allows a schema to assert on the structure of map items without making any assertions on the value of the key
   ```yaml
-    #@schema/doc "The user password used to log in to the system"
-    user_password: ""
+    foo:
+      #@schema/any-key
+      _: 
+      - ""
   ```
+  This example will allow the map to contain any key names that is an array of strings.
+
+- `@schema/key-may-be-present`
+  This annotation asserts a key is allowed by the schema but is not guaranteed. This allows schemas to validate contents of a structure in cases where
+  the contents are not referenced directly. For example,
+  ```yaml
+  connection_options:
+    #@schema/key-may-be-present
+    pooled: true
+  ```
+  will assert that the key `pooled` is allowed under the schema but not guaranteed. This would be useful when accessing something like #@ data.values.connection_options in a template
+  instead of #@ data.values.connection_options.pooled. See more advanced examples below for more.
+
+#### Complex schema annotations
 
 - `@schema/any-of`
   Requires the key to satisy _at least one_ of the provided schemas
@@ -101,29 +131,6 @@ The attach argument will default to `data/values` if none is provided.
     foo: ""
   ```
   Note, any values passed to the `one-of` call will be interpreted as schema documents.
-
-- `@schema/any_key`
-  Applies to items of a map. Allows users to assert on structure while maintaining freedom to have any key
-  Allows a schema to assert on the structure of map items without making any assertions on the value of the key
-  ```yaml
-    foo:
-      #@schema/any-key
-      _: 
-      - ""
-  ```
-  This example will allow the map to contain any key names that is an array of strings.
-
-- `@schema/key-may-be-present`
-  This annotation asserts a key is allowed by the schema but is not guaranteed. This allows schemas to validate contents of a structure in cases where
-  the contents are not referenced directly. For example,
-  ```yaml
-  connection_options:
-    #@schema/key-may-be-present
-    pooled: true
-  ```
-  will assert that the key `pooled` is allowed under the schema but not guaranteed. This would be useful when accessing something like #@ data.values.connection_options in a template
-  instead of #@ data.values.connection_options.pooled. See more advanced examples below for more.
-
 
 ### Sequence of events
 1. Extract defaults from the provided schemas
