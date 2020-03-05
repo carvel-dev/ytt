@@ -1,0 +1,14 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: postgresql-dummy1
+data:
+  dummy1: ""
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: postgresql-dummy2
+data:
+  dummy2: ""
