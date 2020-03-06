@@ -96,8 +96,8 @@ func (l *TemplateLoader) Load(thread *starlark.Thread, module string) (starlark.
 	file := fileInLib.File
 
 	if !file.IsLibrary() {
-		return nil, fmt.Errorf("File '%s' is not a library file "+
-			"(use data.read(...) for loading non-templated file contents into a variable)", file.RelativePath())
+		return nil, fmt.Errorf("Expected file '%s' to be a library file, but was not "+
+			"(hint: library filename must end with '.lib.yml' or '.star'; use data.read(...) for loading non-templated file contents)", file.RelativePath())
 	}
 
 	switch file.Type() {
