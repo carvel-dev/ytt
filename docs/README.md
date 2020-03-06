@@ -12,6 +12,7 @@
   - [@ytt library](lang-ref-ytt.md) describes builtin modules in ytt
     - [overlay module](lang-ref-ytt-overlay.md) describes how to perform configuration patching on top of plain templating
     - [library module](lang-ref-ytt-library.md) describes how to programmatically template libraries
+    - [version module](lang-ref-ytt-version.md) describes how to require minimum ytt version
   - [Annotation format](lang-ref-annotation.md) describes how annotations are built
     - [@data/values annotation](ytt-data-values.md) describes how to inject input into templates
   - [Text templating](ytt-text-templating.md) describes how to deal with complex text templating
