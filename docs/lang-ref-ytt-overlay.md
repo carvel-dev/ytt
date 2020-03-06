@@ -75,12 +75,12 @@ Several functions are provided by overlay module that are useful for executing o
   
 - `map_key(name)` matcher matches array items or maps based on the value of map key `name`:
    
-   this example will successfully match array items that have a map with a key `name` of value `item2`;
+    this example will successfully match array items that have a map with a key `name` of value `item2`:
     ```yaml
     #@overlay/match by=overlay.map_key("name")
     - name: item2
     ```
-   likewise, this example matches items in a map that have a key `name` of value `item2` (note: the key name `_` is arbitrary and ignored);
+    likewise, this example matches items in a map that have a key `name` of value `item2` (note: the key name `_` is arbitrary and ignored) (as of v0.26.0+):
     ```yaml
     #@overlay/match by=overlay.map_key("name")
     _:
@@ -96,19 +96,19 @@ Several functions are provided by overlay module that are useful for executing o
 
 - `all` matcher matches all:
  
-    documents;
+    documents
     ```yaml
     #@overlay/match by=overlay.all
     ---
     metadata:
      annotations: ...
     ```
-    array items;
+    array items
     ```yaml
     #@overlay/match by=overlay.all
     - item10
     ```
-    or items in maps (note: the key name `_` is arbitrary and ignored)
+    or items in maps (note: the key name `_` is arbitrary and ignored) (as of v0.26.0+)
     ```yaml
     #@overlay/match by=overlay.all
     _:
@@ -116,16 +116,30 @@ Several functions are provided by overlay module that are useful for executing o
     ```
 
 - `subset` matcher matches document, array item, or map item that has content that matches given map
-```yaml
-#@overlay/match by=overlay.subset({"metadata":{"name":"example-ingress1"}})
----
-spec:
-  enabled: true
-```
 
-- `and_op` matcher takes one or more matchers and returns true if all matchers return true
-- `or_op` matcher takes one or more matchers and returns true if any matchers return true
-- `not_op` matcher takes another matcher and returns opposite result
+    ```yaml
+    #@overlay/match by=overlay.subset({"metadata":{"name":"example-ingress1"}})
+    ---
+    spec:
+      enabled: true
+    ```
+
+- `and_op` matcher takes one or more matchers and returns true if all matchers return true (as of v0.26.0+)
+- `or_op` matcher takes one or more matchers and returns true if any matchers return true (as of v0.26.0+)
+
+    ```yaml
+    #@overlay/match by=overlay.or_op(overlay.subset({"kind": "ConfigMap"}), overlay.subset({"kind": "Secret"}))
+    ---
+    #! ...
+    ```
+
+- `not_op` matcher takes another matcher and returns opposite result (as of v0.26.0+)
+
+    ```yaml
+    #@overlay/match by=overlay.not_op(overlay.subset({"metadata": {"namespace": "app"}}))
+    ---
+    #! ...
+    ```
 
 #### Programmatic access
 
