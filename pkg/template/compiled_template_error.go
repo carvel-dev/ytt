@@ -201,6 +201,8 @@ func (CompiledTemplateMultiError) hintMsg(errMsg string) string {
 		hintMsg = "use 'None' instead of 'none' to indicate no value"
 	case "got outdent, want primary expression":
 		hintMsg = "is there an extra 'end' keyword?"
+	case "unhandled index operation struct[string]":
+		hintMsg = "use getattr(...) to access struct field programmatically"
 	}
 
 	if len(hintMsg) > 0 {
