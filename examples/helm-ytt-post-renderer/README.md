@@ -11,8 +11,7 @@ From within this directory:
 
 ```bash
 helm repo add stable https://kubernetes-charts.storage.googleapis.com
-helm fetch stable/postgresql
-tar xzvf postgresql
+helm pull --untar stable/postgresql
 helm template postgresql postgresql/ --post-renderer ./ytt-post-renderer
                                      # ^ same flag goes for install/upgrade
 ```
