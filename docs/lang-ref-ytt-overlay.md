@@ -125,6 +125,15 @@ Several functions are provided by overlay module that are useful for executing o
     ```
 
 - `and_op` matcher takes one or more matchers and returns true if all matchers return true (as of v0.26.0+)
+
+    ```yaml
+    #@ not_sa = overlay.not_op(overlay.subset({"kind": "ServiceAccount"}))
+    #@ inside_ns = overlay.subset({"metadata": {"namespace": "some-ns"}})
+    #@overlay/match by=overlay.and_op(not_sa, inside_ns),expects="1+"
+    ---
+    #! ...
+    ```
+
 - `or_op` matcher takes one or more matchers and returns true if any matchers return true (as of v0.26.0+)
 
     ```yaml
