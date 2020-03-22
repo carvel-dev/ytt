@@ -118,7 +118,8 @@ func (l *Library) FindFile(path string) (FileInLibrary, error) {
 		}
 	}
 
-	return FileInLibrary{}, fmt.Errorf("Expected to find file %s", path)
+	return FileInLibrary{}, fmt.Errorf(
+		"Expected to find file %s (hint: only files included via -f flag are available)", path)
 }
 
 type FileInLibrary struct {
