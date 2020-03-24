@@ -40,13 +40,13 @@ func NewLibraryLoader(libraryCtx LibraryExecutionContext,
 	}
 }
 
-func (ll *LibraryLoader) Values(valuesOverlays []*yamlmeta.Document) (*yamlmeta.Document, error) {
-	loader := NewTemplateLoader(&yamlmeta.Document{},
+func (ll *LibraryLoader) Values(valuesOverlays []*DataValues) (*DataValues, []*DataValues, error) {
+	loader := NewTemplateLoader(NewEmptyDataValues(), nil,
 		ll.ui, ll.templateLoaderOpts, ll.libraryExecFactory)
 
 	valuesFiles, err := ll.valuesFiles(loader)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	dvpp := DataValuesPreProcessing{
@@ -71,12 +71,12 @@ func (ll *LibraryLoader) valuesFiles(loader *TemplateLoader) ([]*FileInLibrary, 
 
 			tplOpts := yamltemplate.MetasOpts{IgnoreUnknown: ll.templateLoaderOpts.IgnoreUnknownComments}
 
-			valuesDocs, _, err := yttlibrary.DataValues{docSet, tplOpts}.Extract()
+			values, _, err := yttlibrary.DataValues{docSet, tplOpts}.Extract()
 			if err != nil {
 				return nil, err
 			}
 
-			if len(valuesDocs) > 0 {
+			if len(values) > 0 {
 				valuesFiles = append(valuesFiles, fileInLib)
 				fileInLib.File.MarkForOutput(false)
 			}
@@ -86,8 +86,8 @@ func (ll *LibraryLoader) valuesFiles(loader *TemplateLoader) ([]*FileInLibrary, 
 	return valuesFiles, nil
 }
 
-func (ll *LibraryLoader) Eval(values *yamlmeta.Document) (*EvalResult, error) {
-	exports, docSets, outputFiles, err := ll.eval(values)
+func (ll *LibraryLoader) Eval(values *DataValues, libraryValues []*DataValues) (*EvalResult, error) {
+	exports, docSets, outputFiles, err := ll.eval(values, libraryValues)
 	if err != nil {
 		return nil, err
 	}
@@ -119,10 +119,10 @@ func (ll *LibraryLoader) Eval(values *yamlmeta.Document) (*EvalResult, error) {
 	return result, nil
 }
 
-func (ll *LibraryLoader) eval(values *yamlmeta.Document) ([]EvalExport,
+func (ll *LibraryLoader) eval(values *DataValues, libraryValues []*DataValues) ([]EvalExport,
 	map[*FileInLibrary]*yamlmeta.DocumentSet, []files.OutputFile, error) {
 
-	loader := NewTemplateLoader(values, ll.ui, ll.templateLoaderOpts, ll.libraryExecFactory)
+	loader := NewTemplateLoader(values, libraryValues, ll.ui, ll.templateLoaderOpts, ll.libraryExecFactory)
 
 	exports := []EvalExport{}
 	docSets := map[*FileInLibrary]*yamlmeta.DocumentSet{}

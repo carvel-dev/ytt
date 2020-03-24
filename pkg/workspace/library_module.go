@@ -12,15 +12,23 @@ import (
 	"go.starlark.net/starlarkstruct"
 )
 
+type filteredLibValues struct {
+	Lib         []*DataValues
+	AfterLibMod []*DataValues
+	ChildLib    []*DataValues
+}
+
 type LibraryModule struct {
 	libraryCtx              LibraryExecutionContext
 	libraryExecutionFactory *LibraryExecutionFactory
+	libraryValues           []*DataValues
 }
 
 func NewLibraryModule(libraryCtx LibraryExecutionContext,
-	libraryExecutionFactory *LibraryExecutionFactory) LibraryModule {
+	libraryExecutionFactory *LibraryExecutionFactory,
+	libraryValues []*DataValues) LibraryModule {
 
-	return LibraryModule{libraryCtx, libraryExecutionFactory}
+	return LibraryModule{libraryCtx, libraryExecutionFactory, libraryValues}
 }
 
 func (b LibraryModule) AsModule() starlark.StringDict {
@@ -46,6 +54,11 @@ func (l LibraryModule) Get(thread *starlark.Thread, f *starlark.Builtin,
 		return starlark.None, err
 	}
 
+	libTag, err := l.libTag(kwargs)
+	if err != nil {
+		return starlark.None, err
+	}
+
 	if strings.HasPrefix(libPath, "@") {
 		return starlark.None, fmt.Errorf(
 			"Expected library '%s' to be specified without '@'", libPath)
@@ -58,13 +71,64 @@ func (l LibraryModule) Get(thread *starlark.Thread, f *starlark.Builtin,
 
 	libraryCtx := LibraryExecutionContext{Current: foundLib, Root: foundLib}
 
-	return (&libraryValue{libPath, libraryCtx, nil, l.libraryExecutionFactory}).AsStarlarkValue(), nil
+	filteredValues, err := l.getFilteredValues(l.libraryValues, libPath, libTag)
+	if err != nil {
+		return starlark.None, err
+	}
+
+	return (&libraryValue{libPath, libTag, libraryCtx, filteredValues, l.libraryExecutionFactory}).AsStarlarkValue(), nil
+}
+
+func (l LibraryModule) libTag(kwargs []starlark.Tuple) (string, error) {
+	for _, kwarg := range kwargs {
+		name, err := core.NewStarlarkValue(kwarg[0]).AsString()
+		if err != nil {
+			return "", err
+		}
+
+		val, err := core.NewStarlarkValue(kwarg[1]).AsString()
+		if err != nil {
+			return "", err
+		}
+
+		switch name {
+		case "tag":
+			return val, nil
+		default:
+			return "", fmt.Errorf("Unexpected kwarg %s in library module get", name)
+		}
+	}
+	return "", nil
+}
+
+func (l LibraryModule) getFilteredValues(values []*DataValues,
+	currentLibName, currentLibTag string) (filteredLibValues, error) {
+
+	var filteredValues filteredLibValues
+
+	for _, doc := range values {
+		docLibName, docLibTag, finalPathPiece, updatedValues := doc.PopLib()
+		if docLibName == currentLibName && docLibTag == currentLibTag {
+			if finalPathPiece {
+				if doc.AfterLibMod {
+					filteredValues.AfterLibMod = append(filteredValues.AfterLibMod, updatedValues)
+				} else {
+					filteredValues.Lib = append(filteredValues.Lib, updatedValues)
+				}
+			} else {
+				filteredValues.ChildLib = append(filteredValues.ChildLib, updatedValues)
+			}
+		}
+	}
+
+	return filteredValues, nil
 }
 
 type libraryValue struct {
 	desc                    string // used in error messages
+	tag                     string
 	libraryCtx              LibraryExecutionContext
-	dataValuess             []*yamlmeta.Document
+	filteredValues          filteredLibValues
 	libraryExecutionFactory *LibraryExecutionFactory
 }
 
@@ -79,6 +143,7 @@ func (l *libraryValue) AsStarlarkValue() starlark.Value {
 			"with_data_values": starlark.NewBuiltin("library.with_data_values", core.ErrWrapper(l.WithDataValues)),
 			"eval":             starlark.NewBuiltin("library.eval", core.ErrWrapper(core.ErrDescWrapper(evalErrMsg, l.Eval))),
 			"export":           starlark.NewBuiltin("library.export", core.ErrWrapper(core.ErrDescWrapper(exportErrMsg, l.Export))),
+			"data_values":      starlark.NewBuiltin("library.data_values", core.ErrWrapper(core.ErrDescWrapper(exportErrMsg, l.DataValues))),
 		},
 	}
 }
@@ -92,12 +157,18 @@ func (l *libraryValue) WithDataValues(thread *starlark.Thread, f *starlark.Built
 
 	dataValues := core.NewStarlarkValue(args.Index(0)).AsGoValue()
 
-	libVal := &libraryValue{l.desc, l.libraryCtx, nil, l.libraryExecutionFactory}
-	libVal.dataValuess = append([]*yamlmeta.Document{}, l.dataValuess...)
-	libVal.dataValuess = append(libVal.dataValuess, &yamlmeta.Document{
+	libVal := &libraryValue{l.desc, l.tag, l.libraryCtx, l.filteredValues, l.libraryExecutionFactory}
+
+	valsYAML, err := NewDataValues(&yamlmeta.Document{
 		Value:    yamlmeta.NewASTFromInterface(dataValues),
 		Position: filepos.NewUnknownPosition(),
 	})
+	if err != nil {
+		return starlark.None, err
+	}
+
+	libVal.filteredValues.Lib = append([]*DataValues{}, l.filteredValues.Lib...)
+	libVal.filteredValues.Lib = append(libVal.filteredValues.Lib, valsYAML)
 
 	return libVal.AsStarlarkValue(), nil
 }
@@ -111,17 +182,40 @@ func (l *libraryValue) Eval(thread *starlark.Thread, f *starlark.Builtin,
 
 	libraryLoader := l.libraryExecutionFactory.New(l.libraryCtx)
 
-	astValues, err := libraryLoader.Values(l.dataValuess)
+	l.filteredValues.Lib = append(l.filteredValues.Lib, l.filteredValues.AfterLibMod...)
+	astValues, libValues, err := libraryLoader.Values(l.filteredValues.Lib)
 	if err != nil {
 		return starlark.None, err
 	}
 
-	result, err := libraryLoader.Eval(astValues)
+	libraryAttachedValues := append([]*DataValues{}, libValues...)
+	libraryAttachedValues = append(libValues, l.filteredValues.ChildLib...)
+
+	result, err := libraryLoader.Eval(astValues, libraryAttachedValues)
 	if err != nil {
 		return starlark.None, err
 	}
 
 	return yamltemplate.NewStarlarkFragment(result.DocSet), nil
+}
+
+func (l *libraryValue) DataValues(thread *starlark.Thread, f *starlark.Builtin,
+	args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
+
+	if args.Len() != 0 {
+		return starlark.None, fmt.Errorf("expected no arguments")
+	}
+
+	libraryLoader := l.libraryExecutionFactory.New(l.libraryCtx)
+
+	l.filteredValues.Lib = append(l.filteredValues.Lib, l.filteredValues.AfterLibMod...)
+	astValues, _, err := libraryLoader.Values(l.filteredValues.Lib)
+	if err != nil {
+		return starlark.None, err
+	}
+
+	val := core.NewGoValueWithOpts(astValues.Doc.AsInterface(), core.GoValueOpts{MapIsStruct: true})
+	return val.AsStarlarkValue(), nil
 }
 
 func (l *libraryValue) Export(thread *starlark.Thread, f *starlark.Builtin,
@@ -139,12 +233,15 @@ func (l *libraryValue) Export(thread *starlark.Thread, f *starlark.Builtin,
 
 	libraryLoader := l.libraryExecutionFactory.New(l.libraryCtx)
 
-	astValues, err := libraryLoader.Values(l.dataValuess)
+	astValues, libValues, err := libraryLoader.Values(l.filteredValues.Lib)
 	if err != nil {
 		return starlark.None, err
 	}
 
-	result, err := libraryLoader.Eval(astValues)
+	libraryAttachedValues := append([]*DataValues{}, libValues...)
+	libraryAttachedValues = append(libValues, l.filteredValues.ChildLib...)
+
+	result, err := libraryLoader.Eval(astValues, libraryAttachedValues)
 	if err != nil {
 		return starlark.None, err
 	}

@@ -14,55 +14,67 @@ import (
 
 type DataValuesPreProcessing struct {
 	valuesFiles           []*FileInLibrary
-	valuesOverlays        []*yamlmeta.Document
+	valuesOverlays        []*DataValues
 	loader                *TemplateLoader
 	IgnoreUnknownComments bool // TODO remove?
 }
 
-func (o DataValuesPreProcessing) Apply() (*yamlmeta.Document, error) {
+func (o DataValuesPreProcessing) Apply() (*DataValues, []*DataValues, error) {
 	files := append([]*FileInLibrary{}, o.valuesFiles...)
 
 	// Respect assigned file order for data values overlaying to succeed
 	SortFilesInLibrary(files)
 
-	result, err := o.apply(files)
+	dataValues, libraryDataValues, err := o.apply(files)
 	if err != nil {
 		errMsg := "Overlaying data values (in following order: %s): %s"
-		return nil, fmt.Errorf(errMsg, o.allFileDescs(files), err)
+		return nil, nil, fmt.Errorf(errMsg, o.allFileDescs(files), err)
 	}
 
-	return result, nil
+	return dataValues, libraryDataValues, nil
 }
 
-func (o DataValuesPreProcessing) apply(files []*FileInLibrary) (*yamlmeta.Document, error) {
+func (o DataValuesPreProcessing) apply(files []*FileInLibrary) (*DataValues, []*DataValues, error) {
 	var values *yamlmeta.Document
-
+	var libraryValues []*DataValues
 	for _, fileInLib := range files {
 		valuesDocs, err := o.templateFile(fileInLib)
 		if err != nil {
-			return nil, fmt.Errorf("Templating file '%s': %s", fileInLib.File.RelativePath(), err)
+			return nil, nil, fmt.Errorf("Templating file '%s': %s", fileInLib.File.RelativePath(), err)
 		}
 
 		for _, valuesDoc := range valuesDocs {
-			if values == nil {
-				values = valuesDoc
-				continue
+			dv, err := NewDataValues(valuesDoc)
+			if err != nil {
+				return nil, nil, err
 			}
 
-			var err error
-			values, err = o.overlay(values, valuesDoc)
-			if err != nil {
-				return nil, err
+			switch {
+			case dv.HasLib():
+				libraryValues = append(libraryValues, dv)
+			case values == nil:
+				values = valuesDoc
+			default:
+				var err error
+				values, err = o.overlay(values, dv.Doc)
+				if err != nil {
+					return nil, nil, err
+				}
 			}
 		}
 	}
 
 	values, err := o.overlayValuesOverlays(values)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
-	return values, nil
+	dv, err := NewDataValues(values)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return dv, libraryValues, nil
 }
 
 func (p DataValuesPreProcessing) allFileDescs(files []*FileInLibrary) string {
@@ -139,7 +151,7 @@ func (p DataValuesPreProcessing) overlayValuesOverlays(valuesDoc *yamlmeta.Docum
 	for _, valuesOverlay := range p.valuesOverlays {
 		var err error
 
-		result, err = p.overlay(result, valuesOverlay)
+		result, err = p.overlay(result, valuesOverlay.Doc)
 		if err != nil {
 			// TODO improve error message?
 			return nil, fmt.Errorf("Overlaying additional data values on top of "+

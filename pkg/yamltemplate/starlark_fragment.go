@@ -33,7 +33,9 @@ func NewStarlarkFragment(data interface{}) *StarlarkFragment {
 	return &StarlarkFragment{data}
 }
 
-func (s *StarlarkFragment) String() string       { return fmt.Sprintf("%s(%T)", starlarkFragmentType, s.data) }
+func (s *StarlarkFragment) String() string {
+	return fmt.Sprintf("%s(%T)", starlarkFragmentType, s.data)
+}
 func (s *StarlarkFragment) Type() string         { return starlarkFragmentType }
 func (s *StarlarkFragment) Freeze()              {} // TODO
 func (s *StarlarkFragment) Truth() starlark.Bool { return starlark.Bool(s.Len() > 0) }
