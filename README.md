@@ -4,6 +4,7 @@
 - Slack: [#k14s in Kubernetes slack](https://slack.kubernetes.io)
 - [Docs](docs/README.md) with topics on language, security, ytt vs other tools, _blog posts and talks_ etc.
 - Install: Grab prebuilt binaries from the [Releases page](https://github.com/k14s/ytt/releases)
+- Editor Extensions: [vscode sytnax highlighting](https://marketplace.visualstudio.com/items?itemName=ewrenn.vscode-ytt)
 
 `ytt` (pronounced spelled out) is a templating tool that understands YAML structure allowing you to focus on your data instead of how to properly escape it.
 
