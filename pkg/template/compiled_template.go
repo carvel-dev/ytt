@@ -136,7 +136,7 @@ func (e *CompiledTemplate) eval(
 		}
 	}()
 
-	f, err := syntax.Parse(e.name, e.CodeAsString(), 0)
+	f, err := syntax.Parse(e.name, e.CodeAsString(), syntax.BlockScanner)
 	if err != nil {
 		return nil, nil, err
 	}
