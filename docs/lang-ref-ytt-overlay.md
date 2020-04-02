@@ -39,7 +39,7 @@ Annotations on the "right-side" nodes:
   - valid for documents, map and array items
   - replaces "left-side" node value with "right-side" node value
   - `via` (optional) keyword argument takes a function which will receive two arguments (left and right value) and expects to return single value
-    - does not currently work with non-scalar values
+    - also works with non-scalar values (available in v0.26.0+)
   - Examples:
     - `#@overlay/replace`: (default)
     - `#@overlay/replace via=lambda a,b: "prefix-"+a`: prefix value with `prefix-` string
@@ -56,7 +56,7 @@ Annotations on the "right-side" nodes:
     - if NoneType is returned comparison is considered a success (typically assert module is used within)
     - if False is returned comparison is considered a failure
     - if Tuple(False,String) is returned comparison is considered a failure
-    - does not currently work with non-scalar values
+    - also works with non-scalar values (available in v0.26.0+)
   - Examples:
     - `#@overlay/assert`: (default)
     - `#@overlay/assert via=lambda a,b: a > 0 and a < 1000`: check that value is within certain numeric constraint
