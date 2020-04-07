@@ -9,13 +9,16 @@ When combining two structures together we refer to the structure is modified as 
 
 Annotations on the "right-side" nodes:
 
-- `@overlay/match [by=matcher,expects=Int|String|List|Function,missing_ok=Bool]`
+- `@overlay/match [by=matcher,expects=Int|String|List|Function,missing_ok=Bool,when=Int|String|List]`
   - valid for documents, map and array items
   - specifies how to find node on the "left-side"
+  - `by` can be used in conjunction with other keyword arguments
+  - `expects`, `missing_ok`, and `when` cannot be used simultaneously
+  - `when` (optional) keyword argument applies changes when the condition is true and will not return an error if the condition is false (available in v0.28.0+)
   - Defaults:
     - for array items, there is no default matcher
     - for map items, default matching is key equality
-    - one "left-side" node is expected to be found
+    - one "left-side" node is expected to be found except for `when`
   - Examples:
     - `#@overlay/match by="name"`: expects to find 1 "left-side" node that has a key name with "right-side" node value (for that key)
     - `#@overlay/match by=overlay.map_key("name")`: (same as above)
@@ -25,6 +28,9 @@ Annotations on the "right-side" nodes:
     - `#@overlay/match expects="2+"`: expects to find 2 or more "left-side" nodes
     - `#@overlay/match expects=[0,1,4]`: expects to find 0, 1 or 4 "left-side" nodes
     - `#@overlay/match expects=lambda x: return x < 10`: expects to less than 10 "left-side" nodes
+    - `#@overlay/match when=2`: applies changes when 2 "left-side" nodes are found but will not error otherwise
+    - `#@overlay/match when=2+`: applies changes when 2 or more "left-side" nodes are found but will not error otherwise
+    - `#@overlay/match when=[0,1,4]`: applies changes when 0, 1 or 4 "left-side" nodes are found but will not error otherwise
 - `@overlay/match-child-defaults [expects=...,missing_ok=Bool]`
   - valid for documents, map and array items
   - specifies `overlay/match` defaults for child nodes (does not apply to current node)

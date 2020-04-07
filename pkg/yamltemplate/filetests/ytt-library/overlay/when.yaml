@@ -1,0 +1,117 @@
+#@ load("@ytt:overlay", "overlay")
+#@ load("@ytt:template", "template")
+
+#@ def test1_when_left():
+map:
+  input_string: val1
+  input_int: val1
+  input_func: val1
+  input_list: val1
+array:
+- val1
+array2:
+- val1
+array3:
+- val1
+#@ end
+
+#@ def true_func(num):
+#@ if num == 1:
+#@   return True
+#@ end
+#@ return False
+#@ end
+
+#@ def test1_when_right():
+map:
+  #@overlay/match when="1+"
+  input_string: string
+  #@overlay/match when="1+"
+  negative_string_case: no-match
+  #@overlay/match when=1
+  input_int: int
+  #@overlay/match when=1
+  negative_int_case: no-match
+  #@overlay/match when=true_func
+  input_func: func
+  #@overlay/match when=true_func
+  negative_func_case: no-match
+  #@overlay/match when=[3,1]
+  input_list: list
+  #@overlay/match when=[2,5]
+  negative_list_case: no-match
+array:
+#@overlay/match by=overlay.all,when="1+"
+- input_string
+#@overlay/match by=overlay.all,when="10+"
+- negative_string_case
+array2:
+#@overlay/match by=overlay.all,when=1
+- input_int
+#@overlay/match by=overlay.all,when=3
+- negative_int_case
+array3:
+#@overlay/match by=overlay.all,when=true_func
+- input_func
+#@overlay/match by=overlay.subset({"blah": "blah"}),when=true_func
+- negative_func_case
+#@ end
+
+test1: #@ overlay.apply(test1_when_left(), test1_when_right())
+
+#@ def test2_when_doc_left():
+---
+input_string: val
+input_int: val
+input_func: val
+input_list: val
+#@ end
+
+#@ def test2_when_doc_right():
+#@overlay/match by=overlay.subset({"input_string": "val"}),when="1+"
+---
+input_string: string
+#@overlay/match by=overlay.subset({"blah": "blah"}),when="1+"
+---
+negative_string_case: no-match
+#@overlay/match by=overlay.subset({"input_int": "val"}),when=1
+---
+input_int: int
+#@overlay/match by=overlay.subset({"blah": "blah"}),when=1
+---
+negative_int_case: no-match
+#@overlay/match by=overlay.subset({"input_func": "val"}),when=true_func
+---
+input_func: func
+#@overlay/match by=overlay.subset({"blah": "blah"}),when=true_func
+---
+negative_func_case: no-match
+#@overlay/match by=overlay.subset({"input_list": "val"}),when=[3,1]
+---
+input_list: list
+#@overlay/match by=overlay.subset({"blah": "blah"}),when=[3,1]
+---
+negative_list_case: no-match
+
+#@ end
+
+--- #@ template.replace(overlay.apply(test2_when_doc_left(), test2_when_doc_right()))
++++
+
+test1:
+  map:
+    input_string: string
+    input_int: int
+    input_func: func
+    input_list: list
+  array:
+  - input_string
+  array2:
+  - input_int
+  array3:
+  - input_func
+---
+input_string: string
+input_int: int
+input_func: func
+input_list: list

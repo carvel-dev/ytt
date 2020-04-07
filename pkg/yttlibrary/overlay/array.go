@@ -20,6 +20,9 @@ func (o OverlayOp) mergeArrayItem(
 
 	leftIdxs, err := ann.Indexes(leftArray)
 	if err != nil {
+		if err, ok := err.(MatchAnnotationNumMatchError); ok && err.isConditional() {
+			return nil
+		}
 		return err
 	}
 
@@ -51,6 +54,9 @@ func (o OverlayOp) removeArrayItem(
 
 	leftIdxs, err := ann.Indexes(leftArray)
 	if err != nil {
+		if err, ok := err.(MatchAnnotationNumMatchError); ok && err.isConditional() {
+			return nil
+		}
 		return err
 	}
 
@@ -88,6 +94,9 @@ func (o OverlayOp) replaceArrayItem(
 
 	leftIdxs, err := ann.Indexes(leftArray)
 	if err != nil {
+		if err, ok := err.(MatchAnnotationNumMatchError); ok && err.isConditional() {
+			return nil
+		}
 		return err
 	}
 
@@ -115,6 +124,9 @@ func (o OverlayOp) insertArrayItem(
 
 	leftIdxs, err := ann.Indexes(leftArray)
 	if err != nil {
+		if err, ok := err.(MatchAnnotationNumMatchError); ok && err.isConditional() {
+			return nil
+		}
 		return err
 	}
 
@@ -179,6 +191,9 @@ func (o OverlayOp) assertArrayItem(
 
 	leftIdxs, err := ann.Indexes(leftArray)
 	if err != nil {
+		if err, ok := err.(MatchAnnotationNumMatchError); ok && err.isConditional() {
+			return nil
+		}
 		return err
 	}
 

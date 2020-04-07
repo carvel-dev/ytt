@@ -1,4 +1,5 @@
 #@ load("@ytt:overlay", "overlay")
+#@ load("@ytt:template", "template")
 
 #@ def test1_left():
 key1: val1
@@ -82,7 +83,6 @@ key1:
 #@ end
 
 test5: #@ overlay.apply(test5_left(), test5_right())
-
 +++
 
 test1:
