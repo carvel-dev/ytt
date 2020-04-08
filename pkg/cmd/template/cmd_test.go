@@ -136,6 +136,7 @@ data: #@ data.read("funcs/data")`)
 		files.MustNewFileFromSource(files.NewBytesSource("funcs/funcs.lib.yml", yamlFuncsData)),
 		files.MustNewFileFromSource(files.NewBytesSource("funcs/tpl.yml", yamlFuncsTplData)),
 		files.MustNewFileFromSource(files.NewBytesSource("funcs/data", []byte("data\ndata"))),
+		files.MustNewFileFromSource(files.NewBytesSource("_ytt_lib/lib1/other", []byte("lib1\ndata"))),
 	})
 
 	ui := cmdcore.NewPlainUI(false)
@@ -160,6 +161,58 @@ data: #@ data.read("funcs/data")`)
 
 	file = out.Files[1]
 	if file.RelativePath() != "funcs/tpl.yml" {
+		t.Fatalf("Expected output file to be tpl.yml, but was %#v", file.RelativePath())
+	}
+	if string(file.Bytes()) != expectedYAMLTplData {
+		t.Fatalf("Expected output file to have specific data, but was: >>>%s<<<", file.Bytes())
+	}
+}
+
+func TestDataListRelativeToLibraryRootWithinALibrary(t *testing.T) {
+	yamlTplData := []byte(`
+#@ load("@lib1:funcs/funcs.lib.yml", "lib_data_list", "lib_data_read")
+liblist: #@ lib_data_list()
+libdata: #@ lib_data_read()`)
+
+	expectedYAMLTplData := `liblist:
+  liblist:
+  - other
+  - funcs/funcs.lib.yml
+libdata:
+  libdata: |-
+    lib1
+    data
+`
+
+	yamlLibFuncsData := []byte(`
+#@ load("@ytt:data", "data")
+
+#@ def/end lib_data_list():
+liblist: #@ data.list()
+
+#@ def/end lib_data_read():
+libdata: #@ data.read("other")`)
+
+	filesToProcess := files.NewSortedFiles([]*files.File{
+		files.MustNewFileFromSource(files.NewBytesSource("tpl.yml", yamlTplData)),
+		files.MustNewFileFromSource(files.NewBytesSource("_ytt_lib/lib1/other", []byte("lib1\ndata"))),
+		files.MustNewFileFromSource(files.NewBytesSource("_ytt_lib/lib1/funcs/funcs.lib.yml", yamlLibFuncsData)),
+	})
+
+	ui := cmdcore.NewPlainUI(false)
+	opts := cmdtpl.NewOptions()
+
+	out := opts.RunWithFiles(cmdtpl.TemplateInput{Files: filesToProcess}, ui)
+	if out.Err != nil {
+		t.Fatalf("Expected RunWithFiles to succeed, but was error: %s", out.Err)
+	}
+
+	if len(out.Files) != 1 {
+		t.Fatalf("Expected number of output files to be 1, but was %d", len(out.Files))
+	}
+
+	file := out.Files[0]
+	if file.RelativePath() != "tpl.yml" {
 		t.Fatalf("Expected output file to be tpl.yml, but was %#v", file.RelativePath())
 	}
 	if string(file.Bytes()) != expectedYAMLTplData {

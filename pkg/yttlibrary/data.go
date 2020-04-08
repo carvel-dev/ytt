@@ -1,24 +1,30 @@
 package yttlibrary
 
 import (
-	"github.com/k14s/ytt/pkg/template"
+	"fmt"
+
 	"github.com/k14s/ytt/pkg/template/core"
 	"github.com/k14s/ytt/pkg/yamlmeta"
 	"go.starlark.net/starlark"
 	"go.starlark.net/starlarkstruct"
 )
 
-type dataModule struct {
+type DataModule struct {
 	values starlark.Value
-	loader template.CompiledTemplateLoader
+	loader DataLoader
 }
 
-func NewDataModule(values *yamlmeta.Document, loader template.CompiledTemplateLoader) dataModule {
+type DataLoader interface {
+	FilePaths() []string
+	FileData(string) ([]byte, error)
+}
+
+func NewDataModule(values *yamlmeta.Document, loader DataLoader) DataModule {
 	val := core.NewGoValueWithOpts(values.AsInterface(), core.GoValueOpts{MapIsStruct: true})
-	return dataModule{val.AsStarlarkValue(), loader}
+	return DataModule{val.AsStarlarkValue(), loader}
 }
 
-func (b dataModule) AsModule() starlark.StringDict {
+func (b DataModule) AsModule() starlark.StringDict {
 	return starlark.StringDict{
 		"data": &starlarkstruct.Module{
 			Name: "data",
@@ -32,14 +38,36 @@ func (b dataModule) AsModule() starlark.StringDict {
 	}
 }
 
-func (b dataModule) List(thread *starlark.Thread, f *starlark.Builtin,
+func (b DataModule) List(thread *starlark.Thread, f *starlark.Builtin,
 	args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
 
-	return b.loader.ListData(thread, f, args, kwargs)
+	if args.Len() != 0 {
+		return starlark.None, fmt.Errorf("expected exactly zero arguments")
+	}
+
+	result := []starlark.Value{}
+	for _, path := range b.loader.FilePaths() {
+		result = append(result, starlark.String(path))
+	}
+	return starlark.NewList(result), nil
 }
 
-func (b dataModule) Read(thread *starlark.Thread, f *starlark.Builtin,
+func (b DataModule) Read(thread *starlark.Thread, f *starlark.Builtin,
 	args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
 
-	return b.loader.LoadData(thread, f, args, kwargs)
+	if args.Len() != 1 {
+		return starlark.None, fmt.Errorf("expected exactly one argument")
+	}
+
+	path, err := core.NewStarlarkValue(args.Index(0)).AsString()
+	if err != nil {
+		return starlark.None, err
+	}
+
+	fileBs, err := b.loader.FileData(path)
+	if err != nil {
+		return starlark.None, err
+	}
+
+	return starlark.String(string(fileBs)), nil
 }
