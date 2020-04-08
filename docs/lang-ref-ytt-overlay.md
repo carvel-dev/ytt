@@ -73,7 +73,7 @@ Several functions are provided by overlay module that are useful for executing o
     overlay.apply(left(), one(), two())
     ```
   
-- `map_key(name)` matcher matches array items or maps based on the value of map key `name`:
+- `map_key(name)` matcher matches array items or maps based on the value of map key `name` (it requires that all item values have specified map key, use `overlay.subset(...)` if that requirement is cannot be met):
    
     this example will successfully match array items that have a map with a key `name` of value `item2`:
     ```yaml
