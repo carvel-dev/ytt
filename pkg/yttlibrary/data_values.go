@@ -47,6 +47,9 @@ func (v DataValues) extract(docSet *yamlmeta.DocumentSet) ([]*yamlmeta.Document,
 			}
 			for _, ann := range structMeta.Annotations {
 				if ann.Name == AnnotationDataValues {
+					if hasMatchingAnn {
+						return nil, nil, fmt.Errorf("%s annotation may only be used once per YAML doc", AnnotationDataValues)
+					}
 					hasMatchingAnn = true
 				}
 			}

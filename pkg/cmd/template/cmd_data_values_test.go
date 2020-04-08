@@ -169,6 +169,81 @@ nested:
 	}
 }
 
+func TestDataValuesWithLibraryAttachedFlags(t *testing.T) {
+	tplBytes := []byte(`
+#@ load("@ytt:library", "library")
+#@ load("@ytt:template", "template")
+
+--- #@ template.replace(library.get("lib", tag="inst1").eval())`)
+
+	libTplBytes := []byte(`
+#@ load("@ytt:library", "library")
+#@ load("@ytt:template", "template")
+#@ load("@ytt:data", "data")
+
+lib-val: #@ data.values.lib_val
+--- #@ template.replace(library.get("nested-lib").eval())
+`)
+
+	libValuesBytes := []byte(`
+#@data/values
+---
+lib_val: override-me
+`)
+
+	nestedLibTplBytes := []byte(`
+#@ load("@ytt:data", "data")
+
+nested-lib-val: #@ data.values.nested_lib_val
+`)
+
+	nestedLibValuesBytes := []byte(`
+#@data/values
+---
+nested_lib_val: override-me
+`)
+
+	expectedYAMLTplData := `lib-val: test
+---
+nested-lib-val: passes
+`
+
+	filesToProcess := files.NewSortedFiles([]*files.File{
+		files.MustNewFileFromSource(files.NewBytesSource("config.yml", tplBytes)),
+		files.MustNewFileFromSource(files.NewBytesSource("_ytt_lib/lib/values.yml", libValuesBytes)),
+		files.MustNewFileFromSource(files.NewBytesSource("_ytt_lib/lib/config.yml", libTplBytes)),
+		files.MustNewFileFromSource(files.NewBytesSource("_ytt_lib/lib/_ytt_lib/nested-lib/values.yml", nestedLibValuesBytes)),
+		files.MustNewFileFromSource(files.NewBytesSource("_ytt_lib/lib/_ytt_lib/nested-lib/config.yml", nestedLibTplBytes)),
+	})
+
+	ui := cmdcore.NewPlainUI(false)
+	opts := cmdtpl.NewOptions()
+
+	opts.DataValuesFlags = cmdtpl.DataValuesFlags{
+		// TODO env and files?
+		KVsFromYAML: []string{"@lib~inst1:lib_val=test", "@lib~inst1@nested-lib:nested_lib_val=passes"},
+	}
+
+	out := opts.RunWithFiles(cmdtpl.TemplateInput{Files: filesToProcess}, ui)
+	if out.Err != nil {
+		t.Fatalf("Expected RunWithFiles to succeed, but was error: %s", out.Err)
+	}
+
+	if len(out.Files) != 1 {
+		t.Fatalf("Expected number of output files to be 1, but was %d", len(out.Files))
+	}
+
+	file := out.Files[0]
+
+	if file.RelativePath() != "config.yml" {
+		t.Fatalf("Expected output file to be config.yml, but was %#v", file.RelativePath())
+	}
+
+	if string(file.Bytes()) != expectedYAMLTplData {
+		t.Fatalf("Expected output file to have specific data, but was: >>>%s<<< vs >>>%s<<<", file.Bytes(), expectedYAMLTplData)
+	}
+}
+
 func TestDataValuesMultipleFiles(t *testing.T) {
 	yamlTplData := []byte(`
 #@ load("@ytt:data", "data")
