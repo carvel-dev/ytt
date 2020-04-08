@@ -80,6 +80,93 @@ end`)
 	}
 }
 
+func TestDataListRelativeToLibraryRoot(t *testing.T) {
+	yamlTplData := []byte(`
+#@ load("@ytt:data", "data")
+#@ load("funcs/funcs.lib.yml", "nested_data_list", "nested_data_read")
+
+rootlist: #@ data.list()
+rootdata: #@ data.read("funcs/data")
+
+nestedlist: #@ nested_data_list()
+nesteddata: #@ nested_data_read()`)
+
+	yamlFuncsTplData := []byte(`
+#@ load("@ytt:data", "data")
+#@ load("funcs.lib.yml", "nested_data_list", "nested_data_read")
+
+rootlist: #@ data.list()
+rootdata: #@ data.read("funcs/data")
+
+nestedlist: #@ nested_data_list()
+nesteddata: #@ nested_data_read()
+`)
+
+	expectedYAMLTplData := `rootlist:
+- tpl.yml
+- funcs/funcs.lib.yml
+- funcs/tpl.yml
+- funcs/data
+rootdata: |-
+  data
+  data
+nestedlist:
+  list:
+  - tpl.yml
+  - funcs/funcs.lib.yml
+  - funcs/tpl.yml
+  - funcs/data
+nesteddata:
+  data: |-
+    data
+    data
+`
+
+	yamlFuncsData := []byte(`
+#@ load("@ytt:data", "data")
+
+#@ def/end nested_data_list():
+list: #@ data.list()
+
+#@ def/end nested_data_read():
+data: #@ data.read("funcs/data")`)
+
+	filesToProcess := files.NewSortedFiles([]*files.File{
+		files.MustNewFileFromSource(files.NewBytesSource("tpl.yml", yamlTplData)),
+		files.MustNewFileFromSource(files.NewBytesSource("funcs/funcs.lib.yml", yamlFuncsData)),
+		files.MustNewFileFromSource(files.NewBytesSource("funcs/tpl.yml", yamlFuncsTplData)),
+		files.MustNewFileFromSource(files.NewBytesSource("funcs/data", []byte("data\ndata"))),
+	})
+
+	ui := cmdcore.NewPlainUI(false)
+	opts := cmdtpl.NewOptions()
+
+	out := opts.RunWithFiles(cmdtpl.TemplateInput{Files: filesToProcess}, ui)
+	if out.Err != nil {
+		t.Fatalf("Expected RunWithFiles to succeed, but was error: %s", out.Err)
+	}
+
+	if len(out.Files) != 2 {
+		t.Fatalf("Expected number of output files to be 1, but was %d", len(out.Files))
+	}
+
+	file := out.Files[0]
+	if file.RelativePath() != "tpl.yml" {
+		t.Fatalf("Expected output file to be tpl.yml, but was %#v", file.RelativePath())
+	}
+	if string(file.Bytes()) != expectedYAMLTplData {
+		t.Fatalf("Expected output file to have specific data, but was: >>>%s<<<", file.Bytes())
+	}
+
+	file = out.Files[1]
+	if file.RelativePath() != "funcs/tpl.yml" {
+		t.Fatalf("Expected output file to be tpl.yml, but was %#v", file.RelativePath())
+	}
+	if string(file.Bytes()) != expectedYAMLTplData {
+		t.Fatalf("Expected output file to have specific data, but was: >>>%s<<<", file.Bytes())
+	}
+}
+
 func TestBacktraceAcrossFiles(t *testing.T) {
 	yamlTplData := []byte(`
 #@ load("funcs/funcs.lib.yml", "some_data")
