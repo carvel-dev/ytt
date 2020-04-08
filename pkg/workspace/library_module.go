@@ -182,16 +182,12 @@ func (l *libraryValue) Eval(thread *starlark.Thread, f *starlark.Builtin,
 
 	libraryLoader := l.libraryExecutionFactory.New(l.libraryCtx)
 
-	l.filteredValues.Lib = append(l.filteredValues.Lib, l.filteredValues.AfterLibMod...)
-	astValues, libValues, err := libraryLoader.Values(l.filteredValues.Lib)
+	astValues, libValues, err := l.libraryValues(libraryLoader)
 	if err != nil {
 		return starlark.None, err
 	}
 
-	libraryAttachedValues := append([]*DataValues{}, libValues...)
-	libraryAttachedValues = append(libValues, l.filteredValues.ChildLib...)
-
-	result, err := libraryLoader.Eval(astValues, libraryAttachedValues)
+	result, err := libraryLoader.Eval(astValues, libValues)
 	if err != nil {
 		return starlark.None, err
 	}
@@ -208,8 +204,7 @@ func (l *libraryValue) DataValues(thread *starlark.Thread, f *starlark.Builtin,
 
 	libraryLoader := l.libraryExecutionFactory.New(l.libraryCtx)
 
-	l.filteredValues.Lib = append(l.filteredValues.Lib, l.filteredValues.AfterLibMod...)
-	astValues, _, err := libraryLoader.Values(l.filteredValues.Lib)
+	astValues, _, err := l.libraryValues(libraryLoader)
 	if err != nil {
 		return starlark.None, err
 	}
@@ -233,15 +228,12 @@ func (l *libraryValue) Export(thread *starlark.Thread, f *starlark.Builtin,
 
 	libraryLoader := l.libraryExecutionFactory.New(l.libraryCtx)
 
-	astValues, libValues, err := libraryLoader.Values(l.filteredValues.Lib)
+	astValues, libValues, err := l.libraryValues(libraryLoader)
 	if err != nil {
 		return starlark.None, err
 	}
 
-	libraryAttachedValues := append([]*DataValues{}, libValues...)
-	libraryAttachedValues = append(libValues, l.filteredValues.ChildLib...)
-
-	result, err := libraryLoader.Eval(astValues, libraryAttachedValues)
+	result, err := libraryLoader.Eval(astValues, libValues)
 	if err != nil {
 		return starlark.None, err
 	}
@@ -305,4 +297,18 @@ func (l *libraryValue) exportArgs(args starlark.Tuple, kwargs []starlark.Tuple) 
 	}
 
 	return symbolName, locationPath, nil
+}
+
+func (l *libraryValue) libraryValues(ll *LibraryLoader) (*DataValues, []*DataValues, error) {
+	values := append([]*DataValues{}, l.filteredValues.Lib...)
+	values = append(values, l.filteredValues.AfterLibMod...)
+
+	finalValues, libValues, err := ll.Values(values)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	libValues = append(libValues, l.filteredValues.ChildLib...)
+
+	return finalValues, libValues, nil
 }
