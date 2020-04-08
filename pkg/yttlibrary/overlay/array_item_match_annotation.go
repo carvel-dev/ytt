@@ -71,29 +71,24 @@ func (a ArrayItemMatchAnnotation) Indexes(leftArray *yamlmeta.Array) ([]int, err
 }
 
 func (a ArrayItemMatchAnnotation) MatchNodes(leftArray *yamlmeta.Array) ([]int, []*filepos.Position, error) {
-	if a.matcher == nil {
+	matcher := a.matcher
+
+	if matcher == nil {
 		return nil, nil, fmt.Errorf("Expected '%s' annotation "+
 			"keyword argument 'by' to be specified", AnnotationMatch)
 	}
 
-	switch typedVal := (*a.matcher).(type) {
-	case starlark.String:
-		var leftIdxs []int
-		var matches []*filepos.Position
-
-		for i, item := range leftArray.Items {
-			result, err := overlayModule{}.compareByMapKey(string(typedVal), item, a.newItem)
-			if err != nil {
-				return nil, nil, err
-			}
-			if result {
-				leftIdxs = append(leftIdxs, i)
-				matches = append(matches, item.Position)
-			}
+	if _, ok := (*matcher).(starlark.String); ok {
+		matcherFunc, err := starlark.Call(a.thread, overlayModule{}.MapKey(),
+			starlark.Tuple{*matcher}, []starlark.Tuple{})
+		if err != nil {
+			return nil, nil, err
 		}
 
-		return leftIdxs, matches, nil
+		matcher = &matcherFunc
+	}
 
+	switch typedVal := (*matcher).(type) {
 	case starlark.Callable:
 		var leftIdxs []int
 		var matches []*filepos.Position
@@ -106,7 +101,7 @@ func (a ArrayItemMatchAnnotation) MatchNodes(leftArray *yamlmeta.Array) ([]int, 
 			}
 
 			// TODO check thread correctness
-			result, err := starlark.Call(a.thread, *a.matcher, matcherArgs, []starlark.Tuple{})
+			result, err := starlark.Call(a.thread, *matcher, matcherArgs, []starlark.Tuple{})
 			if err != nil {
 				return nil, nil, err
 			}
@@ -124,7 +119,7 @@ func (a ArrayItemMatchAnnotation) MatchNodes(leftArray *yamlmeta.Array) ([]int, 
 		return leftIdxs, matches, nil
 
 	default:
-		return nil, nil, fmt.Errorf("Expected '%s' annotation keyword argument 'by'"+
-			" to be either string (for map key) or function, but was %T", AnnotationMatch, typedVal)
+		return nil, nil, fmt.Errorf("Expected '%s' annotation keyword argument 'by' "+
+			"to be either string (for map key) or function, but was %T", AnnotationMatch, typedVal)
 	}
 }

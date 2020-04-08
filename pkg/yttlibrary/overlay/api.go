@@ -19,7 +19,7 @@ var (
 				"apply":   starlark.NewBuiltin("overlay.apply", core.ErrWrapper(overlayModule{}.Apply)),
 				"index":   starlark.NewBuiltin("overlay.index", core.ErrWrapper(overlayModule{}.Index)),
 				"all":     starlark.NewBuiltin("overlay.all", core.ErrWrapper(overlayModule{}.All)),
-				"map_key": starlark.NewBuiltin("overlay.map_key", core.ErrWrapper(overlayModule{}.MapKey)),
+				"map_key": overlayModule{}.MapKey(),
 				"subset":  starlark.NewBuiltin("overlay.subset", core.ErrWrapper(overlayModule{}.Subset)),
 
 				"and_op": starlark.NewBuiltin("overlay.and_op", core.ErrWrapper(overlayModule{}.AndOp)),
@@ -100,7 +100,11 @@ func (b overlayModule) All(
 	return starlark.Bool(true), nil
 }
 
-func (b overlayModule) MapKey(
+func (b overlayModule) MapKey() *starlark.Builtin {
+	return starlark.NewBuiltin("overlay.map_key", core.ErrWrapper(b.mapKey))
+}
+
+func (b overlayModule) mapKey(
 	thread *starlark.Thread, f *starlark.Builtin,
 	args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
 
@@ -149,23 +153,10 @@ func (b overlayModule) compareByMapKey(keyName string, oldVal, newVal interface{
 	return result, nil
 }
 
-func (b overlayModule) pullOutMapValue(keyName string, newVal interface{}) (interface{}, error) {
-	var ok bool
-	var typedMap *yamlmeta.Map
-
-	switch typedVal := newVal.(type) {
-	case *yamlmeta.ArrayItem:
-		typedMap, ok = typedVal.Value.(*yamlmeta.Map)
-		if !ok {
-			return starlark.None, fmt.Errorf("Expected arrayitem to contain map, but was %T", typedVal.Value)
-		}
-	case *yamlmeta.MapItem:
-		typedMap, ok = typedVal.Value.(*yamlmeta.Map)
-		if !ok {
-			return starlark.None, fmt.Errorf("Expected mapitem to contain map, but was %T", typedVal.Value)
-		}
-	default:
-		return starlark.None, fmt.Errorf("Expected new item to be arrayitem or mapitem, but was %T", typedVal)
+func (b overlayModule) pullOutMapValue(keyName string, val interface{}) (interface{}, error) {
+	typedMap, ok := val.(*yamlmeta.Map)
+	if !ok {
+		return starlark.None, fmt.Errorf("Expected value to be map, but was %T", val)
 	}
 
 	for _, item := range typedMap.Items {
@@ -174,7 +165,7 @@ func (b overlayModule) pullOutMapValue(keyName string, newVal interface{}) (inte
 		}
 	}
 
-	return starlark.None, fmt.Errorf("Expected to find mapitem with key %s, but did not", keyName)
+	return starlark.None, fmt.Errorf("Expected to find mapitem with key '%s', but did not", keyName)
 }
 
 func (b overlayModule) Subset(

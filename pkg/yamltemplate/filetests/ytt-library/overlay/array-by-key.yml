@@ -1,0 +1,57 @@
+#@ load("@ytt:overlay", "overlay")
+#@ load("@ytt:template", "template")
+
+#@ def/end test1_left():
+---
+clients:
+- needsSecret: true
+- secret: bar
+  needsSecret: false
+- needsSecret: true
+
+#@ def/end test1_right():
+#@overlay/match by=overlay.all
+---
+clients:
+#@overlay/match by="needsSecret",expects="1+"
+-
+  #@overlay/match missing_ok=True
+  secret: ree
+  #@overlay/remove
+  needsSecret: true
+
+#@ def/end test2_right():
+#@overlay/match by=overlay.all
+---
+clients:
+#@overlay/match by=overlay.map_key("needsSecret"),expects="1+"
+-
+  #@overlay/match missing_ok=True
+  secret: ree
+  #@overlay/remove
+  needsSecret: true
+
+---
+test1
+--- #@ template.replace(overlay.apply(test1_left(), test1_right()))
+---
+test2
+--- #@ template.replace(overlay.apply(test1_left(), test2_right()))
+
++++
+
+test1
+---
+clients:
+- secret: ree
+- secret: bar
+  needsSecret: false
+- secret: ree
+---
+test2
+---
+clients:
+- secret: ree
+- secret: bar
+  needsSecret: false
+- secret: ree
