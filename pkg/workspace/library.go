@@ -29,7 +29,7 @@ func NewRootLibrary(fs []*files.File) *Library {
 
 		var currLibrary *Library = rootLibrary
 		for _, piece := range dirPieces {
-			lib, found := currLibrary.FindLibrary(piece)
+			lib, found := currLibrary.findLibrary(piece)
 			if !found {
 				currLibrary = currLibrary.CreateLibrary(piece)
 			} else {
@@ -43,7 +43,7 @@ func NewRootLibrary(fs []*files.File) *Library {
 	return rootLibrary
 }
 
-func (l *Library) FindLibrary(name string) (*Library, bool) {
+func (l *Library) findLibrary(name string) (*Library, bool) {
 	for _, lib := range l.children {
 		if lib.name == name {
 			return lib, true
@@ -69,7 +69,7 @@ func (l *Library) FindAccessibleLibrary(path string) (*Library, error) {
 
 	var currLibrary *Library = privateLib
 	for i, piece := range pieces {
-		lib, found := currLibrary.FindLibrary(piece)
+		lib, found := currLibrary.findLibrary(piece)
 		if !found {
 			return nil, fmt.Errorf("Expected to find library '%s', but did not find '%s'",
 				path, files.JoinPath(pieces[:i]))
@@ -93,20 +93,33 @@ func (l *Library) findPrivateLibrary() (*Library, bool) {
 	return nil, false
 }
 
+func (l *Library) FindLibrary(path string) (*Library, error) {
+	dirPieces, namePiece := files.SplitPath(path)
+
+	var currLibrary *Library = l
+	for i, piece := range append(dirPieces, namePiece) {
+		lib, found := currLibrary.findLibrary(piece)
+		if !found {
+			return nil, fmt.Errorf("Did not find '%s'", files.JoinPath(dirPieces[:i]))
+		}
+		if lib.private {
+			return nil, fmt.Errorf("Encountered private library '%s'", privateName)
+		}
+		currLibrary = lib
+	}
+
+	return currLibrary, nil
+}
+
 func (l *Library) FindFile(path string) (FileInLibrary, error) {
 	dirPieces, namePiece := files.SplitPath(path)
 
 	var currLibrary *Library = l
-	for i, piece := range dirPieces {
-		lib, found := currLibrary.FindLibrary(piece)
-		if !found {
-			return FileInLibrary{}, fmt.Errorf("Expected to find file '%s', but did not find '%s'",
-				path, files.JoinPath(dirPieces[:i]))
-		}
-		if lib.private {
-			return FileInLibrary{}, fmt.Errorf("Could not load file '%s' because it's contained in private library '%s' "+
-				"(use load(\"@lib:file\", \"symbol\") where 'lib' is library name under %s, for example, 'github.com/k14s/test')",
-				path, files.JoinPath(dirPieces[:i]), privateName)
+
+	if len(dirPieces) > 0 {
+		lib, err := l.FindLibrary(files.JoinPath(dirPieces))
+		if err != nil {
+			return FileInLibrary{}, fmt.Errorf("Expected to find file '%s', but did not: %s", path, err)
 		}
 		currLibrary = lib
 	}

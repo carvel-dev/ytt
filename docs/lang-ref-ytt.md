@@ -46,9 +46,15 @@ x = data.values.env.mysql_password or assert.fail("missing env.mysql_password")
 
 - `load("@ytt:data", "data")` (see [ytt @data/values](ytt-data-values.md) for more details)
 ```python
-data.values                # struct that has input values
+data.values # struct that has input values
+
+# relative to current package
 data.list()                # ["template.yml", "data/data.txt"]
 data.read("data/data.txt") # "data-txt contents"
+
+# relative to library root (available in v0.27.1+)
+data.list("/")              # list files 
+data.list("/data/data.txt") # read file
 ```
 
 - `load("@ytt:regexp", "regexp")`

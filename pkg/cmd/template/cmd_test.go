@@ -80,7 +80,7 @@ end`)
 	}
 }
 
-func TestDataListRelativeToLibraryRoot(t *testing.T) {
+func TestDataListRelativeToDir(t *testing.T) {
 	yamlTplData := []byte(`
 #@ load("@ytt:data", "data")
 #@ load("funcs/funcs.lib.yml", "nested_data_list", "nested_data_read")
@@ -91,31 +91,17 @@ rootdata: #@ data.read("funcs/data")
 nestedlist: #@ nested_data_list()
 nesteddata: #@ nested_data_read()`)
 
-	yamlFuncsTplData := []byte(`
-#@ load("@ytt:data", "data")
-#@ load("funcs.lib.yml", "nested_data_list", "nested_data_read")
-
-rootlist: #@ data.list()
-rootdata: #@ data.read("funcs/data")
-
-nestedlist: #@ nested_data_list()
-nesteddata: #@ nested_data_read()
-`)
-
 	expectedYAMLTplData := `rootlist:
 - tpl.yml
 - funcs/funcs.lib.yml
-- funcs/tpl.yml
 - funcs/data
 rootdata: |-
   data
   data
 nestedlist:
   list:
-  - tpl.yml
-  - funcs/funcs.lib.yml
-  - funcs/tpl.yml
-  - funcs/data
+  - funcs.lib.yml
+  - data
 nesteddata:
   data: |-
     data
@@ -129,7 +115,86 @@ nesteddata:
 list: #@ data.list()
 
 #@ def/end nested_data_read():
-data: #@ data.read("funcs/data")`)
+data: #@ data.read("data")`)
+
+	filesToProcess := files.NewSortedFiles([]*files.File{
+		files.MustNewFileFromSource(files.NewBytesSource("tpl.yml", yamlTplData)),
+		files.MustNewFileFromSource(files.NewBytesSource("funcs/funcs.lib.yml", yamlFuncsData)),
+		files.MustNewFileFromSource(files.NewBytesSource("funcs/data", []byte("data\ndata"))),
+		files.MustNewFileFromSource(files.NewBytesSource("_ytt_lib/lib1/other", []byte("lib1\ndata"))),
+	})
+
+	ui := cmdcore.NewPlainUI(false)
+	opts := cmdtpl.NewOptions()
+
+	out := opts.RunWithFiles(cmdtpl.TemplateInput{Files: filesToProcess}, ui)
+	if out.Err != nil {
+		t.Fatalf("Expected RunWithFiles to succeed, but was error: %s", out.Err)
+	}
+
+	if len(out.Files) != 1 {
+		t.Fatalf("Expected number of output files to be 1, but was %d", len(out.Files))
+	}
+
+	file := out.Files[0]
+	if file.RelativePath() != "tpl.yml" {
+		t.Fatalf("Expected output file to be tpl.yml, but was %#v", file.RelativePath())
+	}
+	if string(file.Bytes()) != expectedYAMLTplData {
+		t.Fatalf("Expected output file to have specific data, but was: >>>%s<<<", file.Bytes())
+	}
+}
+
+func TestDataListRelativeToLibraryRoot(t *testing.T) {
+	yamlTplData := []byte(`
+#@ load("@ytt:data", "data")
+#@ load("funcs/funcs.lib.yml", "nested_data_list", "nested_data_read")
+
+rootlist: #@ data.list("/")
+rootdata: #@ data.read("/funcs/data")
+
+nestedlist: #@ nested_data_list()
+nesteddata: #@ nested_data_read()`)
+
+	yamlFuncsTplData := []byte(`
+#@ load("@ytt:data", "data")
+#@ load("funcs.lib.yml", "nested_data_list", "nested_data_read")
+
+rootlist: #@ data.list("/")
+rootdata: #@ data.read("/funcs/data")
+
+nestedlist: #@ nested_data_list()
+nesteddata: #@ nested_data_read()
+`)
+
+	expectedYAMLTplData := `rootlist:
+- /tpl.yml
+- /funcs/funcs.lib.yml
+- /funcs/tpl.yml
+- /funcs/data
+rootdata: |-
+  data
+  data
+nestedlist:
+  list:
+  - /tpl.yml
+  - /funcs/funcs.lib.yml
+  - /funcs/tpl.yml
+  - /funcs/data
+nesteddata:
+  data: |-
+    data
+    data
+`
+
+	yamlFuncsData := []byte(`
+#@ load("@ytt:data", "data")
+
+#@ def/end nested_data_list():
+list: #@ data.list("/")
+
+#@ def/end nested_data_read():
+data: #@ data.read("/funcs/data")`)
 
 	filesToProcess := files.NewSortedFiles([]*files.File{
 		files.MustNewFileFromSource(files.NewBytesSource("tpl.yml", yamlTplData)),
@@ -175,11 +240,13 @@ liblist: #@ lib_data_list()
 libdata: #@ lib_data_read()`)
 
 	expectedYAMLTplData := `liblist:
-  liblist:
-  - other
-  - funcs/funcs.lib.yml
+  liblist1:
+  - funcs.lib.yml
+  liblist2:
+  - /other
+  - /funcs/funcs.lib.yml
 libdata:
-  libdata: |-
+  libdata2: |-
     lib1
     data
 `
@@ -187,11 +254,14 @@ libdata:
 	yamlLibFuncsData := []byte(`
 #@ load("@ytt:data", "data")
 
-#@ def/end lib_data_list():
-liblist: #@ data.list()
+#@ def lib_data_list():
+liblist1: #@ data.list()
+liblist2: #@ data.list("/")
+#@ end
 
-#@ def/end lib_data_read():
-libdata: #@ data.read("other")`)
+#@ def lib_data_read():
+libdata2: #@ data.read("/other")
+#@ end`)
 
 	filesToProcess := files.NewSortedFiles([]*files.File{
 		files.MustNewFileFromSource(files.NewBytesSource("tpl.yml", yamlTplData)),
@@ -269,7 +339,7 @@ func TestDisallowDirectLibraryLoading(t *testing.T) {
 	yamlTplData := []byte(`#@ load("_ytt_lib/data.lib.star", "data")`)
 
 	expectedErr := `
-- cannot load _ytt_lib/data.lib.star: Could not load file '_ytt_lib/data.lib.star' because it's contained in private library '' (use load("@lib:file", "symbol") where 'lib' is library name under _ytt_lib, for example, 'github.com/k14s/test')
+- cannot load _ytt_lib/data.lib.star: Expected to find file '_ytt_lib/data.lib.star', but did not: Encountered private library '_ytt_lib'
     in <toplevel>
       tpl.yml:1 | #@ load("_ytt_lib/data.lib.star", "data")`
 

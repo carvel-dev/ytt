@@ -303,3 +303,7 @@ func IsRootPath(path string) bool {
 func StripRootPath(path string) string {
 	return path[len(pathSeparator):]
 }
+
+func MakeRootPath(path string) string {
+	return pathSeparator + path
+}

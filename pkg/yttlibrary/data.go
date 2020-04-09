@@ -15,7 +15,7 @@ type DataModule struct {
 }
 
 type DataLoader interface {
-	FilePaths() []string
+	FilePaths(string) ([]string, error)
 	FileData(string) ([]byte, error)
 }
 
@@ -41,12 +41,27 @@ func (b DataModule) AsModule() starlark.StringDict {
 func (b DataModule) List(thread *starlark.Thread, f *starlark.Builtin,
 	args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
 
-	if args.Len() != 0 {
-		return starlark.None, fmt.Errorf("expected exactly zero arguments")
+	if args.Len() > 1 {
+		return starlark.None, fmt.Errorf("expected exactly zero or one argument")
+	}
+
+	path := ""
+
+	if args.Len() == 1 {
+		pathStr, err := core.NewStarlarkValue(args.Index(0)).AsString()
+		if err != nil {
+			return starlark.None, err
+		}
+		path = pathStr
+	}
+
+	paths, err := b.loader.FilePaths(path)
+	if err != nil {
+		return starlark.None, err
 	}
 
 	result := []starlark.Value{}
-	for _, path := range b.loader.FilePaths() {
+	for _, path := range paths {
 		result = append(result, starlark.String(path))
 	}
 	return starlark.NewList(result), nil
