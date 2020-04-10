@@ -29,6 +29,8 @@ type DataValuesFlags struct {
 	KVsFromFiles   []string
 
 	Inspect bool
+
+	EnvironFunc func() []string
 }
 
 func (s *DataValuesFlags) Set(cmd *cobra.Command) {
@@ -112,6 +114,10 @@ func (s *DataValuesFlags) env(prefix string, valueFunc valueTransformFunc) ([]*w
 
 	result := []*workspace.DataValues{}
 	envVars := os.Environ()
+
+	if s.EnvironFunc != nil {
+		envVars = s.EnvironFunc()
+	}
 
 	lib, keyPrefix, err := s.libraryPathAndKey(prefix)
 	if err != nil {

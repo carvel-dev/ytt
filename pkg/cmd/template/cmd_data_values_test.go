@@ -1,7 +1,6 @@
 package template_test
 
 import (
-	"os"
 	"testing"
 
 	cmdcore "github.com/k14s/ytt/pkg/cmd/core"
@@ -594,22 +593,17 @@ nested_val: nested_from_env
 		files.MustNewFileFromSource(files.NewBytesSource("_ytt_lib/lib1/_ytt_lib/nested/tpl.yml", nestedTmplBytes)),
 	})
 
-	err := os.Setenv("DVAL_lib_val", "lib_from_env")
-	if err != nil {
-		t.Fatalf("Could not set env var in env test")
-	}
-
-	err = os.Setenv("NESTDVAL_nested_val", "nested_from_env")
-	if err != nil {
-		t.Fatalf("Could not set env var in env test")
-	}
-
 	ui := cmdcore.NewPlainUI(false)
 	opts := cmdtpl.NewOptions()
 
 	opts.DataValuesFlags = cmdtpl.DataValuesFlags{
-		// TODO env and files?
-		EnvFromYAML: []string{"@lib1:DVAL", "@lib1@nested:NESTDVAL"},
+		EnvFromYAML: []string{"@lib1:DVAL", "@lib1@nested:NESTED_DVAL"},
+		EnvironFunc: func() []string {
+			return []string{
+				"DVAL_lib_val=lib_from_env",
+				"NESTED_DVAL_nested_val=nested_from_env",
+			}
+		},
 	}
 
 	out := opts.RunWithFiles(cmdtpl.TemplateInput{Files: filesToProcess}, ui)
