@@ -33,6 +33,8 @@ func NewMatchChildDefaultsAnnotation(node template.EvaluationNode,
 			annotation.expects.expects = &kwarg[1]
 		case MatchAnnotationKwargMissingOK:
 			annotation.expects.missingOK = &kwarg[1]
+		case MatchAnnotationKwargWhen:
+			annotation.expects.when = &kwarg[1]
 		default:
 			return annotation, fmt.Errorf(
 				"Unknown '%s' annotation keyword argument '%s'", AnnotationMatchChildDefaults, kwargName)

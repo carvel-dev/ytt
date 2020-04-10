@@ -60,6 +60,25 @@ key2:
 
 --- #@ template.replace(overlay.apply(test3_left(), test3_right()))
 
+#@ def test4_left():
+---
+key3:
+- name: val1
+#@ end
+
+#@ def test4_right():
+#@overlay/match-child-defaults when="1+"
+#@overlay/match by=overlay.all
+---
+key3:
+#@overlay/match by=overlay.subset({"name": "val1"})
+- name: val3
+#@overlay/match by=overlay.subset({"blah": "blah"})
+- other-key: no-error
+#@ end
+
+--- #@ template.replace(overlay.apply(test4_left(), test4_right()))
+
 +++
 
 test1:
@@ -81,4 +100,7 @@ test2:
 ---
 key2:
 - name: val1
+- name: val3
+---
+key3:
 - name: val3
