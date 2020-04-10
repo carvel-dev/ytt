@@ -107,7 +107,12 @@ func (s *DataValuesFlags) env(prefix string, valueFunc func(string) (interface{}
 			return nil, fmt.Errorf("Expected env variable to be key-value pair (format: key=value)")
 		}
 
-		if !strings.HasPrefix(pieces[0], prefix+"_") {
+		lib, keyPrefix, hasLib, err := s.splitLibAndKey(prefix)
+		if err != nil {
+			return nil, err
+		}
+
+		if !strings.HasPrefix(pieces[0], keyPrefix+"_") {
 			continue
 		}
 
@@ -117,16 +122,20 @@ func (s *DataValuesFlags) env(prefix string, valueFunc func(string) (interface{}
 		}
 
 		// '__' gets translated into a '.' since periods may not be liked by shells
-		keyPieces := strings.Split(strings.TrimPrefix(pieces[0], prefix+"_"), "__")
+		keyPieces := strings.Split(strings.TrimPrefix(pieces[0], keyPrefix+"_"), "__")
+		overlay := s.buildOverlay(keyPieces, val, "env var")
 
-		overlayValues, err := workspace.NewDataValues(s.buildOverlay(keyPieces, val, "env var"))
+		var overlayDataValues *workspace.DataValues
+		if hasLib {
+			overlayDataValues, err = workspace.NewDataValuesWithLib(overlay, lib)
+		} else {
+			overlayDataValues, err = workspace.NewDataValues(overlay)
+		}
 		if err != nil {
 			return nil, err
 		}
 
-		// TODO set library from env
-
-		result = append(result, overlayValues)
+		result = append(result, overlayDataValues)
 	}
 
 	return result, nil
@@ -214,24 +223,13 @@ func (s *DataValuesFlags) buildOverlay(keyPieces []string, value interface{}, de
 }
 
 func (s DataValuesFlags) createDataValues(keyStr string, val interface{}, descStr string) (*workspace.DataValues, error) {
-	var lib string
-
-	keyLibSepCount := strings.Count(keyStr, ":")
-	if keyLibSepCount > 1 {
-		return nil, fmt.Errorf("Expected only one key/library separator ':', got %d", keyLibSepCount)
+	lib, keyStr, hasLib, err := s.splitLibAndKey(keyStr)
+	if err != nil {
+		return nil, err
 	}
-
-	hasLib := keyLibSepCount == 1
-	if hasLib {
-		keyParts := strings.Split(keyStr, ":")
-		lib = keyParts[0]
-		keyStr = keyParts[1]
-	}
-
 	overlay := s.buildOverlay(strings.Split(keyStr, "."), val, descStr)
 
 	var overlayDataValues *workspace.DataValues
-	var err error
 	if hasLib {
 		overlayDataValues, err = workspace.NewDataValuesWithLib(overlay, lib)
 	} else {
@@ -242,4 +240,20 @@ func (s DataValuesFlags) createDataValues(keyStr string, val interface{}, descSt
 	}
 
 	return overlayDataValues, nil
+}
+
+func (DataValuesFlags) splitLibAndKey(keyStr string) (string, string, bool, error) {
+	var lib string
+	keyLibSepCount := strings.Count(keyStr, ":")
+	if keyLibSepCount > 1 {
+		return "", "", false, fmt.Errorf("Expected only one key/library separator ':', got %d", keyLibSepCount)
+	}
+
+	hasLib := keyLibSepCount == 1
+	if hasLib {
+		keyParts := strings.Split(keyStr, ":")
+		lib = keyParts[0]
+		keyStr = keyParts[1]
+	}
+	return lib, keyStr, hasLib, nil
 }

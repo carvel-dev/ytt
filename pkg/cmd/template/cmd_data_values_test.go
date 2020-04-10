@@ -1,6 +1,7 @@
 package template_test
 
 import (
+	"os"
 	"testing"
 
 	cmdcore "github.com/k14s/ytt/pkg/cmd/core"
@@ -545,5 +546,88 @@ data:
 
 	if string(file.Bytes()) != expectedYAMLTplData {
 		t.Fatalf("Expected output file to have specific data, but was: >>>%s<<<", file.Bytes())
+	}
+}
+
+func TestDataValuesFromEnv(t *testing.T) {
+	tmplBytes := []byte(`
+#@ load("@ytt:template", "template")
+#@ load("@ytt:library", "library")
+
+--- #@ template.replace(library.get("lib1").eval())`)
+
+	lib1TmplBytes := []byte(`
+#@ load("@ytt:template", "template")
+#@ load("@ytt:library", "library")
+#@ load("@ytt:data", "data")
+
+lib_val: #@ data.values.lib_val
+--- #@ template.replace(library.get("nested").eval())`)
+
+	lib1DataBytes := []byte(`
+#@data/values
+---
+lib_val: override-me`)
+
+	nestedTmplBytes := []byte(`
+#@ load("@ytt:data", "data")
+
+nested_val: #@ data.values.nested_val
+`)
+
+	nestedDataBytes := []byte(`
+#@data/values
+---
+nested_val: override-me-too
+`)
+
+	expectedYAMLTplData := `lib_val: lib_from_env
+---
+nested_val: nested_from_env
+`
+
+	filesToProcess := files.NewSortedFiles([]*files.File{
+		files.MustNewFileFromSource(files.NewBytesSource("tpl.yml", tmplBytes)),
+		files.MustNewFileFromSource(files.NewBytesSource("_ytt_lib/lib1/data.yml", lib1DataBytes)),
+		files.MustNewFileFromSource(files.NewBytesSource("_ytt_lib/lib1/tpl.yml", lib1TmplBytes)),
+		files.MustNewFileFromSource(files.NewBytesSource("_ytt_lib/lib1/_ytt_lib/nested/data.yml", nestedDataBytes)),
+		files.MustNewFileFromSource(files.NewBytesSource("_ytt_lib/lib1/_ytt_lib/nested/tpl.yml", nestedTmplBytes)),
+	})
+
+	err := os.Setenv("DVAL_lib_val", "lib_from_env")
+	if err != nil {
+		t.Fatalf("Could not set env var in env test")
+	}
+
+	err = os.Setenv("NESTDVAL_nested_val", "nested_from_env")
+	if err != nil {
+		t.Fatalf("Could not set env var in env test")
+	}
+
+	ui := cmdcore.NewPlainUI(false)
+	opts := cmdtpl.NewOptions()
+
+	opts.DataValuesFlags = cmdtpl.DataValuesFlags{
+		// TODO env and files?
+		EnvFromYAML: []string{"@lib1:DVAL", "@lib1@nested:NESTDVAL"},
+	}
+
+	out := opts.RunWithFiles(cmdtpl.TemplateInput{Files: filesToProcess}, ui)
+	if out.Err != nil {
+		t.Fatalf("Expected RunWithFiles to succeed, but was error: %s", out.Err)
+	}
+
+	if len(out.Files) != 1 {
+		t.Fatalf("Expected number of output files to be 1, but was %d", len(out.Files))
+	}
+
+	file := out.Files[0]
+
+	if file.RelativePath() != "tpl.yml" {
+		t.Fatalf("Expected output file to be tpl.yml, but was %#v", file.RelativePath())
+	}
+
+	if string(file.Bytes()) != expectedYAMLTplData {
+		t.Fatalf("Expected output file to have specific data, but was: >>>%s<<< vs >>>%s<<<", file.Bytes(), expectedYAMLTplData)
 	}
 }
