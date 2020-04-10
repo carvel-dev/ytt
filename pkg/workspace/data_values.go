@@ -78,8 +78,9 @@ func parseDVAnnotations(doc *yamlmeta.Document) (bool, []LibPathPiece, bool, err
 	var hasLibAnn, afterLibMod bool
 
 	anns := template.NewAnnotations(doc)
+
 	if hasLibAnn = anns.Has(AnnotationLibraryName); hasLibAnn {
-		libArgs := template.NewAnnotations(doc).Args(AnnotationLibraryName)
+		libArgs := anns.Args(AnnotationLibraryName)
 		if l := libArgs.Len(); l != 1 {
 			return false, nil, false, fmt.Errorf("Expected %s annotation to have one arg, got %d", yttlibrary.AnnotationDataValues, l)
 		}
@@ -95,8 +96,7 @@ func parseDVAnnotations(doc *yamlmeta.Document) (bool, []LibPathPiece, bool, err
 		}
 	}
 
-	dvKwargs := template.NewAnnotations(doc).Kwargs(yttlibrary.AnnotationDataValues)
-	for _, kwarg := range dvKwargs {
+	for _, kwarg := range anns.Kwargs(yttlibrary.AnnotationDataValues) {
 		kwargName, err := core.NewStarlarkValue(kwarg[0]).AsString()
 		if err != nil {
 			return false, nil, false, err
