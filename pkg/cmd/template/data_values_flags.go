@@ -15,6 +15,11 @@ import (
 	"go.starlark.net/starlark"
 )
 
+const (
+	dvsKVSep     = "="
+	dvsMapKeySep = "."
+)
+
 type DataValuesFlags struct {
 	EnvFromStrings []string
 	EnvFromYAML    []string
@@ -100,6 +105,11 @@ func (s *DataValuesFlags) AsOverlays(strict bool) ([]*workspace.DataValues, []*w
 }
 
 func (s *DataValuesFlags) env(prefix string, valueFunc valueTransformFunc) ([]*workspace.DataValues, error) {
+	const (
+		envKeyPrefix = "_"
+		envMapKeySep = "__"
+	)
+
 	result := []*workspace.DataValues{}
 	envVars := os.Environ()
 
@@ -109,12 +119,12 @@ func (s *DataValuesFlags) env(prefix string, valueFunc valueTransformFunc) ([]*w
 	}
 
 	for _, envVar := range envVars {
-		pieces := strings.SplitN(envVar, "=", 2)
+		pieces := strings.SplitN(envVar, dvsKVSep, 2)
 		if len(pieces) != 2 {
 			return nil, fmt.Errorf("Expected env variable to be key-value pair (format: key=value)")
 		}
 
-		if !strings.HasPrefix(pieces[0], keyPrefix+"_") {
+		if !strings.HasPrefix(pieces[0], keyPrefix+envKeyPrefix) {
 			continue
 		}
 
@@ -124,7 +134,7 @@ func (s *DataValuesFlags) env(prefix string, valueFunc valueTransformFunc) ([]*w
 		}
 
 		// '__' gets translated into a '.' since periods may not be liked by shells
-		keyPieces := strings.Split(strings.TrimPrefix(pieces[0], keyPrefix+"_"), "__")
+		keyPieces := strings.Split(strings.TrimPrefix(pieces[0], keyPrefix+envKeyPrefix), envMapKeySep)
 		overlay := s.buildOverlay(keyPieces, val, "env var")
 
 		dvs, err := workspace.NewDataValuesWithOptionalLib(overlay, lib)
@@ -139,7 +149,7 @@ func (s *DataValuesFlags) env(prefix string, valueFunc valueTransformFunc) ([]*w
 }
 
 func (s *DataValuesFlags) kv(kv string, valueFunc valueTransformFunc) (*workspace.DataValues, error) {
-	pieces := strings.SplitN(kv, "=", 2)
+	pieces := strings.SplitN(kv, dvsKVSep, 2)
 	if len(pieces) != 2 {
 		return nil, fmt.Errorf("Expected format key=value")
 	}
@@ -154,7 +164,7 @@ func (s *DataValuesFlags) kv(kv string, valueFunc valueTransformFunc) (*workspac
 		return nil, err
 	}
 
-	overlay := s.buildOverlay(strings.Split(key, "."), val, "kv arg")
+	overlay := s.buildOverlay(strings.Split(key, dvsMapKeySep), val, "kv arg")
 
 	return workspace.NewDataValuesWithOptionalLib(overlay, lib)
 }
@@ -168,7 +178,7 @@ func (s *DataValuesFlags) parseYAML(data string, strict bool) (interface{}, erro
 }
 
 func (s *DataValuesFlags) file(kv string) (*workspace.DataValues, error) {
-	pieces := strings.SplitN(kv, "=", 2)
+	pieces := strings.SplitN(kv, dvsKVSep, 2)
 	if len(pieces) != 2 {
 		return nil, fmt.Errorf("Expected format key=/file/path")
 	}
@@ -183,13 +193,17 @@ func (s *DataValuesFlags) file(kv string) (*workspace.DataValues, error) {
 		return nil, err
 	}
 
-	overlay := s.buildOverlay(strings.Split(key, "."), string(contents), "key=file arg")
+	overlay := s.buildOverlay(strings.Split(key, dvsMapKeySep), string(contents), "key=file arg")
 
 	return workspace.NewDataValuesWithOptionalLib(overlay, lib)
 }
 
 func (DataValuesFlags) libraryPathAndKey(key string) (string, string, error) {
-	keyPieces := strings.Split(key, ":")
+	const (
+		libraryKeySep = ":"
+	)
+
+	keyPieces := strings.Split(key, libraryKeySep)
 
 	switch len(keyPieces) {
 	case 1:
@@ -202,7 +216,7 @@ func (DataValuesFlags) libraryPathAndKey(key string) (string, string, error) {
 		return keyPieces[0], keyPieces[1], nil
 
 	default:
-		return "", "", fmt.Errorf("Expected at most one library-key separator ':' in '%s'", key)
+		return "", "", fmt.Errorf("Expected at most one library-key separator '%s' in '%s'", libraryKeySep, key)
 	}
 }
 
@@ -216,7 +230,7 @@ func (s *DataValuesFlags) buildOverlay(keyPieces []string, value interface{}, de
 	var lastMapItem *yamlmeta.MapItem
 
 	pos := filepos.NewPosition(1)
-	pos.SetFile(fmt.Sprintf("key '%s' (%s)", strings.Join(keyPieces, "."), desc))
+	pos.SetFile(fmt.Sprintf("key '%s' (%s)", strings.Join(keyPieces, dvsMapKeySep), desc))
 
 	for _, piece := range keyPieces {
 		newMap := &yamlmeta.Map{}

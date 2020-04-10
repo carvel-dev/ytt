@@ -129,16 +129,21 @@ func parseDVAnnotations(doc *yamlmeta.Document) (bool, []LibPathPiece, bool, err
 }
 
 func parseLibPathStr(libPathStr string) ([]LibPathPiece, error) {
+	const (
+		librarySep    = "@"
+		libraryTagSep = "~"
+	)
+
 	if libPathStr == "" {
 		return nil, fmt.Errorf("Expected library name to not be empty")
 	}
-	if !strings.HasPrefix(libPathStr, "@") {
-		return nil, fmt.Errorf("Expected library name to start with '@'")
+	if !strings.HasPrefix(libPathStr, librarySep) {
+		return nil, fmt.Errorf("Expected library name to start with '%s'", librarySep)
 	}
 
 	var result []LibPathPiece
-	for _, libPathPiece := range strings.Split(libPathStr, "@")[1:] {
-		libAndTag := strings.SplitN(libPathPiece, "~", 2)
+	for _, libPathPiece := range strings.Split(libPathStr, librarySep)[1:] {
+		libAndTag := strings.SplitN(libPathPiece, libraryTagSep, 2)
 		piece := LibPathPiece{LibName: libAndTag[0]}
 		if len(libAndTag) == 2 {
 			if libAndTag[1] == "" {
