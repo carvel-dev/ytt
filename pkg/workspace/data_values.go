@@ -43,13 +43,22 @@ func NewDataValuesWithLib(doc *yamlmeta.Document, libStr string) (*DataValues, e
 	if err != nil {
 		return nil, err
 	}
+
 	hasLibAnn, _, afterLibMod, err := parseDVAnnotations(doc)
 	if err != nil {
 		return nil, err
 	} else if hasLibAnn {
 		panic(fmt.Sprintf("Library was provided as arg as well as with %s annotation", AnnotationLibraryName))
 	}
+
 	return &DataValues{doc, libPath, afterLibMod}, nil
+}
+
+func NewDataValuesWithOptionalLib(doc *yamlmeta.Document, libStr string) (*DataValues, error) {
+	if len(libStr) > 0 {
+		return NewDataValuesWithLib(doc, libStr)
+	}
+	return NewDataValues(doc)
 }
 
 func (dvd *DataValues) HasLib() bool { return len(dvd.libPath) > 0 }

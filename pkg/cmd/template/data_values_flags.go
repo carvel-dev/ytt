@@ -39,8 +39,10 @@ func (s *DataValuesFlags) Set(cmd *cobra.Command) {
 
 type dataValuesFlagsSource struct {
 	Values        []string
-	TransformFunc func(string) (interface{}, error)
+	TransformFunc valueTransformFunc
 }
+
+type valueTransformFunc func(string) (interface{}, error)
 
 func (s *DataValuesFlags) AsOverlays(strict bool) ([]*workspace.DataValues, []*workspace.DataValues, error) {
 	plainValFunc := func(rawVal string) (interface{}, error) { return rawVal, nil }
@@ -97,19 +99,19 @@ func (s *DataValuesFlags) AsOverlays(strict bool) ([]*workspace.DataValues, []*w
 	return overlayValues, libraryOverlays, nil
 }
 
-func (s *DataValuesFlags) env(prefix string, valueFunc func(string) (interface{}, error)) ([]*workspace.DataValues, error) {
+func (s *DataValuesFlags) env(prefix string, valueFunc valueTransformFunc) ([]*workspace.DataValues, error) {
 	result := []*workspace.DataValues{}
 	envVars := os.Environ()
+
+	lib, keyPrefix, err := s.libraryPathAndKey(prefix)
+	if err != nil {
+		return nil, err
+	}
 
 	for _, envVar := range envVars {
 		pieces := strings.SplitN(envVar, "=", 2)
 		if len(pieces) != 2 {
 			return nil, fmt.Errorf("Expected env variable to be key-value pair (format: key=value)")
-		}
-
-		lib, keyPrefix, hasLib, err := s.splitLibAndKey(prefix)
-		if err != nil {
-			return nil, err
 		}
 
 		if !strings.HasPrefix(pieces[0], keyPrefix+"_") {
@@ -125,23 +127,18 @@ func (s *DataValuesFlags) env(prefix string, valueFunc func(string) (interface{}
 		keyPieces := strings.Split(strings.TrimPrefix(pieces[0], keyPrefix+"_"), "__")
 		overlay := s.buildOverlay(keyPieces, val, "env var")
 
-		var overlayDataValues *workspace.DataValues
-		if hasLib {
-			overlayDataValues, err = workspace.NewDataValuesWithLib(overlay, lib)
-		} else {
-			overlayDataValues, err = workspace.NewDataValues(overlay)
-		}
+		dvs, err := workspace.NewDataValuesWithOptionalLib(overlay, lib)
 		if err != nil {
 			return nil, err
 		}
 
-		result = append(result, overlayDataValues)
+		result = append(result, dvs)
 	}
 
 	return result, nil
 }
 
-func (s *DataValuesFlags) kv(kv string, valueFunc func(string) (interface{}, error)) (*workspace.DataValues, error) {
+func (s *DataValuesFlags) kv(kv string, valueFunc valueTransformFunc) (*workspace.DataValues, error) {
 	pieces := strings.SplitN(kv, "=", 2)
 	if len(pieces) != 2 {
 		return nil, fmt.Errorf("Expected format key=value")
@@ -152,7 +149,14 @@ func (s *DataValuesFlags) kv(kv string, valueFunc func(string) (interface{}, err
 		return nil, fmt.Errorf("Deserializing value for key '%s': %s", pieces[0], err)
 	}
 
-	return s.createDataValues(pieces[0], val, "kv arg")
+	lib, key, err := s.libraryPathAndKey(pieces[0])
+	if err != nil {
+		return nil, err
+	}
+
+	overlay := s.buildOverlay(strings.Split(key, "."), val, "kv arg")
+
+	return workspace.NewDataValuesWithOptionalLib(overlay, lib)
 }
 
 func (s *DataValuesFlags) parseYAML(data string, strict bool) (interface{}, error) {
@@ -173,7 +177,33 @@ func (s *DataValuesFlags) file(kv string) (*workspace.DataValues, error) {
 	if err != nil {
 		return nil, fmt.Errorf("Reading file '%s'", pieces[1])
 	}
-	return s.createDataValues(pieces[0], string(contents), "key=file arg")
+
+	lib, key, err := s.libraryPathAndKey(pieces[0])
+	if err != nil {
+		return nil, err
+	}
+
+	overlay := s.buildOverlay(strings.Split(key, "."), string(contents), "key=file arg")
+
+	return workspace.NewDataValuesWithOptionalLib(overlay, lib)
+}
+
+func (DataValuesFlags) libraryPathAndKey(key string) (string, string, error) {
+	keyPieces := strings.Split(key, ":")
+
+	switch len(keyPieces) {
+	case 1:
+		return "", key, nil
+
+	case 2:
+		if len(keyPieces[0]) == 0 {
+			return "", "", fmt.Errorf("Expected library name to not be empty")
+		}
+		return keyPieces[0], keyPieces[1], nil
+
+	default:
+		return "", "", fmt.Errorf("Expected at most one library-key separator ':' in '%s'", key)
+	}
 }
 
 func (s *DataValuesFlags) buildOverlay(keyPieces []string, value interface{}, desc string) *yamlmeta.Document {
@@ -220,40 +250,4 @@ func (s *DataValuesFlags) buildOverlay(keyPieces []string, value interface{}, de
 	lastMapItem.SetAnnotations(existingAnns)
 
 	return &yamlmeta.Document{Value: resultMap, Position: pos}
-}
-
-func (s DataValuesFlags) createDataValues(keyStr string, val interface{}, descStr string) (*workspace.DataValues, error) {
-	lib, keyStr, hasLib, err := s.splitLibAndKey(keyStr)
-	if err != nil {
-		return nil, err
-	}
-	overlay := s.buildOverlay(strings.Split(keyStr, "."), val, descStr)
-
-	var overlayDataValues *workspace.DataValues
-	if hasLib {
-		overlayDataValues, err = workspace.NewDataValuesWithLib(overlay, lib)
-	} else {
-		overlayDataValues, err = workspace.NewDataValues(overlay)
-	}
-	if err != nil {
-		return nil, err
-	}
-
-	return overlayDataValues, nil
-}
-
-func (DataValuesFlags) splitLibAndKey(keyStr string) (string, string, bool, error) {
-	var lib string
-	keyLibSepCount := strings.Count(keyStr, ":")
-	if keyLibSepCount > 1 {
-		return "", "", false, fmt.Errorf("Expected only one key/library separator ':', got %d", keyLibSepCount)
-	}
-
-	hasLib := keyLibSepCount == 1
-	if hasLib {
-		keyParts := strings.Split(keyStr, ":")
-		lib = keyParts[0]
-		keyStr = keyParts[1]
-	}
-	return lib, keyStr, hasLib, nil
 }
