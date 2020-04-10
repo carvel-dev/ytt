@@ -1,3 +1,18 @@
+### ytt Library: Library annotations
+
+Available in v0.28.0+
+
+- `#@library/name`: Attaches a yaml document to the specified library to be used during evalutaion via the library module (only supported for [data value documents](./ytt-data-values.md#Defining\ data\ values))
+
+```yaml
+#@library/name "@app"
+#@data/values
+---
+name: "app1"
+```
+
+Note: data values may also be attached to libraries via [command line flags](./ytt-data-values.md#Overriding\ library\ data\ values\ via\ command\ line\ flags)
+
 ### ytt Library: Library module
 
 Library module `@ytt:library` provides a way to programmatically get result of templates included in a library. Libraries are found within `_ytt_lib` subdirectory.
@@ -41,6 +56,15 @@ env_vars:
 ```python
 url_func = app1_with_vals.export("url", path="config.lib.yml")
 ```
+
+Available in v0.28.0+
+
+- `x.data_values()` (`x`: library, returned: data values): returns the data values of the library instance.
+
+```python
+app_values = app1_with_vals.data_values()
+```
+
 
 #### Examples
 
