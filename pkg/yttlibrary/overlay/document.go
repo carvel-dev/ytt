@@ -20,6 +20,9 @@ func (o OverlayOp) mergeDocument(
 
 	leftIdxs, err := ann.IndexTuples(leftDocSets)
 	if err != nil {
+		if err, ok := err.(MatchAnnotationNumMatchError); ok && err.isConditional() {
+			return nil
+		}
 		return err
 	}
 
@@ -47,6 +50,9 @@ func (o OverlayOp) removeDocument(
 
 	leftIdxs, err := ann.IndexTuples(leftDocSets)
 	if err != nil {
+		if err, ok := err.(MatchAnnotationNumMatchError); ok && err.isConditional() {
+			return nil
+		}
 		return err
 	}
 
@@ -86,6 +92,9 @@ func (o OverlayOp) replaceDocument(
 
 	leftIdxs, err := ann.IndexTuples(leftDocSets)
 	if err != nil {
+		if err, ok := err.(MatchAnnotationNumMatchError); ok && err.isConditional() {
+			return nil
+		}
 		return err
 	}
 
@@ -113,6 +122,9 @@ func (o OverlayOp) insertDocument(
 
 	leftIdxs, err := ann.IndexTuples(leftDocSets)
 	if err != nil {
+		if err, ok := err.(MatchAnnotationNumMatchError); ok && err.isConditional() {
+			return nil
+		}
 		return err
 	}
 
@@ -179,6 +191,9 @@ func (o OverlayOp) assertDocument(
 
 	leftIdxs, err := ann.IndexTuples(leftDocSets)
 	if err != nil {
+		if err, ok := err.(MatchAnnotationNumMatchError); ok && err.isConditional() {
+			return nil
+		}
 		return err
 	}
 

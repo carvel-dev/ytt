@@ -19,6 +19,9 @@ func (o OverlayOp) mergeMapItem(leftMap *yamlmeta.Map, newItem *yamlmeta.MapItem
 
 	leftIdxs, err := ann.Indexes(leftMap)
 	if err != nil {
+		if err, ok := err.(MatchAnnotationNumMatchError); ok && err.isConditional() {
+			return nil
+		}
 		return err
 	}
 
@@ -51,6 +54,9 @@ func (o OverlayOp) removeMapItem(leftMap *yamlmeta.Map, newItem *yamlmeta.MapIte
 
 	leftIdxs, err := ann.Indexes(leftMap)
 	if err != nil {
+		if err, ok := err.(MatchAnnotationNumMatchError); ok && err.isConditional() {
+			return nil
+		}
 		return err
 	}
 
@@ -87,6 +93,9 @@ func (o OverlayOp) replaceMapItem(leftMap *yamlmeta.Map, newItem *yamlmeta.MapIt
 
 	leftIdxs, err := ann.Indexes(leftMap)
 	if err != nil {
+		if err, ok := err.(MatchAnnotationNumMatchError); ok && err.isConditional() {
+			return nil
+		}
 		return err
 	}
 
@@ -123,6 +132,9 @@ func (o OverlayOp) assertMapItem(leftMap *yamlmeta.Map, newItem *yamlmeta.MapIte
 
 	leftIdxs, err := ann.Indexes(leftMap)
 	if err != nil {
+		if err, ok := err.(MatchAnnotationNumMatchError); ok && err.isConditional() {
+			return nil
+		}
 		return err
 	}
 
