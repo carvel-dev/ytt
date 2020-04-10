@@ -131,9 +131,8 @@ func parseLibStr(libStr string) ([]LibPathPiece, error) {
 	if libStr == "" {
 		return nil, fmt.Errorf("Expected library name to not be empty")
 	}
-
 	if !strings.HasPrefix(libStr, "@") {
-		return nil, fmt.Errorf("Expected library string to being with '@'")
+		return nil, fmt.Errorf("Expected library name to start with '@'")
 	}
 
 	var result []LibPathPiece
