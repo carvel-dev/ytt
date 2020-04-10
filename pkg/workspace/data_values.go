@@ -12,8 +12,9 @@ import (
 
 type DataValues struct {
 	Doc         *yamlmeta.Document
-	libPath     []LibPathPiece
 	AfterLibMod bool
+
+	libPath []LibPathPiece
 }
 
 type LibPathPiece struct {
@@ -31,15 +32,15 @@ func NewDataValues(doc *yamlmeta.Document) (*DataValues, error) {
 		return nil, err
 	}
 
-	return &DataValues{doc, libPath, afterLibMod}, nil
+	return &DataValues{doc, afterLibMod, libPath}, nil
 }
 
 func NewEmptyDataValues() *DataValues {
-	return &DataValues{&yamlmeta.Document{}, nil, false}
+	return &DataValues{&yamlmeta.Document{}, false, nil}
 }
 
-func NewDataValuesWithLib(doc *yamlmeta.Document, libStr string) (*DataValues, error) {
-	libPath, err := parseLibStr(libStr)
+func NewDataValuesWithLib(doc *yamlmeta.Document, libPathStr string) (*DataValues, error) {
+	libPath, err := parseLibPathStr(libPathStr)
 	if err != nil {
 		return nil, err
 	}
@@ -51,12 +52,12 @@ func NewDataValuesWithLib(doc *yamlmeta.Document, libStr string) (*DataValues, e
 		panic(fmt.Sprintf("Library was provided as arg as well as with %s annotation", AnnotationLibraryName))
 	}
 
-	return &DataValues{doc, libPath, afterLibMod}, nil
+	return &DataValues{doc, afterLibMod, libPath}, nil
 }
 
-func NewDataValuesWithOptionalLib(doc *yamlmeta.Document, libStr string) (*DataValues, error) {
-	if len(libStr) > 0 {
-		return NewDataValuesWithLib(doc, libStr)
+func NewDataValuesWithOptionalLib(doc *yamlmeta.Document, libPathStr string) (*DataValues, error) {
+	if len(libPathStr) > 0 {
+		return NewDataValuesWithLib(doc, libPathStr)
 	}
 	return NewDataValues(doc)
 }
@@ -79,7 +80,7 @@ func (dvd *DataValues) PopLib() (string, string, bool, *DataValues) {
 func (dvd *DataValues) deepCopy() *DataValues {
 	var copiedPieces []LibPathPiece
 	copiedPieces = append(copiedPieces, dvd.libPath...)
-	return &DataValues{dvd.Doc.DeepCopy(), copiedPieces, dvd.AfterLibMod}
+	return &DataValues{dvd.Doc.DeepCopy(), dvd.AfterLibMod, copiedPieces}
 }
 
 func parseDVAnnotations(doc *yamlmeta.Document) (bool, []LibPathPiece, bool, error) {
@@ -99,7 +100,7 @@ func parseDVAnnotations(doc *yamlmeta.Document) (bool, []LibPathPiece, bool, err
 			return false, nil, false, err
 		}
 
-		libPath, err = parseLibStr(argString)
+		libPath, err = parseLibPathStr(argString)
 		if err != nil {
 			return false, nil, false, fmt.Errorf("Annotation %s: %s", AnnotationLibraryName, err.Error())
 		}
@@ -127,16 +128,16 @@ func parseDVAnnotations(doc *yamlmeta.Document) (bool, []LibPathPiece, bool, err
 	return hasLibAnn, libPath, afterLibMod, nil
 }
 
-func parseLibStr(libStr string) ([]LibPathPiece, error) {
-	if libStr == "" {
+func parseLibPathStr(libPathStr string) ([]LibPathPiece, error) {
+	if libPathStr == "" {
 		return nil, fmt.Errorf("Expected library name to not be empty")
 	}
-	if !strings.HasPrefix(libStr, "@") {
+	if !strings.HasPrefix(libPathStr, "@") {
 		return nil, fmt.Errorf("Expected library name to start with '@'")
 	}
 
 	var result []LibPathPiece
-	for _, libPathPiece := range strings.Split(libStr, "@")[1:] {
+	for _, libPathPiece := range strings.Split(libPathStr, "@")[1:] {
 		libAndTag := strings.SplitN(libPathPiece, "~", 2)
 		piece := LibPathPiece{LibName: libAndTag[0]}
 		if len(libAndTag) == 2 {
