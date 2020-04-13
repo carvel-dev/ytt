@@ -276,7 +276,6 @@ func (l *libraryValue) libraryValues(ll *LibraryLoader) (*DataValues, []*DataVal
 	for _, dv := range l.dataValuess {
 		matchingDVs := dv.UsedInLibrary(LibPathPiece{LibName: l.path, Tag: l.tag})
 		if matchingDVs != nil {
-			dv.MarkUsed()
 			if matchingDVs.HasLib() {
 				childDVss = append(childDVss, matchingDVs)
 			} else {

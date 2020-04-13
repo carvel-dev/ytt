@@ -69,8 +69,8 @@ func NewDataValuesWithOptionalLib(doc *yamlmeta.Document, libPathStr string) (*D
 	return NewDataValues(doc)
 }
 
-func (dvd *DataValues) MarkUsed()    { dvd.used = true }
 func (dvd *DataValues) IsUsed() bool { return dvd.used }
+func (dvd *DataValues) markUsed()    { dvd.used = true }
 
 func (dvd *DataValues) Desc() string {
 	var desc []string
@@ -85,11 +85,13 @@ func (dvd *DataValues) HasLib() bool { return len(dvd.libPath) > 0 }
 
 func (dvd *DataValues) UsedInLibrary(expectedPathPiece LibPathPiece) *DataValues {
 	if len(dvd.libPath) == 0 {
+		dvd.markUsed()
 		return dvd.deepCopy()
 	}
 	if expectedPathPiece != dvd.libPath[0] {
 		return nil
 	}
+	dvd.markUsed()
 	childDV := dvd.deepCopy()
 	childDV.libPath = dvd.libPath[1:]
 	return childDV
