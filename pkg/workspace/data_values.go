@@ -13,8 +13,10 @@ import (
 type DataValues struct {
 	Doc         *yamlmeta.Document
 	AfterLibMod bool
+	used        bool
 
-	libPath []LibPathPiece
+	originalLibPath []LibPathPiece
+	libPath         []LibPathPiece
 }
 
 type LibPathPiece struct {
@@ -32,11 +34,11 @@ func NewDataValues(doc *yamlmeta.Document) (*DataValues, error) {
 		return nil, err
 	}
 
-	return &DataValues{doc, afterLibMod, libPath}, nil
+	return &DataValues{Doc: doc, AfterLibMod: afterLibMod, libPath: libPath, originalLibPath: libPath}, nil
 }
 
 func NewEmptyDataValues() *DataValues {
-	return &DataValues{&yamlmeta.Document{}, false, nil}
+	return &DataValues{Doc: &yamlmeta.Document{}}
 }
 
 func NewDataValuesWithLib(doc *yamlmeta.Document, libPathStr string) (*DataValues, error) {
@@ -52,7 +54,7 @@ func NewDataValuesWithLib(doc *yamlmeta.Document, libPathStr string) (*DataValue
 		panic(fmt.Sprintf("Library was provided as arg as well as with %s annotation", AnnotationLibraryName))
 	}
 
-	return &DataValues{doc, afterLibMod, libPath}, nil
+	return &DataValues{Doc: doc, AfterLibMod: afterLibMod, libPath: libPath, originalLibPath: libPath}, nil
 }
 
 func NewDataValuesWithOptionalLib(doc *yamlmeta.Document, libPathStr string) (*DataValues, error) {
@@ -60,6 +62,21 @@ func NewDataValuesWithOptionalLib(doc *yamlmeta.Document, libPathStr string) (*D
 		return NewDataValuesWithLib(doc, libPathStr)
 	}
 	return NewDataValues(doc)
+}
+
+func (dvd *DataValues) MarkUsed()    { dvd.used = true }
+func (dvd *DataValues) IsUsed() bool { return dvd.used }
+
+func (dvd *DataValues) Desc() string {
+	var desc []string
+	for _, pathPiece := range dvd.originalLibPath {
+		libName := pathPiece.LibName
+		if pathPiece.Tag != "" {
+			libName = libName + "~" + pathPiece.Tag
+		}
+		desc = append(desc, libName)
+	}
+	return fmt.Sprintf("library '@%s' on %s", strings.Join(desc, "@"), dvd.Doc.Position.AsString())
 }
 
 func (dvd *DataValues) HasLib() bool { return len(dvd.libPath) > 0 }
@@ -80,7 +97,8 @@ func (dvd *DataValues) PopLib() (string, string, bool, *DataValues) {
 func (dvd *DataValues) deepCopy() *DataValues {
 	var copiedPieces []LibPathPiece
 	copiedPieces = append(copiedPieces, dvd.libPath...)
-	return &DataValues{dvd.Doc.DeepCopy(), dvd.AfterLibMod, copiedPieces}
+	return &DataValues{Doc: dvd.Doc.DeepCopy(), AfterLibMod: dvd.AfterLibMod,
+		libPath: copiedPieces, originalLibPath: dvd.originalLibPath}
 }
 
 func parseDVAnnotations(doc *yamlmeta.Document) (bool, []LibPathPiece, bool, error) {

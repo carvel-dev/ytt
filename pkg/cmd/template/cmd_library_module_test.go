@@ -1,6 +1,7 @@
 package template_test
 
 import (
+	"strings"
 	"testing"
 
 	cmdcore "github.com/k14s/ytt/pkg/cmd/core"
@@ -588,6 +589,110 @@ nested-lib: override-me
 	})
 
 	runAndCompare(t, filesToProcess, expectedYAMLTplData)
+}
+
+func TestUnusedLibraryDataValues(t *testing.T) {
+	configBytes := []byte(`
+#@ load("@ytt:template", "template")
+#@ load("@ytt:library", "library")
+#@ load("@ytt:data", "data")
+
+--- #@ template.replace(library.get("lib", tag="inst1").eval())`)
+
+	dataValueBytes := []byte(`
+#@library/name "@lib~inst1"
+#@data/values
+---
+lib_val1: val1
+
+#@library/name "@lib~inst2"
+#@data/values
+---
+lib_val2: val2`)
+
+	libDVBytes := []byte(`
+#@data/values
+---
+lib_val1: "library-defined"
+lib_val2: "library-defined"`)
+
+	libConfigBytes := []byte(`
+#@ load("@ytt:data", "data")
+
+lib_val1: #@ data.values.lib_val1
+lib_val2: #@ data.values.lib_val2`)
+
+	filesToProcess := files.NewSortedFiles([]*files.File{
+		files.MustNewFileFromSource(files.NewBytesSource("values.yml", dataValueBytes)),
+		files.MustNewFileFromSource(files.NewBytesSource("config.yml", configBytes)),
+		files.MustNewFileFromSource(files.NewBytesSource("_ytt_lib/lib/values.yml", libDVBytes)),
+		files.MustNewFileFromSource(files.NewBytesSource("_ytt_lib/lib/config.yml", libConfigBytes)),
+	})
+
+	ui := cmdcore.NewPlainUI(false)
+	opts := cmdtpl.NewOptions()
+
+	out := opts.RunWithFiles(cmdtpl.TemplateInput{Files: filesToProcess}, ui)
+	if out.Err == nil {
+		t.Fatalf("Expected RunWithFiles to error but it did not")
+	}
+
+	if out.Err.Error() != "Expected all provided library data values documents to be used "+
+		"but found unused: library '@lib~inst2' on line values.yml:9" {
+		t.Fatalf("Expected unused data values error but got '%s'", out.Err)
+	}
+}
+
+func TestUnusedLibraryDataValuesNested(t *testing.T) {
+	configBytes := []byte(`
+#@ load("@ytt:template", "template")
+#@ load("@ytt:library", "library")
+#@ load("@ytt:data", "data")
+
+--- #@ template.replace(library.get("with-nested-lib", tag="inst1").eval())`)
+
+	dataValueBytes := []byte(`
+#@library/name "@with-nested-lib~inst1@lib~inst2"
+#@data/values
+---
+nested_lib_val1: new-val1`)
+
+	withNestedLibTmplBytes := []byte(`
+#@ load("@ytt:library", "library")
+#@ load("@ytt:template", "template")
+
+--- #@ template.replace(library.get("lib", tag="inst1").eval())`)
+
+	nestedLibTmplBytes := []byte(`
+#@ load("@ytt:data", "data")
+
+nested-lib: #@ data.values.nested_lib_val1`)
+
+	nestedLibDVBytes := []byte(`
+#@data/values
+---
+nested_lib_val1: override-me`)
+
+	filesToProcess := files.NewSortedFiles([]*files.File{
+		files.MustNewFileFromSource(files.NewBytesSource("values.yml", dataValueBytes)),
+		files.MustNewFileFromSource(files.NewBytesSource("config.yml", configBytes)),
+		files.MustNewFileFromSource(files.NewBytesSource("_ytt_lib/with-nested-lib/config.yml", withNestedLibTmplBytes)),
+		files.MustNewFileFromSource(files.NewBytesSource("_ytt_lib/with-nested-lib/_ytt_lib/lib/values.yml", nestedLibDVBytes)),
+		files.MustNewFileFromSource(files.NewBytesSource("_ytt_lib/with-nested-lib/_ytt_lib/lib/config.yml", nestedLibTmplBytes)),
+	})
+
+	ui := cmdcore.NewPlainUI(false)
+	opts := cmdtpl.NewOptions()
+
+	out := opts.RunWithFiles(cmdtpl.TemplateInput{Files: filesToProcess}, ui)
+	if out.Err == nil {
+		t.Fatalf("Expected RunWithFiles to error but it did not")
+	}
+
+	if !strings.Contains(out.Err.Error(), "Expected all provided library data values documents to be used "+
+		"but found unused: library '@with-nested-lib~inst1@lib~inst2' on line values.yml:4") {
+		t.Fatalf("Expected unused data values error but got '%s'", out.Err)
+	}
 }
 
 func TestLibraryModuleDataValuesFunc(t *testing.T) {

@@ -109,6 +109,7 @@ func (l LibraryModule) getFilteredValues(values []*DataValues,
 	for _, doc := range values {
 		docLibName, docLibTag, finalPathPiece, updatedValues := doc.PopLib()
 		if docLibName == currentLibName && docLibTag == currentLibTag {
+			doc.MarkUsed()
 			if finalPathPiece {
 				if doc.AfterLibMod {
 					filteredValues.AfterLibMod = append(filteredValues.AfterLibMod, updatedValues)

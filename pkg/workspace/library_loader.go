@@ -2,6 +2,7 @@ package workspace
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/k14s/ytt/pkg/files"
 	"github.com/k14s/ytt/pkg/yamlmeta"
@@ -197,7 +198,7 @@ func (ll *LibraryLoader) eval(values *DataValues, libraryValues []*DataValues) (
 		}
 	}
 
-	return exports, docSets, outputFiles, nil
+	return exports, docSets, outputFiles, ll.checkUnusedDVs(libraryValues)
 }
 
 func (*LibraryLoader) sortedOutputDocSets(outputDocSets map[*FileInLibrary]*yamlmeta.DocumentSet) []*FileInLibrary {
@@ -207,4 +208,20 @@ func (*LibraryLoader) sortedOutputDocSets(outputDocSets map[*FileInLibrary]*yaml
 	}
 	SortFilesInLibrary(files)
 	return files
+}
+
+func (LibraryLoader) checkUnusedDVs(libraryValues []*DataValues) error {
+	var unusedValuesDescs []string
+	for _, dv := range libraryValues {
+		if !dv.IsUsed() {
+			unusedValuesDescs = append(unusedValuesDescs, dv.Desc())
+		}
+	}
+
+	if len(unusedValuesDescs) == 0 {
+		return nil
+	}
+
+	return fmt.Errorf("Expected all provided library data values documents "+
+		"to be used but found unused: %s", strings.Join(unusedValuesDescs, ", "))
 }
