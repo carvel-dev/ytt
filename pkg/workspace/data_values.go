@@ -81,17 +81,16 @@ func (dvd *DataValues) Desc() string {
 
 func (dvd *DataValues) HasLib() bool { return len(dvd.libPath) > 0 }
 
-func (dvd *DataValues) PopLib() (string, string, bool, *DataValues) {
+func (dvd *DataValues) UsedInLibrary(expectedPathPiece LibPathPiece) *DataValues {
 	if len(dvd.libPath) == 0 {
-		panic("DataValue was not used by specified library")
+		panic("DataValues: Expected at least one child")
 	}
-
-	updatedDV := dvd.deepCopy()
-	name := updatedDV.libPath[0].LibName
-	tag := updatedDV.libPath[0].Tag
-	final := len(updatedDV.libPath) == 1
-	updatedDV.libPath = dvd.libPath[1:]
-	return name, tag, final, updatedDV
+	if expectedPathPiece != dvd.libPath[0] {
+		return nil
+	}
+	childDV := dvd.deepCopy()
+	childDV.libPath = dvd.libPath[1:]
+	return childDV
 }
 
 func (dvd *DataValues) deepCopy() *DataValues {

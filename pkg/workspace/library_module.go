@@ -107,17 +107,17 @@ func (l LibraryModule) getFilteredValues(values []*DataValues,
 	var filteredValues filteredLibValues
 
 	for _, doc := range values {
-		docLibName, docLibTag, finalPathPiece, updatedValues := doc.PopLib()
-		if docLibName == currentLibName && docLibTag == currentLibTag {
+		childDVs := doc.UsedInLibrary(LibPathPiece{LibName: currentLibName, Tag: currentLibTag})
+		if childDVs != nil {
 			doc.MarkUsed()
-			if finalPathPiece {
-				if doc.AfterLibMod {
-					filteredValues.AfterLibMod = append(filteredValues.AfterLibMod, updatedValues)
-				} else {
-					filteredValues.Lib = append(filteredValues.Lib, updatedValues)
-				}
+			if childDVs.HasLib() {
+				filteredValues.ChildLib = append(filteredValues.ChildLib, childDVs)
 			} else {
-				filteredValues.ChildLib = append(filteredValues.ChildLib, updatedValues)
+				if childDVs.AfterLibMod {
+					filteredValues.AfterLibMod = append(filteredValues.AfterLibMod, childDVs)
+				} else {
+					filteredValues.Lib = append(filteredValues.Lib, childDVs)
+				}
 			}
 		}
 	}
