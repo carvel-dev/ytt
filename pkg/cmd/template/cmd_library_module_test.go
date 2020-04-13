@@ -695,6 +695,72 @@ nested_lib_val1: override-me`)
 	}
 }
 
+func TestUnusedLibraryDataValuesWithoutLibraryEvalChild(t *testing.T) {
+	configBytes := []byte(`
+#@ load("@ytt:library", "library")
+#@ library.get("with-nested-lib")`)
+
+	dataValueBytes := []byte(`
+#@library/name "@with-nested-lib@lib"
+#@data/values
+---
+nested_lib_val1: new-val1`)
+
+	withNestedLibTmplBytes := []byte(``)
+
+	filesToProcess := files.NewSortedFiles([]*files.File{
+		files.MustNewFileFromSource(files.NewBytesSource("values.yml", dataValueBytes)),
+		files.MustNewFileFromSource(files.NewBytesSource("config.yml", configBytes)),
+		files.MustNewFileFromSource(files.NewBytesSource("_ytt_lib/with-nested-lib/config.yml", withNestedLibTmplBytes)),
+	})
+
+	ui := cmdcore.NewPlainUI(false)
+	opts := cmdtpl.NewOptions()
+
+	out := opts.RunWithFiles(cmdtpl.TemplateInput{Files: filesToProcess}, ui)
+	if out.Err == nil {
+		t.Fatalf("Expected RunWithFiles to error but it did not")
+	}
+
+	if !strings.Contains(out.Err.Error(), "Expected all provided library data values documents to be used "+
+		"but found unused: library '@with-nested-lib@lib' on line values.yml:4") {
+		t.Fatalf("Expected unused data values error but got '%s'", out.Err)
+	}
+}
+
+func TestUnusedLibraryDataValuesNestedWithoutLibraryEval(t *testing.T) {
+	configBytes := []byte(`
+#@ load("@ytt:library", "library")
+#@ library.get("with-nested-lib")`)
+
+	dataValueBytes := []byte(`
+#@library/name "@with-nested-lib"
+#@data/values
+---
+nested_lib_val1: new-val1`)
+
+	withNestedLibTmplBytes := []byte(``)
+
+	filesToProcess := files.NewSortedFiles([]*files.File{
+		files.MustNewFileFromSource(files.NewBytesSource("values.yml", dataValueBytes)),
+		files.MustNewFileFromSource(files.NewBytesSource("config.yml", configBytes)),
+		files.MustNewFileFromSource(files.NewBytesSource("_ytt_lib/with-nested-lib/config.yml", withNestedLibTmplBytes)),
+	})
+
+	ui := cmdcore.NewPlainUI(false)
+	opts := cmdtpl.NewOptions()
+
+	out := opts.RunWithFiles(cmdtpl.TemplateInput{Files: filesToProcess}, ui)
+	if out.Err == nil {
+		t.Fatalf("Expected RunWithFiles to error but it did not")
+	}
+
+	if !strings.Contains(out.Err.Error(), "Expected all provided library data values documents to be used "+
+		"but found unused: library '@with-nested-lib' on line values.yml:4") {
+		t.Fatalf("Expected unused data values error but got '%s'", out.Err)
+	}
+}
+
 func TestLibraryModuleDataValuesFunc(t *testing.T) {
 	configBytes := []byte(`
 #@ load("@ytt:template", "template")

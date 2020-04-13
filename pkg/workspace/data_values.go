@@ -83,7 +83,7 @@ func (dvd *DataValues) HasLib() bool { return len(dvd.libPath) > 0 }
 
 func (dvd *DataValues) UsedInLibrary(expectedPathPiece LibPathPiece) *DataValues {
 	if len(dvd.libPath) == 0 {
-		panic("DataValues: Expected at least one child")
+		return dvd.deepCopy()
 	}
 	if expectedPathPiece != dvd.libPath[0] {
 		return nil

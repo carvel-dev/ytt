@@ -12,12 +12,6 @@ import (
 	"go.starlark.net/starlarkstruct"
 )
 
-type filteredLibValues struct {
-	Lib         []*DataValues
-	AfterLibMod []*DataValues
-	ChildLib    []*DataValues
-}
-
 type LibraryModule struct {
 	libraryCtx              LibraryExecutionContext
 	libraryExecutionFactory *LibraryExecutionFactory
@@ -69,14 +63,11 @@ func (l LibraryModule) Get(thread *starlark.Thread, f *starlark.Builtin,
 		return starlark.None, err
 	}
 
+	// copy over library values
+	dataValuess := append([]*DataValues{}, l.libraryValues...)
 	libraryCtx := LibraryExecutionContext{Current: foundLib, Root: foundLib}
 
-	filteredValues, err := l.getFilteredValues(l.libraryValues, libPath, libTag)
-	if err != nil {
-		return starlark.None, err
-	}
-
-	return (&libraryValue{libPath, libTag, libraryCtx, filteredValues, l.libraryExecutionFactory}).AsStarlarkValue(), nil
+	return (&libraryValue{libPath, libTag, dataValuess, libraryCtx, l.libraryExecutionFactory}).AsStarlarkValue(), nil
 }
 
 func (l LibraryModule) libTag(kwargs []starlark.Tuple) (string, error) {
@@ -101,41 +92,19 @@ func (l LibraryModule) libTag(kwargs []starlark.Tuple) (string, error) {
 	return "", nil
 }
 
-func (l LibraryModule) getFilteredValues(values []*DataValues,
-	currentLibName, currentLibTag string) (filteredLibValues, error) {
-
-	var filteredValues filteredLibValues
-
-	for _, doc := range values {
-		childDVs := doc.UsedInLibrary(LibPathPiece{LibName: currentLibName, Tag: currentLibTag})
-		if childDVs != nil {
-			doc.MarkUsed()
-			if childDVs.HasLib() {
-				filteredValues.ChildLib = append(filteredValues.ChildLib, childDVs)
-			} else {
-				if childDVs.AfterLibMod {
-					filteredValues.AfterLibMod = append(filteredValues.AfterLibMod, childDVs)
-				} else {
-					filteredValues.Lib = append(filteredValues.Lib, childDVs)
-				}
-			}
-		}
-	}
-
-	return filteredValues, nil
-}
-
 type libraryValue struct {
-	desc                    string // used in error messages
-	tag                     string
+	path        string
+	tag         string
+	dataValuess []*DataValues
+
 	libraryCtx              LibraryExecutionContext
-	filteredValues          filteredLibValues
 	libraryExecutionFactory *LibraryExecutionFactory
 }
 
 func (l *libraryValue) AsStarlarkValue() starlark.Value {
-	evalErrMsg := fmt.Sprintf("Evaluating library '%s'", l.desc)
-	exportErrMsg := fmt.Sprintf("Exporting from library '%s'", l.desc)
+	// TODO add tag into description
+	evalErrMsg := fmt.Sprintf("Evaluating library '%s'", l.path)
+	exportErrMsg := fmt.Sprintf("Exporting from library '%s'", l.path)
 
 	// TODO technically not a module; switch to struct?
 	return &starlarkstruct.Module{
@@ -158,8 +127,6 @@ func (l *libraryValue) WithDataValues(thread *starlark.Thread, f *starlark.Built
 
 	dataValues := core.NewStarlarkValue(args.Index(0)).AsGoValue()
 
-	libVal := &libraryValue{l.desc, l.tag, l.libraryCtx, l.filteredValues, l.libraryExecutionFactory}
-
 	valsYAML, err := NewDataValues(&yamlmeta.Document{
 		Value:    yamlmeta.NewASTFromInterface(dataValues),
 		Position: filepos.NewUnknownPosition(),
@@ -168,8 +135,11 @@ func (l *libraryValue) WithDataValues(thread *starlark.Thread, f *starlark.Built
 		return starlark.None, err
 	}
 
-	libVal.filteredValues.Lib = append([]*DataValues{}, l.filteredValues.Lib...)
-	libVal.filteredValues.Lib = append(libVal.filteredValues.Lib, valsYAML)
+	// copy over library values
+	newDataValuess := append([]*DataValues{}, l.dataValuess...)
+	newDataValuess = append(newDataValuess, valsYAML)
+
+	libVal := &libraryValue{l.path, l.tag, newDataValuess, l.libraryCtx, l.libraryExecutionFactory}
 
 	return libVal.AsStarlarkValue(), nil
 }
@@ -301,15 +271,32 @@ func (l *libraryValue) exportArgs(args starlark.Tuple, kwargs []starlark.Tuple) 
 }
 
 func (l *libraryValue) libraryValues(ll *LibraryLoader) (*DataValues, []*DataValues, error) {
-	values := append([]*DataValues{}, l.filteredValues.Lib...)
-	values = append(values, l.filteredValues.AfterLibMod...)
+	var dvss, afterLibModDVss, childDVss []*DataValues
 
-	finalValues, libValues, err := ll.Values(values)
+	for _, dv := range l.dataValuess {
+		matchingDVs := dv.UsedInLibrary(LibPathPiece{LibName: l.path, Tag: l.tag})
+		if matchingDVs != nil {
+			dv.MarkUsed()
+			if matchingDVs.HasLib() {
+				childDVss = append(childDVss, matchingDVs)
+			} else {
+				if matchingDVs.AfterLibMod {
+					afterLibModDVss = append(afterLibModDVss, matchingDVs)
+				} else {
+					dvss = append(dvss, matchingDVs)
+				}
+			}
+		}
+	}
+
+	dvs, foundChildDVss, err := ll.Values(append(dvss, afterLibModDVss...))
 	if err != nil {
 		return nil, nil, err
 	}
 
-	libValues = append(libValues, l.filteredValues.ChildLib...)
+	// Order data values specified in a parent library, on top of
+	// data values specified within a child library
+	foundChildDVss = append(foundChildDVss, childDVss...)
 
-	return finalValues, libValues, nil
+	return dvs, foundChildDVss, nil
 }
