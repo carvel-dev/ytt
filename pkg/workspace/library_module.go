@@ -102,9 +102,9 @@ type libraryValue struct {
 }
 
 func (l *libraryValue) AsStarlarkValue() starlark.Value {
-	// TODO add tag into description
-	evalErrMsg := fmt.Sprintf("Evaluating library '%s'", l.path)
-	exportErrMsg := fmt.Sprintf("Exporting from library '%s'", l.path)
+	desc := LibPathPiece{LibName: l.path, Tag: l.tag}.AsString()
+	evalErrMsg := fmt.Sprintf("Evaluating library '%s'", desc)
+	exportErrMsg := fmt.Sprintf("Exporting from library '%s'", desc)
 
 	// TODO technically not a module; switch to struct?
 	return &starlarkstruct.Module{

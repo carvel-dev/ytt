@@ -10,6 +10,11 @@ import (
 	"github.com/k14s/ytt/pkg/yttlibrary"
 )
 
+const (
+	dvsLibrarySep    = "@"
+	dvsLibraryTagSep = "~"
+)
+
 type DataValues struct {
 	Doc         *yamlmeta.Document
 	AfterLibMod bool
@@ -70,13 +75,10 @@ func (dvd *DataValues) IsUsed() bool { return dvd.used }
 func (dvd *DataValues) Desc() string {
 	var desc []string
 	for _, pathPiece := range dvd.originalLibPath {
-		libName := pathPiece.LibName
-		if pathPiece.Tag != "" {
-			libName = libName + "~" + pathPiece.Tag
-		}
-		desc = append(desc, libName)
+		desc = append(desc, pathPiece.AsString())
 	}
-	return fmt.Sprintf("library '@%s' on %s", strings.Join(desc, "@"), dvd.Doc.Position.AsString())
+	return fmt.Sprintf("library '%s%s' on %s", dvsLibrarySep,
+		strings.Join(desc, dvsLibrarySep), dvd.Doc.Position.AsString())
 }
 
 func (dvd *DataValues) HasLib() bool { return len(dvd.libPath) > 0 }
@@ -146,21 +148,16 @@ func parseDVAnnotations(doc *yamlmeta.Document) (bool, []LibPathPiece, bool, err
 }
 
 func parseLibPathStr(libPathStr string) ([]LibPathPiece, error) {
-	const (
-		librarySep    = "@"
-		libraryTagSep = "~"
-	)
-
 	if libPathStr == "" {
 		return nil, fmt.Errorf("Expected library name to not be empty")
 	}
-	if !strings.HasPrefix(libPathStr, librarySep) {
-		return nil, fmt.Errorf("Expected library name to start with '%s'", librarySep)
+	if !strings.HasPrefix(libPathStr, dvsLibrarySep) {
+		return nil, fmt.Errorf("Expected library name to start with '%s'", dvsLibrarySep)
 	}
 
 	var result []LibPathPiece
-	for _, libPathPiece := range strings.Split(libPathStr, librarySep)[1:] {
-		libAndTag := strings.SplitN(libPathPiece, libraryTagSep, 2)
+	for _, libPathPiece := range strings.Split(libPathStr, dvsLibrarySep)[1:] {
+		libAndTag := strings.SplitN(libPathPiece, dvsLibraryTagSep, 2)
 		piece := LibPathPiece{LibName: libAndTag[0]}
 		if len(libAndTag) == 2 {
 			if libAndTag[1] == "" {
@@ -172,4 +169,12 @@ func parseLibPathStr(libPathStr string) ([]LibPathPiece, error) {
 	}
 
 	return result, nil
+}
+
+func (p LibPathPiece) AsString() string {
+	desc := p.LibName
+	if p.Tag != "" {
+		desc = desc + dvsLibraryTagSep + p.Tag
+	}
+	return desc
 }
