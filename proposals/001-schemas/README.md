@@ -190,3 +190,4 @@ config.yml:
 ---
 foo: #@ yaml.encode(data.values) #! => {},  {"foo": {"username": "val", "max_connections":100}}
 ```
+
