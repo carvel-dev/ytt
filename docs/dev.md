@@ -49,3 +49,13 @@ For those interested in extending and improving `ytt`, below is a quick referenc
 `pkg/website` contains HTML/JS/CSS source for get-ytt.io. `./hack/build.sh` combines those assets into a single file `pkg/website/generated.go` (using ytt itself ;) ) before building final binary. `ytt website` command can serve website locally. `./hack/build.sh && ytt website` can be used for pretty quick local iteration.
 
 Ultimately `get-ytt.io` runs on AWS Lambda, hence is wrapped with Lambda specific library. See `cmd/ytt-lambda-website/main.go` for details.
+
+## Terminology
+
+- library path: string that describes location of a library under _ytt_lib in format "@lib1@nested-lib2". used in:
+  - `library.get("@...")`
+  - `load("@...")`
+- library ref: string that describes location of a library under _ytt_lib in format "@lib1@nested-lib2~foo". used in:
+  - `library/ref` annotation, e.g. `#@library/ref "@lib1@nested-lib2~foo"`
+  - data value flag, e.g. `-v @lib1~foo:key=value`
+- library alias: string that could be used to distinguish multiple instances of a library within a library
