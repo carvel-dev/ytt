@@ -84,7 +84,7 @@ third: #@ data.values.key3
 fifth: #@ data.values.key5
 ```
 
-Running `ytt -f .` (or `ytt -f config.yml -f values-default.yml -f values-produciton.yml`) results in:
+Running `ytt -f .` (or `ytt -f config.yml -f values-default.yml -f values-production.yml`) results in:
 
 ```yaml
 first: val1
