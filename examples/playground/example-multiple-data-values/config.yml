@@ -6,3 +6,4 @@
 #@ load("@ytt:data", "data")
 
 data: #@ data.values.keys
+domains: #@ data.values.names
