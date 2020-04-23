@@ -38,6 +38,30 @@ Files can be loaded from current or child directories. As of ytt v0.24.0, `/` pa
 
 Note that there is a distinction between using `load("@project:dir/helpers.lib.txt", "func1")` or `load("@project/dir:helpers.lib.txt", "func1")`, in that, `:` signifies what ytt considers a self-contained library (i.e. is `dir` simply a package in `project` or `project/dir` a standalone library). This allows files to load other files relative to the library root.
 
+To load a set of functions from a single file, you can create a `struct` that contains references to the functions. For example:
+`funcs.star`:
+```
+load("@ytt:struct", "struct")
+
+def testfunc():
+  return 123
+end
+
+def otherfunc():
+  return 456
+end
+
+mod = struct.make(testfunc=testfunc, otherfunc=otherfunc)
+```
+
+`config.yml`:
+```
+#@ load("funcs.star", "mod")
+
+result: #@ mod.testfunc()
+other_result: #@ mod.otherfunc()
+```
+
 #### _ytt_lib directory
 
 `_ytt_lib` directory allows to keep private dependencies from consumers of libraries.
