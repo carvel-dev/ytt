@@ -60,7 +60,7 @@ func (e *CompiledTemplate) CodeAtLine(pos *filepos.Position) *TemplateLine {
 func (e *CompiledTemplate) CodeAsString() string {
 	result := []string{}
 	for _, line := range e.code {
-		result = append(result, line.Instruction.AsString())
+		result = append(result, strings.TrimSpace(line.Instruction.AsString()))
 	}
 	// Do not add any unnecessary newlines to match code lines
 	return strings.Join(result, "\n")
