@@ -21,15 +21,10 @@ test3: #@ a+b+c
 #@   end
 #@ end
 
-#! trims space from multi-line strings
+#! preserves space within strings
 #@ a = "line1\n\
 #@    line2"
 test4: #@ a
-
-#! space preserved within line-continued strings
-#@ a = "line1\n" + \
-#@ "   line2"
-test5: #@ a
 
 +++
 
@@ -37,8 +32,5 @@ test1: 123
 test2: 223
 test3: 323
 test4: |-
-  line1
-  line2
-test5: |-
   line1
      line2
