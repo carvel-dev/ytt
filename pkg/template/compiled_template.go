@@ -2,13 +2,13 @@ package template
 
 import (
 	"fmt"
-	"strings"
-
 	"github.com/k14s/ytt/pkg/filepos"
 	tplcore "github.com/k14s/ytt/pkg/template/core"
 	"go.starlark.net/resolve"
 	"go.starlark.net/starlark"
 	"go.starlark.net/syntax"
+	"strings"
+	"unicode"
 )
 
 type EvaluationCtxDialectName string
@@ -63,7 +63,7 @@ func (e *CompiledTemplate) CodeAsString() string {
 	for _, line := range e.code {
 		src := line.Instruction.AsString()
 		if !cont {
-			src = strings.TrimSpace(src)
+			src = strings.TrimLeftFunc(src, unicode.IsSpace)
 		}
 		cont = strings.HasSuffix(src, "\\")
 		result = append(result, src)
