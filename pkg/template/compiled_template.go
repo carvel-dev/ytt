@@ -2,13 +2,13 @@ package template
 
 import (
 	"fmt"
-	"strings"
-
 	"github.com/k14s/ytt/pkg/filepos"
 	tplcore "github.com/k14s/ytt/pkg/template/core"
 	"go.starlark.net/resolve"
 	"go.starlark.net/starlark"
 	"go.starlark.net/syntax"
+	"strings"
+	"unicode"
 )
 
 type EvaluationCtxDialectName string
@@ -59,8 +59,14 @@ func (e *CompiledTemplate) CodeAtLine(pos *filepos.Position) *TemplateLine {
 
 func (e *CompiledTemplate) CodeAsString() string {
 	result := []string{}
+	cont := false
 	for _, line := range e.code {
-		result = append(result, line.Instruction.AsString())
+		src := line.Instruction.AsString()
+		if !cont {
+			src = strings.TrimLeftFunc(src, unicode.IsSpace)
+		}
+		cont = strings.HasSuffix(src, "\\")
+		result = append(result, src)
 	}
 	// Do not add any unnecessary newlines to match code lines
 	return strings.Join(result, "\n")

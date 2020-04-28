@@ -1,3 +1,4 @@
+#! blocks are determined by `:` and `end`, not whitespace
 #@ if True:
 #@ a = 123
 #@ else:
@@ -12,15 +13,24 @@ test1: #@ a
 #@    end
 test2: #@ a
 
+#@ for a in [3]:
+#@   for b in [20]:
+#@     for c in [300]:
+test3: #@ a+b+c
+#@     end
+#@   end
+#@ end
+
 #! preserves space within strings
 #@ a = "line1\n\
 #@    line2"
-test3: #@ a
+test4: #@ a
 
 +++
 
 test1: 123
 test2: 223
-test3: |-
+test3: 323
+test4: |-
   line1
      line2

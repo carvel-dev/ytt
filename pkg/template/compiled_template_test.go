@@ -37,6 +37,31 @@ a = hello()
 	}
 }
 
+func TestTemplateIgnoreIndentationExceptContinuedLines(t *testing.T) {
+	data := `
+		if True:
+	multiline = "[\
+   ]"
+		end
+`
+	instructions := template.NewInstructionSet()
+	compiledTemplate := template.NewCompiledTemplate(
+		"stdin", template.NewCodeFromBytes([]byte(data), instructions),
+		instructions, template.NewNodes(), template.EvaluationCtxDialects{})
+
+	loader := template.NewNoopCompiledTemplateLoader(compiledTemplate)
+	thread := &starlark.Thread{Name: "test", Load: loader.Load}
+
+	resultGlobals, _, err := compiledTemplate.Eval(thread, loader)
+	if err != nil {
+		t.Fatalf("Evaluating starlark template: %s", err)
+	}
+
+	if resultGlobals["multiline"] != starlark.String("[   ]") {
+		t.Fatalf("Expected multiline to contain the entire multiline string, but was \"%#v\"", resultGlobals["multiline"])
+	}
+}
+
 func TestLine1StarlarkError(t *testing.T) {
 	data := `badsyntax`
 	instructions := template.NewInstructionSet()
