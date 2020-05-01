@@ -48,7 +48,7 @@ func (l LibraryModule) Get(thread *starlark.Thread, f *starlark.Builtin,
 		return starlark.None, err
 	}
 
-	libTag, err := l.libTag(kwargs)
+	libAlias, err := l.libAlias(kwargs)
 	if err != nil {
 		return starlark.None, err
 	}
@@ -67,10 +67,10 @@ func (l LibraryModule) Get(thread *starlark.Thread, f *starlark.Builtin,
 	dataValuess := append([]*DataValues{}, l.libraryValues...)
 	libraryCtx := LibraryExecutionContext{Current: foundLib, Root: foundLib}
 
-	return (&libraryValue{libPath, libTag, dataValuess, libraryCtx, l.libraryExecutionFactory}).AsStarlarkValue(), nil
+	return (&libraryValue{libPath, libAlias, dataValuess, libraryCtx, l.libraryExecutionFactory}).AsStarlarkValue(), nil
 }
 
-func (l LibraryModule) libTag(kwargs []starlark.Tuple) (string, error) {
+func (l LibraryModule) libAlias(kwargs []starlark.Tuple) (string, error) {
 	for _, kwarg := range kwargs {
 		name, err := core.NewStarlarkValue(kwarg[0]).AsString()
 		if err != nil {
@@ -83,7 +83,7 @@ func (l LibraryModule) libTag(kwargs []starlark.Tuple) (string, error) {
 		}
 
 		switch name {
-		case "tag":
+		case "alias":
 			return val, nil
 		default:
 			return "", fmt.Errorf("Unexpected kwarg %s in library module get", name)
@@ -94,7 +94,7 @@ func (l LibraryModule) libTag(kwargs []starlark.Tuple) (string, error) {
 
 type libraryValue struct {
 	path        string
-	tag         string
+	alias       string
 	dataValuess []*DataValues
 
 	libraryCtx              LibraryExecutionContext
@@ -102,7 +102,7 @@ type libraryValue struct {
 }
 
 func (l *libraryValue) AsStarlarkValue() starlark.Value {
-	desc := LibPathPiece{LibName: l.path, Tag: l.tag}.AsString()
+	desc := LibRefPiece{Path: l.path, Alias: l.alias}.AsString()
 	evalErrMsg := fmt.Sprintf("Evaluating library '%s'", desc)
 	exportErrMsg := fmt.Sprintf("Exporting from library '%s'", desc)
 
@@ -139,7 +139,7 @@ func (l *libraryValue) WithDataValues(thread *starlark.Thread, f *starlark.Built
 	newDataValuess := append([]*DataValues{}, l.dataValuess...)
 	newDataValuess = append(newDataValuess, valsYAML)
 
-	libVal := &libraryValue{l.path, l.tag, newDataValuess, l.libraryCtx, l.libraryExecutionFactory}
+	libVal := &libraryValue{l.path, l.alias, newDataValuess, l.libraryCtx, l.libraryExecutionFactory}
 
 	return libVal.AsStarlarkValue(), nil
 }
@@ -272,9 +272,8 @@ func (l *libraryValue) exportArgs(args starlark.Tuple, kwargs []starlark.Tuple) 
 
 func (l *libraryValue) libraryValues(ll *LibraryLoader) (*DataValues, []*DataValues, error) {
 	var dvss, afterLibModDVss, childDVss []*DataValues
-
 	for _, dv := range l.dataValuess {
-		matchingDVs := dv.UsedInLibrary(LibPathPiece{LibName: l.path, Tag: l.tag})
+		matchingDVs := dv.UsedInLibrary(LibRefPiece{Path: l.path, Alias: l.alias})
 		if matchingDVs != nil {
 			if matchingDVs.HasLib() {
 				childDVss = append(childDVss, matchingDVs)

@@ -174,7 +174,7 @@ func TestDataValuesWithLibraryAttachedFlags(t *testing.T) {
 #@ load("@ytt:library", "library")
 #@ load("@ytt:template", "template")
 
---- #@ template.replace(library.get("lib", tag="inst1").eval())`)
+--- #@ template.replace(library.get("lib", alias="inst1").eval())`)
 
 	libTplBytes := []byte(`
 #@ load("@ytt:library", "library")
@@ -221,7 +221,7 @@ nested-lib-val: passes
 
 	opts.DataValuesFlags = cmdtpl.DataValuesFlags{
 		// TODO env and files?
-		KVsFromYAML: []string{"@lib~inst1:lib_val=test", "@lib~inst1@nested-lib:nested_lib_val=passes"},
+		KVsFromYAML: []string{"@~inst1:lib_val=test", "@~inst1@nested-lib:nested_lib_val=passes"},
 	}
 
 	out := opts.RunWithFiles(cmdtpl.TemplateInput{Files: filesToProcess}, ui)
