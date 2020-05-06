@@ -5,6 +5,7 @@ go 1.13
 require (
 	github.com/aws/aws-lambda-go v1.8.2
 	github.com/cppforlife/cobrautil v0.0.0-20180924214100-a39a1714c920
+	github.com/cppforlife/go-cli-ui v0.0.0-20200505234325-512793797f05
 	github.com/hashicorp/go-version v1.2.0
 	github.com/inconshreveable/mousetrap v1.0.0 // indirect
 	github.com/kr/pretty v0.1.0 // indirect
