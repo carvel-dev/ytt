@@ -7,7 +7,7 @@
 shared_conf: val
 #@ end
 
-#@ def add_shared_conf(old, new):
+#@ def add_shared_conf(old, _):
 #@   return yaml.encode(overlay.apply(yaml.decode(old), shared_conf()))
 #@ end
 
