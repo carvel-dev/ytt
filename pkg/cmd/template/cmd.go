@@ -51,6 +51,7 @@ func NewCmd(o *TemplateOptions) *cobra.Command {
 		Aliases: []string{"t", "tpl"},
 		Short:   "Process YAML templates (deprecated; use top-level command -- e.g. `ytt -f-` instead of `ytt template -f-`)",
 		RunE:    func(_ *cobra.Command, _ []string) error { return o.Run() },
+		Args:    cobra.NoArgs,
 	}
 	cmd.Flags().BoolVar(&o.IgnoreUnknownComments, "ignore-unknown-comments", false,
 		"Configure whether unknown comments are considered as errors (comments that do not start with '#@' or '#!')")
