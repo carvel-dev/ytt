@@ -1,0 +1,10 @@
+#@ load("@ytt:data", "data")
+#@ load("@ytt:template", "template")
+#@ load("@ytt:library", "library")
+
+#@ def custom_vals():
+image:
+  url: #@ "{}/{}/{}".format(data.values.image.hostname, data.values.image.username, data.values.image.repo)
+#@ end
+
+--- #@ template.replace(library.get("app1").with_data_values(custom_vals()).eval())

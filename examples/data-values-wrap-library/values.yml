@@ -1,0 +1,6 @@
+#@data/values
+---
+image:
+  hostname: "registry.com"
+  username: ""
+  repo: "repo"
