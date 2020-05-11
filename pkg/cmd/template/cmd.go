@@ -1,6 +1,7 @@
 package template
 
 import (
+	"fmt"
 	"time"
 
 	cmdcore "github.com/k14s/ytt/pkg/cmd/core"
@@ -50,8 +51,12 @@ func NewCmd(o *TemplateOptions) *cobra.Command {
 		Use:     "template",
 		Aliases: []string{"t", "tpl"},
 		Short:   "Process YAML templates (deprecated; use top-level command -- e.g. `ytt -f-` instead of `ytt template -f-`)",
-		RunE:    func(_ *cobra.Command, _ []string) error { return o.Run() },
-		Args:    cobra.NoArgs,
+		RunE: func(c *cobra.Command, args []string) error {
+			if len(args) > 0 {
+				return fmt.Errorf("command '%s' does not accept extra arguments '%s'", c.CommandPath(), args[0])
+			}
+			return o.Run()
+		},
 	}
 	cmd.Flags().BoolVar(&o.IgnoreUnknownComments, "ignore-unknown-comments", false,
 		"Configure whether unknown comments are considered as errors (comments that do not start with '#@' or '#!')")

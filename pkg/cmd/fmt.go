@@ -26,7 +26,6 @@ func NewFmtCmd(o *FmtOptions) *cobra.Command {
 		Use:   "fmt",
 		Short: "Format YAML templates",
 		RunE:  func(_ *cobra.Command, _ []string) error { return o.Run() },
-		Args:  cobra.NoArgs,
 	}
 	cmd.Flags().StringArrayVarP(&o.Files, "file", "f", nil, "File (ie local path, HTTP URL, -) (can be specified multiple times)")
 	cmd.Flags().BoolVarP(&o.StrictYAML, "strict", "s", false, "Configure to use _strict_ YAML subset")

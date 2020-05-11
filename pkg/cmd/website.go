@@ -29,7 +29,6 @@ func NewWebsiteCmd(o *WebsiteOptions) *cobra.Command {
 		Use:   "website",
 		Short: "Starts website HTTP server",
 		RunE:  func(_ *cobra.Command, _ []string) error { return o.Run() },
-		Args:  cobra.NoArgs,
 	}
 	cmd.Flags().StringVar(&o.ListenAddr, "listen-addr", "localhost:8080", "Listen address")
 	return cmd

@@ -18,7 +18,6 @@ func NewVersionCmd(o *VersionOptions) *cobra.Command {
 		Use:   "version",
 		Short: "Print version",
 		RunE:  func(_ *cobra.Command, _ []string) error { return o.Run() },
-		Args:  cobra.NoArgs,
 	}
 	return cmd
 }

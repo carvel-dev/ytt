@@ -62,7 +62,7 @@ func ReconfigureLeafCmd(cmd *cobra.Command) {
 		origRunE := cmd.RunE
 		cmd.RunE = func(cmd2 *cobra.Command, args []string) error {
 			if len(args) > 0 {
-				return fmt.Errorf("command '%s' does not accept extra arguments '%s'", args[0], cmd2.CommandPath())
+				return fmt.Errorf("command '%s' does not accept extra arguments '%s'", cmd2.CommandPath(), args[0])
 			}
 			return origRunE(cmd2, args)
 		}
