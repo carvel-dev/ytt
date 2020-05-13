@@ -1,0 +1,100 @@
+#@ load("@ytt:template", "template")
+#@ load("@ytt:overlay", "overlay")
+
+#! This set of tests show that values passed into overlay matcher
+#! are yamlfragments.
+
+#@ def test1_left():
+---
+metadata:
+  name: test1
+---
+metadata:
+  name: test1
+  other: key
+---
+metadata: {}
+#@ end
+
+---
+#@ def test1_right():
+#@overlay/match by=lambda a,b,c: ("name" in b["metadata"]) and (b["metadata"]["name"] == "test1"),expects=2
+---
+metadata:
+  #@overlay/match missing_ok=True
+  found: true
+#@ end
+
+---
+test1
+--- #@ template.replace(overlay.apply(test1_left(), test1_right()))
+
+---
+#@ def test2_left():
+- test2
+- test2
+- other
+#@ end
+
+#@ def test2_right():
+#@overlay/match by=lambda a,b,c: b == "test2",expects=2
+#@overlay/replace
+- test2 (found)
+#@ end
+
+---
+test2
+--- #@ overlay.apply(test2_left(), test2_right())
+
+---
+#@ def test3_left():
+key1:
+  name: test3
+key2:
+  name: test3
+key3:
+  other: key
+#@ end
+
+#@ def test3_right():
+#@overlay/match by=lambda a,b,c: ("name" in b) and (b["name"] == "test3"),expects=2
+_:
+  #@overlay/match missing_ok=True
+  found: true
+#@ end
+
+---
+test3
+--- #@ overlay.apply(test3_left(), test3_right())
+
++++
+
+test1
+---
+metadata:
+  name: test1
+  found: true
+---
+metadata:
+  name: test1
+  other: key
+  found: true
+---
+metadata: {}
+---
+test2
+---
+- test2 (found)
+- test2 (found)
+- other
+---
+test3
+---
+key1:
+  name: test3
+  found: true
+key2:
+  name: test3
+  found: true
+key3:
+  other: key
