@@ -93,9 +93,9 @@ func (a MapItemMatchAnnotation) MatchNodes(leftMap *yamlmeta.Map) ([]int, []*fil
 
 		for i, item := range leftMap.Items {
 			matcherArgs := starlark.Tuple{
-				yamltemplate.NewStarlarkFragment(item.Key),
-				yamltemplate.NewStarlarkFragment(item.Value),
-				yamltemplate.NewStarlarkFragment(a.newItem.Value),
+				yamltemplate.NewGoValueWithYAML(item.Key).AsStarlarkValue(),
+				yamltemplate.NewGoValueWithYAML(item.Value).AsStarlarkValue(),
+				yamltemplate.NewGoValueWithYAML(a.newItem.Value).AsStarlarkValue(),
 			}
 
 			// TODO check thread correctness
