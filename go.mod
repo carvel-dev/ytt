@@ -4,7 +4,7 @@ go 1.13
 
 require (
 	github.com/aws/aws-lambda-go v1.8.2
-	github.com/cppforlife/cobrautil v0.0.0-20200108171912-b289811fd2b9
+	github.com/cppforlife/cobrautil v0.0.0-20200514214827-bb86e6965d72
 	github.com/cppforlife/go-cli-ui v0.0.0-20200505234325-512793797f05
 	github.com/hashicorp/go-version v1.2.0
 	github.com/spf13/cobra v1.0.0

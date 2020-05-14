@@ -7,15 +7,35 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func VisitCommands(cmd *cobra.Command, f func(*cobra.Command)) {
-	f(cmd)
+type ReconfigureFunc func(cmd *cobra.Command)
+
+func VisitCommands(cmd *cobra.Command, fns ...ReconfigureFunc) {
+	for _, f := range fns {
+		f(cmd)
+	}
 	for _, child := range cmd.Commands() {
-		VisitCommands(child, f)
+		VisitCommands(child, fns...)
 	}
 }
 
-func WrapRunEForCmd(additionalRunE func(*cobra.Command, []string) error) func(cmd *cobra.Command) {
+func ReconfigureLeafCmds(fs ...func(cmd *cobra.Command)) ReconfigureFunc {
 	return func(cmd *cobra.Command) {
+		if len(cmd.Commands()) > 0 {
+			return
+		}
+
+		for _, f := range fs {
+			f(cmd)
+		}
+	}
+}
+
+func WrapRunEForCmd(additionalRunE func(*cobra.Command, []string) error) ReconfigureFunc {
+	return func(cmd *cobra.Command) {
+		if cmd.RunE == nil {
+			panic(fmt.Sprintf("Internal: Command '%s' does not set RunE", cmd.CommandPath()))
+		}
+
 		origRunE := cmd.RunE
 		cmd.RunE = func(cmd2 *cobra.Command, args []string) error {
 			err := additionalRunE(cmd2, args)
@@ -26,6 +46,8 @@ func WrapRunEForCmd(additionalRunE func(*cobra.Command, []string) error) func(cm
 		}
 	}
 }
+
+// ReconfigureFuncs
 
 func ReconfigureCmdWithSubcmd(cmd *cobra.Command) {
 	if len(cmd.Commands()) == 0 {
@@ -49,26 +71,17 @@ func ReconfigureCmdWithSubcmd(cmd *cobra.Command) {
 	cmd.Short += " (" + strings.Join(strs, ", ") + ")"
 }
 
-func ReconfigureLeafCmd(cmd *cobra.Command) {
-	if len(cmd.Commands()) > 0 {
-		return
-	}
-
-	if cmd.RunE == nil {
-		panic(fmt.Sprintf("Internal: Command '%s' does not set RunE", cmd.CommandPath()))
-	}
-
-	if cmd.Args == nil {
-		origRunE := cmd.RunE
-		cmd.RunE = func(cmd2 *cobra.Command, args []string) error {
-			if len(args) > 0 {
-				return fmt.Errorf("command '%s' does not accept extra arguments '%s'", cmd2.CommandPath(), args[0])
-			}
-			return origRunE(cmd2, args)
+func DisallowExtraArgs(cmd *cobra.Command) {
+	WrapRunEForCmd(func(cmd2 *cobra.Command, args []string) error {
+		if len(args) > 0 {
+			return fmt.Errorf("command '%s' does not accept extra arguments '%s'", cmd2.CommandPath(), args[0])
 		}
-		cmd.Args = cobra.ArbitraryArgs
-	}
+		return nil
+	})(cmd)
+	cmd.Args = cobra.ArbitraryArgs
 }
+
+// New RunE's
 
 func ShowSubcommands(cmd *cobra.Command, args []string) error {
 	var strs []string

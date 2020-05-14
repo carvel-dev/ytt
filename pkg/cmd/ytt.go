@@ -43,11 +43,9 @@ Docs for data values: https://github.com/k14s/ytt/blob/master/docs/ytt-data-valu
 	cmd.AddCommand(NewFmtCmd(NewFmtOptions()))
 	cmd.AddCommand(NewWebsiteCmd(NewWebsiteOptions()))
 
-	// Last one runs first
-	cobrautil.VisitCommands(cmd, cobrautil.ReconfigureCmdWithSubcmd)
-	cobrautil.VisitCommands(cmd, cobrautil.ReconfigureLeafCmd)
-
-	cobrautil.VisitCommands(cmd, cobrautil.WrapRunEForCmd(cobrautil.ResolveFlagsForCmd))
+	// Reconfigure Commands
+	cobrautil.VisitCommands(cmd, cobrautil.ReconfigureCmdWithSubcmd,
+		cobrautil.DisallowExtraArgs, cobrautil.WrapRunEForCmd(cobrautil.ResolveFlagsForCmd))
 
 	return cmd
 }
