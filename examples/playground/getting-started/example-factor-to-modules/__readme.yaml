@@ -1,0 +1,53 @@
+readme: |
+
+  =================
+  Factor to Modules
+  =================
+
+  Splitting our template resulted in code duplication.
+
+  In ytt, you can extract common code into "modules".
+  A "module" is a file with a `.lib.yaml` or `.star`
+  extension.
+
+  Templates are automatically loaded and executed.
+  Modules are not. Instead, you manually `load()` a module
+  into your templates.
+
+  We introduce two modules:
+  - `common.lib.yml` consists of both YAML and Starlark code.
+  - `consts.star` contains pure Starlark code.
+
+  We specify these files on the command-line (it's starting
+  to get crowded; we'll address that in the next example).
+
+  What functions are loaded from `common.lib.yml` in:
+  - `deployment.yml`?
+  - `service.yml`?
+  (yes, you must name each function you load from a module).
+
+  -----------------------
+  Solving Shalloway's Law
+  -----------------------
+
+  1. scenario: we bump a patch fix of Prometheus.
+    a) update the version to `v0.39.4`.
+    b) examine the output: did you miss any version
+       references?
+
+  2. scenario: we add another descriptor to our components.
+    a) add the label `app.kubernetes.io/part-of: prometheus`
+      to the metadata of all components (no need to select
+      based on that value)
+    b) examine the output: is it correct?
+      - the `metadata.labels` nodes in both the Deployment
+        and Service should now have four labels.
+      - the `selector` nodes should continue to have just
+        two labels.
+
+  ................
+  Thinking in ytt:
+
+  "Factor internal wiring into modules...
+
+            ...using data values exclusively for user input."

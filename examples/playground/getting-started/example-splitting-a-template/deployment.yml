@@ -1,0 +1,65 @@
+#@ load("@ytt:data", "data")
+
+#@ version = "v0.39.0"
+
+#@ def cpus(n):
+#@   return str(n)+"m"
+#@ end
+
+#@ def memorys(n):
+#@   return "{}Mi".format(n)
+#@ end
+
+#! request_50m_per_factor — generates a resources request
+#!   given a scaling factor such that the limits are twice
+#!   the initial request.
+#@ def request_50m_per_factor(factor):
+#@   initial = { "cpu": 50*factor, "memory": 50*factor }
+requests:
+  cpu: #@ cpus(initial["cpu"])
+  memory: #@ memorys(initial["memory"])
+limits:
+  cpu: #@ cpus(2*initial["cpu"])
+  memory: #@ memorys(2*initial["memory"])
+#@ end
+---
+
+#@ def labels(withVersion=False):
+  app.kubernetes.io/component: controller
+  app.kubernetes.io/name: #@ data.values.app_name
+  #@ if withVersion:
+  app.kubernetes.io/version: #@ version
+  #@ end
+#@ end
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    comment: "This deployment was lifted from\nthe prometheus K8s configuration.\nYou might notice that this line\nis supplied as a single string\nin the source, but a multi-line\nstring in the output."
+  labels: #@ labels(withVersion=True)
+  name: #@ data.values.app_name
+  namespace: default
+spec:
+  replicas: #@ data.values.scaling_factor // 2
+  selector:
+    matchLabels: #@ labels()
+  template:
+    metadata:
+      labels: #@ labels(withVersion=True)
+    spec:
+      containers:
+        - name: prometheus-operator
+          image: #@ "quay.io/coreos/prometheus-operator:" + version
+          args:
+            - --kubelet-service=kube-system/kubelet
+            - --logtostderr=true
+            - --config-reloader-image=jimmidyson/configmap-reload:v0.3.0
+            - #@ "--prometheus-config-reloader=quay.io/coreos/prometheus-config-reloader:" + version
+          ports: [{name: http, containerPort: 8080}]
+          resources: #@ request_50m_per_factor(data.values.scaling_factor)
+      securityContext:
+        runAsNonRoot: yes
+        runAsUser: 65534
+
+      

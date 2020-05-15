@@ -1,0 +1,6 @@
+cmd: |
+ This is what you would type on the command-line.
+
+ $ ytt -f config -f optional/append-https-port.yml
+
+

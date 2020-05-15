@@ -1,0 +1,62 @@
+readme: |
+
+  ==================
+  Modify Array Items
+  ==================
+
+  ytt's built-in matcher functions (e.g. `overlay.all`,
+  `overlay.map_key`, `overlay.subset`, ... ) cover many
+  overlay needs.
+
+  From time-to-time, you need custom matching behavior.
+
+  In ytt, you do this by writing a "custom matcher." We
+  introduced matcher functions in "Overlay map items."
+
+  As a Python dialect, Starlark has "lambda expressions":
+  functions as values. `overlay/match` and `overlay/replace`
+  also accept lambdas.
+
+  ------------------------
+  Concise Structural Edits
+  ------------------------
+
+  In Kubernetes, a "Deployment" is made up of a set of Unix
+  Containers. The contents of containers are captured in
+  archives known as "Images". Images are hosted in sites
+  known as "registries."
+
+  It's not uncommon for a company to "relocate" an image
+  from a public registry to a private one. One aspect of
+  relocation is editing the path in the URLs pointing to
+  those images.
+
+  `optional/relocate-images.yml` illustrates a part of a
+  low-tech way to relocate images.
+
+  Explore:
+  1. there are three document overlays. Take each in turn,
+     and summarize its edit in a sentence.
+
+  2. compare lines 24 and 36. Reconcile them.
+
+  3. focus in on our second overlay. In the `deployment.yml`
+     template, at line 34, the last array item in `arg` is a
+     Starlark expression.
+
+     How does `startswith` (line 37 in `relocate-images.yml`)
+     work if the start of the expression (`deployment.yml`
+     template, line 34) is `#@ "--prometheus`?
+
+  4. all three of these overlays match on the same document.
+     - verify this for yourself.
+     - combine them into one document overlay.
+     - what does merging these edits do to the readability
+       of the overlay?
+
+  ................
+  Thinking in ytt:
+
+  "A custom matcher becomes configurable...
+
+                           ...through the magic of currying."

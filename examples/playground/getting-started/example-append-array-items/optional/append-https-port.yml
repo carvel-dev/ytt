@@ -1,0 +1,24 @@
+#@ load("@ytt:overlay", "overlay")
+#@ load("/config/lib/consts.star", "deployment", "service")
+
+#@overlay/match by=overlay.subset({"kind": "Service", "metadata": {"name": service["name"]}})
+---
+spec:
+  ports:
+    #@overlay/append
+    - name: https
+      port: 30443
+      protocol: TCP
+      targetPort: 443
+
+#@overlay/match by=overlay.subset({"kind": "Deployment", "metadata": {"name": deployment["name"]}})
+---
+spec:
+  template:
+    spec:
+      containers:
+      #@overlay/match by=overlay.subset({"name": "prometheus-operator"})
+      - ports:
+        #@overlay/append
+        - name: https
+          containerPort: 443

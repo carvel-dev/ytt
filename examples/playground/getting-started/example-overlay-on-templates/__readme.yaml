@@ -1,0 +1,97 @@
+readme: |
+
+  Externalizing configuration bits into data values can
+  take you far. In fact, some systems like Helm offer
+  ONLY templating.
+
+  One consequence of that approach is the Configuration
+  Author must externalize EVERY configurable bit. The result
+  is a set of "values" that duplicates the underlying
+  configuration API that was being templated.
+
+  What if, instead, we only externalize data values that are
+  _likely_ to vary ... and encourage Configuration Consumers
+  to embrace the underlying configuration API?
+
+  =============================
+  Overlay on Existing Templates
+  =============================
+
+  Configuration Consumers would need to be able to write
+  edits against those configuration files — essentially
+  patching their desired configuration on top of a set of
+  defaults.
+
+  In ytt, we do this with overlays. An overlay is a YAML
+  Document that encodes a patch on other YAML Documents.
+
+  In our example, we: add `add-namespace.yml` in the `config`
+  directory and it gets included, automatically.
+
+  Updating our ytt flow from "Overlay Data Values":
+  ytt:
+  1) decodes your YAML files, each into a tree of YAML nodes;
+  2) primes the `@ytt:data` module with the first data values
+     file loaded;
+  3) overlays any additional data values files into
+     `@ytt:data`
+  4) "runs" templates by first `load()`ing the `@ytt:data`
+     module and then applying edits to its YAML nodes;
+  5) applies overlays — IN THE ORDER THEY WERE LOADED — on
+     the executed templates;
+  6) encodes the YAML nodes into YAML-formatted text output.
+
+  ---------------------
+  Narrating the Overlay
+  ---------------------
+
+  Let's interpret our overlay.
+
+  In Kubernetes, one can organize their configuration into
+  groups known as "Namespaces". It is common for a collection
+  of related configuration to be placed in the same
+  namespace. This is done by adding a key under `metadata`
+  called `namespace`.
+
+  `add-namespace.yml` can be read as...
+
+  | - from the set of documents yielded from the templates,
+  |   match all of them (I expect there to be one or more);
+  | - in those documents, locate the `metadata` map item.
+  |   (implied: and that item _must_ be present)
+  | - under there, set the map item `namespace` to have the
+  |   value `prometheus-system` (and if there is no
+  |   `namespace` map item, that's ok, just add it).
+
+  Does it work?
+
+  1. Examine `deployment.yml` and `service.yml`, what
+     namespace are they in?
+
+  2. Remove `#@overlay/match missing_ok=True`. That error
+     message reads:
+     "While overlaying on templates... (order of overlays)
+      ... in the document node starting on line 4
+        ... in the map item node on line 5 (i.e. `metadata`)
+          ... while matching the map item node on line 6
+              (i.e. `namespace`), we expected it to be in
+              a target document, but it was not."
+     (we're working to make these error messages more easily
+      read; see https://github.com/k14s/ytt/issues/95).
+
+     a) which "target document" does not have a `namespace`
+       map item under `metadata`?
+
+     b) what happens when you add it?
+
+  3. restore the `... missing_ok` annotation.
+     In `prod/values.yml` set a value for `ingress_path`.
+     Find `prod/ingress.yml` in the output; does it have the
+     `namespace` set?
+
+  ................
+  Thinking in ytt:
+
+  "If an aspect of configuration is invariant...
+
+                                ...capture it in an overlay."

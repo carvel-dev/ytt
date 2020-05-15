@@ -1,0 +1,63 @@
+readme: |
+
+  ======================
+  Extract YAML Fragments
+  ======================
+
+  The next natural step is to extract not just a value,
+  but a whole chunk of YAML — a YAML Fragment.
+
+  In ytt, we declare a function. Its body contains a YAML
+  fragment. We then set the value of a YAML node to
+  that function.
+
+  We have done that in `config.yml`:
+
+  1. `labels` is a function taking one parameter,
+     `withVersion` and implicitly returns the YAML fragment
+     it contains.
+  2. `app.kubernetes.io/version` is in the fragment only if
+      `withVersion` is `True`. (notice that the Starlark
+      boolean literal for truthy is capital-T, `True`).
+
+  ----------------------
+  It's Still "Just" YAML
+  ----------------------
+
+  It's natural to assume function blocks are isolated from
+  the content around them. This is not true.
+
+  See for yourself:
+  1. remove line 11. ytt reports it expected a "document
+     start" (i.e. `---`). What does a YAML "document start"
+     do?
+
+  2. outdent just the YAML lines of "labels()" to the first
+     column; the error message goes away. Why?
+
+  Likewise...
+  1. undo all prior changes
+
+  2. indent line 8 and digest that error message...
+
+     When compiling a template, ytt must determine the value
+     for each node: either a literal value or some Starlark
+     code that evaluates to a value. If both are present it
+     can't know which is the correct value.
+
+     With this indent, suddenly, `app.kubernetes.io/version`
+     becomes a child of `app.kubernetes.io/name`.
+
+     now, "app.kubernetes.io/name" has two values —
+     the Starlark expression `app_name` and a literal node:
+     `app.kubernetes.io/version`.
+
+  3. to further clarify, remove `#@ app_name` from line 6.
+     Note the shape of labels in the output.
+
+  ................
+  Thinking in ytt:
+
+  "ytt templates are YAML document sets...
+
+                  ...with Starlark expressions commented in."

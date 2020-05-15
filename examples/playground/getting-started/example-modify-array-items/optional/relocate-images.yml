@@ -1,0 +1,51 @@
+#@ load("@ytt:overlay", "overlay")
+#@ load("/config/lib/consts.star", "deployment")
+
+#@ def startswith(index, left, right):
+#@  return left.startswith(right)
+#@ end
+
+#@ def relocate(old, new):
+#@  return lambda left, right: left.replace(old, new)
+#@ end
+
+
+#@ external_registry = "quay.io/coreos"
+#@ internal_registry = "harbor.example.com/coreos"
+
+#@overlay/match by=overlay.subset({"kind": "Deployment", "metadata": {"name": deployment["name"]}})
+---
+spec:
+  template:
+    spec:
+      containers:
+      #@overlay/match by="name"
+      - name: prometheus-operator
+        #@overlay/replace via=relocate(external_registry, internal_registry)
+        image:
+
+#@overlay/match by=overlay.subset({"kind": "Deployment", "metadata": {"name": deployment["name"]}})
+---
+spec:
+  template:
+    spec:
+      containers:
+      #@overlay/match by="name"
+      - name: prometheus-operator
+        args:
+        #@overlay/replace via=lambda left, right: left.replace(external_registry, internal_registry)
+        #@overlay/match by=startswith
+        - "--prometheus-config-reloader"
+
+#@overlay/match by=overlay.subset({"kind": "Deployment", "metadata": {"name": deployment["name"]}})
+---
+spec:
+  template:
+    spec:
+      containers:
+      #@overlay/match by="name"
+      - name: prometheus-operator
+        args:
+        #@overlay/remove
+        #@overlay/match by=startswith
+        - "--logtostderr"

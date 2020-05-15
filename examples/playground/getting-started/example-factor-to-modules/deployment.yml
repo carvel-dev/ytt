@@ -1,0 +1,36 @@
+#@ load("@ytt:data", "data")
+#@ load("common.lib.yml", "labels", "request_50m_per_factor")
+#@ load("consts.star", "version")
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    comment: "This deployment was lifted from\nthe prometheus K8s configuration.\nYou might notice that this line\nis supplied as a single string\nin the source, but a multi-line\nstring in the output."
+  labels: #@ labels()
+  name: #@ data.values.app_name
+  namespace: default
+spec:
+  replicas: #@ data.values.scaling_factor // 2
+  selector:
+    matchLabels: #@ labels(forSelecting=True)
+  template:
+    metadata:
+      labels: #@ labels()
+    spec:
+      containers:
+        - name: prometheus-operator
+          image: #@ "quay.io/coreos/prometheus-operator:" + version
+          args:
+            - --kubelet-service=kube-system/kubelet
+            - --logtostderr=true
+            - --config-reloader-image=jimmidyson/configmap-reload:v0.3.0
+            - #@ "--prometheus-config-reloader=quay.io/coreos/prometheus-config-reloader:" + version
+          ports: [{name: http, containerPort: 8080}]
+          resources: #@ request_50m_per_factor(data.values.scaling_factor)
+      securityContext:
+        runAsNonRoot: yes
+        runAsUser: 65534
+
+      

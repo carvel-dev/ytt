@@ -1,0 +1,30 @@
+#@ load("@ytt:data", "data")
+
+#@ component = "controller"
+#@ version = "v0.39.1"
+
+#@ def labels():
+  app.kubernetes.io/component: #@ component
+  app.kubernetes.io/name: #@ data.values.app_name
+  app.kubernetes.io/version: #@ version
+#@ end
+
+#@ def selector_labels():
+  app.kubernetes.io/component: #@ component
+  app.kubernetes.io/name: #@ data.values.app_name
+#@ end
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels: #@ labels()
+  name: #@ "{}-service".format(data.values.app_name)
+spec:
+  type: ClusterIP
+  ports:
+    - name: http
+      port: 38080
+      protocol: TCP
+      targetPort: 8080
+  selector: #@ selector_labels()

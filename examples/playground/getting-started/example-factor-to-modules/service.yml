@@ -1,0 +1,17 @@
+#@ load("@ytt:data", "data")
+#@ load("common.lib.yml", labs="labels")
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels: #@ labs()
+  name: #@ "{}-service".format(data.values.app_name)
+spec:
+  type: ClusterIP
+  ports:
+    - name: http
+      port: 38080
+      protocol: TCP
+      targetPort: 8080
+  selector: #@ labs(forSelecting=True)

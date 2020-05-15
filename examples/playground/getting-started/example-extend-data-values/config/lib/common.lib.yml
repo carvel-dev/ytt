@@ -1,0 +1,32 @@
+#@ load("@ytt:data", "data")
+#@ load("consts.star", "version")
+
+#@ def cpus(n):
+#@   return str(n)+"m"
+#@ end
+
+#@ def memorys(n):
+#@   return "{}Mi".format(n)
+#@ end
+
+#! request_50m_per_factor — generates a resources request
+#!   given a scaling factor such that the limits are twice
+#!   the initial request.
+#@ def request_50m_per_factor(factor):
+#@   initial = { "cpu": 50*factor, "memory": 50*factor }
+requests:
+  cpu: #@ cpus(initial["cpu"])
+  memory: #@ memorys(initial["memory"])
+limits:
+  cpu: #@ cpus(2*initial["cpu"])
+  memory: #@ memorys(2*initial["memory"])
+#@ end
+---
+
+#@ def labels(forSelecting=False):
+  app.kubernetes.io/component: controller
+  app.kubernetes.io/name: #@ data.values.app_name
+  #@ if not forSelecting:
+  app.kubernetes.io/version: #@ version
+  #@ end
+#@ end

@@ -1,0 +1,78 @@
+readme: |
+
+  =====================
+  Extending Data Values
+  =====================
+
+  In our last example, we learned how to modify the value of
+  an existing data value. Sometimes, you need a new data
+  value in order to add more configuration.
+
+  `ytt` will report when a data value overlay includes an
+  item that is not already present. You can override this
+  behavior by telling `ytt` that you expect the data value to
+  be new.
+
+  In our example, we...
+  - add a new data value, `ingress_path`, defaulting it
+    to a falsy string value.
+  - annotate that data value, indicating that it is "ok"
+    if the data value is not already present (aka "missing").
+  - introduce our value in our new template —
+    `prod/ingress.yml`; adding the new ingress only if a
+    path was actually specified (i.e. a truthy string value).
+
+  Let's see this at play...
+  1. What happens when you specify an `ingress_path`?
+  2. What happens when you remove the `#@overlay/match`
+     annotation?
+
+  -----------
+  Annotations
+  -----------
+
+  In ytt, `#@` denotes an annotation on the YAML node just
+  below it.
+
+  A YAML parser interprets `#` as a comment, ignoring the
+  rest. The annotation comes alive when ytt "executes" the
+  file.
+
+  In most cases, we deliberately place an annotation on a
+  specific YAML node:
+
+  - `#@overlay/match missing_ok=True` is annotating
+    `ingress_path: ""`, informing the overlay mechanism that
+     this map item node's key is possibly not present in the
+     target map (i.e. the map in `config/values.yml`).
+
+  - back in `config/values.yml`, we annotated the Document
+    node starting on line 2 as a "data values" document.
+
+  - `#@ if/end data.values.ingress_path:` is annotating the
+    Document node starting on line 4.
+
+  Let's explore:
+
+  1. in `prod/values.yml` ensure `ingress_path` is an empty
+     string. `prod/ingress.yml` should be absent from the
+     output column.
+
+  2. in `prod/ingress.yml` move `#@ if/end ...` from line 3
+     to just below `kind: Ingress` and above `metadata:`.
+     What changes in the output?
+
+  3. in `prod/values.yml` remove the `#@data/values`. What
+     happened to the data values defined in that Document?
+
+     - reinforce this by removing the `#@ if/end` entirely
+       from `prod/ingress.yml` and replace the reference to
+       `data.values.ingress_path` with an empty string.
+       (see the new "template" appear in the output?)
+
+  ................
+  Thinking in ytt:
+
+      "Adding a data value...
+
+                       ...is extending the contract."

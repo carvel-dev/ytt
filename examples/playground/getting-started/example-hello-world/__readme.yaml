@@ -1,0 +1,56 @@
+readme: |
+
+  =============
+  Hello, World!
+  =============
+
+  Welcome to the ytt getting started tutorial.
+  
+  ytt is a general-purpose YAML and text templating tool.
+  
+  For our tutorial, we will use real-world examples
+  from a common use-case: managing Kubernetes configuration.
+  You need not know Kubernetes.
+  
+  The goal is to ease your learning ytt.
+
+  We will:
+  - introduce one concept at a time;
+  - share ways of "Thinking in ytt" so you can be more
+    productive;
+  - point out common gotchas and give insight designed to
+    unstick you.
+  
+  We recommend you:
+  - take your time. these examples are meant to be 
+    thought-provoking;
+  - go in sequence, each lesson builds from the last;
+  - poke, play, and break things; learn by doing.
+  
+  -----------------
+  YAML in, YAML out
+  -----------------
+
+  There is no ytt code in the YAML, below.
+  Yet... there are SIX (6) differences between the input
+  and the output. Can you spot them all?
+
+  With no logic in the template, why are there these
+  differences?
+
+  ytt:
+  1) compiles your YAML file into a tree of YAML nodes;
+  2) applies edits to those YAML nodes;
+  3) encodes those YAML nodes into YAML-formatted text
+     output.
+
+  No need to escape output, ytt does that for you.
+  No need to ensure well-formed output, ytt does that for
+  you.
+
+  ................
+  Thinking in ytt:
+
+          "build structures...
+
+                        ...don't template text."

@@ -1,0 +1,62 @@
+readme: |
+
+  ==========================
+  Externalize to Data Values
+  ==========================
+
+  So far, we have extracted common values to variables within
+  our template. But what about values that often vary?
+  What about values that we would like the person using our
+  templates to specify?
+
+  In ytt, we externalize those inputs into "data values".
+  We then reference those values in our templates.
+
+  You provide "data values" in a separate YAML file. That
+  file contains one YAML document annotated with
+  "#@data/values".
+
+  Updating the ytt flow from "Hello World",
+
+  ytt:
+  1) decodes your YAML files, each into a tree of YAML nodes;
+  2) primes the `@ytt:data` module with data from the data
+     values YAML;
+  3) "runs" the template by first `load()`ing the `@ytt:data`
+     module and then applying edits to its YAML nodes;
+  4) encodes the YAML nodes into YAML-formatted text output.
+
+  -----------------------------
+  Data Values are Shared Values
+  -----------------------------
+
+  In our example,
+  1. we add a new file `values.yml` (at the bottom)
+  2. our template now `load()`s the data values module into
+     the local variable `data`;
+  3. and references values through `data.values`
+  4. on the command-line we include `-f values.yml`
+
+  Prove to yourself that modifying a value in `values.yml`
+  changes the deployment.
+
+  ---------------------------------
+  Not all variables are Data Values
+  ---------------------------------
+
+  The observant learner might have noticed that `version`
+  did not become a Data Value. Why not?
+
+  - `app_name` is changed by the user for multiple instances
+  - `scaling_factor` is likely bigger in prod than local.
+
+  ... however ...
+
+  - "version" is a shared internal constant.
+
+  ................
+  Thinking in ytt:
+
+  "ytt templates are like a function...
+
+        ...for which data values are the varying parameters."

@@ -1,0 +1,14 @@
+#! #@ load("@ytt:overlay", "overlay")
+#! #@ load("/config/lib/common.lib.yml", "labels")
+#!
+#! #@overlay/match by=overlay.subset({"metadata": {"labels": labels()}}), expects=2
+#! ---
+#! metadata:
+#!   #@overlay/match missing_ok=True
+#!   annotations:
+#!     #@overlay/match missing_ok=True
+#!     "commit-sha": "814b438901f5324e03c7c7eebf97d049cd61677a"
+#!     #@overlay/match missing_ok=True
+#!     "build": "1204"
+#!     #@overlay/match missing_ok=True
+#!     "build-date": 2020-05-22@09:06:00

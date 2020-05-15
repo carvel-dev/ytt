@@ -1,0 +1,88 @@
+readme: |
+
+  ... we come to a turning point in our journey ...
+
+  Looking back, as "configuration authors" we have:
+
+  - made the configuration more maintinable by wiring
+    together common values into variables and functions;
+  - simplified configurability by externalizing user inputs
+    to data values;
+  - eased use and readability by choosing intention-
+    revealing names and organizing files into packages.
+
+  The time has come to swap hats.
+
+  As "configuration consumers", we'll want to:
+
+  - specify situation-specific inputs;
+  - make ad-hoc changes to any part of the configuration
+    without editing the source directly... and do so
+    confidently.
+
+  ======================
+  Overlaying Data Values
+  ======================
+
+  As a configuration consumer, we will know what settings
+  for data values are best for *our* situation.
+  We want to apply our values on top of the defaults.
+
+  In ytt, we add a "data value overlay" — a separate data
+  value file — with the updated values.
+
+  In our example, we: add `prod/values.yml` and include it on
+  the command-line.
+
+  Updating our ytt flow from "Externalize to Data Values":
+  ytt:
+  1) decodes your YAML files, each into a tree of YAML nodes;
+  2) primes the `@ytt:data` module with the first data values
+     file loaded;
+  3) overlays any additional data values files into
+     `@ytt:data` — IN THE ORDER THEY WERE LOADED;
+  4) "runs" templates by first `load()`ing the `@ytt:data`
+     module and then applying edits to its YAML nodes;
+  5) encodes the YAML nodes into YAML-formatted text output.
+
+  Observe the effect of the overlay:
+  1. what data values does `prod/values.yml` edit?
+  2. what affect does that edit have on the output?
+
+  --------------------------------
+  By Default, Keys Must be Present
+  --------------------------------
+
+  In an effort to catch typos, `ytt` will report when an
+  overlay includes a key that is not already present.
+
+  Add a new value to `prod/values.yml`:
+     ```
+     app_nmae: prometheus-operator-blue
+     ```
+
+  ytt error messages are information dense:
+
+  - lists the order in which data values are being applied;
+  - that in `prod/values.yml`, the problem is...
+    ...in the YAML Document starting on line 2
+       ...at the Map item named "app_nmae" on line 4
+  - where "app_nmae" was expected to be a node in the data
+    value YAML tree, already, but it wasn't.
+
+  Consider: what would have happened if ytt had — instead —
+  merged in the "new" key?
+
+  Let's correct it:
+  1. fix the typo;
+  2. what affect does this have on the output?
+
+  (what if you _do_ want to extend the "dictionary" of
+   Data Values? We'll cover that scenario, next...)
+
+  ................
+  Thinking in ytt:
+
+  "The first Data Values file...
+
+                        ...establishes a 'schema' of inputs."

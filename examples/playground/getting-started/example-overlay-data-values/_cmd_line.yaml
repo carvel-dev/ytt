@@ -1,0 +1,4 @@
+cmd: |
+ This is what you would type on the command-line.
+
+ $ ytt -f config -f prod

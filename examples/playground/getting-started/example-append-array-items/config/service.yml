@@ -1,0 +1,25 @@
+#@ load("@ytt:data", "data")
+#@ load("lib/consts.star", "version", "service", "deployment")
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app.kubernetes.io/component: controller
+    app.kubernetes.io/name: #@ data.values.app_name
+    app.kubernetes.io/version: #@ version
+  name: #@ service["name"]
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/component: controller
+    app.kubernetes.io/name: #@ data.values.app_name
+  ports:
+    - name: http
+      port: #@ service["port"]
+      protocol: TCP
+      targetPort: #@ deployment["containerPort"]
+    - name: https
+      port: 30443
+      targetPort: 443

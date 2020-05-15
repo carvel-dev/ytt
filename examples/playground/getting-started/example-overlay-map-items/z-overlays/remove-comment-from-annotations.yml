@@ -1,0 +1,15 @@
+#! #@ load("@ytt:overlay", "overlay")
+#!
+#! #@ def has_comments(index, left, right):
+#! #@   return ("metadata" in left) and \
+#! #@     ("annotations" in left["metadata"]) and \
+#! #@     ("comment" in left["metadata"]["annotations"])
+#! #@ end
+#!
+#! #@overlay/match by=overlay.all, expects="1+"
+#! ---
+#! #@overlay/match-child-defaults missing_ok=True
+#! metadata:
+#!   annotations:
+#!     #@overlay/remove
+#!     comment:

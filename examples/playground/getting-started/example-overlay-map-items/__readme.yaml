@@ -1,0 +1,122 @@
+readme: |
+
+  ====================
+  Overlaying Map Items
+  ====================
+
+  There are many kinds of edits that a Configuration Consumer
+  needs to be able to write.
+
+  In ytt, there is a rich set of "matchers" and "operations"
+  which can be combined in flexible ways to achieve nearly
+  any patch.
+
+  We refer to the document being edited as the "left" and the
+  overlay we are applying as the "right."
+
+  Step 1: Selecting Documents
+  The overlay begins with the `#@overlay/match`. If a
+  document meets the criteria, it becomes a "left."
+
+  Step 2: Path to the Node to Edit
+  The contents of the overlay (i.e. the "right") mimicks the
+  path in the "left" down to the node we wish to edit.
+
+  Step 3: Apply an Operation
+  On that node, we indicate what operation we want to
+  perform:
+
+  - `@overlay/merge` merges the contents of "right" with
+    that of "left", recursively.
+
+  - `@overlay/replace` replaces the value on "left",
+    with the value from "right"
+
+  - `@overlay/remove` deletes the node from "left."
+
+
+  -----------------------------------------------------------
+  ...YOU get a `missing_ok`, and YOU get a `missing_ok`, ...
+  -----------------------------------------------------------
+
+  `annotate-components.yml` illustrates a not-uncommon use-
+  case: adding multiple new map items.
+
+  Uncomment this overlay (i.e. remove the `#! `).
+
+  Pro-Tip: in the Playground editor, hold down "alt" and
+           drag-select with the mouse and hit "backspace".
+
+  Try:
+  0. see the re-use of `labels()` on line 4? Which documents
+     will this matcher select?
+
+  1. remove all of the `...missing_ok=True` annotations.
+     - What is causing the resulting error message?
+
+  2. annotate `metadata` with
+     `#@overlay/match-child-defaults missing_ok=True`.
+     - What does this annotation seem to do?
+
+  3. move the `match-child-defaults` to the `annotations`
+     node.
+     - What does that result tell you about how
+       `match-child-defaults` works?
+
+     - move `match-child-defaults` back on top of `metadata`.
+
+  4. specify a value for `ingress_path` (which includes the
+     `ingress.yml`. Does this file get the extra data? Why?
+
+
+  ---------------------
+  ...without a trace...
+  ---------------------
+
+  Uncomment `remove-comment-from-annotations.yml`.
+
+  Try:
+  0. Ignore `has_comments()` for now; we'll get to that.
+
+  1. If you haven't already, specify an `ingress_path` in
+     `prod/values.yml`.
+
+  2. Which documents will this matcher select?
+
+  3. Put to words what this overlay does.
+
+  4. Inspect each of the files in the output.
+     Notice anything fishy? (hint: `prod/ingress.yml`)
+
+  5. Instead of using the `overlay.all` matcher, use
+     `has_comments`:
+
+     ```
+     #@overlay/match by=has_comments, expects="1+"
+     ```
+
+     `has_comments()` is a "custom matcher." Matcher
+     functions take three arguments:
+
+     `index` — which position the "left" is in its set,
+               zero-based (e.g. first match has index = 0).
+     `left` — the candidate document as a YAML Fragment.
+              access children using `[...]` notation.
+     `right` — the body of the overlay as a YAML Fragment.
+
+     (`has_comments()` uses the `in` operator.
+      `"key" in frag` returns `True`, if `frag` has a direct
+      child named `key`.)
+
+     - which documents are selected now?
+
+     - that fishiness from before... what's happened now?
+       what do you think is going on?
+
+
+  ................
+  Thinking in ytt:
+
+  "Overlays select documents based *solely* on the matcher...
+
+            ...their annotated structure are just the edits."

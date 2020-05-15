@@ -1,0 +1,5 @@
+#! Ignore this file.
+
+#@overlay/match by=lambda i,l,r: ("readme" in l) or ("cmd" in l),expects=2
+#@overlay/remove
+---

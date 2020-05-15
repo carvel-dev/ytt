@@ -1,0 +1,62 @@
+readme: |
+
+  =====================
+  Appending Array Items
+  =====================
+
+  Map items are easy to match: if the key of the "left" and
+  the key of the "right" are equal, we can assume they
+  refer to the same item. Lemon squeezy, default behavior.
+
+  Array items don't have keys; they are referenced by index.
+  We can not assume two items at the same position in the
+  array refer to the same item.
+
+  In ytt, you must specify how to match array items. Do this
+  using the same `#@overlay/match by=...` annotation used on
+  documents.
+
+  So, all of these operations must be paired with a
+  `@overlay/match`:
+
+  - `@overlay/merge`
+  - `@overlay/replace`
+  - `@overlay/remove`
+  - `@overlay/insert`
+
+  The one exception is `@overlay/append` which ignores any
+  `@overlay/match` and always inserts after the last item.
+
+  ------------------------
+  Append vs. Ensure Exists
+  ------------------------
+
+  `append-https-port.yml` showcases how to add new array
+  items.
+
+  Explore:
+  1. Summarize what this overlay does in a sentence.
+
+  2. Examine the output of `config/service.yml`; what's
+     wrong there? (hint: ports must be unique)
+
+  3. Just above `#@overlay/append` _add_ the following:
+     ```
+     #@overlay/remove
+     #@overlay/match by="name", missing_ok=True
+     - name: https
+     ```
+
+     How does `config/service.yml` look?
+
+  4. Does the same possibility exist for the `Deployment`?
+
+
+  ................
+  Thinking in ytt:
+
+  "Overlays apply not to collections, but items:
+
+             not docsets, documents;
+                          not maps, map items;
+                                    not arrays, array items."

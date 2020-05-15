@@ -1,0 +1,82 @@
+readme: |
+
+  ====================================
+  Extract Common Values Into Variables
+  ====================================
+
+  Configuration writing is split into two roles:
+  - configuration authors, and
+  - configuration consumers.
+
+  We start with our "configuration author" hats on.
+
+  In this role, our objective is to wrangle these config
+  files so they have the following qualities:
+
+  1. maintainable — wired-up so that things that must change
+     together, do change together.
+  2. configurable — easily inject in situation-specific
+     values
+  3. readable — structured in ways that humans can read
+     easily
+
+  ...
+
+  Our first move for establishing maintainability is
+  extracting common values.
+
+  With ytt, do this by declaring a variable, then setting the
+  value of some YAML node to be that variable.
+
+  Study `config.yml`:
+
+  at the top — `#@` escapes into ytt's programming
+    language — Starlark. Starlark is a dialect of Python.
+    Here, we define two local variables, `app_name` and
+    `version`.
+    These variables are scoped to just this file.
+
+  within the YAML document - to set the value of a given
+    YAML node, start with `#@` followed by the Starlark code
+    resulting in the desired value
+
+  -----------------------------
+  YAML in, YAML out (part deux)
+  -----------------------------
+
+  Other templating tools would require you to escape
+  substituted values, least you generate invalid YAML.
+
+  Add a `'` at the start of `app_name`'s value.
+  How does ytt render that?
+
+
+  REMEMBER: ytt _always_ generates valid YAML.
+
+  ----------------
+  DRYing Templates
+  ----------------
+
+  Much of the point of extracting common values is to
+  avoid duplicate code aka the "DRY principle" (i.e. Do not
+  Repeat Yourself)
+
+  Notice that `spec.template.spec.containers.name` is also
+  `"prometheus-operator"`. yet we chose not set that value to
+  `app_name`. Why?
+
+  In Kubernetes, the name of the container is not required to
+  match any other value.
+
+  `metadata.name` and `spec.template.spec.containers.name`
+  may have the same value, but they have different meanings.
+
+  It's possible to DRY-up your code so much, it chaffes —
+  making natural change more painful than it need be.
+
+  ................
+  Thinking in ytt:
+
+  "Extract what *must* be the same...
+
+                  ...not what is *coincidentally* the same."

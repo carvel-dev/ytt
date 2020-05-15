@@ -64,11 +64,11 @@
           <h2>Basic Usage</h2>
           <pre class="terminal">
 <span class="gray"># Configurations picked up from a directory</span>
-$ <span class="green">ytt -f examples/playground/example-demo/</span> | kubectl apply -f-
+$ <span class="green">ytt -f examples/playground/ref/example-demo/</span> | kubectl apply -f-
 <span class="gray spacer-before"># Input customized on command line or file configuration</span>
-$ <span class="green">ytt -f examples/playground/example-demo/ --data-value-yaml service.enabled=false</span> | kapp -y deploy -a app1 -f-
+$ <span class="green">ytt -f examples/playground/ref/example-demo/ --data-value-yaml service.enabled=false</span> | kapp -y deploy -a app1 -f-
 <span class="gray spacer-before"># Output template results as json</span>
-$ <span class="green">ytt -f examples/playground/example-demo/ -o json</span>
+$ <span class="green">ytt -f examples/playground/ref/example-demo/ -o json</span>
 </pre>
         </div>
       </div>
@@ -78,9 +78,11 @@ $ <span class="green">ytt -f examples/playground/example-demo/ -o json</span>
       <div class="content">
         <div id="playground" style="display: none;">
           <div class="dropdown">
-            <h2>Interactive Playground <button class="button">▼ Examples</button></h2>
-            <ol class="dropdown-content"></ol>
-            <p>Edit files on the left, and see template results on the right.
+              <h2>Interactive Playground
+                <span class="button-container"></span>
+              </h2>
+              <div class="example-sets"></div>
+              <p>Edit files on the left, and see template results on the right.
               Alternatively, click through above examples to see different features.
               We do not store or use content entered into playground.</p>
             <form id="show-gist">
@@ -111,7 +113,7 @@ $ <span class="green">ytt -f examples/playground/example-demo/ -o json</span>
 
         <noscript>Page includes interactive editor with ability to render templates and see their results.</noscript>
 
-        <div id="footer">(c) 2019</div>
+        <div id="footer">(c) 2020</div>
       </div>
     </div>
   </body>

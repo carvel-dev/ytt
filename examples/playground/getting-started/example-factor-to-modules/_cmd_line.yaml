@@ -1,0 +1,6 @@
+cmd: |
+ This is what you would type on the command-line.
+
+ $ ytt -f deployment.yml -f service.yml \
+       -f common.lib.yml -f consts.lib.star \
+       -f values.yml

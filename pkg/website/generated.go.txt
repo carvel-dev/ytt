@@ -26,40 +26,66 @@ for file in data.list():
   end
 end
 
-examples = [
-  {"name": "example-plain-yaml"},
-  {"name": "example-datatypes"},
-  {"name": "example-variable"},
-  {"name": "example-if"},
-  {"name": "example-for"},
-  {"name": "example-function"},
-  {"name": "example-load"},
-  {"name": "example-load-ytt-library"},
-  {"name": "example-load-custom-library"},
-  {"name": "example-assert"},
-  {"name": "example-load-data-values"},
-  {"name": "example-load-data-files"},
-  {"name": "example-text-template"},
-  {"name": "example-replace"},
-  {"name": "example-overlay"},
-  {"name": "example-overlay-files"},
-  {"name": "example-multiple-data-values"},
-  {"name": "example-ytt-library-module"},
-  {"name": "example-k8s-ingress"},
-  {"name": "example-k8s-ingress-with-defs"},
-  {"name": "example-k8s-helm-ish"},
-  {"name": "example-demo"},
+exampleSets = [
+  { "id": "reference",
+    "description": "Specific topics, by example.",
+    "examples": [
+      {"id": "example-plain-yaml"},
+      {"id": "example-datatypes"},
+      {"id": "example-variable"},
+      {"id": "example-if"},
+      {"id": "example-for"},
+      {"id": "example-function"},
+      {"id": "example-load"},
+      {"id": "example-load-ytt-library"},
+      {"id": "example-load-custom-library"},
+      {"id": "example-assert"},
+      {"id": "example-load-data-values"},
+      {"id": "example-load-data-files"},
+      {"id": "example-text-template"},
+      {"id": "example-replace"},
+      {"id": "example-overlay"},
+      {"id": "example-overlay-files"},
+      {"id": "example-multiple-data-values"},
+      {"id": "example-ytt-library-module"},
+      {"id": "example-k8s-ingress"},
+      {"id": "example-k8s-ingress-with-defs"},
+      {"id": "example-k8s-helm-ish"},
+      {"id": "example-demo"},
+    ]
+  },
+  { "id": "getting-started",
+    "description": "Step-by-step tutorial on using ytt well.",
+    "examples": [
+      {"id": "example-hello-world"},
+      {"id": "example-extract-to-variables"},
+      {"id": "example-extract-yaml-fragments"},
+      {"id": "example-calc-in-functions"},
+      {"id": "example-externalize-data-values"},
+      {"id": "example-splitting-a-template"},
+      {"id": "example-factor-to-modules"},
+      {"id": "example-collect-to-packages"},
+      {"id": "example-overlay-data-values"},
+      {"id": "example-extend-data-values"},
+      {"id": "example-overlay-on-templates"},
+      {"id": "example-overlay-map-items"},
+      {"id": "example-append-array-items"},
+      {"id": "example-modify-array-items"},
+    ]
+  }
 ]
 
-for example in examples:
-  example["files"] = []
-  for file in exampleFiles:
-    if file.startswith(example["name"]+"/"):
-      example["files"].append(file)
+for group in exampleSets:
+  for example in group["examples"]:
+    example["files"] = []
+    for file in exampleFiles:
+      if file.startswith(example["id"]+"/"):
+        example["files"].append(file)
+      end
     end
-  end
-  if len(example["files"]) == 0:
-    assert.fail("expected to find at least one file for example "+example["name"])
+    if len(example["files"]) == 0:
+      assert.fail("expected to find at least one file for example "+example["id"])
+    end
   end
 end
 
@@ -67,13 +93,15 @@ unaccountedExampleFiles = []
 
 for file in exampleFiles:
   accounted = False
-  for example in examples:
-    for accountedFile in example["files"]:
-      if accountedFile == file:
-        accounted = True
-        break
+  for group in exampleSets:
+      for example in group["examples"]:
+        for accountedFile in example["files"]:
+          if accountedFile == file:
+            accounted = True
+            break
+          end
+        end
       end
-    end
   end
   if not accounted:
     unaccountedExampleFiles.append(file)
@@ -96,17 +124,26 @@ func init() {
 		(@ end @)
 	}
 
-  Examples = []Example{
-    (@ for example in examples: @)
-    {
-      ID: "(@= example["name"] @)",
-      DisplayName: "(@= example["name"].replace("example-", "").replace("-", " ").capitalize() @)",
-      Files: []File{
-        (@ for file in example["files"]: @)
-        (@ if file.endswith("README.md"): @)(@ continue @)(@ end @)
+  exampleSets = []exampleSet{
+    (@ for group in exampleSets: @)
+     {
+      ID: "(@= group["id"] @)",
+      DisplayName: "(@= group["id"].replace("-", " ").title() @)",
+      Description: "(@= group["description"] @)",
+      Examples: []Example{
+        (@ for example in group["examples"]: @)
         {
-          Name: "(@= file.replace(example["name"]+"/", "", 1).replace("_ytt_lib1", "_ytt_lib") @)",
-          Content: `(@= golang_escape_tick(data.read(file)) @)`,
+          ID: "(@= example["id"] @)",
+          DisplayName: "(@= example["id"].replace("example-", "").replace("-", " ").capitalize() @)",
+          Files: []File{
+            (@ for file in example["files"]: @)
+            (@ if file.endswith("README.md"): @)(@ continue @)(@ end @)
+            {
+              Name: "(@= file.replace(example["id"]+"/", "", 1).replace("_ytt_lib1", "_ytt_lib") @)",
+              Content: `(@= golang_escape_tick(data.read(file)) @)`,
+            },
+            (@ end @)
+          },
         },
         (@ end @)
       },

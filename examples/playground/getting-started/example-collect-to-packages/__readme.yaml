@@ -1,0 +1,31 @@
+readme: |
+
+  =============================
+  Collect Modules into Packages
+  =============================
+
+  Naming each and every file has started to get out of hand.
+
+  In ytt, you can specify a directory and it will scan that
+  directory (and sub-directories) for all files.
+
+  Our project now looks like this:
+
+  config
+  ├── common.lib.yml
+  ├── consts.star
+  ├── deployment.yml
+  ├── service.yml
+  └── values.yml
+
+  And our `ytt` command-line looks sane again.
+
+  We say `config` is a package containing two templates,
+  a data value file, and two modules.
+
+  ................
+  Thinking in ytt:
+
+  "Packages gather files that go together...
+
+                          ...and separate those that do not."

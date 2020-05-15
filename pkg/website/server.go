@@ -30,7 +30,7 @@ func (s *Server) Mux() *http.ServeMux {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", s.redirectToHTTPs(s.noCacheHandler(s.mainHandler)))
 	mux.HandleFunc("/js/", s.redirectToHTTPs(s.noCacheHandler(s.assetHandler)))
-	mux.HandleFunc("/examples", s.redirectToHTTPs(s.noCacheHandler(s.examplesListHandler)))
+	mux.HandleFunc("/examples", s.redirectToHTTPs(s.noCacheHandler(s.exampleSetsHandler)))
 	mux.HandleFunc("/examples/", s.redirectToHTTPs(s.noCacheHandler(s.examplesHandler)))
 	// no need for caching as it's a POST
 	mux.HandleFunc("/template", s.redirectToHTTPs(s.templateHandler))
@@ -62,17 +62,27 @@ func (s *Server) assetHandler(w http.ResponseWriter, r *http.Request) {
 	s.write(w, []byte(Files[strings.TrimPrefix(r.URL.Path, "/")].Content))
 }
 
-func (s *Server) examplesListHandler(w http.ResponseWriter, r *http.Request) {
-	examples := []Example{}
+func (s *Server) exampleSetsHandler(w http.ResponseWriter, r *http.Request) {
+	slimexampleSets := []exampleSet{}
 
-	for _, example := range Examples {
-		examples = append(examples, Example{
-			ID:          example.ID,
-			DisplayName: example.DisplayName,
+	for _, eg := range exampleSets {
+		examples := []Example{}
+		for _, example := range eg.Examples {
+			examples = append(examples, Example{
+				ID:          example.ID,
+				DisplayName: example.DisplayName,
+			})
+		}
+
+		slimexampleSets = append(slimexampleSets, exampleSet{
+			ID:          eg.ID,
+			DisplayName: eg.DisplayName,
+			Description: eg.Description,
+			Examples:    examples,
 		})
 	}
 
-	listBytes, err := json.Marshal(examples)
+	listBytes, err := json.Marshal(slimexampleSets)
 	if err != nil {
 		s.logError(w, err)
 		return
@@ -82,16 +92,18 @@ func (s *Server) examplesListHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) examplesHandler(w http.ResponseWriter, r *http.Request) {
-	for _, example := range Examples {
-		if example.ID == strings.TrimPrefix(r.URL.Path, "/examples/") {
-			exampleBytes, err := json.Marshal(example)
-			if err != nil {
-				s.logError(w, err)
+	for _, eg := range exampleSets {
+		for _, example := range eg.Examples {
+			if example.ID == strings.TrimPrefix(r.URL.Path, "/examples/") {
+				exampleBytes, err := json.Marshal(example)
+				if err != nil {
+					s.logError(w, err)
+					return
+				}
+
+				s.write(w, exampleBytes)
 				return
 			}
-
-			s.write(w, exampleBytes)
-			return
 		}
 	}
 

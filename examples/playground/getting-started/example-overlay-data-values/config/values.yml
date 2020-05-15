@@ -1,0 +1,4 @@
+#@data/values
+---
+app_name: "prometheus-operator"
+scaling_factor: 2

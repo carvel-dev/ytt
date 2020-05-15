@@ -1,0 +1,53 @@
+readme: |
+
+  ====================
+  Splitting a Template
+  ====================
+
+  One can include any number of YAML documents in a template.
+  However, after a while, these files can get unwieldy.
+
+  In ytt, you can split templates into multiple files.
+
+  We've done this in our example:
+  - on the command-line including the new file;
+  - within `service.yml` declaring local variables and
+    functions.
+
+  ---------------
+  Shalloway's Law
+  ---------------
+
+  Alan Shalloway observed,
+
+    "When N things need to change and N > 1,
+     Shalloway will find at most
+     N-1 of these things."
+
+  Can you see "Shalloway's Law" playing out in our example?
+  - we intend to use v0.39.0 of Prometheus, are all resources
+    configured correctly?
+  - each template has its own implementation of `labels()`,
+    how does this affect maintainability?
+
+  ----------------------------
+  Data Values as Shared Values
+  ----------------------------
+
+  By using the same mechanism (i.e. the `@ytt:data` module)
+  data values are easily shared across templates.
+
+  - change `app_name` in `values.yml` (add a suffix `-blue`).
+    How does this affect the "label" parts in both the
+    templates?
+
+  It might be tempting to use `data.values` as a one-stop
+  bucket of shared values. However, there is a better way
+  (we'll cover, next).
+
+  ................
+  Thinking in ytt:
+
+  "Each ytt template is its own module ...
+
+                         ... affected only by what it loads."

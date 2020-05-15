@@ -1,0 +1,62 @@
+readme: |
+
+  =================================
+  Capture Calculations In Functions
+  =================================
+
+  Functions in ytt can either explicitly return a value
+  or implicitly return a YAMLFragment.
+
+  In `deployment.yml`, below...
+
+  - `cpus()` and `memorys()` explicitly return resource
+    values with units.
+  - `request_50m_per_factor()` implicitly returns
+    a YAMLFragment that is the resource configuration.
+
+  ---------------------
+  Changing One Thing...
+  ---------------------
+
+  Note what happens when you change `scaling_factor` to 4.
+
+  In Kubernetes, `replicas` must be an integer...
+  - Change `scaling_factor` to 3.
+    - What happens to `replicas`?
+    - What happens to `resources`?
+  - How would you make `replicas` an integer (regardless of
+    the value of `scaling_factor`)?
+
+  -------------------------
+  Intention-Revealing Names
+  -------------------------
+
+  Naming is hard. When humans are reading the code, the time
+  you spend crafting words that convey intention pay off.
+
+  Consider `request_50m_per_factor`. Contrast that name with:
+  - `resources()`
+  - `requests_and_limits()`
+  - `generate_resource_request_and_limits_based_on_factor()`
+
+  The name we gave assumes the reader has _some_ familiarity
+  with the domain and describes what "novel" bit the function
+  brings.
+
+  Pro-Tip: look at a line the function is being invoked. Ask,
+    "How much can a reader familiar with the domain properly
+     infer about what the function does without reading its
+     definition?"
+    The answer shows how much intention has been revealed by
+    that name.
+
+  For those seeking extra credit, consider
+  `labels(withVersion)`. Could the parameter name be made
+  more intention revealing?
+
+  ................
+  Thinking in ytt:
+
+  "Optimize for the global maxima of reader comprehension...
+
+          ...over the local maxima of author 'productivity.'"

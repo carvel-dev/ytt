@@ -1,0 +1,5 @@
+#@overlay/match by=lambda i,l,r: ("readme" in l) or ("cmd" in l),expects=2
+---
+#@overlay/match by=lambda i,l,r: True
+#@overlay/replace via=lambda o,_: "\n".join(["" for l in o.split("\n")])
+_:
