@@ -22,9 +22,12 @@ type TemplateLoader struct {
 	libraryExecFactory *LibraryExecutionFactory
 }
 
+type ModuleLoader = func(thread *starlark.Thread, module string) (starlark.StringDict, error)
+
 type TemplateLoaderOpts struct {
 	IgnoreUnknownComments bool
 	StrictYAML            bool
+	Extender              func(load ModuleLoader) ModuleLoader
 }
 
 func NewTemplateLoader(values *DataValues, libraryValuess []*DataValues, ui files.UI, opts TemplateLoaderOpts,
@@ -293,7 +296,11 @@ func (l *TemplateLoader) setYTTLibrary(thread *starlark.Thread, yttLibrary yttli
 func (l *TemplateLoader) newThread(libraryCtx LibraryExecutionContext,
 	yttLibrary yttlibrary.API, file *files.File) *starlark.Thread {
 
-	thread := &starlark.Thread{Name: "template=" + file.RelativePath(), Load: l.Load}
+	load := l.Load
+	if l.opts.Extender != nil {
+		load = l.opts.Extender(load)
+	}
+	thread := &starlark.Thread{Name: "template=" + file.RelativePath(), Load: load}
 	l.setCurrentLibrary(thread, libraryCtx.Current)
 	l.setRootLibrary(thread, libraryCtx.Root)
 	l.setYTTLibrary(thread, yttLibrary)
