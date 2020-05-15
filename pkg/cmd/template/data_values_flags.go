@@ -119,7 +119,7 @@ func (s *DataValuesFlags) env(prefix string, valueFunc valueTransformFunc) ([]*w
 		envVars = s.EnvironFunc()
 	}
 
-	lib, keyPrefix, err := s.libraryPathAndKey(prefix)
+	libRef, keyPrefix, err := s.libraryRefAndKey(prefix)
 	if err != nil {
 		return nil, err
 	}
@@ -143,7 +143,7 @@ func (s *DataValuesFlags) env(prefix string, valueFunc valueTransformFunc) ([]*w
 		keyPieces := strings.Split(strings.TrimPrefix(pieces[0], keyPrefix+envKeyPrefix), envMapKeySep)
 		overlay := s.buildOverlay(keyPieces, val, "env var")
 
-		dvs, err := workspace.NewDataValuesWithOptionalLib(overlay, lib)
+		dvs, err := workspace.NewDataValuesWithOptionalLib(overlay, libRef)
 		if err != nil {
 			return nil, err
 		}
@@ -165,14 +165,14 @@ func (s *DataValuesFlags) kv(kv string, valueFunc valueTransformFunc) (*workspac
 		return nil, fmt.Errorf("Deserializing value for key '%s': %s", pieces[0], err)
 	}
 
-	lib, key, err := s.libraryPathAndKey(pieces[0])
+	libRef, key, err := s.libraryRefAndKey(pieces[0])
 	if err != nil {
 		return nil, err
 	}
 
 	overlay := s.buildOverlay(strings.Split(key, dvsMapKeySep), val, "kv arg")
 
-	return workspace.NewDataValuesWithOptionalLib(overlay, lib)
+	return workspace.NewDataValuesWithOptionalLib(overlay, libRef)
 }
 
 func (s *DataValuesFlags) parseYAML(data string, strict bool) (interface{}, error) {
@@ -194,17 +194,17 @@ func (s *DataValuesFlags) file(kv string) (*workspace.DataValues, error) {
 		return nil, fmt.Errorf("Reading file '%s'", pieces[1])
 	}
 
-	lib, key, err := s.libraryPathAndKey(pieces[0])
+	libRef, key, err := s.libraryRefAndKey(pieces[0])
 	if err != nil {
 		return nil, err
 	}
 
 	overlay := s.buildOverlay(strings.Split(key, dvsMapKeySep), string(contents), "key=file arg")
 
-	return workspace.NewDataValuesWithOptionalLib(overlay, lib)
+	return workspace.NewDataValuesWithOptionalLib(overlay, libRef)
 }
 
-func (DataValuesFlags) libraryPathAndKey(key string) (string, string, error) {
+func (DataValuesFlags) libraryRefAndKey(key string) (string, string, error) {
 	const (
 		libraryKeySep = ":"
 	)
@@ -217,7 +217,7 @@ func (DataValuesFlags) libraryPathAndKey(key string) (string, string, error) {
 
 	case 2:
 		if len(keyPieces[0]) == 0 {
-			return "", "", fmt.Errorf("Expected library name to not be empty")
+			return "", "", fmt.Errorf("Expected library ref to not be empty")
 		}
 		return keyPieces[0], keyPieces[1], nil
 

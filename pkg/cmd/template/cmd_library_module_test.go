@@ -393,95 +393,327 @@ lib: |
 	runAndCompare(t, filesToProcess, expectedYAMLTplData)
 }
 
-func TestLibraryAttachedDataValues(t *testing.T) {
-	configBytes := []byte(`
-#@ load("@ytt:template", "template")
+func TestLibDVsRefsWithPathNoAlias(t *testing.T) {
+	tmplBytes := []byte(`#@ load("@ytt:template", "template")
 #@ load("@ytt:library", "library")
 #@ load("@ytt:data", "data")
 
-curr: #@ data.values.current_val
---- #@ template.replace(library.get("lib").eval())`)
+top_level_value: #@ data.values.top_level_val
+--- #@ template.replace(library.get("lib1").eval())
+--- #@ template.replace(library.get("with-child-lib").eval())`)
 
-	dataValueBytes := []byte(`
+	dataValuesBytes := []byte(`#@data/values
+---
+top_level_val: top_level_value
+
+#@data/values
+#@library/ref "@lib1"
+---
+lib1_val2: lib_val_override
+
+#@data/values
+#@library/ref "@with-child-lib@child-lib"
+---
+child_val2: child_val_override`)
+
+	lib1TmplBytes := []byte(`#@ load("@ytt:data", "data")
+lib1_val1: #@ data.values.lib1_val1
+lib1_val2: #@ data.values.lib1_val2`)
+
+	lib1DataValuesBytes := []byte(`
 #@data/values
 ---
-current_val: val1
+lib1_val1: from_lib1_dvs
+lib1_val2: override_me`)
 
-#@library/name "@lib"
-#@data/values
----
-lib_val: val2
-
-#@library/name "@lib@github.com/dir/nested-lib"
-#@data/values
----
-nested_lib_val: nested_val2`)
-
-	libDVBytes := []byte(`
-#@data/values
----
-lib_val: val1`)
-
-	libConfigBytes := []byte(`
-#@ load("@ytt:template", "template")
+	libWithChildTmplBytes := []byte(`#@ load("@ytt:template", "template")
 #@ load("@ytt:library", "library")
-#@ load("@ytt:data", "data")
 
-lib_val: #@ data.values.lib_val
---- #@ template.replace(library.get("github.com/dir/nested-lib").eval())`)
+--- #@ template.replace(library.get("child-lib").eval())`)
 
-	nestedLibConfigBytes := []byte(`
-#@ load("@ytt:data", "data")
+	childLibTmplBytes := []byte(`#@ load("@ytt:data", "data")
+child_val1: #@ data.values.child_val1
+child_val2: #@ data.values.child_val2`)
 
-nested_lib_val: #@ data.values.nested_lib_val`)
-
-	nestedLibDVBytes := []byte(`
-#@data/values
+	childLibDataValuesBytes := []byte(`#@data/values
 ---
-nested_lib_val: nested_val1`)
-
-	expectedYAMLTplData := `curr: val1
----
-lib_val: val2
----
-nested_lib_val: nested_val2
-`
+child_val1: from_child_vals
+child_val2: override_me`)
 
 	filesToProcess := files.NewSortedFiles([]*files.File{
-		files.MustNewFileFromSource(files.NewBytesSource("values.yml", dataValueBytes)),
-		files.MustNewFileFromSource(files.NewBytesSource("config.yml", configBytes)),
-		files.MustNewFileFromSource(files.NewBytesSource("_ytt_lib/lib/values.yml", libDVBytes)),
-		files.MustNewFileFromSource(files.NewBytesSource("_ytt_lib/lib/config.yml", libConfigBytes)),
-		files.MustNewFileFromSource(files.NewBytesSource("_ytt_lib/lib/_ytt_lib/github.com/dir/nested-lib/values.yml", nestedLibDVBytes)),
-		files.MustNewFileFromSource(files.NewBytesSource("_ytt_lib/lib/_ytt_lib/github.com/dir/nested-lib/config.yml", nestedLibConfigBytes)),
+		files.MustNewFileFromSource(files.NewBytesSource("values.yml", dataValuesBytes)),
+		files.MustNewFileFromSource(files.NewBytesSource("config.yml", tmplBytes)),
+		files.MustNewFileFromSource(files.NewBytesSource("_ytt_lib/lib1/values.yml", lib1DataValuesBytes)),
+		files.MustNewFileFromSource(files.NewBytesSource("_ytt_lib/lib1/config.yml", lib1TmplBytes)),
+		files.MustNewFileFromSource(files.NewBytesSource("_ytt_lib/with-child-lib/config.yml", libWithChildTmplBytes)),
+		files.MustNewFileFromSource(files.NewBytesSource("_ytt_lib/with-child-lib/_ytt_lib/child-lib/values.yml", childLibDataValuesBytes)),
+		files.MustNewFileFromSource(files.NewBytesSource("_ytt_lib/with-child-lib/_ytt_lib/child-lib/config.yml", childLibTmplBytes)),
 	})
 
-	runAndCompare(t, filesToProcess, expectedYAMLTplData)
+	expectedYAML := `top_level_value: top_level_value
+---
+lib1_val1: from_lib1_dvs
+lib1_val2: lib_val_override
+---
+child_val1: from_child_vals
+child_val2: child_val_override
+`
+
+	runAndCompare(t, filesToProcess, expectedYAML)
+
 }
 
-func TestLibraryAfterLibModuleDataValues(t *testing.T) {
-	configBytes := []byte(`
+func TestLibDVsRefsWithAliasNoPath(t *testing.T) {
+	tmplBytes := []byte(`#@ load("@ytt:template", "template")
+#@ load("@ytt:library", "library")
+#@ load("@ytt:data", "data")
+
+top_level_value: #@ data.values.top_level_val
+--- #@ template.replace(library.get("lib1", alias="no-nesting").eval())
+--- #@ template.replace(library.get("with-child-lib", alias="nesting").eval())`)
+
+	dataValuesBytes := []byte(`#@data/values
+---
+top_level_val: top_level_value
+
+#@data/values
+#@library/ref "@~no-nesting"
+---
+lib1_val2: lib_val_override
+
+#@data/values
+#@library/ref "@~nesting@~child"
+---
+child_val2: child_val_override`)
+
+	lib1TmplBytes := []byte(`#@ load("@ytt:data", "data")
+lib1_val1: #@ data.values.lib1_val1
+lib1_val2: #@ data.values.lib1_val2`)
+
+	lib1DataValuesBytes := []byte(`#@data/values
+---
+lib1_val1: from_lib1_dvs
+lib1_val2: override_me`)
+
+	libWithChildTmplBytes := []byte(`#@ load("@ytt:template", "template")
+#@ load("@ytt:library", "library")
+
+--- #@ template.replace(library.get("child-lib", alias="child").eval())`)
+
+	childLibTmplBytes := []byte(`#@ load("@ytt:data", "data")
+child_val1: #@ data.values.child_val1
+child_val2: #@ data.values.child_val2`)
+
+	childLibDataValuesBytes := []byte(`#@data/values
+---
+child_val1: from_child_vals
+child_val2: override_me`)
+
+	filesToProcess := files.NewSortedFiles([]*files.File{
+		files.MustNewFileFromSource(files.NewBytesSource("values.yml", dataValuesBytes)),
+		files.MustNewFileFromSource(files.NewBytesSource("config.yml", tmplBytes)),
+		files.MustNewFileFromSource(files.NewBytesSource("_ytt_lib/lib1/values.yml", lib1DataValuesBytes)),
+		files.MustNewFileFromSource(files.NewBytesSource("_ytt_lib/lib1/config.yml", lib1TmplBytes)),
+		files.MustNewFileFromSource(files.NewBytesSource("_ytt_lib/with-child-lib/config.yml", libWithChildTmplBytes)),
+		files.MustNewFileFromSource(files.NewBytesSource("_ytt_lib/with-child-lib/_ytt_lib/child-lib/values.yml", childLibDataValuesBytes)),
+		files.MustNewFileFromSource(files.NewBytesSource("_ytt_lib/with-child-lib/_ytt_lib/child-lib/config.yml", childLibTmplBytes)),
+	})
+
+	expectedYAML := `top_level_value: top_level_value
+---
+lib1_val1: from_lib1_dvs
+lib1_val2: lib_val_override
+---
+child_val1: from_child_vals
+child_val2: child_val_override
+`
+
+	runAndCompare(t, filesToProcess, expectedYAML)
+}
+
+func TestLibDVsRefsWithPathAndAlias(t *testing.T) {
+	tmplBytes := []byte(`
 #@ load("@ytt:template", "template")
 #@ load("@ytt:library", "library")
 #@ load("@ytt:data", "data")
+
+top_level_value: #@ data.values.top_level_val
+--- #@ template.replace(library.get("lib1", alias="no-nesting").eval())
+--- #@ template.replace(library.get("with-child-lib", alias="nesting").eval())`)
+
+	dataValuesBytes := []byte(`#@data/values
+---
+top_level_val: top_level_value
+
+#@data/values
+#@library/ref "@lib1~no-nesting"
+---
+lib1_val2: lib_val_override
+
+#@data/values
+#@library/ref "@with-child-lib~nesting@child-lib~child"
+---
+child_val2: child_val_override
+`)
+
+	lib1TmplBytes := []byte(`
+#@ load("@ytt:data", "data")
+lib1_val1: #@ data.values.lib1_val1
+lib1_val2: #@ data.values.lib1_val2`)
+
+	lib1DataValuesBytes := []byte(`
+#@data/values
+---
+lib1_val1: from_lib1_dvs
+lib1_val2: override_me`)
+
+	libWithChildTmplBytes := []byte(`
+#@ load("@ytt:template", "template")
+#@ load("@ytt:library", "library")
+
+--- #@ template.replace(library.get("child-lib", alias="child").eval())`)
+
+	childLibTmplBytes := []byte(`
+#@ load("@ytt:data", "data")
+child_val1: #@ data.values.child_val1
+child_val2: #@ data.values.child_val2`)
+
+	childLibDataValuesBytes := []byte(`
+#@data/values
+---
+child_val1: from_child_vals
+child_val2: override_me`)
+
+	filesToProcess := files.NewSortedFiles([]*files.File{
+		files.MustNewFileFromSource(files.NewBytesSource("values.yml", dataValuesBytes)),
+		files.MustNewFileFromSource(files.NewBytesSource("config.yml", tmplBytes)),
+		files.MustNewFileFromSource(files.NewBytesSource("_ytt_lib/lib1/values.yml", lib1DataValuesBytes)),
+		files.MustNewFileFromSource(files.NewBytesSource("_ytt_lib/lib1/config.yml", lib1TmplBytes)),
+		files.MustNewFileFromSource(files.NewBytesSource("_ytt_lib/with-child-lib/config.yml", libWithChildTmplBytes)),
+		files.MustNewFileFromSource(files.NewBytesSource("_ytt_lib/with-child-lib/_ytt_lib/child-lib/values.yml", childLibDataValuesBytes)),
+		files.MustNewFileFromSource(files.NewBytesSource("_ytt_lib/with-child-lib/_ytt_lib/child-lib/config.yml", childLibTmplBytes)),
+	})
+
+	expectedYAML := `top_level_value: top_level_value
+---
+lib1_val1: from_lib1_dvs
+lib1_val2: lib_val_override
+---
+child_val1: from_child_vals
+child_val2: child_val_override
+`
+
+	runAndCompare(t, filesToProcess, expectedYAML)
+}
+
+func TestLibDVsParentAndGrandparentOrdering(t *testing.T) {
+	tmplBytes := []byte(`#@ load("@ytt:template", "template")
+#@ load("@ytt:library", "library")
+
+--- #@ template.replace(library.get("with-child-lib").eval())`)
+
+	dataValuesBytes := []byte(`#@data/values
+#@library/ref "@with-child-lib@child-lib"
+---
+child_val: grandparent_value`)
+
+	libWithChildTmplBytes := []byte(`#@ load("@ytt:template", "template")
+#@ load("@ytt:library", "library")
+
+--- #@ template.replace(library.get("child-lib").eval())`)
+
+	libWithChildDataValuesBytes := []byte(`#@data/values
+#@library/ref "@child-lib"
+---
+child_val: parent_value`)
+
+	childLibTmplBytes := []byte(`#@ load("@ytt:data", "data")
+child_val: #@ data.values.child_val`)
+
+	childLibDataValuesBytes := []byte(`#@data/values
+---
+child_val: child_val`)
+
+	filesToProcess := files.NewSortedFiles([]*files.File{
+		files.MustNewFileFromSource(files.NewBytesSource("values.yml", dataValuesBytes)),
+		files.MustNewFileFromSource(files.NewBytesSource("config.yml", tmplBytes)),
+		files.MustNewFileFromSource(files.NewBytesSource("_ytt_lib/with-child-lib/values.yml", libWithChildDataValuesBytes)),
+		files.MustNewFileFromSource(files.NewBytesSource("_ytt_lib/with-child-lib/config.yml", libWithChildTmplBytes)),
+		files.MustNewFileFromSource(files.NewBytesSource("_ytt_lib/with-child-lib/_ytt_lib/child-lib/values.yml", childLibDataValuesBytes)),
+		files.MustNewFileFromSource(files.NewBytesSource("_ytt_lib/with-child-lib/_ytt_lib/child-lib/config.yml", childLibTmplBytes)),
+	})
+
+	expectedYAML := `child_val: grandparent_value
+`
+
+	runAndCompare(t, filesToProcess, expectedYAML)
+
+}
+
+// Test one with a mix of all 3
+func TestLibDVsComboRefWithNesting(t *testing.T) {
+	tmplBytes := []byte(`#@ load("@ytt:template", "template")
+#@ load("@ytt:library", "library")
+
+--- #@ template.replace(library.get("with-child-lib").eval())`)
+
+	dataValuesBytes := []byte(`#@data/values
+#@library/ref "@with-child-lib@child-lib~child@~child-child"
+---
+child_child: great_grandparent_value`)
+
+	libWithChildTmplBytes := []byte(`#@ load("@ytt:template", "template")
+#@ load("@ytt:library", "library")
+
+--- #@ template.replace(library.get("child-lib", alias="child").eval())`)
+
+	childLibTmplBytes := []byte(`#@ load("@ytt:data", "data")
+#@ load("@ytt:template", "template")
+#@ load("@ytt:library", "library")
+
+--- #@ template.replace(library.get("child-child-lib", alias="child-child").eval())`)
+
+	childChildTmplBytes := []byte(`#@ load("@ytt:data", "data")
+child_child_val: #@ data.values.child_child`)
+
+	childChildDataValuesBytes := []byte(`#@data/values
+---
+child_child: override-me`)
+
+	filesToProcess := files.NewSortedFiles([]*files.File{
+		files.MustNewFileFromSource(files.NewBytesSource("values.yml", dataValuesBytes)),
+		files.MustNewFileFromSource(files.NewBytesSource("config.yml", tmplBytes)),
+		files.MustNewFileFromSource(files.NewBytesSource("_ytt_lib/with-child-lib/config.yml", libWithChildTmplBytes)),
+		files.MustNewFileFromSource(files.NewBytesSource("_ytt_lib/with-child-lib/_ytt_lib/child-lib/config.yml", childLibTmplBytes)),
+		files.MustNewFileFromSource(files.NewBytesSource("_ytt_lib/with-child-lib/_ytt_lib/child-lib/_ytt_lib/child-child-lib/values.yml", childChildDataValuesBytes)),
+		files.MustNewFileFromSource(files.NewBytesSource("_ytt_lib/with-child-lib/_ytt_lib/child-lib/_ytt_lib/child-child-lib/config.yml", childChildTmplBytes)),
+	})
+
+	expectedYAML := `child_child_val: great_grandparent_value
+`
+
+	runAndCompare(t, filesToProcess, expectedYAML)
+}
+
+func TestLibDVsAfterLibModule(t *testing.T) {
+	configBytes := []byte(`
+#@ load("@ytt:template", "template")
+#@ load("@ytt:library", "library")
 
 #@ def dv1():
 lib_val1: "foo"
-#@ end
-
-#@ def dv2():
 lib_val2: "bar"
 #@ end
 
---- #@ template.replace(library.get("lib").with_data_values(dv1()).with_data_values(dv2()).eval())`)
+--- #@ template.replace(library.get("lib").with_data_values(dv1()).eval())`)
 
 	dataValueBytes := []byte(`
-#@library/name "@lib"
+#@library/ref "@lib"
 #@data/values
 ---
 lib_val1: val1
 
-#@library/name "@lib"
+#@library/ref "@lib"
 #@data/values after_library_module=True
 ---
 lib_val2: val2`)
@@ -512,37 +744,34 @@ lib_val2: val2
 	runAndCompare(t, filesToProcess, expectedYAMLTplData)
 }
 
-func TestTaggedLibraryDataValues(t *testing.T) {
+// Test multiple .with_data_values calls -> ensure we dont make any lasting changes
+func TestLibDVsNoInstancePollution(t *testing.T) {
 	configBytes := []byte(`
 #@ load("@ytt:template", "template")
 #@ load("@ytt:library", "library")
-#@ load("@ytt:data", "data")
 
---- #@ template.replace(library.get("lib", tag="inst1").eval())
---- #@ template.replace(library.get("lib", tag="inst2").eval())
---- #@ template.replace(library.get("with-nested-lib", tag="inst1").eval())`)
+#@ def dv1():
+lib_val1: "foo"
+#@ end
+
+#@ def dv2():
+lib_val2: "bar"
+#@ end
+
+--- #@ template.replace(library.get("lib", alias="inst1").with_data_values(dv1()).with_data_values(dv2()).eval())
+`)
 
 	dataValueBytes := []byte(`
-#@library/name "@lib~inst1"
-#@data/values
+#@library/ref "@lib~inst1"
+#@data/values after_library_module=True
 ---
-lib_val1: val1
-
-#@library/name "@lib~inst2"
-#@data/values
----
-lib_val2: val2
-
-#@library/name "@with-nested-lib~inst1@lib~inst1"
-#@data/values
----
-nested_lib_val1: new-val1`)
+lib_val1: val1`)
 
 	libDVBytes := []byte(`
 #@data/values
 ---
-lib_val1: "library-defined"
-lib_val2: "library-defined"`)
+lib_val1: "unchanged1"
+lib_val2: "unchanged2"`)
 
 	libConfigBytes := []byte(`
 #@ load("@ytt:data", "data")
@@ -550,32 +779,8 @@ lib_val2: "library-defined"`)
 lib_val1: #@ data.values.lib_val1
 lib_val2: #@ data.values.lib_val2`)
 
-	withNestedLibTmplBytes := []byte(`
-#@ load("@ytt:library", "library")
-#@ load("@ytt:template", "template")
-
---- #@ template.replace(library.get("lib", tag="inst1").eval())
---- #@ template.replace(library.get("lib", tag="inst2").eval())`)
-
-	nestedLibTmplBytes := []byte(`
-#@ load("@ytt:data", "data")
-
-nested-lib: #@ data.values.nested_lib_val1`)
-
-	nestedLibDVBytes := []byte(`
-#@data/values
----
-nested_lib_val1: override-me`)
-
 	expectedYAMLTplData := `lib_val1: val1
-lib_val2: library-defined
----
-lib_val1: library-defined
-lib_val2: val2
----
-nested-lib: new-val1
----
-nested-lib: override-me
+lib_val2: bar
 `
 
 	filesToProcess := files.NewSortedFiles([]*files.File{
@@ -583,9 +788,6 @@ nested-lib: override-me
 		files.MustNewFileFromSource(files.NewBytesSource("config.yml", configBytes)),
 		files.MustNewFileFromSource(files.NewBytesSource("_ytt_lib/lib/values.yml", libDVBytes)),
 		files.MustNewFileFromSource(files.NewBytesSource("_ytt_lib/lib/config.yml", libConfigBytes)),
-		files.MustNewFileFromSource(files.NewBytesSource("_ytt_lib/with-nested-lib/config.yml", withNestedLibTmplBytes)),
-		files.MustNewFileFromSource(files.NewBytesSource("_ytt_lib/with-nested-lib/_ytt_lib/lib/values.yml", nestedLibDVBytes)),
-		files.MustNewFileFromSource(files.NewBytesSource("_ytt_lib/with-nested-lib/_ytt_lib/lib/config.yml", nestedLibTmplBytes)),
 	})
 
 	runAndCompare(t, filesToProcess, expectedYAMLTplData)
@@ -597,15 +799,15 @@ func TestUnusedLibraryDataValues(t *testing.T) {
 #@ load("@ytt:library", "library")
 #@ load("@ytt:data", "data")
 
---- #@ template.replace(library.get("lib", tag="inst1").eval())`)
+--- #@ template.replace(library.get("lib", alias="inst1").eval())`)
 
 	dataValueBytes := []byte(`
-#@library/name "@lib~inst1"
+#@library/ref "@~inst1"
 #@data/values
 ---
 lib_val1: val1
 
-#@library/name "@lib~inst2"
+#@library/ref "@~inst2"
 #@data/values
 ---
 lib_val2: val2`)
@@ -638,7 +840,7 @@ lib_val2: #@ data.values.lib_val2`)
 	}
 
 	if out.Err.Error() != "Expected all provided library data values documents to be used "+
-		"but found unused: library '@lib~inst2' on line values.yml:9" {
+		"but found unused: library '@~inst2' on line values.yml:9" {
 		t.Fatalf("Expected unused data values error but got '%s'", out.Err)
 	}
 }
@@ -649,10 +851,10 @@ func TestUnusedLibraryDataValuesNested(t *testing.T) {
 #@ load("@ytt:library", "library")
 #@ load("@ytt:data", "data")
 
---- #@ template.replace(library.get("with-nested-lib", tag="inst1").eval())`)
+--- #@ template.replace(library.get("with-nested-lib", alias="inst1").eval())`)
 
 	dataValueBytes := []byte(`
-#@library/name "@with-nested-lib~inst1@lib~inst2"
+#@library/ref "@~inst1@~inst2"
 #@data/values
 ---
 nested_lib_val1: new-val1`)
@@ -661,7 +863,7 @@ nested_lib_val1: new-val1`)
 #@ load("@ytt:library", "library")
 #@ load("@ytt:template", "template")
 
---- #@ template.replace(library.get("lib", tag="inst1").eval())`)
+--- #@ template.replace(library.get("lib", alias="inst1").eval())`)
 
 	nestedLibTmplBytes := []byte(`
 #@ load("@ytt:data", "data")
@@ -690,7 +892,7 @@ nested_lib_val1: override-me`)
 	}
 
 	if !strings.Contains(out.Err.Error(), "Expected all provided library data values documents to be used "+
-		"but found unused: library '@with-nested-lib~inst1@lib~inst2' on line values.yml:4") {
+		"but found unused: library '@~inst1@~inst2' on line values.yml:4") {
 		t.Fatalf("Expected unused data values error but got '%s'", out.Err)
 	}
 }
@@ -701,7 +903,7 @@ func TestUnusedLibraryDataValuesWithoutLibraryEvalChild(t *testing.T) {
 #@ library.get("with-nested-lib")`)
 
 	dataValueBytes := []byte(`
-#@library/name "@with-nested-lib@lib"
+#@library/ref "@with-nested-lib@lib"
 #@data/values
 ---
 nested_lib_val1: new-val1`)
@@ -734,7 +936,7 @@ func TestUnusedLibraryDataValuesNestedWithoutLibraryEval(t *testing.T) {
 #@ library.get("with-nested-lib")`)
 
 	dataValueBytes := []byte(`
-#@library/name "@with-nested-lib"
+#@library/ref "@with-nested-lib"
 #@data/values
 ---
 nested_lib_val1: new-val1`)
@@ -761,20 +963,71 @@ nested_lib_val1: new-val1`)
 	}
 }
 
+func TestMalformedLibraryRefEmptyAlias(t *testing.T) {
+	dataValueBytes := []byte(`
+#@library/ref "@lib~"
+#@data/values
+---
+lib_val1: val1
+`)
+
+	filesToProcess := files.NewSortedFiles([]*files.File{
+		files.MustNewFileFromSource(files.NewBytesSource("values.yml", dataValueBytes)),
+	})
+
+	ui := cmdcore.NewPlainUI(false)
+	opts := cmdtpl.NewOptions()
+
+	out := opts.RunWithFiles(cmdtpl.TemplateInput{Files: filesToProcess}, ui)
+	if out.Err == nil {
+		t.Fatalf("Expected RunWithFiles to error but it did not")
+	}
+
+	if !strings.Contains(out.Err.Error(), "Expected library alias to not be empty") {
+		t.Fatalf("Expected ref error but got '%s'", out.Err)
+	}
+}
+
+func TestMalformedLibraryRefGeneralError(t *testing.T) {
+
+	dataValueBytes := []byte(`
+#@library/ref "@~123~abc~inst1"
+#@data/values
+---
+lib_val1: val1
+`)
+
+	filesToProcess := files.NewSortedFiles([]*files.File{
+		files.MustNewFileFromSource(files.NewBytesSource("values.yml", dataValueBytes)),
+	})
+
+	ui := cmdcore.NewPlainUI(false)
+	opts := cmdtpl.NewOptions()
+
+	out := opts.RunWithFiles(cmdtpl.TemplateInput{Files: filesToProcess}, ui)
+	if out.Err == nil {
+		t.Fatalf("Expected RunWithFiles to error but it did not")
+	}
+
+	if !strings.Contains(out.Err.Error(), "Expected library ref to have form: '@path', '@~alias', or '@path~alias', got: ") {
+		t.Fatalf("Expected ref error but got '%s'", out.Err)
+	}
+}
+
 func TestLibraryModuleDataValuesFunc(t *testing.T) {
 	configBytes := []byte(`
 #@ load("@ytt:template", "template")
 #@ load("@ytt:library", "library")
 #@ load("@ytt:data", "data")
 
-#@ lib_vals = library.get("lib", tag="inst1").data_values()
+#@ lib_vals = library.get("lib", alias="inst1").data_values()
 
 lib_val1: #@ lib_vals.lib_val1
 lib_val2: #@ lib_vals.lib_val2
 `)
 
 	dataValueBytes := []byte(`
-#@library/name "@lib~inst1"
+#@library/ref "@~inst1"
 #@data/values
 ---
 lib_val1: val1

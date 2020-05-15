@@ -55,7 +55,7 @@ Ultimately `get-ytt.io` runs on AWS Lambda, hence is wrapped with Lambda specifi
 - library path: string that describes location of a library under _ytt_lib in format "@lib1@nested-lib2". used in:
   - `library.get("@...")`
   - `load("@...")`
-- library ref: string that describes location of a library under _ytt_lib in format "@lib1@nested-lib2~foo". used in:
-  - `library/ref` annotation, e.g. `#@library/ref "@lib1@nested-lib2~foo"`
-  - data value flag, e.g. `-v @lib1~foo:key=value`
-- library alias: string that could be used to distinguish multiple instances of a library within a library
+- library alias: string that is used in place of a path when referencing an instances of a library. Assigned via the alias kwarg to library.get(...). For example, the instance returned from `library.get("/github.com/folder/my-lib", alias=my-lib)` will be addressable in the `@library/ref` annotations using just `my-lib`.
+- library ref: string that describes  reference to a library under _ytt_lib. The ref can be either the library path or library alias. For example, "@lib1@~foo". used in:
+  - `library/ref` annotation, e.g. `#@library/ref "@lib1@~foo"`
+  - data value flag, e.g. `-v @~foo:key=value`
