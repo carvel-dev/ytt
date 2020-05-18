@@ -8,7 +8,7 @@
 
 #### Usage
 
-Load statement allows to load functions from other modules (such as ones from (builtin `ytt` library](lang-ref-ytt.md)).
+Load statement allows to load functions from other modules (such as ones from [builtin `ytt` library](lang-ref-ytt.md)).
 
 - [load](https://github.com/google/starlark-go/blob/master/doc/spec.md#load-statements)
 ```python
