@@ -1,0 +1,8 @@
+[git-together]
+    domain = pivotal.io
+[git-together "authors"]
+    cd = "Cari Dean; cdean"
+    jr = "John Ryan; jtigger@infosysengr.com"
+    ah = "Aaron Hurley; ahurley"
+    ew = "Eli Wrenn; ewrenn"
+    dk = "Dmitriy Kalinin; cppforlife@gmail.com"
