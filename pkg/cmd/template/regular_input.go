@@ -29,7 +29,7 @@ type RegularFilesSourceOpts struct {
 func (s *RegularFilesSourceOpts) Set(cmd *cobra.Command) {
 	cmd.Flags().StringArrayVarP(&s.files, "file", "f", nil, "File (ie local path, HTTP URL, -) (can be specified multiple times)")
 
-	cmd.Flags().StringVar(&s.outputDir, "output-directory", "", "Output destination directory")
+	cmd.Flags().StringVar(&s.outputDir, "output-directory", "", "Output destination directory (_will delete_ given directory)")
 	cmd.Flags().StringVarP(&s.outputType, "output", "o", regularFilesOutputTypeYAML, "Output type (yaml, json, pos)")
 
 	cmd.Flags().BoolVar(&s.SymlinkAllowOpts.AllowAll, "dangerous-allow-all-symlink-destinations", false,
