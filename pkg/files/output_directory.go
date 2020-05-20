@@ -8,7 +8,7 @@ import (
 )
 
 var (
-	suspiciousOutputDirectoryPaths = []string{"/", ".", ""}
+	suspiciousOutputDirectoryPaths = []string{"/", ".", "./", ""}
 )
 
 type OutputDirectory struct {
