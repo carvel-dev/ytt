@@ -65,6 +65,7 @@ func (p *Parser) ParseBytes(data []byte, associatedName string) (*DocumentSet, e
 	// (note that first doc marker may be several lines down)
 	if !startsWithDocMarker && !docSet.Items[0].Position.IsKnown() {
 		docSet.Items[0].Position = filepos.NewPosition(1)
+		docSet.Items[0].Position.SetFile(associatedName)
 	}
 
 	return docSet, nil
