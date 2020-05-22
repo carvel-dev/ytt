@@ -860,6 +860,22 @@ anchored_value: *value
 	parserExamples{{Description: "with seq inside anchored data", Data: data, Expected: expectedVal}}.Check(t)
 }
 
+func TestParserDocWithoutDashesPosition(t *testing.T) {
+	const data = "key: 1\n"
+
+	parsedVal, err := yamlmeta.NewParser(yamlmeta.ParserOpts{WithoutMeta: false}).ParseBytes([]byte(data), "data.yml")
+	if err != nil {
+		t.Fatalf("error: %s", err)
+	}
+
+	parsedPosStr := parsedVal.Items[0].Position.AsString()
+	expectedPosStr := "line data.yml:1"
+
+	if parsedPosStr != expectedPosStr {
+		t.Fatalf("not equal\nparsed...: %s\nexpected.: %s\n", parsedPosStr, expectedPosStr)
+	}
+}
+
 type parserExamples []parserExample
 
 func (exs parserExamples) Check(t *testing.T) {
