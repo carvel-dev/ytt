@@ -1,0 +1,15 @@
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  labels:
+    #@ if True:
+    t: #@ 123
+    #@ end
+    #@ end
+
++++
+
+ERR: 
+- unexpected end
+    stdin:8 |     #@ end
+    stdin:? | __ytt_tplXXX_start_node(11) # *yamlmeta.Document (generated)
