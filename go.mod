@@ -14,4 +14,4 @@ require (
 	gopkg.in/check.v1 v1.0.0-20180628173108-788fd7840127
 )
 
-replace go.starlark.net => github.com/k14s/starlark-go v0.0.0-20200402152745-409c85f3828d // ytt branch
+replace go.starlark.net => github.com/k14s/starlark-go v0.0.0-20200522161834-8a7b2030a110 // ytt branch
