@@ -46,7 +46,11 @@ func (d *OutputDirectory) Write() error {
 		return err
 	}
 
-	err = os.MkdirAll(d.path, 0700)
+	return d.WriteFiles()
+}
+
+func (d *OutputDirectory) WriteFiles() error {
+	err := os.MkdirAll(d.path, 0700)
 	if err != nil {
 		return err
 	}
