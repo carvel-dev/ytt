@@ -3,11 +3,15 @@
   <head>
     <title class="title">ytt - YAML Templating Tool</title>
 
+
     <script src="js/deps.js"></script>
     <link rel="stylesheet" href="js/deps.css"></link>
 
     <script src="js/app.js"></script>
     <link rel="stylesheet" href="js/app.css"></link>
+
+    <script src="js/marked.min.js"></script>
+    <script src="js/purify.min.js"></script>
 
     <!-- google analytics -->
   </head>
@@ -73,6 +77,14 @@ $ <span class="green">ytt -f examples/playground/ref/example-demo/ -o json</span
         </div>
       </div>
     </div>
+
+    <div id="over-here" style="width: 700px; margin: 0 auto;">
+    </div>
+
+    <script>
+      document.getElementById('over-here').innerHTML =
+              DOMPurify.sanitize(marked("## Language\n\nTemplating language used in `ytt` is a slightly modified version of [Starlark](https://github.com/google/starlark-go/blob/master/doc/spec.md). Following modifications were made:\n\n- requires `end` keyword for block closing\n  - hence no longer whitespace sensitive (except new line breaks)\n- does not allow use of `pass` keyword\n\n## Reference\n\n### Types\n\n- NoneType: `None` (equivalent to null in other languages)\n- Bool: `True` or `False`\n- Integer: `1`\n- Float: `1.1`\n- String: `\"string\"` [Reference](lang-ref-string.md)\n- Dictionary: `{\"a\": 1, \"b\": \"b\"}` [Reference](lang-ref-dict.md)\n- List: `[1, 2, {\"a\":3}]` [Reference](lang-ref-list.md)\n- Tuple: `(1, 2, \"a\")`\n- Struct: `struct.make(field1=123, field2=\"val2\")` [Reference](lang-ref-ytt.md#struct)\n- TODO Set?\n- YAMLFragment: [Reference](lang-ref-yaml-fragment.md)\n- Annotation: `@name arg1,arg2,keyword_arg3=123` [Reference](lang-ref-annotation.md)\n\n### Control flow\n\n- [If conditional](lang-ref-if.md)\n- [For loop](lang-ref-for.md)\n- [Function](lang-ref-def.md)\n\n### Libraries\n\n- [@ytt Library](lang-ref-ytt.md)\n  - [@ytt:overlay module](lang-ref-ytt-overlay.md)\n  - [@ytt:library module](lang-ref-ytt-library.md)\n"));
+    </script>
 
     <div class="playground-wrapper">
       <div class="content">
