@@ -19,7 +19,7 @@ github.com/kr/text
 github.com/spf13/cobra
 # github.com/spf13/pflag v1.0.5
 github.com/spf13/pflag
-# go.starlark.net v0.0.0-20190219202100-4eb76950c5f0 => github.com/k14s/starlark-go v0.0.0-20200402152745-409c85f3828d
+# go.starlark.net v0.0.0-20190219202100-4eb76950c5f0 => github.com/k14s/starlark-go v0.0.0-20200522161834-8a7b2030a110
 go.starlark.net/internal/compile
 go.starlark.net/internal/spell
 go.starlark.net/resolve

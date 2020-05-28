@@ -20,11 +20,11 @@ type scannerInterface interface {
 // blockScanner changes INDENT/OUTDENT to be
 // based on nesting depth (start->end) instead of whitespace
 type blockScanner struct {
-	scanner *scanner
-	nextTokens []blockScannerToken
-	prevTokens []blockScannerToken
-	depth int
-	debug bool
+	scanner     *scanner
+	nextTokens  []blockScannerToken
+	prevTokens  []blockScannerToken
+	indentStack []blockScannerToken
+	debug       bool
 }
 
 var _ scannerInterface = &blockScanner{}
@@ -36,7 +36,7 @@ type blockScannerToken struct {
 }
 
 func newBlockScanner(s *scanner) *blockScanner {
-	return &blockScanner{s, nil, nil, 0, false}
+	return &blockScanner{s, nil, nil, nil, false}
 }
 
 func (s *blockScanner) nextToken(outVal *tokenValue) Token {
@@ -116,8 +116,9 @@ func (s *blockScanner) nextTokenInner() blockScannerToken {
 		}
 
 	case EOF:
-		if s.depth != 0 {
-			s.errorf(s.getPos(), "mismatched set of block openings (if/else/elif/for/def) and closing (end)")
+		if len(s.indentStack) != 0 {
+			pos := s.indentStack[len(s.indentStack)-1].val.pos
+			s.errorf(pos, "mismatched set of block openings (if/else/elif/for/def) and closing (end)")
 		}
 
 	default:
@@ -146,7 +147,7 @@ func (s *blockScanner) swallowNextToken(tok Token) {
 }
 
 func (s *blockScanner) buildIndent() blockScannerToken {
-	s.depth+=1
+	s.indentStack = append(s.indentStack, s.prevTokens[len(s.prevTokens)-1])
 	return blockScannerToken{
 		tok: Token(INDENT),
 		val: tokenValue{pos: s.prevTokens[len(s.prevTokens)-1].val.pos},
@@ -154,7 +155,10 @@ func (s *blockScanner) buildIndent() blockScannerToken {
 }
 
 func (s *blockScanner) buildOutdent() blockScannerToken {
-	s.depth-=1
+	if len(s.indentStack) == 0 {
+		s.error(s.getPos(), "unexpected end")
+	}
+	s.indentStack = s.indentStack[:len(s.indentStack)-1]
 	return blockScannerToken{
 		tok: Token(OUTDENT),
 		val: tokenValue{pos: s.prevTokens[len(s.prevTokens)-1].val.pos},
