@@ -1,14 +1,20 @@
-## Schemas
+# Schemas
 
-- Issue: https://github.com/k14s/ytt/issues/103
+- Originating Issue: https://github.com/k14s/ytt/issues/103
 - Status: **Being written** | Being implemented | Included in release | Rejected
+
+## Problem Statement
+
+Software authors want the ability to clearly communicate what data is necessary in order to run their software. Schemas provide the ability for authors to _document_ which data is expected and to _validate_ a consumer's input. This functionality is inspired by [JSON Schema](https://json-schema.org/) but leverages native yaml structure to provide simplicity, brevity, and readability.
+
+## Schema Spec
 
 ### Examples
 
-- Schemas for [cf-for-k8s's values](cf-for-k8s/values.yml)
-  - [JSON schema (as json)](cf-for-k8s/json-schema.json)
-  - [JSON schema (as yaml)](cf-for-k8s/json-schema.yml)
-  - [ytt native schema](cf-for-k8s/ytt-schema.yml)
+Using [cf-for-k8's data values](cf-for-k8s/values.yml) as an example, this is what the schema would look like in various formats:
+- [JSON schema (as json)](cf-for-k8s/json-schema.json)
+- [JSON schema (as yaml)](cf-for-k8s/json-schema.yml)
+- [ytt native schema](cf-for-k8s/ytt-schema.yml)
 
 ### Defining a schema document and what type of documents to apply it to
 
@@ -18,76 +24,144 @@
 #! Schema contents
 ```
 
-Will create a new schema document. The attach keyword is used to specify the type of documents the schema will apply to, in this example, the schema will apply to all `data/values` documents.
-The attach argument will default to `data/values` if the argument is not specified.
+The `#@schema attach="<document-type>"` annotation will create a new schema document. The `attach` argument is used to specify the type of documents the schema will apply to. In this example, the schema will apply to all `data/values` documents.
+The `attach` argument will default to `data/values` if the argument is not specified.
+
+### The Type System
+
+Schemas will have a built-in type system similar to Golang's. This decision was made to ensure that when a key is in the schema, its value will be safe to use. In most cases, the type will be inferred from the schema itself without the need for annotations. However, when more control is needed, the `#@schema/type` annotation is available.
+
+The type system will consist of scalar types, "string", "float", "int", "bool", or "none" as well as compound types, "map" and "array". Each compound type will have its key as the name of the type. For example,
+
+```yaml
+gcp:
+  username: ""
+  password: ""
+```
+
+will be interpreted as a type named `gcp` defined as a map with keys `username` and `password` of type string.
+
+The default value for arrays will be a single entry with type provided in the schema.
+
+```yaml
+app_endpoints:
+- uri: ""
+  port: 0
+```
+
+The above example will result in `app_endpoints` having a single element of type map with keys `uri` and `port`, types string and integer respectively. If the value defaulting is undesirable, the `#@schem/not-default` annotation can be used. If there is more than one entry provided, this annotation will be required on all but one entry. This will allow multi-type arrays to be specified, like so,
+
+```yaml
+iaas:
+- gcp:
+  username: ""
+  password: ""
+#@schema/not-default
+- aws:
+  service_account: ""
+  service_account_secret: ""
+```
+
+This snippet will result in an array with a single element, type `gcp`, but that is also able to hold elements of type `aws`.
 
 ### Schema annotations
 
 #### Basic annotations
 
 - `@schema/type`
-  This annotation is used to specify the data type of a value. For example,
-  ```yaml
-  #@schema/type "array"
-  app_domains: []
-  ```
-  will validate that `app_domain` has a value of type array. The arguments to the type assertion will be strings from a predefined set i.e. "string", "array", "int", etc...
 
-  If a type annotation is not given, ytt will infer the type based on the key's value in the schema document. For example,
+  This annotation is used to specify the data type of a value when type inference is not sufficient. For example, when multiple types are possible:
+
+    ```yaml
+    #@schema/type "int", "float"
+    percentage: 0
+    ```
+
+  will validate that `percentage` is of type float or integer. `@schema/type` will take one or more string arguments which must come from a predefined set of scalar types: "string", "float", "int", "bool", or "none". The type annotation will also allow a single function argument to specify a complex type to reduce repetition. For example,
+
   ```yaml
-  app_domains: []
+  #@ def iaas:
+  #@ 	username:
+  #@	password:
+  #@ end
+
+  #@schema/type None, func_type=iaas()
+  gcp:
+
+  #@schema/type None, func_type=iaas()
+  aws:
   ```
-  will also result in the `app_domains` key requiring a value with type array
+  will assert that `gcp` and `aws` keys have either type None, or map with keys `username` and `password`, both strings. 
+
+  Every key will receive the default empty value for its specified type. If None is a specified type, it will be preferred to enable workflows that test for presence. If multiple arguments are provided, the value must be _one of_ the types.
+
+  The type annotation will also have a keyword argument called `or_inferred` which, when true, will cause ytt to infer the type from the value given in the schema. For example,
+
+    ```yaml
+    #@schema/type None, or_inferred=True
+    aws:
+      password:
+      username:
+    ```
+
+  will assert that the `aws` key is either type `None` or type `aws` (a map with keys `password` and `username` of type string).
 
 - `@schema/validate`
-  This annotation can be used to validate a key's value. Validate will provide a set of keyword arguments which map to built-in validations, such as max, max_len, etc..., but will also take user defined validation functions. For example,
+
+  This annotation can be used to validate a key's value. `@schema/validate` will provide a set of keyword arguments which map to built-in validations, such as `max`, `max_len`, etc., but will also accept user-defined validation functions. Less common validators will also be provided via a `validations` library. For example,
+
   ```yaml
   #@schema/validate number_is_even, min=2
   replicas: 6
   ```
-  will use the `min` predefined validator as well as the user provided `number_is_even` function for validations. Function arguments should have a signature which matches the signature of custom functions passed to overlay/assert.
 
-- `@schema/allow-empty`
-  ytt defaults to requiring any key specified in the schema to have a non-empty value after including data values. This annotation overrides that default and allows keys to have the empty value of its type i.e. "", [], 0. This is useful for defining keys that are optional and could be avoided as data values. For example,
-  ```yaml
-  #@schema/allow-empty
-  system_domain: ""
-  ```
-  will make the `system_domain` key optional as a data value because, although its default value is empty string, the annotation overrides the requirement that the value be non-empty.
-
+  will use the `min` predefined validator as well as the user-provided `number_is_even` function for validations. Function arguments should have a signature which matches the signature of custom functions passed to [`@overlay/assert`](https://github.com/k14s/ytt/blob/master/docs/lang-ref-ytt-overlay.md).
 
 #### Describing annotations
 
-- `@schema/title -> title for node (can maybe infer from the key name ie app_domain -> App domain)`
-  This annotation provides a way to add a short title to the section of a schema associated with a key, similar to the JSON schema title field.
+- `@schema/title`
+  This annotation provides a way to add a short title to the section of a schema associated with a key, similar to the [JSON schema title field](https://json-schema.org/draft/2019-09/json-schema-validation.html#rfc.section.9.1).
+
   ```yaml
   #@schema/title "User Password"
   user_password: ""
   ```
-  If the annotation is not present, the title will be inferred from the key name by replacing special characters with spaces and capitalizing the first letter similar to rails humanize functionality.
+
+  If the annotation is not present, the title will be inferred from the key name by replacing special characters with spaces and capitalizing the first letter similar to [rails humanize functionality](https://apidock.com/rails/String/humanize).
 
 - `@schema/doc`
   This annotation is a way to add a longer description to the section of a schema associated with a key, similar to the JSON Schema description field.
+
   ```yaml
   #@schema/doc "The user password used to log in to the system"
   user_password: ""
   ```
 
 - `@schema/example`
-  Example will take one argument which is an example of a value which satisfies the schema
+  This annotation will take one argument that is an example of a value that satisfies the schema.
+
   ```yaml
   #@schema/example "my_domain.example.com"
   system_domain: ""
   ```
+
   In this example, the example string "my_domain.example.com" will be attached to the `system_domain` key.
 
 - `@schema/examples`
-  Examples will take one or more tuple arguments which consist of (Title, Example value)
+  This annotation will take one or more tuple arguments which consist of (Title, Example value).
+
   ```yaml
   #@schema/examples ("Title 1", value1), ("Title 2", title2_example())
   foo: bar
   ```
-  In this example, the Title 1 and Title 2 examples and their values are attached to the key `foo`.
+
+  In this example, the `"Title 1"` and `"Title 2"` examples and their values are attached to the key `foo`.
+
+- `@schema/deprecated`
+  If the user provides a value, a warning that the field has been deprecated is outputted.
+
+- `@schema/removed`
+  If the user provides a value, an error is returned.
 
 #### Map key presence annotations
 
@@ -138,8 +212,9 @@ The attach argument will default to `data/values` if the argument is not specifi
 
 ### Sequence of events
 1. Extract defaults from the provided schemas
-2. Apply data values, validating against the schema validations after each document
-3. Apply validated data values to templates
+1. Apply data values
+1. Overlay with type checks
+1. Perform validations on the final document (if there's a validation failure, record the error, short circuit to sibling/parent, and continue validation)
 
 ### Complex Examples
 
