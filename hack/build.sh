@@ -13,6 +13,7 @@ go mod vendor
 go mod tidy
 
 # build without website assets
+rm -f pkg/website/generated.go
 go build -o ytt ./cmd/ytt/...
 ./ytt version
 
