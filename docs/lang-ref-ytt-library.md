@@ -2,16 +2,16 @@
 
 Available in v0.28.0+
 
-- `#@library/name`: Attaches a yaml document to the specified library to be used during evalutaion via the library module (only supported for [data value documents](./ytt-data-values.md#defining-data-values))
+- `#@library/ref`: Attaches a yaml document to the specified library to be used during evalutaion via the library module (only supported for [data value documents](./ytt-data-values.md#defining-data-values))
 
 ```yaml
-#@library/name "@app"
+#@library/ref "@app"
 #@data/values
 ---
 name: "app1"
 ```
 
-Note: data values may also be attached to libraries via [command line flags](./ytt-data-values.md#Overriding\ library\ data\ values\ via\ command\ line\ flags)
+Note: data values may also be attached to libraries via [command line flags](ytt-data-values.md#overriding-library-data-values-via-command-line-flags)
 
 ### ytt Library: Library module
 
