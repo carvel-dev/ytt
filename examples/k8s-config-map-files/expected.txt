@@ -14,4 +14,8 @@ data:
     - a
     - b
     - c
-  config3.json: '{"rules2a":123,"rules2b":["a","b","c"]}'
+  config2.json: '{"rules2a":123,"rules2b":["a","b","c"]}'
+  config3.yml: |
+    config3a: config3a
+    ---
+    config3c: config3c
