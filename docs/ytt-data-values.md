@@ -3,6 +3,9 @@
 - [Defining data values](#defining-data-values)
 - [Splitting data values into multiple files](#splitting-data-values-into-multiple-files)
 - [Overriding data values via command line flags](#overriding-data-values-via-command-line-flags)
+- [Library data values](#library-data-values)
+  - [Setting via files](#library-setting-via-files)
+  - [Setting via command line flags](#library-setting-via-cmd)
 
 ### Defining data values
 
@@ -37,10 +40,6 @@ second: val2
 third: null
 fourth: null
 ```
-
-Available in v0.28.0+
-
-The `@data/values` annotation supports a keyword argument `after_libary_module` which requires the values document to also be annotated with a `@library/name` annotation. This keyword argument specifies the data values should overried those passed to the `.with_data_values(...)` function when evaluating via the [library module](./lang-ref-ytt-library.md)
 
 ### Splitting data values into multiple files
 
@@ -130,16 +129,40 @@ ytt -f . \
   --data-values-env-yaml YAML_VALS
 ```
 
-### Overriding library data values via command line flags
+---
+### Library data values
 
 Available in v0.28.0+
 
+Each library may specify data values which will be evaluated separately from the root level library.
+
+#### <a id='library-setting-via-files'/> Setting via files
+
+To override library data values, add `@library/ref` annotation to data values YAML document, like so:
+
+```yaml
+#@library/ref "@lib1"
+#@data/values
+---
+key1: val1
+key2: val2
+
+#@library/ref "@lib1"
+#@data/values after_libary_module=True
+---
+key3: val3
+```
+
+The `@data/values` annotation also supports a keyword argument `after_libary_module`. If this keyword argument is specified, given data values will take precedence over data values passed to the `.with_data_values(...)` function when evaluating via the [library module](./lang-ref-ytt-library.md).
+
+#### <a id='library-setting-via-cmd'/> Setting via command line flags
+
 Data value flags support attaching values to libraries for use during [library module](./lang-ref-ytt-library.md) evaluation:
 
-- Non-environment variable flags: `@lib:key=val`
-- Environment variable flags: `@lib:DVAL`
-
 ```bash
+export STR_VALS_key6=true # will be string 'true'
+export YAML_VALS_key6=true # will be boolean true
+
 ytt -f . \
   --data-value @lib1:key1=val1-arg \
   --data-value-yaml @lib2:key2.nested=123 \ # will be int 123
@@ -148,4 +171,3 @@ ytt -f . \
   --data-values-env @lib5:STR_VALS \
   --data-values-env-yaml @lib6:YAML_VALS
 ```
-

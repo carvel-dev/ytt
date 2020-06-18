@@ -2,7 +2,7 @@
 
 Available in v0.28.0+
 
-- `#@library/ref`: Attaches a yaml document to the specified library to be used during evalutaion via the library module (only supported for [data value documents](./ytt-data-values.md#defining-data-values))
+- `#@library/ref`: Attaches a yaml document to the specified library to be used during evalutaion via the library module (only supported for [data value documents](./ytt-data-values.md#library-setting-via-files))
 
 ```yaml
 #@library/ref "@app"
@@ -11,7 +11,7 @@ Available in v0.28.0+
 name: "app1"
 ```
 
-Note: data values may also be attached to libraries via [command line flags](ytt-data-values.md#overriding-library-data-values-via-command-line-flags)
+Note: data values may also be attached to libraries via [command line flags](ytt-data-values.md#library-setting-via-cmd)
 
 ### ytt Library: Library module
 
@@ -64,7 +64,6 @@ Available in v0.28.0+
 ```python
 app_values = app1_with_vals.data_values()
 ```
-
 
 #### Examples
 
