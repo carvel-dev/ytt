@@ -41,6 +41,10 @@ third: null
 fourth: null
 ```
 
+We typically recommend to use snake case (e.g. `some_key.nested_one`) for naming data values.
+
+Note that if data value contains a `-` (dash) in its name, you will have to use `getattr` function like so `getattr(data.values.key2, "nested-with-dash")` to access its value. This is to avoid parsing ambiguity with substraction operation.
+
 ### Splitting data values into multiple files
 
 Available in v0.13.0.
