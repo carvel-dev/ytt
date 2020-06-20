@@ -41,28 +41,30 @@ gcp:
 
 will be interpreted as a type named `gcp` defined as a map with keys `username` and `password` of type string.
 
-The default value for arrays will be a single entry with type provided in the schema.
+The default value for arrays are specified using `@schema/default` with type provided in the schema.
 
 ```yaml
+#@schema/default []
 app_endpoints:
 - uri: ""
   port: 0
 ```
 
-The above example will result in `app_endpoints` having a single element of type map with keys `uri` and `port`, types string and integer respectively. If the value defaulting is undesirable, the `#@schem/not-default` annotation can be used. If there is more than one entry provided, this annotation will be required on all but one entry. This will allow multi-type arrays to be specified, like so,
+The above example will result in `app_endpoints` having a single element of type map with keys `uri` and `port`, types string and integer respectively. The value for `app_endpoints` is defaulted to an empty array. `@schema/default` will accept any value that is of the type specified in the schema.
 
 ```yaml
-iaas:
-- gcp:
-  username: ""
-  password: ""
-#@schema/not-default
-- aws:
-  service_account: ""
-  service_account_secret: ""
+#@ def bucket:
+- versioning: "Enabled"
+#@ end
+
+#@schema/default bucket()
+bucket:
+- name: ""
+  versioning: ""
+  access: ""
 ```
 
-This snippet will result in an array with a single element, type `gcp`, but that is also able to hold elements of type `aws`.
+This snippet will result in an array with a single element, type `bucket`, with `versioning` defaulted to `Enabled`.
 
 ### Schema annotations
 
@@ -95,7 +97,11 @@ This snippet will result in an array with a single element, type `gcp`, but that
 
   Every key will receive the default empty value for its specified type. If None is a specified type, it will be preferred to enable workflows that test for presence. If multiple arguments are provided, the value must be _one of_ the types.
 
-  The type annotation will also have a keyword argument called `or_inferred` which, when true, will cause ytt to infer the type from the value given in the schema. For example,
+- `@schema/nullable`
+
+  This annotation is used to specify that the type will be inferred from the value given in the schema, or it will be None. 
+
+  Alternatively, use the type keyword argument called `or_inferred` which, when true, will infer the type from the value given in the schema. For example,
 
     ```yaml
     #@schema/type None, or_inferred=True
