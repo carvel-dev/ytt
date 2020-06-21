@@ -97,7 +97,7 @@ TBD: use starlark or yaml terminilogy (list vs array, map vs dict)?
 
   It is equivalent for the following `@schema/type` and `@schema/default` declaration:
 
-    ```
+    ```yaml
     #@schema/type None, or_inferred=True
     #@schema/default None
     aws:
@@ -114,6 +114,8 @@ Beyond specifying a type for a value, one can specify more dynamic constraints o
   This annotation specifies how to validate value. `@schema/validate` will provide a set of keyword arguments which map to built-in validations, such as `max`, `max_len`, etc., but will also accept user-defined validation functions. Less common validators will also be provided via a `validations` library. For example,
 
   ```yaml
+  #@ def number_is_even(num): return (num % 2 == 0, "Number is not even")
+
   #@schema/validate number_is_even, min=2
   replicas: 6
   ```
@@ -142,14 +144,15 @@ Beyond specifying a type for a value, one can specify more dynamic constraints o
     - duration: Golang's duration e.g. "10h"
   - not_null=bool to verify value is not null
   - unique=bool to verify value contains unique elements (TBD?)
+  - prefix=string to verify string has prefix (TBD?)
   - TBD
 
   Full list of builtin validations included in a library:
 
   - ...kwargs validations as functions...
-  - validation.base64_decodable()
-  - validation.json_decodable()
-  - validation.yaml_decodable()
+  - base64.decodable()
+  - json.decodable()
+  - yaml.decodable()
 
 #### Describing annotations
 
@@ -246,6 +249,52 @@ bucket:
 - name: ""
   versioning: ""
   access: ""
+```
+
+Partial minio config (based on https://github.com/helm/charts/blob/21e2e1b1f2656c785ece0ec741b047b21539d7b1/stable/minio/values.yaml#L244), shows how to have one-of available options.
+
+```yaml
+#@ load("@ytt:json", "json")
+
+#@schema/match data_values=True
+---
+#@schema/validate lambda g: (g.s3 or g.azure or g.gcs or g.oss, "Must specify one gateway: s3, azure, gcs, oss")
+gateway:
+  #@schema/nullable
+  s3:
+    #@schema/validate min=1
+    replicas: 4
+    #@schema/validate prefix="https://"
+    serviceEndpoint: ""
+    accessKey: ""
+    secretKey: ""
+
+  #@schema/doc "Use minio as an azure blob gateway, you should disable data persistence so no volume claim are created. https://docs.minio.io/docs/minio-gateway-for-azure"
+  #@schema/nullable
+  azure:
+    #@schema/doc "Number of parallel instances"
+    #@schema/validate min=1
+    replicas: 4
+
+  #@schema/doc "Use minio as GCS (Google Cloud Storage) gateway, you should disable data persistence so no volume claim are created. https://docs.minio.io/docs/minio-gateway-for-gcs"
+  #@schema/nullable
+  gcs:
+    #@schema/doc "Number of parallel instances"
+    #@schema/validate min=1
+    replicas: 4
+    #@schema/doc "credential json file of service account key"
+    #@schema/validate lambda val: (json.decodable(val), "key must be valid JSON")
+    gcsKeyJson: ""
+    #@schema/doc "Google cloud project-id"
+    projectId: ""
+
+  #@schema/nullable
+  oss:
+    #@schema/doc "Number of parallel instances"
+    #@schema/validate min=1
+    replicas: 4
+    #@schema/validate prefix="https://"
+    endpointURL: ""
 ```
 
 #### Asserting on higher level structure with optional lower key with #@schema/key-may-be-present
