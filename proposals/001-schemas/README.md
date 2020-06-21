@@ -16,105 +16,102 @@ Using [cf-for-k8's data values](cf-for-k8s/values.yml) as an example, this is wh
 - [JSON schema (as yaml)](cf-for-k8s/json-schema.yml)
 - [ytt native schema](cf-for-k8s/ytt-schema.yml)
 
-### Defining a schema document and what type of documents to apply it to
+### Defining a schema document
 
 ```yaml
-#@schema attach="data/values"
+#@schema/match data_values=True
 ---
 #! Schema contents
 ```
 
-The `#@schema attach="<document-type>"` annotation will create a new schema document. The `attach` argument is used to specify the type of documents the schema will apply to. In this example, the schema will apply to all `data/values` documents.
-The `attach` argument will default to `data/values` if the argument is not specified.
+The `#@schema/match` annotation will create a new schema document. The `data_values=True` will apply to all `@data/values`.
 
 ### The Type System
 
-Schemas will have a built-in type system similar to Golang's. This decision was made to ensure that when a key is in the schema, its value will be safe to use. In most cases, the type will be inferred from the schema itself without the need for annotations. However, when more control is needed, the `#@schema/type` annotation is available.
+Schemas will have a built-in type system similar to Golang's. This decision was made to ensure that when a key is in the schema, its value will be safe to use. In most cases, the type will be inferred from the value itself without the need for explicit annotation. However, when more control is needed, the `@schema/type` annotation is available.
 
-The type system will consist of scalar types, "string", "float", "int", "bool", or "none" as well as compound types, "map" and "array". Each compound type will have its key as the name of the type. For example,
+Following types are available:
 
-```yaml
-gcp:
-  username: ""
-  password: ""
-```
+- `string`
+- `float`
+- `int`
+- `bool`
+- `null`
+- `map-typed <unique>` (unique indicates that each map defintion is a unique, even if they are same)
+- `array-typed <unique>`
+- `map` (TBD: generic map vs typed one?)
+- `any`
 
-will be interpreted as a type named `gcp` defined as a map with keys `username` and `password` of type string.
-
-The default value for arrays are specified using `@schema/default` with type provided in the schema.
-
-```yaml
-#@schema/default []
-app_endpoints:
-- uri: ""
-  port: 0
-```
-
-The above example will result in `app_endpoints` having a single element of type map with keys `uri` and `port`, types string and integer respectively. The value for `app_endpoints` is defaulted to an empty array. `@schema/default` will accept any value that is of the type specified in the schema.
-
-```yaml
-#@ def bucket:
-- versioning: "Enabled"
-#@ end
-
-#@schema/default bucket()
-bucket:
-- name: ""
-  versioning: ""
-  access: ""
-```
-
-This snippet will result in an array with a single element, type `bucket`, with `versioning` defaulted to `Enabled`.
+TBD: use starlark or yaml terminilogy (list vs array, map vs dict)?
 
 ### Schema annotations
 
-#### Basic annotations
+#### Valule type annotations
 
-- `@schema/type`
+- `@schema/type string, [...string,] [or_inferred=True]`
 
-  This annotation is used to specify the data type of a value when type inference is not sufficient. For example, when multiple types are possible:
+  This annotation is used to specify the data type of a value (by listing allowed types) when type inference is not sufficient. For example, when multiple types are allowed:
 
     ```yaml
     #@schema/type "int", "float"
     percentage: 0
     ```
 
-  will validate that `percentage` is of type float or integer. `@schema/type` will take one or more string arguments which must come from a predefined set of scalar types: "string", "float", "int", "bool", or "none". The type annotation will also allow a single function argument to specify a complex type to reduce repetition. For example,
+  will validate that `percentage` is of type float or integer.
+
+  Since `map-typed <unique>` and `array-typed <unique>` types can _only_ be described inline (as a value), `or_inferred=True` must be specified.
+
+- `@schema/default value`
+
+  This annotation is used to specify default value. It's not necessary in most cases since value provided is used as a default; however, for arrays or multi-type values it's typically necessary to avoid ambiguity.
 
   ```yaml
-  #@ def iaas:
-  #@ 	username:
-  #@	password:
-  #@ end
-
-  #@schema/type None, func_type=iaas()
-  gcp:
-
-  #@schema/type None, func_type=iaas()
+  #@schema/type None, or_inferred=True
+  #@schema/default None
   aws:
+    access_key: ""
+    secret_key: ""
   ```
-  will assert that `gcp` and `aws` keys have either type None, or map with keys `username` and `password`, both strings. 
 
-  Every key will receive the default empty value for its specified type. If None is a specified type, it will be preferred to enable workflows that test for presence. If multiple arguments are provided, the value must be _one of_ the types.
+  In this example, since value of aws could be null or aws typed map, and aws typed map definition takes up the value, one has to specify `@schema/default None` to set the default value to null.
+
+  ```yaml
+  #@schema/default 3 # <-- error; redundant
+  aws: 4
+  ```
+
+  To discourage redundant use of `@schema/default` (TBD how to determine?), above will error.
+
+  This annotation is required for `array-typed <unique>` values to indicate explicitly to readers of schema what is the default value.
 
 - `@schema/nullable`
 
-  This annotation is used to specify that the type will be inferred from the value given in the schema, or it will be None. 
-
-  Alternatively, use the type keyword argument called `or_inferred` which, when true, will infer the type from the value given in the schema. For example,
+  This annotation is used to specify that the type will be inferred from the value (similar to default behaviour for all declarations) given in the schema, _and_ it is allowed to be null.
 
     ```yaml
-    #@schema/type None, or_inferred=True
+    #@schema/nullable
     aws:
-      password:
-      username:
+      username: ""
+      password: ""
     ```
 
-  will assert that the `aws` key is either type `None` or type `aws` (a map with keys `password` and `username` of type string).
+  It is equivalent for the following `@schema/type` and `@schema/default` declaration:
 
-- `@schema/validate`
+    ```
+    #@schema/type None, or_inferred=True
+    #@schema/default None
+    aws:
+      username: ""
+      password: ""
+    ```
 
-  This annotation can be used to validate a key's value. `@schema/validate` will provide a set of keyword arguments which map to built-in validations, such as `max`, `max_len`, etc., but will also accept user-defined validation functions. Less common validators will also be provided via a `validations` library. For example,
+#### Value validation annotations
+
+Beyond specifying a type for a value, one can specify more dynamic constraints on the value via validations.
+
+- `@schema/validate [...user-provided-funcs,] [...builtin-kwargs]`
+
+  This annotation specifies how to validate value. `@schema/validate` will provide a set of keyword arguments which map to built-in validations, such as `max`, `max_len`, etc., but will also accept user-defined validation functions. Less common validators will also be provided via a `validations` library. For example,
 
   ```yaml
   #@schema/validate number_is_even, min=2
@@ -123,9 +120,41 @@ This snippet will result in an array with a single element, type `bucket`, with 
 
   will use the `min` predefined validator as well as the user-provided `number_is_even` function for validations. Function arguments should have a signature which matches the signature of custom functions passed to [`@overlay/assert`](https://github.com/k14s/ytt/blob/master/docs/lang-ref-ytt-overlay.md).
 
+  Full list of builtin validations exposed via kwargs:
+
+  - min=int
+  - max=int
+  - min_len=int
+  - max_len=int
+  - regexp=string (TBD or pattern?) -> golang regexp
+  - format=string (mostly copied from JSON Schema)
+    - date-time: Date and time together, for example, 2018-11-13T20:20:39+00:00.
+    - time: New in draft 7 Time, for example, 20:20:39+00:00
+    - date: New in draft 7 Date, for example, 2018-11-13.
+    - email: Internet email address, see RFC 5322, section 3.4.1.
+    - hostname: Internet host name, see RFC 1034, section 3.1.
+    - ip: IPv4 or IPv6
+    - ipv4: IPv4 address, according to dotted-quad ABNF syntax as defined in RFC 2673, section 3.2.
+    - ipv6: IPv6 address, as defined in RFC 2373, section 2.2.
+    - uri: A universal resource identifier (URI), according to RFC3986.
+    - port: >= 0 && <= 65535
+    - percent: k8s's IsValidPercent e.g. "10%"
+    - duration: Golang's duration e.g. "10h"
+  - not_null=bool to verify value is not null
+  - unique=bool to verify value contains unique elements (TBD?)
+  - TBD
+
+  Full list of builtin validations included in a library:
+
+  - ...kwargs validations as functions...
+  - validation.base64_decodable()
+  - validation.json_decodable()
+  - validation.yaml_decodable()
+
 #### Describing annotations
 
 - `@schema/title`
+
   This annotation provides a way to add a short title to the section of a schema associated with a key, similar to the [JSON schema title field](https://json-schema.org/draft/2019-09/json-schema-validation.html#rfc.section.9.1).
 
   ```yaml
@@ -136,6 +165,7 @@ This snippet will result in an array with a single element, type `bucket`, with 
   If the annotation is not present, the title will be inferred from the key name by replacing special characters with spaces and capitalizing the first letter similar to [rails humanize functionality](https://apidock.com/rails/String/humanize).
 
 - `@schema/doc`
+
   This annotation is a way to add a longer description to the section of a schema associated with a key, similar to the JSON Schema description field.
 
   ```yaml
@@ -144,6 +174,7 @@ This snippet will result in an array with a single element, type `bucket`, with 
   ```
 
 - `@schema/example`
+
   This annotation will take one argument that is an example of a value that satisfies the schema.
 
   ```yaml
@@ -164,14 +195,17 @@ This snippet will result in an array with a single element, type `bucket`, with 
   In this example, the `"Title 1"` and `"Title 2"` examples and their values are attached to the key `foo`.
 
 - `@schema/deprecated`
-  If the user provides a value, a warning that the field has been deprecated is outputted.
+
+  If the user provides a value, a warning that the field has been deprecated is outputted (stderr) to the user.
 
 - `@schema/removed`
-  If the user provides a value, an error is returned.
+
+  If the user provides a value, an error is returned, and evaluation stops.
 
 #### Map key presence annotations
 
 - `@schema/any-key`
+
   Applies to items of a map, allowing users to assert on item structure while maintaining freedom to have any key name.
   ```yaml
   connection_options:
@@ -182,6 +216,7 @@ This snippet will result in an array with a single element, type `bucket`, with 
   This example requires items in the `connection_options` map to have value type array of strings.
 
 - `@schema/key-may-be-present`
+
   This annotation can be used to allow keys in the schema without providing a guarantee they will be present. This allows schemas to validate contents of a structure in cases where the contents are not referenced directly. For example,
   ```yaml
   connection_options:
@@ -190,33 +225,8 @@ This snippet will result in an array with a single element, type `bucket`, with 
   ```
   will allow the key `pooled` but will not guarantee its presence. This is useful when referencing the containing structure, such as #@ data.values.connection_options, in a template instead of the key directly: #@ data.values.connection_options.pooled. See more advanced examples below for more.
 
-#### Complex schema annotations
-
-- `@schema/any-of`
-  Requires the key to satisfy _at least one_ of the provided schemas
-  ```yaml
-  #@schema/any-of schema1(), schema2()
-  foo: ""
-  ```
-  Note, any values passed to the `any-of` call will be interpreted as schema documents.
-
-- `@schema/all-of`
-  Requires the key to satisfy _every_ provided schema
-  ```yaml
-  #@schema/all-of schema1(), schema2()
-  foo: ""
-  ```
-  Note, any values passed to the `all-of` call will be interpreted as schema documents.
-
-- `@schema/one-of`
-  Requires the key to satisfy _exactly one_ of provided schema
-  ```yaml
-  #@schema/one-of schema1(), schema2()
-  foo: ""
-  ```
-  Note, any values passed to the `one-of` call will be interpreted as schema documents.
-
 ### Sequence of events
+
 1. Extract defaults from the provided schemas
 1. Apply data values
 1. Overlay with type checks
@@ -224,7 +234,22 @@ This snippet will result in an array with a single element, type `bucket`, with 
 
 ### Complex Examples
 
+This snippet will result in an array with a single element, type `bucket`, with `versioning` defaulted to `Enabled`.
+
+```yaml
+#@ def default_bucket():
+versioning: "Enabled"
+#@ end
+
+#@schema/default [default_bucket()]
+bucket:
+- name: ""
+  versioning: ""
+  access: ""
+```
+
 #### Asserting on higher level structure with optional lower key with #@schema/key-may-be-present
+
 ```yaml
 #@schema
 ---

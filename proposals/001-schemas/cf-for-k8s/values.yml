@@ -2,6 +2,7 @@
 ---
 system_namespace: cf-system
 workloads_namespace: cf-workloads
+staging_namespace: cf-workloads-staging
 
 #! your system domain, e.g., "system.cf.example.com"
 system_domain:
@@ -21,28 +22,47 @@ cf_db:
   admin_password: ""
   enabled: true
 
+#! reserved static ip for istio LoadBalancer
+istio_static_ip: ""
+
 images:
-#! NOTE: the CAPI image reference below is needed temporarily to address a build break.
-#! See https://www.pivotaltracker.com/story/show/171522062 and https://www.pivotaltracker.com/story/show/171549565 for details
-  capi: "cloudfoundry/cloud-controller-ng@sha256:402932286e330049ea8e6562db615080b26388d849c8bb4aa2eed544b33e2c2a"
-  nginx: "nginx@sha256:4a50ed86d8c86e35f530d4a168173677a192177eed14146fbb5728b1b3a2d4de"
-  cfroutesync: "gcr.io/cf-networking-images/cf-k8s-networking/cfroutesync@sha256:758abd1b6144596cef74ad4805bc7e1a6055142cab5719f0d42d0321a14a190d"
-  log_cache: "logcache/log-cache@sha256:0bc1ee1934ecd2145a3372dc838747c7977d50ca58bd5c28db7f70b28b1021b4"
-  syslog_server: "logcache/syslog-server@sha256:f1f6def4af1261e4cafe4745d5bab8258a2e1ff9fd835c5021e00957ea42d7d4"
-  log_cache_gateway: "logcache/log-cache-gateway@sha256:dd639d3c4cbb120cbbd00850b319bc0c60fcc003979f8f8d6f5198ef985e6a8c"
-  fluent: "logcache/cf-k8s-logging@sha256:8107d5923e630f792631c21e6c862bc027cc1ae275202ac1be3f9b19f4991698"
+  capi: ""
+  nginx: ""
 
 system_certificate:
   #! Base64-encoded certificate for the wildcard
   #! subdomain of the system domain (e.g., CN=*.system.cf.example.com)
   crt: ""
-  #! Base64-encoded private key for the cert above
+  #! Base64-encoded private key for the system certificate
   key: ""
   #! Base64-encoded CA certificate used to sign the system certifcate
   ca: ""
 
+workloads_certificate:
+  #! Base64-encoded certificate for the wildcard
+  #! subdomain of the system domain (e.g., CN=*.apps.cf.example.com)
+  crt: ""
+  #! Base64-encoded private key for the workloads certificate
+  key: ""
+  #! Base64-encoded CA certificate used to sign the workloads certifcate
+  ca: ""
+
+internal_certificate:
+  #! Base64-encoded certificate for the wildcard
+  #! subdomain of the system domain (e.g., CN=*.cf-system.svc.cluster.local)
+  crt: ""
+  #! Base64-encoded private key for the internal certificate
+  key: ""
+  #! Base64-encoded CA certificate used to sign the internal certifcate
+  ca: ""
+
 capi:
   blobstore:
+    package_directory_key: cc-packages
+    droplet_directory_key: cc-droplets
+    resource_directory_key: cc-resources
+    buildpack_directory_key: cc-buildpacks
+    region: "''"
     endpoint: "http://cf-blobstore-minio.cf-blobstore.svc.cluster.local:9000"
   database:
     #! or mysql2, as needed
@@ -67,13 +87,8 @@ uaa:
     #! DB user password in plain text
     password: ""
     name: uaa
-
-  certificate:
-    #! Base64-encoded certificate for the uaa service inside
-    #! the kubernetes cluster (i.e., CN=uaa.cf-system.svc.cluster.local)
-    crt: ""
-    #! Base64-encoded private key for the cert above
-    key: ""
+    #! Plain text ca certificate for tls
+    ca_cert: ""
 
   jwt_policy:
     key_id: "default_jwt_policy_key"
@@ -96,22 +111,6 @@ uaa:
 
   login_secret_name: "uaa-login-secret"
 
-doppler:
-  tls:
-    #! Base64-encoded certificate for the doppler service inside
-    #! the kubernetes cluster (i.e., CN=doppler.cf-system.svc.cluster.local)
-    crt: ""
-    #! Base64-encoded private key for the cert above
-    key: ""
-
-eirini:
-  tls:
-    #! Base64-encoded certificate for the eirini service inside
-    #! the kubernetes cluster (i.e., CN=eirini.cf-system.svc.cluster.local)
-    crt: ""
-    #! Base64-encoded private key for the cert above
-    key: ""
-
 log_cache_ca:
   crt: "" #! Base64-encoded ca for the log cache
   key: "" #! Base64-encoded private key for the cert above
@@ -132,9 +131,18 @@ log_cache_syslog:
   crt: "" #! Base64-encoded cert for the log cache syslog server requires CN of log-cache-syslog
   key: "" #! Base64-encoded private key for the cert above
 
-log_cache_client:
-  id: "" #! comment
-  secret: "" #! comment
+app_registry:
+  hostname: ""
+  repository: ""
+  username: ""
+  password: ""
 
-docker_registry:
-  http_secret: "" #! A random piece of data used to sign state that may be stored with the client to protect against tampering. For production environments you should generate a random piece of data using a cryptographically secure random generator.
+metric_proxy:
+  ca:
+    secret_name: "metric-proxy-ca"
+    crt: ""
+    key: ""
+  cert:
+    secret_name: "metric-proxy-cert"
+    crt: ""
+    key: ""
