@@ -23,9 +23,10 @@ cf_blobstore:
   secret_key: ""
 
 #@schema/doc "control optional deployment of a database for CF"
+#@schema/nullable
+#@schema/default {}
 cf_db:
   admin_password: ""
-  enabled: true
 
 #@schema/doc "reserved static ip for istio LoadBalancer"
 #@schame/validate min_len=0

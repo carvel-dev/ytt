@@ -11,10 +11,12 @@ Software authors want the ability to clearly communicate what data is necessary 
 
 ### Examples
 
-Using [cf-for-k8's data values](cf-for-k8s/values.yml) as an example, this is what the schema would look like in various formats:
-- [JSON schema (as json)](cf-for-k8s/json-schema.json)
-- [JSON schema (as yaml)](cf-for-k8s/json-schema.yml)
-- [ytt native schema](cf-for-k8s/ytt-schema.yml)
+- Using [cf-for-k8's data values](cf-for-k8s/values.yml) as an example, this is what the schema would look like in various formats:
+  - [JSON schema (as json)](cf-for-k8s/json-schema.json)
+  - [JSON schema (as yaml)](cf-for-k8s/json-schema.yml)
+  - [ytt native schema](cf-for-k8s/ytt-schema.yml)
+
+- [Dex](example-partial-dex.yaml)
 
 ### Defining a schema document
 
@@ -105,6 +107,15 @@ TBD: use starlark or yaml terminilogy (list vs array, map vs dict)?
       password: ""
     ```
 
+  In following example, `@schema/nullable` allows cf_db to be set to null; however, by default it is enabled, hence no a null. (TBD better way?)
+
+    ```yaml
+    #@schema/nullable
+    #@schema/default {}
+    cf_db:
+      admin_password: ""
+    ```
+
 #### Value validation annotations
 
 Beyond specifying a type for a value, one can specify more dynamic constraints on the value via validations.
@@ -154,6 +165,8 @@ Beyond specifying a type for a value, one can specify more dynamic constraints o
   - base64.decodable()
   - json.decodable()
   - yaml.decodable()
+
+  String values, by default, have `@schema/validate min_len=1` validation added.
 
 #### Describing annotations
 

@@ -1,0 +1,91 @@
+#! https://github.com/helm/charts/blob/21e2e1b1f2656c785ece0ec741b047b21539d7b1/stable/dex/values.yaml
+#@schema/match data_values=True
+---
+config:
+  #@schema/validate prefix="https://"
+  #@schema/example "http://dex.example.com:8080"
+  issuer: ""
+  storage:
+    #@schema/validate enum=["kubernetes"]
+    type: kubernetes
+    config:
+      inCluster: true
+  logger:
+    #@schema/validate enum=["debug", "info", "error"]
+    level: debug
+
+  web:
+    #@schema/doc "port is taken from ports section above"
+    #@schema/validate format="ipv4"
+    address: 0.0.0.0
+    tlsCert: /etc/dex/tls/https/server/tls.crt
+    tlsKey: /etc/dex/tls/https/server/tls.key
+    #@schema/default []
+    allowedOrigins:
+    - ""
+
+  grpc:
+    #@schema/doc "port is taken from ports section above"
+    #@schema/validate format="ipv4"
+    address: 127.0.0.1
+    tlsCert: /etc/dex/tls/grpc/server/tls.crt
+    tlsKey: /etc/dex/tls/grpc/server/tls.key
+    tlsClientCA: /etc/dex/tls/grpc/ca/tls.crt
+
+  #@schema/default []
+  connectors:
+  - 
+    #@schema/validate enum=["github", "slack"]
+    type: github
+    #@schema/example "github"
+    id: ""
+    #@schema/example "Github"
+    name: ""
+
+    #@ def gh_config_example():
+    clientID: xxxxxxxxxxxxxxx
+    clientSecret: yyyyyyyyyyyyyyyyyyyyy
+    redirectURI: https://dex.minikube.local:5556/callback
+    org: kubernetes
+    #@ end
+
+    #@schema/type "map"
+    #@schema/example gh_config_example()
+    config: {}
+
+  oauth2:
+    alwaysShowLoginScreen: false
+    skipApprovalScreen: true
+
+expiry:
+  #@schema/validate format="duration"
+  signingKeys: "6h"
+  #@schema/validate format="duration"
+  idTokens: "24h"
+
+#@schema/default []
+staticClients:
+- name: ""
+  #@schema/example "example-app"
+  id: ""
+  #@schema/default []
+  redirectURIs:
+  #@schema/example "http://192.168.42.219:31850/oauth2/callback"
+  - ""
+  secret: ""
+
+enablePasswordDB: true
+
+#@schema/default []
+staticPasswords:
+- userID: ""
+  username: ""
+  #@schema/validate format="email"
+  email: ""
+  #@schema/validate regexp="^\$.+\$.+\$.+$"
+  #@schema/example ("$2a$10$2b2cU8CPhOTaGrs1HRQuAueS7JTT5ZHsHSzYiFPm1leZck7Mc8T4W", "bcrypt hash of the string 'password'"")
+  hash: ""
+
+frontend:
+  #@schema/example "https://example.com/yourlogo.png"
+  logoURL: ""
