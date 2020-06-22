@@ -128,6 +128,7 @@ Beyond specifying a type for a value, one can specify more dynamic constraints o
   - max=int
   - min_len=int
   - max_len=int
+  - enum=[string|int|...]: any set of values
   - regexp=string (TBD or pattern?) -> golang regexp
   - format=string (mostly copied from JSON Schema)
     - date-time: Date and time together, for example, 2018-11-13T20:20:39+00:00.
@@ -207,7 +208,7 @@ Beyond specifying a type for a value, one can specify more dynamic constraints o
 
 #### Map key presence annotations
 
-- `@schema/any-key`
+- `@schema/any-key` (TBD: does this apply to a single key or multiple keys?)
 
   Applies to items of a map, allowing users to assert on item structure while maintaining freedom to have any key name.
   ```yaml
@@ -295,6 +296,69 @@ gateway:
     replicas: 4
     #@schema/validate prefix="https://"
     endpointURL: ""
+```
+
+Array examples:
+
+```yaml
+service:
+  #@schema/doc "List of IP addresses at which the Prometheus server service is available. Ref: https://kubernetes.io/docs/user-guide/services/#external-ips"
+  #@schema/default []
+  externalIPs:
+  #@schema/validate format="ip"
+  - ""
+
+#@schema/default []
+imagePullSecrets:
+- name: ""
+
+ingress:
+  #@schema/default ["chart-example.local"]
+  hosts:
+  - ""
+  #@schema/default []
+  tls:
+  - secretName: ""
+    #@schema/default []
+    #@schema/validate min=1
+    hosts:
+    - ""
+
+#@schema/default []
+tolerations:
+#@schema/type "any"
+- null
+
+#@schema/doc "Create multiple buckets after minio install. Enabling `defaultBucket` will take priority over this list"
+#@schema/example [{"name": "bucket1"}]
+buckets:
+- name: ""
+  #@schema/validate enum=["none"]
+  policy: none
+  purge: false
+```
+
+map[string]string examples:
+
+```yaml
+#@ def validate_str_to_str(vals):
+#@   for key in vals:
+#@     type(key) == "string" or assert.fail("Expected key to be string")
+#@     type(vals[key]) == "string" or assert.fail("Expected val to be string")
+#@   end
+#@ end
+
+#@schema/type "map"
+#@schema/validate validate_str_to_str
+#@schema/example {"prometheus.io/scrape": "true", "prometheus.io/path": "/minio/prometheus/metrics", "prometheus.io/port": "9000"}
+annotations: {}
+
+#! ...
+
+#@schema/example {"prometheus.io/scrape": "true", "prometheus.io/path": "/minio/prometheus/metrics", "prometheus.io/port": "9000"}
+annotations:
+  #@schema/any-key
+  _: ""
 ```
 
 #### Asserting on higher level structure with optional lower key with #@schema/key-may-be-present
