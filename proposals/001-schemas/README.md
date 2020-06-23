@@ -41,8 +41,7 @@ Following types are available:
 - `null`
 - `map-typed <unique>` (unique indicates that each map defintion is a unique, even if they are same)
 - `array-typed <unique>`
-- `map` (TBD: generic map vs typed one?)
-- `any`
+- `any` (TBD: vs `#@schema/type any=True`)
 
 TBD: use starlark or yaml terminilogy (list vs array, map vs dict)?
 
@@ -82,7 +81,7 @@ TBD: use starlark or yaml terminilogy (list vs array, map vs dict)?
   aws: 4
   ```
 
-  To discourage redundant use of `@schema/default` (TBD how to determine?), above will error.
+  To discourage redundant use of `@schema/default` (TBD how to determine?), above will error. Another example is when value is of type `any`, `@schema/default` must not be provided.
 
   This annotation is required for `array-typed <unique>` values to indicate explicitly to readers of schema what is the default value.
 
@@ -221,14 +220,15 @@ Beyond specifying a type for a value, one can specify more dynamic constraints o
 
 #### Map key presence annotations
 
-- `@schema/any-key` (TBD: does this apply to a single key or multiple keys?)
+- `@schema/any-key` (TBD: any other name for this?)
 
-  Applies to items of a map, allowing users to assert on item structure while maintaining freedom to have any key name.
+  Applies to multiple KVs of a map that were not matched by explicitly specified keys, allowing users to assert on item structure while maintaining freedom to have any key name.
   ```yaml
   connection_options:
     #@schema/any-key
     _: 
-    - ""
+    #@schema/type "any"
+    - null
   ```
   This example requires items in the `connection_options` map to have value type array of strings.
 
@@ -354,15 +354,16 @@ buckets:
 map[string]string examples:
 
 ```yaml
-#@ def validate_str_to_str(vals):
+#@ def validate_map_str_to_str(vals):
+#@   type(vals) == "dict" or assert.fail("Expected key to be map")
 #@   for key in vals:
 #@     type(key) == "string" or assert.fail("Expected key to be string")
 #@     type(vals[key]) == "string" or assert.fail("Expected val to be string")
 #@   end
 #@ end
 
-#@schema/type "map"
-#@schema/validate validate_str_to_str
+#@schema/type "any"
+#@schema/validate validate_map_str_to_str
 #@schema/example {"prometheus.io/scrape": "true", "prometheus.io/path": "/minio/prometheus/metrics", "prometheus.io/port": "9000"}
 annotations: {}
 
@@ -372,6 +373,31 @@ annotations: {}
 annotations:
   #@schema/any-key
   _: ""
+```
+
+Type any with default (TBD, should we force schema/default?):
+
+```yaml
+#@schema/type "any"
+annotations:
+  foo: bar
+  blah: 123
+```
+
+Example of additional free-form properties:
+
+```yaml
+annotations:
+  #@schema/any-key
+  _: ""
+
+db_opts:
+  username: ""
+  password: ""
+  #@schema/any-key
+  _:
+    #@schema/type "any"
+    value:
 ```
 
 #### Asserting on higher level structure with optional lower key with #@schema/key-may-be-present
