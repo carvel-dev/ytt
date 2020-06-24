@@ -26,7 +26,7 @@ func NewYttCmd(o *YttOptions) *cobra.Command {
 	cmd.Short = "ytt performs YAML templating"
 	cmd.Long = `ytt performs YAML templating.
 
-Docs: https://github.com/k14s/ytt/tree/master/docs
+Docs: https://github.com/k14s/ytt/tree/develop/docs
 Docs for data values: https://github.com/k14s/ytt/blob/master/docs/ytt-data-values.md`
 
 	// Affects children as well
