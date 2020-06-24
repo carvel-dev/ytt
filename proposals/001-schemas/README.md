@@ -130,7 +130,7 @@ Beyond specifying a type for a value, one can specify more dynamic constraints o
   replicas: 6
   ```
 
-  will use the `min` predefined validator as well as the user-provided `number_is_even` function for validations. Function arguments should have a signature which matches the signature of custom functions passed to [`@overlay/assert`](https://github.com/k14s/ytt/blob/master/docs/lang-ref-ytt-overlay.md).
+  will use the `min` predefined validator as well as the user-provided `number_is_even` function for validations. Function arguments should have a signature which matches the signature of custom functions passed to [`@overlay/assert`](https://github.com/k14s/ytt/blob/develop/docs/lang-ref-ytt-overlay.md).
 
   Full list of builtin validations exposed via kwargs:
 

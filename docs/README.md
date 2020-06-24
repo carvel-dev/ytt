@@ -8,7 +8,7 @@
   - [For loop](lang-ref-for.md)
   - [Functions](lang-ref-def.md)
   - [Load statement](lang-ref-load.md)
-  - [Starlark specification](https://github.com/google/starlark-go/blob/master/doc/spec.md#contents) from google/starlark-go repo
+  - [Starlark specification](https://github.com/google/starlark-go/blob/develop/doc/spec.md#contents) from google/starlark-go repo
   - [@ytt library](lang-ref-ytt.md) describes builtin modules in ytt
     - [overlay module](lang-ref-ytt-overlay.md) describes how to perform configuration patching on top of plain templating
     - [library module](lang-ref-ytt-library.md) describes how to programmatically template libraries
@@ -33,7 +33,7 @@
 - [Introducing the YAML Templating Tool (ytt)](https://www.youtube.com/watch?v=KbB5tI_g3bo) on IBM Developer podcast
 - [TGI Kubernetes 079: YTT and Kapp](https://www.youtube.com/watch?v=CSglwNTQiYg) with Joe Beda
 - [Helm Summit 2019 - ytt: An Alternative to Text Templating of YAML Configuration](https://www.youtube.com/watch?v=7-PqgpkxC7E)
-  - [presentation slides](https://github.com/k14s/meetups/blob/master/ytt-2019-sep-helm-summit.pdf)
+  - [presentation slides](https://github.com/k14s/meetups/blob/develop/ytt-2019-sep-helm-summit.pdf)
 
 ### Misc
 

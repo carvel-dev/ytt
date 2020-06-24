@@ -19,7 +19,7 @@ BUILD_VALUES=./hack/build-values-get-ytt-io.yml ./hack/build.sh
 
 For those interested in extending and improving `ytt`, below is a quick reference on the structure of the source code:
 
-- [pkg/cmd/template/cmd.go](https://github.com/k14s/ytt/blob/master/pkg/cmd/template/cmd.go#L95) is the top level call site for the template command
+- [pkg/cmd/template/cmd.go](https://github.com/k14s/ytt/blob/develop/pkg/cmd/template/cmd.go#L95) is the top level call site for the template command
 - [pkg/files](https://github.com/k14s/ytt/tree/develop/pkg/files) allows reading files from filesystem
 - [pkg/workspace](https://github.com/k14s/ytt/tree/develop/pkg/workspace) keeps read files from the filesystem in memory for later access
   - `load(...)` directive goes through `TemplateLoader` to load files
