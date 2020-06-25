@@ -1,4 +1,4 @@
-### ytt Library: Overlay module
+# ytt Library: Overlay module
 
 Overlay module provides a way to combine two structures together with the help of annotations. You can use overlay functionality:
 
@@ -9,9 +9,9 @@ When combining two structures together we refer to the structure is modified as 
 
 Each modification is made of one matching stage (as specified by `@overlay/match` annotation) and one action (e.g. `@overlay/merge`, `@overlay/replace`, etc.).
 
-#### Annotations on the "right-side" nodes
+## Annotations on the "right-side" nodes
 
-##### @overlay/match
+### @overlay/match
 
 `@overlay/match [by=Function, expects=Int|String|List|Function, missing_ok=Bool, when=Int|String|List]`
 
@@ -38,25 +38,25 @@ Examples:
 - `#@overlay/match when=2+`: applies changes when 2 or more "left-side" nodes are found but will not error otherwise
 - `#@overlay/match when=[0,1,4]`: applies changes when 0, 1 or 4 "left-side" nodes are found but will not error otherwise
 
-##### @overlay/match-child-defaults
+### @overlay/match-child-defaults
 
 `@overlay/match-child-defaults [expects=..., missing_ok=Bool]`
 
 Specifies `@overlay/match` defaults for child nodes (does not apply to current node). Mostly useful to avoid repeating `@overlay/match missing_ok=True` on each child node in maps. Valid for documents, map and array items.
 
-##### @overlay/merge
+### @overlay/merge
 
 `@overlay/merge`
 
 This is a default action. It merges node content recursively. Valid for both map and array items.
 
-##### @overlay/remove
+### @overlay/remove
 
 `@overlay/remove`
 
 Removes "left-side" node ("right-side" node value is ignored). Valid for documents, map and array items.
 
-##### @overlay/replace
+### @overlay/replace
 
 `@overlay/replace [via=Function]`
 
@@ -69,19 +69,19 @@ Examples:
 - `#@overlay/replace`: uses right-side value (default)
 - `#@overlay/replace via=lambda a,b: "prefix-"+a`: prefix left-side value with `prefix-` string
 
-##### @overlay/insert
+### @overlay/insert
 
 `@overlay/insert [before=Bool, after=Bool]`
 
 Inserts array item at the matched index, before matched index, or after. Valid only for documents and array items.
 
-##### @overlay/append
+### @overlay/append
 
 `@overlay/append`
 
 Appends array item to the end of "left-side" array or document set. Valid only for documents and array items.
 
-##### @overlay/assert
+### @overlay/assert
 
 `@overlay/assert [via=Function]` (available in v0.24.0+)
 
@@ -100,11 +100,11 @@ Examples:
 - `#@overlay/assert via=lambda a,b: regexp.match("[a-z0-9]+", a)`: check that value is lowercase alphanumeric
 
 ---
-#### Functions
+## Functions
 
 Several functions are provided by overlay module that are useful for executing overlay operation, and matching various structures. Use `load("@ytt:overlay", "overlay")` to access these functions.
 
-##### overlay.apply
+### overlay.apply
 
 `overlay.apply(left, right1[, rightX...])` to combine two or more structures (see [Programmatic access](#programmatic-access) below for details)
 
@@ -113,7 +113,7 @@ overlay.apply(left(), right())
 overlay.apply(left(), one(), two())
 ```
 
-##### overlay.map_key
+### overlay.map_key
 
 `overlay.map_key(name)` matcher matches array items or maps based on the value of map key `name` (it requires that all item values have specified map key, use `overlay.subset(...)` if that requirement is cannot be met)
    
@@ -132,18 +132,18 @@ _:
   name: item2
 ```
 
-##### overlay.index
+### overlay.index
 
-`index(i)` matcher matches array item at given index
+`overlay.index(i)` matcher matches array item at given index
 
 ```yaml
 #@overlay/match by=overlay.index(0)
 - item10
 ```
 
-##### overlay.all
+### overlay.all
 
-`all` matcher matches all:
+`overlay.all` matcher matches all:
  
 documents
 
@@ -169,7 +169,7 @@ _:
   name: item10
 ```
 
-##### overlay.subset
+### overlay.subset
 
 `overlay.subset` matcher matches based on partial equality of given value. Value could be map or any scalar.
 
@@ -183,7 +183,7 @@ spec:
   enabled: true
 ```
 
-##### overlay.and_op
+### overlay.and_op
 
 `overlay.and_op(matcher1, matcher2, ...)` matcher takes one or more matchers and returns true if all matchers return true (as of v0.26.0+)
 
@@ -195,7 +195,7 @@ spec:
 #! ...
 ```
 
-##### overlay.or_op
+### overlay.or_op
 
 `overlay.or_op(matcher1, matcher2, ...)` matcher takes one or more matchers and returns true if any matchers return true (as of v0.26.0+)
 
@@ -205,7 +205,7 @@ spec:
 #! ...
 ```
 
-##### overlay.not_op
+### overlay.not_op
 
 `not_op(matcher)` matcher takes another matcher and returns opposite result (as of v0.26.0+)
 
@@ -216,7 +216,7 @@ spec:
 ```
 
 ---
-#### Programmatic access
+## Programmatic access
 
 In this example we have `left()` function that returns left-side structure and `right()` that returns right-side structure that specifies modifications. `overlay.apply(...)` will execute modifications and return a new structure.
 
@@ -267,7 +267,7 @@ result:
 ```
 
 ---
-#### Overlays as files
+## Overlays as files
 
 ytt CLI treats YAML documents with `overlay/match` annotation as overlays. Such overlays could be specified in any file and are matched against all resulting YAML documents from all other files in the post-templating stage.
 
@@ -318,7 +318,7 @@ metadata:
 
 See [Overlay files example](https://get-ytt.io/#example:example-overlay-files) in online playground.
 
-#### Overlay order
+### Overlay order
 
 Specified as follows in v0.13.0+.
 
