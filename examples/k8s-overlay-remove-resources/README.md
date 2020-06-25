@@ -1,0 +1,1 @@
+This example showcases how to remove k8s resources declarations via overlay in places where such declarations exist (ie conditionally). `@overlay/match`'s `when=` kwarg is used instead of `expects=` since not all Deployments have initContainers for example.

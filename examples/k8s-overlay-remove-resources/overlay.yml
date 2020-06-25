@@ -1,0 +1,47 @@
+#@ load("@ytt:overlay", "overlay")
+
+#! Remove resource requirements to support smaller environments
+
+#@ is_dep = overlay.subset({"kind": "Deployment"})
+#@ is_ds = overlay.subset({"kind": "DaemonSet"})
+#@ is_sts = overlay.subset({"kind": "StatefulSet"})
+
+#@overlay/match by=overlay.or_op(is_dep, is_ds, is_sts),expects="1+"
+---
+spec:
+  template:
+    metadata:
+      #@overlay/match missing_ok=True
+      annotations:
+        #@overlay/match missing_ok=True
+        sidecar.istio.io/proxyCPU: "0m"
+        #@overlay/match missing_ok=True
+        sidecar.istio.io/proxyMemory: "0M"
+    spec:
+      #@overlay/match when=1
+      initContainers:
+      #@overlay/match by=overlay.all,when="1+"
+      -
+        #@overlay/match missing_ok=True
+        #@overlay/remove
+        resources: {}
+        #@overlay/match missing_ok=True
+        #@overlay/remove
+        livenessProbe: {}
+        #@overlay/match missing_ok=True
+        #@overlay/remove
+        readinessProbe: {}
+
+      #@overlay/match when=1
+      containers:
+      #@overlay/match by=overlay.all,when="1+"
+      -
+        #@overlay/match missing_ok=True
+        #@overlay/remove
+        resources: {}
+        #@overlay/match missing_ok=True
+        #@overlay/remove
+        livenessProbe: {}
+        #@overlay/match missing_ok=True
+        #@overlay/remove
+        readinessProbe: {}

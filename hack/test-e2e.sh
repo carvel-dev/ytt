@@ -33,16 +33,17 @@ done
 ./ytt -f examples/overlay-files > /dev/null
 ./ytt -f examples/overlay-regular-files --file-mark file.yml:type=yaml-plain > /dev/null
 
-diff <(./ytt -f examples/k8s-add-global-label)        examples/k8s-add-global-label/expected.txt
-diff <(./ytt -f examples/k8s-adjust-rbac-version)     examples/k8s-adjust-rbac-version/expected.txt
-diff <(./ytt -f examples/k8s-docker-secret)           examples/k8s-docker-secret/expected.txt
-diff <(./ytt -f examples/k8s-relative-rolling-update) examples/k8s-relative-rolling-update/expected.txt
-diff <(./ytt -f examples/k8s-config-map-files)        examples/k8s-config-map-files/expected.txt
-diff <(./ytt -f examples/k8s-update-env-var)          examples/k8s-update-env-var/expected.txt
-diff <(./ytt -f examples/k8s-overlay-all-containers)  examples/k8s-overlay-all-containers/expected.txt
-diff <(./ytt -f examples/k8s-overlay-in-config-map)   examples/k8s-overlay-in-config-map/expected.txt
-diff <(./ytt -f examples/concourse-overlay)           examples/concourse-overlay/expected.txt
-diff <(./ytt -f examples/overlay-not-matcher)         examples/overlay-not-matcher/expected.txt
+diff <(./ytt -f examples/k8s-add-global-label)          examples/k8s-add-global-label/expected.txt
+diff <(./ytt -f examples/k8s-adjust-rbac-version)       examples/k8s-adjust-rbac-version/expected.txt
+diff <(./ytt -f examples/k8s-docker-secret)             examples/k8s-docker-secret/expected.txt
+diff <(./ytt -f examples/k8s-relative-rolling-update)   examples/k8s-relative-rolling-update/expected.txt
+diff <(./ytt -f examples/k8s-config-map-files)          examples/k8s-config-map-files/expected.txt
+diff <(./ytt -f examples/k8s-update-env-var)            examples/k8s-update-env-var/expected.txt
+diff <(./ytt -f examples/k8s-overlay-all-containers)    examples/k8s-overlay-all-containers/expected.txt
+diff <(./ytt -f examples/k8s-overlay-remove-resources)  examples/k8s-overlay-remove-resources/expected.txt
+diff <(./ytt -f examples/k8s-overlay-in-config-map)     examples/k8s-overlay-in-config-map/expected.txt
+diff <(./ytt -f examples/concourse-overlay)             examples/concourse-overlay/expected.txt
+diff <(./ytt -f examples/overlay-not-matcher)           examples/overlay-not-matcher/expected.txt
 
 # test json output
 ./ytt -f examples/k8s-adjust-rbac-version -o json > /dev/null

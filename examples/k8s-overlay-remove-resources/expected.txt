@@ -1,0 +1,90 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx1
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: nginx1
+  template:
+    metadata:
+      labels:
+        app: nginx1
+      annotations:
+        sidecar.istio.io/proxyCPU: 0m
+        sidecar.istio.io/proxyMemory: 0M
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:1.14.2
+        ports:
+        - containerPort: 80
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx2-without-resources
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nginx2
+  template:
+    metadata:
+      labels:
+        app: nginx2
+      annotations:
+        sidecar.istio.io/proxyCPU: 0m
+        sidecar.istio.io/proxyMemory: 0M
+    spec:
+      initContainers:
+      - name: setup
+        image: ubuntu
+        command:
+        - /bin/bash
+        - -c
+        - echo 1
+      containers:
+      - name: nginx
+        image: nginx:1.14.2
+        ports:
+        - containerPort: 80
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: ngninx3
+spec:
+  selector:
+    matchLabels:
+      app: nginx3
+  serviceName: nginx
+  template:
+    metadata:
+      labels:
+        app: nginx3
+      annotations:
+        sidecar.istio.io/proxyCPU: 0m
+        sidecar.istio.io/proxyMemory: 0M
+    spec:
+      terminationGracePeriodSeconds: 10
+      containers:
+      - name: nginx
+        image: k8s.gcr.io/nginx-slim:0.8
+        ports:
+        - containerPort: 80
+          name: web
+        volumeMounts:
+        - name: www
+          mountPath: /usr/share/nginx/html
+  volumeClaimTemplates:
+  - metadata:
+      name: www
+    spec:
+      accessModes:
+      - ReadWriteOnce
+      storageClassName: my-storage-class
+      resources:
+        requests:
+          storage: 1Gi
