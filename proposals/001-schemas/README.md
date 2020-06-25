@@ -43,7 +43,12 @@ Following types are available:
 - `array-typed <unique>`
 - `any` (TBD: vs `#@schema/type any=True`)
 
-TBD: use starlark or yaml terminilogy (list vs array, map vs dict)?
+`map-typed`, `array-typed`, and `any` are "complex values".
+
+Tentative: use `any` when wanting to say "all types"
+
+TBD: use starlark or yaml terminology (list vs array, map vs dict)?
+
 
 ### Schema annotations
 
@@ -61,6 +66,8 @@ TBD: use starlark or yaml terminilogy (list vs array, map vs dict)?
   will validate that `percentage` is of type float or integer.
 
   Since `map-typed <unique>` and `array-typed <unique>` types can _only_ be described inline (as a value), `or_inferred=True` must be specified.
+  
+  `or_inferred=True` can be used iff the value is `map-typed <unique>` or `array-typed <unique>`.
 
 - `@schema/default value`
 
@@ -81,9 +88,12 @@ TBD: use starlark or yaml terminilogy (list vs array, map vs dict)?
   aws: 4
   ```
 
-  To discourage redundant use of `@schema/default` (TBD how to determine?), above will error. Another example is when value is of type `any`, `@schema/default` must not be provided.
-
-  This annotation is required for `array-typed <unique>` values to indicate explicitly to readers of schema what is the default value.
+  `@schema/default` is _disallowed_ when the effective type is:
+  - any scalar type or compound type made up only of scalars
+  - "None"
+  - "Any" 
+      
+  `@schema/default` is _required_ for `array-typed <unique>` values to indicate explicitly to readers of schema what is the default value.
 
 - `@schema/nullable`
 
