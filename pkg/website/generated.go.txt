@@ -27,7 +27,7 @@ for file in data.list():
 end
 
 exampleSets = [
-  { "id": "reference",
+  { "id": "basics",
     "description": "Specific topics, by example.",
     "examples": [
       {"id": "example-plain-yaml"},
