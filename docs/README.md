@@ -8,7 +8,7 @@
   - [For loop](lang-ref-for.md)
   - [Functions](lang-ref-def.md)
   - [Load statement](lang-ref-load.md)
-  - [Starlark specification](https://github.com/google/starlark-go/blob/develop/doc/spec.md#contents) from google/starlark-go repo
+  - [Starlark specification](https://github.com/google/starlark-go/blob/master/doc/spec.md#contents) from google/starlark-go repo
   - [@ytt library](lang-ref-ytt.md) describes builtin modules in ytt
     - [overlay module](lang-ref-ytt-overlay.md) describes how to perform configuration patching on top of plain templating
     - [library module](lang-ref-ytt-library.md) describes how to programmatically template libraries
