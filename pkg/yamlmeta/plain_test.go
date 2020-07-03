@@ -46,3 +46,20 @@ func TestPlainUnmarshalMap(t *testing.T) {
 		t.Fatalf("Expected to be nil: val=%#v type=%T", val, val)
 	}
 }
+
+func TestPlainMarshalLineWidth(t *testing.T) {
+	val := map[string]interface{}{
+		"foo": "very long string very long string very long string very long string very long string very long string very long string very long string very long string very long string very long string",
+	}
+
+	bs, err := yamlmeta.PlainMarshal(val)
+	if err != nil {
+		t.Fatalf("Expected to succeed: %s", err)
+	}
+
+	expectedOutput := "foo: very long string very long string very long string very long string very long string very long string very long string very long string very long string very long string very long string\n"
+
+	if string(bs) != expectedOutput {
+		t.Fatalf("Expected to be single line but was '%s'", bs)
+	}
+}
