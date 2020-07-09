@@ -71,7 +71,7 @@ readme: |
   `metadata.name` and `spec.template.spec.containers.name`
   may have the same value, but they have different meanings.
 
-  It's possible to DRY-up your code so much, it chaffes —
+  It's possible to DRY-up your code so much, it chafes —
   making natural change more painful than it need be.
 
   ................
