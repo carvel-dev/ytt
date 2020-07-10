@@ -1,37 +1,26 @@
-# ytt (YAML Templating Tool)
 
-- Website: https://get-ytt.io
-- Slack: [#k14s in Kubernetes slack](https://slack.kubernetes.io)
-- [Docs](docs/README.md) with topics on language, security, ytt vs other tools, _blog posts and talks_ etc.
-- Install: Grab prebuilt binaries from the [Releases page](https://github.com/k14s/ytt/releases) or [Homebrew k14s tap](https://github.com/k14s/homebrew-tap)
-- Editor Extensions: [vscode sytnax highlighting](https://marketplace.visualstudio.com/items?itemName=ewrenn.vscode-ytt)
+* Install: Grab prebuilt binaries from the [Releases page](https://github.com/k14s/ytt/releases)
+* Play: Jump right in by trying out the [online playground](https://get-ytt.io/#playground)
+* For more information about annotations, data values, overlays and other features see [Docs](https://github.com/k14s/ytt/tree/develop/docs) page
+* Slack: [#k14s in Kubernetes slack](https://slack.kubernetes.io/)
 
-`ytt` (pronounced spelled out) is a templating tool that understands YAML structure allowing you to focus on your data instead of how to properly escape it.
+## Overview
 
-[![](docs/ytt-playground-screenshot.png)](https://get-ytt.io/#example:example-demo)
-
-Features:
-
-- templating works on YAML structure (instead of text)
-  - which eliminates variety of problems such as invalid YAML formatting, escaping, etc.
-- syntactic sugar for single YAML node conditionals and for loops
-  - makes it easier to read densely conditioned templates
-- templates are themselves valid YAML files
-  - makes them friendly to existing editors and YAML tools
-- includes *sandboxed* "fully featured" Python-like programming language
-- allows configuration modularization via functions and libraries
+`ytt` (pronounced spelled out) is a templating tool that understands YAML structure. It helps you easily configure complex software via reusable templates and user provided values. Ytt includes the following features:
+- Structural templating: understands yaml structure so users can focus on their configuration instead of issues associated with text templating, such as YAML value quoting or manual template indentation
+- Built-in programming language: includes the "fully featured" Python-like programming language Starklark which helps ease the burden of configuring complex software through a richer set of functionality.
+- Reusable configuration: You can reuse the same configuration in different environments by applying environment-specific values.
+- Custom validations: coupled with the fast and deterministic execution, allows you to take advantage of faster feedback loops when creating and testing templates
+- Overlays: this advanced configuration helps users manage the customization required for complex software. For more, see [this example](https://get-ytt.io/#example:example-overlay-files) in the online playground.
+- Sandboxing: provides a secure, deterministic environment for execution of templates
 
 ## Try it
 
-Try out [online playground](https://get-ytt.io) or download latest binaries from [Releases page](https://github.com/k14s/ytt/releases) and run it locally:
+To get started with `ytt` and to see examples, you use the online playground or download the binaries and run the playground locally.
+- Try out the [online playground](https://get-ytt.io/#playground)
+- Download the latest binaries from the [releases page](https://github.com/k14s/ytt/releases) and run the playground locally :
 
-```
-ytt -f examples/playground/example-demo/
-ytt -f examples/playground/example-demo/ --output-directory tmp/
-```
+  `ytt website`
 
-See [examples/playground/](examples/playground/) for examples shown on [get-ytt.io](https://get-ytt.io).
-
-## Development
-
-Consult [docs/dev.md](docs/dev.md) for build instructions, code structure details.
+- See the examples used in the playground on the [examples](https://github.com/k14s/ytt/tree/develop/examples/playground) page
+- Editor Extensions: [vscode sytnax highlighting](https://marketplace.visualstudio.com/items?itemName=ewrenn.vscode-ytt)
