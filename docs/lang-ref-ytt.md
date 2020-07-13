@@ -4,7 +4,7 @@ Following modules are included with `ytt`.
 
 ## General modules
 
-### <a id="struct"></a> struct
+### struct
 
 ```python
 load("@ytt:struct", "struct")
