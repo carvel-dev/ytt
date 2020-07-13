@@ -1,19 +1,14 @@
-### ytt Library
+# ytt Library
 
-Following modules are included with `ytt`. Example usage:
+Following modules are included with `ytt`.
 
-```yaml
-#@ load("@ytt:regexp", "regexp")
+## General modules
 
-regex: #@ regexp.match("[a-z]+[0-9]+", "__hello123__")
-```
+### <a id="struct"></a> struct
 
-#### General modules
-
-<a id="struct"></a>
-
-- `load("@ytt:struct", "struct")`
 ```python
+load("@ytt:struct", "struct")
+
 st = struct.make(field1=123, field2={"key": "val"})
 st.field1 # 123
 st.field2 # {"key": "val"}
@@ -38,14 +33,22 @@ struct.decode(struct.make(a=[1,2,3,{"c":456}], b="str")) # plain values extracte
 struct.decode(data.values) # {...}
 ```
 
-- `load("@ytt:assert", "assert")`
+### assert
+
 ```python
+load("@ytt:assert", "assert")
+
 assert.fail("expected value foo, but was {}".format(value)) # stops execution
 x = data.values.env.mysql_password or assert.fail("missing env.mysql_password")
 ```
 
-- `load("@ytt:data", "data")` (see [ytt @data/values](ytt-data-values.md) for more details)
+### data
+
+See [ytt @data/values](ytt-data-values.md) for more details
+
 ```python
+load("@ytt:data", "data")
+
 data.values # struct that has input values
 
 # relative to current package
@@ -57,13 +60,19 @@ data.list("/")              # list files
 data.list("/data/data.txt") # read file
 ```
 
-- `load("@ytt:regexp", "regexp")`
+### regexp
+
 ```python
+load("@ytt:regexp", "regexp")
+
 regexp.match("[a-z]+[0-9]+", "__hello123__") # True
 ```
 
-- `load("@ytt:url", "url")`
+### url
+
 ```python
+load("@ytt:url", "url")
+
 url.path_segment_encode("part part")   # "part%20part"
 url.path_segment_decode("part%20part") # "part part"
 
@@ -74,44 +83,65 @@ url.query_params_encode({"x":["1"],"y":["2","3"],"z":[""]}) # "x=1&y=2&y=3&z="
 url.query_params_decode("x=1&y=2&y=3;z")                    # {"x":["1"],"y":["2","3"],"z":[""]}
 ```
 
-- `load("@ytt:version", "version")` (see [version module doc](lang-ref-ytt-version.md))
+### version
 
-#### Serialization modules
+`load("@ytt:version", "version")` (see [version module doc](lang-ref-ytt-version.md))
 
-- `load("@ytt:base64", "base64")`
+---
+## Serialization modules
+
+### base64
+
 ```python
+load("@ytt:base64", "base64")
+
 base64.encode("regular")      # "cmVndWxhcg=="
 base64.decode("cmVndWxhcg==") # "regular"
 ```
 
-- `load("@ytt:json", "json")`
+### json
+
 ```python
+load("@ytt:json", "json")
+
 json.encode({"a": [1,2,3,{"c":456}], "b": "str"})
 json.decode('{"a":[1,2,3,{"c":456}],"b":"str"}')
 ```
 
-- `load("@ytt:yaml", "yaml")`
+### yaml
+
 ```python
+load("@ytt:yaml", "yaml")
+
 yaml.encode({"a": [1,2,3,{"c":456}], "b": "str"})
 yaml.decode('{"a":[1,2,3,{"c":456}],"b":"str"}')
 ```
 
-#### Hashing modules
+---
+## Hashing modules
 
-- `load("@ytt:md5", "md5")`
+### md5
+
 ```python
+load("@ytt:md5", "md5")
+
 md5.sum("data") # "8d777f385d3dfec8815d20f7496026dc"
 ```
 
-- `load("@ytt:sha256", "sha256")`
+### sha256
+
 ```python
+load("@ytt:sha256", "sha256")
+
 sha256.sum("data") # "3a6eb0790f39ac87c94f3856b2dd2c5d110e6811602261a9a923d3bb23adc8b7"
 ```
 
-#### Overlay module
+---
+## Overlay module
 
 See [Overlay specific docs](lang-ref-ytt-overlay.md).
 
-#### Library module
+---
+## Library module
 
 See [Library specific docs](lang-ref-ytt-library.md).
