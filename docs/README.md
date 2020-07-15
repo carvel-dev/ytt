@@ -21,6 +21,8 @@
 - [File marks](file-marks.md)
 - [Security](security.md)
 - [FAQ](faq.md)
+- [Known limitations](known-limitations.md)
+- [Strict YAML subset](strict.md)
 - [ytt vs X: How ytt is different from other tools / frameworks](ytt-vs-x.md)
 
 ### Blog posts
