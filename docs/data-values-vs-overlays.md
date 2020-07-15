@@ -1,8 +1,16 @@
 # Data Values vs Overlays
-As folks get started with `ytt`, a common question that arises is, “when should I use data values versus overlays?” While these features do address a similar problem space, we recommend using one feature versus the other depending on the use case. We will detail our guidance below.
+As folks get started with `ytt`, a common question that arises is, “when should
+I use data values versus overlays?” While these features do address a similar
+problem space, we recommend using one feature versus the other depending on the
+use case. We will detail our guidance below.
 
 ## Data Values
-[Data values](ytt-data-values.md) provide a way to inject input data into a template. If you think about a ytt template as a function, then data values are the varying parameters. The configuration author provides data values for the configuration consumer. Configuration authors are able to set default data values and prompt the configuration consumer to update them, as needed.
+[Data values](ytt-data-values.md) provide a way to inject input data into a
+template. If you think about a ytt template as a function, then data values are
+the varying parameters. The configuration author will expose values that are
+likely to change often, such as with every new environment, as data values.
+Authors can also set data values to reasonable defaults or leave them empty and
+require the consumers to input their own.
 
 Common use cases:
 1. Set default values (for generic or specific use-cases)
@@ -48,12 +56,18 @@ replicas: 1
 nginx_image: nginx:1.14.2
 ```
 
-The configuration consumer will have the opportunity to update the `values.yml` file directly.
+The configuration consumer will have the opportunity to update the `values.yml`
+file directly, or provide their own data values files that override the ones
+provided.
 
 This example portrays how to:
-1. Set default values. The configuration author has set appropriate default values for `replicas` and `nginx_image`.
-1. Provide visibility to values that could be updated by the consumer. `deployment_name`, `replicas`, and `nginx_image` are all configurable by the consumer.
-1. Enable simple conditional behavior. `deployment_name` must be set by the consumer, otherwise an error will be returned.
+1. Set default values. The configuration author has set appropriate default
+   values for `replicas` and `nginx_image`.
+1. Provide visibility to values that could be updated by the consumer.
+   `deployment_name`, `replicas`, and `nginx_image` are all configurable by the
+   consumer.
+1. Enable simple conditional behavior. `deployment_name` must be set by the
+   consumer, otherwise an error will be returned.
 
 Pros:
 - Simple (easy to use, easy to understand)
@@ -62,7 +76,15 @@ Cons:
 - Limited in capability (by design)
 
 ## Overlays
-[Overlays](lang-ref-ytt-overlay.md) provide a way to combine two structures together with the help of annotations. Configuration consumers use overlays to add to, remove from, or edit in-place their configurations. With basic usage, overlays can act as an extension of data values, but as situations inevitably become more complex, overlays provide many more capabilities.
+When authors would like to provide a way to perform more advanced configuration,
+such as enabling optional components that require changing config in many
+places, or consumers would like to configure fields beyond what the original
+author exposed as data values, they should turn to
+[Overlays](lang-ref-ytt-overlay.md).  These documents provide a way to specify
+locations within configuration and either add to, remove from, or replace within
+that existing configuration.  With basic usage, overlays can act as an extension
+of data values, but as situations inevitably become more complex, overlays
+provide many more capabilities.
 
 Common use cases:
 1. To replace, delete, or append configuration
@@ -170,15 +192,19 @@ This example demonstrates a number of overlay capabilities:
 1. Removing configuration via `remove-container.yml`
 1. Extending and updating data values via `prod-values.yml`
 
-Use the [ytt playground to play with this example](https://get-ytt.io/#gist:https://gist.github.com/aaronshurley/b6868b76e25fcb24aedde42f522734af).
+Use the [ytt playground to play with this
+example](https://get-ytt.io/#gist:https://gist.github.com/aaronshurley/b6868b76e25fcb24aedde42f522734af).
 
 Pros:
 - Has more functionality
 - Doesn’t change the source
-- Programmatic capabilities (this wasn't demonstrated here, see [example](lang-ref-ytt-overlay.md#programmatic-access))
+- Programmatic capabilities (this wasn't demonstrated here, see
+  [example](lang-ref-ytt-overlay.md#programmatic-access))
 
 Cons:
 - Added complexity
 
 # If you want to learn more...
-Check out the [Getting Started tutorial](https://get-ytt.io/#example:example-hello-world) on the ytt website for a detailed introduction to ytt.
+Check out the [Getting Started
+tutorial](https://get-ytt.io/#example:example-hello-world) on the ytt website
+for a detailed introduction to ytt.
