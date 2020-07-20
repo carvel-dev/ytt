@@ -17,10 +17,10 @@ import (
 	"unicode"
 	"unicode/utf8"
 
-	"go.starlark.net/internal/compile"
-	"go.starlark.net/internal/spell"
-	"go.starlark.net/resolve"
-	"go.starlark.net/syntax"
+	"github.com/k14s/starlark-go/internal/compile"
+	"github.com/k14s/starlark-go/internal/spell"
+	"github.com/k14s/starlark-go/resolve"
+	"github.com/k14s/starlark-go/syntax"
 )
 
 // A Thread contains the state of a Starlark thread,

@@ -3,9 +3,9 @@ package yttlibrary
 import (
 	"fmt"
 
+	"github.com/k14s/starlark-go/starlark"
 	tplcore "github.com/k14s/ytt/pkg/template/core"
 	"github.com/k14s/ytt/pkg/yttlibrary/overlay"
-	"go.starlark.net/starlark"
 )
 
 type API struct {

@@ -1,7 +1,7 @@
 package core
 
 import (
-	"go.starlark.net/starlark"
+	"github.com/k14s/starlark-go/starlark"
 )
 
 func BoolArg(kwargs []starlark.Tuple, keyToFind string) (bool, error) {

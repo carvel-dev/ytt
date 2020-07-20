@@ -6,10 +6,10 @@ import (
 	"fmt"
 	"os"
 
-	"go.starlark.net/internal/compile"
-	"go.starlark.net/internal/spell"
-	"go.starlark.net/resolve"
-	"go.starlark.net/syntax"
+	"github.com/k14s/starlark-go/internal/compile"
+	"github.com/k14s/starlark-go/internal/spell"
+	"github.com/k14s/starlark-go/resolve"
+	"github.com/k14s/starlark-go/syntax"
 )
 
 const vmdebug = false // TODO(adonovan): use a bitfield of specific kinds of error.

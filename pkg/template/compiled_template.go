@@ -2,11 +2,11 @@ package template
 
 import (
 	"fmt"
+	"github.com/k14s/starlark-go/resolve"
+	"github.com/k14s/starlark-go/starlark"
+	"github.com/k14s/starlark-go/syntax"
 	"github.com/k14s/ytt/pkg/filepos"
 	tplcore "github.com/k14s/ytt/pkg/template/core"
-	"go.starlark.net/resolve"
-	"go.starlark.net/starlark"
-	"go.starlark.net/syntax"
 	"strings"
 	"unicode"
 )

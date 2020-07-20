@@ -3,7 +3,7 @@ package core
 import (
 	"fmt"
 
-	"go.starlark.net/starlark"
+	"github.com/k14s/starlark-go/starlark"
 	"runtime/debug"
 )
 

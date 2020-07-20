@@ -3,9 +3,9 @@ package yamltemplate
 import (
 	"fmt"
 
+	"github.com/k14s/starlark-go/starlark"
 	tplcore "github.com/k14s/ytt/pkg/template/core"
 	"github.com/k14s/ytt/pkg/yamlmeta"
-	"go.starlark.net/starlark"
 )
 
 func NewGoValueWithYAML(val interface{}) tplcore.GoValue {

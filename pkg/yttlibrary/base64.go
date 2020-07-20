@@ -4,9 +4,9 @@ import (
 	"encoding/base64"
 	"fmt"
 
+	"github.com/k14s/starlark-go/starlark"
+	"github.com/k14s/starlark-go/starlarkstruct"
 	"github.com/k14s/ytt/pkg/template/core"
-	"go.starlark.net/starlark"
-	"go.starlark.net/starlarkstruct"
 )
 
 var (

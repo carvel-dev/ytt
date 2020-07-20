@@ -6,13 +6,13 @@ import (
 	"os"
 	"strings"
 
+	"github.com/k14s/starlark-go/starlark"
 	"github.com/k14s/ytt/pkg/filepos"
 	"github.com/k14s/ytt/pkg/template"
 	"github.com/k14s/ytt/pkg/workspace"
 	"github.com/k14s/ytt/pkg/yamlmeta"
 	yttoverlay "github.com/k14s/ytt/pkg/yttlibrary/overlay"
 	"github.com/spf13/cobra"
-	"go.starlark.net/starlark"
 )
 
 const (

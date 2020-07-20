@@ -9,9 +9,9 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/k14s/starlark-go/starlark"
 	"github.com/k14s/ytt/pkg/template"
 	"github.com/k14s/ytt/pkg/texttemplate"
-	"go.starlark.net/starlark"
 )
 
 var (

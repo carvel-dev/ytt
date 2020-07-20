@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"reflect"
 
+	"github.com/k14s/starlark-go/starlark"
+	"github.com/k14s/starlark-go/syntax"
 	tplcore "github.com/k14s/ytt/pkg/template/core"
 	"github.com/k14s/ytt/pkg/yamlmeta"
-	"go.starlark.net/starlark"
-	"go.starlark.net/syntax"
 )
 
 const (

@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/k14s/starlark-go/starlark"
 	"github.com/k14s/ytt/pkg/template"
 	"github.com/k14s/ytt/pkg/yamlmeta"
 	yttoverlay "github.com/k14s/ytt/pkg/yttlibrary/overlay"
-	"go.starlark.net/starlark"
 )
 
 type OverlayPostProcessing struct {

@@ -4,9 +4,9 @@ import (
 	"fmt"
 	// "os" // yamlmeta.NewPrinter(os.Stdout).Print(typedLeft)
 
+	"github.com/k14s/starlark-go/starlark"
 	"github.com/k14s/ytt/pkg/template"
 	"github.com/k14s/ytt/pkg/yamlmeta"
-	"go.starlark.net/starlark"
 )
 
 type OverlayOp struct {

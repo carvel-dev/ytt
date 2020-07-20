@@ -10,7 +10,7 @@
 // free variable.  It also sets the Locals array of a File for locals
 // bound by top-level comprehensions and load statements.
 // Identifiers for global variables do not get an index.
-package resolve // import "go.starlark.net/resolve"
+package resolve // import "github.com/k14s/starlark-go/resolve"
 
 // All references to names are statically resolved.  Names may be
 // predeclared, global, or local to a function or file.
@@ -87,8 +87,8 @@ import (
 	"sort"
 	"strings"
 
-	"go.starlark.net/internal/spell"
-	"go.starlark.net/syntax"
+	"github.com/k14s/starlark-go/internal/spell"
+	"github.com/k14s/starlark-go/syntax"
 )
 
 const debug = false

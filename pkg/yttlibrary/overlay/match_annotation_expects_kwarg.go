@@ -5,8 +5,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/k14s/starlark-go/starlark"
 	"github.com/k14s/ytt/pkg/filepos"
-	"go.starlark.net/starlark"
 )
 
 const (

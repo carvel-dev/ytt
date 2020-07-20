@@ -3,8 +3,8 @@ package template_test
 import (
 	"testing"
 
+	"github.com/k14s/starlark-go/starlark"
 	"github.com/k14s/ytt/pkg/template"
-	"go.starlark.net/starlark"
 )
 
 type ErrorHintTest struct {

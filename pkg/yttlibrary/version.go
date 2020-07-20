@@ -5,10 +5,10 @@ import (
 	"regexp"
 
 	semver "github.com/hashicorp/go-version"
+	"github.com/k14s/starlark-go/starlark"
+	"github.com/k14s/starlark-go/starlarkstruct"
 	"github.com/k14s/ytt/pkg/template/core"
 	"github.com/k14s/ytt/pkg/version"
-	"go.starlark.net/starlark"
-	"go.starlark.net/starlarkstruct"
 )
 
 const (

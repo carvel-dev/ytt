@@ -3,9 +3,9 @@ package overlay
 import (
 	"fmt"
 
+	"github.com/k14s/starlark-go/starlark"
 	"github.com/k14s/ytt/pkg/template"
 	tplcore "github.com/k14s/ytt/pkg/template/core"
-	"go.starlark.net/starlark"
 )
 
 type InsertAnnotation struct {

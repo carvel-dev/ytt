@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/k14s/starlark-go/starlark"
 	"github.com/k14s/ytt/pkg/files"
 	"github.com/k14s/ytt/pkg/yamlmeta"
 	"github.com/k14s/ytt/pkg/yamltemplate"
 	"github.com/k14s/ytt/pkg/yttlibrary"
-	"go.starlark.net/starlark"
 )
 
 type LibraryLoader struct {

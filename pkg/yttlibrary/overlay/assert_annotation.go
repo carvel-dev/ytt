@@ -3,11 +3,11 @@ package overlay
 import (
 	"fmt"
 
+	"github.com/k14s/starlark-go/starlark"
 	"github.com/k14s/ytt/pkg/template"
 	tplcore "github.com/k14s/ytt/pkg/template/core"
 	"github.com/k14s/ytt/pkg/yamlmeta"
 	"github.com/k14s/ytt/pkg/yamltemplate"
-	"go.starlark.net/starlark"
 )
 
 type AssertAnnotation struct {

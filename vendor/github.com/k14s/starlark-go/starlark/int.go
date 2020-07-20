@@ -10,7 +10,7 @@ import (
 	"math/big"
 	"strconv"
 
-	"go.starlark.net/syntax"
+	"github.com/k14s/starlark-go/syntax"
 )
 
 // Int is the type of a Starlark int.

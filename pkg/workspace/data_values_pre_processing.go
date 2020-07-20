@@ -4,12 +4,12 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/k14s/starlark-go/starlark"
 	"github.com/k14s/ytt/pkg/filepos"
 	"github.com/k14s/ytt/pkg/yamlmeta"
 	"github.com/k14s/ytt/pkg/yamltemplate"
 	"github.com/k14s/ytt/pkg/yttlibrary"
 	yttoverlay "github.com/k14s/ytt/pkg/yttlibrary/overlay"
-	"go.starlark.net/starlark"
 )
 
 type DataValuesPreProcessing struct {

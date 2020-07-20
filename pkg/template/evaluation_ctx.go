@@ -3,9 +3,9 @@ package template
 import (
 	"fmt"
 
+	"github.com/k14s/starlark-go/starlark"
 	"github.com/k14s/ytt/pkg/structmeta"
 	"github.com/k14s/ytt/pkg/template/core"
-	"go.starlark.net/starlark"
 	// Should not import template specific packages here (like yamlmeta)
 )
 

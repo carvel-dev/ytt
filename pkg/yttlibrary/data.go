@@ -3,10 +3,10 @@ package yttlibrary
 import (
 	"fmt"
 
+	"github.com/k14s/starlark-go/starlark"
+	"github.com/k14s/starlark-go/starlarkstruct"
 	"github.com/k14s/ytt/pkg/template/core"
 	"github.com/k14s/ytt/pkg/yamlmeta"
-	"go.starlark.net/starlark"
-	"go.starlark.net/starlarkstruct"
 )
 
 type DataModule struct {
