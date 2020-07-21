@@ -83,11 +83,9 @@ Cons:
 ---
 ## Overlays
 
-When authors would like to provide a way to perform more advanced configuration,
-such as enabling optional components that require changing config in many
-places, or consumers would like to configure fields beyond what the original
-author exposed as data values, they should turn to
-[Overlays](lang-ref-ytt-overlay.md).  These documents provide a way to specify
+When consumers would like to configure fields beyond what the original
+author has exposed as data values, they should turn to
+[Overlays](lang-ref-ytt-overlay.md). These documents provide a way to specify
 locations within configuration and either add to, remove from, or replace within
 that existing configuration.  With basic usage, overlays can act as an extension
 of data values, but as situations inevitably become more complex, overlays
