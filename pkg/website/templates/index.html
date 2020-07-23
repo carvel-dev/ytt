@@ -12,79 +12,86 @@
     <!-- google analytics -->
   </head>
   <body>
-    <div class="content-wrapper">
-      <div id="k14s-tools">
-        <p>Part of <a href="https://k14s.io">k14s.io</a>: ytt | <a href="https://get-kbld.io">kbld</a> | <a href="https://get-kapp.io">kapp</a> | <a href="https://github.com/k14s/kwt">kwt</a></p>
+    <div class="content">
+      <div id="nav">
+        <h1><span class="logo">ytt <span class="partof">part of <a href="https://k14s.io">k14s</a></span></span></h1>
+        <ul>
+          <li><a href="https://slack.kubernetes.io">Slack</a></li>
+          <li><a href="https://github.com/k14s/ytt">Github</a></li>
+          <li><a href="#">Community</a></li>
+          <li><a href="#">Resources</a></li>
+          <li><a href="#">Blog</a></li>
+          <li><a href="https://github.com/k14s/ytt/tree/develop/docs/README.md">Docs</a></li>
+        </ul>
       </div>
 
-      <div class="content">
-        <div id="header">
-          <h1><span class="logo">$<strong>ytt</strong></span></h1>
+      <div id="hero">
+        <div class="bg">&nbsp;</div>
+        <h2>All your YAML shaping in one tool</h2>
+        <p>Template and patch as needed to make your configuration easily reusable and extensible. Work with your own and third-party YAML configuration.</p>
+        <p>
+          <a class="link-button try-online link-button-primary" href="#playground">Try Online <span>⤵</span></a>
+          <a class="link-button" href="https://github.com/k14s/ytt/releases">Download Binary</a>
+        </p>
+      </div>
 
-          <p class="hero"><code>ytt</code> is a templating tool that understands YAML structure <br/>
-          allowing you to focus on your data instead of how to properly escape it.</p>
+      <div id="highlights">
+        <ul>
+          <li>
+            <svg xmlns="http://www.w3.org/2000/svg" enable-background="new 0 0 24 24" height="24" viewBox="0 0 24 24" width="24"><g><rect fill="none" height="24" width="24"/></g><g><g><rect height="2" width="9" x="13" y="7"/><rect height="2" width="9" x="13" y="15"/><rect height="2" width="6" x="16" y="11"/><polygon points="13,12 8,7 8,11 2,11 2,13 8,13 8,17"/></g></g></svg>
+            <h3>Structure-oriented</h3>
+            <p>ytt templates are plain YAML documents made from nodes such as maps and arrays. ytt allows you to set values and attach statements (such as if and for loops) on those nodes. This eliminates text insertion concerns like manual escaping and allows for easy structure reuse, thus, increasing readability.</p>
+          </li>
+          <li>
+            <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24"><path d="M0 0h24v24H0V0z" fill="none"/><path d="M20.36 11H19V5h-6V3.64c0-1.31-.94-2.5-2.24-2.63C9.26.86 8 2.03 8 3.5V5H2.01v5.8H3.4c1.31 0 2.5.88 2.75 2.16.33 1.72-.98 3.24-2.65 3.24H2V22h5.8v-1.4c0-1.31.88-2.5 2.16-2.75 1.72-.33 3.24.98 3.24 2.65V22H19v-6h1.5c1.47 0 2.64-1.26 2.49-2.76-.13-1.3-1.33-2.24-2.63-2.24z"/></svg>
+            <h3>Modularized Config</h3>
+            <p>Weave ytt templating into your own configuration, externalize values to variables, extract repeated snippets to functions, and make whole sections conditional. Patch on top of any configuration using ytt overlays. Express precise structural edits and invariant declaratively.</p>
+          </li>
+          <li>
+            <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24"><g fill="none"><path d="M0 0h24v24H0V0z"/><path d="M0 0h24v24H0V0z" opacity=".87"/></g><path d="M20 8h-3V6.21c0-2.61-1.91-4.94-4.51-5.19C9.51.74 7 3.08 7 6v2H4v14h16V8zm-8 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zM9 8V6c0-1.66 1.34-3 3-3s3 1.34 3 3v2H9z"/></svg>
+            <h3>Deterministic execution</h3>
+            <p>ytt execution environment is hermetic and side-effect free, with no access to filesystem, network, time, randomness, or the operating system interfaces. This guarantees that templates produce identical output with the same inputs. Your configuration changes only when you change it.</p>
+          </li>
+        </ul>
+      </div>
 
-          <p class="hero">
-            <a class="link-button" href="https://github.com/k14s/ytt">Github</a>
-            <a class="link-button" href="https://github.com/k14s/ytt/tree/develop/docs/README.md">Docs</a>
-            <a class="link-button" href="https://slack.kubernetes.io">#k14s in Kubernetes slack</a>
-            <a class="link-button" href="https://github.com/k14s/ytt/releases">Download Binary</a>
-            <a class="link-button try-online" href="#playground">Try Online <span>⤵</span></a>
-          </p>
-        </div>
+      <div id="features">
+        <h2>Features</h2>
+        <ul>
+          <li>Template any YAML content, including, <em class="highlight">Kubernetes configuration</em>, Concourse pipelines, AWS CloudFormation configurations, etc.</li>
+          <li>Works directly with <em class="highlight">YAML structures, not text</em>. This avoids variety of problems such as YAML value quoting, manual template indentation (as seen with Helm's templating).</li>
+          <li>Includes <em class="highlight">sandboxed Pythonic language</em> making template code look familiar, e.g. <code>"-listen=:" + str(data.values.port)</code>.</li>
+          <li>Encourages modularization and reuse of YAML structures via <em class="highlight">functions</em>. Users can easily define custom functions that return YAML structures.</li>
+          <li>Supports <em class="highlight">merging of YAML structures</em> via builtin <code>overlay</code> package.</li>
+          <li>Provides several ways to <a href="https://github.com/k14s/ytt/blob/develop/docs/ytt-data-values.md">inject data values</a> into templates.</li>
+          <li>Allows data validation via builtin <code>assert</code> package.</li>
+          <li>Includes experimental <a href="https://github.com/k14s/ytt/blob/develop/docs/strict.md"><em class="highlight">strict YAML mode</em>.</a></li>
+          <li>Includes optional <a href="https://github.com/k14s/ytt/blob/develop/docs/ytt-text-templating.md">text templating</a>.</li>
+        </ul>
+      </div>
 
-        <div id="features">
-          <h2>Features</h2>
-          <ul>
-            <li>
-              Template any YAML content, including,
-              <ul><li><em class="highlight">Kubernetes configuration</em>, Concourse pipelines, AWS CloudFormation configurations, etc.</li></ul>
-            </li>
-            <li>
-              Works directly with <em class="highlight">YAML structures, not text</em>
-              <ul><li>hence avoids variety of problems such as YAML value quoting, manual template indentation (as seen with Helm)</li></ul>
-            </li>
-            <li>
-              Includes <em class="highlight">sandboxed Pythonic language</em>
-              <ul><li>making template code look familiar, e.g. <code>"-listen=:" + str(data.values.port)</code></li></ul>
-            </li>
-            <li>
-              Encourages modularization and reuse of YAML structures via <em class="highlight">functions</em>
-              <ul><li>users can easily define custom functions that return YAML structures</li></ul>
-            </li>
-            <li>Supports <em class="highlight">merging of YAML structures</em> via builtin <code>overlay</code> package</li>
-            <li>Provides several ways to <a href="https://github.com/k14s/ytt/blob/develop/docs/ytt-data-values.md">inject data values</a> into templates</li>
-            <li>Allows data validation via builtin <code>assert</code> package</li>
-            <li>Includes experimental <a href="https://github.com/k14s/ytt/blob/develop/docs/strict.md"><em class="highlight">strict YAML mode</em></a></li>
-            <li>Includes optional <a href="https://github.com/k14s/ytt/blob/develop/docs/ytt-text-templating.md">text templating</a></li>
-          </ul>
-        </div>
-
-        <div id="basic-usage">
-          <h2>Basic Usage</h2>
-          <pre class="terminal">
-<span class="gray"># Configurations picked up from a directory</span>
-$ <span class="green">ytt -f examples/playground/ref/example-demo/</span> | kubectl apply -f-
+      <div id="basic-usage">
+        <h2>Basic Usage</h2>
+        <pre class="terminal">
+<span class="gray spacer-before"># Configurations picked up from a directory</span>
+$ <span class="green">ytt -f playground/basics/example-demo/</span> | kubectl apply -f-
 <span class="gray spacer-before"># Input customized on command line or file configuration</span>
-$ <span class="green">ytt -f examples/playground/ref/example-demo/ --data-value-yaml service.enabled=false</span> | kapp -y deploy -a app1 -f-
-<span class="gray spacer-before"># Output template results as json</span>
-$ <span class="green">ytt -f examples/playground/ref/example-demo/ -o json</span>
+$ <span class="green">ytt -f playground/basics/example-demo/ --data-value-yaml service.enabled=false</span> | ...
+<span class="gray spacer-before"># Give as many configuration files as needed</span>
+$ <span class="green">ytt -f playground/basics/example-demo/ -f values-staging.yml -f overlay-env-1.yml</span> | ...
 </pre>
-        </div>
       </div>
-    </div>
 
-    <div class="playground-wrapper">
-      <div class="content">
+      <div class="playground-wrapper">
         <div id="playground" style="display: none;">
           <div class="dropdown">
-              <h2>Interactive Playground
-                <span class="button-container"></span>
-              </h2>
-              <div class="example-sets"></div>
-              <p>Edit files on the left, and see template results on the right.
-              Alternatively, click through above examples to see different features.
-              We do not store or use content entered into playground.</p>
+            <h2>Interactive Playground
+              <span class="button-container"></span>
+            </h2>
+            <div class="example-sets"></div>
+            <p>Edit files on the left, and see template results on the right.
+            Alternatively, click through above examples to see different features.
+            We do not store or use content entered into playground.</p>
             <form id="show-gist">
               <p>Alternatively enter <a href="https://gist.github.com/">GitHub Gist</a> URL here <input/> press Enter.</p>
             </form>
@@ -96,8 +103,8 @@ $ <span class="green">ytt -f examples/playground/ref/example-demo/ -o json</span
             <div class="left">
               <div class="controls">
                 <button type="button" class="add-config button">+ Add File</button>
-                <button type="button" class="run button">&#8627; Run (Shift+Enter)</button>
-                <button type="button" class="expand button">&#8597;</button>
+                <button type="button" class="run button" title="Run (Shift+Enter)">&#8627; Run</button>
+                <button type="button" class="expand button">Full Screen</button>
               </div>
 
               <form class="config-form">
@@ -112,8 +119,31 @@ $ <span class="green">ytt -f examples/playground/ref/example-demo/ -o json</span
         </div>
 
         <noscript>Page includes interactive editor with ability to render templates and see their results.</noscript>
+      </div>
 
-        <div id="footer">(c) 2020</div>
+      <div id="authors">
+        <h2>k14s Team</h2>
+        <p>ytt is released as open source software and provides community support through our <a href="https://github.com/k14s/ytt/issues">GitHub project page</a>.</p>
+        <p>The k14s project team welcomes contributions from the community, please see our contributing documentation.</p>
+      </div>
+
+      <div id="footer">
+        <ul>
+          <li>
+            <a href="#"><svg class="svg-inline--fa fa-slack fa-w-14 fa-lg fa-fw mr-1" aria-hidden="true" data-prefix="fab" data-icon="slack" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512" data-fa-i2svg=""><path fill="currentColor" d="M244.2 217.5l19.3 57.7-59.8 20-19.3-57.7 59.8-20zm41.4 243.7C131.6 507.4 65 471.6 18.8 317.6S8.4 97 162.4 50.8C316.4 4.6 383 40.4 429.2 194.4c46.2 154 10.4 220.6-143.6 266.8zM366.2 265c-3.9-12.2-17.2-18.6-29.4-14.7l-29 9.7-19.3-57.7 29-9.7c12.2-3.9 18.6-17.2 14.7-29.4-3.9-12.2-17.2-18.6-29.4-14.7l-29 9.7-10-30.1c-3.9-12.2-17.2-18.6-29.4-14.7-12.2 3.9-18.6 17.2-14.7 29.4l10 30.1-59.8 20.1-10-30.1c-3.9-12.2-17.2-18.6-29.4-14.7-12.2 3.9-18.6 17.2-14.7 29.4l10 30.1-29 9.7c-12.2 3.9-18.6 17.2-14.7 29.4 3.2 9.3 12.2 15.4 21.5 15.8 4.3.6 7.7-1 36.9-10.7l19.3 57.7-29 9.7c-12.2 3.9-18.6 17.2-14.7 29.4 3.2 9.3 12.2 15.4 21.5 15.8 4.3.6 7.7-1 36.9-10.7l10 30.1c3.7 10.8 15.8 18.6 29.4 14.7 12.2-3.9 18.6-17.2 14.7-29.4l-10-30.1 59.8-20.1 10 30.1c3.7 10.8 15.8 18.6 29.4 14.7 12.2-3.9 18.6-17.2 14.7-29.4l-10-30.1 29-9.7c12.2-4.2 18.6-17.5 14.7-29.6z"></path></svg> Slack</a>
+          </li>
+          <li>
+            <a href="#"><svg class="svg-inline--fa fa-github fa-w-16 fa-lg fa-fw mr-1" aria-hidden="true" data-prefix="fab" data-icon="github" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512" data-fa-i2svg=""><path fill="currentColor" d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"></path></svg> Github</a>
+          </li>
+          <li>
+            <a href="#"><svg class="svg-inline--fa fa-twitter fa-w-16 fa-lg fa-fw mr-1" aria-hidden="true" data-prefix="fab" data-icon="twitter" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" data-fa-i2svg=""><path fill="currentColor" d="M459.37 151.716c.325 4.548.325 9.097.325 13.645 0 138.72-105.583 298.558-298.558 298.558-59.452 0-114.68-17.219-161.137-47.106 8.447.974 16.568 1.299 25.34 1.299 49.055 0 94.213-16.568 130.274-44.832-46.132-.975-84.792-31.188-98.112-72.772 6.498.974 12.995 1.624 19.818 1.624 9.421 0 18.843-1.3 27.614-3.573-48.081-9.747-84.143-51.98-84.143-102.985v-1.299c13.969 7.797 30.214 12.67 47.431 13.319-28.264-18.843-46.781-51.005-46.781-87.391 0-19.492 5.197-37.36 14.294-52.954 51.655 63.675 129.3 105.258 216.365 109.807-1.624-7.797-2.599-15.918-2.599-24.04 0-57.828 46.782-104.934 104.934-104.934 30.213 0 57.502 12.67 76.67 33.137 23.715-4.548 46.456-13.32 66.599-25.34-7.798 24.366-24.366 44.833-46.132 57.827 21.117-2.273 41.584-8.122 60.426-16.243-14.292 20.791-32.161 39.308-52.628 54.253z"></path></svg> Twitter</a>
+          </li>
+        </ul>
+
+        <p>&copy; 2020 k14s Authors.</p>
+
+        <p class="vmware"><a href="http://vmware.github.io/" class="vm-logo">A VMware-backed project. <img src="data:image/jpeg;base64, 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" alt="VMware logo" /></a>
+        </p>
       </div>
     </div>
   </body>
