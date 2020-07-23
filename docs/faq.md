@@ -23,14 +23,12 @@ Additional resources: [json is valid yaml](https://gist.github.com/pivotaljohn/d
 ### How do I check if a key is set?
 You can check for the existence of a key by using `hasattr`.\
 For example, to check if struct `foo` has attribute `bar`, use `hasattr(foo, "bar")`.\
-Slack link: [2020-06-29](https://kubernetes.slack.com/archives/CH8KCCKA5/p1593456026390900), [2020-06-26](https://kubernetes.slack.com/archives/CH8KCCKA5/p1593166736308800)
 
 ### How do I provide a default for a data value when it may not be defined?
 When a value may be null, you can use `or` to specify a default.
 ```yaml
 #@ data.values.foo or "bar"
 ```
-Slack link: [2020-05-12](https://kubernetes.slack.com/archives/CH8KCCKA5/p1589307427287400)
 
 ### How do I error if a data value is not provided?
 
@@ -62,18 +60,13 @@ Additional resources: [overlay remove docs](lang-ref-ytt-overlay.md#overlayremov
 
 ### How do I add items to an existing array?  
 
-The default behaviour for arrays is to overwrite them, as there isn't any default matching criteria (unlike maps which use their keys).\
-To append, use the `#@overlay/append` annotation. Note that it must be applied to each individual item you want to merge in. If you wish to add something more complex, like an array into another array, it may be helpful to use the `expects=` match annotation.
+The default merging behaviour for arrays is to overwrite them, as there isn't any default matching criteria (unlike maps which use their keys). To add an item, either provide that matching annotation (eg. `#@overlay/match by="field_name"`), or use the `#@overlay/append` annotation to add to the end of the list. Note that the append annotation must be applied to each item you want to insert.
 
-Additional resources: [Overlay docs](lang-ref-ytt-overlay.md#overlayappend), [example gist on playground](https://get-ytt.io/#gist:https://gist.github.com/pivotaljohn/8c7f48e183158ce12107f576eeab937c), [replace-list gist](https://get-ytt.io/#gist:https://gist.github.com/pivotaljohn/2b3a9b3367137079195971e1409d539e), [edit-list gist](https://get-ytt.io/#gist:https://gist.github.com/pivotaljohn/217e8232dc080bb764bfd064ffa9c115)
-
-Slack link: [2020-04-18](https://kubernetes.slack.com/archives/CH8KCCKA5/p1587248371373800), [2020-04-18](https://kubernetes.slack.com/archives/CH8KCCKA5/p1587248746378700), [2020-04-27](https://kubernetes.slack.com/archives/CH8KCCKA5/p1588019152046200), [2020-05-08](https://kubernetes.slack.com/archives/CH8KCCKA5/p1588962390214100), 
+Additional resources: [overlay append docs](lang-ref-ytt-overlay.md#overlayappend), [example gist on playground](https://get-ytt.io/#gist:https://gist.github.com/pivotaljohn/8c7f48e183158ce12107f576eeab937c), [replace-list gist](https://get-ytt.io/#gist:https://gist.github.com/pivotaljohn/2b3a9b3367137079195971e1409d539e), [edit-list gist](https://get-ytt.io/#gist:https://gist.github.com/pivotaljohn/217e8232dc080bb764bfd064ffa9c115)
 
 ### Why am I getting an exception when trying to append to an array?
 
-A common append issue is to incorrectly set the `match missing_ok=True` on the key which gets replaced by new key-values. Instead, the `match mising_ok=True` should be applied to each child (which can more be conveniently done with the `match-child-defaults` annotation)
-
-Additional resources: [illustrative gist](https://gist.github.com/cppforlife/bf42f2d3d23dacf07affcd4150370cb9)
+A common append issue is incorrectly setting the `#@overlay/match missing_ok=True` annotation on the key which gets replaced by new key-values. Instead, it should be applied to each child (made convenient with the `#@overlay/match-child-defaults missing_ok=True` annotation). See this [illustrative gist](https://gist.github.com/cppforlife/bf42f2d3d23dacf07affcd4150370cb9) for an example.
 
 ### How do I rename a key without changing the value?
 
@@ -83,13 +76,9 @@ An `#@overlay/replace` annotation with a lambda `via`. For example, to replace t
 ```
 See [this gist](https://get-ytt.io/#gist:https://gist.github.com/gcheadle-vmware/3c41645a80201caaeefa878e84fff958) for the full example.
 
-Slack link: [2020-05-25](https://kubernetes.slack.com/archives/CH8KCCKA5/p1590434935446000)
-
 ### How do I add or replace a value in a dictionary?
 
-A `template.replate()` annotation can be used. See this example on [get-ytt.io](https://get-ytt.io/#example:example-replace). You can also use overlays to edit a dictionary, some examples can be found on [this gist playground](https://get-ytt.io/#gist:https://gist.github.com/gcheadle-vmware/af8aeb3120386e58922c816d76f47ab6).
-
-Slack link: [2020-05-02](https://kubernetes.slack.com/archives/CH8KCCKA5/p1588427231127500), [2020-06-29](https://kubernetes.slack.com/archives/CH8KCCKA5/p1593468228397200)
+A `#@ template.replace()` annotation can be used for these purposes. See [this example](https://get-ytt.io/#example:example-replace). You can also use overlays to edit a dictionary, an example can be found on [this gist playground](https://get-ytt.io/#gist:https://gist.github.com/gcheadle-vmware/af8aeb3120386e58922c816d76f47ab6).
 
 ### How do I match a field.name that starts with a string?
 
@@ -102,13 +91,9 @@ overlay/match by=lambda a,_: a["field"]["name"].startswith("string")
 To match a dictionary from a list of dictionaries if the `foo` key is present, you can use 
 ```#@overlay/match by=lambda idx,old,new: "foo" in old, expects="1+"```.
 
-Slack link: [2020-04-18](https://kubernetes.slack.com/archives/CH8KCCKA5/p1587249303386100)
-
 ### How do I modify only part of a multi-line string?
 
 An `#@overlay/replace` annotation with a lambda `via` function can modify part of a string. See this [modify-string gist](https://get-ytt.io/#gist:https://gist.github.com/cppforlife/7633c2ed0560e5c8005e05c8448a74d2) for an example.
-
-Slack link: [2020-07-08](https://kubernetes.slack.com/archives/CH8KCCKA5/p1594235515016900)
 
 ### How can I match a regex pattern in the subset matcher?
 
@@ -125,15 +110,13 @@ No. A design goal of ytt is determinism, which keeps randomness out of scope.
 
 If you want to generate secrets, see the [injecting secrets doc](injecting-secrets.md) or the [kubernetes secretgen-controller](https://github.com/k14s/secretgen-controller)
 
-Slack link: [2020-07-08](https://kubernetes.slack.com/archives/CH8KCCKA5/p1594224108011100?thread_ts=1594224060.011000&cid=CH8KCCKA5)
-
 ### Can I load multiple functions without having to name each one?
 
-Yes! Functions can be stored in a struct which can be imported all together. You can then call functions from within that struct.
+Yes! Functions can be stored in a struct which can be imported all together. You can then call individual functions from within that struct. Note that because Starlark does not provide forward references, you must declare the struct that collects the functions to export at the end of the file.
 
 Storing functions in struct:
 
-```
+```yaml
 #@ load("@ytt:struct", "struct")
 #@ mod = struct.make(func1=func1, func2=func2)
 ```
@@ -145,15 +128,13 @@ Loading and calling functions in template:
 something: #@ mod.func1()
 ```
 
-Slack link: [2020-04-23](https://kubernetes.slack.com/archives/CH8KCCKA5/p1587660183496700), [2020-05-04](https://kubernetes.slack.com/archives/CH8KCCKA5/p1588615212156300)
+Additional resources: [Load Statement doc](lang-ref-load.md)
 
 ### How do I inject secrets?
 See the [injecting secrets doc](injecting-secrets.md).\
-Slack link: [2020-05-14](https://kubernetes.slack.com/archives/CH8KCCKA5/p1589503314304100), [2020-05-23](https://kubernetes.slack.com/archives/CH8KCCKA5/p1590224367405600)
 
 ### How do I template values within text?
 See the [text templating doc](ytt-text-templating.md).\
-Slack link: [2020-07-11](https://kubernetes.slack.com/archives/CH8KCCKA5/p1594483959052300), [2020-05-15](https://kubernetes.slack.com/archives/CH8KCCKA5/p1592274814197200)
 
 ### What templating language does ytt use?
 
