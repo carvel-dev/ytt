@@ -51,7 +51,7 @@ readme: |
     that name.
 
   For those seeking extra credit, consider
-  `labels(withVersion)`. Could the parameter name be made
+  `labels(with_version)`. Could the parameter name be made
   more intention revealing?
 
   ................

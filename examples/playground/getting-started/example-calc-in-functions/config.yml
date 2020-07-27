@@ -24,10 +24,10 @@
 #@ end
 ---
 
-#@ def labels(withVersion=False):
+#@ def labels(with_version=False):
   app.kubernetes.io/component: controller
   app.kubernetes.io/name: #@ app_name
-  #@ if withVersion:
+  #@ if with_version:
   app.kubernetes.io/version: #@ version
   #@ end
 #@ end
@@ -37,7 +37,7 @@ kind: Deployment
 metadata:
   annotations:
     comment: "This deployment was lifted from\nthe prometheus K8s configuration.\nYou might notice that this line\nis supplied as a single string\nin the source, but a multi-line\nstring in the output."
-  labels: #@ labels(withVersion=True)
+  labels: #@ labels(with_version=True)
   name: #@ app_name
   namespace: default
 spec:
@@ -46,7 +46,7 @@ spec:
     matchLabels: #@ labels()
   template:
     metadata:
-      labels: #@ labels(withVersion=True)
+      labels: #@ labels(with_version=True)
     spec:
       containers:
         - name: prometheus-operator
@@ -65,7 +65,7 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  labels: #@ labels(withVersion=True)
+  labels: #@ labels(with_version=True)
   name: #@ app_name + "-service"
 spec:
   type: ClusterIP

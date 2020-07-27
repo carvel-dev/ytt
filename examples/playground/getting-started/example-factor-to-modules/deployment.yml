@@ -14,7 +14,7 @@ metadata:
 spec:
   replicas: #@ data.values.scaling_factor // 2
   selector:
-    matchLabels: #@ labels(forSelecting=True)
+    matchLabels: #@ labels(for_selecting=True)
   template:
     metadata:
       labels: #@ labels()

@@ -23,10 +23,10 @@ limits:
 #@ end
 ---
 
-#@ def labels(forSelecting=False):
+#@ def labels(for_selecting=False):
   app.kubernetes.io/component: controller
   app.kubernetes.io/name: #@ data.values.app_name
-  #@ if not forSelecting:
+  #@ if not for_selecting:
   app.kubernetes.io/version: #@ version
   #@ end
 #@ end

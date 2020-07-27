@@ -14,4 +14,4 @@ spec:
       port: 8080
       protocol: TCP
       targetPort: 80
-  selector: #@ labels(forSelecting=True)
+  selector: #@ labels(for_selecting=True)
