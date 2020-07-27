@@ -14,4 +14,4 @@ spec:
       port: 38080
       protocol: TCP
       targetPort: 8080
-  selector: #@ labs(forSelecting=True)
+  selector: #@ labs(for_selecting=True)
