@@ -156,7 +156,7 @@ func NewFileFromSource(fileSrc Source) (*File, error) {
 		return nil, fmt.Errorf("Calculating relative path for '%s': %s", fileSrc, err)
 	}
 
-	return &File{src: fileSrc, relPath: relPath}, nil
+	return &File{src: fileSrc, relPath: filepath.ToSlash(relPath)}, nil
 }
 
 func MustNewFileFromSource(fileSrc Source) *File {
