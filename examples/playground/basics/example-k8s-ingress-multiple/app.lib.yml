@@ -1,8 +1,10 @@
-#! example is based on the following post: https://bit.ly/2QNCWab
-#! let's make it possible to have multiple copies
-#! of the app: apple, banana, orange. to do so pull
-#! reusable functionality into a set of functions.
-#! take a look and move to next example: k8s-ingress-with-objs
+#! this two-part example is based on the blog post
+#! by matthew palmer: https://bit.ly/2QNCWab
+
+#! let's now make it possible to have multiple copies
+#! of the app: apple, banana, and orange.
+#! to do so, we pull reusable functionality into a
+#! set of functions
 
 #@ def/end app_labels(app):
 app: #@ app.name

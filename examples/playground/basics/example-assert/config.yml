@@ -1,8 +1,8 @@
-#! to stop templating with a custom error
-#! use provided assert.fail function
+#! to stop templating and throw a custom error message
+#! use the fail() function from ytt's assert module
 
 #@ load("@ytt:assert", "assert")
 
 #@ val = 123
 
-key: #@ val if val > 130 else assert.fail("val is too small")
+key: #@ val if val > 150 else assert.fail("val is too small")

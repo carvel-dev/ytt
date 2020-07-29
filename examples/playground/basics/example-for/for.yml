@@ -1,23 +1,23 @@
-#! occasionally some data needs to be mapped
-#! into a set of YAML nodes, in those cases 
+#! occasionally data needs to be mapped
+#! into a set of YAML nodes, in those cases
 #! for loops are handy
 
 array:
-#@ for j in range(0,10):
+#@ for j in range(0,4):
 - item: #@ j
 #@ end
 
+#! similar to ifs, for/end annotations apply only to a single node
 array_with_data:
-#@ for val in [1,5,{"key":"val"}]:
+#@ for/end val in [1,5,{"key":"val"}]:
 - item: #@ val
-#@ end
 
 array_with_index:
 #@ arr = [1,5,{"key":"val"}]
 #@ for i in range(len(arr)):
 - val: #@ arr[i]
   index: #@ i
-#@ end 
+#@ end
 
 #! continue and break keywords allow to further
 #! control execution of for loop
@@ -33,7 +33,7 @@ array_odd:
 - #@ j
 #@ end
 
-#! documents can be also produced in a loop
+#! documents can also be produced in a loop
 
 #@ for val in [5,"str",{"key":"val"}]:
 --- #@ val

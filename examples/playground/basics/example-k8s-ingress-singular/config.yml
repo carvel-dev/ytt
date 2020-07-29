@@ -1,6 +1,9 @@
-#! example is based on the following post: https://bit.ly/2QNCWab
-#! we start by creating a simple pod+service configuration.
-#! take a look and move to next example: k8s-ingress-with-defs
+#! this two-part example is based on the blog post
+#! by matthew palmer: https://bit.ly/2QNCWab
+
+#! we start by creating a simple pod and service
+#! configuration. take a look around, then move
+#! to the next part: k8s-ingress-with-defs
 
 #@ load("@ytt:data", "data")
 

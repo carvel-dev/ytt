@@ -1,6 +1,5 @@
-#! some variables need to be configurable externally
-#! we can specify them in a separate file or a separate
-#! YAML document node
+#! variables that need to be externally configurable
+#! are specified in a data values file
 
 #@ load("@ytt:data", "data")
 

@@ -1,10 +1,10 @@
 #@ load("@ytt:data", "data")
 
-#! data.list() provides list of all files given to ytt
-#! (which includes templates themselves)
+#! data.list() provides a list of all files given to ytt
+#! (which also includes template files themselves)
 
-#! to load content from a file as a string
-#! without applying any templating use data.read(...)
+#! to load the raw content from a file as a string,
+#! i.e. without applying any templating, use data.read(...)
 
 #@ files = data.list()
 

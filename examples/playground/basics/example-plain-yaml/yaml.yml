@@ -1,6 +1,6 @@
 #! <-- this begins a comment meant for humans
 
-#! let's see some common datatypes
+#! let's see some common datatypes!
 nullz: null
 
 true_bool: true
@@ -9,10 +9,10 @@ false_bool: false
 integer: 123
 float: 123.123
 
-string: value
+string: some string
 
-#! since string starts with a comment sign (#)
-#! it has to be disambiguated by wrapping it in quotes
+#! since string_quoted starts with a comment sign (#), it has
+#! to be disambiguated from a comment by wrapping it in quotes
 string_quoted: "#value"
 
 #! this is a map item with a string value
@@ -39,5 +39,5 @@ list_with_a_map:
 ---
 new_doc: true
 
-#! by the way, keys in the YAML result 
+#! by the way, keys in the resulting YAML
 #! should have remained in the same order

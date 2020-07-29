@@ -1,3 +1,4 @@
+#@ load("@ytt:overlay", "overlay")
 #@data/values
 ---
 keys:
@@ -7,7 +8,8 @@ keys:
   #@overlay/match missing_ok=True
   key3: val3
 names:
+#@overlay/match by=overlay.subset("default.example.com")
+#@overlay/remove
+-
 #@overlay/append
-- bunny.example.com
-#@overlay/append
-- rabbit.example.com
+- production.example.com
