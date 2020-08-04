@@ -18,4 +18,4 @@ echo 'Running Tests...'
 ytt version
 
 # We only care about exit code
-ytt -f examples/playground/getting-started/example-modify-array-items
+ytt -f examples\load-paths
