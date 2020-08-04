@@ -39,7 +39,7 @@ a, a:visited, a:hover {
 
 /* Hero stuff */
 #hero {
-  background: #212971;
+  background: #0091DA;
   background-repeat: repeat;
   color: #fff;
   clear: both;
@@ -70,8 +70,11 @@ a, a:visited, a:hover {
   padding: 15px 20px 13px;
   border-radius: 5px;
   color: #fff;
+  display: inline-block;
+  width: 150px;
   border: 1px solid #fff;  
   text-transform: uppercase;
+  text-align: center;
   font-size: 12px;
   text-decoration: none;
   font-weight: bold;
@@ -82,21 +85,20 @@ a, a:visited, a:hover {
   color: #fff;
 }
 #hero .link-button:hover {
-  text-decoration: underline;
+  box-shadow: 2px 2px 10px #0000009e;
 }
 #hero .link-button-primary,
 #hero .link-button-primary:hover,
 #hero .link-button-primary:visited {
-  background: #1fcfec;
+  background: #ffffff;
   color: #333;
   border-color: #0f29b5;
-  box-shadow: 2px 2px 10px #0000009e, inset 0px -10px 14px #9ff6ff87;
   border-width: 0;
   padding-top: 16px;
   padding-bottom: 14px;
 }
 #hero .link-button-primary:hover {
-  box-shadow: 2px 2px 10px #0000009e, inset 0px -10px 14px #9ff6ff;
+  box-shadow: 2px 2px 10px #0000009e;
 }
 
 /* Nav */
@@ -138,10 +140,10 @@ a, a:visited, a:hover {
   box-shadow: 0 2px 4px 0 rgba(0,0,0,.1);
 }
 #highlights svg {
-  width: 50px;
-  height: 50px;
+  width: 90px;
+  height: 90px;
   display: inline-block;
-  fill: #00c0c0;
+  fill: #0091DA;
 }
 #highlights a,
 #highlights h3 {
@@ -155,22 +157,44 @@ a, a:visited, a:hover {
 #features { margin-bottom: 50px; }
 #features > ul { list-style-type: none; }
 #features > ul > li {
-  padding: 20px;
-  border: 1px solid #efefef;
-  border-width: 1px 0 0 0;
+  margin: 20px;
+  border: 1px solid #e8e8e8;
+  display: flex;
+}
+#features .icon {
+  background: #0091DA;
+  text-align: center;
+  width: 15%
+}
+#features svg {
+  fill: #ffffff;
+  transform: scale(0.5, 0.5);
+}
+#features .card {
+  margin: 40px;
+  display: flex;
+  justify-content: center;
+  flex-direction: column;
+  width: 85%
+}
+#features h3 {
+  display: block;
+  font-size: 25px;
+  font-weight: lighter;
+  margin: 0;
 }
 #features li:nth-child(even) {
-  border-left: 180px solid transparent;
+  flex-direction: row-reverse;
 }
 #features li:nth-child(odd) {
-  border-right: 180px solid transparent; /* #283176 */
+  flex-direction: row;
 }
 #features > ul > li ul {
   margin-left: 30px;
 }
 #features .highlight {
-  background: #ffc;
   font-style: normal;
+  font-weight: bold;
 }
 
 /* Basic usage */
