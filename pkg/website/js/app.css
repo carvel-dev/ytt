@@ -160,15 +160,19 @@ a, a:visited, a:hover {
   margin: 20px;
   border: 1px solid #e8e8e8;
   display: flex;
+  height: 180px;
 }
 #features .icon {
   background: #0091DA;
   text-align: center;
-  width: 15%
+  width: 15%;
+  display: flex;
+  align-items: center;
 }
 #features svg {
   fill: #ffffff;
-  transform: scale(0.5, 0.5);
+  transform: scale(0.6, 0.6);
+  margin: auto;
 }
 #features .card {
   margin: 40px;
@@ -346,7 +350,7 @@ input[disabled] {
   columns: 4;
   -webkit-columns: 4;
   -moz-columns: 4;
-  margin: 0 0 40px 0;
+  margin: 0 0 40px 40px;
 }
 
 /* Playground */
