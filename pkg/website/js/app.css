@@ -12,11 +12,10 @@ body {
   background: #fdfdfd;
   line-height: 1.5;
 }
-h2 { font-weight: lighter; }
 
 /* Links */
 a, a:visited, a:hover {
-  color: #333;
+  color: #0091DA;
   text-decoration: underline; 
 }
 
@@ -157,10 +156,10 @@ a, a:visited, a:hover {
 #features { margin-bottom: 50px; }
 #features > ul { list-style-type: none; }
 #features > ul > li {
-  margin: 20px;
+  margin: 40px 0px 40px 0px;
   border: 1px solid #e8e8e8;
   display: flex;
-  height: 180px;
+  height: 120px;
 }
 #features .icon {
   background: #0091DA;
@@ -213,11 +212,11 @@ a, a:visited, a:hover {
 
 /* Authors */
 #authors {
-  background: #eafcff;
-  color: #000;
+  background: #1D428A;
+  color: #fff;
   clear: both;
-  margin: 0 -50px;
-  padding: 30px 50px;
+  margin: 0px -50px;
+  padding: 12px 38px 24px 38px;
 }
 #authors a,
 #authors a:visited,
@@ -227,18 +226,20 @@ a, a:visited, a:hover {
 
 /* Footer */
 #footer {
-  padding: 30px 0;
+  margin: 18px -50px 0px -50px
 }
-#footer p {
-  width: 400px;
+#footer .copyright {
+  float: right;
+  margin-right: 18px;
 }
-#footer .vmware { margin: 0; }
+#footer .vmware {
+  float: right;
+}
 #footer .vmware img {
   display: block;
   margin-top: 7px;
 }
 #footer ul {
-  float: right;
   list-style-type: none;
 }
 #footer li { float: left; }
@@ -313,7 +314,7 @@ input[disabled] {
 .button {
   border: none;
   border-radius: 3px;
-  color: blue;
+  color: #0091DA;
   padding: 5px 10px;
   margin: 0;
   text-align: center;
@@ -444,7 +445,8 @@ input[disabled] {
 }
 
 .playground-wrapper {
-  padding: 20px 0;
+  margin: 0px -50px;
+  padding: 12px 36px 0px 36px;
   background: #fff;
   clear: both;
 }
