@@ -1,3 +1,8 @@
+/* Variables */
+:root {
+  --base-color: #0091DA;  /* "Ocean" */
+}
+
 /* Reset */
 html, body, ol, ul, li { margin: 0; padding: 0; }
 p {
@@ -15,8 +20,8 @@ body {
 
 /* Links */
 a, a:visited, a:hover {
-  color: #0091DA;
-  text-decoration: underline; 
+  color: var(--base-color);
+  text-decoration: underline;
 }
 
 /* Content */
@@ -38,7 +43,7 @@ a, a:visited, a:hover {
 
 /* Hero stuff */
 #hero {
-  background: #0091DA;
+  background: var(--base-color);
   background-repeat: repeat;
   color: #fff;
   clear: both;
@@ -114,6 +119,7 @@ a, a:visited, a:hover {
 #nav li a:visited,
 #nav li a:hover {
   color: #333;
+  font-weight: normal;
 }
 #nav h1 {
   float: left;
@@ -142,7 +148,7 @@ a, a:visited, a:hover {
   width: 90px;
   height: 90px;
   display: inline-block;
-  fill: #0091DA;
+  fill: var(--base-color);
 }
 #highlights a,
 #highlights h3 {
@@ -162,7 +168,7 @@ a, a:visited, a:hover {
   height: 120px;
 }
 #features .icon {
-  background: #0091DA;
+  background: var(--base-color);
   text-align: center;
   width: 15%;
   display: flex;
@@ -286,6 +292,7 @@ p code {
 code, .terminal, .logo {
   font-family: Consolas,Monaco,'Andale Mono','Ubuntu Mono',monospace;
 }
+
 li code, p code {
   font-size: 90%;
 }
@@ -314,7 +321,7 @@ input[disabled] {
 .button {
   border: none;
   border-radius: 3px;
-  color: #0091DA;
+  color: var(--base-color);
   padding: 5px 10px;
   margin: 0;
   text-align: center;

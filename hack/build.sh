@@ -54,3 +54,4 @@ go build $repro_flags -o ./tmp/main ./cmd/ytt-lambda-website/...
 # TODO ./hack/generate-docs.sh
 
 echo SUCCESS
+./ytt website
