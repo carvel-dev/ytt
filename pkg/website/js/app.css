@@ -175,7 +175,6 @@ a, a:visited, a:hover {
   margin: 40px 0px 40px 0px;
   border: 1px solid #e8e8e8;
   display: flex;
-  height: 120px;
 }
 #features .icon {
   background: var(--base-color);
