@@ -1,3 +1,6 @@
+// Copyright 2020 VMware, Inc.
+// SPDX-License-Identifier: Apache-2.0
+
 package yamlmeta
 
 func (n *DocumentSet) DeepCopyAsNode() Node { return n.DeepCopy() }
