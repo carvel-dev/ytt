@@ -178,7 +178,7 @@ a, a:visited, a:hover {
 #features .icon {
   background: var(--base-color);
   text-align: center;
-  width: 15%;
+  width: 12%;
   display: flex;
   align-items: center;
 }
