@@ -33,6 +33,30 @@ a, a:visited, a:hover {
   text-decoration: underline;
 }
 
+/* Banner */
+.banner {
+  background-color: #EC7700;
+  color: #777;
+  font-size: 20px;
+  margin: 10px -50px;
+  padding: 10px 50px ;
+  text-align: center;
+  clear: both;
+}
+.banner p {
+  margin: 0px;
+  color: white;
+}
+.banner a, .banner a:visited{
+  margin: 0px;
+  color: white;
+  text-decoration-color: lightgrey;
+}
+.banner a:hover {
+  color: white;
+  text-decoration-color: white;
+}
+
 /* Content */
 .content {
   margin: 0 auto;
@@ -50,12 +74,20 @@ a, a:visited, a:hover {
 .logo {
   color: #999;
   font-weight: normal;
+  margin-bottom: 0px;
 }
 .logo .partof { font-size: 13px; }
 .logo .project-name a {
   color: #999;
   font-size: 30px;
   text-decoration: none;
+}
+.logo .suite-name {
+  display: inline-flex;
+  flex-direction: column;
+}
+.suite-name .formally-known {
+  font-size: 10px;
 }
 
 /* Hero stuff */
@@ -508,30 +540,4 @@ input[disabled] {
   padding: 12px 36px 0px 36px;
   background: #fff;
   clear: both;
-}
-
-/* Banner */
-.banner {
-  background-color: #EC7700;
-  color: #777;
-  font-size: 20px;
-  margin: 10px -50px;
-  padding: 10px 50px ;
-  text-align: center;
-  clear: both;
-}
-.banner p {
-  margin: 0px;
-  color: white;
-}
-
-.banner a, .banner a:visited{
-  margin: 0px;
-  color: white;
-  text-decoration-color: lightgrey;
-}
-
-.banner a:hover {
-  color: white;
-  text-decoration-color: white;
 }
