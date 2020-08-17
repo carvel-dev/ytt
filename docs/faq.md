@@ -22,7 +22,7 @@ Additional resources: [json is valid yaml](https://gist.github.com/pivotaljohn/d
 
 ### How do I check if a key is set?
 You can check for the existence of a key by using `hasattr`.\
-For example, to check if struct `foo` has attribute `bar`, use `hasattr(foo, "bar")`.\
+For example, to check if struct `foo` has attribute `bar`, use `hasattr(foo, "bar")`.
 
 ### How do I provide a default for a data value when it may not be defined?
 When a value may be null, you can use `or` to specify a default.
@@ -131,10 +131,10 @@ something: #@ mod.func1()
 Additional resources: [Load Statement doc](lang-ref-load.md)
 
 ### How do I inject secrets?
-See the [injecting secrets doc](injecting-secrets.md).\
+See the [injecting secrets doc](injecting-secrets.md).
 
 ### How do I template values within text?
-See the [text templating doc](ytt-text-templating.md).\
+See the [text templating doc](ytt-text-templating.md).
 
 ### What templating language does ytt use?
 
