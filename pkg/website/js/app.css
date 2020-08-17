@@ -41,14 +41,22 @@ a, a:visited, a:hover {
   background: #fdfdfd;
 }
 
+/* Use to hide required elements that are not ready */
+.hidden {
+  display: none;
+}
+
 /* Logo */
 .logo {
-  color: #111;
-  font-size: 30px;
   color: #999;
   font-weight: normal;
 }
 .logo .partof { font-size: 13px; }
+.logo .project-name a {
+  color: #999;
+  font-size: 30px;
+  text-decoration: none;
+}
 
 /* Hero stuff */
 #hero {
