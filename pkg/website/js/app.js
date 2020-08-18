@@ -432,7 +432,7 @@ $(document).ready(function() {
   })
 
   $("#playground .expand").click(function(){
-    $("#playground").toggleClass("expanded");
+    $("body").toggleClass("playground-expanded");
     $("#playground")[0].scrollIntoView();
     return false;
   })
