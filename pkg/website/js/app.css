@@ -146,7 +146,7 @@ a, a:visited, a:hover {
 }
 #nav li { float: right; }
 #nav li a {
-  padding: 30px 15px;
+  padding: 34px 15px 15px;
   float: right;
 }
 #nav li a,
