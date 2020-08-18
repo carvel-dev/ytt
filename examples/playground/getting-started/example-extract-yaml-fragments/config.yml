@@ -1,10 +1,10 @@
 #@ app_name = "prometheus-operator"
 #@ version = "v0.39.0"
 
-#@ def labels(withVersion=False):
+#@ def labels(with_version=False):
   app.kubernetes.io/component: controller
   app.kubernetes.io/name: #@ app_name
-  #@ if withVersion:
+  #@ if with_version:
   app.kubernetes.io/version: #@ version
   #@ end
 #@ end
@@ -12,7 +12,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  labels: #@ labels(withVersion=True)
+  labels: #@ labels(with_version=True)
   name: #@ app_name
   namespace: default
 spec:
@@ -46,7 +46,7 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  labels: #@ labels(withVersion=True)
+  labels: #@ labels(with_version=True)
   name: #@ app_name + "-service"
 spec:
   type: ClusterIP

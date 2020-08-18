@@ -1,5 +1,4 @@
 #@ load("@ytt:data", "data")
-#@ load("@ytt:assert", "assert")
 
 #@ def labels():
 app: #@ data.values.name

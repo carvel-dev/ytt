@@ -1,16 +1,15 @@
-#! sometimes it's necessary to replace particular node
-#! with one or more values of the same type.
-#! template.replace provides that functionality.
+#! template.replace provides the functionality to replace
+#! a node with one or more values of the same type
 
 #@ load("@ytt:template", "template")
 
 in_map:
   key1: value1
   key2: value2
-  #! _ is a conventional replacement key
-  #! though any other key can be used
+  #! _ is the conventional replacement key,
+  #! though any key can be used
   _: #@ template.replace({"key3": "value3"})
-  _: #@ template.replace({"key4": "value4", "key5": "value5"})
+  unused_key: #@ template.replace({"key4": "value4", "key5": "value5"})
 
 in_array:
 - item1
@@ -18,7 +17,6 @@ in_array:
 - #@ template.replace([{"key3": "value3"}])
 - #@ template.replace(["item4", "item5"])
 
----
 #@ def two_docs():
 ---
 doc1

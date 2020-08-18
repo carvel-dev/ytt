@@ -1,32 +1,41 @@
-#! any custom library that contains templates could be
-#! used to produce its result programmatically.
-#! in this example we are using generic app library
-#! (found under _ytt_lib/app) to produce configuration
-#! for two apps: backend and frontend. frontend needs
-#! to know backend url to communicate with it.
+#! in this example we are using a generic "app" library
+#! (found under _ytt_lib/app) to produce configurations
+#! for two apps: backend and frontend. additionally, the
+#! frontend app needs the backend's url to communicate.
 
 #@ load("@ytt:template", "template")
 #@ load("@ytt:library", "library")
 #@ load("@ytt:overlay", "overlay")
 #@ load("@ytt:data", "data")
 
-#! build configuration for the backend app
+#! build an instance of the app library
+#@ default_app = library.get("app")
 
+#! configuration for the backend app
 #@ def backend():
 name: backend
 image: user/backend
 #@ end
 
-#@ backend = library.get("app").with_data_values(backend())
+#! create a copy of default_app with values
+#! from our backend() function
+#@ backend = default_app.with_data_values(backend())
 
+
+#! configuration for the frontend app
 #@ def frontend():
 name: frontend
 image: user/frontend
 #@ end
 
-#! frontend updates will be overlayed on top of
-#! frontend app configuration to inject backend url as
-#! an environment variable
+#! create a copy of default_app with values
+#! from our frontend() function
+#@ frontend = default_app.with_data_values(frontend())
+
+#! frontend_updates will be overlaid on top of the
+#! frontend app configuration to inject the backend url.
+#! the backend.export call returns the value
+#! of backend's svc_url function call
 
 #@ def frontend_updates():
 #@overlay/match by=overlay.subset({"kind":"Deployment"})
@@ -43,9 +52,7 @@ spec:
           value: #@ backend.export("svc_url")()
 #@ end
 
-#! build configuration for the frontend app
-
-#@ frontend = library.get("app").with_data_values(frontend())
-
+#! eval() runs ytt's templating engine on the library
+#! instance and returns the resulting yaml
 --- #@ template.replace(backend.eval())
 --- #@ template.replace(overlay.apply(frontend.eval(), frontend_updates()))

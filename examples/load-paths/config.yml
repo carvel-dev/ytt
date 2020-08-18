@@ -1,0 +1,3 @@
+#@ load("/lib/funcs.star", "func1")
+
+func1: #@ func1()

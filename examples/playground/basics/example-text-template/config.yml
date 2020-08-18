@@ -1,21 +1,21 @@
-#! sometimes it's necessary to perform complex
-#! text templating within a particular YAML node
+#! text templating can be performed
+#! within YAML nodes with "{}".format()
 
 #@ val1 = "value1"
 #@ val2 = "value2"
 
 key: #@ "before {} middle {} after".format(val1, val2)
 
-#! alternatively you can use inline string templating tags
-#! (@ ... @) to execute code and (@= @) to yield string
-#! value; for text templating to take effect, node
-#! must be annotated with @yaml/text-templated-strings
+#! alternatively, inline string templating tags (@ ... @)
+#! can be used to execute code and (@= @) tags to yield a
+#! string value; note that for text templating to take effect,
+#! a node must be annotated with @yaml/text-templated-strings
 
 #@yaml/text-templated-strings
 key_alt: "before (@= val1 @) middle (@= val2 @) after"
 
-#! @yaml/text-templated-strings annotation applies to
-#! all child nodes as well
+#! The @yaml/text-templated-strings annotation
+#! also applies to all child nodes
 
 #@yaml/text-templated-strings
 ---

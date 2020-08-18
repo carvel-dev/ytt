@@ -1,5 +1,5 @@
 #! sometimes it is useful to extract common
-#! functionality into functions.
+#! functionality into functions
 
 #@ def some_data():
 #@   return [1,2,{"key":"value"}]
@@ -19,7 +19,7 @@ cities:
 
 yaml_key: #@ some_yaml()
 
-#! functions with scalar values must be written
+#! functions with scalar return values must be written
 #! in Starlark
 
 #@ def some_scalar():
@@ -29,15 +29,15 @@ yaml_key: #@ some_yaml()
 scalar_key: #@ some_scalar()
 
 ---
-#! If the YAML node inside the function
+#! if the YAML node inside the function
 #! is not compatible with the surrounding context
-#! (here a list in a map context), functions
-#! can be declared in separate YAML document
-#! to reset the context.
+#! (here an array and map would be siblings due to scalar_key),
+#! functions can be declared in separate YAML documents
+#! to reset the context
 
-#! To avoid splitting the current document,
+#! to avoid splitting the current document,
 #! definitions can happen in a separate file or
-#! at the top of the document.
+#! at the top of the document
 
 #@ def some_list():
 - item1
@@ -48,7 +48,7 @@ yaml_list_key: #@ some_list()
 
 #! and since functions return just values you
 #! can use them any way you want, for example,
-#! as values of documents
+#! as document values
 
 --- #@ some_scalar()
 --- #@ some_yaml()

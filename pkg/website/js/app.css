@@ -1,3 +1,6 @@
+/* Copyright 2020 VMware, Inc. */
+/* SPDX-License-Identifier: Apache-2.0 */
+
 /* Variables */
 :root {
   --base-color: #0091DA;  /* "Ocean" */
@@ -18,7 +21,6 @@ p {
 }
 
 /* Body */
-
 body {
   font-family: Metropolis,Helvetica,Arial,sans-serif;
   font-size: 14px;

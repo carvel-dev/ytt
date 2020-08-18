@@ -21,11 +21,11 @@ diff ./tmp/config-alt1.yml examples/eirini/config-result.yml
 diff ./tmp/eirini/config-alt2.yml examples/eirini/config-result.yml
 
 # check playground examples
-for name in $(ls examples/playground/ref/); do
+for name in $(ls examples/playground/basics/); do
   if [ "$name" != "example-assert" ] && \
-    [ "$name" != "example-load-custom-library" ] && \
+    [ "$name" != "example-load-custom-library-module" ] && \
     [ "$name" != "example-ytt-library-module" ]; then
-      ./ytt -f examples/playground/ref/${name} > /dev/null
+      ./ytt -f examples/playground/basics/${name} > /dev/null
   fi
 done
 

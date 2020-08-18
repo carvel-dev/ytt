@@ -1,5 +1,5 @@
-#! by using '#@' comment at the end of the line,
-#! you can specify value for the node on that line.
+#! by using '#@' at the end of the line, you can
+#! specify a Starlark value for the node on that line
 
 nullz: #@ None
 
@@ -9,11 +9,12 @@ false_bool: #@ False
 integer: #@ 123
 float: #@ 123.123
 
-#! note how string got serialized, without quotes
-string: #@ "value"
+#! note how the string_node gets serialized.
+#! it is unambiguously a string, so the quotes are removed
+string_node: #@ "value"
 
-#! but string that contains '#' (one of special YAML characters)
-#! was correctly written by YAML library with quotes
+#! strings that begin with special YAML characters (e.g. # or &)
+#! are correctly serialized with quotes
 string_quoted: #@ "#value"
 
 nested_map: #@ {"key1": "value1", "key2": "value2"}
@@ -21,7 +22,7 @@ nested_map: #@ {"key1": "value1", "key2": "value2"}
 list: #@ ["item1", "item2"]
 list_with_a_map: #@ [{"key1": "value1", "key2": "value2"}, "item2"]
 
-#! setting value of YAML document node works as well
+#! setting the value of a YAML document node works as well
 
 --- #@ "document-value"
 --- #@ [1, "item1", {"key1": "value1"}]

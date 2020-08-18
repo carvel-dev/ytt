@@ -16,6 +16,7 @@
   - [Annotation format](lang-ref-annotation.md) describes how annotations are built
     - [@data/values annotation](ytt-data-values.md) describes how to inject input into templates
   - [Text templating](ytt-text-templating.md) describes how to deal with complex text templating
+- [@data/values vs overlays](data-values-vs-overlays.md)
 - [Injecting secrets](injecting-secrets.md)
 - [Outputs](outputs.md)
 - [File marks](file-marks.md)

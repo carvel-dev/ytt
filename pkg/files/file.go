@@ -1,3 +1,6 @@
+// Copyright 2020 VMware, Inc.
+// SPDX-License-Identifier: Apache-2.0
+
 package files
 
 import (
@@ -156,7 +159,7 @@ func NewFileFromSource(fileSrc Source) (*File, error) {
 		return nil, fmt.Errorf("Calculating relative path for '%s': %s", fileSrc, err)
 	}
 
-	return &File{src: fileSrc, relPath: relPath}, nil
+	return &File{src: fileSrc, relPath: filepath.ToSlash(relPath)}, nil
 }
 
 func MustNewFileFromSource(fileSrc Source) *File {

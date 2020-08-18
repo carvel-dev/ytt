@@ -1,5 +1,12 @@
+#! overlays are used to update yaml nodes which have no
+#! externally exposed means of data configuration
+
 #@ load("@ytt:overlay", "overlay")
 #@ load("@ytt:template", "template")
+
+#! the ingress() function does not take any parameters,
+#! so, as a consumer, we rely on overlays to configure the
+#! returned yaml
 
 #@ def ingress():
 apiVersion: extensions/v1beta1

@@ -1,0 +1,11 @@
+#! it can be useful to organize separate components into
+#! libraries. libraries are folders within the _ytt_lib
+#! directory and their modules can be loaded as shown below
+
+#! anything inside the library's own _ytt_lib folder
+#! is not accessible to library consumers, allowing the
+#! library to have private functionality
+
+#@ load("@github.com/k14s/test-lib:funcs.star", "testfunc")
+
+result: #@ testfunc()

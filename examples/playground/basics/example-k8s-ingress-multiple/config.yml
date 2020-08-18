@@ -1,5 +1,3 @@
-#! example is based on the following post: https://bit.ly/2QNCWab
-
 #@ load("@ytt:data", "data")
 #@ load("@ytt:template", "template")
 #@ load("app.lib.yml", "app_config", "app_labels", "app_svc_name")

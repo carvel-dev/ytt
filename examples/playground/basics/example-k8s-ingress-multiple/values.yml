@@ -5,7 +5,6 @@ apps:
   path: /apple
   port: 8080
   text: "Hi from #ytt apple"
-  additional_args: []
 
 - name: banana
   path: /banana
