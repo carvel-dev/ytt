@@ -22,7 +22,7 @@ edits. This allows for configuring values beyond what was exposed as data values
 For more:
 * navigate to the [overlay files](https://get-ytt.io/#example:example-overlay-files)
 example on the playground
-* take a look at the [overlays reference docs](lang-ref-ytt-overlay.md)
+* take a look at the [ytt Overlays overview](ytt-overlays.md)
 
 ### Next steps
 - [Reference](#reference) — learn more of what can be done with `ytt`
