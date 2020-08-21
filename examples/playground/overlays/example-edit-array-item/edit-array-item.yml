@@ -1,0 +1,23 @@
+#@ load("@ytt:overlay", "overlay")
+
+#@ def substitute(old):
+#@   return lambda left, right: left.replace(old, right)
+#@ end
+
+#! From all documents, select those with id: 1
+#@overlay/match by=overlay.subset({"id": 1})
+---
+awards:
+  #@overlay/match by=overlay.subset("Dayton Literary Peace Prize")
+  #@overlay/replace via=substitute("Dayton")
+  - Oslo
+
+#! `@overlay/replace via` takes a function with 2 params.
+#!   that function is invoked on each array item that
+#!   matched.
+#!   `left` is the array item that matched (think: target).
+#!   `right` is the array item that the `@...replace`
+#!     annotated.
+
+#! For more about lambda expressions in Starlark
+#! https://github.com/google/starlark-go/blob/master/doc/spec.md#lambda-expressions

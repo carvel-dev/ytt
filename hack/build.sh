@@ -26,6 +26,7 @@ build_values_path="../../${BUILD_VALUES:-./hack/build-values-default.yml}"
 	./../../ytt \
 		-f . \
 		-f ../../examples/playground/basics \
+		-f ../../examples/playground/overlays \
 		-f ../../examples/playground/getting-started \
 		-f $build_values_path \
 		--file-mark 'alt-example**/*:type=data' \

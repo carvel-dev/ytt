@@ -1,0 +1,8 @@
+#@ load("@ytt:overlay", "overlay")
+
+#@overlay/match by=overlay.all,expects="0+"
+---
+awards:
+#@overlay/match by=overlay.subset("International Botev"),missing_ok=True
+#@overlay/replace
+- Nobel Prize in Literature

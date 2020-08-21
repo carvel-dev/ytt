@@ -1,0 +1,22 @@
+#@ load("@ytt:overlay", "overlay")
+
+#! (optional) ensures that "format" is the only item in "meta"
+#@overlay/match by=lambda _, left, __: ("meta" in left) and ("format" in left["meta"]), expects="1+"
+---
+#@overlay/assert via=lambda left, right: (len(left) == 1, "meta contains more than map items than expected.")
+meta:
+
+#! replace contents of "meta" with "ebook: (existing value)"
+#@overlay/match by=lambda _, left, __: ("meta" in left) and ("format" in left["meta"]), expects="1+"
+---
+#@overlay/replace via=lambda a,b: {"ebook": a["format"]}
+meta:
+
+#! See also:
+#!
+#! - @overlay/match: https://github.com/k14s/ytt/blob/develop/docs/lang-ref-ytt-overlay.md#overlaymatch
+#! - Lambda expressions: https://github.com/google/starlark-go/blob/master/doc/spec.md#lambda-expressions
+#! - `in` operator: https://github.com/google/starlark-go/blob/master/doc/spec.md#membership-tests
+
+#! To preserve the additional contents of "meta", see
+#!   example, "Rename key"

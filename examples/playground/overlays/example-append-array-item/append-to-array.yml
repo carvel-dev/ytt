@@ -1,0 +1,13 @@
+#@ load("@ytt:overlay", "overlay")
+
+#! From all documents, select those with id: 1
+#@overlay/match by=overlay.subset({"id": 1})
+---
+awards:
+  #@overlay/append
+  - Ovid Prize
+  #@overlay/append
+  - Grand Prix of Literary Associations
+
+#! each item is applied on the target array, one-at-a-time
+#! so, each needs its own annotation to direct the edit.

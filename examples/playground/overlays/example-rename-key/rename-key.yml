@@ -1,0 +1,24 @@
+#@ load("@ytt:overlay", "overlay")
+
+#@ def swap_entry(map, old, new):
+#@  d = dict(**map)      # new dict from yamlfragment
+#@  d[new] = d.pop(old)  # dicts are mutable, yamlfragments are not
+#@  return d
+#@ end
+#! `**` expands `map` to a set of key/value arguments to
+#!      `dict()`
+
+#@ def rename(old, new):
+#@  return lambda left, right: swap_entry(left, old, new)
+#@ end
+
+#@overlay/match by=lambda _, left, __: ("meta" in left) and ("format" in left["meta"]), expects="1+"
+---
+#@overlay/replace via=rename("format", "ebook")
+meta:
+
+#! See also:
+#!
+#! - @overlay/match: https://github.com/k14s/ytt/blob/develop/docs/lang-ref-ytt-overlay.md#overlaymatch
+#! - Lambda expressions: https://github.com/google/starlark-go/blob/master/doc/spec.md#lambda-expressions
+#! - `in` operator: https://github.com/google/starlark-go/blob/master/doc/spec.md#membership-tests

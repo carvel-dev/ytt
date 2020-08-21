@@ -1,0 +1,13 @@
+#@ load("@ytt:overlay", "overlay")
+
+#! From all documents, select those with id: 1
+#@overlay/match by=overlay.subset({"id": 1})
+---
+awards:
+#@overlay/match by=overlay.subset("Dayton Literary Peace Prize")
+#@overlay/remove
+-
+
+#! Unlike other operations, `@overlay/remove` takes
+#!  no parameters, so specifying what you wish to
+#!  remove must be done via matcher.

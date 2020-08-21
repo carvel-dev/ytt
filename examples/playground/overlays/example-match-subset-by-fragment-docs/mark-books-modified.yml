@@ -1,0 +1,11 @@
+#@ load("@ytt:overlay", "overlay")
+
+#@ def hesse_books():
+type: book
+author: Hermann Hesse
+#@ end
+
+#! overlay.subset() also accepts YAML fragments
+#@overlay/match by=overlay.subset(hesse_books())
+---
+modified: true

@@ -1,0 +1,12 @@
+#@ load("@ytt:overlay", "overlay")
+
+#@overlay/match by=overlay.all, expects="1+"
+---
+meta:
+  #@overlay/match missing_ok=True
+  #@overlay/remove
+  preview:
+
+#! See also:
+#!
+#! - @overlay/match: https://github.com/k14s/ytt/blob/develop/docs/lang-ref-ytt-overlay.md#overlaymatch
