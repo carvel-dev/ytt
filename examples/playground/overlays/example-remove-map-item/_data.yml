@@ -3,6 +3,7 @@ id: 1
 type: book
 meta:
   format: .mobi
+  preview: true
 ---
 id: 2
 type: book
@@ -12,5 +13,5 @@ meta:
 id: 3
 type: book
 meta:
-  preview: true
   format: .epub
+  preview: true

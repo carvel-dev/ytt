@@ -1,0 +1,19 @@
+---
+items:
+  - id: 1
+    type: book
+    modified: false
+  - id: 2
+    type: book
+    modified: false
+  - id: 3
+    type: course
+    modified: false
+---
+items:
+  - id: 1
+    modified: false
+  - id: 2
+    modified: false
+  - id: 3
+    modified: false

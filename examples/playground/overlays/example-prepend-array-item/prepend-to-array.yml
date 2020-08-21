@@ -14,7 +14,3 @@ awards:
 #! each operation on an array requires two parts:
 #! 1. a matcher that selects which item(s) to edit
 #! 2. an action that describes the edit
-#!
-#! #@overlay/append is short-hand for:
-#!   #@overlay/match by=overlay.index(len(left)-1)
-#!   #@overlay/insert after=True

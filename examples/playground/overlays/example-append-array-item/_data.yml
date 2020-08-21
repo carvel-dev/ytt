@@ -1,13 +1,11 @@
 ---
 id: 1
 type: book
-title: Moonwalking with Einstein
 awards:
   - International Botev
   - Dayton Literary Peace Prize
 ---
 id: 2
 type: book
-title: The Glass Bead Game
-author: Hermann Hesse
-awards: []
+awards:
+  - NYT Best Seller

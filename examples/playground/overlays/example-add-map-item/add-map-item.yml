@@ -4,4 +4,4 @@
 ---
 meta:
   #@overlay/match missing_ok=True
-  hardcopy: yes
+  hardcopy: true

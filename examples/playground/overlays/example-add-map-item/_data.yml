@@ -1,0 +1,11 @@
+---
+id: 1
+type: book
+meta:
+  preview: true
+---
+id: 2
+type: book
+meta:
+  ebook: .epub
+  hardcopy: no

@@ -68,7 +68,7 @@ exampleSets = [
           {"id": "example-remove-array-item"},
           {"id": "example-replace-array"},
           {"id": "example-add-map-item"},
-          {"id": "example-rename-key"},
+          {"id": "example-rename-key-in-map"},
           {"id": "example-edit-map-value"},
           {"id": "example-remove-map-item"},
           {"id": "example-replace-map"},
