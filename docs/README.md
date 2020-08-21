@@ -46,9 +46,22 @@ example on the playground
   - [Load statement](lang-ref-load.md)
   - [Full Starlark specification](https://github.com/google/starlark-go/blob/master/doc/spec.md#contents)
 - [@ytt library](lang-ref-ytt.md) — modules included with ytt
+  - General
+    - [assert module](lang-ref-ytt.md#assert)
+    - [struct module](lang-ref-ytt.md#struct)
+    - [data module](lang-ref-ytt.md#data)
+    - [regexp module](lang-ref-ytt.md#regexp)
+    - [url module](lang-ref-ytt.md#url)
+    - [version module](lang-ref-ytt-version.md) — requiring a minimum ytt version
+  - Serialization
+    - [base64 module](lang-ref-ytt.md#base64)
+    - [json module](lang-ref-ytt.md#json)
+    - [yaml module](lang-ref-ytt.md#yaml)
+  - Hashing
+    - [md5 module](lang-ref-ytt.md#md5)
+    - [sha256 module](lang-ref-ytt.md#sha256)
   - [overlay module](lang-ref-ytt-overlay.md) — patching on top of plain templating
   - [library module](lang-ref-ytt-library.md) — programmatically including template libraries
-  - [version module](lang-ref-ytt-version.md) — requiring a minimum ytt version
 - [Annotation format](lang-ref-annotation.md) — how annotations look and work
   - [@data/values annotation](ytt-data-values.md) — injecting input into templates
 - [Text templating](ytt-text-templating.md) — templating non-YAML files and strings
