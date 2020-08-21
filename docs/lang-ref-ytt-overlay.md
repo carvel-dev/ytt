@@ -17,10 +17,29 @@ Each modification is made of one matching stage (as specified by `@overlay/match
 
 Specifies how to find node on the "left-side". Valid for documents, map and array items.
 
-- `by=Function` (optional) function used to match left-side node. See matchers section below for builtin matches. Can be used in conjunction with other keyword arguments. Default: (a) for array items or documents, no default (b) for map items, default matching is key equality.
-- `expects=Int|String|List|Function` (optional) sets expected number of matched left-side nodes to be found; if more or less found, error is raised. Defaults to `1` (i.e. expecting to find exactly one left-side node).
+- `by=Function(index,left,right):Boolean` predicate used to match left-side nodes.
+   - `index` (`Int`) — the potential match's position in the list of all potential matches
+   - `left` ([`yamlfragment`](lang-ref-yaml-fragment.md) or scalar) — the potential match/target
+   - `right` ([`yamlfragment`](lang-ref-yaml-fragment.md) or scalar) — the contents of the overlay
+   - Built-in matchers:
+     - [`overlay.all()`](#overlayall)
+     - [`overlay.subset()`](#overlaysubset)
+     - [`overlay.index()`](#overlaysubset)
+     - [`overlay.map_key()`](#overlaymap_key)
+   - Defaults:
+     - for array items and documents: no default (i.e. `by` is required)
+     - for map items: key equality (i.e. [`overlay.map_key()`](#overlaymap_key))
+- `expects=Int|String|List|Function` (optional) sets expected number of matched left-side nodes to be found; if not satisfied, error is raised.
+   - `Int` — must match this number, exactly
+   - `String` (format: `"%d+"`) — must match _at least_ the number
+   - `Function(found):Bool` — `found` (`Int`) must satisfy the predicate
+   - `List[Int|String|Function]` — must match one of the given criteria
+   - Default: `1` (`Int`) (i.e. expecting to find exactly one left-side node).
 - `missing_ok=Bool` (optional) shorthand syntax for `expects="0+"`
-- `when=Int|String|List` (optional; available in v0.28.0+) checks if number of matched left-side nodes matches given criteria, and if it matches proceeds with overlay execution; otherwise does nothing. This keyword argument is similar to `expects` with an exception of raising an error making it useful to apply certain overlay operation conditionally.
+- `when=Int|String|List` (optional; available in v0.28.0+) sets criteria for when the overlay should apply. If the criteria is met, the overlay applies; otherwise, nothing happens.
+   - `Int` — must equal this number, exactly
+   - `String` (format: `"%d+"`) — must match _at least_ the number
+   - `List[Int|String]` — must match one of the given criteria
 
 `expects`, `missing_ok`, and `when` cannot be used simultaneously.
 
