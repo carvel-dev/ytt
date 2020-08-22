@@ -69,12 +69,12 @@ func (b regexpModule) Replace(thread *starlark.Thread, f *starlark.Builtin, args
 		return starlark.None, err
 	}
 
-	target, err := core.NewStarlarkValue(args.Index(2)).AsString()
+	repl, err := core.NewStarlarkValue(args.Index(2)).AsString()
 	if err != nil {
 		return starlark.None, err
 	}
 
-	newString := re.ReplaceAllLiteralString(source, target)
+	newString := re.ReplaceAllString(source, repl)
 
 	return starlark.String(newString), nil
 }
