@@ -24,7 +24,7 @@ Specifies how to find node on the "left-side". Valid for documents, map and arra
    - Built-in matchers:
      - [`overlay.all()`](#overlayall)
      - [`overlay.subset()`](#overlaysubset)
-     - [`overlay.index()`](#overlaysubset)
+     - [`overlay.index()`](#overlayindex)
      - [`overlay.map_key()`](#overlaymap_key)
    - Defaults:
      - for array items and documents: no default (i.e. `by` is required)
