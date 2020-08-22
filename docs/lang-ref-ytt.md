@@ -66,6 +66,7 @@ data.list("/data/data.txt") # read file
 load("@ytt:regexp", "regexp")
 
 regexp.match("[a-z]+[0-9]+", "__hello123__") # True
+regexp.replace("[a-z]+[0-9]+", "__hello123__", "foo") # __foo__
 ```
 
 ### url
