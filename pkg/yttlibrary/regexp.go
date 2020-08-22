@@ -17,7 +17,8 @@ var (
 		"regexp": &starlarkstruct.Module{
 			Name: "regexp",
 			Members: starlark.StringDict{
-				"match": starlark.NewBuiltin("regexp.match", core.ErrWrapper(regexpModule{}.Match)),
+				"match":   starlark.NewBuiltin("regexp.match", core.ErrWrapper(regexpModule{}.Match)),
+				"replace": starlark.NewBuiltin("regexp.replace", core.ErrWrapper(regexpModule{}.Replace)),
 			},
 		},
 	}
@@ -46,4 +47,34 @@ func (b regexpModule) Match(thread *starlark.Thread, f *starlark.Builtin, args s
 	}
 
 	return starlark.Bool(matched), nil
+}
+
+func (b regexpModule) Replace(thread *starlark.Thread, f *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
+	if args.Len() != 3 {
+		return starlark.None, fmt.Errorf("expected exactly 3 arguments")
+	}
+
+	pattern, err := core.NewStarlarkValue(args.Index(0)).AsString()
+	if err != nil {
+		return starlark.None, err
+	}
+
+	re, err := regexp.Compile(pattern)
+	if err != nil {
+		return starlark.None, err
+	}
+
+	source, err := core.NewStarlarkValue(args.Index(1)).AsString()
+	if err != nil {
+		return starlark.None, err
+	}
+
+	target, err := core.NewStarlarkValue(args.Index(2)).AsString()
+	if err != nil {
+		return starlark.None, err
+	}
+
+	newString := re.ReplaceAllLiteralString(source, target)
+
+	return starlark.String(newString), nil
 }

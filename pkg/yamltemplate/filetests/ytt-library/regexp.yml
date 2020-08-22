@@ -2,8 +2,12 @@
 
 test1: #@ regexp.match("[a-z]+[0-9]+", "__hello123__")
 test2: #@ regexp.match("^[a-z]+[0-9]+$", "__hello123__")
+test3: #@ regexp.replace("[a-z]+[0-9]+", "__foo123__BAR456__", "baz")
+test4: #@ regexp.replace("(?i)[a-z]+[0-9]+", "__foo123__BAR456__", "baz")
 
 +++
 
 test1: true
 test2: false
+test3: __baz__BAR456__
+test4: __baz__baz__
