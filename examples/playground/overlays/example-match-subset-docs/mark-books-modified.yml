@@ -1,6 +1,0 @@
-#@ load("@ytt:overlay", "overlay")
-
-#! overlay.subset() selects docs matching given structure
-#@overlay/match by=overlay.subset({"type": "book"}), expects="1+"
----
-modified: true

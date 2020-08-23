@@ -1,9 +1,9 @@
 ---
 items:
-- id: 1
+- id: 2
   type: book
   modified: false
-- id: 2
+- id: 1
   type: book
   modified: false
 - id: 3

@@ -1,0 +1,10 @@
+#@ load("@ytt:overlay", "overlay")
+
+#! Out of the total set of documents, select only those
+#!   that contain the key: "type" with the value "book"
+#@overlay/match by=overlay.subset({"type": "book"}), expects="1+"
+---
+modified: true
+
+#! For more on `overlay.subset()`:
+#!   https://github.com/k14s/ytt/blob/develop/docs/lang-ref-ytt-overlay.md#overlaysubset

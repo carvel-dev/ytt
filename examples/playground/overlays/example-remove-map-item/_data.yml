@@ -1,17 +1,5 @@
 ---
 id: 1
-type: book
 meta:
   format: .mobi
-  preview: true
----
-id: 2
-type: book
-meta:
-  hardcopy: false
----
-id: 3
-type: book
-meta:
-  format: .epub
   preview: true

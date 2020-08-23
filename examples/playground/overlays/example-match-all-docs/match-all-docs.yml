@@ -2,14 +2,10 @@
 
 #@overlay/match by=overlay.all, expects="1+"
 ---
-meta:
-  #@overlay/match missing_ok=True
-  hardcopy: true
+modified: true
 
-#! By default, `@overlay/match` applied to a map item
-#!   matches by key name (here: `hardcopy`).
-
-#! By default, the operation is `@overlay/merge`
+#! by default `@overlay/match` expects exactly 1 match.
+#!   Specify `expects` to override.
 
 #! For more on `@overlay/match`:
 #!   https://github.com/k14s/ytt/blob/develop/docs/lang-ref-ytt-overlay.md#overlaymatch

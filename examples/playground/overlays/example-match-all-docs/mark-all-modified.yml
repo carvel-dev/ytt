@@ -1,7 +1,0 @@
-#@ load("@ytt:overlay", "overlay")
-
-#! overlay.all() always returns True.
-#! by default overlay/match expects exactly 1.
-#@overlay/match by=overlay.all, expects="1+"
----
-modified: true

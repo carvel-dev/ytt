@@ -5,8 +5,7 @@
 meta:
   #@overlay/match missing_ok=True
   #@overlay/remove
-  preview:
+  preview: (this value is ignored)
 
-#! See also:
-#!
-#! - @overlay/match: https://github.com/k14s/ytt/blob/develop/docs/lang-ref-ytt-overlay.md#overlaymatch
+#! By default, `@overlay/match` applied to a map item
+#!   matches by key name (here: `preview`)

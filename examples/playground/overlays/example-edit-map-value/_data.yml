@@ -3,14 +3,3 @@ id: 1
 type: book
 meta:
   format: .mobi
----
-id: 2
-type: book
-meta:
-  hardcopy: false
----
-id: 3
-type: book
-meta:
-  preview: true
-  format: .epub
