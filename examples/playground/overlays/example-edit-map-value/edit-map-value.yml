@@ -1,6 +1,6 @@
 #@ load("@ytt:overlay", "overlay")
 
-#@overlay/match by=overlay.all, expects="1+"
+#@overlay/match by=overlay.all
 ---
 meta:
   #@overlay/replace via=lambda left, right: right+left
