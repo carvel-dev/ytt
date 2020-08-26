@@ -1,243 +1,116 @@
 # ytt Library: Overlay module
 
-Overlay module provides a way to combine two structures together with the help of annotations. You can use overlay functionality:
+## Contents
 
-- [programmatically via `overlay.apply` function](#programmatic-access)
-- [by specifying overlays as standalone YAML documents](#overlays-as-files)
-
-When combining two structures together we refer to the structure is modified as "left-side" (or base) and to the structure that specifies modifications as "right-side" (or overlay). Modifications are described via overlay annotations on the right-side structures.
-
-Each modification is made of one matching stage (as specified by `@overlay/match` annotation) and one action (e.g. `@overlay/merge`, `@overlay/replace`, etc.).
-
-## Annotations on the "right-side" nodes
-
-### @overlay/match
-
-`@overlay/match [by=Function, expects=Int|String|List|Function, missing_ok=Bool, when=Int|String|List]`
-
-Specifies how to find node on the "left-side". Valid for documents, map and array items.
-
-- `by=Function(index,left,right):Boolean` predicate used to match left-side nodes.
-   - `index` (`Int`) — the potential match's position in the list of all potential matches
-   - `left` ([`yamlfragment`](lang-ref-yaml-fragment.md) or scalar) — the potential match/target
-   - `right` ([`yamlfragment`](lang-ref-yaml-fragment.md) or scalar) — the contents of the overlay
-   - Built-in matchers:
-     - [`overlay.all()`](#overlayall)
-     - [`overlay.subset()`](#overlaysubset)
-     - [`overlay.index()`](#overlayindex)
-     - [`overlay.map_key()`](#overlaymap_key)
-   - Defaults:
-     - for array items and documents: no default (i.e. `by` is required)
-     - for map items: key equality (i.e. [`overlay.map_key()`](#overlaymap_key))
-- `expects=Int|String|List|Function` (optional) sets expected number of matched left-side nodes to be found; if not satisfied, error is raised.
-   - `Int` — must match this number, exactly
-   - `String` (format: `"%d+"`) — must match _at least_ the number
-   - `Function(found):Bool` — `found` (`Int`) must satisfy the predicate
-   - `List[Int|String|Function]` — must match one of the given criteria
-   - Default: `1` (`Int`) (i.e. expecting to find exactly one left-side node).
-- `missing_ok=Bool` (optional) shorthand syntax for `expects="0+"`
-- `when=Int|String|List` (optional; available in v0.28.0+) sets criteria for when the overlay should apply. If the criteria is met, the overlay applies; otherwise, nothing happens.
-   - `Int` — must equal this number, exactly
-   - `String` (format: `"%d+"`) — must match _at least_ the number
-   - `List[Int|String]` — must match one of the given criteria
-
-`expects`, `missing_ok`, and `when` cannot be used simultaneously.
-
-Examples:
-
-- `#@overlay/match by="name"`: expects to find 1 "left-side" node that has a key name with "right-side" node value (for that key)
-- `#@overlay/match by=overlay.map_key("name")`: (same as above)
-- `#@overlay/match by=overlay.all,expects="0+"`: expects to find all "left-side" nodes
-- `#@overlay/match missing_ok=True`: expects to find 0 or 1 matching "left-side" node
-- `#@overlay/match expects=2`: expects to find 2 "left-side" nodes
-- `#@overlay/match expects="2+"`: expects to find 2 or more "left-side" nodes
-- `#@overlay/match expects=[0,1,4]`: expects to find 0, 1 or 4 "left-side" nodes
-- `#@overlay/match expects=lambda x: return x < 10`: expects to less than 10 "left-side" nodes
-- `#@overlay/match when=2`: applies changes when 2 "left-side" nodes are found but will not error otherwise
-- `#@overlay/match when=2+`: applies changes when 2 or more "left-side" nodes are found but will not error otherwise
-- `#@overlay/match when=[0,1,4]`: applies changes when 0, 1 or 4 "left-side" nodes are found but will not error otherwise
-
-### @overlay/match-child-defaults
-
-`@overlay/match-child-defaults [expects=..., missing_ok=Bool]`
-
-Specifies `@overlay/match` defaults for child nodes (does not apply to current node). Mostly useful to avoid repeating `@overlay/match missing_ok=True` on each child node in maps. Valid for documents, map and array items.
-
-### @overlay/merge
-
-`@overlay/merge`
-
-This is a default action. It merges node content recursively. Valid for both map and array items.
-
-### @overlay/remove
-
-`@overlay/remove`
-
-Removes "left-side" node ("right-side" node value is ignored). Valid for documents, map and array items.
-
-### @overlay/replace
-
-`@overlay/replace [via=Function]`
-
-Replaces "left-side" node value with "right-side" node value. Valid for documents, map and array items.
-
-- `via=Function` (optional) takes a function which will receive two arguments (left-side and right-side value) and expects to return single new value. Works with non-scalar values as of v0.26.0+.
-
-Examples:
-
-- `#@overlay/replace`: uses right-side value (default)
-- `#@overlay/replace via=lambda a,b: "prefix-"+a`: prefix left-side value with `prefix-` string
-
-### @overlay/insert
-
-`@overlay/insert [before=Bool, after=Bool]`
-
-Inserts array item at the matched index, before matched index, or after. Valid only for documents and array items.
-
-### @overlay/append
-
-`@overlay/append`
-
-Appends array item to the end of "left-side" array or document set. Valid only for documents and array items.
-
-### @overlay/assert
-
-`@overlay/assert [via=Function]` (available in v0.24.0+)
-
-Tests equality of "left-side" node value with "right-side" node value. Valid for documents, map and array items.
-
-- `via=Function` (optional) takes a function which will receive two arguments (left-side and right-side value) and expects to return NoneType, Bool, or Tuple(Bool,String)
-  - if NoneType is returned comparison is considered a success (typically assert module is used within)
-  - if False is returned comparison is considered a failure
-  - if Tuple(False,String) is returned comparison is considered a failure
-  - also works with non-scalar values (available in v0.26.0+)
-
-Examples:
-
-- `#@overlay/assert`: (default)
-- `#@overlay/assert via=lambda a,b: a > 0 and a < 1000`: check that value is within certain numeric constraint
-- `#@overlay/assert via=lambda a,b: regexp.match("[a-z0-9]+", a)`: check that value is lowercase alphanumeric
+- [Overview](#overview)
+- [Overlays as files](#overlays-as-files) — the primary way overlays are used: declaratively
+- [Programmatic access](#programmatic-access) — applying overlays in a more precise way: programmatically
+- [`@overlay` Annotations](#overlay-annotations) — how to declare overlays
+- [Functions](#functions) — the contents of the `@ytt:overlay` module
 
 ---
-## Functions
 
-Several functions are provided by overlay module that are useful for executing overlay operation, and matching various structures. Use `load("@ytt:overlay", "overlay")` to access these functions.
+## Overview
 
-### overlay.apply
+`ytt`'s Overlay feature provides a way to combine YAML structures together with the help of annotations.
 
-`overlay.apply(left, right1[, rightX...])` to combine two or more structures (see [Programmatic access](#programmatic-access) below for details)
+There are two (2) structures involved in an overlay operation:
+- the "left" — the YAML document(s) (and/or contained maps and arrays) being modified, and
+- the "right" — the YAML document (and/or contained maps and arrays) that is the overlay, describing the modification.
 
-```python
-overlay.apply(left(), right())
-overlay.apply(left(), one(), two())
-```
+Each modification is composed of:
+- a matcher (via an [`@overlay/(match)`](#matching-annotations) annotation), identifying which node(s) on the "left" are the target(s) of the edit, and
+- an action (via an [`@overlay/(action)`](#action-annotations) annotation), describing the edit.
 
-### overlay.map_key
+Once written, an overlay can be applied in one of two ways:
 
-`overlay.map_key(name)` matcher matches array items or maps based on the value of map key `name` (it requires that all item values have specified map key, use `overlay.subset(...)` if that requirement is cannot be met)
-   
-This example will successfully match array items that have a map with a key `name` of value `item2`:
+- on all rendered templates, [declaratively, via YAML documents annotated with `@overlay/match`](#overlays-as-files); this is the most common approach.
+- on selected documents, [programmatically, via `overlay.apply()`](#programmatic-access).
 
-```yaml
-#@overlay/match by=overlay.map_key("name")
-- name: item2
-```
+---
+## Overlays as files
 
-Likewise, this example matches items in a map that have a key `name` of value `item2` (note: the key name `_` is arbitrary and ignored) (as of v0.26.0+):
+As `ytt` scans input files, it pulls aside any YAML Document that is annotated with `@overlay/match`, and considers it an overlay.
 
-```yaml
-#@overlay/match by=overlay.map_key("name")
-_:
-  name: item2
-```
+After YAML templates are rendered, the collection of identified overlays are applied. Each overlay executes, one-at-a-time over the entire set of the rendered YAML documents.
 
-### overlay.index
-
-`overlay.index(i)` matcher matches array item at given index
-
-```yaml
-#@overlay/match by=overlay.index(0)
-- item10
-```
-
-### overlay.all
-
-`overlay.all` matcher matches all:
+Order matters: modifications from earlier overlays are seen by later overlays. Overlays are applied in the order detailed in [Overlay order](#overlay-order), below.
  
-documents
+In the example below, the last YAML document is an overlay (it has the `@overlay/match` annotation).
+That overlay matcher's selects the first YAML document *only*: it's the only one that has a `metadata.name` of `example-ingress`.
 
 ```yaml
-#@overlay/match by=overlay.all
+#@ load("@ytt:overlay", "overlay")
+
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: example-ingress
+  annotations:
+    ingress.kubernetes.io/rewrite-target: /
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: another-example-ingress
+  annotations:
+    ingress.kubernetes.io/rewrite-target: /
+
+#@overlay/match by=overlay.subset({"metadata":{"name":"example-ingress"}})
 ---
 metadata:
- annotations: ...
+  annotations:
+    #@overlay/remove
+    ingress.kubernetes.io/rewrite-target:
 ```
 
-array items
+yields:
 
 ```yaml
-#@overlay/match by=overlay.all
-- item10
-```
-
-or items in maps (note: the key name `_` is arbitrary and ignored) (as of v0.26.0+)
-
-```yaml
-#@overlay/match by=overlay.all
-_:
-  name: item10
-```
-
-### overlay.subset
-
-`overlay.subset` matcher matches based on partial equality of given value. Value could be map or any scalar.
-
-- when value is a map, left-side node must include all keys and values recursively to be a match
-- when value is a scalar, left-side node must be of the same value to be a match
-
-```yaml
-#@overlay/match by=overlay.subset({"metadata":{"name":"example-ingress1"}})
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: example-ingress
+  annotations: {}
 ---
-spec:
-  enabled: true
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: another-example-ingress
+  annotations:
+    ingress.kubernetes.io/rewrite-target: /
 ```
 
-### overlay.and_op
+See also: [Overlay files example](https://get-ytt.io/#example:example-overlay-files) in online playground.
 
-`overlay.and_op(matcher1, matcher2, ...)` matcher takes one or more matchers and returns true if all matchers return true (as of v0.26.0+)
+__
+### Overlay order
 
-```yaml
-#@ not_sa = overlay.not_op(overlay.subset({"kind": "ServiceAccount"}))
-#@ inside_ns = overlay.subset({"metadata": {"namespace": "some-ns"}})
-#@overlay/match by=overlay.and_op(not_sa, inside_ns),expects="1+"
----
-#! ...
-```
+(as of v0.13.0)
 
-### overlay.or_op
+Overlays are applied, in sequence, by:
 
-`overlay.or_op(matcher1, matcher2, ...)` matcher takes one or more matchers and returns true if any matchers return true (as of v0.26.0+)
+1. left-to-right for file flags
+    - e.g. in `-f overlay1.yml -f overlay2.yml`, `overlay1.yml` will be applied first
+1. if file flag is set to a directory, files are alphanumerically sorted
+    - e.g. in `aaa/z.yml xxx/c.yml d.yml`, will be applied in following order `aaa/z.yml d.yml xxx/c.yml`
+1. top-to-bottom order for overlay YAML documents within a single file
 
-```yaml
-#@overlay/match by=overlay.or_op(overlay.subset({"kind": "ConfigMap"}), overlay.subset({"kind": "Secret"}))
----
-#! ...
-```
+__
+### Next Steps
 
-### overlay.not_op
-
-`not_op(matcher)` matcher takes another matcher and returns opposite result (as of v0.26.0+)
-
-```yaml
-#@overlay/match by=overlay.not_op(overlay.subset({"metadata": {"namespace": "app"}}))
----
-#! ...
-```
+Familiarize yourself with the [overlay annotations](#overlay-annotations).
 
 ---
 ## Programmatic access
 
-In this example we have `left()` function that returns left-side structure and `right()` that returns right-side structure that specifies modifications. `overlay.apply(...)` will execute modifications and return a new structure.
+Overlays need not apply to the entire set of rendered YAML documents (as is the case with [the declarative approach](#overlays-as-files)).
+
+Instead, the declared modifications can be captured in a function and applied to a specific set of documents via [`overlay.apply()`](#overlayapply) in Starlark code.
+
+In this example we have `left()` function that returns target structure and `right()` that returns the overlay, specifying the modifications.
+
+`overlay.apply(...)` will execute the execute the overlay and return a new structure.
 
 ```yaml
 #@ load("@ytt:overlay", "overlay")
@@ -270,7 +143,7 @@ key2:
 result: #@ overlay.apply(left(), right())
 ```
 
-with the result of
+yields:
 
 ```yaml
 result:
@@ -284,67 +157,606 @@ result:
       key7: val7
       key8: new-val8
 ```
+__
+### Next Steps
+
+Familiarize yourself with the two kinds of overlay annotations:
+- matchers (via an [`@overlay/(match)`](#matching-annotations) annotation), and
+- actions (via an [`@overlay/(action)`](#action-annotations) annotation).
 
 ---
-## Overlays as files
+## `@overlay` Annotations
 
-ytt CLI treats YAML documents with `overlay/match` annotation as overlays. Such overlays could be specified in any file and are matched against all resulting YAML documents from all other files in the post-templating stage.
+There are two groups of overlay annotations:
 
-In the example below, last YAML document is considered to be an overlay because it has `overlay/match` annotation. It will match *only* first YAML document, which has `example-ingress` as its `metadata.name`.
+- [Matching Annotations](#matching-annotations)
+- [Action Annotations](#action-annotations)
 
-```yaml
-#@ load("@ytt:overlay", "overlay")
-#@ some_path = "/"
 
-apiVersion: extensions/v1beta1
-kind: Ingress
-metadata:
-  name: example-ingress
-  annotations:
-    ingress.kubernetes.io/rewrite-target: #@ some_path
----
-apiVersion: extensions/v1beta1
-kind: Ingress
-metadata:
-  name: another-example-ingress
-  annotations:
-    ingress.kubernetes.io/rewrite-target: #@ some_path
+### Matching Annotations
 
-#@overlay/match by=overlay.subset({"metadata":{"name":"example-ingress"}})
----
-metadata:
-  annotations:
-    #@overlay/remove
-    ingress.kubernetes.io/rewrite-target:
+These annotations are used to select which structure(s) will be modified:
+
+- [@overlay/match](#overlaymatch)
+- [@overlay/match-child-defaults](#overlaymatch-child-defaults)
+
+__
+#### @overlay/match
+
+Specifies which nodes on the "left" to modify.
+
+**Valid on:** Document, Map Item, Array Item.
+
+```
+@overlay/match [by=Function|String, expects=Int|String|List|Function, missing_ok=Bool, when=Int|String|List]
+```
+- **`by=`**`Function|String` — criteria for matching nodes on the "left"
+   - `Function` — predicate of whether a given node is a match
+       - provided matcher functions (supplied by the `@ytt:overlay` module):
+         - [`overlay.all()`](#overlayall)
+         - [`overlay.subset()`](#overlaysubset)
+         - [`overlay.index()`](#overlayindex)
+         - [`overlay.map_key()`](#overlaymap_key)
+       - [Custom matcher function](#custom-overlay-matcher-functions) can also be used
+   - `String` — short-hand for [`overlay.map_key()`](#overlaymap_key) with the same argument 
+   - Defaults (depends on the type of the annotated node):
+     - document or array item: none (i.e. `by` is required)
+     - map item: key equality (i.e. [`overlay.map_key()`](#overlaymap_key))
+- **`expects=`**`Int|String|List|Function` — (optional) expected number of nodes to be found in the "left." If not satisfied, raises an error.
+   - `Int` — must match this number, exactly
+   - `String` (e.g. `"1+"`) — must match _at least_ the number
+   - `Function(found):Bool` — predicate of whether the expected number of matches were found
+      - `found` (`Int`) — number of actual matches
+   - `List[Int|String|Function]` — must match one of the given criteria
+   - Default: `1` (`Int`) (i.e. expecting to match exactly one (1) node on the "left").
+- **`missing_ok=`**`Bool` (optional) shorthand syntax for `expects="0+"`
+- **`when=`**`Int|String|List` (optional) criteria for when the overlay should apply. If the criteria is met, the overlay applies; otherwise, nothing happens.
+   - `Int` — must equal this number, exactly
+   - `String` (e.g. `"1+"`) — must match _at least_ the number
+   - `List[Int|String]` — must match one of the given criteria
+
+**Notes:**
+- `expects`, `missing_ok`, and `when` are mutually-exclusive parameters.
+- take care when `expects` includes zero (0); matching none is indistinguishable from a mistakenly written match (e.g. a misspelling of a key name)
+
+**Examples:**
+
+- `#@overlay/match by="id"`: expects to find one (1) node on the "left" that has the key `id` and value matching the same-named item on the "right."
+- `#@overlay/match by=`[`overlay.map_key("name")`](#overlaymap_key): (same as above)
+- `#@overlay/match by=`[`overlay.all`](#overlayall)`,expects="0+"`: has no effective matching expectations
+- `#@overlay/match missing_ok=True`: expects to find 0 or 1 matching nodes on the "left"
+- `#@overlay/match expects=2`: expects to find exactly two (2) matching nodes on the "left"
+- `#@overlay/match expects="2+"`: expects to find two (2) or more matching nodes on the "left"
+- `#@overlay/match expects=[0,1,4]`: expects to find 0, 1 or 4 matching nodes on the "left"
+- `#@overlay/match expects=lambda x: return x < 10`: expects 9 or fewer matching nodes on the "left"
+- `#@overlay/match when=2`: applies changes only if two (2) nodes are found on the "left" and will not error otherwise
+- `#@overlay/match when=2+`: applies changes only if two (2) or more nodes are found on the "left" and will not error otherwise
+- `#@overlay/match when=[0,1,4]`: applies changes only if there were exactly 0, 1 or 4 nodes found on the "left" and will not error otherwise
+
+**History:**
+- v0.28.0+ — added `when` keyword argument.
+
+__
+##### Custom Overlay Matcher Functions
+
+The matcher functions from `@ytt:overlay` cover many use-cases. From time-to-time, more precise matching is required.
+
+A matcher function has the following signature:
+
+`Function(index,left,right):Boolean`
+   - `index` (`Int`) — the potential match's position in the list of all potential matches (zero-based)
+   - `left` ([`yamlfragment`](lang-ref-yaml-fragment.md) or scalar) — the potential match/target node
+   - `right` ([`yamlfragment`](lang-ref-yaml-fragment.md) or scalar) — the value of the annotated node in the overlay
+   - returns `True` if `left` should be considered a match; `False` otherwise.
+
+Most custom matchers can be written as a Lambda expression.
+
+Lambda expressions start with the keyword `lambda`, followed by a parameter list, then a `:`, and a single expression that is the body of the function.
+
+**Examples:**
+
+_Example 1: Key presence or partial string match_
+
+`left` contains `right`:
+```python
+lambda index, left, right: right in left
+```
+Returns `True` when `right` is "a member of" `left`
+
+(see also: [Starlark Spec: Membership tests](https://github.com/google/starlark-go/blob/master/doc/spec.md#membership-tests) for more details)
+
+__
+
+_Example 2: Precise string matching_
+
+`left` contains a key of the same name as the value of `right`:
+```python
+lambda index, left, right: left["metadata"]["name"].endswith("server")
+```
+See also:
+- [Language: String](lang-ref-string.md) for more built-in functions on strings.
+- [@ytt:regexp Library](lang-ref-ytt.md#regexp) for regular expression matching.
+
+
+
+__
+#### @overlay/match-child-defaults
+
+Sets default values for `expects`, `missing_ok`, or `when` for the children of the annotated node.
+Does not set these values for the annotated node, itself.
+
+Commonly used to avoid repeating `@overlay/match missing_ok=True` on each child node in maps.
+
+**Valid on:** Document, Map Item, Array Item.
+
+```
+@overlay/match-child-defaults [expects=Int|String|List|Function, missing_ok=Bool, when=Int|String|List]
 ```
 
-Result:
+_(see [@overlay/match](#overlaymatch) for parameter specifications.)_
 
+**Examples:**
+
+Without the `#@overlay/match-child-defaults`, _each_ of the four new annotation would have needed an `@overlay/match missing_ok=True` to apply successfully:
 ```yaml
-apiVersion: extensions/v1beta1
-kind: Ingress
-metadata:
-  name: example-ingress
-  annotations: {}
 ---
-apiVersion: extensions/v1beta1
-kind: Ingress
 metadata:
-  name: another-example-ingress
   annotations:
     ingress.kubernetes.io/rewrite-target: /
+
+#@overlay/match by=overlay.all
+---
+metadata:
+  #@overlay/match-child-defaults missing_ok=True
+  annotations:
+    nginx.ingress.kubernetes.io/limit-rps: 2000
+    nginx.ingress.kubernetes.io/enable-access-log: "true"
+    nginx.ingress.kubernetes.io/canary: "true"
+    nginx.ingress.kubernetes.io/client-body-buffer-size: 1M
 ```
 
-See [Overlay files example](https://get-ytt.io/#example:example-overlay-files) in online playground.
+---
+### Action Annotations
 
-### Overlay order
+The following annotations describe how to modify the matched "left" node.
 
-Specified as follows in v0.13.0+.
+They are:
+  - [`@overlay/merge`](#overlaymerge) — (default) combine left and right nodes
+  - [`@overlay/remove`](#overlayremove) — delete nodes from left
+  - [`@overlay/replace`](#overlayreplace) — replace the left node
+  - [`@overlay/insert`](#overlayinsert) — insert right node into left
+  - [`@overlay/append`](#overlayappend) — add right node at end of collection on left
+  - [`@overlay/assert`](#overlayassert) — declare an invariant on the left node
 
-Overlay order is determined by:
+__
+#### @overlay/merge
 
-1. left-to-right for file flags
-    - e.g. in `-f overlay1.yml -f overlay2.yml`, `overlay1.yml` will be applied first
-1. if file flag is set to a directory, files are alphanumerically sorted
-    - e.g. in `aaa/z.yml xxx/c.yml d.yml`, will be applied in following order `aaa/z.yml d.yml xxx/c.yml`
-1. top-to-bottom order for overlay YAML documents within a single file
+Merge the value of "right" node with the corresponding "left" node.
+
+**Valid on:** Map Item, Array Item.
+
+```
+@overlay/merge
+```
+_(this annotation has no parameters.)_
+
+**Note:** This is the default action; for each node in an overlay, either the action is explicitly specified or it is `merge`.
+
+
+__
+#### @overlay/remove
+
+Deletes the matched "left" node.
+
+**Valid on:** Document, Map Item, Array Item.
+
+```
+@overlay/remove
+```
+_(this annotation has no parameters.)_
+
+
+__
+#### @overlay/replace
+
+Substitutes matched "left" node with the value of the "right" node (or by that of a provided function).
+
+**Valid on:** Document, Map Item, Array Item.
+
+```
+@overlay/replace [via=Function]
+```
+
+- **`via=`**`Function(left, right): (any)` _(optional)_ determines the value to substitute in. If omitted, the value is `right`.
+   - `left` ([`yamlfragment`](lang-ref-yaml-fragment.md) or scalar) — the matched node's value
+   - `right` ([`yamlfragment`](lang-ref-yaml-fragment.md) or scalar) — the value of the annotated node
+
+**History:**
+- v0.26.0 — works with [`yamlfragment`](lang-ref-yaml-fragment.md) values.
+
+**Examples:**
+
+_Example 1: Use value from "right"_
+
+Replaces the corresponding "left" with the value `"v1"`
+```yaml
+#@overlay/replace
+apiVersion: v1
+```
+__
+
+_Example 2: Edit string value_ 
+
+```yaml
+#@overlay/replace via=lambda left, right: "prefix-"+left
+```
+
+See also:
+- `ytt` modules that export functions useful for manipulating values:
+    - [base64 module](lang-ref-ytt.md#base64)
+    - [json module](lang-ref-ytt.md#json)
+    - [md5 module](lang-ref-ytt.md#md5)
+    - [sha256 module](lang-ref-ytt.md#sha256)
+    - [url module](lang-ref-ytt.md#url)
+    - [yaml module](lang-ref-ytt.md#yaml)
+- [Language: String](lang-ref-string.md) for built-in string functions.
+- Other Starlark language features that manipulate values:
+    - [string interpolation](https://github.com/google/starlark-go/blob/master/doc/spec.md#string-interpolation)
+    - [conditional expressions](https://github.com/google/starlark-go/blob/master/doc/spec.md#conditional-expressions)
+    - [index expressions](https://github.com/google/starlark-go/blob/master/doc/spec.md#index-expressions)
+    - [slice expressions](https://github.com/google/starlark-go/blob/master/doc/spec.md#slice-expressions)
+
+__
+#### @overlay/insert
+
+Inserts "right" node before/after the matched "left" node.
+
+**Valid on:** Document, Array Item.
+
+```
+@overlay/insert [before=Bool, after=Bool]
+```
+- **`before=`**`Bool` whether to insert the "right" node immediately in front of the matched "left" node.
+- **`after=`**`Bool` whether to insert the "right" node immediately following the matched "left" node.
+
+
+__
+#### @overlay/append
+
+Inserts the "right" node after the last "left" node.
+
+**Valid on:** Document, Array Item.
+
+```
+@overlay/append
+```
+_(this annotation has no parameters.)_
+
+**Note:** This action implies an `@overlay/match` selecting the last node. Any other `@overlay/match` annotation is ignored. 
+
+__
+#### @overlay/assert
+
+Checks assertion that value of "left" matched node equals that of the annotated "right" node (_or_ a provided predicate).
+
+**Valid on:** Document, Map Item, Array Item.
+
+```
+@overlay/assert [via=Function]
+```
+
+- Default: checks that the value of the matched "left" node equals the value of the annotated "right" node.
+- **`via`**`=Function(left, right):(Bool|Tuple(Bool|String)|None)` _(optional)_ predicate indicating whether "left" passes the check 
+   - `left` ([`yamlfragment`](lang-ref-yaml-fragment.md) or scalar) — the matched node's value
+   - `right` ([`yamlfragment`](lang-ref-yaml-fragment.md) or scalar) — the value of the annotated node
+   - Return types:
+     - `Bool` — if `False`, the assertion fails; otherwise, nothing happens.
+     - `Tuple(Bool|String)` — if `False`, the assertion fails and specified string is appended to the resulting error message; otherwise nothing happens.
+     - `None` — the assertion assumes to succeed. In these situations, the function makes use of the [`@ytt:assert`](lang-ref-ytt.md#assert) module to effect the assertion.
+     
+**History:**
+- v0.26.0 — works with [`yamlfragment`](lang-ref-yaml-fragment.md) values.
+- v0.24.0 — introduced
+
+**Examples:**
+
+_Example 1: Range check_
+
+Fails the execution if `left` not between 0 and 1000, exclusively.
+
+```yaml
+#@overlay/assert via=lambda left, right: left > 0 and left < 1000
+```
+
+__
+
+_Example 2: Well-formedness check_
+
+Fails the execution if `left` contains anything other than lowercase letters or numbers.
+
+```yaml
+#@overlay/assert via=lambda left, right: regexp.match("[a-z0-9]+", left)
+```
+
+__
+
+See also:
+- `ytt` hashing functions from:
+    - [md5 module](lang-ref-ytt.md#md5)
+    - [sha256 module](lang-ref-ytt.md#sha256)
+- Boolean expression operators and built-in functions, including:
+    - [`in`](https://github.com/google/starlark-go/blob/master/doc/spec.md#membership-tests) (aka "membership test")
+    - [`and` and `or`](https://github.com/google/starlark-go/blob/master/doc/spec.md#or-and-and)
+    - [`any()`](https://github.com/google/starlark-go/blob/master/doc/spec.md#any) or [`all()`](https://github.com/google/starlark-go/blob/master/doc/spec.md#all)
+    - [`hasattr()`](https://github.com/google/starlark-go/blob/master/doc/spec.md#hasattr)
+    - [`len()`](https://github.com/google/starlark-go/blob/master/doc/spec.md#len)
+    - [`type()`](https://github.com/google/starlark-go/blob/master/doc/spec.md#type)
+- [Language: String](lang-ref-string.md) functions
+
+
+---
+## Functions
+
+The `@ytt:overlay` module provides several functions that support overlay use.
+
+To use these functions, include the `@ytt:overlay` module:
+ 
+```python
+#@ load("@ytt:overlay", "overlay")
+```
+
+The functions exported by this module are:
+- [overlay.apply()](#overlayapply)
+- [overlay.map_key()](#overlaymap_key)
+- [overlay.index()](#overlayindex)
+- [overlay.all()](#overlayall)
+- [overlay.subset()](#overlaysubset)
+- [overlay.and_op()](#overlayand_op)
+- [overlay.or_op()](#overlayor_op)
+- [overlay.not_op()](#overlaynot_op)
+
+__
+### overlay.apply()
+
+Executes the supplied overlays on top of the given structure.
+
+```python
+overlay.apply(left, right1[, rightN...])
+```
+
+- `left` ([`yamlfragment`](lang-ref-yaml-fragment.md)) — the target of the overlays
+- `right1` ([`yamlfragment`](lang-ref-yaml-fragment.md) annotated with [`@overlay/(action)`](#action-annotations)) — the (first) overlay to apply on `left`.
+- `rightN` ([`yamlfragment`](lang-ref-yaml-fragment.md) annotated with [`@overlay/(action)`](#action-annotations)) — the Nth overlay to apply on the result so far (which reflects the changes made by prior overlays)
+
+**Notes:**
+- For details on how to use `apply()`, see [Programmatic access](#programmatic-access).
+
+**Examples:** 
+
+```python
+overlay.apply(left(), right())
+overlay.apply(left(), one(), two())
+```
+
+See also: [Overlay example](https://get-ytt.io/#example:example-overlay) in the ytt Playground.
+
+__
+### overlay.map_key()
+
+An [Overlay matcher function](#overlaymatch) that matches when the collection (i.e. Map or Array) in the "left" contains a map item with the key of `name` and value equal to the corresponding map item from the "right."
+ 
+```python
+overlay.map_key(name)
+```
+- `name` (`String`) — the key of the contained map item on which to match
+
+**Note:** this matcher requires that _all_ items in the target collection have a map item with the key `name`; if this requirement cannot be guaranteed, consider using [`overlay.subset()`](#overlaysubset), instead.  
+
+**Examples:**
+   
+_Example 1: Over an Array_
+
+With "left" similar to:
+```yaml
+clients:
+- id: 1
+- id: 2
+```
+the following matches on the second array item:
+```yaml
+clients:
+#@overlay/match by=overlay.map_key("id")
+- id: 2
+```
+__
+
+_Example 2: Over a Map_
+
+(as of v0.26.0+)
+
+With "left" similar to:
+```yaml
+clients:
+  clientA:
+    id: 1
+  clientB:
+    id: 2
+```
+the following matches on the second map item:
+```yaml
+---
+clients:
+  #@overlay/match by=overlay.map_key("id")
+  _:
+    id: 2
+```
+(note: the key name `_` is arbitrary and ignored).
+
+
+__
+### overlay.index()
+
+An [Overlay matcher function](#overlaymatch) that matches the array item at the given index
+
+```python
+overlay.index(i)
+```
+- `i` (`Int`) — the ordinal of the item in the array on the "left" to match (zero-based index) 
+
+**Example:**
+
+```yaml
+#@overlay/match by=overlay.index(0)
+- item10
+```
+
+__
+### overlay.all()
+
+An [Overlay matcher function](#overlaymatch) that matches all contained nodes from the "left", unconditionally.
+
+```python
+overlay.all()
+```
+_(this function has no parameters.)_
+
+**Examples:**
+
+_Example 1: Documents_
+
+Matches each and every document:
+```yaml
+#@overlay/match by=overlay.all
+---
+metadata:
+ annotations: ...
+```
+
+_Example 2: Array Items_
+
+Matches each and every item in the array contained in `items` on the "left":
+```yaml
+items:
+#@overlay/match by=overlay.all
+- item10
+```
+
+_Example 3: Map Items_
+
+(as of v0.26.0+)
+
+Matches each and every item in the map contained in `items` on the "left":
+```yaml
+items:
+  #@overlay/match by=overlay.all
+  _:
+    name: item10
+```
+(note: the key name `_` is arbitrary and ignored) 
+
+__
+### overlay.subset()
+
+An [Overlay matcher function](#overlaymatch) that matches when the "left" node's structure and value equals the given `target`.
+ 
+```python
+overlay.subset(target)
+```
+- `target` (`any`) — value that the "left" node must equal.
+
+**Examples**
+
+_Example 1: Scalar_
+
+To match, scalar values must be equal.
+
+```yaml
+#@overlay/match by=overlay.subset(1)
+#@overlay/match by=overlay.subset("Entire string must match")
+#@overlay/match by=overlay.subset(True)
+```
+(if a partial match is required, consider writing a [Custom Overlay Matcher function](#custom-overlay-matcher-functions))
+
+__
+
+_Example 2: Dict (aka "map")_
+
+To match, dictionary literals must match the structure and value of `left`.
+
+```yaml
+#@overlay/match by=overlay.subset({"kind": "Deployment"})
+#@overlay/match by=overlay.subset("metadata":{"name": "istio-system"})
+```
+__
+
+_Example 3: YAML Fragment_
+
+To match, [`yamlfragment`](lang-ref-yaml-fragment.md)'s must match structure and value of `left`.
+
+```yaml
+#@ def resource(kind, name):
+kind: #@ kind
+metadata:
+  name: #@ name
+#@ end
+
+#@overlay/match by=overlay.subset(resource("Deployment", "istio-system"))
+```  
+
+__
+### overlay.and_op()
+
+(as of v0.26.0+)
+
+An [Overlay matcher function](#overlaymatch) that matches when all given matchers return `True`.
+
+```python
+overlay.and_op(matcher1, matcher2, ...)
+```
+- `matcher1`, `matcher2`, ... — one or more other [Overlay matcher function](#overlaymatch)s.
+
+**Examples:**
+
+```yaml
+#@ not_sa = overlay.not_op(overlay.subset({"kind": "ServiceAccount"}))
+#@ inside_ns = overlay.subset({"metadata": {"namespace": "some-ns"}})
+
+#@overlay/match by=overlay.and_op(not_sa, inside_ns),expects="1+"
+```
+
+__
+### overlay.or_op()
+
+(as of v0.26.0+)
+
+An [Overlay matcher function](#overlaymatch) that matches when at least one of the given matchers return `True`.
+
+```python
+overlay.or_op(matcher1, matcher2, ...)
+```
+- `matcher1`, `matcher2`, ... — one or more other [Overlay matcher function](#overlaymatch)s.
+
+**Examples:**
+
+```yaml
+#@ config_maps = overlay.subset({"kind": "ConfigMap"})
+#@ secrets = overlay.subset({"kind": "Secret"})
+
+#@overlay/match by=overlay.or_op(config_maps, secrets)
+```
+
+__
+### overlay.not_op()
+
+(as of v0.26.0+)
+
+An [Overlay matcher function](#overlaymatch) that matches when the given matcher does not.
+
+```pythons
+not_op(matcher)
+```
+- `matcher` — another [Overlay matcher function](#overlaymatch).
+
+```yaml
+#@overlay/match by=overlay.not_op(overlay.subset({"metadata": {"namespace": "app"}}))
+```
