@@ -1,0 +1,13 @@
+#@ load("@ytt:overlay", "overlay")
+
+#! selects over the list of documents
+#@overlay/match by=overlay.all, expects="1+"
+---
+items:
+#! within *each* matched document,
+#!   selects the nth item (zero-based index)
+#@overlay/match by=overlay.index(1)
+- modified: true
+
+#! For more on `overlay.index()`:
+#!   https://github.com/k14s/ytt/blob/develop/docs/lang-ref-ytt-overlay.md#overlayindex

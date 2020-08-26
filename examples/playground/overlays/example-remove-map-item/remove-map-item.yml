@@ -1,0 +1,11 @@
+#@ load("@ytt:overlay", "overlay")
+
+#@overlay/match by=overlay.all
+---
+meta:
+  #@overlay/match missing_ok=True
+  #@overlay/remove
+  preview: (this value is ignored)
+
+#! By default, `@overlay/match` applied to a map item
+#!   matches by key name (here: `preview`)

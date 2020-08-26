@@ -1,0 +1,12 @@
+#@ load("@ytt:overlay", "overlay")
+
+#@overlay/match by=overlay.all
+---
+awards:
+#@overlay/match by=overlay.index(0)
+#@overlay/insert before=True
+- Ovid Prize
+
+#! Each edit requires two parts:
+#! 1. which item(s) in the collection to target (match)
+#! 2. what operation to perform (here, insert)

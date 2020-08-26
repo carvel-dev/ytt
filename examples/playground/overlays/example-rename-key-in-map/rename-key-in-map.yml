@@ -1,0 +1,15 @@
+#@ load("@ytt:overlay", "overlay")
+
+#@overlay/match by=overlay.all
+---
+#@overlay/replace via=lambda left, right: {"ebook": left["format"]}
+meta:
+
+#! `@overlay/replace via` takes a function with 2 params:
+#!   `left` is the matched map (i.e. value of `meta` in the input)
+#!   `right` is the annotated map (here: empty, and not used)
+
+#! `lambda` starts a function literal.
+#!   followed by a parameter list, ending with a `:`
+#!   and a single expression that is the body of
+#!     the function.

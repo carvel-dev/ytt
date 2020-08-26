@@ -1,0 +1,11 @@
+---
+id: 1
+type: book
+meta:
+  format: .mobi
+---
+id: 2
+type: book
+meta:
+  preview: true
+  format: .epub

@@ -1,0 +1,11 @@
+#@ load("@ytt:overlay", "overlay")
+
+#! selects over the list of documents
+#@overlay/match by=overlay.all, expects="1+"
+---
+items:
+#! within *each* matched document,
+#!   selects over the array in `items`
+#@overlay/match by="id"
+- id: 2
+  modified: true

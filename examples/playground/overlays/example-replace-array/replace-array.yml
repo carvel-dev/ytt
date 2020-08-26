@@ -1,0 +1,14 @@
+#@ load("@ytt:overlay", "overlay")
+
+#@overlay/match by=overlay.all
+---
+#@overlay/replace
+awards:
+  - Christopher Hewitt Award
+  - Edgar Allan Poe Award
+
+#! Each edit requires two parts:
+#! 1. which item(s) in the collection to target (match)
+#! 2. what operation to perform (here, replace)
+
+#! By default, the match is on map item key (here, awards)

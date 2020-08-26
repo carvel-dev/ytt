@@ -1,0 +1,15 @@
+#@ load("@ytt:overlay", "overlay")
+
+#@overlay/match by=overlay.all
+---
+awards:
+#@overlay/append
+- Ovid Prize
+
+#! Each edit requires two parts:
+#! 1. which item(s) in the collection to target (match)
+#! 2. what operation to perform
+
+#! `@overlay/append`:
+#! 1. implies a match on the last item, and
+#! 2. inserts after that item.

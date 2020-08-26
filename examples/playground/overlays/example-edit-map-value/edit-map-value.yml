@@ -1,0 +1,12 @@
+#@ load("@ytt:overlay", "overlay")
+
+#@overlay/match by=overlay.all
+---
+meta:
+  #@overlay/replace via=lambda left, right: right+left
+  format: .ebook
+
+#! `lambda` starts a function literal.
+#!   followed by a parameter list, ending with a `:`
+#!   and a single expression that is the body of
+#!     the function.

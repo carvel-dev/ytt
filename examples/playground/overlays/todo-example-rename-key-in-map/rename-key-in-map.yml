@@ -1,0 +1,19 @@
+#@ load("@ytt:overlay", "overlay")
+
+#@ def rename_key(map, old, new):
+#@  d = dict(**map)      # new dict from yamlfragment
+#@  d[new] = d.pop(old)  # dicts are mutable, yamlfragments are not
+#@  return d
+#@ end
+#! `**` expands `map` to a set of key/value arguments to
+#!      `dict()`
+
+#@overlay/match by=overlay.all, expects="1+"
+---
+#@overlay/replace via=lambda left, right: rename_key(left, "format", "ebook")
+meta:
+
+#! See also:
+#!
+#! - Lambda expressions: https://github.com/google/starlark-go/blob/master/doc/spec.md#lambda-expressions
+#! - `in` operator: https://github.com/google/starlark-go/blob/master/doc/spec.md#membership-tests

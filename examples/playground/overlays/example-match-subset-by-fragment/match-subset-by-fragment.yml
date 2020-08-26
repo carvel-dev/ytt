@@ -1,0 +1,17 @@
+#@ load("@ytt:overlay", "overlay")
+
+#@ def foer_classes():
+type: course
+author: Joshua Foer
+#@ end
+
+#! overlay.subset() also accepts YAML fragments
+#@overlay/match by=overlay.subset(foer_classes())
+---
+modified: true
+
+#! For more on `overlay.subset()`:
+#!   https://github.com/k14s/ytt/blob/develop/docs/lang-ref-ytt-overlay.md#overlaysubset
+
+#! For more on YAML Fragments:
+#!   https://github.com/k14s/ytt/blob/develop/docs/lang-ref-yaml-fragment.md

@@ -54,6 +54,26 @@ exampleSets = [
       {"id": "example-demo"},
     ]
   },
+  { "id": "overlays",
+        "description": "Patching, in depth.",
+        "examples": [
+          {"id": "example-match-all-docs"},
+          {"id": "example-match-subset-docs"},
+          {"id": "example-match-subset-by-fragment"},
+          {"id": "example-match-by-index"},
+          {"id": "example-match-by-key"},
+          {"id": "example-insert-array-item"},
+          {"id": "example-replace-array-item"},
+          {"id": "example-remove-array-item"},
+          {"id": "example-edit-array-item"},
+          {"id": "example-append-array-item"},
+          {"id": "example-replace-array"},
+          {"id": "example-add-map-item"},
+          {"id": "example-edit-map-value"},
+          {"id": "example-remove-map-item"},
+          {"id": "example-rename-key-in-map"},
+        ]
+  },
   { "id": "getting-started",
     "description": "Step-by-step tutorial on using ytt well.",
     "examples": [
