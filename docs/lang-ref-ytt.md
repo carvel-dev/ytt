@@ -66,8 +66,13 @@ data.list("/data/data.txt") # read file
 load("@ytt:regexp", "regexp")
 
 regexp.match("[a-z]+[0-9]+", "__hello123__") # True
+
 regexp.replace("[a-z]+[0-9]+", "__hello123__", "foo") # __foo__
+regexp.replace("(?i)[a-z]+[0-9]+", "__hello123__HI456__") # __bye__bye__
+regexp.replace("[a-z]+[0-9]+", "__hello123__", lambda s: str(len(s))) # __8__
 ```
+
+See the [RE2 docs](https://github.com/google/re2/wiki/Syntax) for more on the regex syntax supported.
 
 ### url
 
