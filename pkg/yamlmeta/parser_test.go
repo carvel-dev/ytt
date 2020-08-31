@@ -863,6 +863,120 @@ anchored_value: *value
 	parserExamples{{Description: "with seq inside anchored data", Data: data, Expected: expectedVal}}.Check(t)
 }
 
+func TestParserMergeOp(t *testing.T) {
+	data := `
+#@ variable = 123
+value: &value
+  path: #@ variable
+  #@annotation
+  args:
+  - 1
+  - 2
+merged_value:
+  <<: *value
+  other: true
+`
+
+	expectedVal := &yamlmeta.DocumentSet{
+		Items: []*yamlmeta.Document{
+			&yamlmeta.Document{
+				Value: &yamlmeta.Map{
+					Items: []*yamlmeta.MapItem{
+						&yamlmeta.MapItem{
+							Key: "value",
+							Metas: []*yamlmeta.Meta{
+								&yamlmeta.Meta{Data: "@ variable = 123", Position: filepos.NewPosition(2)},
+							},
+							Value: &yamlmeta.Map{
+								Items: []*yamlmeta.MapItem{
+									&yamlmeta.MapItem{
+										// TODO should be here as well
+										// Metas: []*yamlmeta.Meta{
+										// 	&yamlmeta.Meta{Data: "@ variable", Position: filepos.NewPosition(4)},
+										// },
+										Key:      "path",
+										Value:    nil,
+										Position: filepos.NewPosition(4),
+									},
+									&yamlmeta.MapItem{
+										Metas: []*yamlmeta.Meta{
+											&yamlmeta.Meta{Data: "@annotation", Position: filepos.NewPosition(5)},
+										},
+										Key: "args",
+										Value: &yamlmeta.Array{
+											Items: []*yamlmeta.ArrayItem{
+												&yamlmeta.ArrayItem{
+													Value:    1,
+													Position: filepos.NewPosition(7),
+												},
+												&yamlmeta.ArrayItem{
+													Value:    2,
+													Position: filepos.NewPosition(8),
+												},
+											},
+										},
+										Position: filepos.NewPosition(6),
+									},
+								},
+								Position: filepos.NewUnknownPosition(),
+							},
+							Position: filepos.NewPosition(3),
+						},
+						&yamlmeta.MapItem{
+							Key: "merged_value",
+							Value: &yamlmeta.Map{
+								Items: []*yamlmeta.MapItem{
+									&yamlmeta.MapItem{
+										Metas: []*yamlmeta.Meta{
+											&yamlmeta.Meta{Data: "@ variable", Position: filepos.NewPosition(4)},
+										},
+										Key:      "path",
+										Value:    nil,
+										Position: filepos.NewPosition(4),
+									},
+									&yamlmeta.MapItem{
+										// TODO should be here as well
+										// Metas: []*yamlmeta.Meta{
+										// 	&yamlmeta.Meta{Data: "@annotation", Position: filepos.NewPosition(5)},
+										// },
+										Key: "args",
+										Value: &yamlmeta.Array{
+											Items: []*yamlmeta.ArrayItem{
+												&yamlmeta.ArrayItem{
+													Value:    1,
+													Position: filepos.NewPosition(7),
+												},
+												&yamlmeta.ArrayItem{
+													Value:    2,
+													Position: filepos.NewPosition(8),
+												},
+											},
+										},
+										Position: filepos.NewPosition(6),
+									},
+									&yamlmeta.MapItem{
+										Key:      "other",
+										Value:    true,
+										Position: filepos.NewPosition(11),
+									},
+								},
+								Position: filepos.NewUnknownPosition(),
+							},
+							Position: filepos.NewPosition(9),
+						},
+					},
+					Position: filepos.NewUnknownPosition(),
+				},
+				Position: filepos.NewPosition(1),
+			},
+		},
+		Position: filepos.NewUnknownPosition(),
+	}
+
+	// TODO annotations are not properly assigned
+	parserExamples{{Description: "merge", Data: data, Expected: expectedVal}}.Check(t)
+}
+
 func TestParserDocWithoutDashesPosition(t *testing.T) {
 	const data = "key: 1\n"
 
