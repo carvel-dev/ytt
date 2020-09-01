@@ -14,10 +14,12 @@ import (
 )
 
 type TemplateOptions struct {
-	IgnoreUnknownComments bool
-	StrictYAML            bool
-	Debug                 bool
-	InspectFiles          bool
+	IgnoreUnknownComments   bool
+	ImplicitMapKeyOverrides bool
+
+	StrictYAML   bool
+	Debug        bool
+	InspectFiles bool
 
 	BulkFilesSourceOpts    BulkFilesSourceOpts
 	RegularFilesSourceOpts RegularFilesSourceOpts
@@ -57,6 +59,8 @@ func NewCmd(o *TemplateOptions) *cobra.Command {
 	}
 	cmd.Flags().BoolVar(&o.IgnoreUnknownComments, "ignore-unknown-comments", false,
 		"Configure whether unknown comments are considered as errors (comments that do not start with '#@' or '#!')")
+	cmd.Flags().BoolVar(&o.ImplicitMapKeyOverrides, "implicit-map-key-overrides", false,
+		"Configure whether implicit map keys overrides are allowed")
 	cmd.Flags().BoolVarP(&o.StrictYAML, "strict", "s", false, "Configure to use _strict_ YAML subset")
 	cmd.Flags().BoolVar(&o.Debug, "debug", false, "Enable debug output")
 	cmd.Flags().BoolVar(&o.InspectFiles, "files-inspect", false, "Inspect files")
@@ -111,8 +115,9 @@ func (o *TemplateOptions) RunWithFiles(in TemplateInput, ui cmdcore.PlainUI) Tem
 	}
 
 	libraryExecutionFactory := workspace.NewLibraryExecutionFactory(ui, workspace.TemplateLoaderOpts{
-		IgnoreUnknownComments: o.IgnoreUnknownComments,
-		StrictYAML:            o.StrictYAML,
+		IgnoreUnknownComments:   o.IgnoreUnknownComments,
+		ImplicitMapKeyOverrides: o.ImplicitMapKeyOverrides,
+		StrictYAML:              o.StrictYAML,
 	})
 
 	libraryCtx := workspace.LibraryExecutionContext{Current: rootLibrary, Root: rootLibrary}

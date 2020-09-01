@@ -30,7 +30,8 @@ type Template struct {
 }
 
 type TemplateOpts struct {
-	IgnoreUnknownComments bool
+	IgnoreUnknownComments   bool
+	ImplicitMapKeyOverrides bool
 }
 
 func NewTemplate(name string, opts TemplateOpts) *Template {
@@ -56,7 +57,9 @@ func (e *Template) Compile(docSet *yamlmeta.DocumentSet) (*template.CompiledTemp
 	})
 
 	return template.NewCompiledTemplate(e.name, code, e.instructions, e.nodes, template.EvaluationCtxDialects{
-		EvaluationCtxDialectName:              EvaluationCtx{},
+		EvaluationCtxDialectName: EvaluationCtx{
+			implicitMapKeyOverrides: e.opts.ImplicitMapKeyOverrides,
+		},
 		texttemplate.EvaluationCtxDialectName: texttemplate.EvaluationCtx{},
 	}), nil
 }

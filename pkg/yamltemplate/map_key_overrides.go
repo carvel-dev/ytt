@@ -15,7 +15,9 @@ const (
 	AnnotationMapKeyOverride structmeta.AnnotationName = "yaml/map-key-override"
 )
 
-type MapItemOverride struct{}
+type MapItemOverride struct {
+	implicit bool
+}
 
 func (d MapItemOverride) Apply(
 	typedMap *yamlmeta.Map, newItem *yamlmeta.MapItem, strict bool) error {
@@ -27,7 +29,7 @@ func (d MapItemOverride) Apply(
 	}
 
 	if prevIdx, ok := itemIndex[newItem.Key]; ok {
-		if template.NewAnnotations(newItem).Has(AnnotationMapKeyOverride) || !strict {
+		if d.implicit || template.NewAnnotations(newItem).Has(AnnotationMapKeyOverride) || !strict {
 			typedMap.Items = append(typedMap.Items[:prevIdx], typedMap.Items[prevIdx+1:]...)
 			return nil
 		}

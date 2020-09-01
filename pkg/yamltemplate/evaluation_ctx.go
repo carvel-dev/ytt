@@ -15,7 +15,9 @@ const (
 	EvaluationCtxDialectName template.EvaluationCtxDialectName = "yaml"
 )
 
-type EvaluationCtx struct{}
+type EvaluationCtx struct {
+	implicitMapKeyOverrides bool
+}
 
 var _ template.EvaluationCtxDialect = EvaluationCtx{}
 
@@ -24,7 +26,7 @@ func (e EvaluationCtx) PrepareNode(
 
 	if typedMap, ok := parentNode.(*yamlmeta.Map); ok {
 		if typedMapItem, ok := val.(*yamlmeta.MapItem); ok {
-			return MapItemOverride{}.Apply(typedMap, typedMapItem, true)
+			return MapItemOverride{e.implicitMapKeyOverrides}.Apply(typedMap, typedMapItem, true)
 		}
 	}
 	return nil
@@ -136,7 +138,7 @@ func (e EvaluationCtx) replaceItemInMap(
 	// If map items does not carry metadata
 	// we cannot check for override conflicts
 	for _, newItem := range insertItems {
-		err := MapItemOverride{}.Apply(dstMap, newItem, carryMeta)
+		err := MapItemOverride{e.implicitMapKeyOverrides}.Apply(dstMap, newItem, carryMeta)
 		if err != nil {
 			return err
 		}

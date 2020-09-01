@@ -26,8 +26,9 @@ type TemplateLoader struct {
 }
 
 type TemplateLoaderOpts struct {
-	IgnoreUnknownComments bool
-	StrictYAML            bool
+	IgnoreUnknownComments   bool
+	ImplicitMapKeyOverrides bool
+	StrictYAML              bool
 }
 
 func NewTemplateLoader(values *DataValues, libraryValuess []*DataValues, ui files.UI, opts TemplateLoaderOpts,
@@ -155,7 +156,10 @@ func (l *TemplateLoader) EvalYAML(libraryCtx LibraryExecutionContext, file *file
 		return nil, docSet, nil
 	}
 
-	tplOpts := yamltemplate.TemplateOpts{IgnoreUnknownComments: l.opts.IgnoreUnknownComments}
+	tplOpts := yamltemplate.TemplateOpts{
+		IgnoreUnknownComments:   l.opts.IgnoreUnknownComments,
+		ImplicitMapKeyOverrides: l.opts.ImplicitMapKeyOverrides,
+	}
 
 	compiledTemplate, err := yamltemplate.NewTemplate(file.RelativePath(), tplOpts).Compile(docSet)
 	if err != nil {
