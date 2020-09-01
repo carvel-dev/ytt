@@ -51,7 +51,7 @@ func (l LibraryModule) Get(thread *starlark.Thread, f *starlark.Builtin,
 		return starlark.None, err
 	}
 
-	libAlias, err := l.libAlias(kwargs)
+	libAlias, tplLoaderOptsOverrides, err := l.getOpts(kwargs)
 	if err != nil {
 		return starlark.None, err
 	}
@@ -70,29 +70,56 @@ func (l LibraryModule) Get(thread *starlark.Thread, f *starlark.Builtin,
 	dataValuess := append([]*DataValues{}, l.libraryValues...)
 	libraryCtx := LibraryExecutionContext{Current: foundLib, Root: foundLib}
 
-	return (&libraryValue{libPath, libAlias, dataValuess, libraryCtx, l.libraryExecutionFactory}).AsStarlarkValue(), nil
+	return (&libraryValue{libPath, libAlias, dataValuess, libraryCtx,
+		l.libraryExecutionFactory.WithTemplateLoaderOptsOverrides(tplLoaderOptsOverrides),
+	}).AsStarlarkValue(), nil
 }
 
-func (l LibraryModule) libAlias(kwargs []starlark.Tuple) (string, error) {
+func (l LibraryModule) getOpts(kwargs []starlark.Tuple) (string, TemplateLoaderOptsOverrides, error) {
+	var alias string
+	var overrides TemplateLoaderOptsOverrides
+
 	for _, kwarg := range kwargs {
 		name, err := core.NewStarlarkValue(kwarg[0]).AsString()
 		if err != nil {
-			return "", err
-		}
-
-		val, err := core.NewStarlarkValue(kwarg[1]).AsString()
-		if err != nil {
-			return "", err
+			return "", overrides, err
 		}
 
 		switch name {
 		case "alias":
-			return val, nil
+			val, err := core.NewStarlarkValue(kwarg[1]).AsString()
+			if err != nil {
+				return "", overrides, err
+			}
+			alias = val
+
+		case "ignore_unknown_comments":
+			result, err := core.NewStarlarkValue(kwarg[1]).AsBool()
+			if err != nil {
+				return "", overrides, err
+			}
+			overrides.IgnoreUnknownComments = &result
+
+		case "implicit_map_key_overrides":
+			result, err := core.NewStarlarkValue(kwarg[1]).AsBool()
+			if err != nil {
+				return "", overrides, err
+			}
+			overrides.ImplicitMapKeyOverrides = &result
+
+		case "strict":
+			result, err := core.NewStarlarkValue(kwarg[1]).AsBool()
+			if err != nil {
+				return "", overrides, err
+			}
+			overrides.StrictYAML = &result
+
 		default:
-			return "", fmt.Errorf("Unexpected kwarg %s in library module get", name)
+			return "", overrides, fmt.Errorf("Unexpected kwarg '%s'", name)
 		}
 	}
-	return "", nil
+
+	return alias, overrides, nil
 }
 
 type libraryValue struct {

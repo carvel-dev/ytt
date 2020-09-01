@@ -463,7 +463,6 @@ child_val2: child_val_override
 `
 
 	runAndCompare(t, filesToProcess, expectedYAML)
-
 }
 
 func TestLibDVsRefsWithAliasNoPath(t *testing.T) {
@@ -650,7 +649,6 @@ child_val: child_val`)
 `
 
 	runAndCompare(t, filesToProcess, expectedYAML)
-
 }
 
 // Test one with a mix of all 3
@@ -992,7 +990,6 @@ lib_val1: val1
 }
 
 func TestMalformedLibraryRefGeneralError(t *testing.T) {
-
 	dataValueBytes := []byte(`
 #@library/ref "@~123~abc~inst1"
 #@data/values
@@ -1053,7 +1050,79 @@ lib_val2: library-defined
 	})
 
 	runAndCompare(t, filesToProcess, expectedYAMLTplData)
+}
 
+func TestLibraryModuleWithOpts(t *testing.T) {
+	configTplData := []byte(`
+#@ load("@ytt:template", "template")
+#@ load("@ytt:library", "library")
+
+#@ lib = library.get("lib", ignore_unknown_comments=True)
+#@ lib2 = lib.with_data_values({"int": 123})
+--- #@ template.replace(lib2.eval())
+--- #@ template.replace(lib.eval())`)
+
+	libValuesTplData := []byte(`
+#@data/values
+---
+int: 100`)
+
+	libConfig1TplData := []byte(`
+#@ load("@ytt:data", "data")
+# ignored!
+lib_int: #@ data.values.int`)
+
+	expectedYAMLTplData := `lib_int: 123
+---
+lib_int: 100
+`
+
+	filesToProcess := files.NewSortedFiles([]*files.File{
+		files.MustNewFileFromSource(files.NewBytesSource("config.yml", configTplData)),
+		files.MustNewFileFromSource(files.NewBytesSource("_ytt_lib/lib/values.yml", libValuesTplData)),
+		files.MustNewFileFromSource(files.NewBytesSource("_ytt_lib/lib/config1.yml", libConfig1TplData)),
+	})
+
+	runAndCompare(t, filesToProcess, expectedYAMLTplData)
+}
+
+func TestLibraryModuleWithoutOpts(t *testing.T) {
+	configTplData := []byte(`
+#@ load("@ytt:template", "template")
+#@ load("@ytt:library", "library")
+
+#@ lib = library.get("lib")
+#@ lib2 = lib.with_data_values({"int": 123})
+--- #@ template.replace(lib2.eval())
+--- #@ template.replace(lib.eval())`)
+
+	libValuesTplData := []byte(`
+#@data/values
+---
+int: 100`)
+
+	libConfig1TplData := []byte(`
+#@ load("@ytt:data", "data")
+# ignored!
+lib_int: #@ data.values.int`)
+
+	filesToProcess := files.NewSortedFiles([]*files.File{
+		files.MustNewFileFromSource(files.NewBytesSource("config.yml", configTplData)),
+		files.MustNewFileFromSource(files.NewBytesSource("_ytt_lib/lib/values.yml", libValuesTplData)),
+		files.MustNewFileFromSource(files.NewBytesSource("_ytt_lib/lib/config1.yml", libConfig1TplData)),
+	})
+
+	ui := cmdcore.NewPlainUI(false)
+	opts := cmdtpl.NewOptions()
+
+	out := opts.RunWithFiles(cmdtpl.TemplateInput{Files: filesToProcess}, ui)
+	if out.Err == nil {
+		t.Fatalf("Expected RunWithFiles to error but it did not")
+	}
+
+	if !strings.Contains(out.Err.Error(), "' ignored!': Unknown metadata format") {
+		t.Fatalf("Expected ref error but got '%s'", out.Err)
+	}
 }
 
 func runAndCompare(t *testing.T, filesToProcess []*files.File, expectedYAMLTplData string) {

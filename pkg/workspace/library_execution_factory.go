@@ -21,6 +21,10 @@ func NewLibraryExecutionFactory(ui files.UI, templateLoaderOpts TemplateLoaderOp
 	return &LibraryExecutionFactory{ui, templateLoaderOpts}
 }
 
+func (f *LibraryExecutionFactory) WithTemplateLoaderOptsOverrides(overrides TemplateLoaderOptsOverrides) *LibraryExecutionFactory {
+	return NewLibraryExecutionFactory(f.ui, f.templateLoaderOpts.Merge(overrides))
+}
+
 func (f *LibraryExecutionFactory) New(ctx LibraryExecutionContext) *LibraryLoader {
 	return NewLibraryLoader(ctx, f.ui, f.templateLoaderOpts, f)
 }

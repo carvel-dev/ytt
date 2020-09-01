@@ -31,6 +31,12 @@ type TemplateLoaderOpts struct {
 	StrictYAML              bool
 }
 
+type TemplateLoaderOptsOverrides struct {
+	IgnoreUnknownComments   *bool
+	ImplicitMapKeyOverrides *bool
+	StrictYAML              *bool
+}
+
 func NewTemplateLoader(values *DataValues, libraryValuess []*DataValues, ui files.UI, opts TemplateLoaderOpts,
 	libraryExecFactory *LibraryExecutionFactory) *TemplateLoader {
 
@@ -309,4 +315,18 @@ func (l *TemplateLoader) newThread(libraryCtx LibraryExecutionContext,
 
 func (l *TemplateLoader) addCompiledTemplate(path string, ct *template.CompiledTemplate) {
 	l.compiledTemplates[path] = ct
+}
+
+func (opts TemplateLoaderOpts) Merge(overrides TemplateLoaderOptsOverrides) TemplateLoaderOpts {
+	optsCopy := opts
+	if overrides.IgnoreUnknownComments != nil {
+		optsCopy.IgnoreUnknownComments = *overrides.IgnoreUnknownComments
+	}
+	if overrides.ImplicitMapKeyOverrides != nil {
+		optsCopy.ImplicitMapKeyOverrides = *overrides.ImplicitMapKeyOverrides
+	}
+	if overrides.StrictYAML != nil {
+		optsCopy.StrictYAML = *overrides.StrictYAML
+	}
+	return optsCopy
 }
