@@ -70,9 +70,9 @@ func (b regexpModule) Replace(thread *starlark.Thread, f *starlark.Builtin, args
 	}
 
 	repl := args.Index(2)
-	switch repl.(type) {
-	case *starlark.Function:
-		return b.replaceLambda(thread, re, source, repl.(*starlark.Function))
+	switch typedRepl := repl.(type) {
+	case starlark.Callable:
+		return b.replaceLambda(thread, re, source, typedRepl)
 	default:
 		return b.replaceString(re, source, repl)
 	}
@@ -89,25 +89,32 @@ func (b regexpModule) replaceString(re *regexp.Regexp, source string, repl starl
 	return starlark.String(newString), nil
 }
 
-func (b regexpModule) replaceLambda(thread *starlark.Thread, re *regexp.Regexp, source string, repl *starlark.Function) (result starlark.Value, err error) {
-	defer func() {
-		if r, ok := recover().(error); ok {
-			err = r
-		}
-	}()
-
+func (b regexpModule) replaceLambda(thread *starlark.Thread, re *regexp.Regexp, source string, repl starlark.Callable) (result starlark.Value, err error) {
 	newString := re.ReplaceAllStringFunc(source, func(match string) string {
-		args := starlark.Tuple{starlark.String(match)}
-		result, err := starlark.Call(thread, repl, args, []starlark.Tuple{})
 		if err != nil {
-			panic(err)
+			// if we have multiple matches but an earlier replace caused an error, we want to exit
+			// quickly then propagate that error
+			return ""
 		}
-		newString, err := core.NewStarlarkValue(result).AsString()
+
+		args := starlark.Tuple{starlark.String(match)}
+		var result starlark.Value
+		result, err = starlark.Call(thread, repl, args, []starlark.Tuple{})
 		if err != nil {
-			panic(err)
+			return ""
+		}
+
+		var newString string
+		newString, err = core.NewStarlarkValue(result).AsString()
+		if err != nil {
+			return ""
 		}
 		return newString
 	})
+
+	if err != nil {
+		return
+	}
 
 	result = starlark.String(newString)
 	return
