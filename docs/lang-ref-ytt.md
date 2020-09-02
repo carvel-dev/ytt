@@ -67,12 +67,15 @@ load("@ytt:regexp", "regexp")
 
 regexp.match("[a-z]+[0-9]+", "__hello123__") # True
 
-regexp.replace("[a-z]+[0-9]+", "__hello123__", "foo") # __foo__
-regexp.replace("(?i)[a-z]+[0-9]+", "__hello123__HI456__") # __bye__bye__
+regexp.replace("[a-z]+[0-9]+", "__hello123__", "foo")                 # __foo__
+regexp.replace("(?i)[a-z]+[0-9]+", "__hello123__HI456__")             # __bye__bye__
+regexp.replace("([a-z]+)[0-9]+", "__hello123__bye123__", "$1")        # __hello__bye__
 regexp.replace("[a-z]+[0-9]+", "__hello123__", lambda s: str(len(s))) # __8__
 ```
 
 See the [RE2 docs](https://github.com/google/re2/wiki/Syntax) for more on the regex syntax supported.
+
+Note that you can pass either a string or a lambda function as the third parameter. When given a string, `$` symbols are expanded, so that `$1` expands to the first submatch. When given a lambda function, the match is directly replaced by the result of the function.
 
 ### url
 
