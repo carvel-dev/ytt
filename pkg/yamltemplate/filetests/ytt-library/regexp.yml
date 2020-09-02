@@ -5,7 +5,7 @@ test2: #@ regexp.match("^[a-z]+[0-9]+$", "__hello123__")
 test3: #@ regexp.replace("[a-z]+[0-9]+", "__hello123__HI456__", "bye")
 test4: #@ regexp.replace("(?i)[a-z]+[0-9]+", "__hello123__HI456__", "bye")
 test5: #@ regexp.replace("(?i)([a-z]+)[0-9]+", "__hello123__HI456__", "$1")
-test6: #@ regexp.replace("[a-z]+[0-9]+", "__hello123__", lambda a: str(len(a)))
+test6: #@ regexp.replace("(?i)[a-z]+[0-9]+", "__hello123__HI456__", lambda a: str(len(a)))
 
 +++
 
@@ -14,4 +14,4 @@ test2: false
 test3: __bye__HI456__
 test4: __bye__bye__
 test5: __hello__HI__
-test6: __8__
+test6: __8__5__
