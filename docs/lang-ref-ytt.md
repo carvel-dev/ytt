@@ -68,7 +68,7 @@ load("@ytt:regexp", "regexp")
 regexp.match("[a-z]+[0-9]+", "__hello123__") # True
 
 regexp.replace("[a-z]+[0-9]+", "__hello123__", "foo")                 # __foo__
-regexp.replace("(?i)[a-z]+[0-9]+", "__hello123__HI456__")             # __bye__bye__
+regexp.replace("(?i)[a-z]+[0-9]+", "__hello123__HI456__", "bye")      # __bye__bye__
 regexp.replace("([a-z]+)[0-9]+", "__hello123__bye123__", "$1")        # __hello__bye__
 regexp.replace("[a-z]+[0-9]+", "__hello123__", lambda s: str(len(s))) # __8__
 ```
