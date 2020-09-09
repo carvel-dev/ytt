@@ -123,6 +123,11 @@ func (o *TemplateOptions) RunWithFiles(in TemplateInput, ui cmdcore.PlainUI) Tem
 	libraryCtx := workspace.LibraryExecutionContext{Current: rootLibrary, Root: rootLibrary}
 	libraryLoader := libraryExecutionFactory.New(libraryCtx)
 
+	_, err = libraryLoader.Schemas()
+	if err != nil {
+		return TemplateOutput{Err: err}
+	}
+
 	values, libraryValues, err := libraryLoader.Values(valuesOverlays)
 	if err != nil {
 		return TemplateOutput{Err: err}

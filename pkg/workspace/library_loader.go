@@ -9,9 +9,9 @@ import (
 
 	"github.com/k14s/starlark-go/starlark"
 	"github.com/k14s/ytt/pkg/files"
+	"github.com/k14s/ytt/pkg/structmeta"
 	"github.com/k14s/ytt/pkg/yamlmeta"
 	"github.com/k14s/ytt/pkg/yamltemplate"
-	"github.com/k14s/ytt/pkg/yttlibrary"
 )
 
 type LibraryLoader struct {
@@ -44,6 +44,20 @@ func NewLibraryLoader(libraryCtx LibraryExecutionContext,
 	}
 }
 
+func (ll *LibraryLoader) Schemas() (*yamlmeta.Document, error) {
+	loader := NewTemplateLoader(NewEmptyDataValues(), nil,
+		ll.ui, ll.templateLoaderOpts, ll.libraryExecFactory)
+
+	_, err := ll.schemaFiles(loader)
+	if err != nil {
+		return nil, err
+	}
+
+	// TBD template schemas?
+
+	return nil, nil
+}
+
 func (ll *LibraryLoader) Values(valuesOverlays []*DataValues) (*DataValues, []*DataValues, error) {
 	loader := NewTemplateLoader(NewEmptyDataValues(), nil,
 		ll.ui, ll.templateLoaderOpts, ll.libraryExecFactory)
@@ -63,7 +77,16 @@ func (ll *LibraryLoader) Values(valuesOverlays []*DataValues) (*DataValues, []*D
 	return dvpp.Apply()
 }
 
+func (ll *LibraryLoader) schemaFiles(loader *TemplateLoader) ([]*FileInLibrary, error) {
+	return ll.filesByAnnotation(AnnotationSchemaMatch, loader)
+}
+
 func (ll *LibraryLoader) valuesFiles(loader *TemplateLoader) ([]*FileInLibrary, error) {
+	return ll.filesByAnnotation(AnnotationDataValues, loader)
+
+}
+
+func (ll *LibraryLoader) filesByAnnotation(annName structmeta.AnnotationName, loader *TemplateLoader) ([]*FileInLibrary, error) {
 	var valuesFiles []*FileInLibrary
 
 	for _, fileInLib := range ll.libraryCtx.Current.ListAccessibleFiles() {
@@ -75,7 +98,7 @@ func (ll *LibraryLoader) valuesFiles(loader *TemplateLoader) ([]*FileInLibrary, 
 
 			tplOpts := yamltemplate.MetasOpts{IgnoreUnknown: ll.templateLoaderOpts.IgnoreUnknownComments}
 
-			values, _, err := yttlibrary.DataValues{docSet, tplOpts}.Extract()
+			values, _, err := DocExtractor{docSet, tplOpts}.Extract(annName)
 			if err != nil {
 				return nil, err
 			}

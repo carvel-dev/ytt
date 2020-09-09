@@ -1,7 +1,7 @@
 // Copyright 2020 VMware, Inc.
 // SPDX-License-Identifier: Apache-2.0
 
-package yttlibrary
+package workspace
 
 import (
 	"fmt"
@@ -12,21 +12,24 @@ import (
 )
 
 const (
-	AnnotationDataValues structmeta.AnnotationName = "data/values"
+	AnnotationDataValues  structmeta.AnnotationName = "data/values"
+	AnnotationSchemaMatch structmeta.AnnotationName = "schema/match"
 )
 
-type DataValues struct {
+type DocExtractor struct {
 	DocSet    *yamlmeta.DocumentSet
 	MetasOpts yamltemplate.MetasOpts
 }
 
-func (v DataValues) Extract() ([]*yamlmeta.Document, []*yamlmeta.Document, error) {
-	err := v.checkNonDocs(v.DocSet)
+func (v DocExtractor) Extract(annName structmeta.AnnotationName) ([]*yamlmeta.Document,
+	[]*yamlmeta.Document, error) {
+
+	err := v.checkNonDocs(v.DocSet, annName)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	valuesDocs, nonValuesDocs, err := v.extract(v.DocSet)
+	valuesDocs, nonValuesDocs, err := v.extract(v.DocSet, annName)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -34,7 +37,9 @@ func (v DataValues) Extract() ([]*yamlmeta.Document, []*yamlmeta.Document, error
 	return valuesDocs, nonValuesDocs, nil
 }
 
-func (v DataValues) extract(docSet *yamlmeta.DocumentSet) ([]*yamlmeta.Document, []*yamlmeta.Document, error) {
+func (v DocExtractor) extract(docSet *yamlmeta.DocumentSet,
+	annName structmeta.AnnotationName) ([]*yamlmeta.Document, []*yamlmeta.Document, error) {
+
 	var valuesDocs []*yamlmeta.Document
 	var nonValuesDocs []*yamlmeta.Document
 
@@ -49,9 +54,9 @@ func (v DataValues) extract(docSet *yamlmeta.DocumentSet) ([]*yamlmeta.Document,
 				return nil, nil, err
 			}
 			for _, ann := range structMeta.Annotations {
-				if ann.Name == AnnotationDataValues {
+				if ann.Name == annName {
 					if hasMatchingAnn {
-						return nil, nil, fmt.Errorf("%s annotation may only be used once per YAML doc", AnnotationDataValues)
+						return nil, nil, fmt.Errorf("%s annotation may only be used once per YAML doc", annName)
 					}
 					hasMatchingAnn = true
 				}
@@ -68,7 +73,7 @@ func (v DataValues) extract(docSet *yamlmeta.DocumentSet) ([]*yamlmeta.Document,
 	return valuesDocs, nonValuesDocs, nil
 }
 
-func (v DataValues) checkNonDocs(val interface{}) error {
+func (v DocExtractor) checkNonDocs(val interface{}, annName structmeta.AnnotationName) error {
 	node, ok := val.(yamlmeta.Node)
 	if !ok {
 		return nil
@@ -81,19 +86,19 @@ func (v DataValues) checkNonDocs(val interface{}) error {
 		}
 
 		for _, ann := range structMeta.Annotations {
-			if ann.Name == AnnotationDataValues {
+			if ann.Name == annName {
 				// TODO check for annotation emptiness
 				_, isDoc := node.(*yamlmeta.Document)
 				if !isDoc {
 					errMsg := "Expected YAML document to be annotated with %s but was %T"
-					return fmt.Errorf(errMsg, AnnotationDataValues, node)
+					return fmt.Errorf(errMsg, annName, node)
 				}
 			}
 		}
 	}
 
 	for _, childVal := range node.GetValues() {
-		err := v.checkNonDocs(childVal)
+		err := v.checkNonDocs(childVal, annName)
 		if err != nil {
 			return err
 		}
