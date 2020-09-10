@@ -11,11 +11,7 @@ Software authors want the ability to clearly communicate what data is necessary 
 
 ### Examples
 
-- Using [cf-for-k8's data values](cf-for-k8s/values.yml) as an example, this is what the schema would look like in various formats:
-  - [JSON schema (as json)](cf-for-k8s/json-schema.json)
-  - [JSON schema (as yaml)](cf-for-k8s/json-schema.yml)
-  - [ytt native schema](cf-for-k8s/ytt-schema.yml)
-
+- [ytt native schema](cf-for-k8s/ytt-schema.yml) to describe [cf-for-k8's data values](cf-for-k8s/values.yml)
 - [Dex](example-partial-dex.yaml)
 
 ### Defining a schema document
