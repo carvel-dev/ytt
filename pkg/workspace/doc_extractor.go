@@ -29,19 +29,19 @@ func (v DocExtractor) Extract(annName structmeta.AnnotationName) ([]*yamlmeta.Do
 		return nil, nil, err
 	}
 
-	valuesDocs, nonValuesDocs, err := v.extract(v.DocSet, annName)
+	matchedDocs, nonMatchedDocs, err := v.extract(v.DocSet, annName)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	return valuesDocs, nonValuesDocs, nil
+	return matchedDocs, nonMatchedDocs, nil
 }
 
 func (v DocExtractor) extract(docSet *yamlmeta.DocumentSet,
 	annName structmeta.AnnotationName) ([]*yamlmeta.Document, []*yamlmeta.Document, error) {
 
-	var valuesDocs []*yamlmeta.Document
-	var nonValuesDocs []*yamlmeta.Document
+	var matchedDocs []*yamlmeta.Document
+	var nonMatchedDocs []*yamlmeta.Document
 
 	for _, doc := range docSet.Items {
 		var hasMatchingAnn bool
@@ -64,13 +64,13 @@ func (v DocExtractor) extract(docSet *yamlmeta.DocumentSet,
 		}
 
 		if hasMatchingAnn {
-			valuesDocs = append(valuesDocs, doc)
+			matchedDocs = append(matchedDocs, doc)
 		} else {
-			nonValuesDocs = append(nonValuesDocs, doc)
+			nonMatchedDocs = append(nonMatchedDocs, doc)
 		}
 	}
 
-	return valuesDocs, nonValuesDocs, nil
+	return matchedDocs, nonMatchedDocs, nil
 }
 
 func (v DocExtractor) checkNonDocs(val interface{}, annName structmeta.AnnotationName) error {

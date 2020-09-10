@@ -123,12 +123,19 @@ func (o *TemplateOptions) RunWithFiles(in TemplateInput, ui cmdcore.PlainUI) Tem
 	libraryCtx := workspace.LibraryExecutionContext{Current: rootLibrary, Root: rootLibrary}
 	libraryLoader := libraryExecutionFactory.New(libraryCtx)
 
-	_, err = libraryLoader.Schemas()
+	schemaDocs, err := libraryLoader.Schemas()
 	if err != nil {
 		return TemplateOutput{Err: err}
 	}
+	var schema yamlmeta.Schema = yamlmeta.AnySchema{}
+	if len(schemaDocs) > 0 {
+		schema = yamlmeta.NewDocumentSchema(schemaDocs[0])
+		if err != nil {
+			return TemplateOutput{Err: err}
+		}
+	}
 
-	values, libraryValues, err := libraryLoader.Values(valuesOverlays)
+	values, libraryValues, err := libraryLoader.Values(valuesOverlays, schema)
 	if err != nil {
 		return TemplateOutput{Err: err}
 	}

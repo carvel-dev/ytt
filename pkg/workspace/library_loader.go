@@ -44,23 +44,36 @@ func NewLibraryLoader(libraryCtx LibraryExecutionContext,
 	}
 }
 
-func (ll *LibraryLoader) Schemas() (*yamlmeta.Document, error) {
-	loader := NewTemplateLoader(NewEmptyDataValues(), nil,
-		ll.ui, ll.templateLoaderOpts, ll.libraryExecFactory)
+func (ll *LibraryLoader) Schemas() ([]*yamlmeta.Document, error) {
+	loader := NewTemplateLoader(NewEmptyDataValues(), nil, ll.ui, ll.templateLoaderOpts, ll.libraryExecFactory, yamlmeta.AnySchema{})
 
-	_, err := ll.schemaFiles(loader)
+	schemaFiles, err := ll.schemaFiles(loader)
 	if err != nil {
 		return nil, err
 	}
 
-	// TBD template schemas?
+	if len(schemaFiles) > 0 {
+		libraryCtx := LibraryExecutionContext{Current: schemaFiles[0].Library, Root: NewRootLibrary(nil)}
 
+		_, resultDocSet, err := loader.EvalYAML(libraryCtx, schemaFiles[0].File)
+		if err != nil {
+			return nil, err
+		}
+
+		tplOpts := yamltemplate.MetasOpts{IgnoreUnknown: true}
+
+		docs, _, err := DocExtractor{resultDocSet, tplOpts}.Extract(AnnotationSchemaMatch)
+		if err != nil {
+			return nil, err
+		}
+
+		return docs, nil
+	}
 	return nil, nil
 }
 
-func (ll *LibraryLoader) Values(valuesOverlays []*DataValues) (*DataValues, []*DataValues, error) {
-	loader := NewTemplateLoader(NewEmptyDataValues(), nil,
-		ll.ui, ll.templateLoaderOpts, ll.libraryExecFactory)
+func (ll *LibraryLoader) Values(valuesOverlays []*DataValues, schema yamlmeta.Schema) (*DataValues, []*DataValues, error) {
+	loader := NewTemplateLoader(NewEmptyDataValues(), nil, ll.ui, ll.templateLoaderOpts, ll.libraryExecFactory, schema)
 
 	valuesFiles, err := ll.valuesFiles(loader)
 	if err != nil {
@@ -149,7 +162,7 @@ func (ll *LibraryLoader) Eval(values *DataValues, libraryValues []*DataValues) (
 func (ll *LibraryLoader) eval(values *DataValues, libraryValues []*DataValues) ([]EvalExport,
 	map[*FileInLibrary]*yamlmeta.DocumentSet, []files.OutputFile, error) {
 
-	loader := NewTemplateLoader(values, libraryValues, ll.ui, ll.templateLoaderOpts, ll.libraryExecFactory)
+	loader := NewTemplateLoader(values, libraryValues, ll.ui, ll.templateLoaderOpts, ll.libraryExecFactory, yamlmeta.AnySchema{})
 
 	exports := []EvalExport{}
 	docSets := map[*FileInLibrary]*yamlmeta.DocumentSet{}

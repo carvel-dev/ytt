@@ -123,6 +123,14 @@ func (p *Parser) parseBytes(data []byte, lineCorrection int) (*DocumentSet, erro
 	return docSet, nil
 }
 
+//type Type struct {
+//	Current      string
+//	Allowed      []string
+//	Nullable     boolean
+//	Default      interface{}
+//	NodeInSchema Node
+//}
+
 func (p *Parser) parse(val interface{}, lineCorrection int) interface{} {
 	switch typedVal := val.(type) {
 	case yaml.MapSlice:
