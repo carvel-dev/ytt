@@ -11,7 +11,11 @@ Software authors want the ability to clearly communicate what data is necessary 
 
 ### Examples
 
-- [ytt native schema](cf-for-k8s/ytt-schema.yml) to describe [cf-for-k8's data values](cf-for-k8s/values.yml)
+- Using [cf-for-k8's data values](cf-for-k8s/values.yml) as an example, this is what the schema would look like in various formats:
+  - [JSON schema (as json)](cf-for-k8s/json-schema.json)
+  - [JSON schema (as yaml)](cf-for-k8s/json-schema.yml)
+  - [ytt native schema](cf-for-k8s/ytt-schema.yml)
+
 - [Dex](example-partial-dex.yaml)
 
 ### Defining a schema document
@@ -48,16 +52,16 @@ TBD: use starlark or yaml terminology (list vs array, map vs dict)?
 
 ### Schema annotations
 
-#### Valule type annotations
+#### Value type annotations
 
-- `@schema/type string, [...string,] [or_inferred=True]`
+##### `@schema/type string, [...string,] [or_inferred=True]`
 
   This annotation is used to specify the data type of a value (by listing allowed types) when type inference is not sufficient. For example, when multiple types are allowed:
 
-    ```yaml
-    #@schema/type "int", "float"
-    percentage: 0
-    ```
+```yaml
+#@schema/type "int", "float"
+percentage: 0
+```
 
   will validate that `percentage` is of type float or integer.
 
@@ -65,7 +69,7 @@ TBD: use starlark or yaml terminology (list vs array, map vs dict)?
   
   `or_inferred=True` can be used iff the value is `map-typed <unique>` or `array-typed <unique>`.
 
-- `@schema/default value`
+##### `@schema/default value`
 
   This annotation is used to specify default value. It's not necessary in most cases since value provided is used as a default; however, for arrays or multi-type values it's typically necessary to avoid ambiguity.
 
@@ -91,41 +95,41 @@ TBD: use starlark or yaml terminology (list vs array, map vs dict)?
       
   `@schema/default` is _required_ for `array-typed <unique>` values to indicate explicitly to readers of schema what is the default value.
 
-- `@schema/nullable`
+##### `@schema/nullable`
 
   This annotation is used to specify that the type will be inferred from the value (similar to default behaviour for all declarations) given in the schema, _and_ it is allowed to be null.
 
-    ```yaml
-    #@schema/nullable
-    aws:
-      username: ""
-      password: ""
-    ```
+```yaml
+#@schema/nullable
+aws:
+  username: ""
+  password: ""
+```
 
   It is equivalent for the following `@schema/type` and `@schema/default` declaration:
 
-    ```yaml
-    #@schema/type None, or_inferred=True
-    #@schema/default None
-    aws:
-      username: ""
-      password: ""
-    ```
+```yaml
+#@schema/type None, or_inferred=True
+#@schema/default None
+aws:
+  username: ""
+  password: ""
+```
 
   In following example, `@schema/nullable` allows cf_db to be set to null; however, by default it is enabled, hence no a null. (TBD better way?)
 
-    ```yaml
-    #@schema/nullable
-    #@schema/default {}
-    cf_db:
-      admin_password: ""
-    ```
+```yaml
+#@schema/nullable
+#@schema/default {}
+cf_db:
+  admin_password: ""
+```
 
 #### Value validation annotations
 
 Beyond specifying a type for a value, one can specify more dynamic constraints on the value via validations.
 
-- `@schema/validate [...user-provided-funcs,] [...builtin-kwargs]`
+##### `@schema/validate [...user-provided-funcs,] [...builtin-kwargs]`
 
   This annotation specifies how to validate value. `@schema/validate` will provide a set of keyword arguments which map to built-in validations, such as `max`, `max_len`, etc., but will also accept user-defined validation functions. Less common validators will also be provided via a `validations` library. For example,
 
@@ -175,7 +179,7 @@ Beyond specifying a type for a value, one can specify more dynamic constraints o
 
 #### Describing annotations
 
-- `@schema/title`
+##### `@schema/title`
 
   This annotation provides a way to add a short title to the section of a schema associated with a key, similar to the [JSON schema title field](https://json-schema.org/draft/2019-09/json-schema-validation.html#rfc.section.9.1).
 
@@ -186,7 +190,7 @@ Beyond specifying a type for a value, one can specify more dynamic constraints o
 
   If the annotation is not present, the title will be inferred from the key name by replacing special characters with spaces and capitalizing the first letter similar to [rails humanize functionality](https://apidock.com/rails/String/humanize).
 
-- `@schema/doc`
+##### `@schema/doc`
 
   This annotation is a way to add a longer description to the section of a schema associated with a key, similar to the JSON Schema description field.
 
@@ -195,7 +199,7 @@ Beyond specifying a type for a value, one can specify more dynamic constraints o
   user_password: ""
   ```
 
-- `@schema/example`
+##### `@schema/example`
 
   This annotation will take one argument that is an example of a value that satisfies the schema.
 
@@ -206,7 +210,7 @@ Beyond specifying a type for a value, one can specify more dynamic constraints o
 
   In this example, the example string "my_domain.example.com" will be attached to the `system_domain` key.
 
-- `@schema/examples`
+##### `@schema/examples`
   This annotation will take one or more tuple arguments which consist of (Title, Example value).
 
   ```yaml
@@ -216,17 +220,22 @@ Beyond specifying a type for a value, one can specify more dynamic constraints o
 
   In this example, the `"Title 1"` and `"Title 2"` examples and their values are attached to the key `foo`.
 
-- `@schema/deprecated`
+##### `@schema/deprecated`
 
   If the user provides a value, a warning that the field has been deprecated is outputted (stderr) to the user.
 
-- `@schema/removed`
+##### `@schema/removed`
 
   If the user provides a value, an error is returned, and evaluation stops.
 
+   ```yaml
+   #@schema/removed "Provide the same value at the 'domain' key instead"
+   system_domain: ""
+   ```
+
 #### Map key presence annotations
 
-- `@schema/any-key` (TBD: any other name for this?)
+##### `@schema/any-key` (TBD: any other name for this?)
 
   Applies to multiple KVs of a map that were not matched by explicitly specified keys, allowing users to assert on item structure while maintaining freedom to have any key name.
   ```yaml
@@ -238,7 +247,7 @@ Beyond specifying a type for a value, one can specify more dynamic constraints o
   ```
   This example requires items in the `connection_options` map to have value type array of strings.
 
-- `@schema/key-may-be-present`
+##### `@schema/key-may-be-present`
 
   This annotation can be used to allow keys in the schema without providing a guarantee they will be present. This allows schemas to validate contents of a structure in cases where the contents are not referenced directly. For example,
   ```yaml
