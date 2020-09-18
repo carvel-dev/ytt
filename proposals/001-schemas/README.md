@@ -1,13 +1,63 @@
 # Schemas
 
-- Originating Issue: https://github.com/k14s/ytt/issues/103
-- Status: **Being written** | Being implemented | Included in release | Rejected
+- Status: Scoping | **Pre-Alpha** | In Alpha | In Beta | GA | Rejected
+- Originating Issue: [ytt#103](https://github.com/k14s/ytt/issues/103)
+
+[![hackmd-github-sync-badge](https://hackmd.io/pODV3wzbT56MbQTxbQOOKQ/badge)](https://hackmd.io/pODV3wzbT56MbQTxbQOOKQ)
+
+## Table of Contents
+
+[TOC]
+
+---
 
 ## Problem Statement
 
-Software authors want the ability to clearly communicate what data is necessary in order to run their software. Schemas provide the ability for authors to _document_ which data is expected and to _validate_ a consumer's input. This functionality is inspired by [JSON Schema](https://json-schema.org/) but leverages native yaml structure to provide simplicity, brevity, and readability.
+Configuration Authors want to be able to document, constrain, and generate configuration inputs (for example, Data Values) for _their_ users.
 
-## Schema Spec
+Specifically, they would like to:
+- **have a single authoritative definition of possible inputs** (think: API) _to simplify the task of discovering the total set of possible inputs_;
+- be able to **attach documentation to those definitions** in a format that tools could extract _to communicate meaning and intent of each input_;
+- **provide structure, type, and value validations** to inputs _so that errors can be detected quickly and reported in terms the user will likely understand_.
+
+As of v0.26.0, `ytt` technical has a feature set that could satisfy all of these requirements. However, doing so is onerous and error prone. Also, many of the error messages that `ytt` emits today around these topics have been found by many users to be enigmatic.
+
+Likewise, there exist tools that can meet some of these requirements. However, given the need to weave in many of these behaviors to the structure building algorithm that is `ytt`'s main flow, they fall short of meeting the first-order needs and do nothing to improve the user experience around specifying data values.
+
+As an opportunistic driver, Configuration Authors who wrestle with non-trivial templatizing and patching of configuration would appreciate the ability to validate the resulting documents, helping ensure that their `ytt` library yields well-formed and valid YAML docs.
+
+## Proposal
+
+Implement a light-weight typing system for YAML documents: `ytt` Schema.
+
+Focus first on addressing the needs around Data Values documents: making it easy to declare and activate a schema for this input.
+
+This mechanism ought to:
+
+- provide a way to articulate a schema for Data Values;
+  - declare YAML document contents: Map, Array, their contained items by example (i.e. by simply adding the nodes)
+- the schema must be YAML, itself _so that users can leverage all that they learn/know about this format and not have to context switch to read/consider/write this description_;
+- in fact, schema documents should enjoy all the features of data values files and templates _so that all of the attendant capabilities are available in this context as well_;
+  - be able to define functions to capture expressions that are evaluated at runtime
+  - be able to attach metadata (i.e. annotations) to capture information _outside_ of the structure of the document
+- provide a means of attaching documentation to nodes;
+- validate supplied Data Values against the schema, reporting violations in terms the end-user would understand.
+
+Keep in mind that we aim for being able to articulate schema for any YAML document `ytt` handles. e.g. [ytt#103@schema-for-templates](https://github.com/k14s/ytt/issues/103#issuecomment-624326922)
+
+### Sources of Inspiration
+
+Be aware of prior art: avoid reinvention; shamelessly "repurpose" great ideas.
+
+- [JSON Schema](https://json-schema.org/)
+- [OpenAPI v3 schema](https://swagger.io/specification/) — _(see also [ytt#103@openapi](https://github.com/k14s/ytt/issues/103#issuecomment-672296576))_
+
+Remember the differences in context:
+
+- we seek simplicity, brevity, and readability.
+
+
+## Specification
 
 ### Examples
 
@@ -463,3 +513,13 @@ config.yml:
 ---
 foo: #@ yaml.encode(data.values) #! => {},  {"foo": {"username": "val", "max_connections":100}}
 ```
+
+## Open Questions
+
+- Are there needs around versioning schema?
+- Should we support generating `ytt` Schema from other popular sources (e.g. JSON Schema, OpenAPI v3 schema)?
+- how to add more things to schema? (via overlays similar to data values)
+- provide programmatic schema.apply() (similar to overlay.apply)
+- respect schema for data values set via cmd line flags/env vars
+- add --data-values-schema-inspect (similar to --data-values-inspect)
+  - generate html view via builtin server
