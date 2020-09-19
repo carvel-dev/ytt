@@ -1,5 +1,3 @@
 # Proposals
 
-This directory contains proposals for "largish" features. See each proposal for their status.
-
-- [Schemas](001-schemas/)
+Find proposals and other design documents in https://github.com/k14s/design-docs/tree/develop/ytt
