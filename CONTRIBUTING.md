@@ -4,7 +4,7 @@ We’d love to accept your patches and contributions to this project. Please rev
 
 # Communication
 
-We prefer communicating asynchronously through GitHub issues and the [k14s Slack channel](https://kubernetes.slack.com/archives/CH8KCCKA5). In order to be inclusive to the community, if a conversation related to an issue happens outside of these channels, we appreciate summarizing the conversation's context and adding it to an issue.
+We prefer communicating asynchronously through GitHub issues and the [#carvel Slack channel](https://kubernetes.slack.com/archives/CH8KCCKA5). In order to be inclusive to the community, if a conversation related to an issue happens outside of these channels, we appreciate summarizing the conversation's context and adding it to an issue.
 
 # Propose a Change
 

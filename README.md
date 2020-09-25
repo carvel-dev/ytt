@@ -2,7 +2,7 @@
 * Install: Grab prebuilt binaries from the [Releases page](https://github.com/k14s/ytt/releases)
 * Play: Jump right in by trying out the [online playground](https://get-ytt.io/#playground)
 * For more information about annotations, data values, overlays and other features see [Docs](https://github.com/k14s/ytt/tree/develop/docs) page
-* Slack: [#k14s in Kubernetes slack](https://slack.kubernetes.io/)
+* Slack: [#carvel in Kubernetes slack](https://slack.kubernetes.io/)
 
 ## Overview
 
