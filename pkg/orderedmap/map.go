@@ -59,6 +59,13 @@ func (m *Map) isKeyEq(key1, key2 interface{}) bool {
 	return reflect.DeepEqual(key1, key2)
 }
 
+func (m *Map) Keys() (keys []interface{}) {
+	m.Iterate(func(k, _ interface{}) {
+		keys = append(keys, k)
+	})
+	return
+}
+
 func (m *Map) Iterate(iterFunc func(k, v interface{})) {
 	for _, item := range m.items {
 		iterFunc(item.Key, item.Value)
