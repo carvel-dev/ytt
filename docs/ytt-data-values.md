@@ -1,15 +1,18 @@
 ## ytt @data/values
 
-- [Defining data values](#defining-data-values)
+The standard way to externalize configuration values is to declare them as "Data Values"
+and then reference those values in templates.
+
+- [Defining and Using Data Values](#declaring-and-using-data-values)
 - [Splitting data values into multiple files](#splitting-data-values-into-multiple-files)
 - [Overriding data values via command line flags](#overriding-data-values-via-command-line-flags)
 - [Library data values](#library-data-values)
   - [Setting via files](#library-setting-via-files)
   - [Setting via command line flags](#library-setting-via-cmd)
 
-### Defining data values
+### Declaring and Using Data Values
 
-One way to inject input data into templates is to include a YAML document annotated with `@data/values`. Example:
+A Data Values file is a YAML document annotated with `@data/values`.
 
 ```yaml
 #@data/values
@@ -17,11 +20,13 @@ One way to inject input data into templates is to include a YAML document annota
 key1: val1
 key2:
   nested: val2
-key3:
+key3: val3
 key4:
 ```
 
-Subsequently these values can be accessed via `@ytt:data` library:
+`ytt` processes all Data Values files prior to rendering templates.
+
+Templates access those processed values via the `@ytt:data` module:
 
 ```yaml
 #@ load("@ytt:data", "data")
@@ -37,14 +42,25 @@ Resulting in
 ```yaml
 first: val1
 second: val2
-third: null
+third: val3
 fourth: null
 ```
 
-We typically recommend to use snake case (e.g. `some_key.nested_one`) for naming data values.
-
-Note that if data value contains a `-` (dash) in its name, you will have to use `getattr` function like so `getattr(data.values.key2, "nested-with-dash")` to access its value. This is to avoid parsing ambiguity with substraction operation.
-
+Note:
+- Data Values keys must be strings.
+- use snake-case for keys (e.g. `db_conn.secure`) — keys that contain a `-` (dash)
+  cannot be accessed via the dot expression (the dash is the subtraction operator).
+- if dashes cannot be avoided, use the Starlark built-in [`getattr()`](https://github.com/google/starlark-go/blob/master/doc/spec.md#getattr)
+  to access the value:
+    ```python
+    secure: #@ getattr(data.values, "db-conn").secure
+    ```
+  _(as of v0.31.0)_ the same can be done with [index notation](lang-ref-structs.md#attributes):
+    ```python
+    secure: #@ data.values["db-conn"].secure
+    ```
+- `data.values` is a [`struct`](lang-ref-structs.md).
+ 
 ### Splitting data values into multiple files
 
 Available in v0.13.0.
