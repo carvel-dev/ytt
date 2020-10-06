@@ -37,7 +37,7 @@ rendered: true`
 
 	ui := cmdcore.NewPlainUI(false)
 	opts := cmdtpl.NewOptions()
-
+	opts.SchemaEnabled = true
 	out := opts.RunWithFiles(cmdtpl.TemplateInput{Files: filesToProcess}, ui)
 	if out.Err != nil {
 		t.Fatalf("Expected RunWithFiles to succeed, but was error: %s", out.Err)
@@ -68,7 +68,7 @@ not_in_schema: "this should fail the type check!"
 
 	ui := cmdcore.NewPlainUI(false)
 	opts := cmdtpl.NewOptions()
-
+	opts.SchemaEnabled = true
 	out := opts.RunWithFiles(cmdtpl.TemplateInput{Files: filesToProcess}, ui)
 
 	if out.Err == nil {
@@ -118,7 +118,7 @@ rendered: true`
 
 	ui := cmdcore.NewPlainUI(false)
 	opts := cmdtpl.NewOptions()
-
+	opts.SchemaEnabled = true
 	out := opts.RunWithFiles(cmdtpl.TemplateInput{Files: filesToProcess}, ui)
 	if out.Err == nil {
 		t.Fatalf("Expected an error about a schema check failure, but succeeded.")
@@ -128,4 +128,77 @@ rendered: true`
 	if !strings.Contains(out.Err.Error(), expectedErr) {
 		t.Fatalf("Expected an error about a schema check failure, but got: %s", out.Err.Error())
 	}
+}
+
+func TestSchemaFileButNoSchemaFlag(t *testing.T) {
+	schemaYAML := `#@schema/match data_values=True
+---
+db_conn:
+  hostname: ""
+  port: 0
+  username: ""
+  password: ""
+`
+	dataValuesYAML := `#@data/values
+---
+db_conn:
+  hostname: server.example.com
+  port: 5432
+  username: sa
+  password: changeme
+`
+	templateYAML := `---
+rendered: true`
+
+	filesToProcess := files.NewSortedFiles([]*files.File{
+		files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
+		files.MustNewFileFromSource(files.NewBytesSource("dataValues.yml", []byte(dataValuesYAML))),
+		files.MustNewFileFromSource(files.NewBytesSource("template.yml", []byte(templateYAML))),
+	})
+
+	ui := cmdcore.NewPlainUI(false)
+	opts := cmdtpl.NewOptions()
+	out := opts.RunWithFiles(cmdtpl.TemplateInput{Files: filesToProcess}, ui)
+	if out.Err != nil {
+		t.Fatalf("Expected RunWithFiles to succeed, but got failure: %v", out.Err.Error())
+	}
+
+	if len(out.Files) != 1 {
+		t.Fatalf("Expected number of output files to be 1, but was: %d", len(out.Files))
+	}
+
+	if string(out.Files[0].Bytes()) != "rendered: true\n" {
+		t.Fatalf("Expected output to only include template YAML, but got: %s", out.Files[0].Bytes())
+	}
+}
+
+func TestNoSchemaFileSchemaFlagSet(t *testing.T) {
+	dataValuesYAML := `#@data/values
+---
+db_conn:
+  hostname: server.example.com
+  port: 5432
+  username: sa
+  password: changeme
+`
+	templateYAML := `---
+rendered: true`
+
+	filesToProcess := files.NewSortedFiles([]*files.File{
+		files.MustNewFileFromSource(files.NewBytesSource("dataValues.yml", []byte(dataValuesYAML))),
+		files.MustNewFileFromSource(files.NewBytesSource("template.yml", []byte(templateYAML))),
+	})
+
+	ui := cmdcore.NewPlainUI(false)
+	opts := cmdtpl.NewOptions()
+	opts.SchemaEnabled = true
+	out := opts.RunWithFiles(cmdtpl.TemplateInput{Files: filesToProcess}, ui)
+	if out.Err == nil {
+		t.Fatalf("Expected RunWithFiles to fail with message about schema enabled but no schema provided, but was a success")
+	}
+
+	if !strings.Contains(out.Err.Error(), "Schema experiment flag was enabled but no schema document was provided.") {
+		t.Fatalf("Expected an error about schema enabled but no schema provided, but got: %v", out.Err.Error())
+	}
+
 }

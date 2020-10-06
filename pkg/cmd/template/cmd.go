@@ -4,6 +4,8 @@
 package template
 
 import (
+	"fmt"
+	"os"
 	"time"
 
 	cmdcore "github.com/k14s/ytt/pkg/cmd/core"
@@ -17,9 +19,10 @@ type TemplateOptions struct {
 	IgnoreUnknownComments   bool
 	ImplicitMapKeyOverrides bool
 
-	StrictYAML   bool
-	Debug        bool
-	InspectFiles bool
+	StrictYAML    bool
+	Debug         bool
+	InspectFiles  bool
+	SchemaEnabled bool
 
 	BulkFilesSourceOpts    BulkFilesSourceOpts
 	RegularFilesSourceOpts RegularFilesSourceOpts
@@ -64,6 +67,8 @@ func NewCmd(o *TemplateOptions) *cobra.Command {
 	cmd.Flags().BoolVarP(&o.StrictYAML, "strict", "s", false, "Configure to use _strict_ YAML subset")
 	cmd.Flags().BoolVar(&o.Debug, "debug", false, "Enable debug output")
 	cmd.Flags().BoolVar(&o.InspectFiles, "files-inspect", false, "Inspect files")
+	cmd.Flags().BoolVar(&o.SchemaEnabled, "enable-experiment-schema", false, "Enable experimental schema features")
+
 	o.BulkFilesSourceOpts.Set(cmd)
 	o.RegularFilesSourceOpts.Set(cmd)
 	o.FileMarksOpts.Set(cmd)
@@ -129,9 +134,19 @@ func (o *TemplateOptions) RunWithFiles(in TemplateInput, ui cmdcore.PlainUI) Tem
 	}
 	var schema yamlmeta.Schema = yamlmeta.AnySchema{}
 	if len(schemaDocs) > 0 {
-		schema = yamlmeta.NewDocumentSchema(schemaDocs[0])
-		if err != nil {
-			return TemplateOutput{Err: err}
+		if o.SchemaEnabled {
+			schema = yamlmeta.NewDocumentSchema(schemaDocs[0])
+			if err != nil {
+				return TemplateOutput{Err: err}
+			}
+		} else {
+			fmt.Fprintln(os.Stderr, "Warning: schema document was detected, but schema experiment flag is not enabled. Did you mean to include --enable-experiment-schema?")
+		}
+	} else {
+		if o.SchemaEnabled {
+			return TemplateOutput{Err: fmt.Errorf(
+				"Schema experiment flag was enabled but no schema document was provided. (See this propsal for details on how to include a schema document: https://github.com/k14s/design-docs/blob/develop/ytt/001-schemas/README.md#defining-a-schema-document)",
+			)}
 		}
 	}
 
