@@ -5,9 +5,9 @@ package yttlibrary
 
 import (
 	"fmt"
-
 	"github.com/k14s/starlark-go/starlark"
 	"github.com/k14s/starlark-go/starlarkstruct"
+	"github.com/k14s/ytt/pkg/orderedmap"
 	"github.com/k14s/ytt/pkg/template/core"
 )
 
@@ -16,7 +16,7 @@ var (
 		"struct": &starlarkstruct.Module{
 			Name: "struct",
 			Members: starlark.StringDict{
-				"make":          starlark.NewBuiltin("struct.make", core.ErrWrapper(starlarkstruct.Make)),
+				"make":          starlark.NewBuiltin("struct.make", core.ErrWrapper(structModule{}.Make)),
 				"make_and_bind": starlark.NewBuiltin("struct.make_and_bind", core.ErrWrapper(structModule{}.MakeAndBind)),
 				"bind":          starlark.NewBuiltin("struct.bind", core.ErrWrapper(structModule{}.Bind)),
 
@@ -28,6 +28,25 @@ var (
 )
 
 type structModule struct{}
+
+func (b structModule) Make(_ *starlark.Thread, _ *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
+	if len(args) > 0 {
+		return nil, fmt.Errorf("struct: unexpected positional arguments; structs are made from keyword arguments only")
+	}
+	return b.fromKeywords(kwargs), nil
+}
+
+// fromKeywords returns a new struct instance whose fields are specified by the
+// key/value pairs in kwargs.  (Each kwargs[i][0] must be a starlark.String.)
+func (b structModule) fromKeywords(kwargs []starlark.Tuple) *core.StarlarkStruct {
+	data := orderedmap.Map{}
+	for _, kwarg := range kwargs {
+		k := string(kwarg[0].(starlark.String))
+		v := kwarg[1]
+		data.Set(k, v)
+	}
+	return core.NewStarlarkStruct(&data)
+}
 
 func (b structModule) MakeAndBind(thread *starlark.Thread, f *starlark.Builtin,
 	bindArgs starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
@@ -47,7 +66,7 @@ func (b structModule) MakeAndBind(thread *starlark.Thread, f *starlark.Builtin,
 		}
 	}
 
-	return starlarkstruct.Make(thread, nil, starlark.Tuple{}, kwargs)
+	return b.Make(thread, nil, starlark.Tuple{}, kwargs)
 }
 
 func (b structModule) Bind(thread *starlark.Thread, f *starlark.Builtin,

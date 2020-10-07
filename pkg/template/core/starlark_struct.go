@@ -13,6 +13,10 @@ type StarlarkStruct struct {
 	data *orderedmap.Map // [string]starlark.Value; most common usage: HasAttrs
 }
 
+func NewStarlarkStruct(goStringKeyToStarlarkValue *orderedmap.Map) *StarlarkStruct {
+	return &StarlarkStruct{data: goStringKeyToStarlarkValue}
+}
+
 var _ starlark.Value = (*StarlarkStruct)(nil)
 var _ starlark.HasAttrs = (*StarlarkStruct)(nil)
 var _ starlark.IterableMapping = (*StarlarkStruct)(nil)
