@@ -60,7 +60,7 @@ func (ll *LibraryLoader) Schemas() ([]*yamlmeta.Document, error) {
 			return nil, err
 		}
 
-		tplOpts := yamltemplate.MetasOpts{IgnoreUnknown: true}
+		tplOpts := yamltemplate.MetasOpts{IgnoreUnknown: ll.templateLoaderOpts.IgnoreUnknownComments}
 
 		docs, _, err := DocExtractor{resultDocSet, tplOpts}.Extract(AnnotationSchemaMatch)
 		if err != nil {

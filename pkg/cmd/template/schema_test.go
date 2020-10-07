@@ -130,7 +130,7 @@ rendered: true`
 	}
 }
 
-func TestSchemaFileButNoSchemaFlag(t *testing.T) {
+func TestSchemaFileButNoSchemaFlagExpectsWarning(t *testing.T) {
 	schemaYAML := `#@schema/match data_values=True
 ---
 db_conn:

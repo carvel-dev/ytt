@@ -5,7 +5,6 @@ package template
 
 import (
 	"fmt"
-	"os"
 	"time"
 
 	cmdcore "github.com/k14s/ytt/pkg/cmd/core"
@@ -140,7 +139,7 @@ func (o *TemplateOptions) RunWithFiles(in TemplateInput, ui cmdcore.PlainUI) Tem
 				return TemplateOutput{Err: err}
 			}
 		} else {
-			fmt.Fprintln(os.Stderr, "Warning: schema document was detected, but schema experiment flag is not enabled. Did you mean to include --enable-experiment-schema?")
+			ui.Warnf("Warning: schema document was detected, but schema experiment flag is not enabled. Did you mean to include --enable-experiment-schema?\n")
 		}
 	} else {
 		if o.SchemaEnabled {

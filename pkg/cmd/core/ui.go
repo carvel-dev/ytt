@@ -23,6 +23,10 @@ func (ui PlainUI) Printf(str string, args ...interface{}) {
 	fmt.Printf(str, args...)
 }
 
+func (ui PlainUI) Warnf(str string, args ...interface{}) {
+	fmt.Fprintf(os.Stderr, str, args...)
+}
+
 func (ui PlainUI) Debugf(str string, args ...interface{}) {
 	if ui.debug {
 		fmt.Fprintf(os.Stderr, str, args...)
