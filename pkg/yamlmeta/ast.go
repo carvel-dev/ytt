@@ -24,10 +24,13 @@ type Node interface {
 	DeepCopyAsInterface() interface{}
 	DeepCopyAsNode() Node
 
+	Check() TypeCheck
+
 	_private()
 }
 
-var _ []Node = []Node{&DocumentSet{}, &Document{}, &Map{}, &MapItem{}, &Array{}, &ArrayItem{}}
+// Ensure: all types are — in fact — assignable to Node
+var _ = []Node{&DocumentSet{}, &Document{}, &Map{}, &MapItem{}, &Array{}, &ArrayItem{}}
 
 type DocumentSet struct {
 	Metas    []*Meta
@@ -44,6 +47,7 @@ type Document struct {
 	Metas    []*Meta
 	Value    interface{}
 	Position *filepos.Position
+	Type     interface{}
 
 	annotations interface{}
 	injected    bool // indicates that Document was not present in the parsed content
@@ -53,6 +57,7 @@ type Map struct {
 	Metas    []*Meta
 	Items    []*MapItem
 	Position *filepos.Position
+	Type     *MapType
 
 	annotations interface{}
 }
@@ -62,6 +67,7 @@ type MapItem struct {
 	Key      interface{}
 	Value    interface{}
 	Position *filepos.Position
+	Type     interface{}
 
 	annotations interface{}
 }

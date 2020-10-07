@@ -317,7 +317,7 @@ func (l *libraryValue) libraryValues(ll *LibraryLoader) (*DataValues, []*DataVal
 		}
 	}
 
-	dvs, foundChildDVss, err := ll.Values(append(dvss, afterLibModDVss...))
+	dvs, foundChildDVss, err := ll.Values(append(dvss, afterLibModDVss...), yamlmeta.AnySchema{})
 	if err != nil {
 		return nil, nil, err
 	}

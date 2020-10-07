@@ -23,6 +23,7 @@ type TemplateLoader struct {
 	opts               TemplateLoaderOpts
 	compiledTemplates  map[string]*template.CompiledTemplate
 	libraryExecFactory *LibraryExecutionFactory
+	schema             yamlmeta.Schema
 }
 
 type TemplateLoaderOpts struct {
@@ -37,8 +38,7 @@ type TemplateLoaderOptsOverrides struct {
 	StrictYAML              *bool
 }
 
-func NewTemplateLoader(values *DataValues, libraryValuess []*DataValues, ui files.UI, opts TemplateLoaderOpts,
-	libraryExecFactory *LibraryExecutionFactory) *TemplateLoader {
+func NewTemplateLoader(values *DataValues, libraryValuess []*DataValues, ui files.UI, opts TemplateLoaderOpts, libraryExecFactory *LibraryExecutionFactory, schema yamlmeta.Schema) *TemplateLoader {
 
 	if values == nil {
 		panic("Expected values to be non-nil")
@@ -51,6 +51,7 @@ func NewTemplateLoader(values *DataValues, libraryValuess []*DataValues, ui file
 		opts:               opts,
 		compiledTemplates:  map[string]*template.CompiledTemplate{},
 		libraryExecFactory: libraryExecFactory,
+		schema:             schema,
 	}
 }
 
@@ -185,7 +186,17 @@ func (l *TemplateLoader) EvalYAML(libraryCtx LibraryExecutionContext, file *file
 	if err != nil {
 		return nil, nil, err
 	}
-
+	if _, ok := l.schema.(yamlmeta.AnySchema); !ok {
+		var outerTypeCheck yamlmeta.TypeCheck
+		for _, doc := range resultVal.(*yamlmeta.DocumentSet).Items {
+			l.schema.AssignType(doc)
+			typeCheck := doc.Check()
+			outerTypeCheck.Violations = append(outerTypeCheck.Violations, typeCheck.Violations...)
+		}
+		if len(outerTypeCheck.Violations) > 0 {
+			return globals, resultVal.(*yamlmeta.DocumentSet), fmt.Errorf("Typechecking violations found: %v", outerTypeCheck.Violations)
+		}
+	}
 	return globals, resultVal.(*yamlmeta.DocumentSet), nil
 }
 

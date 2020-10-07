@@ -10,7 +10,6 @@ import (
 	"github.com/k14s/ytt/pkg/template"
 	"github.com/k14s/ytt/pkg/template/core"
 	"github.com/k14s/ytt/pkg/yamlmeta"
-	"github.com/k14s/ytt/pkg/yttlibrary"
 )
 
 const (
@@ -136,7 +135,7 @@ func parseDVAnnotations(doc *yamlmeta.Document) (bool, []LibRefPiece, bool, erro
 	if hasLibAnn = anns.Has(AnnotationLibraryRef); hasLibAnn {
 		libArgs := anns.Args(AnnotationLibraryRef)
 		if l := libArgs.Len(); l != 1 {
-			return false, nil, false, fmt.Errorf("Expected %s annotation to have one arg, got %d", yttlibrary.AnnotationDataValues, l)
+			return false, nil, false, fmt.Errorf("Expected %s annotation to have one arg, got %d", AnnotationDataValues, l)
 		}
 
 		argString, err := core.NewStarlarkValue(libArgs[0]).AsString()
@@ -150,7 +149,7 @@ func parseDVAnnotations(doc *yamlmeta.Document) (bool, []LibRefPiece, bool, erro
 		}
 	}
 
-	for _, kwarg := range anns.Kwargs(yttlibrary.AnnotationDataValues) {
+	for _, kwarg := range anns.Kwargs(AnnotationDataValues) {
 		kwargName, err := core.NewStarlarkValue(kwarg[0]).AsString()
 		if err != nil {
 			return false, nil, false, err
@@ -163,10 +162,10 @@ func parseDVAnnotations(doc *yamlmeta.Document) (bool, []LibRefPiece, bool, erro
 				return false, nil, false, err
 			} else if len(libRef) == 0 {
 				return false, nil, false, fmt.Errorf("Annotation %s: Expected kwarg 'after_library_module' to be used with %s annotation",
-					yttlibrary.AnnotationDataValues, AnnotationLibraryRef)
+					AnnotationDataValues, AnnotationLibraryRef)
 			}
 		default:
-			return false, nil, false, fmt.Errorf("Unknown kwarg %s for annotation %s", kwargName, yttlibrary.AnnotationDataValues)
+			return false, nil, false, fmt.Errorf("Unknown kwarg %s for annotation %s", kwargName, AnnotationDataValues)
 		}
 	}
 	return hasLibAnn, libRef, afterLibMod, nil
