@@ -52,8 +52,8 @@ Attributes can be referenced:
 
 Referencing an attribute that is not defined on the `struct` results in an error:
 ```yaml
-db_url: data.values.bd_conn              # <== struct has no .bd_conn field or method
-db_host: data.values["db_conn"]["hast"]  # <== key "hast" not in struct
+db_url: #@ data.values.bd_conn              # <== struct has no .bd_conn field or method
+db_host: #@ data.values["db_conn"]["hast"]  # <== key "hast" not in struct
 ```
 
 __
@@ -88,7 +88,7 @@ The following built-ins can be useful with `struct` values:
     # `value` is a struct that _might_ have a field, "additional_ports"
     
     def ports(value):
-      if(hasattr(value, "additional_ports")):
+      if hasattr(value, "additional_ports"):
       ... 
     end
     ```

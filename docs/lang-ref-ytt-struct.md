@@ -193,9 +193,9 @@ load("@ytt:struct", "struct")
 
 conn = struct.make(hostname="svc.example.com", default_port=1022, protocol="https")
 
-def _url(this, port=None):
-  port = port or this.default_port
-  return "{}://{}:{}".format(this.protocol, this.hostname, port)
+def _url(self, port=None):
+  port = port or self.default_port
+  return "{}://{}:{}".format(self.protocol, self.hostname, port)
 end
 
 conn = struct.make_and_bind(conn, url=_url)
@@ -213,7 +213,7 @@ load("@ytt:struct", "struct")
 
 _conn_data = struct.make(hostname="svc.example.com", default_port=1022, protocol="https")
 
-conn = struct.make_and_bind(_conn_data, url=lambda this, port=None: "{}://{}:{}".format(this.protocol, this.hostname, port or this.default_port))
+conn = struct.make_and_bind(_conn_data, url=lambda self, port=None: "{}://{}:{}".format(self.protocol, self.hostname, port or self.default_port))
 
 conn.url()      # ==> https://svc.example.com:1022
 conn.url(8080)  # ==> https://svc.example.com:8080

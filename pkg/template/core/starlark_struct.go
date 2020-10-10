@@ -27,6 +27,7 @@ func (s *StarlarkStruct) Type() string          { return "struct" }
 func (s *StarlarkStruct) Freeze()               {} // TODO
 func (s *StarlarkStruct) Truth() starlark.Bool  { return s.data.Len() > 0 }
 func (s *StarlarkStruct) Hash() (uint32, error) { return 0, fmt.Errorf("unhashable type: struct") }
+func (s *StarlarkStruct) Len() int              { return s.data.Len() }
 
 // returns (nil, nil) if attribute not present
 func (s *StarlarkStruct) Attr(name string) (starlark.Value, error) {
@@ -48,11 +49,13 @@ func (s *StarlarkStruct) AttrNames() []string {
 
 func (s *StarlarkStruct) Get(key starlark.Value) (val starlark.Value, found bool, err error) {
 	if attr, ok := NewStarlarkValue(key).AsGoValue().(string); ok {
-		val, err = s.Attr(attr)
-		return val, val != nil, err
-	} else {
-		return nil, false, fmt.Errorf("expected key `%s` to be a string but is a %T", key, key)
+		val, found := s.data.Get(attr)
+		if found {
+			return val.(starlark.Value), true, nil
+		}
+		return starlark.None, false, nil
 	}
+	return nil, false, fmt.Errorf("expected key `%s` to be a string but is a %T", key, key)
 }
 
 func (s *StarlarkStruct) Iterate() starlark.Iterator {
@@ -69,10 +72,6 @@ func (s *StarlarkStruct) Items() (items []starlark.Tuple) {
 		})
 	})
 	return
-}
-
-func (s *StarlarkStruct) Len() int {
-	return s.data.Len()
 }
 
 type StarlarkStructIterator struct {

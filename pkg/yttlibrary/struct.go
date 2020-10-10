@@ -31,7 +31,7 @@ type structModule struct{}
 
 func (b structModule) Make(_ *starlark.Thread, _ *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
 	if len(args) > 0 {
-		return nil, fmt.Errorf("struct: unexpected positional arguments; structs are made from keyword arguments only")
+		return nil, fmt.Errorf("unexpected positional arguments (structs are made from keyword arguments only)")
 	}
 	return b.fromKeywords(kwargs), nil
 }
