@@ -92,9 +92,11 @@ example on the playground
 #### Talks
 
 - [Introducing the YAML Templating Tool (ytt)](https://www.youtube.com/watch?v=KbB5tI_g3bo) on IBM Developer podcast
-- [TGI Kubernetes 079: YTT and Kapp](https://www.youtube.com/watch?v=CSglwNTQiYg) with Joe Beda
-- [Helm Summit 2019 - ytt: An Alternative to Text Templating of YAML Configuration](https://www.youtube.com/watch?v=7-PqgpkxC7E)
+- [YTT and Kapp @ TGI Kubernetes 079](https://www.youtube.com/watch?v=CSglwNTQiYg) with Joe Beda
+- [ytt: An Alternative to Text Templating of YAML Configuration @ Helm Summit 2019](https://www.youtube.com/watch?v=7-PqgpkxC7E)
   - [presentation slides](https://github.com/k14s/meetups/blob/develop/ytt-2019-sep-helm-summit.pdf)
+- [Managing Applications in Production: Helm vs ytt & kapp @ Kubecon 2020](https://www.youtube.com/watch?v=WJw1MDFMVuk)
+- [Introduction to Carvel @ Rawkode Live](https://www.youtube.com/watch?v=LBCmMTofNxw)
 
 ### Contributing
 
