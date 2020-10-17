@@ -67,8 +67,9 @@ _Example 1: Data structure from a dictionary_
 load("@ytt:struct", "struct")
 
 d = struct.encode({"a": [1,2,3,{"c":456}], "b": "str"})
-d.a     # ==> [1, 2, 3, c: (struct...)]
-d.a[3].c   # ==> 456
+d.a        # <== [1, 2, 3, c: (struct...)]
+d.a[3].c   # <== 456
+bar["b"]   # <== "str"
 ```
 
 __

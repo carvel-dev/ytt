@@ -3,7 +3,7 @@
 The standard way to externalize configuration values is to declare them as "Data Values"
 and then reference those values in templates.
 
-- [Defining and Using Data Values](#declaring-and-using-data-values)
+- [Declaring and Using Data Values](#declaring-and-using-data-values)
 - [Splitting data values into multiple files](#splitting-data-values-into-multiple-files)
 - [Overriding data values via command line flags](#overriding-data-values-via-command-line-flags)
 - [Library data values](#library-data-values)
@@ -26,7 +26,7 @@ key4:
 
 `ytt` processes all Data Values files prior to rendering templates.
 
-Templates access those processed values via the `@ytt:data` module:
+Templates can access those processed values via the `@ytt:data` module:
 
 ```yaml
 #@ load("@ytt:data", "data")
@@ -48,7 +48,7 @@ fourth: null
 
 Note:
 - Data Values keys must be strings.
-- use snake-case for keys (e.g. `db_conn.secure`) — keys that contain a `-` (dash)
+- we recommend using snake-case for keys (e.g. `db_conn.secure`) — keys that contain a `-` (dash)
   cannot be accessed via the dot expression (the dash is the subtraction operator).
 - if dashes cannot be avoided, use the Starlark built-in [`getattr()`](https://github.com/google/starlark-go/blob/master/doc/spec.md#getattr)
   to access the value:

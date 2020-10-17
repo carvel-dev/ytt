@@ -40,7 +40,7 @@ Described below:
 Attributes are a key/value pair, where the key is a `string` and the value can be of any type.
 
 Attributes can be referenced:
-- by name (using "[dot notation](https://github.com/google/starlark-go/blob/master/doc/spec.md#dot-expressions)")
+- by field (using "[dot notation](https://github.com/google/starlark-go/blob/master/doc/spec.md#dot-expressions)")
     ```yaml
     db_url: #@ data.values.db_conn.host
     ```
