@@ -152,12 +152,12 @@ key1: val1
 key2: val2
 
 #@library/ref "@lib1"
-#@data/values after_libary_module=True
+#@data/values after_library_module=True
 ---
 key3: val3
 ```
 
-The `@data/values` annotation also supports a keyword argument `after_libary_module`. If this keyword argument is specified, given data values will take precedence over data values passed to the `.with_data_values(...)` function when evaluating via the [library module](./lang-ref-ytt-library.md).
+The `@data/values` annotation also supports a keyword argument `after_library_module`. If this keyword argument is specified, given data values will take precedence over data values passed to the `.with_data_values(...)` function when evaluating via the [library module](./lang-ref-ytt-library.md).
 
 #### <a id='library-setting-via-cmd'/> Setting via command line flags
 
