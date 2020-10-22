@@ -6,32 +6,7 @@ Following modules are included with `ytt`.
 
 ### struct
 
-```python
-load("@ytt:struct", "struct")
-
-st = struct.make(field1=123, field2={"key": "val"})
-st.field1 # 123
-st.field2 # {"key": "val"}
-
-def _add_method(num, right):
-  return num.val + right
-end
-
-num123 = struct.make(val=123)
-
-calc = struct.make(add=struct.bind(_add_method, num123))
-calc.add(3) # 126
-
-# make_and_bind automatically binds any callable value to given object
-calc = struct.make_and_bind(num123, add=_add_method)
-calc.add(3) # 126
-
-struct.encode({"a": [1,2,3,{"c":456}], "b": "str"})      # struct with contents
-struct.decode(struct.make(a=[1,2,3,{"c":456}], b="str")) # plain values extracted from struct
-
-# plain values extracted from data.values struct
-struct.decode(data.values) # {...}
-```
+See [@ytt:struct module docs](lang-ref-ytt-struct.md).
 
 ### assert
 

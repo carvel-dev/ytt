@@ -31,7 +31,7 @@
 #@   test5=_bound_test1,
 #@   test6=_bound_test2)
 
-struct:
+make:
   test1: #@ st.test1
   test2: #@ st.test2
   test3: #@ st.test3(123)
@@ -39,27 +39,51 @@ struct:
   test5: #@ st.test5()
   test6: #@ st.test6("other")
   test7: #@ st.test7()
+  is_mapping:
+    test1: #@ st["test1"]
+    test6: #@ st["test6"]("other")
 
-object:
+make_and_bind:
   test1: #@ obj.test1
   test2: #@ obj.test2
   test3: #@ obj.test3()
   #! test4: #@ obj.test4()
   test5: #@ obj.test5()
   test6: #@ obj.test6("other")
+  is_mapping:
+    test5: #@ obj["test5"]()
+    test6: #@ obj["test6"]("other")
 
 ---
 #@ val = struct.encode({"a": [1,2,3,{"c":456}], "b": "str", "c": {"d": 123}})
-test1: #@ val.a
-test2: #@ val.b
-test3: #@ val.c.d
+encode:
+  test1: #@ val.a
+  test2: #@ val.b
+  test3: #@ val.c.d
+  is_mapping:
+    test1: #@ val["b"]
+    test2: #@ val["c"]["d"]
+    test3: #@ "a" in val
+    test4: #@ "not-in-val" not in val
+    test5: #@ "c" in val["a"][3]
+  is_iterable:
+    test1:
+      #@ for/end key in val:
+      - #@ "{} = {}".format(key, str(val[key]))
+    test2:
+      #@ d = dict(**val)
+      #@ for/end key in d:
+      - #@ "{} = {}".format(key, str(d[key]))
+  is_sequence:
+     test1: #@ len(val)
 ---
-test1: #@ struct.decode(struct.make(a=[1,2,3], b="str", c={"d": 123}))
-test2: #@ struct.decode(struct.make(a=[1,2,3], b="str", c=struct.make(d=123)))
+decode:
+  test1: #@ struct.decode(struct.make(a=[1,2,3], b="str", c={"d": 123}))
+  test2: #@ struct.decode(struct.make(a=[1,2,3], b="str", c=struct.make(d=123)))
 
 +++
 
-struct:
+make:
   test1: val1
   test2: val2
   test3: 123
@@ -67,34 +91,59 @@ struct:
   test5: bound-val1
   test6: bound-val2-other
   test7: bound-val3-bound-val4
-object:
+  is_mapping:
+    test1: val1
+    test6: bound-val2-other
+make_and_bind:
   test1: val1
   test2: val2
   test3: bound-obj
   test5: bound-obj
   test6: bound-obj-other
+  is_mapping:
+    test5: bound-obj
+    test6: bound-obj-other
 ---
-test1:
-- 1
-- 2
-- 3
-- c: 456
-test2: str
-test3: 123
----
-test1:
-  a:
+encode:
+  test1:
   - 1
   - 2
   - 3
-  b: str
-  c:
-    d: 123
-test2:
-  a:
-  - 1
-  - 2
-  - 3
-  b: str
-  c:
-    d: 123
+  - c: 456
+  test2: str
+  test3: 123
+  is_mapping:
+    test1: str
+    test2: 123
+    test3: true
+    test4: true
+    test5: true
+  is_iterable:
+    test1:
+    - a = [1, 2, 3, struct(...)]
+    - b = str
+    - c = struct(...)
+    test2:
+    - a = [1, 2, 3, struct(...)]
+    - b = str
+    - c = struct(...)
+  is_sequence:
+    test1: 3
+---
+decode:
+  test1:
+    a:
+    - 1
+    - 2
+    - 3
+    b: str
+    c:
+      d: 123
+  test2:
+    a:
+    - 1
+    - 2
+    - 3
+    b: str
+    c:
+      d: 123

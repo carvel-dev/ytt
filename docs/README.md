@@ -40,6 +40,8 @@ example on the playground
   - [Strings](lang-ref-string.md)
   - [Lists](lang-ref-list.md)
   - [Dictionaries (a.k.a.: maps, hashes)](lang-ref-dict.md)
+  - [Structs](lang-ref-structs.md)
+  - [YAML Fragments](lang-ref-yaml-fragment.md)
   - [If conditional](lang-ref-if.md)
   - [For loop](lang-ref-for.md)
   - [Functions](lang-ref-def.md)
