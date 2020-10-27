@@ -8,124 +8,76 @@ import (
 )
 
 type Schema interface {
-	AssignType(document *Document)
+	AssignType(typeable Typeable) TypeCheck
 }
+
+var _ Schema = &AnySchema{}
+var _ Schema = &DocumentSchema{}
 
 type AnySchema struct {
 }
 
 type DocumentSchema struct {
+	Name    string
+	Source  *Document
 	Allowed *DocumentType
 }
 
-type TypeCheck struct {
-	Violations []string
-}
+func NewDocumentSchema(doc *Document) (*DocumentSchema, error) {
+	docType := &DocumentType{Source: doc}
 
-func (tc *TypeCheck) HasViolations() bool {
-	return len(tc.Violations) > 0
-}
-
-type DocumentType struct {
-	*Document
-}
-
-type MapType struct {
-	Map
-}
-
-type MapItemType struct {
-	MapItem
-}
-
-func (mt *MapType) AllowsKey(key interface{}) bool {
-	for _, item := range mt.Items {
-		if item.Key == key {
-			return true
-		}
-	}
-	return false
-}
-
-func (mt MapType) CheckAllows(item *MapItem) TypeCheck {
-	typeCheck := TypeCheck{}
-
-	if !mt.AllowsKey(item.Key) {
-		typeCheck.Violations = append(typeCheck.Violations, fmt.Sprintf("Map item '%s' at %s is not defined in schema", item.Key, item.Position.AsCompactString()))
-	}
-	return typeCheck
-}
-
-func NewDocumentSchema(doc *Document) *DocumentSchema {
-	schemaDoc := &DocumentSchema{Allowed: &DocumentType{&Document{Value: nil}}}
-
-	switch typedContent := doc.Value.(type) {
+	switch typedDocumentValue := doc.Value.(type) {
 	case *Map:
-		mapType := &MapType{}
-		for _, mapItem := range typedContent.Items {
-			mapType.Items = append(mapType.Items, &MapItem{Key: mapItem.Key, Value: mapItem.Value, Type: "string"})
-		}
-		schemaDoc.Allowed = &DocumentType{&Document{Value: mapType}}
+		valueType, _ := NewMapType(typedDocumentValue)
+
+		docType.ValueType = valueType
+	case *Array:
+		return &DocumentSchema{}, NewArraySchema()
 	}
-
-	return schemaDoc
+	return &DocumentSchema{
+		Name:    "dataValues",
+		Source:  doc,
+		Allowed: docType,
+	}, nil
 }
 
-func (d *Document) Check() TypeCheck {
-	var typeCheck TypeCheck
+func NewMapType(m *Map) (*MapType, error) {
+	mapType := &MapType{}
 
-	switch typedContents := d.Value.(type) {
-	case Node:
-		typeCheck = typedContents.Check()
-	}
-
-	return typeCheck
-}
-
-func (m *Map) Check() TypeCheck {
-	typeCheck := TypeCheck{}
-
-	for _, item := range m.Items {
-		check := m.Type.CheckAllows(item)
-		if check.HasViolations() {
-			typeCheck.Violations = append(typeCheck.Violations, check.Violations...)
-			continue
+	for _, mapItem := range m.Items {
+		mapItemType, err := NewMapItemType(mapItem)
+		if err != nil {
+			return nil, err
 		}
-
-		check = item.Check()
-		if check.HasViolations() {
-			typeCheck.Violations = append(typeCheck.Violations, check.Violations...)
-		}
+		mapType.Items = append(mapType.Items, mapItemType)
 	}
-	return typeCheck
+	return mapType, nil
 }
 
-func (d *DocumentSet) Check() TypeCheck { return TypeCheck{} }
-func (d *MapItem) Check() TypeCheck     { return TypeCheck{} }
-func (d *Array) Check() TypeCheck       { return TypeCheck{} }
-func (d *ArrayItem) Check() TypeCheck   { return TypeCheck{} }
-
-func (as AnySchema) AssignType(doc *Document) {
-	doc.Type = DocumentType{}
-}
-
-func (s DocumentSchema) AssignType(doc *Document) {
-	switch typedNode := doc.Value.(type) {
+func NewMapItemType(item *MapItem) (*MapItemType, error) {
+	switch typedContent := item.Value.(type) {
 	case *Map:
-		mapType, ok := s.Allowed.Value.(*MapType)
-		if !ok {
-			typedNode.Type = &MapType{}
-			// during typing we dont report error
-			break
+		mapType, err := NewMapType(typedContent)
+		if err != nil {
+			return nil, err
 		}
-		// set the type on the map
-		typedNode.Type = mapType
-		for _, item := range typedNode.Items {
-			for _, mapTypeItem := range mapType.Items {
-				if item.Key == mapTypeItem.Key {
-					item.Type = mapTypeItem.Type
-				}
-			}
-		}
+		return &MapItemType{Key: item.Key, ValueType: mapType}, nil
+	case string:
+		return &MapItemType{Key: item.Key, ValueType: &ScalarType{Type: *new(string)}}, nil
+	case int:
+		return &MapItemType{Key: item.Key, ValueType: &ScalarType{Type: *new(int)}}, nil
+	case *Array:
+		return nil, NewArraySchema()
 	}
+	return nil, fmt.Errorf("Map Item type did not match any know types")
+}
+
+func NewArraySchema() error {
+	return fmt.Errorf("Arrays are currently not supported in schema")
+}
+
+func (as *AnySchema) AssignType(typeable Typeable) TypeCheck { return TypeCheck{} }
+
+func (s *DocumentSchema) AssignType(typeable Typeable) TypeCheck {
+	return s.Allowed.AssignTypeTo(typeable)
 }

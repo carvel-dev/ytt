@@ -45,7 +45,7 @@ func NewLibraryLoader(libraryCtx LibraryExecutionContext,
 }
 
 func (ll *LibraryLoader) Schemas() ([]*yamlmeta.Document, error) {
-	loader := NewTemplateLoader(NewEmptyDataValues(), nil, ll.ui, ll.templateLoaderOpts, ll.libraryExecFactory, yamlmeta.AnySchema{})
+	loader := NewTemplateLoader(NewEmptyDataValues(), nil, ll.ui, ll.templateLoaderOpts, ll.libraryExecFactory, &yamlmeta.AnySchema{})
 
 	schemaFiles, err := ll.schemaFiles(loader)
 	if err != nil {
@@ -162,7 +162,7 @@ func (ll *LibraryLoader) Eval(values *DataValues, libraryValues []*DataValues) (
 func (ll *LibraryLoader) eval(values *DataValues, libraryValues []*DataValues) ([]EvalExport,
 	map[*FileInLibrary]*yamlmeta.DocumentSet, []files.OutputFile, error) {
 
-	loader := NewTemplateLoader(values, libraryValues, ll.ui, ll.templateLoaderOpts, ll.libraryExecFactory, yamlmeta.AnySchema{})
+	loader := NewTemplateLoader(values, libraryValues, ll.ui, ll.templateLoaderOpts, ll.libraryExecFactory, &yamlmeta.AnySchema{})
 
 	exports := []EvalExport{}
 	docSets := map[*FileInLibrary]*yamlmeta.DocumentSet{}

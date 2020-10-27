@@ -186,15 +186,18 @@ func (l *TemplateLoader) EvalYAML(libraryCtx LibraryExecutionContext, file *file
 	if err != nil {
 		return nil, nil, err
 	}
-	if _, ok := l.schema.(yamlmeta.AnySchema); !ok {
+	if _, ok := l.schema.(*yamlmeta.AnySchema); !ok {
 		var outerTypeCheck yamlmeta.TypeCheck
 		for _, doc := range resultVal.(*yamlmeta.DocumentSet).Items {
-			l.schema.AssignType(doc)
+			outerTypeCheck = l.schema.AssignType(doc)
+			if len(outerTypeCheck.Violations) > 0 {
+				return globals, resultVal.(*yamlmeta.DocumentSet), fmt.Errorf("Typechecking violations found: [%v]", strings.Join(outerTypeCheck.Violations, ", "))
+			}
 			typeCheck := doc.Check()
 			outerTypeCheck.Violations = append(outerTypeCheck.Violations, typeCheck.Violations...)
 		}
 		if len(outerTypeCheck.Violations) > 0 {
-			return globals, resultVal.(*yamlmeta.DocumentSet), fmt.Errorf("Typechecking violations found: %v", outerTypeCheck.Violations)
+			return globals, resultVal.(*yamlmeta.DocumentSet), fmt.Errorf("Typechecking violations found: [%v]", strings.Join(outerTypeCheck.Violations, ", "))
 		}
 	}
 	return globals, resultVal.(*yamlmeta.DocumentSet), nil

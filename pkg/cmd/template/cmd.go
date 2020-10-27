@@ -131,10 +131,10 @@ func (o *TemplateOptions) RunWithFiles(in TemplateInput, ui cmdcore.PlainUI) Tem
 	if err != nil {
 		return TemplateOutput{Err: err}
 	}
-	var schema yamlmeta.Schema = yamlmeta.AnySchema{}
+	var schema yamlmeta.Schema = &yamlmeta.AnySchema{}
 	if len(schemaDocs) > 0 {
 		if o.SchemaEnabled {
-			schema = yamlmeta.NewDocumentSchema(schemaDocs[0])
+			schema, err = yamlmeta.NewDocumentSchema(schemaDocs[0])
 			if err != nil {
 				return TemplateOutput{Err: err}
 			}

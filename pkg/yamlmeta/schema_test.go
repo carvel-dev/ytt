@@ -26,7 +26,10 @@ not_in_schema: "this must fail validation."
 	if err != nil {
 		t.Fatalf("Unable to parse schema file: %s", err)
 	}
-	schema := yamlmeta.NewDocumentSchema(schemaDocSet.GetValues()[1].(*yamlmeta.Document))
+	schema, err := yamlmeta.NewDocumentSchema(schemaDocSet.GetValues()[1].(*yamlmeta.Document))
+	if err != nil {
+		t.Fatalf("Unable to create schema from file %v: %s", schemaDocSet.GetValues()[1].(*yamlmeta.Document).Position, err)
+	}
 	dataValuesDocSet, err := yamlmeta.NewParser(yamlmeta.ParserOpts{}).ParseBytes([]byte(valuesYAML), "dataValues.yml")
 	if err != nil {
 		t.Fatalf("Unable to parse data values file: %s", err)

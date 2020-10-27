@@ -154,10 +154,14 @@ func (n *ArrayItem) GetMetas() []*Meta   { return n.Metas }
 
 func (n *DocumentSet) addMeta(meta *Meta) { n.Metas = append(n.Metas, meta) }
 func (n *Document) addMeta(meta *Meta)    { n.Metas = append(n.Metas, meta) }
-func (n *Map) addMeta(meta *Meta)         { n.Metas = append(n.Metas, meta) }
-func (n *MapItem) addMeta(meta *Meta)     { n.Metas = append(n.Metas, meta) }
-func (n *Array) addMeta(meta *Meta)       { n.Metas = append(n.Metas, meta) }
-func (n *ArrayItem) addMeta(meta *Meta)   { n.Metas = append(n.Metas, meta) }
+func (n *Map) addMeta(meta *Meta) {
+	panic(fmt.Sprintf("Attempted to attach metadata (%s) to Map (%v); maps cannot carry metadata", meta.Data, n))
+}
+func (n *MapItem) addMeta(meta *Meta) { n.Metas = append(n.Metas, meta) }
+func (n *Array) addMeta(meta *Meta) {
+	panic(fmt.Sprintf("Attempted to attach metadata (%s) to Array (%v); arrays cannot carry metadata", meta.Data, n))
+}
+func (n *ArrayItem) addMeta(meta *Meta) { n.Metas = append(n.Metas, meta) }
 
 func (n *DocumentSet) GetAnnotations() interface{} { return n.annotations }
 func (n *Document) GetAnnotations() interface{}    { return n.annotations }
@@ -172,6 +176,96 @@ func (n *Map) SetAnnotations(anns interface{})         { n.annotations = anns }
 func (n *MapItem) SetAnnotations(anns interface{})     { n.annotations = anns }
 func (n *Array) SetAnnotations(anns interface{})       { n.annotations = anns }
 func (n *ArrayItem) SetAnnotations(anns interface{})   { n.annotations = anns }
+
+type TypeCheck struct {
+	Violations []string
+}
+
+func (tc *TypeCheck) HasViolations() bool {
+	return len(tc.Violations) > 0
+}
+
+func (n *Document) Check() TypeCheck {
+	var typeCheck TypeCheck
+
+	switch typedContents := n.Value.(type) {
+	case Node:
+		typeCheck = typedContents.Check()
+	}
+
+	return typeCheck
+}
+func (n *Map) Check() TypeCheck {
+	typeCheck := TypeCheck{}
+	violationErrorMessage := "Map item '%s' at %s was not defined in schema"
+
+	if n.Type == nil {
+		for _, item := range n.Items {
+			violation := fmt.Sprintf(violationErrorMessage, item.Key, item.Position.AsCompactString())
+			typeCheck.Violations = append(typeCheck.Violations, violation)
+		}
+		return typeCheck
+	}
+
+	for _, item := range n.Items {
+		check := n.Type.CheckAllows(item)
+		if check.HasViolations() {
+			typeCheck.Violations = append(typeCheck.Violations, check.Violations...)
+			continue
+		}
+		check = item.Check()
+		if check.HasViolations() {
+			typeCheck.Violations = append(typeCheck.Violations, check.Violations...)
+		}
+	}
+	return typeCheck
+}
+func (n *MapItem) Check() TypeCheck {
+	typeCheck := TypeCheck{}
+	violationErrorMessage := "Map item '%s' at %s was type %T when %T was expected"
+
+	mapItem, ok := n.Type.(*MapItemType)
+	if !ok {
+		panic(fmt.Sprintf("Map item '%s' at %s was not a supported type", n.Key, n.Position.AsCompactString()))
+	}
+
+	switch typedValue := n.Value.(type) {
+	case *Map:
+		check := typedValue.Check()
+		typeCheck.Violations = append(typeCheck.Violations, check.Violations...)
+
+	case string:
+		scalarType, ok := mapItem.ValueType.(*ScalarType)
+		if !ok {
+			violation := fmt.Sprintf(violationErrorMessage, n.Key, n.Position.AsCompactString(), typedValue, mapItem.ValueType)
+			typeCheck.Violations = append(typeCheck.Violations, violation)
+			return typeCheck
+		}
+
+		if _, ok := scalarType.Type.(string); !ok {
+			violation := fmt.Sprintf(violationErrorMessage, n.Key, n.Position.AsCompactString(), typedValue, scalarType.Type)
+			typeCheck.Violations = append(typeCheck.Violations, violation)
+		}
+
+	case int:
+		scalarType, ok := mapItem.ValueType.(*ScalarType)
+		if !ok {
+			violation := fmt.Sprintf(violationErrorMessage, n.Key, n.Position.AsCompactString(), typedValue, mapItem.ValueType)
+			typeCheck.Violations = append(typeCheck.Violations, violation)
+			return typeCheck
+		}
+
+		if _, ok := scalarType.Type.(int); !ok {
+			violation := fmt.Sprintf(violationErrorMessage, n.Key, n.Position.AsCompactString(), typedValue, scalarType.Type)
+			typeCheck.Violations = append(typeCheck.Violations, violation)
+		}
+	}
+
+	return typeCheck
+}
+func (n *DocumentSet) Check() TypeCheck { return TypeCheck{} }
+func (n *Array) Check() TypeCheck       { return TypeCheck{} }
+func (n *ArrayItem) Check() TypeCheck   { return TypeCheck{} }
 
 // Below methods disallow marshaling of nodes directly
 var _ []yaml.Marshaler = []yaml.Marshaler{&DocumentSet{}, &Document{}, &Map{}, &MapItem{}, &Array{}, &ArrayItem{}}

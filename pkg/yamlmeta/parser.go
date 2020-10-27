@@ -70,6 +70,7 @@ func (p *Parser) ParseBytes(data []byte, associatedName string) (*DocumentSet, e
 		docSet.Items[0].Position = filepos.NewPosition(1)
 		docSet.Items[0].Position.SetFile(associatedName)
 	}
+	setPositionOfCollections(docSet, nil)
 
 	return docSet, nil
 }
@@ -123,10 +124,35 @@ func (p *Parser) parseBytes(data []byte, lineCorrection int) (*DocumentSet, erro
 	return docSet, nil
 }
 
+// setPositionOfCollections assigns the Position of Maps and Arrays to their parent
+//   these kinds of nodes are not visible and therefore technically don't have a position.
+//   However, it is useful when communicating certain error cases to be able to reference
+//   a collection by line number.
+//   The position of the parent matches well with what the user sees. E.g. the MapItem that
+//   holds an Array is a great place to point at when referring to the entire array.
+func setPositionOfCollections(node Node, parent Node) {
+	if !node.GetPosition().IsKnown() {
+		if parent != nil {
+			if mapNode, ok := node.(*Map); ok {
+				mapNode.Position = parent.GetPosition()
+			}
+			//if arrayNode, ok := node.(*Array); ok {
+			//	arrayNode.Position = parent.GetPosition()
+			//}
+		}
+	}
+	for _, val := range node.GetValues() {
+		child, isNode := val.(Node)
+		if isNode {
+			setPositionOfCollections(child, node)
+		}
+	}
+}
+
 func (p *Parser) parse(val interface{}, lineCorrection int) interface{} {
 	switch typedVal := val.(type) {
 	case yaml.MapSlice:
-		result := &Map{Position: filepos.NewUnknownPosition()}
+		result := &Map{Position: p.newUnknownPosition()}
 		for _, item := range typedVal {
 			result.Items = append(result.Items, &MapItem{
 				Key:      item.Key,

@@ -12,7 +12,7 @@ import (
 	"github.com/k14s/ytt/pkg/files"
 )
 
-func TestDataValuesConformingToSchemaChecksOk(t *testing.T) {
+func TestMapOnlySchemaChecksOk(t *testing.T) {
 	schemaYAML := `#@schema/match data_values=True
 ---
 db_conn:
@@ -20,6 +20,9 @@ db_conn:
   port: 0
   username: ""
   password: ""
+  metadata:
+    run: jobName
+top_level: ""
 `
 	dataValuesYAML := `#@data/values
 ---
@@ -28,6 +31,9 @@ db_conn:
   port: 5432
   username: sa
   password: changeme
+  metadata:
+    run: ./build.sh
+top_level: key
 `
 	templateYAML := `---
 rendered: true`
@@ -55,13 +61,50 @@ rendered: true`
 	}
 }
 
-func TestDataValuesNotConformingToSchemaFailsCheck(t *testing.T) {
+func TestDataValuesNotConformingToEmptySchemaFailsCheck(t *testing.T) {
 	schemaYAML := `#@schema/match data_values=True
 ---
 `
 	dataValuesYAML := `#@data/values
 ---
 not_in_schema: "this should fail the type check!"
+`
+
+	filesToProcess := files.NewSortedFiles([]*files.File{
+		files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
+		files.MustNewFileFromSource(files.NewBytesSource("values.yml", []byte(dataValuesYAML))),
+	})
+
+	ui := cmdcore.NewPlainUI(false)
+	opts := cmdtpl.NewOptions()
+	opts.SchemaEnabled = true
+	out := opts.RunWithFiles(cmdtpl.TemplateInput{Files: filesToProcess}, ui)
+
+	if out.Err == nil {
+		t.Fatalf("Expected an error about a schema check failure, but succeeded.")
+	}
+	expectedErr := "Typechecking violations found: [Expected node at values.yml:2 to be nil, but was a *yamlmeta.Map]"
+	if !strings.Contains(out.Err.Error(), expectedErr) {
+		t.Fatalf("Expected an error about a schema check failure, but got: %s", out.Err.Error())
+	}
+
+}
+
+func TestMapOnlyDataValuesNotConformingToSchemaFailsCheck(t *testing.T) {
+	schemaYAML := `#@schema/match data_values=True
+---
+db_conn:
+  port: 0
+  username:
+    main: "0"
+`
+	dataValuesYAML := `#@data/values
+---
+db_conn:
+  port: localHost
+  username:
+    main: 123
+  password: changeme
 `
 
 	filesToProcess := files.NewSortedFiles([]*files.File{
@@ -75,11 +118,41 @@ not_in_schema: "this should fail the type check!"
 	out := opts.RunWithFiles(cmdtpl.TemplateInput{Files: filesToProcess}, ui)
 
 	if out.Err == nil {
-		t.Fatalf("Expected an error about a schema check failure, but succeeded.")
+		t.Fatalf("Expected an error about the schema check failures, but succeeded.")
 	}
-	expectedErr := "Typechecking violations found: [Map item 'not_in_schema' at dataValues.yml:3 is not defined in schema]"
+	expectedErr := "Typechecking violations found: [Map item 'port' at dataValues.yml:4 was type string when int was expected, Map item 'main' at dataValues.yml:6 was type int when string was expected, Map item 'password' at dataValues.yml:7 is not defined in schema]"
 	if !strings.Contains(out.Err.Error(), expectedErr) {
 		t.Fatalf("Expected an error about a schema check failure, but got: %s", out.Err.Error())
+	}
+
+}
+
+func TestDataValuesAndSchemaContainsArrayFailsCheck(t *testing.T) {
+	schemaYAML := `#@schema/match data_values=True
+---
+- ""
+`
+	dataValuesYAML := `#@data/values
+---
+- test
+`
+
+	filesToProcess := files.NewSortedFiles([]*files.File{
+		files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
+		files.MustNewFileFromSource(files.NewBytesSource("dataValues.yml", []byte(dataValuesYAML))),
+	})
+
+	ui := cmdcore.NewPlainUI(false)
+	opts := cmdtpl.NewOptions()
+	opts.SchemaEnabled = true
+	out := opts.RunWithFiles(cmdtpl.TemplateInput{Files: filesToProcess}, ui)
+
+	if out.Err == nil {
+		t.Fatalf("Expected an error about arrays not being supported in schemas, but succeeded.")
+	}
+	expectedErr := "Arrays are currently not supported in schema"
+	if !strings.Contains(out.Err.Error(), expectedErr) {
+		t.Fatalf("Expected an error about about arrays not being supported, but got: %s", out.Err.Error())
 	}
 
 }
@@ -136,26 +209,12 @@ rendered: true`
 func TestSchemaFileButNoSchemaFlagExpectsWarning(t *testing.T) {
 	schemaYAML := `#@schema/match data_values=True
 ---
-db_conn:
-  hostname: ""
-  port: 0
-  username: ""
-  password: ""
-`
-	dataValuesYAML := `#@data/values
----
-db_conn:
-  hostname: server.example.com
-  port: 5432
-  username: sa
-  password: changeme
 `
 	templateYAML := `---
 rendered: true`
 
 	filesToProcess := files.NewSortedFiles([]*files.File{
 		files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
-		files.MustNewFileFromSource(files.NewBytesSource("dataValues.yml", []byte(dataValuesYAML))),
 		files.MustNewFileFromSource(files.NewBytesSource("template.yml", []byte(templateYAML))),
 	})
 
