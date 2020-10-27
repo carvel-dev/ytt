@@ -97,6 +97,20 @@ func (p DataValuesPreProcessing) templateFile(fileInLib *FileInLibrary) ([]*yaml
 	if err != nil {
 		return nil, err
 	}
+	if _, ok := p.loader.schema.(*yamlmeta.AnySchema); !ok {
+		var outerTypeCheck yamlmeta.TypeCheck
+		for _, doc := range resultDocSet.Items {
+			outerTypeCheck = p.loader.schema.AssignType(doc)
+			if len(outerTypeCheck.Violations) > 0 {
+				return resultDocSet.Items, fmt.Errorf("Typechecking violations found: [%v]", strings.Join(outerTypeCheck.Violations, ", "))
+			}
+			typeCheck := doc.Check()
+			outerTypeCheck.Violations = append(outerTypeCheck.Violations, typeCheck.Violations...)
+		}
+		if len(outerTypeCheck.Violations) > 0 {
+			return resultDocSet.Items, fmt.Errorf("Typechecking violations found: [%v]", strings.Join(outerTypeCheck.Violations, ", "))
+		}
+	}
 
 	tplOpts := yamltemplate.MetasOpts{IgnoreUnknown: p.IgnoreUnknownComments}
 
