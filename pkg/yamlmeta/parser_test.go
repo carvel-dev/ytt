@@ -5,7 +5,9 @@ package yamlmeta_test
 
 import (
 	"fmt"
+	"github.com/k14s/difflib"
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/k14s/ytt/pkg/filepos"
@@ -37,8 +39,9 @@ func TestParserDocSetEmpty(t *testing.T) {
 	expectedValStr := printer.PrintStr(expectedVal)
 
 	if parsedValStr != expectedValStr {
-		t.Fatalf("not equal\nparsed:\n%sexpected:\n%s", parsedValStr, expectedValStr)
+		t.Fatalf("Not equal; diff expected...actual:\n%v\n", diffText(expectedValStr, parsedValStr))
 	}
+
 }
 
 func TestParserDocSetNewline(t *testing.T) {
@@ -64,8 +67,9 @@ func TestParserDocSetNewline(t *testing.T) {
 	expectedValStr := printer.PrintStr(expectedVal)
 
 	if parsedValStr != expectedValStr {
-		t.Fatalf("not equal\nparsed:\n%sexpected:\n%s", parsedValStr, expectedValStr)
+		t.Fatalf("Not equal; diff expected...actual:\n%v\n", diffText(expectedValStr, parsedValStr))
 	}
+
 }
 
 func TestParserOnlyComment(t *testing.T) {
@@ -124,8 +128,9 @@ func TestParserDoc(t *testing.T) {
 	expectedValStr := printer.PrintStr(expectedVal)
 
 	if parsedValStr != expectedValStr {
-		t.Fatalf("not equal\nparsed:\n%sexpected:\n%s", parsedValStr, expectedValStr)
+		t.Fatalf("Not equal; diff expected...actual:\n%v\n", diffText(expectedValStr, parsedValStr))
 	}
+
 }
 
 func TestParserDocWithoutDashes(t *testing.T) {
@@ -157,8 +162,9 @@ func TestParserDocWithoutDashes(t *testing.T) {
 	expectedValStr := printer.PrintStr(expectedVal)
 
 	if parsedValStr != expectedValStr {
-		t.Fatalf("not equal\nparsed:\n%sexpected:\n%s", parsedValStr, expectedValStr)
+		t.Fatalf("Not equal; diff expected...actual:\n%v\n", diffText(expectedValStr, parsedValStr))
 	}
+
 }
 
 func TestParserRootValue(t *testing.T) {
@@ -300,8 +306,9 @@ array:
 	expectedValStr := printer.PrintStr(expectedVal)
 
 	if parsedValStr != expectedValStr {
-		t.Fatalf("not equal\nparsed:\n%sexpected:\n%s", parsedValStr, expectedValStr)
+		t.Fatalf("Not equal; diff expected...actual:\n%v\n", diffText(expectedValStr, parsedValStr))
 	}
+
 }
 
 func TestParserMapComments(t *testing.T) {
@@ -370,8 +377,9 @@ map:
 	expectedValStr := printer.PrintStr(expectedVal)
 
 	if parsedValStr != expectedValStr {
-		t.Fatalf("not equal\nparsed:\n%sexpected:\n%s", parsedValStr, expectedValStr)
+		t.Fatalf("Not equal; diff expected...actual:\n%v\n", diffText(expectedValStr, parsedValStr))
 	}
+
 }
 
 func TestParserArrayComments(t *testing.T) {
@@ -483,8 +491,9 @@ array:
 	expectedValStr := printer.PrintStr(expectedVal)
 
 	if parsedValStr != expectedValStr {
-		t.Fatalf("not equal\nparsed:\n%sexpected:\n%s", parsedValStr, expectedValStr)
+		t.Fatalf("Not equal; diff expected...actual:\n%v\n", diffText(expectedValStr, parsedValStr))
 	}
+
 }
 
 func TestParserDocSetComments(t *testing.T) {
@@ -530,8 +539,9 @@ func TestParserDocSetComments(t *testing.T) {
 	expectedValStr := printer.PrintStr(expectedVal)
 
 	if parsedValStr != expectedValStr {
-		t.Fatalf("not equal\nparsed:\n%sexpected:\n%s", parsedValStr, expectedValStr)
+		t.Fatalf("Not equal; diff expected...actual:\n%v\n", diffText(expectedValStr, parsedValStr))
 	}
+
 }
 
 func TestParserDocSetOnlyComments2(t *testing.T) {
@@ -563,8 +573,9 @@ func TestParserDocSetOnlyComments2(t *testing.T) {
 	expectedValStr := printer.PrintStr(expectedVal)
 
 	if parsedValStr != expectedValStr {
-		t.Fatalf("not equal\nparsed:\n%sexpected:\n%s", parsedValStr, expectedValStr)
+		t.Fatalf("Not equal; diff expected...actual:\n%v\n", diffText(expectedValStr, parsedValStr))
 	}
+
 }
 
 func TestParserDocSetOnlyComments3(t *testing.T) {
@@ -593,8 +604,9 @@ func TestParserDocSetOnlyComments3(t *testing.T) {
 	expectedValStr := printer.PrintStr(expectedVal)
 
 	if parsedValStr != expectedValStr {
-		t.Fatalf("not equal\nparsed:\n%sexpected:\n%s", parsedValStr, expectedValStr)
+		t.Fatalf("Not equal; diff expected...actual:\n%v\n", diffText(expectedValStr, parsedValStr))
 	}
+
 }
 
 func TestParserDocSetOnlyComments(t *testing.T) {
@@ -626,7 +638,7 @@ func TestParserDocSetOnlyComments(t *testing.T) {
 	expectedValStr := printer.PrintStr(expectedVal)
 
 	if parsedValStr != expectedValStr {
-		t.Fatalf("not equal\nparsed:\n%sexpected:\n%s", parsedValStr, expectedValStr)
+		t.Fatalf("Not equal; diff expected...actual:\n%v\n", diffText(expectedValStr, parsedValStr))
 	}
 }
 
@@ -672,8 +684,9 @@ func TestParserDocSetCommentsNoFirstDashes(t *testing.T) {
 	expectedValStr := printer.PrintStr(expectedVal)
 
 	if parsedValStr != expectedValStr {
-		t.Fatalf("not equal\nparsed:\n%sexpected:\n%s", parsedValStr, expectedValStr)
+		t.Fatalf("Not equal; diff expected...actual:\n%v\n", diffText(expectedValStr, parsedValStr))
 	}
+
 }
 
 func TestParserUnindentedComment(t *testing.T) {
@@ -731,8 +744,9 @@ key:
 	expectedValStr := printer.PrintStr(expectedVal)
 
 	if parsedValStr != expectedValStr {
-		t.Fatalf("not equal\nparsed:\n%sexpected:\n%s", parsedValStr, expectedValStr)
+		t.Fatalf("Not equal; diff expected...actual:\n%v\n", diffText(expectedValStr, parsedValStr))
 	}
+
 }
 
 func TestParserInvalidDoc(t *testing.T) {
@@ -1028,8 +1042,7 @@ func (ex parserExample) checkDocSet(t *testing.T, parsedVal *yamlmeta.DocumentSe
 	expectedValStr := printer.PrintStr(ex.Expected)
 
 	if parsedValStr != expectedValStr {
-		t.Errorf("%s: not equal\nparsed:\n%s\nexpected:\n%s",
-			ex.Description, parsedValStr, expectedValStr)
+		t.Fatalf("Not equal; diff expected...actual:\n%v\n", diffText(expectedValStr, parsedValStr))
 	}
 }
 
@@ -1042,6 +1055,30 @@ func (ex parserExample) checkErr(t *testing.T, err error) {
 	expectedValStr := ex.ExpectedErr
 
 	if parsedValStr != expectedValStr {
-		t.Fatalf("not equal\nparsed:\n%s\nexpected:\n%s", parsedValStr, expectedValStr)
+		t.Fatalf("Not equal; diff expected...actual:\n%v\n", diffText(expectedValStr, parsedValStr))
 	}
+}
+
+func diffText(left, right string) string {
+	var sb strings.Builder
+
+	recs := difflib.Diff(strings.Split(right, "\n"), strings.Split(left, "\n"))
+
+	for _, diff := range recs {
+		var mark string
+
+		switch diff.Delta {
+		case difflib.RightOnly:
+			mark = " + |"
+		case difflib.LeftOnly:
+			mark = " - |"
+		case difflib.Common:
+			mark = "   |"
+		}
+
+		// make sure to have line numbers to make sure diff is truly unique
+		sb.WriteString(fmt.Sprintf("%3d,%3d%s%s\n", diff.LineLeft, diff.LineRight, mark, diff.Payload))
+	}
+
+	return sb.String()
 }
