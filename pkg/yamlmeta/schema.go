@@ -28,11 +28,19 @@ func NewDocumentSchema(doc *Document) (*DocumentSchema, error) {
 
 	switch typedDocumentValue := doc.Value.(type) {
 	case *Map:
-		valueType, _ := NewMapType(typedDocumentValue)
+		valueType, err := NewMapType(typedDocumentValue)
+		if err != nil {
+			return nil, err
+		}
 
 		docType.ValueType = valueType
 	case *Array:
-		return &DocumentSchema{}, NewArraySchema()
+		valueType, err := NewArrayType(typedDocumentValue)
+		if err != nil {
+			return nil, err
+		}
+
+		docType.ValueType = valueType
 	}
 	return &DocumentSchema{
 		Name:    "dataValues",
@@ -55,25 +63,57 @@ func NewMapType(m *Map) (*MapType, error) {
 }
 
 func NewMapItemType(item *MapItem) (*MapItemType, error) {
-	switch typedContent := item.Value.(type) {
+	valueType, err := newCollectionItemValueType(item.Value)
+	if err != nil {
+		return nil, err
+	}
+	return &MapItemType{Key: item.Key, ValueType: valueType}, nil
+}
+
+func NewArrayType(a *Array) (*ArrayType, error) {
+	if len(a.Items) != 1 {
+		return nil, fmt.Errorf("Expected only one element in the array to determine type, but found %v", len(a.Items))
+	}
+
+	arrayItemType, err := NewArrayItemType(a.Items[0])
+	if err != nil {
+		return nil, err
+	}
+
+	return &ArrayType{ItemsType: arrayItemType}, nil
+}
+
+func NewArrayItemType(item *ArrayItem) (*ArrayItemType, error) {
+	valueType, err := newCollectionItemValueType(item.Value)
+	if err != nil {
+		return nil, err
+	}
+	return &ArrayItemType{ValueType: valueType}, nil
+}
+
+func newCollectionItemValueType(collectionItemValue interface{}) (Type, error) {
+	switch typedContent := collectionItemValue.(type) {
 	case *Map:
 		mapType, err := NewMapType(typedContent)
 		if err != nil {
 			return nil, err
 		}
-		return &MapItemType{Key: item.Key, ValueType: mapType}, nil
-	case string:
-		return &MapItemType{Key: item.Key, ValueType: &ScalarType{Type: *new(string)}}, nil
-	case int:
-		return &MapItemType{Key: item.Key, ValueType: &ScalarType{Type: *new(int)}}, nil
+		return mapType, nil
 	case *Array:
-		return nil, NewArraySchema()
+		arrayType, err := NewArrayType(typedContent)
+		if err != nil {
+			return nil, err
+		}
+		return arrayType, nil
+	case string:
+		return &ScalarType{Type: *new(string)}, nil
+	case int:
+		return &ScalarType{Type: *new(int)}, nil
+	case bool:
+		return &ScalarType{Type: *new(bool)}, nil
 	}
-	return nil, fmt.Errorf("Map Item type did not match any know types")
-}
 
-func NewArraySchema() error {
-	return fmt.Errorf("Arrays are currently not supported in schema")
+	return nil, fmt.Errorf("Collection item type did not match any known types")
 }
 
 func (as *AnySchema) AssignType(typeable Typeable) TypeCheck { return TypeCheck{} }
