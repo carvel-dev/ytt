@@ -17,6 +17,8 @@ type Type interface {
 var _ Type = (*DocumentType)(nil)
 var _ Type = (*MapType)(nil)
 var _ Type = (*MapItemType)(nil)
+var _ Type = (*ArrayType)(nil)
+var _ Type = (*ArrayItemType)(nil)
 
 type Typeable interface {
 	// TODO: extract methods common to Node and Typeable to a shared interface?
@@ -29,10 +31,14 @@ type Typeable interface {
 var _ Typeable = (*Document)(nil)
 var _ Typeable = (*Map)(nil)
 var _ Typeable = (*MapItem)(nil)
+var _ Typeable = (*Array)(nil)
+var _ Typeable = (*ArrayItem)(nil)
 
-func (n *Document) SetType(t Type) { n.Type = t }
-func (n *Map) SetType(t Type)      { n.Type = t }
-func (n *MapItem) SetType(t Type)  { n.Type = t }
+func (n *Document) SetType(t Type)  { n.Type = t }
+func (n *Map) SetType(t Type)       { n.Type = t }
+func (n *MapItem) SetType(t Type)   { n.Type = t }
+func (n *Array) SetType(t Type)     { n.Type = t }
+func (n *ArrayItem) SetType(t Type) { n.Type = t }
 
 type DocumentType struct {
 	Source    *Document
@@ -45,7 +51,12 @@ type MapItemType struct {
 	Key       interface{} // usually a string
 	ValueType Type
 }
-
+type ArrayType struct {
+	ItemsType Type
+}
+type ArrayItemType struct {
+	ValueType Type
+}
 type ScalarType struct {
 	Type interface{}
 }
@@ -56,7 +67,12 @@ func (t *DocumentType) CheckAllows(item *MapItem) TypeCheck {
 func (m MapItemType) CheckAllows(item *MapItem) TypeCheck {
 	panic("Attempt to check if a MapItem is allowed as a value of a MapItem.")
 }
-
+func (a ArrayType) CheckAllows(item *MapItem) TypeCheck {
+	panic("Attempt to check if a MapItem is allowed as a value of an Array.")
+}
+func (a ArrayItemType) CheckAllows(item *MapItem) TypeCheck {
+	panic("Attempt to check if a MapItem is allowed as a value of an ArrayItemType.")
+}
 func (m ScalarType) CheckAllows(item *MapItem) TypeCheck {
 	panic("Attempt to check if a MapItem is allowed as a value of a ScalarType.")
 }
@@ -113,6 +129,33 @@ func (t *MapItemType) AssignTypeTo(typeable Typeable) (chk TypeCheck) {
 	} // else, at a leaf
 	return
 }
+func (t *ArrayType) AssignTypeTo(typeable Typeable) (chk TypeCheck) {
+	arrayNode, ok := typeable.(*Array)
+	if !ok {
+		chk.Violations = []string{fmt.Sprintf("Expected node at %s to be a %T, but was a %T", typeable.GetPosition().AsCompactString(), &Array{}, typeable)}
+		return
+	}
+	typeable.SetType(t)
+	for _, arrayItem := range arrayNode.Items {
+		childCheck := t.ItemsType.AssignTypeTo(arrayItem)
+		chk.Violations = append(chk.Violations, childCheck.Violations...)
+	}
+	return
+}
+func (t ArrayItemType) AssignTypeTo(typeable Typeable) (chk TypeCheck) {
+	arrayItem, ok := typeable.(*ArrayItem)
+	if !ok {
+		chk.Violations = []string{fmt.Sprintf("Expected node at %s to be a %T, but was a %T", typeable.GetPosition().AsCompactString(), &ArrayItem{}, typeable)}
+		return
+	}
+	typeable.SetType(t)
+	typeableValue, ok := arrayItem.Value.(Typeable)
+	if ok {
+		childCheck := t.ValueType.AssignTypeTo(typeableValue)
+		chk.Violations = append(chk.Violations, childCheck.Violations...)
+	} // else, at a leaf
+	return
+}
 
 func (t *ScalarType) AssignTypeTo(typeable Typeable) (chk TypeCheck) {
 	switch t.Type.(type) {
@@ -135,11 +178,9 @@ func (t *MapType) AllowsKey(key interface{}) bool {
 	return false
 }
 
-func (t *MapType) CheckAllows(item *MapItem) TypeCheck {
-	typeCheck := TypeCheck{}
-
+func (t *MapType) CheckAllows(item *MapItem) (chk TypeCheck) {
 	if !t.AllowsKey(item.Key) {
-		typeCheck.Violations = append(typeCheck.Violations, fmt.Sprintf("Map item '%s' at %s is not defined in schema", item.Key, item.Position.AsCompactString()))
+		chk.Violations = append(chk.Violations, fmt.Sprintf("Map item '%s' at %s is not defined in schema", item.Key, item.Position.AsCompactString()))
 	}
-	return typeCheck
+	return chk
 }

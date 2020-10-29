@@ -22,12 +22,99 @@ db_conn:
   password: ""
   metadata:
     run: jobName
+  tls_only: false
 top_level: ""
 `
 	dataValuesYAML := `#@data/values
 ---
 db_conn:
   hostname: server.example.com
+  port: 5432
+  username: sa
+  password: changeme
+  metadata:
+    run: ./build.sh
+  tls_only: true
+top_level: key
+`
+	templateYAML := `---
+rendered: true`
+
+	filesToProcess := files.NewSortedFiles([]*files.File{
+		files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
+		files.MustNewFileFromSource(files.NewBytesSource("dataValues.yml", []byte(dataValuesYAML))),
+		files.MustNewFileFromSource(files.NewBytesSource("template.yml", []byte(templateYAML))),
+	})
+
+	ui := cmdcore.NewPlainUI(false)
+	opts := cmdtpl.NewOptions()
+	opts.SchemaEnabled = true
+	out := opts.RunWithFiles(cmdtpl.TemplateInput{Files: filesToProcess}, ui)
+	if out.Err != nil {
+		t.Fatalf("Expected RunWithFiles to succeed, but was error: %s", out.Err)
+	}
+
+	if len(out.Files) != 1 {
+		t.Fatalf("Expected number of output files to be 1, but was: %d", len(out.Files))
+	}
+
+	if string(out.Files[0].Bytes()) != "rendered: true\n" {
+		t.Fatalf("Expected output to only include template YAML, but got: %s", out.Files[0].Bytes())
+	}
+}
+
+func TestArrayOnlySchemaChecksOk(t *testing.T) {
+	schemaYAML := `#@schema/match data_values=True
+---
+- ""
+`
+	dataValuesYAML := `#@data/values
+---
+- first
+- second
+`
+	templateYAML := `---
+rendered: true`
+
+	filesToProcess := files.NewSortedFiles([]*files.File{
+		files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
+		files.MustNewFileFromSource(files.NewBytesSource("dataValues.yml", []byte(dataValuesYAML))),
+		files.MustNewFileFromSource(files.NewBytesSource("template.yml", []byte(templateYAML))),
+	})
+
+	ui := cmdcore.NewPlainUI(false)
+	opts := cmdtpl.NewOptions()
+	opts.SchemaEnabled = true
+	out := opts.RunWithFiles(cmdtpl.TemplateInput{Files: filesToProcess}, ui)
+	if out.Err != nil {
+		t.Fatalf("Expected RunWithFiles to succeed, but was error: %s", out.Err)
+	}
+
+	if len(out.Files) != 1 {
+		t.Fatalf("Expected number of output files to be 1, but was: %d", len(out.Files))
+	}
+
+	if string(out.Files[0].Bytes()) != "rendered: true\n" {
+		t.Fatalf("Expected output to only include template YAML, but got: %s", out.Files[0].Bytes())
+	}
+}
+
+func TestMapAndArraySchemaChecksOk(t *testing.T) {
+	schemaYAML := `#@schema/match data_values=True
+---
+db_conn:
+- hostname: ""
+  port: 0
+  username: ""
+  password: ""
+  metadata:
+    run: jobName
+top_level: ""
+`
+	dataValuesYAML := `#@data/values
+---
+db_conn:
+- hostname: server.example.com
   port: 5432
   username: sa
   password: changeme
@@ -87,7 +174,6 @@ not_in_schema: "this should fail the type check!"
 	if !strings.Contains(out.Err.Error(), expectedErr) {
 		t.Fatalf("Expected an error about a schema check failure, but got: %s", out.Err.Error())
 	}
-
 }
 
 func TestMapOnlyDataValuesNotConformingToSchemaFailsCheck(t *testing.T) {
@@ -124,17 +210,30 @@ db_conn:
 	if !strings.Contains(out.Err.Error(), expectedErr) {
 		t.Fatalf("Expected an error about a schema check failure, but got: %s", out.Err.Error())
 	}
-
 }
 
-func TestDataValuesAndSchemaContainsArrayFailsCheck(t *testing.T) {
+func TestArrayDataValuesNotConformingToSchemaFailsCheck(t *testing.T) {
 	schemaYAML := `#@schema/match data_values=True
 ---
-- ""
+clients:
+- id: 0
+  name: ""
+  flags:
+  - name: ""
+    set: false
 `
 	dataValuesYAML := `#@data/values
 ---
-- test
+clients:
+- id: 1
+  name: Alice
+  flags:
+  - name: secure
+    value: true   #! "value" is not in the schema
+- id: 2
+  name: Bob
+  flags:
+  - secure  #! expecting a map, got a string
 `
 
 	filesToProcess := files.NewSortedFiles([]*files.File{
@@ -148,13 +247,12 @@ func TestDataValuesAndSchemaContainsArrayFailsCheck(t *testing.T) {
 	out := opts.RunWithFiles(cmdtpl.TemplateInput{Files: filesToProcess}, ui)
 
 	if out.Err == nil {
-		t.Fatalf("Expected an error about arrays not being supported in schemas, but succeeded.")
+		t.Fatalf("Expected an error about the schema check failures, but succeeded.")
 	}
-	expectedErr := "Arrays are currently not supported in schema"
+	expectedErr := "Typechecking violations found: [Map item 'value' at dataValues.yml:8 is not defined in schema, Array item at dataValues.yml:12 was type string when *yamlmeta.MapType was expected]"
 	if !strings.Contains(out.Err.Error(), expectedErr) {
-		t.Fatalf("Expected an error about about arrays not being supported, but got: %s", out.Err.Error())
+		t.Fatalf("Expected an error about a schema check failure, but got: %s", out.Err.Error())
 	}
-
 }
 
 func TestMultiDataValuesOneDataValuesNotConformingToSchemaFailsCheck(t *testing.T) {
@@ -262,5 +360,4 @@ rendered: true`
 	if !strings.Contains(out.Err.Error(), "Schema experiment flag was enabled but no schema document was provided.") {
 		t.Fatalf("Expected an error about schema enabled but no schema provided, but got: %v", out.Err.Error())
 	}
-
 }

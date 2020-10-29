@@ -73,6 +73,7 @@ type MapItem struct {
 }
 
 type Array struct {
+	Type     Type
 	Metas    []*Meta
 	Items    []*ArrayItem
 	Position *filepos.Position
@@ -81,6 +82,7 @@ type Array struct {
 }
 
 type ArrayItem struct {
+	Type     Type
 	Metas    []*Meta
 	Value    interface{}
 	Position *filepos.Position
