@@ -41,17 +41,6 @@ rm -f ./ytt
 go build $repro_flags -o ytt ./cmd/ytt/...
 ./ytt version
 
-# build aws lambda binary
-export GOOS=linux GOARCH=amd64
-go build $repro_flags -o ./tmp/ytt ./cmd/ytt/...
-go build $repro_flags -o ./tmp/main ./cmd/ytt-lambda-website/...
-(
-	cd tmp
-	chmod +x main ytt
-	rm -f ytt-lambda-website.zip
-	zip ytt-lambda-website.zip main ytt
-)
-
 # TODO ./hack/generate-docs.sh
 
 echo SUCCESS
