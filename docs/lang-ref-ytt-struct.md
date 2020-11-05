@@ -59,6 +59,10 @@ struct.encode(value)
     Keys of the items in `dict` values must be strings.
   - if a `dict` or `list` contains a value that is a `dict`, it is likewise converted to a `struct`.
 
+**Notes:**
+- `encode()` cannot encode functions nor [YAML Fragments](lang-ref-yaml-fragment.md). If you wish to make a struct that
+ contains attributes that hold these types, consider [`make()`](#structmake).
+
 **Examples:** 
 
 _Example 1: Data structure from a dictionary_
@@ -116,8 +120,8 @@ struct.make(key1=value1, key2=value2, ...)
 
 **Notes:**
 - `make()` does not modify `values` in any way (e.g. if `valueN` is a dictionary, it is
-  _not_ converted into a `struct`). To recursively build a hierarchy of `struct`s, see [`struct.encode()`](#structencode).
-  
+  _not_ converted into a `struct`). To recursively build a hierarchy of `struct`s from `dict`,
+   `list`, and scalars, see [`struct.encode()`](#structencode).
 
 **Examples:** 
 
