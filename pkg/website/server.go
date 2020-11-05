@@ -15,10 +15,11 @@ import (
 )
 
 type ServerOpts struct {
-	ListenAddr   string
-	CheckCookie  bool
-	TemplateFunc func([]byte) ([]byte, error)
-	ErrorFunc    func(error) ([]byte, error)
+	ListenAddr      string
+	RedirectToHTTPs bool
+	CheckCookie     bool
+	TemplateFunc    func([]byte) ([]byte, error)
+	ErrorFunc       func(error) ([]byte, error)
 }
 
 type Server struct {
@@ -150,6 +151,9 @@ func (s *Server) write(w http.ResponseWriter, data []byte) {
 }
 
 func (s *Server) redirectToHTTPs(wrappedFunc func(http.ResponseWriter, *http.Request)) func(http.ResponseWriter, *http.Request) {
+	if !s.opts.RedirectToHTTPs {
+		return wrappedFunc
+	}
 	return func(w http.ResponseWriter, r *http.Request) {
 		checkHTTPs := true
 		clientIP, _, err := net.SplitHostPort(r.RemoteAddr)
