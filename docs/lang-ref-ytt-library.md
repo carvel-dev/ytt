@@ -72,4 +72,4 @@ app_values = app1_with_vals.data_values()
 
 #### Examples
 
-See [ytt-library-module example](../examples/playground/example-ytt-library-module).
+See [ytt-library-module example](../examples/playground/basics/example-ytt-library-module).
