@@ -98,7 +98,7 @@ func (s *Server) exampleSetsHandler(w http.ResponseWriter, r *http.Request) {
 func (s *Server) examplesHandler(w http.ResponseWriter, r *http.Request) {
 	for _, eg := range exampleSets {
 		for _, example := range eg.Examples {
-			if example.ID == strings.TrimPrefix(r.URL.Path, "/examples/") {
+			if strings.Contains(r.URL.Path, example.ID) {
 				exampleBytes, err := json.Marshal(example)
 				if err != nil {
 					s.logError(w, err)
@@ -111,10 +111,11 @@ func (s *Server) examplesHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	s.logError(w, fmt.Errorf("Did not find example"))
+	s.logError(w, fmt.Errorf("Did not find example: %v", strings.TrimPrefix(r.URL.Path, "/examples/")))
 }
 
 func (s *Server) templateHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Access-Control-Allow-Headers", "*")
 	data, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		s.logError(w, err)
@@ -155,6 +156,7 @@ func (s *Server) redirectToHTTPs(wrappedFunc func(http.ResponseWriter, *http.Req
 		return wrappedFunc
 	}
 	return func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Access-Control-Allow-Origin", "*")
 		checkHTTPs := true
 		clientIP, _, err := net.SplitHostPort(r.RemoteAddr)
 		if err == nil {
