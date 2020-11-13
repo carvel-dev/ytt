@@ -43,7 +43,8 @@ func NewStructMetaFromMeta(meta *yamlmeta.Meta, opts MetasOpts) (structmeta.Meta
 	structMeta, err := structmeta.NewMetaFromString(meta.Data, structmeta.MetaOpts{IgnoreUnknown: opts.IgnoreUnknown})
 	if err != nil {
 		return structmeta.Meta{}, fmt.Errorf(
-			"Unknown comment syntax at %s: '%s': %s", meta.Position.AsString(), meta.Data, err)
+			"Non-ytt comment at %s: '#%s': %s. (hint: if this is plain YAML — not a template — consider `--file-mark '<filename>:type=yaml-plain'`)",
+			meta.Position.AsString(), meta.Data, err)
 	}
 	return structMeta, nil
 }
