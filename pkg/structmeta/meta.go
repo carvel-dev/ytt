@@ -65,7 +65,7 @@ func NewMetaFromString(data string, opts MetaOpts) (Meta, error) {
 				Content: data,
 			}}
 		} else {
-			return Meta{}, fmt.Errorf("Unknown metadata format (use '#@' or '#!')")
+			return Meta{}, fmt.Errorf("Unrecognized comment type (expected '#@' or '#!')")
 		}
 	}
 

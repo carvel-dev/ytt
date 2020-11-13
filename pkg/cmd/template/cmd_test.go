@@ -507,7 +507,7 @@ yamlfunc: yamlfunc`)
 		t.Fatalf("Expected RunWithFiles to fail")
 	}
 
-	if out.Err.Error() != "Unknown comment syntax at line tpl.yml:2: ' plain YAML comment': Unknown metadata format (use '#@' or '#!')" {
+	if !strings.Contains(out.Err.Error(), "Non-ytt comment at line tpl.yml:2: '# plain YAML comment': Unrecognized comment type (expected '#@' or '#!')") {
 		t.Fatalf("Expected RunWithFiles to fail with error, but was '%s'", out.Err.Error())
 	}
 }

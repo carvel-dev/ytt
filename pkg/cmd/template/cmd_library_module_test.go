@@ -1120,7 +1120,7 @@ lib_int: #@ data.values.int`)
 		t.Fatalf("Expected RunWithFiles to error but it did not")
 	}
 
-	if !strings.Contains(out.Err.Error(), "' ignored!': Unknown metadata format") {
+	if !strings.Contains(out.Err.Error(), "'# ignored!': Unrecognized comment type") {
 		t.Fatalf("Expected ref error but got '%s'", out.Err)
 	}
 }
