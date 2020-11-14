@@ -1,0 +1,17 @@
+---
+id: 1
+type: book
+awards:
+  books:
+    - id: 1
+      title: International Botev
+      reviewers:
+        - id: 2
+          name: PersonB
+    - id: 2
+      title: Dayton Literary Peace Prize
+      reviewers:
+        - id: 3
+          name: PersonC
+    - id: 3
+      title: Example Book
