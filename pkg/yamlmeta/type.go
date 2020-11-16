@@ -135,7 +135,10 @@ func (t *MapType) applySchemaDefaults(foundKeys []interface{}, chk TypeCheck, ma
 		}
 		childCheck := item.AssignTypeTo(val)
 		chk.Violations = append(chk.Violations, childCheck.Violations...)
-		mapNode.AddValue(val) // TODO: How might we surface this error?
+		err := mapNode.AddValue(val)
+		if err != nil {
+			panic("Unreachable")
+		}
 	}
 }
 
