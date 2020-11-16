@@ -63,6 +63,81 @@ rendered: true`
 	}
 }
 
+func TestMapOnlySchemaFillInDefaults(t *testing.T) {
+	schemaYAML := `#@schema/match data_values=True
+---
+db_conn:
+  hostname: server.example.com
+  port: 0
+  username: someuser
+  password: somepassword
+  tls_only: false
+  metadata:
+    run: jobName
+  other_key:
+    inner_key: some string
+    missing_key:
+      something: other
+`
+	dataValuesYAML := `#@data/values
+---
+db_conn:
+  username: sa
+  password: changeme
+  tls_only: true
+  other_key:
+    missing_key:
+      something: yeet
+`
+	templateYAML := `#@ load("@ytt:data", "data")
+---
+rendered: true
+db:
+  hostname: #@ data.values.db_conn.hostname
+  port: #@ data.values.db_conn.port
+  username: #@ data.values.db_conn.username
+  password: #@ data.values.db_conn.password
+  tls_only: #@ data.values.db_conn.tls_only
+  metadata: #@ data.values.db_conn.metadata
+  other_key: #@ data.values.db_conn.other_key.missing_key.something
+  inner_key: #@ data.values.db_conn.other_key.inner_key
+`
+
+	filesToProcess := files.NewSortedFiles([]*files.File{
+		files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
+		files.MustNewFileFromSource(files.NewBytesSource("dataValues.yml", []byte(dataValuesYAML))),
+		files.MustNewFileFromSource(files.NewBytesSource("template.yml", []byte(templateYAML))),
+	})
+
+	ui := cmdcore.NewPlainUI(false)
+	opts := cmdtpl.NewOptions()
+	opts.SchemaEnabled = true
+	out := opts.RunWithFiles(cmdtpl.TemplateInput{Files: filesToProcess}, ui)
+	if out.Err != nil {
+		t.Fatalf("Expected RunWithFiles to succeed, but was error: %s", out.Err)
+	}
+
+	if len(out.Files) != 1 {
+		t.Fatalf("Expected number of output files to be 1, but was: %d", len(out.Files))
+	}
+
+	expected := `rendered: true
+db:
+  hostname: server.example.com
+  port: 0
+  username: sa
+  password: changeme
+  tls_only: true
+  metadata:
+    run: jobName
+  other_key: yeet
+  inner_key: some string
+`
+	if string(out.Files[0].Bytes()) != expected {
+		t.Fatalf("Expected output to only include template YAML, but got: %s", out.Files[0].Bytes())
+	}
+}
+
 func TestArrayOnlySchemaChecksOk(t *testing.T) {
 	schemaYAML := `#@schema/match data_values=True
 ---
