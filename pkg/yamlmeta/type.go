@@ -147,6 +147,7 @@ func contains(haystack []interface{}, needle interface{}) bool {
 	}
 	return false
 }
+
 func (t *MapItemType) AssignTypeTo(typeable Typeable) (chk TypeCheck) {
 	mapItem, ok := typeable.(*MapItem)
 	if !ok {

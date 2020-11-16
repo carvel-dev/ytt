@@ -4,9 +4,11 @@
 package template_test
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 
+	"github.com/k14s/difflib"
 	cmdcore "github.com/k14s/ytt/pkg/cmd/core"
 	cmdtpl "github.com/k14s/ytt/pkg/cmd/template"
 	"github.com/k14s/ytt/pkg/files"
@@ -67,40 +69,30 @@ func TestMapOnlySchemaFillInDefaults(t *testing.T) {
 	schemaYAML := `#@schema/match data_values=True
 ---
 db_conn:
-  hostname: server.example.com
+  hostname: default.com
   port: 0
-  username: someuser
   password: somepassword
   tls_only: false
+  jobs:
+    run: defaultJob
   metadata:
-    run: jobName
-  other_key:
-    inner_key: some string
-    missing_key:
-      something: other
+    missing_key: default value
+    present_key:
+      inner_key: other
 `
 	dataValuesYAML := `#@data/values
 ---
 db_conn:
-  username: sa
-  password: changeme
+  password: mysecurepassword
   tls_only: true
-  other_key:
-    missing_key:
-      something: yeet
+  metadata:
+    present_key:
+      inner_key: value present
 `
 	templateYAML := `#@ load("@ytt:data", "data")
 ---
 rendered: true
-db:
-  hostname: #@ data.values.db_conn.hostname
-  port: #@ data.values.db_conn.port
-  username: #@ data.values.db_conn.username
-  password: #@ data.values.db_conn.password
-  tls_only: #@ data.values.db_conn.tls_only
-  metadata: #@ data.values.db_conn.metadata
-  other_key: #@ data.values.db_conn.other_key.missing_key.something
-  inner_key: #@ data.values.db_conn.other_key.inner_key
+db: #@ data.values.db_conn
 `
 
 	filesToProcess := files.NewSortedFiles([]*files.File{
@@ -123,18 +115,19 @@ db:
 
 	expected := `rendered: true
 db:
-  hostname: server.example.com
-  port: 0
-  username: sa
-  password: changeme
+  password: mysecurepassword
   tls_only: true
   metadata:
-    run: jobName
-  other_key: yeet
-  inner_key: some string
+    present_key:
+      inner_key: value present
+    missing_key: default value
+  hostname: default.com
+  port: 0
+  jobs:
+    run: defaultJob
 `
 	if string(out.Files[0].Bytes()) != expected {
-		t.Fatalf("Expected output to only include template YAML, but got: %s", out.Files[0].Bytes())
+		t.Fatalf("Expected output to only include template YAML, differences:\n%s", diffText(string(out.Files[0].Bytes()), expected))
 	}
 }
 
@@ -435,4 +428,28 @@ rendered: true`
 	if !strings.Contains(out.Err.Error(), "Schema experiment flag was enabled but no schema document was provided.") {
 		t.Fatalf("Expected an error about schema enabled but no schema provided, but got: %v", out.Err.Error())
 	}
+}
+
+func diffText(left, right string) string {
+	var sb strings.Builder
+
+	recs := difflib.Diff(strings.Split(right, "\n"), strings.Split(left, "\n"))
+
+	for _, diff := range recs {
+		var mark string
+
+		switch diff.Delta {
+		case difflib.RightOnly:
+			mark = " + |"
+		case difflib.LeftOnly:
+			mark = " - |"
+		case difflib.Common:
+			mark = "   |"
+		}
+
+		// make sure to have line numbers to make sure diff is truly unique
+		sb.WriteString(fmt.Sprintf("%3d,%3d%s%s\n", diff.LineLeft, diff.LineRight, mark, diff.Payload))
+	}
+
+	return sb.String()
 }
