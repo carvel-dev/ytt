@@ -1,0 +1,15 @@
+#@ load("@ytt:overlay", "overlay")
+
+#! Add a map to an array of maps:
+
+#@overlay/match by=overlay.all
+---
+awards:
+  books:
+    #@overlay/match by=overlay.all, expects="1+"
+    -
+      #@overlay/match missing_ok=True
+      reviewers:
+        #@overlay/append
+        - id: person-b
+          name: Person B

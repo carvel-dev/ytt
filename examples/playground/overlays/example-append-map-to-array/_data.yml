@@ -1,0 +1,12 @@
+---
+id: 1
+type: book
+awards:
+  books:
+    - id: book-botev
+      title: International Botev
+      reviewers:
+        - id: person-a
+          name: Person A
+    - id: example-book
+      title: Example Book
