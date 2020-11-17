@@ -67,7 +67,7 @@ func NewMapItemType(item *MapItem) (*MapItemType, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &MapItemType{Key: item.Key, ValueType: valueType}, nil
+	return &MapItemType{Key: item.Key, ValueType: valueType, DefaultValue: item.Value, Position: item.Position}, nil
 }
 
 func NewArrayType(a *Array) (*ArrayType, error) {

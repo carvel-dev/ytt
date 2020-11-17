@@ -48,8 +48,10 @@ type MapType struct {
 	Items []*MapItemType
 }
 type MapItemType struct {
-	Key       interface{} // usually a string
-	ValueType Type
+	Key          interface{} // usually a string
+	ValueType    Type
+	DefaultValue interface{}
+	Position     *filepos.Position
 }
 type ArrayType struct {
 	ItemsType Type
@@ -103,18 +105,52 @@ func (t *MapType) AssignTypeTo(typeable Typeable) (chk TypeCheck) {
 		chk.Violations = []string{fmt.Sprintf("Expected node at %s to be a %T, but was a %T", typeable.GetPosition().AsCompactString(), &Map{}, typeable)}
 		return
 	}
+	var foundKeys []interface{}
 	typeable.SetType(t)
 	for _, mapItem := range mapNode.Items {
 		for _, itemType := range t.Items {
 			if mapItem.Key == itemType.Key {
+				foundKeys = append(foundKeys, itemType.Key)
 				childCheck := itemType.AssignTypeTo(mapItem)
 				chk.Violations = append(chk.Violations, childCheck.Violations...)
 				break
 			}
 		}
 	}
+
+	t.applySchemaDefaults(foundKeys, chk, mapNode)
 	return
 }
+
+func (t *MapType) applySchemaDefaults(foundKeys []interface{}, chk TypeCheck, mapNode *Map) {
+	for _, item := range t.Items {
+		if contains(foundKeys, item.Key) {
+			continue
+		}
+
+		val := &MapItem{
+			Key:      item.Key,
+			Value:    item.DefaultValue,
+			Position: item.Position,
+		}
+		childCheck := item.AssignTypeTo(val)
+		chk.Violations = append(chk.Violations, childCheck.Violations...)
+		err := mapNode.AddValue(val)
+		if err != nil {
+			panic(fmt.Sprintf("Internal inconsistency: adding map item: %s", err))
+		}
+	}
+}
+
+func contains(haystack []interface{}, needle interface{}) bool {
+	for _, key := range haystack {
+		if key == needle {
+			return true
+		}
+	}
+	return false
+}
+
 func (t *MapItemType) AssignTypeTo(typeable Typeable) (chk TypeCheck) {
 	mapItem, ok := typeable.(*MapItem)
 	if !ok {

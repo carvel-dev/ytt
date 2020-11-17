@@ -7,6 +7,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/k14s/difflib"
 	cmdcore "github.com/k14s/ytt/pkg/cmd/core"
 	cmdtpl "github.com/k14s/ytt/pkg/cmd/template"
 	"github.com/k14s/ytt/pkg/files"
@@ -60,6 +61,73 @@ rendered: true`
 
 	if string(out.Files[0].Bytes()) != "rendered: true\n" {
 		t.Fatalf("Expected output to only include template YAML, but got: %s", out.Files[0].Bytes())
+	}
+}
+
+func TestMapOnlySchemaFillInDefaults(t *testing.T) {
+	schemaYAML := `#@schema/match data_values=True
+---
+db_conn:
+  hostname: default.com
+  port: 0
+  password: somepassword
+  tls_only: false
+  jobs:
+    run: defaultJob
+  metadata:
+    missing_key: default value
+    present_key:
+      inner_key: other
+`
+	dataValuesYAML := `#@data/values
+---
+db_conn:
+  password: mysecurepassword
+  tls_only: true
+  metadata:
+    present_key:
+      inner_key: value present
+`
+	templateYAML := `#@ load("@ytt:data", "data")
+---
+rendered: true
+db: #@ data.values.db_conn
+`
+
+	filesToProcess := files.NewSortedFiles([]*files.File{
+		files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
+		files.MustNewFileFromSource(files.NewBytesSource("dataValues.yml", []byte(dataValuesYAML))),
+		files.MustNewFileFromSource(files.NewBytesSource("template.yml", []byte(templateYAML))),
+	})
+
+	ui := cmdcore.NewPlainUI(false)
+	opts := cmdtpl.NewOptions()
+	opts.SchemaEnabled = true
+	out := opts.RunWithFiles(cmdtpl.TemplateInput{Files: filesToProcess}, ui)
+	if out.Err != nil {
+		t.Fatalf("Expected RunWithFiles to succeed, but was error: %s", out.Err)
+	}
+
+	if len(out.Files) != 1 {
+		t.Fatalf("Expected number of output files to be 1, but was: %d", len(out.Files))
+	}
+
+	expected := `rendered: true
+db:
+  password: mysecurepassword
+  tls_only: true
+  metadata:
+    present_key:
+      inner_key: value present
+    missing_key: default value
+  hostname: default.com
+  port: 0
+  jobs:
+    run: defaultJob
+`
+	if string(out.Files[0].Bytes()) != expected {
+		diff := difflib.PPDiff(strings.Split(string(out.Files[0].Bytes()), "\n"), strings.Split(expected, "\n"))
+		t.Fatalf("Expected output to only include template YAML, differences:\n%s", diff)
 	}
 }
 
