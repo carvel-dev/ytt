@@ -137,7 +137,7 @@ func (t *MapType) applySchemaDefaults(foundKeys []interface{}, chk TypeCheck, ma
 		chk.Violations = append(chk.Violations, childCheck.Violations...)
 		err := mapNode.AddValue(val)
 		if err != nil {
-			panic("Unreachable")
+			panic(fmt.Sprintf("Internal inconsistency: adding map item: %s", err))
 		}
 	}
 }
