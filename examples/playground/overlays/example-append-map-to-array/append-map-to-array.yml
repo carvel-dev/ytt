@@ -11,5 +11,5 @@ awards:
       #@overlay/match missing_ok=True
       reviewers:
         #@overlay/append
-        - id: 1
-          name: Person A
+        - id: person-b
+          name: Person B
