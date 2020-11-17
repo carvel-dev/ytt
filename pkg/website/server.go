@@ -34,10 +34,10 @@ func (s *Server) Mux() *http.ServeMux {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", s.redirectToHTTPs(s.noCacheHandler(s.mainHandler)))
 	mux.HandleFunc("/js/", s.redirectToHTTPs(s.noCacheHandler(s.assetHandler)))
-	mux.HandleFunc("/examples", s.redirectToHTTPs(s.noCacheHandler(s.exampleSetsHandler)))
-	mux.HandleFunc("/examples/", s.redirectToHTTPs(s.noCacheHandler(s.examplesHandler)))
+	mux.HandleFunc("/examples", s.redirectToHTTPs(s.noCacheHandler(s.corsHandler(s.exampleSetsHandler))))
+	mux.HandleFunc("/examples/", s.redirectToHTTPs(s.noCacheHandler(s.corsHandler(s.examplesHandler))))
 	// no need for caching as it's a POST
-	mux.HandleFunc("/template", s.redirectToHTTPs(s.templateHandler))
+	mux.HandleFunc("/template", s.redirectToHTTPs(s.corsHandler(s.templateHandler)))
 	mux.HandleFunc("/alpha-test", s.redirectToHTTPs(s.noCacheHandler(s.alphaTestHandler)))
 	mux.HandleFunc("/health", s.healthHandler)
 	return mux
@@ -115,7 +115,6 @@ func (s *Server) examplesHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) templateHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Access-Control-Allow-Headers", "*")
 	data, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		s.logError(w, err)
@@ -156,7 +155,6 @@ func (s *Server) redirectToHTTPs(wrappedFunc func(http.ResponseWriter, *http.Req
 		return wrappedFunc
 	}
 	return func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Access-Control-Allow-Origin", "*")
 		checkHTTPs := true
 		clientIP, _, err := net.SplitHostPort(r.RemoteAddr)
 		if err == nil {
@@ -201,6 +199,14 @@ func (s *Server) noCacheHandler(wrappedFunc func(http.ResponseWriter, *http.Requ
 			w.Header().Set(k, v)
 		}
 
+		wrappedFunc(w, r)
+	}
+}
+
+func (s *Server) corsHandler(wrappedFunc func(http.ResponseWriter, *http.Request)) func(http.ResponseWriter, *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Set("Access-Control-Allow-Headers", "*")
 		wrappedFunc(w, r)
 	}
 }
