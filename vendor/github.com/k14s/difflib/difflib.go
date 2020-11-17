@@ -20,6 +20,7 @@ import (
 	"bytes"
 	"fmt"
 	"math"
+	"strings"
 )
 
 // DeltaType describes the relationship of elements in two
@@ -124,6 +125,39 @@ func HTMLDiff(seq1, seq2 []string) string {
 		buf.WriteString("</td></tr>\n")
 	}
 	return buf.String()
+}
+
+// PPDiff returns the results of diffing left and right as an pretty
+// printed string. It will display all the lines of both the sequences
+// that are being compared.
+// When the left is different from right it will prepend a " - |" before
+// the line.
+// When the right is different from left it will prepend a " + |" before
+// the line.
+// When the right and left are equal it will prepend a "   |" before
+// the line.
+func PPDiff(left, right []string) string {
+	var sb strings.Builder
+
+	recs := Diff(right, left)
+
+	for _, diff := range recs {
+		var mark string
+
+		switch diff.Delta {
+		case RightOnly:
+			mark = " + |"
+		case LeftOnly:
+			mark = " - |"
+		case Common:
+			mark = "   |"
+		}
+
+		// make sure to have line numbers to make sure diff is truly unique
+		sb.WriteString(fmt.Sprintf("%3d,%3d%s%s\n", diff.LineLeft, diff.LineRight, mark, diff.Payload))
+	}
+
+	return sb.String()
 }
 
 // numEqualStartAndEndElements returns the number of elements a and b

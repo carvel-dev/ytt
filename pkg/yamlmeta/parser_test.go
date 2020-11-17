@@ -38,10 +38,7 @@ func TestParserDocSetEmpty(t *testing.T) {
 	parsedValStr := printer.PrintStr(parsedVal)
 	expectedValStr := printer.PrintStr(expectedVal)
 
-	if parsedValStr != expectedValStr {
-		t.Fatalf("Not equal; diff expected...actual:\n%v\n", diffText(expectedValStr, parsedValStr))
-	}
-
+	assertEqual(t, parsedValStr, expectedValStr)
 }
 
 func TestParserDocSetNewline(t *testing.T) {
@@ -66,10 +63,7 @@ func TestParserDocSetNewline(t *testing.T) {
 	parsedValStr := printer.PrintStr(parsedVal)
 	expectedValStr := printer.PrintStr(expectedVal)
 
-	if parsedValStr != expectedValStr {
-		t.Fatalf("Not equal; diff expected...actual:\n%v\n", diffText(expectedValStr, parsedValStr))
-	}
-
+	assertEqual(t, parsedValStr, expectedValStr)
 }
 
 func TestParserOnlyComment(t *testing.T) {
@@ -127,10 +121,7 @@ func TestParserDoc(t *testing.T) {
 	parsedValStr := printer.PrintStr(parsedVal)
 	expectedValStr := printer.PrintStr(expectedVal)
 
-	if parsedValStr != expectedValStr {
-		t.Fatalf("Not equal; diff expected...actual:\n%v\n", diffText(expectedValStr, parsedValStr))
-	}
-
+	assertEqual(t, parsedValStr, expectedValStr)
 }
 
 func TestParserDocWithoutDashes(t *testing.T) {
@@ -161,10 +152,7 @@ func TestParserDocWithoutDashes(t *testing.T) {
 	parsedValStr := printer.PrintStr(parsedVal)
 	expectedValStr := printer.PrintStr(expectedVal)
 
-	if parsedValStr != expectedValStr {
-		t.Fatalf("Not equal; diff expected...actual:\n%v\n", diffText(expectedValStr, parsedValStr))
-	}
-
+	assertEqual(t, parsedValStr, expectedValStr)
 }
 
 func TestParserRootValue(t *testing.T) {
@@ -305,10 +293,7 @@ array:
 	parsedValStr := printer.PrintStr(parsedVal)
 	expectedValStr := printer.PrintStr(expectedVal)
 
-	if parsedValStr != expectedValStr {
-		t.Fatalf("Not equal; diff expected...actual:\n%v\n", diffText(expectedValStr, parsedValStr))
-	}
-
+	assertEqual(t, parsedValStr, expectedValStr)
 }
 
 func TestParserMapComments(t *testing.T) {
@@ -376,10 +361,7 @@ map:
 	parsedValStr := printer.PrintStr(parsedVal)
 	expectedValStr := printer.PrintStr(expectedVal)
 
-	if parsedValStr != expectedValStr {
-		t.Fatalf("Not equal; diff expected...actual:\n%v\n", diffText(expectedValStr, parsedValStr))
-	}
-
+	assertEqual(t, parsedValStr, expectedValStr)
 }
 
 func TestParserArrayComments(t *testing.T) {
@@ -490,10 +472,7 @@ array:
 	parsedValStr := printer.PrintStr(parsedVal)
 	expectedValStr := printer.PrintStr(expectedVal)
 
-	if parsedValStr != expectedValStr {
-		t.Fatalf("Not equal; diff expected...actual:\n%v\n", diffText(expectedValStr, parsedValStr))
-	}
-
+	assertEqual(t, parsedValStr, expectedValStr)
 }
 
 func TestParserDocSetComments(t *testing.T) {
@@ -538,10 +517,7 @@ func TestParserDocSetComments(t *testing.T) {
 	parsedValStr := printer.PrintStr(parsedVal)
 	expectedValStr := printer.PrintStr(expectedVal)
 
-	if parsedValStr != expectedValStr {
-		t.Fatalf("Not equal; diff expected...actual:\n%v\n", diffText(expectedValStr, parsedValStr))
-	}
-
+	assertEqual(t, parsedValStr, expectedValStr)
 }
 
 func TestParserDocSetOnlyComments2(t *testing.T) {
@@ -572,10 +548,7 @@ func TestParserDocSetOnlyComments2(t *testing.T) {
 	parsedValStr := printer.PrintStr(parsedVal)
 	expectedValStr := printer.PrintStr(expectedVal)
 
-	if parsedValStr != expectedValStr {
-		t.Fatalf("Not equal; diff expected...actual:\n%v\n", diffText(expectedValStr, parsedValStr))
-	}
-
+	assertEqual(t, parsedValStr, expectedValStr)
 }
 
 func TestParserDocSetOnlyComments3(t *testing.T) {
@@ -603,10 +576,7 @@ func TestParserDocSetOnlyComments3(t *testing.T) {
 	parsedValStr := printer.PrintStr(parsedVal)
 	expectedValStr := printer.PrintStr(expectedVal)
 
-	if parsedValStr != expectedValStr {
-		t.Fatalf("Not equal; diff expected...actual:\n%v\n", diffText(expectedValStr, parsedValStr))
-	}
-
+	assertEqual(t, parsedValStr, expectedValStr)
 }
 
 func TestParserDocSetOnlyComments(t *testing.T) {
@@ -637,9 +607,7 @@ func TestParserDocSetOnlyComments(t *testing.T) {
 	parsedValStr := printer.PrintStr(parsedVal)
 	expectedValStr := printer.PrintStr(expectedVal)
 
-	if parsedValStr != expectedValStr {
-		t.Fatalf("Not equal; diff expected...actual:\n%v\n", diffText(expectedValStr, parsedValStr))
-	}
+	assertEqual(t, parsedValStr, expectedValStr)
 }
 
 func TestParserDocSetCommentsNoFirstDashes(t *testing.T) {
@@ -683,10 +651,7 @@ func TestParserDocSetCommentsNoFirstDashes(t *testing.T) {
 	parsedValStr := printer.PrintStr(parsedVal)
 	expectedValStr := printer.PrintStr(expectedVal)
 
-	if parsedValStr != expectedValStr {
-		t.Fatalf("Not equal; diff expected...actual:\n%v\n", diffText(expectedValStr, parsedValStr))
-	}
-
+	assertEqual(t, parsedValStr, expectedValStr)
 }
 
 func TestParserUnindentedComment(t *testing.T) {
@@ -743,10 +708,7 @@ key:
 	parsedValStr := printer.PrintStr(parsedVal)
 	expectedValStr := printer.PrintStr(expectedVal)
 
-	if parsedValStr != expectedValStr {
-		t.Fatalf("Not equal; diff expected...actual:\n%v\n", diffText(expectedValStr, parsedValStr))
-	}
-
+	assertEqual(t, parsedValStr, expectedValStr)
 }
 
 func TestParserInvalidDoc(t *testing.T) {
@@ -1041,9 +1003,7 @@ func (ex parserExample) checkDocSet(t *testing.T, parsedVal *yamlmeta.DocumentSe
 	parsedValStr := printer.PrintStr(parsedVal)
 	expectedValStr := printer.PrintStr(ex.Expected)
 
-	if parsedValStr != expectedValStr {
-		t.Fatalf("Not equal; diff expected...actual:\n%v\n", diffText(expectedValStr, parsedValStr))
-	}
+	assertEqual(t, parsedValStr, expectedValStr)
 }
 
 func (ex parserExample) checkErr(t *testing.T, err error) {
@@ -1054,31 +1014,11 @@ func (ex parserExample) checkErr(t *testing.T, err error) {
 	parsedValStr := err.Error()
 	expectedValStr := ex.ExpectedErr
 
-	if parsedValStr != expectedValStr {
-		t.Fatalf("Not equal; diff expected...actual:\n%v\n", diffText(expectedValStr, parsedValStr))
-	}
+	assertEqual(t, parsedValStr, expectedValStr)
 }
 
-func diffText(left, right string) string {
-	var sb strings.Builder
-
-	recs := difflib.Diff(strings.Split(right, "\n"), strings.Split(left, "\n"))
-
-	for _, diff := range recs {
-		var mark string
-
-		switch diff.Delta {
-		case difflib.RightOnly:
-			mark = " + |"
-		case difflib.LeftOnly:
-			mark = " - |"
-		case difflib.Common:
-			mark = "   |"
-		}
-
-		// make sure to have line numbers to make sure diff is truly unique
-		sb.WriteString(fmt.Sprintf("%3d,%3d%s%s\n", diff.LineLeft, diff.LineRight, mark, diff.Payload))
+func assertEqual(t *testing.T, parsedValStr string, expectedValStr string) {
+	if parsedValStr != expectedValStr {
+		t.Fatalf("Not equal; diff expected...actual:\n%v\n", difflib.PPDiff(strings.Split(expectedValStr, "\n"), strings.Split(parsedValStr, "\n")))
 	}
-
-	return sb.String()
 }

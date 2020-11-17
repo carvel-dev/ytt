@@ -11,7 +11,7 @@ github.com/cppforlife/go-cli-ui/errors
 github.com/hashicorp/go-version
 # github.com/inconshreveable/mousetrap v1.0.0
 github.com/inconshreveable/mousetrap
-# github.com/k14s/difflib v0.0.0-20200108171459-b101e55e0592
+# github.com/k14s/difflib v0.0.0-20201117154628-0c031775bf57
 github.com/k14s/difflib
 # github.com/k14s/starlark-go v0.0.0-20200720175618-3a5c849cc368
 github.com/k14s/starlark-go/internal/compile

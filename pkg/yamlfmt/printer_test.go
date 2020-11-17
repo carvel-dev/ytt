@@ -112,7 +112,8 @@ func evalTemplate(t *testing.T, data string) (string, *testErr) {
 
 func expectEquals(t *testing.T, resultStr, expectedStr string) error {
 	if resultStr != expectedStr {
-		return fmt.Errorf("Not equal; diff expected...actual:\n%v\n", diffText(expectedStr, resultStr))
+		diff := difflib.PPDiff(strings.Split(expectedStr, "\n"), strings.Split(resultStr, "\n"))
+		return fmt.Errorf("Not equal; diff expected...actual:\n%v\n", diff)
 	}
 	return nil
 }
@@ -125,28 +126,4 @@ func kvArg(name string) string {
 		}
 	}
 	return ""
-}
-
-func diffText(left, right string) string {
-	var sb strings.Builder
-
-	recs := difflib.Diff(strings.Split(right, "\n"), strings.Split(left, "\n"))
-
-	for _, diff := range recs {
-		var mark string
-
-		switch diff.Delta {
-		case difflib.RightOnly:
-			mark = " + |"
-		case difflib.LeftOnly:
-			mark = " - |"
-		case difflib.Common:
-			mark = "   |"
-		}
-
-		// make sure to have line numbers to make sure diff is truly unique
-		sb.WriteString(fmt.Sprintf("%3d,%3d%s%s\n", diff.LineLeft, diff.LineRight, mark, diff.Payload))
-	}
-
-	return sb.String()
 }

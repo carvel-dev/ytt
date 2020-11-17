@@ -4,7 +4,6 @@
 package template_test
 
 import (
-	"fmt"
 	"strings"
 	"testing"
 
@@ -127,7 +126,8 @@ db:
     run: defaultJob
 `
 	if string(out.Files[0].Bytes()) != expected {
-		t.Fatalf("Expected output to only include template YAML, differences:\n%s", diffText(string(out.Files[0].Bytes()), expected))
+		diff := difflib.PPDiff(strings.Split(string(out.Files[0].Bytes()), "\n"), strings.Split(expected, "\n"))
+		t.Fatalf("Expected output to only include template YAML, differences:\n%s", diff)
 	}
 }
 
@@ -428,28 +428,4 @@ rendered: true`
 	if !strings.Contains(out.Err.Error(), "Schema experiment flag was enabled but no schema document was provided.") {
 		t.Fatalf("Expected an error about schema enabled but no schema provided, but got: %v", out.Err.Error())
 	}
-}
-
-func diffText(left, right string) string {
-	var sb strings.Builder
-
-	recs := difflib.Diff(strings.Split(right, "\n"), strings.Split(left, "\n"))
-
-	for _, diff := range recs {
-		var mark string
-
-		switch diff.Delta {
-		case difflib.RightOnly:
-			mark = " + |"
-		case difflib.LeftOnly:
-			mark = " - |"
-		case difflib.Common:
-			mark = "   |"
-		}
-
-		// make sure to have line numbers to make sure diff is truly unique
-		sb.WriteString(fmt.Sprintf("%3d,%3d%s%s\n", diff.LineLeft, diff.LineRight, mark, diff.Payload))
-	}
-
-	return sb.String()
 }
