@@ -71,8 +71,12 @@ func NewMapItemType(item *MapItem) (*MapItemType, error) {
 }
 
 func NewArrayType(a *Array) (*ArrayType, error) {
-	if len(a.Items) != 1 {
-		return nil, fmt.Errorf("Expected only one element in the array to determine type, but found %v", len(a.Items))
+	// These really are distinct use cases. In the empty list, perhaps the user is unaware that arrays must be typed. In the >1 scenario, they may be expecting the given items to be the defaults.
+	if len(a.Items) == 0 {
+		return nil, fmt.Errorf("Expected one item in array (describing the type of its elements) at %s", a.Position.AsCompactString())
+	}
+	if len(a.Items) > 1 {
+		return nil, fmt.Errorf("Expected one item (found %v) in array (describing the type of its elements) at %s", len(a.Items), a.Position.AsCompactString())
 	}
 
 	arrayItemType, err := NewArrayItemType(a.Items[0])

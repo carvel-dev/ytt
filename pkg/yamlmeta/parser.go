@@ -136,9 +136,9 @@ func setPositionOfCollections(node Node, parent Node) {
 			if mapNode, ok := node.(*Map); ok {
 				mapNode.Position = parent.GetPosition()
 			}
-			//if arrayNode, ok := node.(*Array); ok {
-			//	arrayNode.Position = parent.GetPosition()
-			//}
+			if arrayNode, ok := node.(*Array); ok {
+				arrayNode.Position = parent.GetPosition()
+			}
 		}
 	}
 	for _, val := range node.GetValues() {
