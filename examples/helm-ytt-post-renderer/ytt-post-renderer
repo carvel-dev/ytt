@@ -2,6 +2,6 @@
 
 set -e
 
-ytt version || (echo "*** Missing ytt binary. Install from https://k14s.io ***" 1>&2; exit 1)
+ytt version || (echo "*** Missing ytt binary. Install from https://carvel.dev ***" 1>&2; exit 1)
 
 ytt --ignore-unknown-comments -f - -f config/

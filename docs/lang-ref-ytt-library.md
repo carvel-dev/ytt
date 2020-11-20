@@ -33,7 +33,7 @@ url_func = app1_with_vals.export("url")
 url_func() # result of url function
 ```
 
-- `library.get(name, [alias=, ...])` (`name`: string, returned: library): returns library object that is backed by content under `_ytt_lib/<name>` (found in the same directory as the file containing this call). `name` could contain '/' slashes for directories (e.g. `github.com/k14s/k8s-lib/app`).
+- `library.get(name, [alias=, ...])` (`name`: string, returned: library): returns library object that is backed by content under `_ytt_lib/<name>` (found in the same directory as the file containing this call). `name` could contain '/' slashes for directories (e.g. `github.com/vmware-tanzu/carvel-ytt-library-for-kubernetes/app`).
   - Keyword arguments:
     - `alias=<string>` (no default) can be used to specify unique name for this library instantiation.
     - `ignore_unknown_comments=<bool>` (default False) equivalent to `ytt --ignore-unknown-comments`. Available v0.31.0+
