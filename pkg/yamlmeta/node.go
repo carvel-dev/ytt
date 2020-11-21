@@ -217,6 +217,10 @@ func (n *MapItem) Check() (chk TypeCheck) {
 		return
 	}
 
+	if n.Value == nil && mapItemType.DefaultValue == nil {
+		return
+	}
+
 	check := checkCollectionItem(n.Value, mapItemType.ValueType, violationErrorMessage)
 	if check.HasViolations() {
 		chk.Violations = append(chk.Violations, check.Violations...)

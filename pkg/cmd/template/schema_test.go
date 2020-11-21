@@ -13,6 +13,148 @@ import (
 	"github.com/k14s/ytt/pkg/files"
 )
 
+func TestNullableSchemaMapAllowsNull(t *testing.T) {
+	schemaYAML := `#@schema/match data_values=True
+---
+vpc:
+  name: ""
+  subnet_ids:
+  - 0
+  #@schema/nullable
+  subnet_config:
+  - id: 0
+    mask: "255.255.0.0"
+    private: true
+`
+	dataValuesYAML := `#@data/values
+---
+vpc:
+  name: vpc-203d912a
+  subnet_config: ~
+`
+	templateYAML := `#@ load("@ytt:data", "data")
+---
+rendered: true
+vpc: #@ data.values.vpc
+`
+
+	filesToProcess := files.NewSortedFiles([]*files.File{
+		files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
+		files.MustNewFileFromSource(files.NewBytesSource("dataValues.yml", []byte(dataValuesYAML))),
+		files.MustNewFileFromSource(files.NewBytesSource("template.yml", []byte(templateYAML))),
+	})
+
+	ui := cmdcore.NewPlainUI(false)
+	opts := cmdtpl.NewOptions()
+	opts.SchemaEnabled = true
+	out := opts.RunWithFiles(cmdtpl.TemplateInput{Files: filesToProcess}, ui)
+	if out.Err != nil {
+		t.Fatalf("Expected RunWithFiles to succeed, but was error: %s", out.Err)
+	}
+
+	if len(out.Files) != 1 {
+		t.Fatalf("Expected number of output files to be 1, but was: %d", len(out.Files))
+	}
+
+	expected := `rendered: true
+vpc:
+  name: vpc-203d912a
+  subnet_config: null
+  subnet_ids: []
+`
+	if string(out.Files[0].Bytes()) != expected {
+		diff := difflib.PPDiff(strings.Split(string(out.Files[0].Bytes()), "\n"), strings.Split(expected, "\n"))
+		t.Fatalf("Expected output to only include template YAML, differences:\n%s", diff)
+	}
+}
+
+func TestNullableSchemaArrayItemFailsCheck(t *testing.T) {
+	schemaYAML := `#@schema/match data_values=True
+---
+vpc:
+  subnet_ids:
+  #@schema/nullable
+  - 0
+`
+
+	filesToProcess := files.NewSortedFiles([]*files.File{
+		files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
+	})
+
+	ui := cmdcore.NewPlainUI(false)
+	opts := cmdtpl.NewOptions()
+	opts.SchemaEnabled = true
+	out := opts.RunWithFiles(cmdtpl.TemplateInput{Files: filesToProcess}, ui)
+	if out.Err == nil {
+		t.Fatalf("Expected an error about a schema check failure, but succeeded.")
+	}
+
+	expectedErr := "Array items cannot be annotated with #@schema/nullable (schema.yml:6). If this behaviour would be valuable, please submit an issue on https://github.com/vmware-tanzu/carvel-ytt"
+	if !strings.Contains(out.Err.Error(), expectedErr) {
+		t.Fatalf("Expected an error about a schema check failure, but got: %s", out.Err.Error())
+	}
+}
+
+func TestNullableSchemaNodesDefaultToNullButCanBeOverridden(t *testing.T) {
+	schemaYAML := `#@schema/match data_values=True
+---
+vpc:
+  #@schema/nullable
+  name: ""
+  subnet_ids:
+  - 0
+  #@schema/nullable
+  subnet_config:
+  - id: 0
+    mask: "255.255.0.0"
+    private: true
+`
+	dataValuesYAML := `#@data/values
+---
+vpc:
+  name: vpc-203d912a
+  subnet_ids:
+  - 1
+  - 2
+`
+	templateYAML := `#@ load("@ytt:data", "data")
+---
+rendered: true
+vpc: #@ data.values.vpc
+`
+
+	filesToProcess := files.NewSortedFiles([]*files.File{
+		files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
+		files.MustNewFileFromSource(files.NewBytesSource("dataValues.yml", []byte(dataValuesYAML))),
+		files.MustNewFileFromSource(files.NewBytesSource("template.yml", []byte(templateYAML))),
+	})
+
+	ui := cmdcore.NewPlainUI(false)
+	opts := cmdtpl.NewOptions()
+	opts.SchemaEnabled = true
+	out := opts.RunWithFiles(cmdtpl.TemplateInput{Files: filesToProcess}, ui)
+	if out.Err != nil {
+		t.Fatalf("Expected RunWithFiles to succeed, but was error: %s", out.Err)
+	}
+
+	if len(out.Files) != 1 {
+		t.Fatalf("Expected number of output files to be 1, but was: %d", len(out.Files))
+	}
+
+	expected := `rendered: true
+vpc:
+  name: vpc-203d912a
+  subnet_ids:
+  - 1
+  - 2
+  subnet_config: null
+`
+	if string(out.Files[0].Bytes()) != expected {
+		diff := difflib.PPDiff(strings.Split(string(out.Files[0].Bytes()), "\n"), strings.Split(expected, "\n"))
+		t.Fatalf("Expected output to only include template YAML, differences:\n%s", diff)
+	}
+}
+
 func TestMapOnlySchemaChecksOk(t *testing.T) {
 	schemaYAML := `#@schema/match data_values=True
 ---

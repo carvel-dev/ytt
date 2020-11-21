@@ -68,9 +68,20 @@ func NewMapItemType(item *MapItem) (*MapItemType, error) {
 		return nil, err
 	}
 
+	nullable := false
+	for _, meta := range item.GetMetas() {
+		if meta.Data == "@schema/nullable" {
+			nullable = true
+			break
+		}
+	}
+
 	defaultValue := item.Value
 	if _, ok := item.Value.(*Array); ok {
 		defaultValue = &Array{}
+	}
+	if nullable {
+		defaultValue = nil
 	}
 
 	return &MapItemType{Key: item.Key, ValueType: valueType, DefaultValue: defaultValue, Position: item.Position}, nil
@@ -98,6 +109,13 @@ func NewArrayItemType(item *ArrayItem) (*ArrayItemType, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	for _, meta := range item.GetMetas() {
+		if meta.Data == "@schema/nullable" {
+			return nil, fmt.Errorf("Array items cannot be annotated with #@schema/nullable (%s). If this behaviour would be valuable, please submit an issue on https://github.com/vmware-tanzu/carvel-ytt", item.GetPosition().AsCompactString())
+		}
+	}
+
 	return &ArrayItemType{ValueType: valueType}, nil
 }
 
