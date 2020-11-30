@@ -1,12 +1,14 @@
 // Copyright 2020 VMware, Inc.
 // SPDX-License-Identifier: Apache-2.0
 
-package yamlmeta_test
+package schema_test
 
 import (
 	"fmt"
-	"github.com/k14s/ytt/pkg/yamlmeta"
 	"testing"
+
+	"github.com/k14s/ytt/pkg/schema"
+	"github.com/k14s/ytt/pkg/yamlmeta"
 )
 
 func TestValueNotInSchemaErr(t *testing.T) {
@@ -26,7 +28,7 @@ not_in_schema: "this must fail validation."
 	if err != nil {
 		t.Fatalf("Unable to parse schema file: %s", err)
 	}
-	schema, err := yamlmeta.NewDocumentSchema(schemaDocSet.GetValues()[1].(*yamlmeta.Document))
+	schemaVar, err := schema.NewDocumentSchema(schemaDocSet.GetValues()[1].(*yamlmeta.Document))
 	if err != nil {
 		t.Fatalf("Unable to create schema from file %v: %s", schemaDocSet.GetValues()[1].(*yamlmeta.Document).Position, err)
 	}
@@ -35,7 +37,7 @@ not_in_schema: "this must fail validation."
 		t.Fatalf("Unable to parse data values file: %s", err)
 	}
 	dataValueDoc := dataValuesDocSet.GetValues()[1].(*yamlmeta.Document)
-	schema.AssignType(dataValueDoc)
+	schemaVar.AssignType(dataValueDoc)
 	typeCheck := dataValueDoc.Check()
 
 	const expectedErrorMessage = "{[Map item 'not_in_schema' at dataValues.yml:5 is not defined in schema]}"

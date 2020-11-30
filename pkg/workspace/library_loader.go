@@ -9,6 +9,7 @@ import (
 
 	"github.com/k14s/starlark-go/starlark"
 	"github.com/k14s/ytt/pkg/files"
+	"github.com/k14s/ytt/pkg/schema"
 	"github.com/k14s/ytt/pkg/structmeta"
 	"github.com/k14s/ytt/pkg/yamlmeta"
 	"github.com/k14s/ytt/pkg/yamltemplate"
@@ -45,7 +46,7 @@ func NewLibraryLoader(libraryCtx LibraryExecutionContext,
 }
 
 func (ll *LibraryLoader) Schemas() ([]*yamlmeta.Document, error) {
-	loader := NewTemplateLoader(NewEmptyDataValues(), nil, ll.ui, ll.templateLoaderOpts, ll.libraryExecFactory, &yamlmeta.AnySchema{})
+	loader := NewTemplateLoader(NewEmptyDataValues(), nil, ll.ui, ll.templateLoaderOpts, ll.libraryExecFactory, &schema.AnySchema{})
 
 	schemaFiles, err := ll.schemaFiles(loader)
 	if err != nil {
@@ -72,7 +73,7 @@ func (ll *LibraryLoader) Schemas() ([]*yamlmeta.Document, error) {
 	return nil, nil
 }
 
-func (ll *LibraryLoader) Values(valuesOverlays []*DataValues, schema yamlmeta.Schema) (*DataValues, []*DataValues, error) {
+func (ll *LibraryLoader) Values(valuesOverlays []*DataValues, schema Schema) (*DataValues, []*DataValues, error) {
 	loader := NewTemplateLoader(NewEmptyDataValues(), nil, ll.ui, ll.templateLoaderOpts, ll.libraryExecFactory, schema)
 
 	valuesFiles, err := ll.valuesFiles(loader)
@@ -162,7 +163,7 @@ func (ll *LibraryLoader) Eval(values *DataValues, libraryValues []*DataValues) (
 func (ll *LibraryLoader) eval(values *DataValues, libraryValues []*DataValues) ([]EvalExport,
 	map[*FileInLibrary]*yamlmeta.DocumentSet, []files.OutputFile, error) {
 
-	loader := NewTemplateLoader(values, libraryValues, ll.ui, ll.templateLoaderOpts, ll.libraryExecFactory, &yamlmeta.AnySchema{})
+	loader := NewTemplateLoader(values, libraryValues, ll.ui, ll.templateLoaderOpts, ll.libraryExecFactory, &schema.AnySchema{})
 
 	exports := []EvalExport{}
 	docSets := map[*FileInLibrary]*yamlmeta.DocumentSet{}
