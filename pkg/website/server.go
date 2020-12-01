@@ -98,7 +98,7 @@ func (s *Server) exampleSetsHandler(w http.ResponseWriter, r *http.Request) {
 func (s *Server) examplesHandler(w http.ResponseWriter, r *http.Request) {
 	for _, eg := range exampleSets {
 		for _, example := range eg.Examples {
-			if strings.Contains(r.URL.Path, example.ID) {
+			if example.ID == strings.TrimPrefix(r.URL.Path, "/examples/") {
 				exampleBytes, err := json.Marshal(example)
 				if err != nil {
 					s.logError(w, err)
