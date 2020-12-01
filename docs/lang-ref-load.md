@@ -26,7 +26,7 @@ load("@project:dir/helpers.lib.txt", "func1")  # load func1 from a project locat
 
 1. location which takes following shape `[@[library]:][package/]{0,n}module`, where,
     - `library` could be `ytt` or local path under `_ytt_lib` directory
-      - examples: [`ytt`](lang-ref-ytt.md), `github.com/k14s/k8s-lib`, `common`
+      - examples: [`ytt`](lang-ref-ytt.md), `github.com/vmware-tanzu/carvel-ytt-library-for-kubernetes`, `common`
     - `package` could be a directory path
       - examples: `overlay`, `regexp`, `app/`, `/app/something`
     - `module` is a file name or predefined name (included in `ytt` library)

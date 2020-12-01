@@ -1,7 +1,7 @@
 
-* Install: Grab prebuilt binaries from the [Releases page](https://github.com/k14s/ytt/releases)
+* Install: Grab prebuilt binaries from the [Releases page](https://github.com/vmware-tanzu/carvel-ytt/releases)
 * Play: Jump right in by trying out the [online playground](https://get-ytt.io/#playground)
-* For more information about annotations, data values, overlays and other features see [Docs](https://github.com/k14s/ytt/tree/develop/docs) page
+* For more information about annotations, data values, overlays and other features see [Docs](https://github.com/vmware-tanzu/carvel-ytt/tree/develop/docs) page
 * Slack: [#carvel in Kubernetes slack](https://slack.kubernetes.io/)
 
 ## Overview
@@ -18,9 +18,9 @@
 
 To get started with `ytt` and to see examples, you use the online playground or download the binaries and run the playground locally.
 - Try out the [online playground](https://get-ytt.io/#playground)
-- Download the latest binaries from the [releases page](https://github.com/k14s/ytt/releases) and run the playground locally :
+- Download the latest binaries from the [releases page](https://github.com/vmware-tanzu/carvel-ytt/releases) and run the playground locally :
 
   `ytt website`
 
-- See the examples used in the playground on the [examples](https://github.com/k14s/ytt/tree/develop/examples/playground) page
+- See the examples used in the playground on the [examples](https://github.com/vmware-tanzu/carvel-ytt/tree/develop/examples/playground) page
 - Editor Extensions: [vscode sytnax highlighting](https://marketplace.visualstudio.com/items?itemName=ewrenn.vscode-ytt)

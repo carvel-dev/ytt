@@ -74,7 +74,7 @@ func (l *TemplateLoader) Load(thread *starlark.Thread, module string) (starlark.
 		pieces := strings.SplitN(module[1:], ":", 2)
 		if len(pieces) != 2 {
 			return nil, fmt.Errorf("Expected library path to be in format '@name:path' " +
-				"e.g. '@github.com/k14s/test:test.star' or '@ytt:base64'")
+				"e.g. '@github.com/vmware-tanzu/test:test.star' or '@ytt:base64'")
 		}
 
 		if pieces[0] == "ytt" {

@@ -18,4 +18,4 @@ awards:
 
 #! Strings come with a number of built-in functions,
 #!   including `replace()`.
-#! For more: https://github.com/k14s/ytt/blob/develop/docs/lang-ref-string.md
+#! For more: https://github.com/vmware-tanzu/carvel-ytt/blob/develop/docs/lang-ref-string.md

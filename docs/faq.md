@@ -103,12 +103,12 @@ The subset matcher does not directly support regex patterns. Instead, a custom m
 
 ### Why can't I write standard yaml comments (#)? Why doesn't ytt support the yaml merge operator (<<:)? Why is my anchor reference null despite my anchor's successful template?
 
-These are [known limitations](https://github.com/k14s/ytt/blob/develop/docs/known-limitations.md) of ytt.
+These are [known limitations](https://github.com/vmware-tanzu/carvel-ytt/blob/develop/docs/known-limitations.md) of ytt.
 
 ### Can I generate random strings with ytt?
 No. A design goal of ytt is determinism, which keeps randomness out of scope.
 
-If you want to generate secrets, see the [injecting secrets doc](injecting-secrets.md) or the [kubernetes secretgen-controller](https://github.com/k14s/secretgen-controller)
+If you want to generate secrets, see the [injecting secrets doc](injecting-secrets.md) or the [kubernetes secretgen-controller](https://github.com/vmware-tanzu/carvel-secretgen-controller)
 
 ### Can I load multiple functions without having to name each one?
 

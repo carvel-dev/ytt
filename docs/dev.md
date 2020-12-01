@@ -1,9 +1,9 @@
 ## Building
 
 ```bash
-git clone https://github.com/k14s/ytt ./src/github.com/k14s/ytt
+git clone https://github.com/vmware-tanzu/carvel-ytt ./src/github.com/vmware-tanzu/carvel-ytt
 export GOPATH=$PWD
-cd ./src/github.com/k14s/ytt
+cd ./src/github.com/vmware-tanzu/carvel-ytt
 
 ./hack/build.sh
 ./hack/test-unit.sh
@@ -19,18 +19,18 @@ BUILD_VALUES=./hack/build-values-get-ytt-io.yml ./hack/build.sh
 
 For those interested in extending and improving `ytt`, below is a quick reference on the structure of the source code:
 
-- [pkg/cmd/template/cmd.go](https://github.com/k14s/ytt/blob/develop/pkg/cmd/template/cmd.go#L95) is the top level call site for the template command
-- [pkg/files](https://github.com/k14s/ytt/tree/develop/pkg/files) allows reading files from filesystem
-- [pkg/workspace](https://github.com/k14s/ytt/tree/develop/pkg/workspace) keeps read files from the filesystem in memory for later access
+- [pkg/cmd/template/cmd.go](https://github.com/vmware-tanzu/carvel-ytt/blob/develop/pkg/cmd/template/cmd.go#L95) is the top level call site for the template command
+- [pkg/files](https://github.com/vmware-tanzu/carvel-ytt/tree/develop/pkg/files) allows reading files from filesystem
+- [pkg/workspace](https://github.com/vmware-tanzu/carvel-ytt/tree/develop/pkg/workspace) keeps read files from the filesystem in memory for later access
   - `load(...)` directive goes through `TemplateLoader` to load files
-- [pkg/yamlmeta](https://github.com/k14s/ytt/tree/develop/pkg/yamlmeta) parses YAML and tracks YAML node annotations (metas)
-- [pkg/yamltemplate](https://github.com/k14s/ytt/tree/develop/pkg/yamltemplate) generates Starlark template based on yamlmeta package structures
-- [pkg/texttemplate](https://github.com/k14s/ytt/tree/develop/pkg/texttemplate) parses text templates and generates Starlark template
-- [pkg/template](https://github.com/k14s/ytt/tree/develop/pkg/template)
+- [pkg/yamlmeta](https://github.com/vmware-tanzu/carvel-ytt/tree/develop/pkg/yamlmeta) parses YAML and tracks YAML node annotations (metas)
+- [pkg/yamltemplate](https://github.com/vmware-tanzu/carvel-ytt/tree/develop/pkg/yamltemplate) generates Starlark template based on yamlmeta package structures
+- [pkg/texttemplate](https://github.com/vmware-tanzu/carvel-ytt/tree/develop/pkg/texttemplate) parses text templates and generates Starlark template
+- [pkg/template](https://github.com/vmware-tanzu/carvel-ytt/tree/develop/pkg/template)
   - `InstructionSet` provides generic template instruction set for building Starlark templates
   - `CompiledTemplate` uses [Starlark Go library](https://github.com/google/starlark-go) to evaluate Starlark code
-- [pkg/yttlibrary](https://github.com/k14s/ytt/tree/develop/pkg/yttlibrary) is bundled `@ytt` library
-  - you can also make your own libraries as exemplified by [k14s/k8s-lib](https://github.com/k14s/k8s-lib)
+- [pkg/yttlibrary](https://github.com/vmware-tanzu/carvel-ytt/tree/develop/pkg/yttlibrary) is bundled `@ytt` library
+  - you can also make your own libraries as exemplified by [vmware-tanzu/carvel-ytt-library-for-kubernetes](https://github.com/vmware-tanzu/carvel-ytt-library-for-kubernetes)
 
 ### Tests
 
