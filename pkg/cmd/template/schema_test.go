@@ -713,7 +713,7 @@ rendered: true`
 		t.Fatalf("Expected RunWithFiles to fail with message about schema enabled but no schema provided, but was a success")
 	}
 
-	if !strings.Contains(out.Err.Error(), "Schema experiment flag was enabled but no schema document was provided.") {
+	if !strings.Contains(out.Err.Error(), "Schema experiment flag was enabled but no schema document was provided") {
 		t.Fatalf("Expected an error about schema enabled but no schema provided, but got: %v", out.Err.Error())
 	}
 }

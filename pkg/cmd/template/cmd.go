@@ -144,7 +144,9 @@ func (o *TemplateOptions) RunWithFiles(in TemplateInput, ui cmdcore.PlainUI) Tem
 	} else {
 		if o.SchemaEnabled {
 			return TemplateOutput{Err: fmt.Errorf(
-				"Schema experiment flag was enabled but no schema document was provided. (See this propsal for details on how to include a schema document: https://github.com/k14s/design-docs/blob/develop/ytt/001-schemas/README.md#defining-a-schema-document)",
+				// TODO: Include documentation on defining a schema with this error when
+				// docs are ready.
+				"Schema experiment flag was enabled but no schema document was provided",
 			)}
 		}
 	}
