@@ -145,7 +145,7 @@ func (o *TemplateOptions) RunWithFiles(in TemplateInput, ui cmdcore.PlainUI) Tem
 		if o.SchemaEnabled {
 			return TemplateOutput{Err: fmt.Errorf(
 				// TODO: Include documentation on defining a schema with this error when
-				// docs are ready. 
+				// docs are ready.
 				"Schema experiment flag was enabled but no schema document was provided",
 			)}
 		}
