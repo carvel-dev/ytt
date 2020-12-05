@@ -68,7 +68,7 @@ Copied here for convenience from [Starlark specification](https://github.com/goo
 - [string·lower](https://github.com/google/starlark-go/blob/master/doc/spec.md#string·lower)
 - [string·lstrip](https://github.com/google/starlark-go/blob/master/doc/spec.md#string·lstrip)
 ```python
-"  hello  ".lstrip()  # "  hello"
+"  hello  ".lstrip()  # "hello  "
 ```
 
 - [string·partition](https://github.com/google/starlark-go/blob/master/doc/spec.md#string·partition)
@@ -90,7 +90,7 @@ Copied here for convenience from [Starlark specification](https://github.com/goo
 - [string·rsplit](https://github.com/google/starlark-go/blob/master/doc/spec.md#string·rsplit)
 - [string·rstrip](https://github.com/google/starlark-go/blob/master/doc/spec.md#string·rstrip) (`S.rstrip()`)
 ```python
-"  hello  ".rstrip()  # "hello  "
+"  hello  ".rstrip()  # "  hello"
 ```
 
 - [string·split](https://github.com/google/starlark-go/blob/master/doc/spec.md#string·split) (`S.split([sep [, maxsplit]])`)
