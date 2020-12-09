@@ -1,5 +1,8 @@
 name: test-all
-on: [push, pull_request]
+on: 
+  push:
+  pull_request:
+    types: [opened, reopened]
 jobs:
   test-all:
     name: Test All
