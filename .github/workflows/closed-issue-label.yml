@@ -1,0 +1,17 @@
+name: Closed issue labeling
+on:
+  issues:
+    types: ['reopened']
+  issue_comment:
+    types: ['created']
+
+jobs:
+  add-labels:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: docker://k8slt/closed-issue-label-action@sha256:84360552559e0de4dfaaeefcf1ea0a1070a6250621f98539caf3eaad9395feb7
+        if: github.event_name == 'issues' || ( github.event_name == 'issue_comment' && github.event.issue.state == 'closed')
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          ignore-comments: true
+          default-labels: '["carvel-triage"]'
