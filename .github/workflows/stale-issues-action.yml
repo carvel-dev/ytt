@@ -1,0 +1,21 @@
+name: Mark issues stale and close stale issues
+
+on:
+  schedule:
+  - cron: "0 0 * * *"
+
+jobs:
+  stale:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/stale@87c2b794b9b47a9bec68ae03c01aeb572ffebdb1
+      with:
+        repo-token: ${{ secrets.GITHUB_TOKEN }}
+        stale-issue-message: 'This issue is being marked as stale due to a long period of inactivity and will be closed in 5 days if there is no response.'
+        stale-issue-label: 'stale'
+        exempt-issue-label: 'discussion'
+        only-labels: 'carvel-triage'
+        days-before-stale: 40
+        days-before-close: 5
