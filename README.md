@@ -1,3 +1,5 @@
+[![Chocolatey](https://img.shields.io/chocolatey/v/ytt.svg)](https://chocolatey.org/packages/ytt)
+
 
 * Install: Grab prebuilt binaries from the [Releases page](https://github.com/vmware-tanzu/carvel-ytt/releases)
 * Play: Jump right in by trying out the [online playground](https://get-ytt.io/#playground)
