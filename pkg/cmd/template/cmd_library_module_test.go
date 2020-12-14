@@ -1125,6 +1125,110 @@ lib_int: #@ data.values.int`)
 	}
 }
 
+func TestNotProcessedFiles(t *testing.T) {
+	configTplData := []byte(`
+key: value`)
+
+	notProcessedFile := []byte(`; last modified 1 April 2001 by John Doe
+[owner]
+name=John Doe
+organization=Acme Widgets Inc.
+
+[database]
+; use IP address in case network name resolution is not working
+server=192.0.2.62     
+port=143
+file="payroll.dat"`)
+
+	expectedYAMLTplData := `key: value
+`
+
+	filesToProcess := files.NewSortedFiles([]*files.File{
+		files.MustNewFileFromSource(files.NewBytesSource("config.yml", configTplData)),
+		files.MustNewFileFromSource(files.NewBytesSource("not-processed.ini", notProcessedFile)),
+	})
+
+	ui := cmdcore.NewPlainUI(false)
+	opts := cmdtpl.NewOptions()
+
+	out := opts.RunWithFiles(cmdtpl.TemplateInput{Files: filesToProcess}, ui)
+	if out.Err != nil {
+		t.Fatalf("Expected RunWithFiles to succeed, but was error: %s", out.Err)
+	}
+
+	if len(out.Files) != 1 {
+		t.Fatalf("Expected number of output files to be 1, but was %d", len(out.Files))
+	}
+
+	file := out.Files[0]
+
+	if file.RelativePath() != "config.yml" {
+		t.Fatalf("Expected output file to be config.yml, but was %#v", file.RelativePath())
+	}
+
+	if string(file.Bytes()) != expectedYAMLTplData {
+		t.Fatalf("Expected output file to have specific data, but was: >>>%s<<<", file.Bytes())
+	}
+
+	if len(out.UnkownFiles) != 1 {
+		t.Fatalf("Expect unknown files to be 1, but was %d", len(out.UnkownFiles))
+	}
+	if out.UnkownFiles[0].RelativePath() == "not-processed.txt" {
+		t.Fatalf("Expect not processed file to be 'not-processed.txt', but was %s", out.UnkownFiles[0].RelativePath())
+	}
+}
+
+func TestNotProcessedFiles1(t *testing.T) {
+	configTplData := []byte(`no: bananas
+'no': something`)
+
+	notProcessedFile := []byte(`[Application]
+APP_NAME = Application
+APP_DESC = Description
+APP_PATH = Application Path
+APP_SITE = Application Identifier
+APP_DATA = Data Path
+APP_INBOX = Inbox Path
+APP_OUTBOX = Outbox Path`)
+
+	expectedYAMLTplData := `key: value
+`
+
+	filesToProcess := files.NewSortedFiles([]*files.File{
+		files.MustNewFileFromSource(files.NewBytesSource("config.yml", configTplData)),
+		files.MustNewFileFromSource(files.NewBytesSource("not-processed.ini.txt", notProcessedFile)),
+	})
+
+	ui := cmdcore.NewPlainUI(false)
+	opts := cmdtpl.NewOptions()
+
+	out := opts.RunWithFiles(cmdtpl.TemplateInput{Files: filesToProcess}, ui)
+	if out.Err != nil {
+		t.Fatalf("Expected RunWithFiles to succeed, but was error: %s", out.Err)
+	}
+
+	if len(out.Files) != 1 {
+		t.Fatalf("Expected number of output files to be 1, but was %d", len(out.Files))
+	}
+
+	file := out.Files[0]
+
+	if file.RelativePath() != "config.yml" {
+		t.Fatalf("Expected output file to be config.yml, but was %#v", file.RelativePath())
+	}
+
+	if string(file.Bytes()) != expectedYAMLTplData {
+		t.Fatalf("Expected output file to have specific data, but was: >>>%s<<<", file.Bytes())
+	}
+
+	if len(out.UnkownFiles) != 1 {
+		t.Fatalf("Expect unknown files to be 1, but was %d", len(out.UnkownFiles))
+	}
+	if out.UnkownFiles[0].RelativePath() == "not-processed.txt" {
+		t.Fatalf("Expect not processed file to be 'not-processed.txt', but was %s", out.UnkownFiles[0].RelativePath())
+	}
+}
+
 func runAndCompare(t *testing.T, filesToProcess []*files.File, expectedYAMLTplData string) {
 	ui := cmdcore.NewPlainUI(false)
 	opts := cmdtpl.NewOptions()

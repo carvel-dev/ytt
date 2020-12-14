@@ -101,5 +101,13 @@ func (s *RegularFilesSource) Output(out TemplateOutput) error {
 	s.ui.Debugf("### result\n")
 	s.ui.Printf("%s", combinedDocBytes) // no newline
 
+	if len(out.UnkownFiles) > 0 {
+		message := "The following files were not processed:\n"
+		for _, file := range out.Files {
+			message = fmt.Sprintf("%s - %s\n", message, file.RelativePath())
+		}
+		s.ui.Warnf(message)
+	}
+
 	return nil
 }

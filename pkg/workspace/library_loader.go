@@ -22,9 +22,10 @@ type LibraryLoader struct {
 }
 
 type EvalResult struct {
-	Files   []files.OutputFile
-	DocSet  *yamlmeta.DocumentSet
-	Exports []EvalExport
+	Files        []files.OutputFile
+	DocSet       *yamlmeta.DocumentSet
+	Exports      []EvalExport
+	UnknownFiles []files.File
 }
 
 type EvalExport struct {
@@ -127,7 +128,7 @@ func (ll *LibraryLoader) filesByAnnotation(annName structmeta.AnnotationName, lo
 }
 
 func (ll *LibraryLoader) Eval(values *DataValues, libraryValues []*DataValues) (*EvalResult, error) {
-	exports, docSets, outputFiles, err := ll.eval(values, libraryValues)
+	exports, docSets, outputFiles, unkownFiles, err := ll.eval(values, libraryValues)
 	if err != nil {
 		return nil, err
 	}
@@ -138,9 +139,10 @@ func (ll *LibraryLoader) Eval(values *DataValues, libraryValues []*DataValues) (
 	}
 
 	result := &EvalResult{
-		Files:   outputFiles,
-		DocSet:  &yamlmeta.DocumentSet{},
-		Exports: exports,
+		Files:        outputFiles,
+		DocSet:       &yamlmeta.DocumentSet{},
+		Exports:      exports,
+		UnknownFiles: unkownFiles,
 	}
 
 	for _, fileInLib := range ll.sortedOutputDocSets(docSets) {
@@ -160,13 +162,14 @@ func (ll *LibraryLoader) Eval(values *DataValues, libraryValues []*DataValues) (
 }
 
 func (ll *LibraryLoader) eval(values *DataValues, libraryValues []*DataValues) ([]EvalExport,
-	map[*FileInLibrary]*yamlmeta.DocumentSet, []files.OutputFile, error) {
+	map[*FileInLibrary]*yamlmeta.DocumentSet, []files.OutputFile, []files.File, error) {
 
 	loader := NewTemplateLoader(values, libraryValues, ll.ui, ll.templateLoaderOpts, ll.libraryExecFactory, &yamlmeta.AnySchema{})
 
 	exports := []EvalExport{}
 	docSets := map[*FileInLibrary]*yamlmeta.DocumentSet{}
 	outputFiles := []files.OutputFile{}
+	var unknownFiles []files.File
 
 	for _, fileInLib := range ll.libraryCtx.Current.ListAccessibleFiles() {
 		libraryCtx := LibraryExecutionContext{Current: fileInLib.Library, Root: ll.libraryCtx.Root}
@@ -178,7 +181,7 @@ func (ll *LibraryLoader) eval(values *DataValues, libraryValues []*DataValues) (
 			case files.TypeYAML:
 				_, resultDocSet, err := loader.EvalYAML(libraryCtx, fileInLib.File)
 				if err != nil {
-					return nil, nil, nil, err
+					return nil, nil, nil, nil, err
 				}
 
 				docSets[fileInLib] = resultDocSet
@@ -186,7 +189,7 @@ func (ll *LibraryLoader) eval(values *DataValues, libraryValues []*DataValues) (
 			case files.TypeText:
 				_, resultVal, err := loader.EvalText(libraryCtx, fileInLib.File)
 				if err != nil {
-					return nil, nil, nil, err
+					return nil, nil, nil, nil, err
 				}
 
 				resultStr := resultVal.AsString()
@@ -195,7 +198,7 @@ func (ll *LibraryLoader) eval(values *DataValues, libraryValues []*DataValues) (
 				outputFiles = append(outputFiles, files.NewOutputFile(fileInLib.RelativePath(), []byte(resultStr)))
 
 			default:
-				return nil, nil, nil, fmt.Errorf("Unknown file type")
+				return nil, nil, nil, nil, fmt.Errorf("Unknown file type")
 			}
 
 		case fileInLib.File.IsLibrary():
@@ -226,18 +229,19 @@ func (ll *LibraryLoader) eval(values *DataValues, libraryValues []*DataValues) (
 			if evalFunc != nil {
 				globals, err := evalFunc(libraryCtx, fileInLib.File)
 				if err != nil {
-					return nil, nil, nil, err
+					return nil, nil, nil, nil, err
 				}
 
 				exports = append(exports, EvalExport{Path: fileInLib.RelativePath(), Symbols: globals})
 			}
 
 		default:
+			unknownFiles = append(unknownFiles, *fileInLib.File)
 			// do nothing
 		}
 	}
 
-	return exports, docSets, outputFiles, ll.checkUnusedDVs(libraryValues)
+	return exports, docSets, outputFiles, unknownFiles, ll.checkUnusedDVs(libraryValues)
 }
 
 func (*LibraryLoader) sortedOutputDocSets(outputDocSets map[*FileInLibrary]*yamlmeta.DocumentSet) []*FileInLibrary {

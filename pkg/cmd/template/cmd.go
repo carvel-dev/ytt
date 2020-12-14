@@ -34,9 +34,10 @@ type TemplateInput struct {
 }
 
 type TemplateOutput struct {
-	Files  []files.OutputFile
-	DocSet *yamlmeta.DocumentSet
-	Err    error
+	Files       []files.OutputFile
+	DocSet      *yamlmeta.DocumentSet
+	UnkownFiles []files.File
+	Err         error
 }
 
 type FileSource interface {
@@ -170,7 +171,7 @@ func (o *TemplateOptions) RunWithFiles(in TemplateInput, ui cmdcore.PlainUI) Tem
 		return TemplateOutput{Err: err}
 	}
 
-	return TemplateOutput{Files: result.Files, DocSet: result.DocSet}
+	return TemplateOutput{Files: result.Files, DocSet: result.DocSet, UnkownFiles: result.UnknownFiles}
 }
 
 func (o *TemplateOptions) pickSource(srcs []FileSource, pickFunc func(FileSource) bool) FileSource {
