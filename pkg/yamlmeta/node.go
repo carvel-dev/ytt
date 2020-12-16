@@ -195,12 +195,13 @@ func (n *Document) Check() (chk TypeCheck) {
 	return
 }
 func (n *Map) Check() (chk TypeCheck) {
+	check := n.Type.CheckType(n, "")
+	if check.HasViolations() {
+		chk.Violations = append(chk.Violations, check.Violations...)
+		return
+	}
+
 	for _, item := range n.Items {
-		check := n.Type.CheckAllows(item)
-		if check.HasViolations() {
-			chk.Violations = append(chk.Violations, check.Violations...)
-			continue
-		}
 		check = item.Check()
 		if check.HasViolations() {
 			chk.Violations = append(chk.Violations, check.Violations...)

@@ -8,8 +8,6 @@ import (
 )
 
 type Type interface {
-	// Checks whether `value` is permitted within (applicable to map types only)
-	CheckAllows(item *MapItem) TypeCheck
 	AssignTypeTo(typeable Typeable) TypeCheck
 	GetValueType() Type
 	CheckType(node TypeWithValues, prependErrorMessage string) TypeCheck

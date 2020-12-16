@@ -69,10 +69,21 @@ func (t *DocumentType) CheckType(_ yamlmeta.TypeWithValues, _ string) (chk yamlm
 func (m *MapType) CheckType(node yamlmeta.TypeWithValues, prependErrorMessage string) (chk yamlmeta.TypeCheck) {
 	violationErrorMessage := prependErrorMessage + " was type %T when %T was expected"
 
-	_, ok := node.(*yamlmeta.Map)
+	nodeMap, ok := node.(*yamlmeta.Map)
 	if !ok {
-		chk.Violations = append(chk.Violations, fmt.Sprintf(violationErrorMessage, node.GetValues()[0], &yamlmeta.Map{}))
+		scalar, ok := node.(*yamlmeta.Scalar)
+		if ok {
+			chk.Violations = append(chk.Violations, fmt.Sprintf(violationErrorMessage, scalar.Value, &yamlmeta.Map{}))
+		} else {
+			chk.Violations = append(chk.Violations, fmt.Sprintf(violationErrorMessage, node, &yamlmeta.Map{}))
+		}
 		return
+	}
+
+	for _, item := range nodeMap.Items {
+		if !m.AllowsKey(item.Key) {
+			chk.Violations = append(chk.Violations, fmt.Sprintf("Map item '%s' at %s is not defined in schema", item.Key, item.Position.AsCompactString()))
+		}
 	}
 	return
 }
@@ -95,8 +106,12 @@ func (a ArrayType) CheckType(node yamlmeta.TypeWithValues, prependErrorMessage s
 
 	_, ok := node.(*yamlmeta.Array)
 	if !ok {
-		chk.Violations = append(chk.Violations, fmt.Sprintf(violationErrorMessage, node.GetValues()[0], &yamlmeta.Array{}))
-		return
+		scalar, ok := node.(*yamlmeta.Scalar)
+		if ok {
+			chk.Violations = append(chk.Violations, fmt.Sprintf(violationErrorMessage, scalar.Value, &yamlmeta.Array{}))
+		} else {
+			chk.Violations = append(chk.Violations, fmt.Sprintf(violationErrorMessage, node, &yamlmeta.Array{}))
+		}
 	}
 	return
 }
@@ -105,7 +120,7 @@ func (a ArrayItemType) CheckType(node yamlmeta.TypeWithValues, prependErrorMessa
 
 	_, ok := node.(*yamlmeta.ArrayItem)
 	if !ok {
-		chk.Violations = append(chk.Violations, fmt.Sprintf(violationErrorMessage, node.GetValues()[0], node))
+		chk.Violations = append(chk.Violations, fmt.Sprintf(violationErrorMessage, node, &yamlmeta.ArrayItem{}))
 		return
 	}
 	return
@@ -135,22 +150,6 @@ func (m ScalarType) CheckType(node yamlmeta.TypeWithValues, prependErrorMessage 
 		chk.Violations = append(chk.Violations, violation)
 	}
 	return
-}
-
-func (t *DocumentType) CheckAllows(item *yamlmeta.MapItem) yamlmeta.TypeCheck {
-	panic("Attempt to check if a MapItem is allowed as a value of a Document.")
-}
-func (m MapItemType) CheckAllows(item *yamlmeta.MapItem) yamlmeta.TypeCheck {
-	panic("Attempt to check if a MapItem is allowed as a value of a MapItem.")
-}
-func (a ArrayType) CheckAllows(item *yamlmeta.MapItem) yamlmeta.TypeCheck {
-	panic("Attempt to check if a MapItem is allowed as a value of an Array.")
-}
-func (a ArrayItemType) CheckAllows(item *yamlmeta.MapItem) yamlmeta.TypeCheck {
-	panic("Attempt to check if a MapItem is allowed as a value of an ArrayItemType.")
-}
-func (m ScalarType) CheckAllows(item *yamlmeta.MapItem) yamlmeta.TypeCheck {
-	panic("Attempt to check if a MapItem is allowed as a value of a ScalarType.")
 }
 
 func (t *DocumentType) AssignTypeTo(typeable yamlmeta.Typeable) (chk yamlmeta.TypeCheck) {
@@ -296,13 +295,6 @@ func (t *MapType) AllowsKey(key interface{}) bool {
 		}
 	}
 	return false
-}
-
-func (t *MapType) CheckAllows(item *yamlmeta.MapItem) (chk yamlmeta.TypeCheck) {
-	if !t.AllowsKey(item.Key) {
-		chk.Violations = append(chk.Violations, fmt.Sprintf("Map item '%s' at %s is not defined in schema", item.Key, item.Position.AsCompactString()))
-	}
-	return chk
 }
 
 func (t MapItemType) IsNullable() bool {

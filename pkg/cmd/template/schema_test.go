@@ -456,7 +456,6 @@ db_conn:
   port: localHost
   username:
     main: 123
-  password: changeme
 `
 
 	filesToProcess := files.NewSortedFiles([]*files.File{
@@ -472,7 +471,39 @@ db_conn:
 	if out.Err == nil {
 		t.Fatalf("Expected an error about the schema check failures, but succeeded.")
 	}
-	expectedErr := "Typechecking violations found: [Map item 'port' at dataValues.yml:4 was type string when int was expected, Map item 'main' at dataValues.yml:6 was type int when string was expected, Map item 'password' at dataValues.yml:7 is not defined in schema]"
+	expectedErr := "Typechecking violations found: [Map item 'port' at dataValues.yml:4 was type string when int was expected, Map item 'main' at dataValues.yml:6 was type int when string was expected]"
+	if !strings.Contains(out.Err.Error(), expectedErr) {
+		t.Fatalf("Expected an error about a schema check failure, but got: %s", out.Err.Error())
+	}
+}
+
+func TestMapKeyNotPresentInSchemaFailsCheck(t *testing.T) {
+	schemaYAML := `#@schema/match data_values=True
+---
+db_conn:
+  port: 0
+`
+	dataValuesYAML := `#@data/values
+---
+db_conn:
+  port: not an int  #! wrong type, but check values only when all keys in the map are valid
+  password: i should not be here
+`
+
+	filesToProcess := files.NewSortedFiles([]*files.File{
+		files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
+		files.MustNewFileFromSource(files.NewBytesSource("dataValues.yml", []byte(dataValuesYAML))),
+	})
+
+	ui := cmdcore.NewPlainUI(false)
+	opts := cmdtpl.NewOptions()
+	opts.SchemaEnabled = true
+	out := opts.RunWithFiles(cmdtpl.TemplateInput{Files: filesToProcess}, ui)
+
+	if out.Err == nil {
+		t.Fatalf("Expected an error about the schema check failures, but succeeded.")
+	}
+	expectedErr := "Typechecking violations found: [Map item 'password' at dataValues.yml:5 is not defined in schema]"
 	if !strings.Contains(out.Err.Error(), expectedErr) {
 		t.Fatalf("Expected an error about a schema check failure, but got: %s", out.Err.Error())
 	}
@@ -500,6 +531,9 @@ clients:
   name: Bob
   flags:
   - secure  #! expecting a map, got a string
+- id: 3
+  name: Charlie
+  flags: secure  #! expecting a array, got a string
 `
 
 	filesToProcess := files.NewSortedFiles([]*files.File{
@@ -515,7 +549,7 @@ clients:
 	if out.Err == nil {
 		t.Fatalf("Expected an error about the schema check failures, but succeeded.")
 	}
-	expectedErr := "Typechecking violations found: [Map item 'value' at dataValues.yml:8 is not defined in schema, Array item at dataValues.yml:12 was type string when *yamlmeta.Map was expected]"
+	expectedErr := "Typechecking violations found: [Map item 'value' at dataValues.yml:8 is not defined in schema, Array item at dataValues.yml:12 was type string when *yamlmeta.Map was expected, Map item 'flags' at dataValues.yml:15 was type string when *yamlmeta.Array was expected]"
 	if !strings.Contains(out.Err.Error(), expectedErr) {
 		t.Fatalf("Expected an error about a schema check failure, but got: %s", out.Err.Error())
 	}
