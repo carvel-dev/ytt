@@ -5,6 +5,7 @@ package overlay
 
 import (
 	"fmt"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -189,5 +190,6 @@ func (MatchAnnotationExpectsKwarg) formatPositions(pos []*filepos.Position) stri
 	for _, p := range pos {
 		lines = append(lines, p.AsCompactString())
 	}
+	sort.Strings(lines)
 	return " (lines: " + strings.Join(lines, ", ") + ")"
 }
