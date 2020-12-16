@@ -16,7 +16,6 @@ const (
 	AnnotationValue   structmeta.AnnotationName = "template/value"
 )
 
-// TODO change to struct
 type NodeAnnotations map[structmeta.AnnotationName]NodeAnnotation
 
 type NodeAnnotation struct {

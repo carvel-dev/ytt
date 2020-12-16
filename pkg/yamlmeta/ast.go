@@ -90,6 +90,10 @@ type ArrayItem struct {
 	annotations interface{}
 }
 
+type Scalar struct {
+	Value interface{}
+}
+
 type Meta struct {
 	Data     string
 	Position *filepos.Position

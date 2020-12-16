@@ -10,6 +10,7 @@ import (
 	"github.com/k14s/starlark-go/starlark"
 	"github.com/k14s/starlark-go/starlarkstruct"
 	"github.com/k14s/ytt/pkg/filepos"
+	"github.com/k14s/ytt/pkg/schema"
 	"github.com/k14s/ytt/pkg/template/core"
 	"github.com/k14s/ytt/pkg/yamlmeta"
 	"github.com/k14s/ytt/pkg/yamltemplate"
@@ -317,7 +318,7 @@ func (l *libraryValue) libraryValues(ll *LibraryLoader) (*DataValues, []*DataVal
 		}
 	}
 
-	dvs, foundChildDVss, err := ll.Values(append(dvss, afterLibModDVss...), &yamlmeta.AnySchema{})
+	dvs, foundChildDVss, err := ll.Values(append(dvss, afterLibModDVss...), &schema.AnySchema{})
 	if err != nil {
 		return nil, nil, err
 	}

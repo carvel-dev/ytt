@@ -13,6 +13,139 @@ import (
 	"github.com/k14s/ytt/pkg/files"
 )
 
+func TestNullableScalarsAllowsNull(t *testing.T) {
+	schemaYAML := `#@schema/match data_values=True
+---
+vpc:
+  name: ""
+  #@schema/nullable
+  nullable_string: "empty"
+  #@schema/nullable
+  nullable_int: 10
+  foo: ""
+`
+	dataValuesYAML := `#@data/values
+---
+vpc:
+  name: vpc-203d912a
+`
+	templateYAML := `#@ load("@ytt:data", "data")
+---
+rendered: true
+vpc: #@ data.values.vpc
+`
+
+	expected := `rendered: true
+vpc:
+  name: vpc-203d912a
+  nullable_string: null
+  nullable_int: null
+  foo: ""
+`
+
+	testSchemaTemplates(t, schemaYAML, dataValuesYAML, templateYAML, expected)
+}
+
+func TestProvidingNullToNonNullableNodeFails(t *testing.T) {
+	schemaYAML := `#@schema/match data_values=True
+---
+app: {}
+`
+	dataValuesYAML := `#@data/values
+---
+app: null
+`
+
+	filesToProcess := files.NewSortedFiles([]*files.File{
+		files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
+		files.MustNewFileFromSource(files.NewBytesSource("dataValues.yml", []byte(dataValuesYAML))),
+	})
+
+	ui := cmdcore.NewPlainUI(false)
+	opts := cmdtpl.NewOptions()
+	opts.SchemaEnabled = true
+	out := opts.RunWithFiles(cmdtpl.TemplateInput{Files: filesToProcess}, ui)
+	if out.Err == nil {
+		t.Fatalf("Expected RunWithFiles to fail with message about type checking the 'app' key given nil should expect a map")
+	}
+
+	if !strings.Contains(out.Err.Error(), "Typechecking violations found: [Map item 'app' at dataValues.yml:3 was type <nil> when *schema.MapType was expected") {
+		t.Fatalf("Expected an error about type checking, but got: %v", out.Err.Error())
+	}
+}
+
+func TestNullableAtTopLevelWithDataValueOmitted(t *testing.T) {
+	schemaYAML := `#@schema/match data_values=True
+---
+#@schema/nullable
+vpc:
+  #@schema/nullable
+  name: ""
+foo: "bar"
+`
+	dataValuesYAML := `---
+#@data/values
+---
+`
+	templateYAML := `#@ load("@ytt:data", "data")
+---
+vpc: #@ data.values.vpc
+`
+
+	expected := `vpc: null
+`
+
+	testSchemaTemplates(t, schemaYAML, dataValuesYAML, templateYAML, expected)
+}
+
+func TestSchemaWithEmptyOverlay(t *testing.T) {
+	schemaYAML := `#@schema/match data_values=True
+---
+#@schema/nullable
+vpc:
+  #@schema/nullable
+  name: ""
+foo: "bar"
+`
+	dataValuesYAML := `#@data/values
+---
+`
+	dataValuesOverlayYAML := `#@ load("@ytt:overlay", "overlay")
+#@overlay/match by=overlay.all
+---
+`
+	templateYAML := `#@ load("@ytt:data", "data")
+---
+vpc: #@ data.values.vpc
+`
+
+	expected := ``
+
+	filesToProcess := files.NewSortedFiles([]*files.File{
+		files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
+		files.MustNewFileFromSource(files.NewBytesSource("dataValues.yml", []byte(dataValuesYAML))),
+		files.MustNewFileFromSource(files.NewBytesSource("overlay.yml", []byte(dataValuesOverlayYAML))),
+		files.MustNewFileFromSource(files.NewBytesSource("template.yml", []byte(templateYAML))),
+	})
+
+	ui := cmdcore.NewPlainUI(false)
+	opts := cmdtpl.NewOptions()
+	opts.SchemaEnabled = true
+	out := opts.RunWithFiles(cmdtpl.TemplateInput{Files: filesToProcess}, ui)
+	if out.Err != nil {
+		t.Fatalf("Expected RunWithFiles to succeed, but was error: %s", out.Err)
+	}
+
+	if len(out.Files) != 1 {
+		t.Fatalf("Expected number of output files to be 1, but was: %d", len(out.Files))
+	}
+
+	if string(out.Files[0].Bytes()) != expected {
+		diff := difflib.PPDiff(strings.Split(string(out.Files[0].Bytes()), "\n"), strings.Split(expected, "\n"))
+		t.Fatalf("Expected output to only include template YAML, differences:\n%s", diff)
+	}
+}
+
 func TestNullableSchemaMapAllowsNull(t *testing.T) {
 	schemaYAML := `#@schema/match data_values=True
 ---
@@ -37,35 +170,14 @@ vpc:
 rendered: true
 vpc: #@ data.values.vpc
 `
-
-	filesToProcess := files.NewSortedFiles([]*files.File{
-		files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
-		files.MustNewFileFromSource(files.NewBytesSource("dataValues.yml", []byte(dataValuesYAML))),
-		files.MustNewFileFromSource(files.NewBytesSource("template.yml", []byte(templateYAML))),
-	})
-
-	ui := cmdcore.NewPlainUI(false)
-	opts := cmdtpl.NewOptions()
-	opts.SchemaEnabled = true
-	out := opts.RunWithFiles(cmdtpl.TemplateInput{Files: filesToProcess}, ui)
-	if out.Err != nil {
-		t.Fatalf("Expected RunWithFiles to succeed, but was error: %s", out.Err)
-	}
-
-	if len(out.Files) != 1 {
-		t.Fatalf("Expected number of output files to be 1, but was: %d", len(out.Files))
-	}
-
 	expected := `rendered: true
 vpc:
   name: vpc-203d912a
   subnet_config: null
   subnet_ids: []
 `
-	if string(out.Files[0].Bytes()) != expected {
-		diff := difflib.PPDiff(strings.Split(string(out.Files[0].Bytes()), "\n"), strings.Split(expected, "\n"))
-		t.Fatalf("Expected output to only include template YAML, differences:\n%s", diff)
-	}
+
+	testSchemaTemplates(t, schemaYAML, dataValuesYAML, templateYAML, expected)
 }
 
 func TestNullableSchemaArrayItemFailsCheck(t *testing.T) {
@@ -103,7 +215,7 @@ vpc:
   name: ""
   subnet_ids:
   - 0
-  #@schema/nullable
+  #@schema/nullable 
   subnet_config:
   - id: 0
     mask: "255.255.0.0"
@@ -122,25 +234,6 @@ vpc:
 rendered: true
 vpc: #@ data.values.vpc
 `
-
-	filesToProcess := files.NewSortedFiles([]*files.File{
-		files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
-		files.MustNewFileFromSource(files.NewBytesSource("dataValues.yml", []byte(dataValuesYAML))),
-		files.MustNewFileFromSource(files.NewBytesSource("template.yml", []byte(templateYAML))),
-	})
-
-	ui := cmdcore.NewPlainUI(false)
-	opts := cmdtpl.NewOptions()
-	opts.SchemaEnabled = true
-	out := opts.RunWithFiles(cmdtpl.TemplateInput{Files: filesToProcess}, ui)
-	if out.Err != nil {
-		t.Fatalf("Expected RunWithFiles to succeed, but was error: %s", out.Err)
-	}
-
-	if len(out.Files) != 1 {
-		t.Fatalf("Expected number of output files to be 1, but was: %d", len(out.Files))
-	}
-
 	expected := `rendered: true
 vpc:
   name: vpc-203d912a
@@ -149,10 +242,8 @@ vpc:
   - 2
   subnet_config: null
 `
-	if string(out.Files[0].Bytes()) != expected {
-		diff := difflib.PPDiff(strings.Split(string(out.Files[0].Bytes()), "\n"), strings.Split(expected, "\n"))
-		t.Fatalf("Expected output to only include template YAML, differences:\n%s", diff)
-	}
+
+	testSchemaTemplates(t, schemaYAML, dataValuesYAML, templateYAML, expected)
 }
 
 func TestMapOnlySchemaChecksOk(t *testing.T) {
@@ -183,27 +274,7 @@ top_level: key
 	templateYAML := `---
 rendered: true`
 
-	filesToProcess := files.NewSortedFiles([]*files.File{
-		files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
-		files.MustNewFileFromSource(files.NewBytesSource("dataValues.yml", []byte(dataValuesYAML))),
-		files.MustNewFileFromSource(files.NewBytesSource("template.yml", []byte(templateYAML))),
-	})
-
-	ui := cmdcore.NewPlainUI(false)
-	opts := cmdtpl.NewOptions()
-	opts.SchemaEnabled = true
-	out := opts.RunWithFiles(cmdtpl.TemplateInput{Files: filesToProcess}, ui)
-	if out.Err != nil {
-		t.Fatalf("Expected RunWithFiles to succeed, but was error: %s", out.Err)
-	}
-
-	if len(out.Files) != 1 {
-		t.Fatalf("Expected number of output files to be 1, but was: %d", len(out.Files))
-	}
-
-	if string(out.Files[0].Bytes()) != "rendered: true\n" {
-		t.Fatalf("Expected output to only include template YAML, but got: %s", out.Files[0].Bytes())
-	}
+	testSchemaTemplates(t, schemaYAML, dataValuesYAML, templateYAML, "rendered: true\n")
 }
 
 func TestMapOnlySchemaFillInDefaults(t *testing.T) {
@@ -235,25 +306,6 @@ db_conn:
 rendered: true
 db: #@ data.values.db_conn
 `
-
-	filesToProcess := files.NewSortedFiles([]*files.File{
-		files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
-		files.MustNewFileFromSource(files.NewBytesSource("dataValues.yml", []byte(dataValuesYAML))),
-		files.MustNewFileFromSource(files.NewBytesSource("template.yml", []byte(templateYAML))),
-	})
-
-	ui := cmdcore.NewPlainUI(false)
-	opts := cmdtpl.NewOptions()
-	opts.SchemaEnabled = true
-	out := opts.RunWithFiles(cmdtpl.TemplateInput{Files: filesToProcess}, ui)
-	if out.Err != nil {
-		t.Fatalf("Expected RunWithFiles to succeed, but was error: %s", out.Err)
-	}
-
-	if len(out.Files) != 1 {
-		t.Fatalf("Expected number of output files to be 1, but was: %d", len(out.Files))
-	}
-
 	expected := `rendered: true
 db:
   password: mysecurepassword
@@ -267,10 +319,8 @@ db:
   jobs:
     run: defaultJob
 `
-	if string(out.Files[0].Bytes()) != expected {
-		diff := difflib.PPDiff(strings.Split(string(out.Files[0].Bytes()), "\n"), strings.Split(expected, "\n"))
-		t.Fatalf("Expected output to only include template YAML, differences:\n%s", diff)
-	}
+
+	testSchemaTemplates(t, schemaYAML, dataValuesYAML, templateYAML, expected)
 }
 
 func TestArrayOnlySchemaChecksOk(t *testing.T) {
@@ -286,27 +336,7 @@ func TestArrayOnlySchemaChecksOk(t *testing.T) {
 	templateYAML := `---
 rendered: true`
 
-	filesToProcess := files.NewSortedFiles([]*files.File{
-		files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
-		files.MustNewFileFromSource(files.NewBytesSource("dataValues.yml", []byte(dataValuesYAML))),
-		files.MustNewFileFromSource(files.NewBytesSource("template.yml", []byte(templateYAML))),
-	})
-
-	ui := cmdcore.NewPlainUI(false)
-	opts := cmdtpl.NewOptions()
-	opts.SchemaEnabled = true
-	out := opts.RunWithFiles(cmdtpl.TemplateInput{Files: filesToProcess}, ui)
-	if out.Err != nil {
-		t.Fatalf("Expected RunWithFiles to succeed, but was error: %s", out.Err)
-	}
-
-	if len(out.Files) != 1 {
-		t.Fatalf("Expected number of output files to be 1, but was: %d", len(out.Files))
-	}
-
-	if string(out.Files[0].Bytes()) != "rendered: true\n" {
-		t.Fatalf("Expected output to only include template YAML, but got: %s", out.Files[0].Bytes())
-	}
+	testSchemaTemplates(t, schemaYAML, dataValuesYAML, templateYAML, "rendered: true\n")
 }
 
 func TestMapAndArraySchemaChecksOk(t *testing.T) {
@@ -335,27 +365,7 @@ top_level: key
 	templateYAML := `---
 rendered: true`
 
-	filesToProcess := files.NewSortedFiles([]*files.File{
-		files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
-		files.MustNewFileFromSource(files.NewBytesSource("dataValues.yml", []byte(dataValuesYAML))),
-		files.MustNewFileFromSource(files.NewBytesSource("template.yml", []byte(templateYAML))),
-	})
-
-	ui := cmdcore.NewPlainUI(false)
-	opts := cmdtpl.NewOptions()
-	opts.SchemaEnabled = true
-	out := opts.RunWithFiles(cmdtpl.TemplateInput{Files: filesToProcess}, ui)
-	if out.Err != nil {
-		t.Fatalf("Expected RunWithFiles to succeed, but was error: %s", out.Err)
-	}
-
-	if len(out.Files) != 1 {
-		t.Fatalf("Expected number of output files to be 1, but was: %d", len(out.Files))
-	}
-
-	if string(out.Files[0].Bytes()) != "rendered: true\n" {
-		t.Fatalf("Expected output to only include template YAML, but got: %s", out.Files[0].Bytes())
-	}
+	testSchemaTemplates(t, schemaYAML, dataValuesYAML, templateYAML, "rendered: true\n")
 }
 
 func TestMapAndArraySchemaFillInDefaults(t *testing.T) {
@@ -387,25 +397,6 @@ vpc:
 rendered: true
 vpc: #@ data.values.vpc
 `
-
-	filesToProcess := files.NewSortedFiles([]*files.File{
-		files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
-		files.MustNewFileFromSource(files.NewBytesSource("dataValues.yml", []byte(dataValuesYAML))),
-		files.MustNewFileFromSource(files.NewBytesSource("template.yml", []byte(templateYAML))),
-	})
-
-	ui := cmdcore.NewPlainUI(false)
-	opts := cmdtpl.NewOptions()
-	opts.SchemaEnabled = true
-	out := opts.RunWithFiles(cmdtpl.TemplateInput{Files: filesToProcess}, ui)
-	if out.Err != nil {
-		t.Fatalf("Expected RunWithFiles to succeed, but was error: %s", out.Err)
-	}
-
-	if len(out.Files) != 1 {
-		t.Fatalf("Expected number of output files to be 1, but was: %d", len(out.Files))
-	}
-
 	expected := `rendered: true
 vpc:
   name: beax-a3543-5555
@@ -419,10 +410,8 @@ vpc:
     private: true
   subnet_ids: []
 `
-	if string(out.Files[0].Bytes()) != expected {
-		diff := difflib.PPDiff(strings.Split(string(out.Files[0].Bytes()), "\n"), strings.Split(expected, "\n"))
-		t.Fatalf("Expected output to only include template YAML, differences:\n%s", diff)
-	}
+
+	testSchemaTemplates(t, schemaYAML, dataValuesYAML, templateYAML, expected)
 }
 
 func TestDataValuesNotConformingToEmptySchemaFailsCheck(t *testing.T) {
@@ -467,7 +456,6 @@ db_conn:
   port: localHost
   username:
     main: 123
-  password: changeme
 `
 
 	filesToProcess := files.NewSortedFiles([]*files.File{
@@ -483,7 +471,39 @@ db_conn:
 	if out.Err == nil {
 		t.Fatalf("Expected an error about the schema check failures, but succeeded.")
 	}
-	expectedErr := "Typechecking violations found: [Map item 'port' at dataValues.yml:4 was type string when int was expected, Map item 'main' at dataValues.yml:6 was type int when string was expected, Map item 'password' at dataValues.yml:7 is not defined in schema]"
+	expectedErr := "Typechecking violations found: [Map item 'port' at dataValues.yml:4 was type string when int was expected, Map item 'main' at dataValues.yml:6 was type int when string was expected]"
+	if !strings.Contains(out.Err.Error(), expectedErr) {
+		t.Fatalf("Expected an error about a schema check failure, but got: %s", out.Err.Error())
+	}
+}
+
+func TestMapKeyNotPresentInSchemaFailsCheck(t *testing.T) {
+	schemaYAML := `#@schema/match data_values=True
+---
+db_conn:
+  port: 0
+`
+	dataValuesYAML := `#@data/values
+---
+db_conn:
+  port: not an int  #! wrong type, but check values only when all keys in the map are valid
+  password: i should not be here
+`
+
+	filesToProcess := files.NewSortedFiles([]*files.File{
+		files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
+		files.MustNewFileFromSource(files.NewBytesSource("dataValues.yml", []byte(dataValuesYAML))),
+	})
+
+	ui := cmdcore.NewPlainUI(false)
+	opts := cmdtpl.NewOptions()
+	opts.SchemaEnabled = true
+	out := opts.RunWithFiles(cmdtpl.TemplateInput{Files: filesToProcess}, ui)
+
+	if out.Err == nil {
+		t.Fatalf("Expected an error about the schema check failures, but succeeded.")
+	}
+	expectedErr := "Typechecking violations found: [Map item 'password' at dataValues.yml:5 is not defined in schema]"
 	if !strings.Contains(out.Err.Error(), expectedErr) {
 		t.Fatalf("Expected an error about a schema check failure, but got: %s", out.Err.Error())
 	}
@@ -511,6 +531,9 @@ clients:
   name: Bob
   flags:
   - secure  #! expecting a map, got a string
+- id: 3
+  name: Charlie
+  flags: secure  #! expecting a array, got a string
 `
 
 	filesToProcess := files.NewSortedFiles([]*files.File{
@@ -526,7 +549,7 @@ clients:
 	if out.Err == nil {
 		t.Fatalf("Expected an error about the schema check failures, but succeeded.")
 	}
-	expectedErr := "Typechecking violations found: [Map item 'value' at dataValues.yml:8 is not defined in schema, Array item at dataValues.yml:12 was type string when *yamlmeta.MapType was expected]"
+	expectedErr := "Typechecking violations found: [Map item 'value' at dataValues.yml:8 is not defined in schema, Array item at dataValues.yml:12 was type string when *yamlmeta.Map was expected, Map item 'flags' at dataValues.yml:15 was type string when *yamlmeta.Array was expected]"
 	if !strings.Contains(out.Err.Error(), expectedErr) {
 		t.Fatalf("Expected an error about a schema check failure, but got: %s", out.Err.Error())
 	}
@@ -715,5 +738,30 @@ rendered: true`
 
 	if !strings.Contains(out.Err.Error(), "Schema experiment flag was enabled but no schema document was provided") {
 		t.Fatalf("Expected an error about schema enabled but no schema provided, but got: %v", out.Err.Error())
+	}
+}
+
+func testSchemaTemplates(t *testing.T, schemaYAML string, dataValuesYAML string, templateYAML string, expected string) {
+	filesToProcess := files.NewSortedFiles([]*files.File{
+		files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
+		files.MustNewFileFromSource(files.NewBytesSource("dataValues.yml", []byte(dataValuesYAML))),
+		files.MustNewFileFromSource(files.NewBytesSource("template.yml", []byte(templateYAML))),
+	})
+
+	ui := cmdcore.NewPlainUI(false)
+	opts := cmdtpl.NewOptions()
+	opts.SchemaEnabled = true
+	out := opts.RunWithFiles(cmdtpl.TemplateInput{Files: filesToProcess}, ui)
+	if out.Err != nil {
+		t.Fatalf("Expected RunWithFiles to succeed, but was error: %s", out.Err)
+	}
+
+	if len(out.Files) != 1 {
+		t.Fatalf("Expected number of output files to be 1, but was: %d", len(out.Files))
+	}
+
+	if string(out.Files[0].Bytes()) != expected {
+		diff := difflib.PPDiff(strings.Split(string(out.Files[0].Bytes()), "\n"), strings.Split(expected, "\n"))
+		t.Fatalf("Expected output to only include template YAML, differences:\n%s", diff)
 	}
 }

@@ -237,3 +237,102 @@ overlayed: true
 		t.Fatalf("Expected error to match '%s' but was '%s'", expectedErr, out.Err.Error())
 	}
 }
+
+func TestMultipleDataValuesOneEmptyAndOneNonEmpty(t *testing.T) {
+	yamlTplData := []byte(`#@ load("@ytt:data", "data")
+key: #@ data.values.key
+`)
+
+	emptyYamlDataValue := []byte(`
+#@data/values
+---
+`)
+
+	nonEmptyYamlDataValue := []byte(`#@ load("@ytt:overlay", "overlay")
+#@data/values
+#@overlay/replace
+---
+key: value_from_data_value_overlay
+`)
+
+	expectedYAMLTplData := `key: value_from_data_value_overlay
+`
+
+	filesToProcess := files.NewSortedFiles([]*files.File{
+		files.MustNewFileFromSource(files.NewBytesSource("tpl.yml", yamlTplData)),
+		files.MustNewFileFromSource(files.NewBytesSource("datavalue_empty.yml", emptyYamlDataValue)),
+		files.MustNewFileFromSource(files.NewBytesSource("datavalue_non_empty.yml", nonEmptyYamlDataValue)),
+	})
+
+	ui := cmdcore.NewPlainUI(false)
+	opts := cmdtpl.NewOptions()
+
+	out := opts.RunWithFiles(cmdtpl.TemplateInput{Files: filesToProcess}, ui)
+	if out.Err != nil {
+		t.Fatalf("Expected RunWithFiles to succeed, but was error: %s", out.Err)
+	}
+
+	if len(out.Files) != 1 {
+		t.Fatalf("Expected number of output files to be 1, but was %d", len(out.Files))
+	}
+
+	file := out.Files[0]
+
+	if file.RelativePath() != "tpl.yml" {
+		t.Fatalf("Expected output file to be tpl.yml, but was %#v", file.RelativePath())
+	}
+
+	if string(file.Bytes()) != expectedYAMLTplData {
+		t.Fatalf("Expected output file to have specific data, but was: >>>%s<<<", file.Bytes())
+	}
+}
+
+func TestEmptyOverlayAndEmptyDataValues(t *testing.T) {
+	yamlTplData := []byte(`
+array:
+- name: item1
+  subarray:
+  - item1
+`)
+
+	yamlDataValue := []byte(`
+#@data/values
+---
+`)
+
+	yamlOverlayTplData1 := []byte(`
+#@ load("@ytt:overlay", "overlay")
+#@overlay/match by=overlay.all
+---
+`)
+
+	expectedYAMLTplData := ``
+
+	filesToProcess := files.NewSortedFiles([]*files.File{
+		files.MustNewFileFromSource(files.NewBytesSource("tpl.yml", yamlTplData)),
+		files.MustNewFileFromSource(files.NewBytesSource("overlay2.yml", yamlOverlayTplData1)),
+		files.MustNewFileFromSource(files.NewBytesSource("datavalue.yml", yamlDataValue)),
+	})
+
+	ui := cmdcore.NewPlainUI(false)
+	opts := cmdtpl.NewOptions()
+
+	out := opts.RunWithFiles(cmdtpl.TemplateInput{Files: filesToProcess}, ui)
+	if out.Err != nil {
+		t.Fatalf("Expected RunWithFiles to succeed, but was error: %s", out.Err)
+	}
+
+	if len(out.Files) != 1 {
+		t.Fatalf("Expected number of output files to be 1, but was %d", len(out.Files))
+	}
+
+	file := out.Files[0]
+
+	if file.RelativePath() != "tpl.yml" {
+		t.Fatalf("Expected output file to be tpl.yml, but was %#v", file.RelativePath())
+	}
+
+	if string(file.Bytes()) != expectedYAMLTplData {
+		t.Fatalf("Expected output file to have specific data, but was: >>>%s<<<", file.Bytes())
+	}
+}

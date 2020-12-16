@@ -9,6 +9,7 @@ import (
 
 	"github.com/k14s/starlark-go/starlark"
 	"github.com/k14s/ytt/pkg/filepos"
+	"github.com/k14s/ytt/pkg/schema"
 	"github.com/k14s/ytt/pkg/yamlmeta"
 	"github.com/k14s/ytt/pkg/yamltemplate"
 	yttoverlay "github.com/k14s/ytt/pkg/yttlibrary/overlay"
@@ -97,9 +98,11 @@ func (p DataValuesPreProcessing) templateFile(fileInLib *FileInLibrary) ([]*yaml
 	if err != nil {
 		return nil, err
 	}
-	if _, ok := p.loader.schema.(*yamlmeta.AnySchema); !ok {
+	if _, ok := p.loader.schema.(*schema.AnySchema); !ok {
+
 		var outerTypeCheck yamlmeta.TypeCheck
-		for _, doc := range resultDocSet.Items {
+		// Skip first document because the parser inserts a new doc start at the beginning of every doc
+		for _, doc := range resultDocSet.Items[1:] {
 			outerTypeCheck = p.loader.schema.AssignType(doc)
 			if len(outerTypeCheck.Violations) > 0 {
 				return resultDocSet.Items, fmt.Errorf("Typechecking violations found: [%v]", strings.Join(outerTypeCheck.Violations, ", "))
