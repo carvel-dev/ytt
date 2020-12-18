@@ -1,8 +1,8 @@
 
-* Install: Grab prebuilt binaries from the [Releases page](https://github.com/vmware-tanzu/carvel-ytt/releases)
 * Play: Jump right in by trying out the [online playground](https://get-ytt.io/#playground)
 * For more information about annotations, data values, overlays and other features see [Docs](https://github.com/vmware-tanzu/carvel-ytt/tree/develop/docs) page
 * Slack: [#carvel in Kubernetes slack](https://slack.kubernetes.io/)
+* Install: Grab prebuilt binaries from the [Releases page](https://github.com/vmware-tanzu/carvel-ytt/releases) or [Homebrew Carvel tap](https://github.com/vmware-tanzu/homebrew-carvel)
 
 ## Overview
 
