@@ -23,4 +23,4 @@ To get started with `ytt` and to see examples, you use the online playground or 
   `ytt website`
 
 - See the examples used in the playground on the [examples](https://github.com/vmware-tanzu/carvel-ytt/tree/develop/examples/playground) page
-- Editor Extensions: [vscode sytnax highlighting](https://marketplace.visualstudio.com/items?itemName=ewrenn.vscode-ytt)
+- Editor Extensions: [vscode syntax highlighting](https://marketplace.visualstudio.com/items?itemName=ewrenn.vscode-ytt)
