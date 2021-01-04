@@ -1,0 +1,14 @@
+name: Reopened issue labeling
+on:
+  issues:
+    types: ['reopened']
+
+jobs:
+  add-labels:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: docker://k8slt/closed-issue-label-action@sha256:84360552559e0de4dfaaeefcf1ea0a1070a6250621f98539caf3eaad9395feb7
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          ignore-comments: true
+          default-labels: '["carvel-triage"]'
