@@ -39,6 +39,7 @@ func (o DataValuesPreProcessing) Apply() (*DataValues, []*DataValues, error) {
 
 func (o DataValuesPreProcessing) apply(files []*FileInLibrary) (*DataValues, []*DataValues, error) {
 	var values *yamlmeta.Document
+	values = o.loader.schema.AsDataValue()
 	var libraryValues []*DataValues
 	for _, fileInLib := range files {
 		valuesDocs, err := o.templateFile(fileInLib)

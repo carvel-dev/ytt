@@ -5,7 +5,6 @@ package schema
 
 import (
 	"fmt"
-
 	"github.com/k14s/ytt/pkg/template"
 	"github.com/k14s/ytt/pkg/yamlmeta"
 )
@@ -13,15 +12,36 @@ import (
 type AnySchema struct {
 }
 
+type NullSchema struct {
+}
+
 type DocumentSchema struct {
-	Name    string
-	Source  *yamlmeta.Document
-	Allowed *DocumentType
+	Name       string
+	Source     *yamlmeta.Document
+	defaultDVs *yamlmeta.Document
+	Allowed    *DocumentType
 }
 
 func NewDocumentSchema(doc *yamlmeta.Document) (*DocumentSchema, error) {
-	docType := &DocumentType{Source: doc}
+	docType, err := NewDocumentType(doc)
+	if err != nil {
+		return nil, err
+	}
+	schemaDVs, err := DefaultDataValues(doc)
+	if err != nil {
+		return nil, err
+	}
 
+	return &DocumentSchema{
+		Name:       "dataValues",
+		Source:     doc,
+		defaultDVs: schemaDVs,
+		Allowed:    docType,
+	}, nil
+}
+
+func NewDocumentType(doc *yamlmeta.Document) (*DocumentType, error) {
+	docType := &DocumentType{Source: doc}
 	switch typedDocumentValue := doc.Value.(type) {
 	case *yamlmeta.Map:
 		valueType, err := NewMapType(typedDocumentValue)
@@ -35,14 +55,9 @@ func NewDocumentSchema(doc *yamlmeta.Document) (*DocumentSchema, error) {
 		if err != nil {
 			return nil, err
 		}
-
 		docType.ValueType = valueType
 	}
-	return &DocumentSchema{
-		Name:    "dataValues",
-		Source:  doc,
-		Allowed: docType,
-	}, nil
+	return docType, nil
 }
 
 func NewMapType(m *yamlmeta.Map) (*MapType, error) {
@@ -143,10 +158,63 @@ func newCollectionItemValueType(collectionItemValue interface{}) (yamlmeta.Type,
 	return nil, fmt.Errorf("Collection item type did not match any known types")
 }
 
+func DefaultDataValues(doc *yamlmeta.Document) (*yamlmeta.Document, error) {
+	docCopy := doc.DeepCopyAsNode()
+	for _, value := range docCopy.GetValues() {
+		setDefaultValues(value)
+	}
+
+	return docCopy.(*yamlmeta.Document), nil
+}
+
+func setDefaultValues(node interface{}) {
+	switch typedNode := node.(type) {
+	case *yamlmeta.Map:
+		for _, value := range typedNode.Items {
+			setDefaultValues(value)
+		}
+	case *yamlmeta.MapItem:
+		setDefaultValues(typedNode.Value)
+	case *yamlmeta.Array:
+		typedNode.Items = []*yamlmeta.ArrayItem{}
+	}
+}
+
 func (as *AnySchema) AssignType(typeable yamlmeta.Typeable) yamlmeta.TypeCheck {
+	return yamlmeta.TypeCheck{}
+}
+
+func (n NullSchema) AssignType(typeable yamlmeta.Typeable) yamlmeta.TypeCheck {
 	return yamlmeta.TypeCheck{}
 }
 
 func (s *DocumentSchema) AssignType(typeable yamlmeta.Typeable) yamlmeta.TypeCheck {
 	return s.Allowed.AssignTypeTo(typeable)
+}
+
+func (as *AnySchema) AsDataValue() *yamlmeta.Document {
+	return nil
+}
+
+func (n NullSchema) AsDataValue() *yamlmeta.Document {
+	return nil
+}
+
+func (s *DocumentSchema) AsDataValue() *yamlmeta.Document {
+	return s.defaultDVs
+}
+
+func (as *AnySchema) ValidateWithValues(valuesFilesCount int) error {
+	return nil
+}
+
+func (n NullSchema) ValidateWithValues(valuesFilesCount int) error {
+	if valuesFilesCount > 0 {
+		return fmt.Errorf("Schema experiment flag was enabled but no schema document was provided")
+	}
+	return nil
+}
+
+func (s *DocumentSchema) ValidateWithValues(valuesFilesCount int) error {
+	return nil
 }

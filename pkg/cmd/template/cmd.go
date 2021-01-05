@@ -4,7 +4,6 @@
 package template
 
 import (
-	"fmt"
 	"time"
 
 	cmdcore "github.com/k14s/ytt/pkg/cmd/core"
@@ -131,30 +130,32 @@ func (o *TemplateOptions) RunWithFiles(in TemplateInput, ui cmdcore.PlainUI) Tem
 	if err != nil {
 		return TemplateOutput{Err: err}
 	}
-	var schemaVar workspace.Schema = &schema.AnySchema{}
-	if len(schemaDocs) > 0 {
-		if o.SchemaEnabled {
-			schemaVar, err = schema.NewDocumentSchema(schemaDocs[0])
+
+	var currSchema workspace.Schema
+	var values *workspace.DataValues
+	var libraryValues []*workspace.DataValues
+
+	if o.SchemaEnabled {
+		if len(schemaDocs) > 0 {
+			currSchema, err = schema.NewDocumentSchema(schemaDocs[0])
 			if err != nil {
 				return TemplateOutput{Err: err}
 			}
 		} else {
-			ui.Warnf("Warning: schema document was detected, but schema experiment flag is not enabled. Did you mean to include --enable-experiment-schema?\n")
+			currSchema = schema.NullSchema{}
 		}
 	} else {
-		if o.SchemaEnabled {
-			return TemplateOutput{Err: fmt.Errorf(
-				// TODO: Include documentation on defining a schema with this error when
-				// docs are ready.
-				"Schema experiment flag was enabled but no schema document was provided",
-			)}
+		if len(schemaDocs) > 0 {
+			ui.Warnf("Warning: schema document was detected, but schema experiment flag is not enabled. Did you mean to include --enable-experiment-schema?\n")
 		}
+		currSchema = &schema.AnySchema{}
 	}
 
-	values, libraryValues, err := libraryLoader.Values(valuesOverlays, schemaVar)
+	values, libraryValues, err = libraryLoader.Values(valuesOverlays, currSchema)
 	if err != nil {
 		return TemplateOutput{Err: err}
 	}
+
 	libraryValues = append(libraryValues, libraryValuesOverlays...)
 
 	if o.DataValuesFlags.Inspect {

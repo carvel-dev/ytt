@@ -13,6 +13,7 @@ import (
 	"github.com/k14s/ytt/pkg/files"
 )
 
+//TODO: Remove overlay/append from array item in tests.
 func TestNullableScalarsAllowsNull(t *testing.T) {
 	schemaYAML := `#@schema/match data_values=True
 ---
@@ -173,8 +174,8 @@ vpc: #@ data.values.vpc
 	expected := `rendered: true
 vpc:
   name: vpc-203d912a
-  subnet_config: null
   subnet_ids: []
+  subnet_config: null
 `
 
 	testSchemaTemplates(t, schemaYAML, dataValuesYAML, templateYAML, expected)
@@ -226,7 +227,9 @@ vpc:
 vpc:
   name: vpc-203d912a
   subnet_ids:
+  #@overlay/append
   - 1
+  #@overlay/append
   - 2
 `
 	templateYAML := `#@ load("@ytt:data", "data")
@@ -308,16 +311,16 @@ db: #@ data.values.db_conn
 `
 	expected := `rendered: true
 db:
-  password: mysecurepassword
-  tls_only: true
-  metadata:
-    present_key:
-      inner_key: value present
-    missing_key: default value
   hostname: default.com
   port: 0
+  password: mysecurepassword
+  tls_only: true
   jobs:
     run: defaultJob
+  metadata:
+    missing_key: default value
+    present_key:
+      inner_key: value present
 `
 
 	testSchemaTemplates(t, schemaYAML, dataValuesYAML, templateYAML, expected)
@@ -330,13 +333,21 @@ func TestArrayOnlySchemaChecksOk(t *testing.T) {
 `
 	dataValuesYAML := `#@data/values
 ---
+#@overlay/append
+- first
+#@overlay/append
+- second
+`
+	templateYAML := `#@ load("@ytt:data", "data")
+---
+rendered: #@ data.values
+`
+	expected := `rendered:
 - first
 - second
 `
-	templateYAML := `---
-rendered: true`
 
-	testSchemaTemplates(t, schemaYAML, dataValuesYAML, templateYAML, "rendered: true\n")
+	testSchemaTemplates(t, schemaYAML, dataValuesYAML, templateYAML, expected)
 }
 
 func TestMapAndArraySchemaChecksOk(t *testing.T) {
@@ -354,6 +365,7 @@ top_level: ""
 	dataValuesYAML := `#@data/values
 ---
 db_conn:
+#@overlay/append
 - hostname: server.example.com
   port: 5432
   username: sa
@@ -362,10 +374,22 @@ db_conn:
     run: ./build.sh
 top_level: key
 `
-	templateYAML := `---
-rendered: true`
+	templateYAML := `#@ load("@ytt:data", "data")
+---
+rendered: #@ data.values
+`
 
-	testSchemaTemplates(t, schemaYAML, dataValuesYAML, templateYAML, "rendered: true\n")
+	expected := `rendered:
+  db_conn:
+  - hostname: server.example.com
+    port: 5432
+    username: sa
+    password: changeme
+    metadata:
+      run: ./build.sh
+  top_level: key
+`
+	testSchemaTemplates(t, schemaYAML, dataValuesYAML, templateYAML, expected)
 }
 
 func TestMapAndArraySchemaFillInDefaults(t *testing.T) {
@@ -388,7 +412,9 @@ vpc:
   name: beax-a3543-5555
   subnet_names: []
   subnet_config:
+  #@overlay/append
   - id: 2
+  #@overlay/append
   - id: 3
     mask: 255.255.255.0
 `
@@ -401,6 +427,7 @@ vpc: #@ data.values.vpc
 vpc:
   name: beax-a3543-5555
   subnet_names: []
+  subnet_ids: []
   subnet_config:
   - id: 2
     mask: 255.255.0.0
@@ -408,7 +435,6 @@ vpc:
   - id: 3
     mask: 255.255.255.0
     private: true
-  subnet_ids: []
 `
 
 	testSchemaTemplates(t, schemaYAML, dataValuesYAML, templateYAML, expected)
@@ -711,7 +737,56 @@ rendered: true`
 	}
 }
 
-func TestNoSchemaFileSchemaFlagSet(t *testing.T) {
+func TestSchemaOnlyNoDataValues(t *testing.T) {
+	schemaYAML := `#@schema/match data_values=True
+---
+system_domain: ""
+load_balancer:
+  enable: true
+  static_ip: ""
+app_domains:
+- ""
+`
+	templateYAML := `#@ load("@ytt:data", "data")
+---
+rendered: true
+system_domain: #@ data.values.system_domain
+load_balancer: #@ data.values.load_balancer
+app_domains: #@ data.values.app_domains
+`
+	expected := `rendered: true
+system_domain: ""
+load_balancer:
+  enable: true
+  static_ip: ""
+app_domains: []
+`
+
+	filesToProcess := files.NewSortedFiles([]*files.File{
+		files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
+		files.MustNewFileFromSource(files.NewBytesSource("template.yml", []byte(templateYAML))),
+	})
+
+	ui := cmdcore.NewPlainUI(false)
+	opts := cmdtpl.NewOptions()
+	opts.SchemaEnabled = true
+	out := opts.RunWithFiles(cmdtpl.TemplateInput{Files: filesToProcess}, ui)
+	if out.Err != nil {
+		t.Fatalf("Expected RunWithFiles to succeed, but was error: %s", out.Err)
+	}
+
+	if len(out.Files) != 1 {
+		t.Fatalf("Expected number of output files to be 1, but was: %d", len(out.Files))
+	}
+
+	if string(out.Files[0].Bytes()) != expected {
+		diff := difflib.PPDiff(strings.Split(string(out.Files[0].Bytes()), "\n"), strings.Split(expected, "\n"))
+		t.Fatalf("Expected output to only include template YAML, differences:\n%s", diff)
+	}
+
+}
+
+func TestNoSchemaDataValuesOnly(t *testing.T) {
 	dataValuesYAML := `#@data/values
 ---
 db_conn:
@@ -738,6 +813,34 @@ rendered: true`
 
 	if !strings.Contains(out.Err.Error(), "Schema experiment flag was enabled but no schema document was provided") {
 		t.Fatalf("Expected an error about schema enabled but no schema provided, but got: %v", out.Err.Error())
+	}
+}
+
+func TestNoSchemaNoDataValues(t *testing.T) {
+	templateYAML := `---
+rendered: true`
+	expected := `rendered: true
+`
+	filesToProcess := files.NewSortedFiles([]*files.File{
+		files.MustNewFileFromSource(files.NewBytesSource("template.yml", []byte(templateYAML))),
+	})
+	ui := cmdcore.NewPlainUI(false)
+	opts := cmdtpl.NewOptions()
+	opts.SchemaEnabled = true
+
+	out := opts.RunWithFiles(cmdtpl.TemplateInput{Files: filesToProcess}, ui)
+
+	if out.Err != nil {
+		t.Fatalf("Expected RunWithFiles to succeed, but was error: %s", out.Err)
+	}
+
+	if len(out.Files) != 1 {
+		t.Fatalf("Expected number of output files to be 1, but was: %d", len(out.Files))
+	}
+
+	if string(out.Files[0].Bytes()) != expected {
+		diff := difflib.PPDiff(strings.Split(string(out.Files[0].Bytes()), "\n"), strings.Split(expected, "\n"))
+		t.Fatalf("Expected output to only include template YAML, differences:\n%s", diff)
 	}
 }
 
