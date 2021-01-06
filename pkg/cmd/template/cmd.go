@@ -35,9 +35,10 @@ type TemplateInput struct {
 }
 
 type TemplateOutput struct {
-	Files  []files.OutputFile
-	DocSet *yamlmeta.DocumentSet
-	Err    error
+	Files     []files.OutputFile
+	DocSet    *yamlmeta.DocumentSet
+	Err       error
+	FileMarks []string
 }
 
 type FileSource interface {
@@ -69,8 +70,6 @@ func NewCmd(o *TemplateOptions) *cobra.Command {
 	cmd.Flags().BoolVar(&o.InspectFiles, "files-inspect", false, "Inspect files")
 	cmd.Flags().BoolVar(&o.SchemaEnabled, "enable-experiment-schema", false, "Enable experimental schema features")
 
-	o.RegularFilesSourceOpts.fileMarks = o.FileMarksOpts.fileMarks
-
 	o.BulkFilesSourceOpts.Set(cmd)
 	o.RegularFilesSourceOpts.Set(cmd)
 	o.FileMarksOpts.Set(cmd)
@@ -97,6 +96,7 @@ func (o *TemplateOptions) Run() error {
 	}
 
 	out := o.RunWithFiles(in, ui)
+	out.FileMarks = o.FileMarksOpts.fileMarks
 
 	return o.pickSource(srcs, func(s FileSource) bool { return s.HasOutput() }).Output(out)
 }

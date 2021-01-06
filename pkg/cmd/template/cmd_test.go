@@ -840,24 +840,23 @@ organization=Acme Widgets Inc.`)
 
 	testIniFile, err := createTempFileWithContent(iniData, "ini.txt")
 	if err != nil {
-		t.Fatalf("Expected writing to test file not to fail")
+		t.Fatalf("Expected writing to test file not to fail: %v", err)
 	}
 	defer os.Remove(testIniFile.Name())
 
-	expectedStdErr := fmt.Sprintf(`Warning: There are templates marked for output that are not included in this output.
-	Non-YAML templates are not rendered to standard output.
-	If you want to include those results, use the --output-directory or --dangerous-emptied-output-directory flag.
-	Non-YAML files are: [%s]`, filepath.Base(testIniFile.Name()))
+	expectedStdErr := fmt.Sprintf("\n"+`Warning: There are templates marked for output that are not included in this output. Non-YAML templates are not rendered to standard output.
+If you want to include those results, use the --output-directory or --dangerous-emptied-output-directory flag.
+Non-YAML files are: [%s]`+"\n", filepath.Base(testIniFile.Name()))
 
 	fakeStdErr, err := ioutil.TempFile(os.TempDir(), "fakedev")
 	if err != nil {
-		t.Fatalf("Expected creating a temp file to not fail")
+		t.Fatalf("Expected creating a temp file to not fail: %v", err)
 	}
 	defer os.Remove(fakeStdErr.Name())
 
 	fakeStdOut, err := ioutil.TempFile(os.TempDir(), "fakedev")
 	if err != nil {
-		t.Fatalf("Expected creating a temp file to not fail")
+		t.Fatalf("Expected creating a temp file to not fail: %v", err)
 	}
 	defer os.Remove(fakeStdOut.Name())
 
@@ -876,20 +875,23 @@ organization=Acme Widgets Inc.`)
 	cmd.SilenceUsage = true
 
 	err = cmd.Execute()
+	if err != nil {
+		t.Fatalf("Unexpected error running command: %v", err)
+	}
 	resetStdOutAndErr()
 
 	stdErrContents, err := ioutil.ReadFile(fakeStdErr.Name())
 	if err != nil {
-		t.Fatalf("Expected reading stderr to not fail")
+		t.Fatalf("Expected reading stderr to not fail: %v", err)
 	}
 
 	if string(stdErrContents) != expectedStdErr {
-		t.Fatalf("Expected std err to have specific warning message, but was: >>>%s<<<", stdErrContents)
+		t.Fatalf("Expected std err to be >>>%s<<<\nBut was: >>>%s<<<", expectedStdErr, stdErrContents)
 	}
 
 	stdOutContents, err := ioutil.ReadFile(fakeStdOut.Name())
 	if err != nil {
-		t.Fatalf("Expected reading stdout to not fail")
+		t.Fatalf("Expected reading stdout to not fail: %v", err)
 	}
 
 	if string(stdOutContents) != "" {
@@ -897,26 +899,26 @@ organization=Acme Widgets Inc.`)
 	}
 }
 
-func TestFileMarkedAsAYamlFilesDoesNotSuggestsUsingOutputFlags(t *testing.T) {
+func TestFileMarkedAsAYamlFileDoesNotSuggestsUsingOutputFlags(t *testing.T) {
 	expectedStdErr := ""
 	expectedStdOut := `a: b
 `
 
 	testYamlFile, err := createTempFileWithContent([]byte(expectedStdOut), "txt")
 	if err != nil {
-		t.Fatalf("Expected writing to test file not to fail")
+		t.Fatalf("Expected writing to test file not to fail: %v", err)
 	}
 	defer os.Remove(testYamlFile.Name())
 
 	fakeStdErr, err := ioutil.TempFile(os.TempDir(), "fakedev")
 	if err != nil {
-		t.Fatalf("Expected creating a temp file to not fail")
+		t.Fatalf("Expected creating a temp file to not fail: %v", err)
 	}
 	defer os.Remove(fakeStdErr.Name())
 
 	fakeStdOut, err := ioutil.TempFile(os.TempDir(), "fakedev")
 	if err != nil {
-		t.Fatalf("Expected creating a temp file to not fail")
+		t.Fatalf("Expected creating a temp file to not fail: %v", err)
 	}
 	defer os.Remove(fakeStdOut.Name())
 
@@ -935,11 +937,14 @@ func TestFileMarkedAsAYamlFilesDoesNotSuggestsUsingOutputFlags(t *testing.T) {
 	cmd.SilenceUsage = true
 
 	err = cmd.Execute()
+	if err != nil {
+		t.Fatalf("Unexpected error running command: %v", err)
+	}
 	resetStdOutAndErr()
 
 	stdErrContents, err := ioutil.ReadFile(fakeStdErr.Name())
 	if err != nil {
-		t.Fatalf("Expected reading stderr to not fail")
+		t.Fatalf("Expected reading stderr to not fail: %v", err)
 	}
 
 	if string(stdErrContents) != expectedStdErr {
@@ -948,7 +953,7 @@ func TestFileMarkedAsAYamlFilesDoesNotSuggestsUsingOutputFlags(t *testing.T) {
 
 	stdOutContents, err := ioutil.ReadFile(fakeStdOut.Name())
 	if err != nil {
-		t.Fatalf("Expected reading stdout to not fail")
+		t.Fatalf("Expected reading stdout to not fail: %v", err)
 	}
 
 	if string(stdOutContents) != expectedStdOut {
@@ -964,30 +969,29 @@ organization=Acme Widgets Inc.`)
 
 	testIniFile1, err := createTempFileWithContent(iniData, "ini.txt")
 	if err != nil {
-		t.Fatalf("Expected writing to test file not to fail")
+		t.Fatalf("Expected writing to test file not to fail: %v", err)
 	}
 	defer os.Remove(testIniFile1.Name())
 
 	testIniFile2, err := createTempFileWithContent(iniData, "ini.txt")
 	if err != nil {
-		t.Fatalf("Expected writing to test file not to fail")
+		t.Fatalf("Expected writing to test file not to fail: %v", err)
 	}
 	defer os.Remove(testIniFile2.Name())
 
-	expectedStdErr := fmt.Sprintf(`Warning: There are templates marked for output that are not included in this output.
-	Non-YAML templates are not rendered to standard output.
-	If you want to include those results, use the --output-directory or --dangerous-emptied-output-directory flag.
-	Non-YAML files are: [%s, %s]`, filepath.Base(testIniFile1.Name()), filepath.Base(testIniFile2.Name()))
+	expectedStdErr := fmt.Sprintf("\n"+`Warning: There are templates marked for output that are not included in this output. Non-YAML templates are not rendered to standard output.
+If you want to include those results, use the --output-directory or --dangerous-emptied-output-directory flag.
+Non-YAML files are: [%s, %s]`+"\n", filepath.Base(testIniFile1.Name()), filepath.Base(testIniFile2.Name()))
 
 	fakeStdErr, err := ioutil.TempFile(os.TempDir(), "fakedev")
 	if err != nil {
-		t.Fatalf("Expected creating a temp file to not fail")
+		t.Fatalf("Expected creating a temp file to not fail: %v", err)
 	}
 	defer os.Remove(fakeStdErr.Name())
 
 	fakeStdOut, err := ioutil.TempFile(os.TempDir(), "fakedev")
 	if err != nil {
-		t.Fatalf("Expected creating a temp file to not fail")
+		t.Fatalf("Expected creating a temp file to not fail: %v", err)
 	}
 	defer os.Remove(fakeStdOut.Name())
 
@@ -1006,20 +1010,23 @@ organization=Acme Widgets Inc.`)
 	cmd.SilenceUsage = true
 
 	err = cmd.Execute()
+	if err != nil {
+		t.Fatalf("Unexpected error running command: %v", err)
+	}
 	resetStdOutAndErr()
 
 	stdErrContents, err := ioutil.ReadFile(fakeStdErr.Name())
 	if err != nil {
-		t.Fatalf("Expected reading stderr to not fail")
+		t.Fatalf("Expected reading stderr to not fail: %v", err)
 	}
 
 	if string(stdErrContents) != expectedStdErr {
-		t.Fatalf("Expected std err to have specific warning message, but was: >>>%s<<<", stdErrContents)
+		t.Fatalf("Expected std err to be >>>%s<<<\nBut was: >>>%s<<<", expectedStdErr, stdErrContents)
 	}
 
 	stdOutContents, err := ioutil.ReadFile(fakeStdOut.Name())
 	if err != nil {
-		t.Fatalf("Expected reading stdout to not fail")
+		t.Fatalf("Expected reading stdout to not fail: %v", err)
 	}
 
 	if string(stdOutContents) != "" {
@@ -1037,30 +1044,29 @@ organization=Acme Widgets Inc.`)
 `
 	testIniFile, err := createTempFileWithContent(iniData, "ini.txt")
 	if err != nil {
-		t.Fatalf("Expected writing to test file not to fail")
+		t.Fatalf("Expected writing to test file not to fail: %v", err)
 	}
 	defer os.Remove(testIniFile.Name())
 
 	testYamlFile, err := createTempFileWithContent(yamlData, "yml")
 	if err != nil {
-		t.Fatalf("Expected writing to test file not to fail")
+		t.Fatalf("Expected writing to test file not to fail: %v", err)
 	}
 	defer os.Remove(testYamlFile.Name())
 
-	expectedStdErr := fmt.Sprintf(`Warning: There are templates marked for output that are not included in this output.
-	Non-YAML templates are not rendered to standard output.
-	If you want to include those results, use the --output-directory or --dangerous-emptied-output-directory flag.
-	Non-YAML files are: [%s]`, filepath.Base(testIniFile.Name()))
+	expectedStdErr := fmt.Sprintf("\n"+`Warning: There are templates marked for output that are not included in this output. Non-YAML templates are not rendered to standard output.
+If you want to include those results, use the --output-directory or --dangerous-emptied-output-directory flag.
+Non-YAML files are: [%s]`+"\n", filepath.Base(testIniFile.Name()))
 
 	fakeStdErr, err := ioutil.TempFile(os.TempDir(), "fakedev")
 	if err != nil {
-		t.Fatalf("Expected creating a temp file to not fail")
+		t.Fatalf("Expected creating a temp file to not fail: %v", err)
 	}
 	defer os.Remove(fakeStdErr.Name())
 
 	fakeStdOut, err := ioutil.TempFile(os.TempDir(), "fakedev")
 	if err != nil {
-		t.Fatalf("Expected creating a temp file to not fail")
+		t.Fatalf("Expected creating a temp file to not fail: %v", err)
 	}
 	defer os.Remove(fakeStdOut.Name())
 
@@ -1079,20 +1085,23 @@ organization=Acme Widgets Inc.`)
 	cmd.SilenceUsage = true
 
 	err = cmd.Execute()
+	if err != nil {
+		t.Fatalf("Unexpected error running command: %v", err)
+	}
 	resetStdOutAndErr()
 
 	stdErrContents, err := ioutil.ReadFile(fakeStdErr.Name())
 	if err != nil {
-		t.Fatalf("Expected reading stderr to not fail")
+		t.Fatalf("Expected reading stderr to not fail: %v", err)
 	}
 
 	if string(stdErrContents) != expectedStdErr {
-		t.Fatalf("Expected std err to have specific warning message, but was: >>>%s<<<", stdErrContents)
+		t.Fatalf("Expected std err to be >>>%s<<<\nBut was: >>>%s<<<", expectedStdErr, stdErrContents)
 	}
 
 	stdOutContents, err := ioutil.ReadFile(fakeStdOut.Name())
 	if err != nil {
-		t.Fatalf("Expected reading stdout to not fail")
+		t.Fatalf("Expected reading stdout to not fail: %v", err)
 	}
 
 	if string(stdOutContents) != expectedStdOut {
@@ -1109,13 +1118,13 @@ organization=Acme Widgets Inc.`)
 
 	testIniFile, err := createTempFileWithContent(iniData, "ini.txt")
 	if err != nil {
-		t.Fatalf("Expected writing to test file not to fail")
+		t.Fatalf("Expected writing to test file not to fail: %v", err)
 	}
 	defer os.Remove(testIniFile.Name())
 
 	testYamlFile, err := createTempFileWithContent(yamlData, "yml")
 	if err != nil {
-		t.Fatalf("Expected writing to test file not to fail")
+		t.Fatalf("Expected writing to test file not to fail: %v", err)
 	}
 	defer os.Remove(testYamlFile.Name())
 
@@ -1131,13 +1140,13 @@ organization=Acme Widgets Inc.`)
 
 	fakeStdErr, err := ioutil.TempFile(os.TempDir(), "fakedev")
 	if err != nil {
-		t.Fatalf("Expected creating a temp file to not fail")
+		t.Fatalf("Expected creating a temp file to not fail: %v", err)
 	}
 	defer os.Remove(fakeStdErr.Name())
 
 	fakeStdOut, err := ioutil.TempFile(os.TempDir(), "fakedev")
 	if err != nil {
-		t.Fatalf("Expected creating a temp file to not fail")
+		t.Fatalf("Expected creating a temp file to not fail: %v", err)
 	}
 	defer os.Remove(fakeStdOut.Name())
 
@@ -1156,24 +1165,27 @@ organization=Acme Widgets Inc.`)
 	cmd.SilenceUsage = true
 
 	err = cmd.Execute()
+	if err != nil {
+		t.Fatalf("Unexpected error running command: %v", err)
+	}
 	resetStdOutAndErr()
 
 	stdErrContents, err := ioutil.ReadFile(fakeStdErr.Name())
 	if err != nil {
-		t.Fatalf("Expected reading stderr to not fail")
+		t.Fatalf("Expected reading stderr to not fail: %v", err)
 	}
 
 	if string(stdErrContents) != "" {
-		t.Fatalf("Expected std err to be empty, but was: >>>%s<<<", string(stdErrContents))
+		t.Fatalf("Expected std err to be empty, but was: >>>%s<<<", stdErrContents)
 	}
 
 	stdOutContents, err := ioutil.ReadFile(fakeStdOut.Name())
 	if err != nil {
-		t.Fatalf("Expected reading stdout to not fail")
+		t.Fatalf("Expected reading stdout to not fail: %v", err)
 	}
 
 	if string(stdOutContents) != expectedStdOut {
-		t.Fatalf("Expected std out to be >>>>%s<<<<\nbut was: >>>%s<<<", expectedStdOut, stdOutContents)
+		t.Fatalf("Expected std out to be >>>%s<<<\nBut was: >>>%s<<<", expectedStdOut, stdOutContents)
 	}
 }
 
@@ -1189,5 +1201,3 @@ func createTempFileWithContent(yamlData []byte, suffix string) (*os.File, error)
 	}
 	return testYamlFile, err
 }
-
-// what about bulk files --bulk-file-in? should they have a warning msg too?

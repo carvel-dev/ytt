@@ -21,8 +21,7 @@ const (
 )
 
 type RegularFilesSourceOpts struct {
-	files     []string
-	fileMarks []string
+	files []string
 
 	outputDir   string
 	outputFiles string
@@ -79,12 +78,14 @@ func (s *RegularFilesSource) Output(out TemplateOutput) error {
 	case len(s.opts.outputFiles) > 0:
 		return files.NewOutputDirectory(s.opts.outputFiles, out.Files, s.ui).WriteFiles()
 	default:
+		fileMarkMap := getFileMarksAsKeyValues(out.FileMarks)
 		for _, file := range out.Files {
-			// consider adding file marks to FileSource pkg/cmd/template/cmd.go:89
-
-			//marks := s.opts.fileMarks
-			if !strings.Contains(file.RelativePath(), ".yml") {
-				nonYamlFileNames = append(nonYamlFileNames, file.RelativePath())
+			noYAMLFileExt := !strings.Contains(file.RelativePath(), ".yml") && !strings.Contains(file.RelativePath(), ".yaml")
+			if noYAMLFileExt {
+				fileMarkType := fileMarkMap[file.RelativePath()]
+				if fileMarkType != "type=yaml-plain" && fileMarkType != "type=yaml-template" {
+					nonYamlFileNames = append(nonYamlFileNames, file.RelativePath())
+				}
 			}
 		}
 	}
@@ -113,11 +114,9 @@ func (s *RegularFilesSource) Output(out TemplateOutput) error {
 	s.ui.Printf("%s", combinedDocBytes) // no newline
 
 	if len(nonYamlFileNames) > 0 {
-		s.ui.Warnf(`Warning: There are templates marked for output that are not included in this output.
-	Non-YAML templates are not rendered to standard output.
-	If you want to include those results, use the --output-directory or --dangerous-emptied-output-directory flag.
-	Non-YAML files are: [%s]`, strings.Join(nonYamlFileNames, ", "))
-
+		s.ui.Warnf("\n"+`Warning: There are templates marked for output that are not included in this output. Non-YAML templates are not rendered to standard output.
+If you want to include those results, use the --output-directory or --dangerous-emptied-output-directory flag.
+Non-YAML files are: [%s]`+"\n", strings.Join(nonYamlFileNames, ", "))
 	}
 	return nil
 }
