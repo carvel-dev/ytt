@@ -6,6 +6,7 @@ package template
 import (
 	"fmt"
 	"io"
+	"strings"
 
 	cmdcore "github.com/k14s/ytt/pkg/cmd/core"
 	"github.com/k14s/ytt/pkg/files"
@@ -71,11 +72,21 @@ func (s *RegularFilesSource) Output(out TemplateOutput) error {
 		return out.Err
 	}
 
+	nonYamlFileNames := []string{}
 	switch {
 	case len(s.opts.outputDir) > 0:
 		return files.NewOutputDirectory(s.opts.outputDir, out.Files, s.ui).Write()
 	case len(s.opts.outputFiles) > 0:
 		return files.NewOutputDirectory(s.opts.outputFiles, out.Files, s.ui).WriteFiles()
+	default:
+		for _, file := range out.Files {
+			// consider adding file marks to FileSource pkg/cmd/template/cmd.go:89
+
+			//marks := s.opts.fileMarks
+			if !strings.Contains(file.RelativePath(), ".yml") {
+				nonYamlFileNames = append(nonYamlFileNames, file.RelativePath())
+			}
+		}
 	}
 
 	var printerFunc func(io.Writer) yamlmeta.DocumentPrinter
@@ -101,5 +112,12 @@ func (s *RegularFilesSource) Output(out TemplateOutput) error {
 	s.ui.Debugf("### result\n")
 	s.ui.Printf("%s", combinedDocBytes) // no newline
 
+	if len(nonYamlFileNames) > 0 {
+		s.ui.Warnf(`Warning: There are templates marked for output that are not included in this output.
+	Non-YAML templates are not rendered to standard output.
+	If you want to include those results, use the --output-directory or --dangerous-emptied-output-directory flag.
+	Non-YAML files are: [%s]`, strings.Join(nonYamlFileNames, ", "))
+
+	}
 	return nil
 }
