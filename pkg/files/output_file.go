@@ -11,10 +11,11 @@ import (
 type OutputFile struct {
 	relativePath string
 	data         []byte
+	MarkedType   Type
 }
 
-func NewOutputFile(relativePath string, data []byte) OutputFile {
-	return OutputFile{relativePath, data}
+func NewOutputFile(relativePath string, data []byte, markedType Type) OutputFile {
+	return OutputFile{relativePath, data, markedType}
 }
 
 func (f OutputFile) RelativePath() string { return f.relativePath }

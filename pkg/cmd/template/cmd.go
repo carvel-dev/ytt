@@ -35,10 +35,9 @@ type TemplateInput struct {
 }
 
 type TemplateOutput struct {
-	Files     []files.OutputFile
-	DocSet    *yamlmeta.DocumentSet
-	Err       error
-	FileMarks []string
+	Files  []files.OutputFile
+	DocSet *yamlmeta.DocumentSet
+	Err    error
 }
 
 type FileSource interface {
@@ -96,8 +95,6 @@ func (o *TemplateOptions) Run() error {
 	}
 
 	out := o.RunWithFiles(in, ui)
-	out.FileMarks = o.FileMarksOpts.fileMarks
-
 	return o.pickSource(srcs, func(s FileSource) bool { return s.HasOutput() }).Output(out)
 }
 

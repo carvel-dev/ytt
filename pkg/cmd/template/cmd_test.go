@@ -844,8 +844,8 @@ organization=Acme Widgets Inc.`)
 	}
 	defer os.Remove(testIniFile.Name())
 
-	expectedStdErr := fmt.Sprintf("\n"+`Warning: There are templates marked for output that are not included in this output. Non-YAML templates are not rendered to standard output.
-If you want to include those results, use the --output-directory or --dangerous-emptied-output-directory flag.
+	expectedStdErr := fmt.Sprintf("\n"+`Warning: Non-YAML templates are not rendered to standard output.
+If you want to include those results, use the --output-files or --dangerous-emptied-output-directory flag.
 Non-YAML files are: [%s]`+"\n", filepath.Base(testIniFile.Name()))
 
 	fakeStdErr, err := ioutil.TempFile(os.TempDir(), "fakedev")
@@ -900,10 +900,8 @@ Non-YAML files are: [%s]`+"\n", filepath.Base(testIniFile.Name()))
 }
 
 func TestFileMarkedAsAYamlFileDoesNotSuggestsUsingOutputFlags(t *testing.T) {
-	expectedStdErr := ""
 	expectedStdOut := `a: b
 `
-
 	testYamlFile, err := createTempFileWithContent([]byte(expectedStdOut), "txt")
 	if err != nil {
 		t.Fatalf("Expected writing to test file not to fail: %v", err)
@@ -947,8 +945,8 @@ func TestFileMarkedAsAYamlFileDoesNotSuggestsUsingOutputFlags(t *testing.T) {
 		t.Fatalf("Expected reading stderr to not fail: %v", err)
 	}
 
-	if string(stdErrContents) != expectedStdErr {
-		t.Fatalf("Expected std err to have >>>%s<<< \n warning message, but was: >>>%s<<<", expectedStdErr, stdErrContents)
+	if string(stdErrContents) != "" {
+		t.Fatalf("Expected std err to be empty but was: >>>%s<<<", stdErrContents)
 	}
 
 	stdOutContents, err := ioutil.ReadFile(fakeStdOut.Name())
@@ -1044,8 +1042,8 @@ func TestFileMarkedAsExclusiveForOutputFileSuggestsUsingOutputFlags(t *testing.T
 	}
 	defer os.Remove(testFile.Name())
 
-	expectedStdErr := fmt.Sprintf("\n"+`Warning: There are templates marked for output that are not included in this output. Non-YAML templates are not rendered to standard output.
-If you want to include those results, use the --output-directory or --dangerous-emptied-output-directory flag.
+	expectedStdErr := fmt.Sprintf("\n"+`Warning: Non-YAML templates are not rendered to standard output.
+If you want to include those results, use the --output-files or --dangerous-emptied-output-directory flag.
 Non-YAML files are: [%s]`+"\n", filepath.Base(testFile.Name()))
 
 	fakeStdErr, err := ioutil.TempFile(os.TempDir(), "fakedev")
@@ -1121,8 +1119,8 @@ organization=Acme Widgets Inc.`)
 	}
 	defer os.Remove(testIniFile2.Name())
 
-	expectedStdErr := fmt.Sprintf("\n"+`Warning: There are templates marked for output that are not included in this output. Non-YAML templates are not rendered to standard output.
-If you want to include those results, use the --output-directory or --dangerous-emptied-output-directory flag.
+	expectedStdErr := fmt.Sprintf("\n"+`Warning: Non-YAML templates are not rendered to standard output.
+If you want to include those results, use the --output-files or --dangerous-emptied-output-directory flag.
 Non-YAML files are: [%s, %s]`+"\n", filepath.Base(testIniFile1.Name()), filepath.Base(testIniFile2.Name()))
 
 	fakeStdErr, err := ioutil.TempFile(os.TempDir(), "fakedev")
@@ -1196,8 +1194,8 @@ organization=Acme Widgets Inc.`)
 	}
 	defer os.Remove(testYamlFile.Name())
 
-	expectedStdErr := fmt.Sprintf("\n"+`Warning: There are templates marked for output that are not included in this output. Non-YAML templates are not rendered to standard output.
-If you want to include those results, use the --output-directory or --dangerous-emptied-output-directory flag.
+	expectedStdErr := fmt.Sprintf("\n"+`Warning: Non-YAML templates are not rendered to standard output.
+If you want to include those results, use the --output-files or --dangerous-emptied-output-directory flag.
 Non-YAML files are: [%s]`+"\n", filepath.Base(testIniFile.Name()))
 
 	fakeStdErr, err := ioutil.TempFile(os.TempDir(), "fakedev")

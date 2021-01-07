@@ -142,12 +142,3 @@ func (s *FileMarksOpts) clearNils(input []*files.File) []*files.File {
 	}
 	return output
 }
-
-func getFileMarksAsKeyValues(fileMarkStrings []string) map[string]string {
-	fileMarksKV := make(map[string]string)
-	for _, mark := range fileMarkStrings {
-		pieces := strings.SplitN(mark, ":", 2)
-		fileMarksKV[pieces[0]] = pieces[1]
-	}
-	return fileMarksKV
-}
