@@ -961,6 +961,148 @@ func TestFileMarkedAsAYamlFileDoesNotSuggestsUsingOutputFlags(t *testing.T) {
 	}
 }
 
+func TestFileMarkedAsExclusiveForOutputFileDoesNotSuggestUsingOutputFlags(t *testing.T) {
+	expectedStdErr := ""
+
+	fileData := `EXCLUSIVE OUTPUT
+`
+	testFile, err := createTempFileWithContent([]byte(fileData), "txt")
+	if err != nil {
+		t.Fatalf("Expected writing to test file not to fail: %v", err)
+	}
+	defer os.Remove(testFile.Name())
+
+	outputDir, err := ioutil.TempDir(os.TempDir(), "fakedir")
+	if err != nil {
+		t.Fatalf("Expected creating a temp dir to not fail: %v", err)
+	}
+	defer os.RemoveAll(outputDir)
+
+	testFilePath := filepath.Join(outputDir, filepath.Base(testFile.Name()))
+	expectedStdOut := `creating: ` + testFilePath + "\n"
+
+	fakeStdErr, err := ioutil.TempFile(os.TempDir(), "fakedev")
+	if err != nil {
+		t.Fatalf("Expected creating a temp file to not fail: %v", err)
+	}
+	defer os.Remove(fakeStdErr.Name())
+
+	fakeStdOut, err := ioutil.TempFile(os.TempDir(), "fakedev")
+	if err != nil {
+		t.Fatalf("Expected creating a temp file to not fail: %v", err)
+	}
+	defer os.Remove(fakeStdOut.Name())
+
+	os.Stdout = fakeStdOut
+	os.Stderr = fakeStdErr
+
+	resetStdOutAndErr := func() {
+		os.Stdout = os.NewFile(uintptr(syscall.Stdout), "/dev/stdout")
+		os.Stderr = os.NewFile(uintptr(syscall.Stderr), "/dev/stderr")
+	}
+	defer resetStdOutAndErr()
+
+	templateOptions := &cmdtpl.TemplateOptions{}
+	cmd := cmdtpl.NewCmd(templateOptions)
+	cmd.SetArgs([]string{"-f", testFile.Name(), "--file-mark", fmt.Sprintf("%s:exclusive-for-output=true", filepath.Base(testFile.Name())), "--output-files", outputDir})
+	cmd.SilenceUsage = true
+
+	err = cmd.Execute()
+	if err != nil {
+		t.Fatalf("Unexpected error running command: %v", err)
+	}
+	resetStdOutAndErr()
+
+	stdErrContents, err := ioutil.ReadFile(fakeStdErr.Name())
+	if err != nil {
+		t.Fatalf("Expected reading stderr to not fail: %v", err)
+	}
+
+	if string(stdErrContents) != expectedStdErr {
+		t.Fatalf("Expected std err to have >>>%s<<< \n warning message, but was: >>>%s<<<", expectedStdErr, stdErrContents)
+	}
+
+	stdOutContents, err := ioutil.ReadFile(fakeStdOut.Name())
+	if err != nil {
+		t.Fatalf("Expected reading stdout to not fail: %v", err)
+	}
+
+	if string(stdOutContents) != expectedStdOut {
+		t.Fatalf("Expected std out to be >>>%s<<<\nBut was: >>>%s<<<", expectedStdOut, stdOutContents)
+	}
+
+	if string(stdErrContents) != expectedStdErr {
+		t.Fatalf("Expected std out to be empty\nBut was: >>>%s<<<", stdErrContents)
+	}
+}
+
+func TestFileMarkedAsExclusiveForOutputFileSuggestsUsingOutputFlags(t *testing.T) {
+	fileData := `EXCLUSIVE OUTPUT`
+	testFile, err := createTempFileWithContent([]byte(fileData), "txt")
+	if err != nil {
+		t.Fatalf("Expected writing to test file not to fail: %v", err)
+	}
+	defer os.Remove(testFile.Name())
+
+	expectedStdErr := fmt.Sprintf("\n"+`Warning: There are templates marked for output that are not included in this output. Non-YAML templates are not rendered to standard output.
+If you want to include those results, use the --output-directory or --dangerous-emptied-output-directory flag.
+Non-YAML files are: [%s]`+"\n", filepath.Base(testFile.Name()))
+
+	fakeStdErr, err := ioutil.TempFile(os.TempDir(), "fakedev")
+	if err != nil {
+		t.Fatalf("Expected creating a temp file to not fail: %v", err)
+	}
+	defer os.Remove(fakeStdErr.Name())
+
+	fakeStdOut, err := ioutil.TempFile(os.TempDir(), "fakedev")
+	if err != nil {
+		t.Fatalf("Expected creating a temp file to not fail: %v", err)
+	}
+	defer os.Remove(fakeStdOut.Name())
+
+	os.Stdout = fakeStdOut
+	os.Stderr = fakeStdErr
+
+	resetStdOutAndErr := func() {
+		os.Stdout = os.NewFile(uintptr(syscall.Stdout), "/dev/stdout")
+		os.Stderr = os.NewFile(uintptr(syscall.Stderr), "/dev/stderr")
+	}
+	defer resetStdOutAndErr()
+
+	templateOptions := &cmdtpl.TemplateOptions{}
+	cmd := cmdtpl.NewCmd(templateOptions)
+	cmd.SetArgs([]string{"-f", testFile.Name(), "--file-mark", fmt.Sprintf("%s:exclusive-for-output=true", filepath.Base(testFile.Name()))})
+	cmd.SilenceUsage = true
+
+	err = cmd.Execute()
+	if err != nil {
+		t.Fatalf("Unexpected error running command: %v", err)
+	}
+	resetStdOutAndErr()
+
+	stdErrContents, err := ioutil.ReadFile(fakeStdErr.Name())
+	if err != nil {
+		t.Fatalf("Expected reading stderr to not fail: %v", err)
+	}
+
+	if string(stdErrContents) != expectedStdErr {
+		t.Fatalf("Expected std err to have >>>%s<<< \n warning message, but was: >>>%s<<<", expectedStdErr, stdErrContents)
+	}
+
+	stdOutContents, err := ioutil.ReadFile(fakeStdOut.Name())
+	if err != nil {
+		t.Fatalf("Expected reading stdout to not fail: %v", err)
+	}
+
+	if string(stdOutContents) != "" {
+		t.Fatalf("Expected std out to be empty\nBut was: >>>%s<<<", stdOutContents)
+	}
+
+	if string(stdErrContents) != expectedStdErr {
+		t.Fatalf("Expected std out to be empty\nBut was: >>>%s<<<", stdErrContents)
+	}
+}
+
 func TestMultipleNonYamlFilesSuggestsUsingOutputFlags(t *testing.T) {
 	iniData := []byte(`
 [owner]
