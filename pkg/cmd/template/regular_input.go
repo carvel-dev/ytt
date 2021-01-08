@@ -6,7 +6,6 @@ package template
 import (
 	"fmt"
 	"io"
-	"strings"
 
 	cmdcore "github.com/k14s/ytt/pkg/cmd/core"
 	"github.com/k14s/ytt/pkg/files"
@@ -79,7 +78,7 @@ func (s *RegularFilesSource) Output(out TemplateOutput) error {
 		return files.NewOutputDirectory(s.opts.outputFiles, out.Files, s.ui).WriteFiles()
 	default:
 		for _, file := range out.Files {
-			if file.MarkedType != files.TypeYAML {
+			if file.Type() != files.TypeYAML {
 				nonYamlFileNames = append(nonYamlFileNames, file.RelativePath())
 			}
 		}
@@ -109,9 +108,8 @@ func (s *RegularFilesSource) Output(out TemplateOutput) error {
 	s.ui.Printf("%s", combinedDocBytes) // no newline
 
 	if len(nonYamlFileNames) > 0 {
-		s.ui.Warnf("\n"+`Warning: Non-YAML templates are not rendered to standard output.
-If you want to include those results, use the --output-files or --dangerous-emptied-output-directory flag.
-Non-YAML files are: [%s]`+"\n", strings.Join(nonYamlFileNames, ", "))
+		s.ui.Warnf("\n" + `Warning: Found Non-YAML templates in input. Non-YAML templates are not rendered to standard output.
+If you want to include those results, use the --output-files or --dangerous-emptied-output-directory flag.` + "\n")
 	}
 	return nil
 }
