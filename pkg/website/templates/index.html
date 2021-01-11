@@ -9,6 +9,12 @@
     <script src="js/app.js"></script>
     <link rel="stylesheet" href="js/app.css"></link>
 
+    <script type="text/javascript">
+      var defaultDomain = "get-ytt.io";
+      if (document.domain == defaultDomain) {
+        window.location.replace(window.location.href.replace(defaultDomain, "carvel.dev/ytt"));
+      }
+    </script>
   </head>
   <body>
     <div class="content">
