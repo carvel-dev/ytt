@@ -95,7 +95,6 @@ func (o *TemplateOptions) Run() error {
 	}
 
 	out := o.RunWithFiles(in, ui)
-
 	return o.pickSource(srcs, func(s FileSource) bool { return s.HasOutput() }).Output(out)
 }
 

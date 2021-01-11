@@ -154,7 +154,7 @@ func (ll *LibraryLoader) Eval(values *DataValues, libraryValues []*DataValues) (
 		}
 
 		ll.ui.Debugf("### %s result\n%s", fileInLib.RelativePath(), resultDocBytes)
-		result.Files = append(result.Files, files.NewOutputFile(fileInLib.RelativePath(), resultDocBytes))
+		result.Files = append(result.Files, files.NewOutputFile(fileInLib.RelativePath(), resultDocBytes, fileInLib.File.Type()))
 	}
 
 	return result, nil
@@ -193,7 +193,7 @@ func (ll *LibraryLoader) eval(values *DataValues, libraryValues []*DataValues) (
 				resultStr := resultVal.AsString()
 
 				ll.ui.Debugf("### %s result\n%s", fileInLib.RelativePath(), resultStr)
-				outputFiles = append(outputFiles, files.NewOutputFile(fileInLib.RelativePath(), []byte(resultStr)))
+				outputFiles = append(outputFiles, files.NewOutputFile(fileInLib.RelativePath(), []byte(resultStr), fileInLib.File.Type()))
 
 			default:
 				return nil, nil, nil, fmt.Errorf("Unknown file type")

@@ -20,8 +20,7 @@ const (
 )
 
 type RegularFilesSourceOpts struct {
-	files     []string
-	fileMarks []string
+	files []string
 
 	outputDir   string
 	outputFiles string
@@ -71,11 +70,18 @@ func (s *RegularFilesSource) Output(out TemplateOutput) error {
 		return out.Err
 	}
 
+	nonYamlFileNames := []string{}
 	switch {
 	case len(s.opts.outputDir) > 0:
 		return files.NewOutputDirectory(s.opts.outputDir, out.Files, s.ui).Write()
 	case len(s.opts.outputFiles) > 0:
 		return files.NewOutputDirectory(s.opts.outputFiles, out.Files, s.ui).WriteFiles()
+	default:
+		for _, file := range out.Files {
+			if file.Type() != files.TypeYAML {
+				nonYamlFileNames = append(nonYamlFileNames, file.RelativePath())
+			}
+		}
 	}
 
 	var printerFunc func(io.Writer) yamlmeta.DocumentPrinter
@@ -101,5 +107,9 @@ func (s *RegularFilesSource) Output(out TemplateOutput) error {
 	s.ui.Debugf("### result\n")
 	s.ui.Printf("%s", combinedDocBytes) // no newline
 
+	if len(nonYamlFileNames) > 0 {
+		s.ui.Warnf("\n" + `Warning: Found Non-YAML templates in input. Non-YAML templates are not rendered to standard output.
+If you want to include those results, use the --output-files or --dangerous-emptied-output-directory flag.` + "\n")
+	}
 	return nil
 }

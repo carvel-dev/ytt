@@ -4,6 +4,10 @@
 package template_test
 
 import (
+	"fmt"
+	"io/ioutil"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -825,4 +829,109 @@ func TestLoadYTTModuleFailEarly(t *testing.T) {
 	if !strings.Contains(out.Err.Error(), "cannot load @ytt:not-exist: builtin ytt library does not have module 'not-exist'") {
 		t.Fatalf("Expected RunWithFiles to fail with error, but was '%s'", out.Err.Error())
 	}
+}
+
+func TestNonYAMLWithOutputFlagShowsNoWarning(t *testing.T) {
+	iniData := []byte(`
+[owner]
+name=John Doe
+organization=Acme Widgets Inc.`)
+	yamlData := []byte(`foo: bar`)
+
+	testIniFile, err := createTempFileWithContent(iniData, "ini.txt")
+	if err != nil {
+		t.Fatalf("Expected writing to test file not to fail: %v", err)
+	}
+	defer os.Remove(testIniFile.Name())
+
+	testYamlFile, err := createTempFileWithContent(yamlData, "yml")
+	if err != nil {
+		t.Fatalf("Expected writing to test file not to fail: %v", err)
+	}
+	defer os.Remove(testYamlFile.Name())
+
+	outputDir, err := ioutil.TempDir(os.TempDir(), "fakedir")
+	if err != nil {
+		t.Fatalf("Expected creating a temp dir to not fail: %v", err)
+	}
+	defer os.RemoveAll(outputDir)
+
+	iniFilePath := filepath.Join(outputDir, filepath.Base(testIniFile.Name()))
+	yamlFilePath := filepath.Join(outputDir, filepath.Base(testYamlFile.Name()))
+	expectedStdOut := `creating: ` + iniFilePath + "\n" + `creating: ` + yamlFilePath + "\n"
+	expectedStdErr := ""
+
+	fakeStdOut, fakeStdErr, err := redirectStdOutAndErr()
+	if err != nil {
+		t.Fatalf("Unexpected error occurred: %v", err)
+	}
+
+	defer os.Remove(fakeStdErr.Name())
+	defer os.Remove(fakeStdOut.Name())
+	defer restoreStdOutAndErr()
+
+	templateOptions := &cmdtpl.TemplateOptions{}
+	cmd := cmdtpl.NewCmd(templateOptions)
+	cmd.SetArgs([]string{"-f", testYamlFile.Name(), "-f", testIniFile.Name(), "--output-files", outputDir})
+	cmd.SilenceUsage = true
+
+	err = cmd.Execute()
+	if err != nil {
+		t.Fatalf("Unexpected error running command: %v", err)
+	}
+	restoreStdOutAndErr()
+
+	err = assertStdOutAndStdErr(fakeStdOut, fakeStdErr, expectedStdOut, expectedStdErr)
+	if err != nil {
+		t.Fatalf("Assertion failed:\n%v", err)
+	}
+}
+
+func TestFileMarkedAsYamlFileDoesNotSuggestOutputFlags(t *testing.T) {
+	expectedStdOut := "a: b\n"
+	expectedStdErr := ""
+
+	testYamlFile, err := createTempFileWithContent([]byte(expectedStdOut), "txt")
+	if err != nil {
+		t.Fatalf("Expected writing to test file not to fail: %v", err)
+	}
+	defer os.Remove(testYamlFile.Name())
+
+	fakeStdOut, fakeStdErr, err := redirectStdOutAndErr()
+	if err != nil {
+		t.Fatalf("Unexpected error occurred: %v", err)
+	}
+
+	defer os.Remove(fakeStdErr.Name())
+	defer os.Remove(fakeStdOut.Name())
+	defer restoreStdOutAndErr()
+
+	templateOptions := &cmdtpl.TemplateOptions{}
+	cmd := cmdtpl.NewCmd(templateOptions)
+	cmd.SetArgs([]string{"-f", testYamlFile.Name(), "--file-mark", fmt.Sprintf("%s:type=yaml-plain", filepath.Base(testYamlFile.Name()))})
+	cmd.SilenceUsage = true
+
+	err = cmd.Execute()
+	if err != nil {
+		t.Fatalf("Unexpected error running command: %v", err)
+	}
+	restoreStdOutAndErr()
+
+	err = assertStdOutAndStdErr(fakeStdOut, fakeStdErr, expectedStdOut, expectedStdErr)
+	if err != nil {
+		t.Fatalf("Assertion failed:\n%v", err)
+	}
+}
+
+func createTempFileWithContent(yamlData []byte, suffix string) (*os.File, error) {
+	testYamlFile, err := ioutil.TempFile(os.TempDir(), fmt.Sprintf("*test-yaml.%s", suffix))
+	if err != nil {
+		return nil, err
+	}
+
+	err = ioutil.WriteFile(testYamlFile.Name(), yamlData, os.ModePerm)
+	if err != nil {
+		return nil, err
+	}
+	return testYamlFile, err
 }
