@@ -6,7 +6,7 @@ set -e -x -u
 export CGO_ENABLED=0
 repro_flags="-ldflags=-buildid= -trimpath"
 
-BUILD_VALUES= ./hack/build.sh
+./hack/build.sh
 
 GOOS=darwin GOARCH=amd64 go build $repro_flags -o ytt-darwin-amd64 ./cmd/ytt
 GOOS=linux GOARCH=amd64 go build $repro_flags -o ytt-linux-amd64 ./cmd/ytt

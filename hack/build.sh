@@ -17,8 +17,6 @@ rm -f pkg/website/generated.go
 go build -o ytt ./cmd/ytt/...
 ./ytt version
 
-build_values_path="../../${BUILD_VALUES:-./hack/build-values-default.yml}"
-
 (
 	# Use newly built binary to template all website assets
 	# into a single Go file
@@ -28,7 +26,6 @@ build_values_path="../../${BUILD_VALUES:-./hack/build-values-default.yml}"
 		-f ../../examples/playground/basics \
 		-f ../../examples/playground/overlays \
 		-f ../../examples/playground/getting-started \
-		-f $build_values_path \
 		--file-mark 'alt-example**/*:type=data' \
 		--file-mark 'example**/*:type=data' \
 		--file-mark 'generated.go.txt:exclusive-for-output=true' \

@@ -14,10 +14,6 @@ def golang_escape_tick(str):
   return str.replace("`", "`+\"`\"+`")
 end
 
-def inject_google_analytics(str):
-  return str.replace("<!-- google analytics -->", data.values.google_analytics)
-end
-
 assetFiles = []
 exampleFiles = []
 
@@ -143,7 +139,7 @@ func init() {
 		(@ for name in assetFiles: @)
     "(@= name @)": File{
       Name: "(@= name @)",
-      Content: `(@= inject_google_analytics(golang_escape_tick(data.read(name))) @)`,
+      Content: `(@= golang_escape_tick(data.read(name)) @)`,
     },
 		(@ end @)
 	}

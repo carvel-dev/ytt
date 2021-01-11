@@ -1,7 +1,7 @@
 <!DOCTYPE html >
 <html>
   <head>
-    <title class="title">ytt - YAML Templating Tool</title>
+    <title class="title">ytt playground</title>
 
     <script src="js/deps.js"></script>
     <link rel="stylesheet" href="js/deps.css"></link>
@@ -9,124 +9,9 @@
     <script src="js/app.js"></script>
     <link rel="stylesheet" href="js/app.css"></link>
 
-    <!-- google analytics -->
   </head>
   <body>
     <div class="content">
-      <div id="nav" class="analytics">
-        <h1 class="logo">
-          <span class="project-name">
-            <a href="/">ytt</a>
-          </span>
-          <span class="partof"> part of <a href="https://carvel.dev">Carvel</a></span>
-        </h1>
-        <ul>
-          <li><a href="https://carvel.dev/blog">Blog</a></li>
-          <li><a href="https://carvel.dev/community">Community</a></li>
-          <li><a href="https://slack.kubernetes.io">#carvel on Kubernetes Slack</a></li>
-          <li><a href="https://github.com/vmware-tanzu/carvel-ytt">GitHub</a></li>
-          <li><a href="https://github.com/vmware-tanzu/carvel-ytt/tree/develop/docs/README.md">Docs</a></li>
-        </ul>
-      </div>
-      <div class="banner">
-        <p>k14s is now Carvel. Watch our talk from <a href="https://www.youtube.com/watch?v=WJw1MDFMVuk">KubeCon + CloudNativeCon Europe 2020</a></p>
-      </div>
-      <div id="hero">
-        <div class="bg">&nbsp;</div>
-        <h2>All your YAML shaping in one tool</h2>
-        <p>Template and patch as needed to easily make your configuration reusable and extensible. Works with your own and third-party YAML configuration.</p>
-        <p class="analytics">
-          <a class="link-button try-online link-button-primary" href="#playground">Try In PLayground</a>
-          <a class="link-button" href="https://github.com/vmware-tanzu/carvel-ytt/releases">Download Binary</a>
-        </p>
-      </div>
-
-      <div id="highlights">
-        <ul>
-          <li>
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 95 95">
-              <g transform="translate(-12 -12)">
-                <path d="M59.5,14.5a45,45,0,1,1-45,45,45.05,45.05,0,0,1,45-45m0-2.5A47.5,47.5,0,1,0,107,59.5,47.5,47.5,0,0,0,59.5,12Z" />
-                <path d="M44.37,36.58a6.25,6.25,0,1,1-6.25,6.25,6.25,6.25,0,0,1,6.25-6.25m0-2.5a8.75,8.75,0,1,0,8.75,8.75,8.75,8.75,0,0,0-8.75-8.75Z" />
-              </g>
-              <circle cx="59.84" cy="57.27" r="7.5"/>
-              <circle cx="32.49" cy="68.11" r="7.5"/>
-              <circle cx="69.94" cy="30.8" r="7.5"/>
-              <rect x="31.49" y="42.38" width="2.5" height="16.23"/>
-              <rect x="43.89" y="29.8" width="16.23" height="2.5"/>
-              <rect x="57.87" y="48.43" width="2.5" height="16.23" transform="translate(-34.66 46.37) rotate(-45)"/>
-            </svg>
-            <h3>Structure-oriented</h3>
-            <p>ytt templates are plain YAML documents made from nodes such as maps and arrays. ytt allows you to set values and attach statements (such as if and for loops) on those nodes. This eliminates text insertion concerns like manual escaping and allows for easy structure reuse, thus, increasing readability.</p>
-          </li>
-          <li>
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 94.97 54.28">
-              <path class="cls-1" d="M93.86,44.43c-1-11.23-9.48-20.09-20-20.34h-.51c-8.49,0-15.83,5.7-19,13.85h-.07a17.22,17.22,0,0,0-7-1.67h-.44a17.54,17.54,0,0,0-17.09,14,13.86,13.86,0,0,0-3.43-.49H26A14,14,0,0,0,12.06,63.36c-.18,7.72,6.86,14.78,14.54,15h1.64c9.24,0,53.2-.19,62.35-.19h1.94c7.81,0,14.29-7.37,14.49-16.54S101.41,45.15,93.86,44.43Zm-20-17.84c9.09.22,16.64,8,17.56,18.07l.19,2.06,2.06.2c4.74.45,8.62,4.2,10.17,9.28H87a3.75,3.75,0,1,1-5,0H65.5V44.93a3.75,3.75,0,1,0,0-5.94V28.6a16.54,16.54,0,0,1,7.87-2ZM28.24,75.86H26.67c-6.37-.17-12.25-6.21-12.11-12.43a11.47,11.47,0,0,1,2-6.13H42.62a3.76,3.76,0,1,1,5.37,0H65v7.3a3.76,3.76,0,1,0,0,5.49v5.66l-5.48,0C46.43,75.81,32.86,75.86,28.24,75.86Z" transform="translate(-12.06 -24.08)"/>
-            </svg>
-            <h3>Modularized Config</h3>
-            <p>Weave ytt templating into your own configuration, externalize values to variables, extract repeated snippets to functions, and make whole sections conditional. Patch on top of any configuration using ytt overlays. Express precise structural edits and invariant declaratively.</p>
-          </li>
-          <li>
-            <svg version="1.0" xmlns="http://www.w3.org/2000/svg" width="120.000000pt" height="120.000000pt" viewBox="0 0 120.000000 120.000000" preserveAspectRatio="xMidYMid meet">
-              <metadata>Created by potrace 1.16, written by Peter Selinger 2001-2019</metadata>
-              <g transform="translate(0.000000,120.000000) scale(0.100000,-0.100000)" stroke="none">
-                <path d="M540 1069 c-14 -6 -36 -20 -48 -32 -44 -41 -52 -69 -52 -186 l0 -111 -46 -42 c-68 -63 -96 -126 -102 -225 -7 -129 37 -223 138 -292 218 -148 510 5 513 269 1 92 -26 161 -90 231 l-53 57 0 88 c0 49 -5 106 -10 126 -14 48 -55 97 -97 114 -37 16 -117 17 -153 3z m164 -52 c42 -29 56 -74 56 -176 l0 -89 -37 14 c-21 7 -69 13 -108 13 -38 0 -87 -6 -107 -13 l-38 -14 0 90 c0 126 20 166 97 194 46 16 97 9 137 -19z m32 -296 c107 -48 180 -170 171 -286 -14 -180 -194 -312 -364 -266 -145 39 -245 196 -215 338 39 186 236 290 408 214z"/>
-                <path d="M541 708 c-94 -27 -172 -119 -175 -206 -1 -62 16 -69 30 -11 6 25 18 58 27 75 33 63 112 114 177 114 23 0 30 4 30 20 0 23 -30 25 -89 8z"/>
-                <path d="M572 528 c-14 -14 -16 -70 -3 -83 5 -6 11 -26 13 -45 3 -32 6 -35 33 -35 27 0 30 3 33 35 2 19 8 39 13 45 13 13 11 69 -3 83 -7 7 -26 12 -43 12 -17 0 -36 -5 -43 -12z"/>
-              </g></svg>
-            <h3>Deterministic</h3>
-            <p>ytt execution environment is hermetic and side-effect free, with no access to filesystem, network, time, randomness, or the operating system interfaces. This guarantees that templates produce identical output with the same inputs. Your configuration changes only when you change it.</p>
-          </li>
-        </ul>
-      </div>
-
-      <div id="features">
-        <h2>Features</h2>
-        <ul>
-          <li>
-            <div class="icon">
-              <svg xmlns="http://www.w3.org/2000/svg" height="120px" width="120px" viewBox="0 0 78.72 95">
-                <g transform="translate(-19.2 -12.15)"><path d="M82.46,107.15A1.26,1.26,0,0,1,81.22,106C81,103.8,78.77,84,81.35,79c1.05-2,2.36-4.25,3.74-6.6,3.57-6.06,7.62-12.93,9.12-19.71C96.73,41.27,95.3,32.21,90,25.75c-9.58-11.56-28.68-11.1-28.87-11.1-9.78,0-22.38,4.28-27.63,12.44-3.25,5.06-3.72,14.5-3.09,21.66.57,6.3-7.69,19-8.5,20.27a1.85,1.85,0,0,0-.15.53c.3.06.81.12,1.3.19,3.39.47,4.81.76,5.22,1.87.1.27.36,1,.08,14.69,0,.13-.27,3.24,1.38,5a4.48,4.48,0,0,0,3.54,1.34c.85,0,1.74,0,2.65-.08,4.42-.2,9.92-.45,10.64,4.5a52.85,52.85,0,0,1,.56,8.83,1.25,1.25,0,1,1-2.49-.08,53.23,53.23,0,0,0-.54-8.39c-.37-2.53-3.43-2.58-8.06-2.37-.94.05-1.88.09-2.76.09A6.93,6.93,0,0,1,27.83,93c-2.4-2.64-2-6.7-2-6.87.11-5.41.16-11.58.07-13.37a31.87,31.87,0,0,0-3.22-.56c-.73-.1-1.3-.18-1.65-.26a2.27,2.27,0,0,1-1.59-1.25,3.59,3.59,0,0,1,.21-2.86l.08-.13c2.41-3.64,8.57-14.09,8.15-18.75-.67-7.57-.12-17.64,3.48-23.23C37.08,16.82,50.62,12.16,61,12.16c.79,0,20.48-.5,30.83,12,5.87,7.09,7.48,16.86,4.78,29.06-1.59,7.17-5.74,14.22-9.4,20.44-1.37,2.32-2.66,4.51-3.67,6.48-1.9,3.67-.55,19.75.13,25.63a1.25,1.25,0,0,1-1.1,1.38Z"/><path d="M76.93,59.1a10,10,0,1,1,10-10A10,10,0,0,1,76.93,59.1Zm0-17.5a7.5,7.5,0,1,0,7.5,7.5A7.51,7.51,0,0,0,76.93,41.6Z"/><path d="M71,38.36l-3.36-4.89a7.48,7.48,0,1,0-5.06,2,7.55,7.55,0,0,0,3-.62l3.38,4.94ZM57.57,28a5,5,0,1,1,5,5A5,5,0,0,1,57.57,28Z"/><path d="M54.45,34.74l-1.71-1.82-5.51,5.16a5,5,0,0,0-1.82-.87A5,5,0,1,0,43,46.93a4.76,4.76,0,0,0,1.18.14,5,5,0,0,0,4.86-3.81h0a5,5,0,0,0-.3-3.2Zm-7.8,7.92a2.51,2.51,0,0,1-3,1.84,2.51,2.51,0,0,1-1.84-3,2.49,2.49,0,0,1,2.43-1.91,2.46,2.46,0,0,1,.6.07A2.51,2.51,0,0,1,46.65,42.66Z"/></g>
-              </svg>
-            </div>
-            <div class="card">
-              <h3>Intuitive templating</h3>
-              <p>Makes <em class="highlight">template code look familiar</em> by including a sandboxed Pythonic language. <br/> e.g. <code>"-listen=:" + str(data.values.port)</code>.</p>
-            </div>
-          </li>
-          <li>
-            <div class="icon">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 93.98 47.04"><g transform="translate(-13.07 -30.97)"><path d="M70.46,31.6V78h36.59V31.6ZM104.55,75H73V34.6h31.59Z" /><path d="M41.87,56.27l-1,.29a7.91,7.91,0,0,1-1.06.24,7.52,7.52,0,0,0-.49,1.13A3.16,3.16,0,0,1,38.73,59c.07.11.26.43.56,1a7.91,7.91,0,0,0,.59.92,29.25,29.25,0,0,1-2.4,2.51,14.73,14.73,0,0,1-2-1.15,6.59,6.59,0,0,1-2.1.83A4.07,4.07,0,0,0,33,64.21a5.89,5.89,0,0,1-.35,1.17H29.32a5.74,5.74,0,0,1-.33-1.1c-.13-.52-.23-.89-.31-1.1-1.32-.59-2-.9-2.08-.94a4.52,4.52,0,0,0-1,.5,9.15,9.15,0,0,1-1,.54A27,27,0,0,1,22.2,61a13.9,13.9,0,0,1,1.05-2c0-.12-.2-.49-.47-1.1a4.83,4.83,0,0,1-.37-1.19,9.57,9.57,0,0,1-1.12-.25c-.52-.15-.87-.24-1.08-.29V52.72l1-.29a7.68,7.68,0,0,1,1.07-.24c.1-.18.27-.55.5-1.11A6.26,6.26,0,0,1,23.35,50a11.31,11.31,0,0,0-1.15-1.89,30.22,30.22,0,0,1,2.41-2.51,13.11,13.11,0,0,1,2,1.15,12.44,12.44,0,0,1,2.19-.83c0-.13.14-.52.32-1.17.12-.46.22-.84.32-1.14h3.33a21.72,21.72,0,0,1,.64,2.2c.13.06.49.21,1.08.43a4.35,4.35,0,0,1,1,.51,3.47,3.47,0,0,0,1-.5,9,9,0,0,1,1-.54,6.17,6.17,0,0,1,1.28,1.12A15.39,15.39,0,0,0,40,48c-.5.93-.88,1.59-1.15,2a19.76,19.76,0,0,0,.83,2.29,6.11,6.11,0,0,1,1.12.25c.52.15.88.25,1.08.29Zm-4.81,1.47a6.8,6.8,0,0,0,.83-3.85,6.38,6.38,0,0,0-1.24-3.25A7,7,0,0,0,34,48.45a6.66,6.66,0,0,0-3.4-.65,6.58,6.58,0,0,0-4.21,1.81,6.5,6.5,0,0,0-1.88,3.64,7.26,7.26,0,0,0,.46,4.1,6.28,6.28,0,0,0,2.79,3.11,6.64,6.64,0,0,0,5.37.46A6.46,6.46,0,0,0,37.06,57.74Z" /></g><polygon points="45.61 22.64 33.01 22.64 33.01 25.14 45.61 25.14 45.61 28.56 53.71 23.89 45.61 19.21 45.61 22.64"/><polygon points="33.45 44.54 28.7 44.54 28.7 47.04 35.95 47.04 35.95 39.79 33.45 39.79 33.45 44.54"/><polygon points="2.61 39.79 0.11 39.79 0.11 47.04 7.36 47.04 7.36 44.54 2.61 44.54 2.61 39.79"/><polygon points="0.11 7.25 2.61 7.25 2.61 2.5 7.36 2.5 7.36 0 0.11 0 0.11 7.25"/><polygon points="33.45 7.25 35.95 7.25 35.95 0 28.7 0 28.7 2.5 33.45 2.5 33.45 7.25"/><rect x="63.94" y="26.1" width="23.49" height="2.5"/><rect x="63.94" y="10.69" width="23.49" height="2.5"/><rect x="67.94" y="18.39" width="19.49" height="2.5"/><rect x="67.94" y="33.8" width="19.49" height="2.5"/><rect x="11.62" y="44.54" width="12.81" height="2.5"/><rect y="25.59" width="2.5" height="11.32"/><rect x="11.62" width="12.81" height="2.5"/><rect x="33.45" y="29.59" width="2.5" height="7.32"/><rect y="10.76" width="2.5" height="11.32"/><rect x="33.45" y="10.76" width="2.5" height="7.32"/></svg>
-            </div>
-            <div class="card">
-              <h3>Overlays</h3>
-              <p><em class="highlight">Patch YAML structures</em> via the builtin <code>overlay</code> package.</p>
-            </div>
-          </li>
-          <li>
-            <div class="icon">
-              <svg version="1.1" viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg"><g transform="matrix(1.3333 0 0 -1.3333 0 160)"><g transform="translate(52.667 12.75)"><path d="m0 0h-39.917v94.5h39.917v-2.5h-37.417v-89.5h37.417z"/></g><g transform="translate(107.25 12.75)"><path d="m0 0h-39.25v2.5h36.75v89.5h-36.75v2.5h39.25z"/></g><path d="m73.642 86.375h-26.937v-55h26.937zm-2.5-52.5h-21.937v50h21.937z"/><g transform="translate(97.04 33.815)"><path d="m0 0h-19.529v2.5h17.029v45h-17.029v2.5h19.529z"/></g><g ><path d="m67.87 53.897h-15.393v2.5h15.393z"/><path d="m67.87 63.774-11.475 2e-6v2.5h11.475z"/><path d="m67.87 73.675h-15.393v2.5h15.393z"/></g><g transform="translate(42.987 33.815)"><path d="m0 0h-19.529v50h19.529v-2.5h-17.029v-45h17.029z"/></g><path d="m67.87 44.464h-11.475v2.5h11.475z" /><g transform="matrix(.95757 0 0 1 1.4962 -.65306)" ><path d="m42.962 52.353h-15.393v2.5h15.393z"/><path d="m42.962 62.23h-11.475v2.5h11.475z"/><path d="m42.962 72.131h-15.393v2.5h15.393z"/><path d="m42.962 42.92h-11.475v2.5h11.475z"/></g><g transform="matrix(.95757 0 0 1 51.292 -.65306)" ><path d="m42.962 52.353h-15.393v2.5h15.393z"/><path d="m42.962 62.23h-11.475v2.5h11.475z"/><path d="m42.962 72.131h-15.393v2.5h15.393z"/><path d="m42.962 42.92h-11.475v2.5h11.475z"/></g></g></svg>
-            </div>
-            <div class="card">
-              <h3>Any YAML</h3>
-              <p>Template any YAML content, including, <em class="highlight">Kubernetes configuration</em>, Concourse pipelines, AWS CloudFormation configurations, etc.</p>
-            </div>
-          </li>
-        </ul>
-      </div>
-
-      <div id="basic-usage">
-        <h2>Basic Usage</h2>
-        <pre class="terminal">
-<span class="gray spacer-before"># Configurations picked up from a directory</span>
-$ <span class="green">ytt -f playground/basics/example-demo/</span> | kubectl apply -f-
-<span class="gray spacer-before"># Input customized on command line or file configuration</span>
-$ <span class="green">ytt -f playground/basics/example-demo/ --data-value-yaml service.enabled=false</span> | ...
-<span class="gray spacer-before"># Give as many configuration files as needed</span>
-$ <span class="green">ytt -f playground/basics/example-demo/ -f values-staging.yml -f overlay-env-1.yml</span> | ...
-</pre>
-      </div>
-
       <div class="playground-wrapper">
         <div id="playground" style="display: none;">
           <div class="dropdown">
@@ -164,32 +49,6 @@ $ <span class="green">ytt -f playground/basics/example-demo/ -f values-staging.y
         </div>
 
         <noscript>Page includes interactive editor with ability to render templates and see their results.</noscript>
-      </div>
-
-      <div id="authors">
-        <h2>Carvel Team</h2>
-        <p>ytt is released as open source software and provides community support through our <a href="https://github.com/vmware-tanzu/carvel-ytt/issues">GitHub project page</a>.</p>
-        <p>The Carvel project team welcomes contributions from the community, please see the <a href="https://github.com/vmware-tanzu/carvel-ytt/blob/develop/CONTRIBUTING.md">contributing documentation</a> for more details.</p>
-      </div>
-
-      <div id="footer">
-        <div class="flex">
-          <ul>
-            <li>
-              <a href="https://slack.kubernetes.io" class="analytics"><svg class="svg-inline--fa fa-slack fa-w-14 fa-lg fa-fw mr-1" aria-hidden="true" data-prefix="fab" data-icon="slack" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512" data-fa-i2svg=""><path fill="currentColor" d="M244.2 217.5l19.3 57.7-59.8 20-19.3-57.7 59.8-20zm41.4 243.7C131.6 507.4 65 471.6 18.8 317.6S8.4 97 162.4 50.8C316.4 4.6 383 40.4 429.2 194.4c46.2 154 10.4 220.6-143.6 266.8zM366.2 265c-3.9-12.2-17.2-18.6-29.4-14.7l-29 9.7-19.3-57.7 29-9.7c12.2-3.9 18.6-17.2 14.7-29.4-3.9-12.2-17.2-18.6-29.4-14.7l-29 9.7-10-30.1c-3.9-12.2-17.2-18.6-29.4-14.7-12.2 3.9-18.6 17.2-14.7 29.4l10 30.1-59.8 20.1-10-30.1c-3.9-12.2-17.2-18.6-29.4-14.7-12.2 3.9-18.6 17.2-14.7 29.4l10 30.1-29 9.7c-12.2 3.9-18.6 17.2-14.7 29.4 3.2 9.3 12.2 15.4 21.5 15.8 4.3.6 7.7-1 36.9-10.7l19.3 57.7-29 9.7c-12.2 3.9-18.6 17.2-14.7 29.4 3.2 9.3 12.2 15.4 21.5 15.8 4.3.6 7.7-1 36.9-10.7l10 30.1c3.7 10.8 15.8 18.6 29.4 14.7 12.2-3.9 18.6-17.2 14.7-29.4l-10-30.1 59.8-20.1 10 30.1c3.7 10.8 15.8 18.6 29.4 14.7 12.2-3.9 18.6-17.2 14.7-29.4l-10-30.1 29-9.7c12.2-4.2 18.6-17.5 14.7-29.6z"></path></svg>#carvel on Kubernetes Slack</a>
-            </li>
-            <li>
-              <a href="https://github.com/vmware-tanzu/carvel-ytt" class="analytics"><svg class="svg-inline--fa fa-github fa-w-16 fa-lg fa-fw mr-1" aria-hidden="true" data-prefix="fab" data-icon="github" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512" data-fa-i2svg=""><path fill="currentColor" d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"></path></svg>GitHub</a>
-            </li>
-          </ul>
-          <div class="right-aligned">
-            &copy; 2020 Carvel Authors.
-            <a href="http://vmware.github.io/" class="vm-logo analytics">A VMware-backed project.<img src="data:image/jpeg;base64, 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" alt="VMware logo" /></a>
-          </div>
-        </div>
-        <div class="flex privacy">
-            <a href="https://www.vmware.com/help/privacy.html">Privacy</a>
-        </div>
       </div>
     </div>
   </body>
