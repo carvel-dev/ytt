@@ -23,8 +23,8 @@ type RegularFilesSourceOpts struct {
 	files []string
 
 	outputDir   string
-	outputFiles string
-	outputType  string
+	OutputFiles string
+	OutputType  string
 
 	files.SymlinkAllowOpts
 }
@@ -34,9 +34,9 @@ func (s *RegularFilesSourceOpts) Set(cmd *cobra.Command) {
 
 	cmd.Flags().StringVar(&s.outputDir, "dangerous-emptied-output-directory", "",
 		"Delete given directory, and then create it with output files")
-	cmd.Flags().StringVar(&s.outputFiles, "output-files", "", "Add output files to given directory")
+	cmd.Flags().StringVar(&s.OutputFiles, "output-files", "", "Add output files to given directory")
 
-	cmd.Flags().StringVarP(&s.outputType, "output", "o", regularFilesOutputTypeYAML, "Output type (yaml, json, pos)")
+	cmd.Flags().StringVarP(&s.OutputType, "output", "o", regularFilesOutputTypeYAML, "Output type (yaml, json, pos)")
 
 	cmd.Flags().BoolVar(&s.SymlinkAllowOpts.AllowAll, "dangerous-allow-all-symlink-destinations", false,
 		"Symlinks to all destinations are allowed")
@@ -74,8 +74,8 @@ func (s *RegularFilesSource) Output(out TemplateOutput) error {
 	switch {
 	case len(s.opts.outputDir) > 0:
 		return files.NewOutputDirectory(s.opts.outputDir, out.Files, s.ui).Write()
-	case len(s.opts.outputFiles) > 0:
-		return files.NewOutputDirectory(s.opts.outputFiles, out.Files, s.ui).WriteFiles()
+	case len(s.opts.OutputFiles) > 0:
+		return files.NewOutputDirectory(s.opts.OutputFiles, out.Files, s.ui).WriteFiles()
 	default:
 		for _, file := range out.Files {
 			if file.Type() != files.TypeYAML {
@@ -86,7 +86,7 @@ func (s *RegularFilesSource) Output(out TemplateOutput) error {
 
 	var printerFunc func(io.Writer) yamlmeta.DocumentPrinter
 
-	switch s.opts.outputType {
+	switch s.opts.OutputType {
 	case regularFilesOutputTypeYAML:
 		printerFunc = nil
 	case regularFilesOutputTypeJSON:
@@ -96,7 +96,7 @@ func (s *RegularFilesSource) Output(out TemplateOutput) error {
 			return yamlmeta.WrappedFilePositionPrinter{yamlmeta.NewFilePositionPrinter(w)}
 		}
 	default:
-		return fmt.Errorf("Unknown output type '%s'", s.opts.outputType)
+		return fmt.Errorf("Unknown output type '%s'", s.opts.OutputType)
 	}
 
 	combinedDocBytes, err := out.DocSet.AsBytesWithPrinter(printerFunc)

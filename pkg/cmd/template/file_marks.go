@@ -13,17 +13,17 @@ import (
 )
 
 type FileMarksOpts struct {
-	fileMarks []string
+	FileMarks []string
 }
 
 func (s *FileMarksOpts) Set(cmd *cobra.Command) {
-	cmd.Flags().StringArrayVar(&s.fileMarks, "file-mark", nil, "File mark (ie change file path, mark as non-template) (format: file:key=value) (can be specified multiple times)")
+	cmd.Flags().StringArrayVar(&s.FileMarks, "file-mark", nil, "File mark (ie change file path, mark as non-template) (format: file:key=value) (can be specified multiple times)")
 }
 
 func (s *FileMarksOpts) Apply(filesToProcess []*files.File) ([]*files.File, error) {
 	var exclusiveForOutputFiles []*files.File
 
-	for _, mark := range s.fileMarks {
+	for _, mark := range s.FileMarks {
 		pieces := strings.SplitN(mark, ":", 2)
 		if len(pieces) != 2 {
 			return nil, fmt.Errorf("Expected file mark '%s' to be in format path:key=value", mark)
