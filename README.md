@@ -1,3 +1,6 @@
+![logo](docs/CarvelLogo.png)
+
+# ytt
 
 * Play: Jump right in by trying out the [online playground](https://carvel.dev/ytt/#playground)
 * For more information about annotations, data values, overlays and other features see [Docs](https://github.com/vmware-tanzu/carvel-ytt/tree/develop/docs) page
@@ -22,3 +25,9 @@ To get started with `ytt` and to see examples, you use the online playground or 
 - Download the latest binaries from the [releases page](https://github.com/vmware-tanzu/carvel-ytt/releases) and run the playground locally: `ytt website`
 - See the examples used in the playground on the [examples](https://github.com/vmware-tanzu/carvel-ytt/tree/develop/examples/playground) page
 - Editor Extensions: [vscode syntax highlighting](https://marketplace.visualstudio.com/items?itemName=ewrenn.vscode-ytt)
+
+### Join the Community and Make Carvel Better
+Carvel is better because of our contributors and maintainers. It is because of you that we can bring great software to the community. Please join us during our online community meetings ([Zoom link](http://community.klt.rip/)) every other Wednesday at 12PM ET / 9AM PT and catch up with past meetings on the [VMware YouTube Channel](https://www.youtube.com/playlist?list=PL7bmigfV0EqQ_cDNKVTIcZt-dAM-hpClS). Join [Google Group](https://groups.google.com/g/carvel-dev) to get updates on the project and invites to community meetings.
+You can chat with us on Kubernetes Slack in the #carvel channel and follow us on Twitter at @carvel_dev.
+
+Check out which organizations are using and contributing to Carvel: [Adopter's list](https://github.com/vmware-tanzu/carvel/blob/master/ADOPTERS.md)
