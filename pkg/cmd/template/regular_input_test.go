@@ -4,6 +4,7 @@
 package template_test
 
 import (
+	"bytes"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -34,7 +35,9 @@ If you want to include those results, use the --output-files or --dangerous-empt
 		files.MustNewFileFromSource(files.NewBytesSource("foo.yaml", yamlData)),
 	}
 
-	ui := cmdcore.NewPlainUI(false)
+	stdout := bytes.NewBufferString("")
+	stderr := bytes.NewBufferString("")
+	ui := cmdcore.NewFakeUI(false, stdout, stderr)
 	opts := cmdtpl.NewOptions()
 	rfsOpts := template.RegularFilesSourceOpts{}
 	rfsOpts.Set(&cobra.Command{})
@@ -45,24 +48,36 @@ If you want to include those results, use the --output-files or --dangerous-empt
 		t.Fatalf("An unexpected error occurred: %v", out.Err)
 	}
 
-	fakeStdOut, fakeStdErr, err := redirectStdOutAndErr()
+	err := rfs.Output(out)
 	if err != nil {
 		t.Fatalf("Unexpected error occurred: %v", err)
 	}
-	defer os.Remove(fakeStdErr.Name())
-	defer os.Remove(fakeStdOut.Name())
-	defer restoreStdOutAndErr()
 
-	err = rfs.Output(out)
+	err = assertOnStdOutAndStdErr(stdout, stderr, expectedStdOut, expectedStdErr)
 	if err != nil {
-		t.Fatalf("Unexpected error occurred: %v", err)
+		t.Fatalf("Assertion failed:\n %s", err)
 	}
-	restoreStdOutAndErr()
+}
 
-	err = assertStdOutAndStdErr(fakeStdOut, fakeStdErr, expectedStdOut, expectedStdErr)
+func assertOnStdOutAndStdErr(stdout *bytes.Buffer, stderr *bytes.Buffer, expectedStdOut string, expectedStdErr string) error {
+	stdoutOutput, err := ioutil.ReadAll(stdout)
 	if err != nil {
-		t.Fatalf("Assertion failed:\n%v", err)
+		return fmt.Errorf("Error reading stdout buffer: %s", err)
 	}
+
+	if string(stdoutOutput) != expectedStdOut {
+		return fmt.Errorf("Expected stdout to be >>>%s<<<\nBut was: >>>%s<<<", expectedStdOut, string(stdoutOutput))
+	}
+
+	stderrOutput, err := ioutil.ReadAll(stderr)
+	if err != nil {
+		return fmt.Errorf("Error reading stderr buffer: %s", err)
+	}
+
+	if string(stderrOutput) != expectedStdErr {
+		return fmt.Errorf("Expected stderr to be >>>%s<<<\nBut was: >>>%s<<<", expectedStdErr, string(stderrOutput))
+	}
+	return nil
 }
 
 func redirectStdOutAndErr() (*os.File, *os.File, error) {

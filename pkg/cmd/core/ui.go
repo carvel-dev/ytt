@@ -12,24 +12,38 @@ import (
 )
 
 type PlainUI struct {
-	debug bool
+	debug  bool
+	stdout io.Writer
+	stderr io.Writer
 }
 
 var _ files.UI = PlainUI{}
 
-func NewPlainUI(debug bool) PlainUI { return PlainUI{debug} }
+func NewPlainUI(debug bool) PlainUI {
+	return PlainUI{debug, os.Stdout, os.Stderr}
+}
+
+func NewFakeUI(debug bool, stdout io.Writer, stderr io.Writer) PlainUI {
+	if stdout == nil {
+		stdout = os.Stdout
+	}
+	if stderr == nil {
+		stderr = os.Stderr
+	}
+	return PlainUI{debug, stdout, stderr}
+}
 
 func (ui PlainUI) Printf(str string, args ...interface{}) {
-	fmt.Printf(str, args...)
+	fmt.Fprintf(ui.stdout, str, args...)
 }
 
 func (ui PlainUI) Warnf(str string, args ...interface{}) {
-	fmt.Fprintf(os.Stderr, str, args...)
+	fmt.Fprintf(ui.stderr, str, args...)
 }
 
 func (ui PlainUI) Debugf(str string, args ...interface{}) {
 	if ui.debug {
-		fmt.Fprintf(os.Stderr, str, args...)
+		fmt.Fprintf(ui.stderr, str, args...)
 	}
 }
 
