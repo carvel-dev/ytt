@@ -1,3 +1,5 @@
+[![Chocolatey](https://img.shields.io/chocolatey/v/ytt.svg)](https://chocolatey.org/packages/ytt)
+
 
 * Play: Jump right in by trying out the [online playground](https://carvel.dev/ytt/#playground)
 * For more information about annotations, data values, overlays and other features see [Docs](https://github.com/vmware-tanzu/carvel-ytt/tree/develop/docs) page
