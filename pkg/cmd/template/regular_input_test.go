@@ -101,7 +101,7 @@ organization=Acme Widgets Inc.`)
 	}
 }
 
-func Test_FileMark_YAML_With_Shows_No_Warning(t *testing.T) {
+func Test_FileMark_YAML_Shows_No_Warning(t *testing.T) {
 	yamlData := []byte(`foo: bar`)
 
 	expectedStdErr := ""
