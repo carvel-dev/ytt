@@ -8,8 +8,8 @@ import (
 	"testing"
 
 	"github.com/k14s/difflib"
-	cmdcore "github.com/k14s/ytt/pkg/cmd/core"
 	cmdtpl "github.com/k14s/ytt/pkg/cmd/template"
+	cmdui "github.com/k14s/ytt/pkg/cmd/ui"
 	"github.com/k14s/ytt/pkg/files"
 )
 
@@ -57,7 +57,7 @@ rendered: true`
 			files.MustNewFileFromSource(files.NewBytesSource("template.yml", []byte(templateYAML))),
 		})
 
-		assertYttWorkflowSucceedsWithOutput(t, filesToProcess, "rendered: true\n")
+		assertYTTWorkflowSucceedsWithOutput(t, filesToProcess, "rendered: true\n")
 	})
 	t.Run("Map And Array", func(t *testing.T) {
 		schemaYAML := `#@schema/match data_values=True
@@ -105,7 +105,7 @@ rendered: #@ data.values
 			files.MustNewFileFromSource(files.NewBytesSource("template.yml", []byte(templateYAML))),
 		})
 
-		assertYttWorkflowSucceedsWithOutput(t, filesToProcess, expected)
+		assertYTTWorkflowSucceedsWithOutput(t, filesToProcess, expected)
 	})
 	t.Run("Array Only", func(t *testing.T) {
 		schemaYAML := `#@schema/match data_values=True
@@ -134,7 +134,7 @@ rendered: #@ data.values
 			files.MustNewFileFromSource(files.NewBytesSource("template.yml", []byte(templateYAML))),
 		})
 
-		assertYttWorkflowSucceedsWithOutput(t, filesToProcess, expected)
+		assertYTTWorkflowSucceedsWithOutput(t, filesToProcess, expected)
 	})
 }
 
@@ -175,7 +175,7 @@ vpc:
 			files.MustNewFileFromSource(files.NewBytesSource("template.yml", []byte(templateYAML))),
 		})
 
-		assertYttWorkflowSucceedsWithOutput(t, filesToProcess, expected)
+		assertYTTWorkflowSucceedsWithOutput(t, filesToProcess, expected)
 	})
 	t.Run("Allows null on top level map item", func(t *testing.T) {
 		schemaYAML := `#@schema/match data_values=True
@@ -202,7 +202,7 @@ vpc: #@ data.values.vpc
 			files.MustNewFileFromSource(files.NewBytesSource("template.yml", []byte(templateYAML))),
 		})
 
-		assertYttWorkflowSucceedsWithOutput(t, filesToProcess, expected)
+		assertYTTWorkflowSucceedsWithOutput(t, filesToProcess, expected)
 	})
 	t.Run("Allows null on map values", func(t *testing.T) {
 		schemaYAML := `#@schema/match data_values=True
@@ -231,7 +231,7 @@ vpc: #@ data.values.vpc
 			files.MustNewFileFromSource(files.NewBytesSource("template.yml", []byte(templateYAML))),
 		})
 
-		assertYttWorkflowSucceedsWithOutput(t, filesToProcess, expected)
+		assertYTTWorkflowSucceedsWithOutput(t, filesToProcess, expected)
 	})
 	t.Run("Allows null on array values", func(t *testing.T) {
 		schemaYAML := `#@schema/match data_values=True
@@ -261,7 +261,7 @@ vpc: #@ data.values.vpc
 			files.MustNewFileFromSource(files.NewBytesSource("template.yml", []byte(templateYAML))),
 		})
 
-		assertYttWorkflowSucceedsWithOutput(t, filesToProcess, expected)
+		assertYTTWorkflowSucceedsWithOutput(t, filesToProcess, expected)
 	})
 	t.Run("Data values can override nullables", func(t *testing.T) {
 		schemaYAML := `#@schema/match data_values=True
@@ -289,7 +289,7 @@ vpc: #@ data.values.vpc
 			files.MustNewFileFromSource(files.NewBytesSource("template.yml", []byte(templateYAML))),
 		})
 
-		assertYttWorkflowSucceedsWithOutput(t, filesToProcess, expected)
+		assertYTTWorkflowSucceedsWithOutput(t, filesToProcess, expected)
 	})
 }
 
@@ -316,7 +316,7 @@ db_conn:
 		})
 		expectedErr := "Typechecking violations found: [Map item 'port' at dataValues.yml:4 was type string when int was expected, Map item 'main' at dataValues.yml:6 was type int when string was expected]"
 
-		assertYttWorkflowFailsWithErrorMessage(t, filesToProcess, expectedErr)
+		assertYTTWorkflowFailsWithErrorMessage(t, filesToProcess, expectedErr)
 	})
 	t.Run("array value type mismatched", func(t *testing.T) {
 		schemaYAML := `#@schema/match data_values=True
@@ -339,7 +339,7 @@ clients:
 		})
 		expectedErr := "Typechecking violations found: [Map item 'flags' at dataValues.yml:4 was type string when *yamlmeta.Array was expected, Array item at dataValues.yml:6 was type string when *yamlmeta.Map was expected]"
 
-		assertYttWorkflowFailsWithErrorMessage(t, filesToProcess, expectedErr)
+		assertYTTWorkflowFailsWithErrorMessage(t, filesToProcess, expectedErr)
 	})
 	t.Run("map key is not present in schema", func(t *testing.T) {
 		schemaYAML := `#@schema/match data_values=True
@@ -360,7 +360,7 @@ db_conn:
 		})
 		expectedErr := "Typechecking violations found: [Map item 'password' at dataValues.yml:5 is not defined in schema]"
 
-		assertYttWorkflowFailsWithErrorMessage(t, filesToProcess, expectedErr)
+		assertYTTWorkflowFailsWithErrorMessage(t, filesToProcess, expectedErr)
 	})
 	t.Run("null is given to a map item that is not nullable", func(t *testing.T) {
 		schemaYAML := `#@schema/match data_values=True
@@ -378,7 +378,7 @@ app: null
 		})
 		expectedErr := "Typechecking violations found: [Map item 'app' at dataValues.yml:3 was type <nil> when *schema.ScalarType was expected"
 
-		assertYttWorkflowFailsWithErrorMessage(t, filesToProcess, expectedErr)
+		assertYTTWorkflowFailsWithErrorMessage(t, filesToProcess, expectedErr)
 	})
 	t.Run("data values is given but schema is empty", func(t *testing.T) {
 		schemaYAML := `#@schema/match data_values=True
@@ -395,7 +395,7 @@ not_in_schema: "this should fail the type check!"
 		})
 		expectedErr := "Typechecking violations found: [Expected node at values.yml:2 to be nil, but was a *yamlmeta.Map]"
 
-		assertYttWorkflowFailsWithErrorMessage(t, filesToProcess, expectedErr)
+		assertYTTWorkflowFailsWithErrorMessage(t, filesToProcess, expectedErr)
 	})
 	t.Run("second data value conforms but the first data value does not conform", func(t *testing.T) {
 		schemaYAML := `#@schema/match data_values=True
@@ -424,7 +424,7 @@ rendered: true`
 		})
 		expectedErr := "Typechecking violations found: [Map item 'secret' at dataValues1.yml:3 is not defined in schema]"
 
-		assertYttWorkflowFailsWithErrorMessage(t, filesToProcess, expectedErr)
+		assertYTTWorkflowFailsWithErrorMessage(t, filesToProcess, expectedErr)
 	})
 }
 
@@ -445,7 +445,7 @@ system_domain: #@ data.values.system_domain
 			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
 			files.MustNewFileFromSource(files.NewBytesSource("template.yml", []byte(templateYAML))),
 		})
-		assertYttWorkflowSucceedsWithOutput(t, filesToProcess, expected)
+		assertYTTWorkflowSucceedsWithOutput(t, filesToProcess, expected)
 	})
 	t.Run("Array defaults to an empty list", func(t *testing.T) {
 		schemaYAML := `#@schema/match data_values=True
@@ -474,7 +474,7 @@ vpc: #@ data.values.vpc
 			files.MustNewFileFromSource(files.NewBytesSource("template.yml", []byte(templateYAML))),
 		})
 
-		assertYttWorkflowSucceedsWithOutput(t, filesToProcess, expected)
+		assertYTTWorkflowSucceedsWithOutput(t, filesToProcess, expected)
 	})
 	t.Run("When a key in the data value is omitted yet present in the schema it is filled in", func(t *testing.T) {
 		schemaYAML := `#@schema/match data_values=True
@@ -517,7 +517,7 @@ vpc: #@ data.values.vpc
 			files.MustNewFileFromSource(files.NewBytesSource("template.yml", []byte(templateYAML))),
 		})
 
-		assertYttWorkflowSucceedsWithOutput(t, filesToProcess, expected)
+		assertYTTWorkflowSucceedsWithOutput(t, filesToProcess, expected)
 	})
 }
 
@@ -534,7 +534,7 @@ db_conn:
 			files.MustNewFileFromSource(files.NewBytesSource("template.yml", []byte(templateYAML))),
 		})
 		expectedErr := "Schema experiment flag was enabled but no schema document was provided"
-		assertYttWorkflowFailsWithErrorMessage(t, filesToProcess, expectedErr)
+		assertYTTWorkflowFailsWithErrorMessage(t, filesToProcess, expectedErr)
 	})
 	t.Run("data value is not given, should succeed", func(t *testing.T) {
 		templateYAML := `---
@@ -544,7 +544,7 @@ rendered: true`
 		filesToProcess := files.NewSortedFiles([]*files.File{
 			files.MustNewFileFromSource(files.NewBytesSource("template.yml", []byte(templateYAML))),
 		})
-		assertYttWorkflowSucceedsWithOutput(t, filesToProcess, expected)
+		assertYTTWorkflowSucceedsWithOutput(t, filesToProcess, expected)
 	})
 }
 
@@ -567,7 +567,7 @@ vpc:
 		})
 		expectedErr := "Expected one item in array (describing the type of its elements) at schema.yml:4"
 
-		assertYttWorkflowFailsWithErrorMessage(t, filesToProcess, expectedErr)
+		assertYTTWorkflowFailsWithErrorMessage(t, filesToProcess, expectedErr)
 	})
 	t.Run("Array value with more than one elements", func(t *testing.T) {
 		schemaYAML := `#@schema/match data_values=True
@@ -588,7 +588,7 @@ vpc:
 		})
 		expectedErr := "Expected one item (found 2) in array (describing the type of its elements) at schema.yml:4"
 
-		assertYttWorkflowFailsWithErrorMessage(t, filesToProcess, expectedErr)
+		assertYTTWorkflowFailsWithErrorMessage(t, filesToProcess, expectedErr)
 	})
 	t.Run("Array value with a nullable annotation", func(t *testing.T) {
 		schemaYAML := `#@schema/match data_values=True
@@ -603,7 +603,7 @@ vpc:
 			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
 		})
 		expectedErr := "Array items cannot be annotated with #@schema/nullable (schema.yml:6). If this behaviour would be valuable, please submit an issue on https://github.com/vmware-tanzu/carvel-ytt"
-		assertYttWorkflowFailsWithErrorMessage(t, filesToProcess, expectedErr)
+		assertYTTWorkflowFailsWithErrorMessage(t, filesToProcess, expectedErr)
 	})
 }
 
@@ -622,12 +622,12 @@ rendered: true`
 		files.MustNewFileFromSource(files.NewBytesSource("template.yml", []byte(templateYAML))),
 	})
 	expected := "rendered: true\n"
-	assertYttWorkflowSucceedsWithOutput(t, filesToProcess, expected)
+	assertYTTWorkflowSucceedsWithOutput(t, filesToProcess, expected)
 }
 
-func assertYttWorkflowSucceedsWithOutput(t *testing.T, filesToProcess []*files.File, expectedOut string) {
+func assertYTTWorkflowSucceedsWithOutput(t *testing.T, filesToProcess []*files.File, expectedOut string) {
 	t.Helper()
-	out := opts.RunWithFiles(cmdtpl.TemplateInput{Files: filesToProcess}, cmdcore.NewPlainUI(false))
+	out := opts.RunWithFiles(cmdtpl.TemplateInput{Files: filesToProcess}, cmdui.NewTTY(false))
 	if out.Err != nil {
 		t.Fatalf("Expected RunWithFiles to succeed, but was error: %s", out.Err)
 	}
@@ -642,9 +642,9 @@ func assertYttWorkflowSucceedsWithOutput(t *testing.T, filesToProcess []*files.F
 	}
 }
 
-func assertYttWorkflowFailsWithErrorMessage(t *testing.T, filesToProcess []*files.File, expectedErr string) {
+func assertYTTWorkflowFailsWithErrorMessage(t *testing.T, filesToProcess []*files.File, expectedErr string) {
 	t.Helper()
-	out := opts.RunWithFiles(cmdtpl.TemplateInput{Files: filesToProcess}, cmdcore.NewPlainUI(false))
+	out := opts.RunWithFiles(cmdtpl.TemplateInput{Files: filesToProcess}, cmdui.NewTTY(false))
 	if out.Err == nil {
 		t.Fatalf("Expected an error, but succeeded.")
 	}

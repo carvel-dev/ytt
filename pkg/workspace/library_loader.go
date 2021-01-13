@@ -5,6 +5,7 @@ package workspace
 
 import (
 	"fmt"
+	ui2 "github.com/k14s/ytt/pkg/cmd/ui"
 	"strings"
 
 	"github.com/k14s/starlark-go/starlark"
@@ -17,7 +18,7 @@ import (
 
 type LibraryLoader struct {
 	libraryCtx         LibraryExecutionContext
-	ui                 files.UI
+	ui                 ui2.UI
 	templateLoaderOpts TemplateLoaderOpts
 	libraryExecFactory *LibraryExecutionFactory
 }
@@ -34,7 +35,7 @@ type EvalExport struct {
 }
 
 func NewLibraryLoader(libraryCtx LibraryExecutionContext,
-	ui files.UI, templateLoaderOpts TemplateLoaderOpts,
+	ui ui2.UI, templateLoaderOpts TemplateLoaderOpts,
 	libraryExecFactory *LibraryExecutionFactory) *LibraryLoader {
 
 	return &LibraryLoader{

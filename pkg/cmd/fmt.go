@@ -7,7 +7,7 @@ import (
 	"os"
 	"time"
 
-	cmdcore "github.com/k14s/ytt/pkg/cmd/core"
+	cmdui "github.com/k14s/ytt/pkg/cmd/ui"
 	"github.com/k14s/ytt/pkg/files"
 	"github.com/k14s/ytt/pkg/yamlfmt"
 	"github.com/k14s/ytt/pkg/yamlmeta"
@@ -37,7 +37,7 @@ func NewFmtCmd(o *FmtOptions) *cobra.Command {
 }
 
 func (o *FmtOptions) Run() error {
-	ui := cmdcore.NewPlainUI(o.Debug)
+	ui := cmdui.NewTTY(o.Debug)
 	t1 := time.Now()
 
 	defer func() {

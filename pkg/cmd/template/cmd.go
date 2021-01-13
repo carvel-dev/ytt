@@ -6,7 +6,7 @@ package template
 import (
 	"time"
 
-	cmdcore "github.com/k14s/ytt/pkg/cmd/core"
+	cmdui "github.com/k14s/ytt/pkg/cmd/ui"
 	"github.com/k14s/ytt/pkg/files"
 	"github.com/k14s/ytt/pkg/schema"
 	"github.com/k14s/ytt/pkg/workspace"
@@ -76,7 +76,7 @@ func NewCmd(o *TemplateOptions) *cobra.Command {
 }
 
 func (o *TemplateOptions) Run() error {
-	ui := cmdcore.NewPlainUI(o.Debug)
+	ui := cmdui.NewTTY(o.Debug)
 	t1 := time.Now()
 
 	defer func() {
@@ -97,7 +97,7 @@ func (o *TemplateOptions) Run() error {
 	return o.pickSource(srcs, func(s FileSource) bool { return s.HasOutput() }).Output(out)
 }
 
-func (o *TemplateOptions) RunWithFiles(in TemplateInput, ui cmdcore.PlainUI) TemplateOutput {
+func (o *TemplateOptions) RunWithFiles(in TemplateInput, ui cmdui.UI) TemplateOutput {
 	var err error
 
 	in.Files, err = o.FileMarksOpts.Apply(in.Files)
@@ -109,7 +109,7 @@ func (o *TemplateOptions) RunWithFiles(in TemplateInput, ui cmdcore.PlainUI) Tem
 	rootLibrary.Print(ui.DebugWriter())
 
 	if o.InspectFiles {
-		return o.inspectFiles(rootLibrary, ui)
+		return o.inspectFiles(rootLibrary)
 	}
 
 	valuesOverlays, libraryValuesOverlays, err := o.DataValuesFlags.AsOverlays(o.StrictYAML)
@@ -183,13 +183,13 @@ func (o *TemplateOptions) pickSource(srcs []FileSource, pickFunc func(FileSource
 	return srcs[len(srcs)-1]
 }
 
-func (o *TemplateOptions) inspectFiles(rootLibrary *workspace.Library, ui cmdcore.PlainUI) TemplateOutput {
-	files := rootLibrary.ListAccessibleFiles()
-	workspace.SortFilesInLibrary(files)
+func (o *TemplateOptions) inspectFiles(rootLibrary *workspace.Library) TemplateOutput {
+	accessibleFiles := rootLibrary.ListAccessibleFiles()
+	workspace.SortFilesInLibrary(accessibleFiles)
 
 	paths := &yamlmeta.Array{}
 
-	for _, fileInLib := range files {
+	for _, fileInLib := range accessibleFiles {
 		paths.Items = append(paths.Items, &yamlmeta.ArrayItem{
 			Value: fileInLib.File.RelativePath(),
 		})
