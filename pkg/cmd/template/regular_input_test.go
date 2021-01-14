@@ -6,13 +6,13 @@ package template_test
 import (
 	"bytes"
 	"fmt"
-	"io"
 	"io/ioutil"
 	"os"
 	"testing"
 
 	"github.com/k14s/ytt/pkg/cmd/template"
 	cmdtpl "github.com/k14s/ytt/pkg/cmd/template"
+	"github.com/k14s/ytt/pkg/cmd/ui"
 	"github.com/k14s/ytt/pkg/files"
 )
 
@@ -35,10 +35,7 @@ If you want to include those results, use the --output-files or --dangerous-empt
 
 	stdout := bytes.NewBufferString("")
 	stderr := bytes.NewBufferString("")
-	ui := fakeUI{
-		stdout: stdout,
-		stderr: stderr,
-	}
+	ui := ui.NewCustomWriterTTY(false, stdout, stderr)
 	opts := cmdtpl.NewOptions()
 	rfsOpts := template.RegularFilesSourceOpts{OutputType: "yaml"}
 	rfs := template.NewRegularFilesSource(rfsOpts, ui)
@@ -83,10 +80,7 @@ organization=Acme Widgets Inc.`)
 
 	stdout := bytes.NewBufferString("")
 	stderr := bytes.NewBufferString("")
-	ui := fakeUI{
-		stdout: stdout,
-		stderr: stderr,
-	}
+	ui := ui.NewCustomWriterTTY(false, stdout, stderr)
 	opts := cmdtpl.NewOptions()
 	rfsOpts := template.RegularFilesSourceOpts{OutputType: "yaml", OutputFiles: outputDir}
 	rfs := template.NewRegularFilesSource(rfsOpts, ui)
@@ -119,10 +113,7 @@ func Test_FileMark_YAML_Shows_No_Warning(t *testing.T) {
 
 	stdout := bytes.NewBufferString("")
 	stderr := bytes.NewBufferString("")
-	ui := fakeUI{
-		stdout: stdout,
-		stderr: stderr,
-	}
+	ui := ui.NewCustomWriterTTY(false, stdout, stderr)
 	opts := cmdtpl.NewOptions()
 	opts.FileMarksOpts.FileMarks = []string{"yaml.txt:type=yaml-plain"}
 	rfsOpts := template.RegularFilesSourceOpts{OutputType: "yaml"}
@@ -163,25 +154,4 @@ func assertStdoutAndStderr(stdout *bytes.Buffer, stderr *bytes.Buffer, expectedS
 		return fmt.Errorf("Expected stderr to be >>>%s<<<\nBut was: >>>%s<<<", expectedStdErr, string(stderrOutput))
 	}
 	return nil
-}
-
-type fakeUI struct {
-	stdout io.Writer
-	stderr io.Writer
-}
-
-func (ui fakeUI) DebugWriter() io.Writer {
-	return ui.stderr
-}
-
-func (ui fakeUI) Printf(str string, args ...interface{}) {
-	fmt.Fprintf(ui.stdout, str, args...)
-}
-
-func (ui fakeUI) Warnf(str string, args ...interface{}) {
-	fmt.Fprintf(ui.stderr, str, args...)
-}
-
-func (ui fakeUI) Debugf(str string, args ...interface{}) {
-	fmt.Fprintf(ui.stderr, str, args...)
 }
