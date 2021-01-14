@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	cmdtpl "github.com/k14s/ytt/pkg/cmd/template"
-	cmdui "github.com/k14s/ytt/pkg/cmd/ui"
+	"github.com/k14s/ytt/pkg/cmd/ui"
 	"github.com/k14s/ytt/pkg/files"
 )
 
@@ -32,7 +32,7 @@ str: str`)
 		files.MustNewFileFromSource(files.NewBytesSource("data.yml", yamlData)),
 	})
 
-	ui := cmdui.NewTTY(false)
+	ui := ui.NewTTY(false)
 	opts := cmdtpl.NewOptions()
 
 	out := opts.RunWithFiles(cmdtpl.TemplateInput{Files: filesToProcess}, ui)
@@ -92,7 +92,7 @@ another:
 		files.MustNewFileFromSource(files.NewBytesSource("data.yml", yamlData)),
 	})
 
-	ui := cmdui.NewTTY(false)
+	ui := ui.NewTTY(false)
 	opts := cmdtpl.NewOptions()
 
 	opts.DataValuesFlags = cmdtpl.DataValuesFlags{
@@ -144,7 +144,7 @@ nested:
 		files.MustNewFileFromSource(files.NewBytesSource("data.yml", yamlData)),
 	})
 
-	ui := cmdui.NewTTY(false)
+	ui := ui.NewTTY(false)
 	opts := cmdtpl.NewOptions()
 
 	opts.DataValuesFlags = cmdtpl.DataValuesFlags{
@@ -219,7 +219,7 @@ nested-lib-val: passes
 		files.MustNewFileFromSource(files.NewBytesSource("_ytt_lib/lib/_ytt_lib/nested-lib/config.yml", nestedLibTplBytes)),
 	})
 
-	ui := cmdui.NewTTY(false)
+	ui := ui.NewTTY(false)
 	opts := cmdtpl.NewOptions()
 
 	opts.DataValuesFlags = cmdtpl.DataValuesFlags{
@@ -274,7 +274,7 @@ str: str2`)
 		files.MustNewFileFromSource(files.NewBytesSource("data2.yml", yamlData2)),
 	})
 
-	ui := cmdui.NewTTY(false)
+	ui := ui.NewTTY(false)
 	opts := cmdtpl.NewOptions()
 
 	out := opts.RunWithFiles(cmdtpl.TemplateInput{Files: filesToProcess}, ui)
@@ -323,7 +323,7 @@ int: 123`)
 		files.MustNewFileFromSource(files.NewBytesSource("data.yml", yamlData)),
 	})
 
-	ui := cmdui.NewTTY(false)
+	ui := ui.NewTTY(false)
 	opts := cmdtpl.NewOptions()
 
 	out := opts.RunWithFiles(cmdtpl.TemplateInput{Files: filesToProcess}, ui)
@@ -374,7 +374,7 @@ int: 123`)
 		files.MustNewFileFromSource(files.NewBytesSource("data2.yml", yamlData2)),
 	})
 
-	ui := cmdui.NewTTY(false)
+	ui := ui.NewTTY(false)
 	opts := cmdtpl.NewOptions()
 
 	out := opts.RunWithFiles(cmdtpl.TemplateInput{Files: filesToProcess}, ui)
@@ -426,7 +426,7 @@ data:
 		files.MustNewFileFromSource(files.NewBytesSource("data2.yml", yamlData2)),
 	})
 
-	ui := cmdui.NewTTY(false)
+	ui := ui.NewTTY(false)
 	opts := cmdtpl.NewOptions()
 
 	out := opts.RunWithFiles(cmdtpl.TemplateInput{Files: filesToProcess}, ui)
@@ -461,7 +461,7 @@ non-data-values-doc`)
 		files.MustNewFileFromSource(files.NewBytesSource("data.yml", yamlData)),
 	})
 
-	ui := cmdui.NewTTY(false)
+	ui := ui.NewTTY(false)
 	opts := cmdtpl.NewOptions()
 
 	out := opts.RunWithFiles(cmdtpl.TemplateInput{Files: filesToProcess}, ui)
@@ -484,7 +484,7 @@ str: str`)
 		files.MustNewFileFromSource(files.NewBytesSource("data.yml", yamlData)),
 	})
 
-	ui := cmdui.NewTTY(false)
+	ui := ui.NewTTY(false)
 	opts := cmdtpl.NewOptions()
 
 	out := opts.RunWithFiles(cmdtpl.TemplateInput{Files: filesToProcess}, ui)
@@ -528,7 +528,7 @@ data:
 		files.MustNewFileFromSource(files.NewBytesSource("data2.yml", yamlData2)),
 	})
 
-	ui := cmdui.NewTTY(false)
+	ui := ui.NewTTY(false)
 	opts := cmdtpl.NewOptions()
 
 	out := opts.RunWithFiles(cmdtpl.TemplateInput{Files: filesToProcess}, ui)
@@ -596,7 +596,7 @@ nested_val: nested_from_env
 		files.MustNewFileFromSource(files.NewBytesSource("_ytt_lib/lib1/_ytt_lib/nested/tpl.yml", nestedTmplBytes)),
 	})
 
-	ui := cmdui.NewTTY(false)
+	ui := ui.NewTTY(false)
 	opts := cmdtpl.NewOptions()
 
 	opts.DataValuesFlags = cmdtpl.DataValuesFlags{
