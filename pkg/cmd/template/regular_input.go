@@ -5,9 +5,9 @@ package template
 
 import (
 	"fmt"
+	ui2 "github.com/k14s/ytt/pkg/cmd/ui"
 	"io"
 
-	cmdcore "github.com/k14s/ytt/pkg/cmd/core"
 	"github.com/k14s/ytt/pkg/files"
 	"github.com/k14s/ytt/pkg/yamlmeta"
 	"github.com/spf13/cobra"
@@ -46,10 +46,10 @@ func (s *RegularFilesSourceOpts) Set(cmd *cobra.Command) {
 
 type RegularFilesSource struct {
 	opts RegularFilesSourceOpts
-	ui   cmdcore.PlainUI
+	ui   ui2.UI
 }
 
-func NewRegularFilesSource(opts RegularFilesSourceOpts, ui cmdcore.PlainUI) *RegularFilesSource {
+func NewRegularFilesSource(opts RegularFilesSourceOpts, ui ui2.UI) *RegularFilesSource {
 	return &RegularFilesSource{opts, ui}
 }
 

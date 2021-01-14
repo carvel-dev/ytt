@@ -8,246 +8,23 @@ import (
 	"testing"
 
 	"github.com/k14s/difflib"
-	cmdcore "github.com/k14s/ytt/pkg/cmd/core"
 	cmdtpl "github.com/k14s/ytt/pkg/cmd/template"
+	cmdui "github.com/k14s/ytt/pkg/cmd/ui"
 	"github.com/k14s/ytt/pkg/files"
 )
 
-func TestNullableScalarsAllowsNull(t *testing.T) {
-	schemaYAML := `#@schema/match data_values=True
----
-vpc:
-  name: ""
-  #@schema/nullable
-  nullable_string: "empty"
-  #@schema/nullable
-  nullable_int: 10
-  foo: ""
-`
-	dataValuesYAML := `#@data/values
----
-vpc:
-  name: vpc-203d912a
-`
-	templateYAML := `#@ load("@ytt:data", "data")
----
-rendered: true
-vpc: #@ data.values.vpc
-`
+var opts *cmdtpl.TemplateOptions
 
-	expected := `rendered: true
-vpc:
-  name: vpc-203d912a
-  nullable_string: null
-  nullable_int: null
-  foo: ""
-`
-
-	testSchemaTemplates(t, schemaYAML, dataValuesYAML, templateYAML, expected)
-}
-
-func TestProvidingNullToNonNullableNodeFails(t *testing.T) {
-	schemaYAML := `#@schema/match data_values=True
----
-app: {}
-`
-	dataValuesYAML := `#@data/values
----
-app: null
-`
-
-	filesToProcess := files.NewSortedFiles([]*files.File{
-		files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
-		files.MustNewFileFromSource(files.NewBytesSource("dataValues.yml", []byte(dataValuesYAML))),
-	})
-
-	ui := cmdcore.NewPlainUI(false)
-	opts := cmdtpl.NewOptions()
+func TestMain(m *testing.M) {
+	opts = cmdtpl.NewOptions()
 	opts.SchemaEnabled = true
-	out := opts.RunWithFiles(cmdtpl.TemplateInput{Files: filesToProcess}, ui)
-	if out.Err == nil {
-		t.Fatalf("Expected RunWithFiles to fail with message about type checking the 'app' key given nil should expect a map")
-	}
 
-	if !strings.Contains(out.Err.Error(), "Typechecking violations found: [Map item 'app' at dataValues.yml:3 was type <nil> when *schema.MapType was expected") {
-		t.Fatalf("Expected an error about type checking, but got: %v", out.Err.Error())
-	}
+	m.Run()
 }
 
-func TestNullableAtTopLevelWithDataValueOmitted(t *testing.T) {
-	schemaYAML := `#@schema/match data_values=True
----
-#@schema/nullable
-vpc:
-  #@schema/nullable
-  name: ""
-foo: "bar"
-`
-	dataValuesYAML := `---
-#@data/values
----
-`
-	templateYAML := `#@ load("@ytt:data", "data")
----
-vpc: #@ data.values.vpc
-`
-
-	expected := `vpc: null
-`
-
-	testSchemaTemplates(t, schemaYAML, dataValuesYAML, templateYAML, expected)
-}
-
-func TestSchemaWithEmptyOverlay(t *testing.T) {
-	schemaYAML := `#@schema/match data_values=True
----
-#@schema/nullable
-vpc:
-  #@schema/nullable
-  name: ""
-foo: "bar"
-`
-	dataValuesYAML := `#@data/values
----
-`
-	dataValuesOverlayYAML := `#@ load("@ytt:overlay", "overlay")
-#@overlay/match by=overlay.all
----
-`
-	templateYAML := `#@ load("@ytt:data", "data")
----
-vpc: #@ data.values.vpc
-`
-
-	expected := ``
-
-	filesToProcess := files.NewSortedFiles([]*files.File{
-		files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
-		files.MustNewFileFromSource(files.NewBytesSource("dataValues.yml", []byte(dataValuesYAML))),
-		files.MustNewFileFromSource(files.NewBytesSource("overlay.yml", []byte(dataValuesOverlayYAML))),
-		files.MustNewFileFromSource(files.NewBytesSource("template.yml", []byte(templateYAML))),
-	})
-
-	ui := cmdcore.NewPlainUI(false)
-	opts := cmdtpl.NewOptions()
-	opts.SchemaEnabled = true
-	out := opts.RunWithFiles(cmdtpl.TemplateInput{Files: filesToProcess}, ui)
-	if out.Err != nil {
-		t.Fatalf("Expected RunWithFiles to succeed, but was error: %s", out.Err)
-	}
-
-	if len(out.Files) != 1 {
-		t.Fatalf("Expected number of output files to be 1, but was: %d", len(out.Files))
-	}
-
-	if string(out.Files[0].Bytes()) != expected {
-		diff := difflib.PPDiff(strings.Split(string(out.Files[0].Bytes()), "\n"), strings.Split(expected, "\n"))
-		t.Fatalf("Expected output to only include template YAML, differences:\n%s", diff)
-	}
-}
-
-func TestNullableSchemaMapAllowsNull(t *testing.T) {
-	schemaYAML := `#@schema/match data_values=True
----
-vpc:
-  name: ""
-  subnet_ids:
-  - 0
-  #@schema/nullable
-  subnet_config:
-  - id: 0
-    mask: "255.255.0.0"
-    private: true
-`
-	dataValuesYAML := `#@data/values
----
-vpc:
-  name: vpc-203d912a
-  subnet_config: ~
-`
-	templateYAML := `#@ load("@ytt:data", "data")
----
-rendered: true
-vpc: #@ data.values.vpc
-`
-	expected := `rendered: true
-vpc:
-  name: vpc-203d912a
-  subnet_config: null
-  subnet_ids: []
-`
-
-	testSchemaTemplates(t, schemaYAML, dataValuesYAML, templateYAML, expected)
-}
-
-func TestNullableSchemaArrayItemFailsCheck(t *testing.T) {
-	schemaYAML := `#@schema/match data_values=True
----
-vpc:
-  subnet_ids:
-  #@schema/nullable
-  - 0
-`
-
-	filesToProcess := files.NewSortedFiles([]*files.File{
-		files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
-	})
-
-	ui := cmdcore.NewPlainUI(false)
-	opts := cmdtpl.NewOptions()
-	opts.SchemaEnabled = true
-	out := opts.RunWithFiles(cmdtpl.TemplateInput{Files: filesToProcess}, ui)
-	if out.Err == nil {
-		t.Fatalf("Expected an error about a schema check failure, but succeeded.")
-	}
-
-	expectedErr := "Array items cannot be annotated with #@schema/nullable (schema.yml:6). If this behaviour would be valuable, please submit an issue on https://github.com/vmware-tanzu/carvel-ytt"
-	if !strings.Contains(out.Err.Error(), expectedErr) {
-		t.Fatalf("Expected an error about a schema check failure, but got: %s", out.Err.Error())
-	}
-}
-
-func TestNullableSchemaNodesDefaultToNullButCanBeOverridden(t *testing.T) {
-	schemaYAML := `#@schema/match data_values=True
----
-vpc:
-  #@schema/nullable
-  name: ""
-  subnet_ids:
-  - 0
-  #@schema/nullable 
-  subnet_config:
-  - id: 0
-    mask: "255.255.0.0"
-    private: true
-`
-	dataValuesYAML := `#@data/values
----
-vpc:
-  name: vpc-203d912a
-  subnet_ids:
-  - 1
-  - 2
-`
-	templateYAML := `#@ load("@ytt:data", "data")
----
-rendered: true
-vpc: #@ data.values.vpc
-`
-	expected := `rendered: true
-vpc:
-  name: vpc-203d912a
-  subnet_ids:
-  - 1
-  - 2
-  subnet_config: null
-`
-
-	testSchemaTemplates(t, schemaYAML, dataValuesYAML, templateYAML, expected)
-}
-
-func TestMapOnlySchemaChecksOk(t *testing.T) {
-	schemaYAML := `#@schema/match data_values=True
+func TestDataValueConformingToSchemaSucceeds(t *testing.T) {
+	t.Run("Map Only", func(t *testing.T) {
+		schemaYAML := `#@schema/match data_values=True
 ---
 db_conn:
   hostname: ""
@@ -259,7 +36,7 @@ db_conn:
   tls_only: false
 top_level: ""
 `
-	dataValuesYAML := `#@data/values
+		dataValuesYAML := `#@data/values
 ---
 db_conn:
   hostname: server.example.com
@@ -271,76 +48,19 @@ db_conn:
   tls_only: true
 top_level: key
 `
-	templateYAML := `---
+		templateYAML := `---
 rendered: true`
 
-	testSchemaTemplates(t, schemaYAML, dataValuesYAML, templateYAML, "rendered: true\n")
-}
+		filesToProcess := files.NewSortedFiles([]*files.File{
+			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
+			files.MustNewFileFromSource(files.NewBytesSource("dataValues.yml", []byte(dataValuesYAML))),
+			files.MustNewFileFromSource(files.NewBytesSource("template.yml", []byte(templateYAML))),
+		})
 
-func TestMapOnlySchemaFillInDefaults(t *testing.T) {
-	schemaYAML := `#@schema/match data_values=True
----
-db_conn:
-  hostname: default.com
-  port: 0
-  password: somepassword
-  tls_only: false
-  jobs:
-    run: defaultJob
-  metadata:
-    missing_key: default value
-    present_key:
-      inner_key: other
-`
-	dataValuesYAML := `#@data/values
----
-db_conn:
-  password: mysecurepassword
-  tls_only: true
-  metadata:
-    present_key:
-      inner_key: value present
-`
-	templateYAML := `#@ load("@ytt:data", "data")
----
-rendered: true
-db: #@ data.values.db_conn
-`
-	expected := `rendered: true
-db:
-  password: mysecurepassword
-  tls_only: true
-  metadata:
-    present_key:
-      inner_key: value present
-    missing_key: default value
-  hostname: default.com
-  port: 0
-  jobs:
-    run: defaultJob
-`
-
-	testSchemaTemplates(t, schemaYAML, dataValuesYAML, templateYAML, expected)
-}
-
-func TestArrayOnlySchemaChecksOk(t *testing.T) {
-	schemaYAML := `#@schema/match data_values=True
----
-- ""
-`
-	dataValuesYAML := `#@data/values
----
-- first
-- second
-`
-	templateYAML := `---
-rendered: true`
-
-	testSchemaTemplates(t, schemaYAML, dataValuesYAML, templateYAML, "rendered: true\n")
-}
-
-func TestMapAndArraySchemaChecksOk(t *testing.T) {
-	schemaYAML := `#@schema/match data_values=True
+		assertYTTWorkflowSucceedsWithOutput(t, filesToProcess, "rendered: true\n")
+	})
+	t.Run("Map And Array", func(t *testing.T) {
+		schemaYAML := `#@schema/match data_values=True
 ---
 db_conn:
 - hostname: ""
@@ -351,9 +71,10 @@ db_conn:
     run: jobName
 top_level: ""
 `
-	dataValuesYAML := `#@data/values
+		dataValuesYAML := `#@data/values
 ---
 db_conn:
+#@overlay/append
 - hostname: server.example.com
   port: 5432
   username: sa
@@ -362,95 +83,226 @@ db_conn:
     run: ./build.sh
 top_level: key
 `
-	templateYAML := `---
-rendered: true`
+		templateYAML := `#@ load("@ytt:data", "data")
+---
+rendered: #@ data.values
+`
 
-	testSchemaTemplates(t, schemaYAML, dataValuesYAML, templateYAML, "rendered: true\n")
+		expected := `rendered:
+  db_conn:
+  - hostname: server.example.com
+    port: 5432
+    username: sa
+    password: changeme
+    metadata:
+      run: ./build.sh
+  top_level: key
+`
+
+		filesToProcess := files.NewSortedFiles([]*files.File{
+			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
+			files.MustNewFileFromSource(files.NewBytesSource("dataValues.yml", []byte(dataValuesYAML))),
+			files.MustNewFileFromSource(files.NewBytesSource("template.yml", []byte(templateYAML))),
+		})
+
+		assertYTTWorkflowSucceedsWithOutput(t, filesToProcess, expected)
+	})
+	t.Run("Array Only", func(t *testing.T) {
+		schemaYAML := `#@schema/match data_values=True
+---
+- ""
+`
+		dataValuesYAML := `#@data/values
+---
+#@overlay/append
+- first
+#@overlay/append
+- second
+`
+		templateYAML := `#@ load("@ytt:data", "data")
+---
+rendered: #@ data.values
+`
+		expected := `rendered:
+- first
+- second
+`
+
+		filesToProcess := files.NewSortedFiles([]*files.File{
+			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
+			files.MustNewFileFromSource(files.NewBytesSource("dataValues.yml", []byte(dataValuesYAML))),
+			files.MustNewFileFromSource(files.NewBytesSource("template.yml", []byte(templateYAML))),
+		})
+
+		assertYTTWorkflowSucceedsWithOutput(t, filesToProcess, expected)
+	})
 }
 
-func TestMapAndArraySchemaFillInDefaults(t *testing.T) {
-	schemaYAML := `#@schema/match data_values=True
+func TestNullableAnnotation(t *testing.T) {
+	t.Run("Allows null on scalars", func(t *testing.T) {
+		schemaYAML := `#@schema/match data_values=True
 ---
 vpc:
   name: ""
-  subnet_names:
-  - "foo"
-  subnet_ids:
-  - 0
+  #@schema/nullable
+  nullable_string: "empty"
+  #@schema/nullable
+  nullable_int: 10
+  foo: ""
+`
+		dataValuesYAML := `#@data/values
+---
+vpc:
+  name: vpc-203d912a
+`
+		templateYAML := `#@ load("@ytt:data", "data")
+---
+rendered: true
+vpc: #@ data.values.vpc
+`
+
+		expected := `rendered: true
+vpc:
+  name: vpc-203d912a
+  nullable_string: null
+  nullable_int: null
+  foo: ""
+`
+
+		filesToProcess := files.NewSortedFiles([]*files.File{
+			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
+			files.MustNewFileFromSource(files.NewBytesSource("dataValues.yml", []byte(dataValuesYAML))),
+			files.MustNewFileFromSource(files.NewBytesSource("template.yml", []byte(templateYAML))),
+		})
+
+		assertYTTWorkflowSucceedsWithOutput(t, filesToProcess, expected)
+	})
+	t.Run("Allows null on top level map item", func(t *testing.T) {
+		schemaYAML := `#@schema/match data_values=True
+---
+#@schema/nullable
+vpc:
+  foo: "bar"
+`
+		dataValuesYAML := `---
+#@data/values
+---
+`
+		templateYAML := `#@ load("@ytt:data", "data")
+---
+vpc: #@ data.values.vpc
+`
+
+		expected := `vpc: null
+`
+
+		filesToProcess := files.NewSortedFiles([]*files.File{
+			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
+			files.MustNewFileFromSource(files.NewBytesSource("dataValues.yml", []byte(dataValuesYAML))),
+			files.MustNewFileFromSource(files.NewBytesSource("template.yml", []byte(templateYAML))),
+		})
+
+		assertYTTWorkflowSucceedsWithOutput(t, filesToProcess, expected)
+	})
+	t.Run("Allows null on map values", func(t *testing.T) {
+		schemaYAML := `#@schema/match data_values=True
+---
+vpc:
+  #@schema/nullable
+  subnet_config:
+  - id: 0
+`
+		dataValuesYAML := `#@data/values
+---
+vpc:
+  subnet_config: ~
+`
+		templateYAML := `#@ load("@ytt:data", "data")
+---
+vpc: #@ data.values.vpc
+`
+		expected := `vpc:
+  subnet_config: null
+`
+
+		filesToProcess := files.NewSortedFiles([]*files.File{
+			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
+			files.MustNewFileFromSource(files.NewBytesSource("dataValues.yml", []byte(dataValuesYAML))),
+			files.MustNewFileFromSource(files.NewBytesSource("template.yml", []byte(templateYAML))),
+		})
+
+		assertYTTWorkflowSucceedsWithOutput(t, filesToProcess, expected)
+	})
+	t.Run("Allows null on array values", func(t *testing.T) {
+		schemaYAML := `#@schema/match data_values=True
+---
+vpc:
+  #@schema/nullable
   subnet_config:
   - id: 0
     mask: "255.255.0.0"
     private: true
 `
-	dataValuesYAML := `#@data/values
+		dataValuesYAML := `#@data/values
 ---
-vpc:
-  name: beax-a3543-5555
-  subnet_names: []
-  subnet_config:
-  - id: 2
-  - id: 3
-    mask: 255.255.255.0
+vpc: {}
 `
-	templateYAML := `#@ load("@ytt:data", "data")
+		templateYAML := `#@ load("@ytt:data", "data")
 ---
-rendered: true
 vpc: #@ data.values.vpc
 `
-	expected := `rendered: true
-vpc:
-  name: beax-a3543-5555
-  subnet_names: []
-  subnet_config:
-  - id: 2
-    mask: 255.255.0.0
-    private: true
-  - id: 3
-    mask: 255.255.255.0
-    private: true
-  subnet_ids: []
+		expected := `vpc:
+  subnet_config: null
 `
 
-	testSchemaTemplates(t, schemaYAML, dataValuesYAML, templateYAML, expected)
-}
+		filesToProcess := files.NewSortedFiles([]*files.File{
+			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
+			files.MustNewFileFromSource(files.NewBytesSource("dataValues.yml", []byte(dataValuesYAML))),
+			files.MustNewFileFromSource(files.NewBytesSource("template.yml", []byte(templateYAML))),
+		})
 
-func TestDataValuesNotConformingToEmptySchemaFailsCheck(t *testing.T) {
-	schemaYAML := `#@schema/match data_values=True
----
-`
-	dataValuesYAML := `#@data/values
----
-not_in_schema: "this should fail the type check!"
-`
-
-	filesToProcess := files.NewSortedFiles([]*files.File{
-		files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
-		files.MustNewFileFromSource(files.NewBytesSource("values.yml", []byte(dataValuesYAML))),
+		assertYTTWorkflowSucceedsWithOutput(t, filesToProcess, expected)
 	})
+	t.Run("Data values can override nullables", func(t *testing.T) {
+		schemaYAML := `#@schema/match data_values=True
+---
+vpc:
+  #@schema/nullable
+  name: ""
+`
+		dataValuesYAML := `#@data/values
+---
+vpc:
+  name: vpc-203d912a
+`
+		templateYAML := `#@ load("@ytt:data", "data")
+---
+vpc: #@ data.values.vpc
+`
+		expected := `vpc:
+  name: vpc-203d912a
+`
 
-	ui := cmdcore.NewPlainUI(false)
-	opts := cmdtpl.NewOptions()
-	opts.SchemaEnabled = true
-	out := opts.RunWithFiles(cmdtpl.TemplateInput{Files: filesToProcess}, ui)
+		filesToProcess := files.NewSortedFiles([]*files.File{
+			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
+			files.MustNewFileFromSource(files.NewBytesSource("dataValues.yml", []byte(dataValuesYAML))),
+			files.MustNewFileFromSource(files.NewBytesSource("template.yml", []byte(templateYAML))),
+		})
 
-	if out.Err == nil {
-		t.Fatalf("Expected an error about a schema check failure, but succeeded.")
-	}
-	expectedErr := "Typechecking violations found: [Expected node at values.yml:2 to be nil, but was a *yamlmeta.Map]"
-	if !strings.Contains(out.Err.Error(), expectedErr) {
-		t.Fatalf("Expected an error about a schema check failure, but got: %s", out.Err.Error())
-	}
+		assertYTTWorkflowSucceedsWithOutput(t, filesToProcess, expected)
+	})
 }
 
-func TestMapOnlyDataValuesNotConformingToSchemaFailsCheck(t *testing.T) {
-	schemaYAML := `#@schema/match data_values=True
+func TestDataValueNotConformingToSchemaFails(t *testing.T) {
+	t.Run("map value type mismatched", func(t *testing.T) {
+		schemaYAML := `#@schema/match data_values=True
 ---
 db_conn:
   port: 0
   username:
     main: "0"
 `
-	dataValuesYAML := `#@data/values
+		dataValuesYAML := `#@data/values
 ---
 db_conn:
   port: localHost
@@ -458,232 +310,307 @@ db_conn:
     main: 123
 `
 
-	filesToProcess := files.NewSortedFiles([]*files.File{
-		files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
-		files.MustNewFileFromSource(files.NewBytesSource("dataValues.yml", []byte(dataValuesYAML))),
+		filesToProcess := files.NewSortedFiles([]*files.File{
+			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
+			files.MustNewFileFromSource(files.NewBytesSource("dataValues.yml", []byte(dataValuesYAML))),
+		})
+		expectedErr := "Typechecking violations found: [Map item 'port' at dataValues.yml:4 was type string when int was expected, Map item 'main' at dataValues.yml:6 was type int when string was expected]"
+
+		assertYTTWorkflowFailsWithErrorMessage(t, filesToProcess, expectedErr)
 	})
+	t.Run("array value type mismatched", func(t *testing.T) {
+		schemaYAML := `#@schema/match data_values=True
+---
+clients:
+- flags:
+  - name: ""
+`
+		dataValuesYAML := `#@data/values
+---
+clients:
+- flags: secure  #! expecting a array, got a string
+- flags:
+  - secure  #! expecting a map, got a string
+`
 
-	ui := cmdcore.NewPlainUI(false)
-	opts := cmdtpl.NewOptions()
-	opts.SchemaEnabled = true
-	out := opts.RunWithFiles(cmdtpl.TemplateInput{Files: filesToProcess}, ui)
+		filesToProcess := files.NewSortedFiles([]*files.File{
+			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
+			files.MustNewFileFromSource(files.NewBytesSource("dataValues.yml", []byte(dataValuesYAML))),
+		})
+		expectedErr := "Typechecking violations found: [Map item 'flags' at dataValues.yml:4 was type string when *yamlmeta.Array was expected, Array item at dataValues.yml:6 was type string when *yamlmeta.Map was expected]"
 
-	if out.Err == nil {
-		t.Fatalf("Expected an error about the schema check failures, but succeeded.")
-	}
-	expectedErr := "Typechecking violations found: [Map item 'port' at dataValues.yml:4 was type string when int was expected, Map item 'main' at dataValues.yml:6 was type int when string was expected]"
-	if !strings.Contains(out.Err.Error(), expectedErr) {
-		t.Fatalf("Expected an error about a schema check failure, but got: %s", out.Err.Error())
-	}
-}
-
-func TestMapKeyNotPresentInSchemaFailsCheck(t *testing.T) {
-	schemaYAML := `#@schema/match data_values=True
+		assertYTTWorkflowFailsWithErrorMessage(t, filesToProcess, expectedErr)
+	})
+	t.Run("map key is not present in schema", func(t *testing.T) {
+		schemaYAML := `#@schema/match data_values=True
 ---
 db_conn:
   port: 0
 `
-	dataValuesYAML := `#@data/values
+		dataValuesYAML := `#@data/values
 ---
 db_conn:
   port: not an int  #! wrong type, but check values only when all keys in the map are valid
   password: i should not be here
 `
 
-	filesToProcess := files.NewSortedFiles([]*files.File{
-		files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
-		files.MustNewFileFromSource(files.NewBytesSource("dataValues.yml", []byte(dataValuesYAML))),
+		filesToProcess := files.NewSortedFiles([]*files.File{
+			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
+			files.MustNewFileFromSource(files.NewBytesSource("dataValues.yml", []byte(dataValuesYAML))),
+		})
+		expectedErr := "Typechecking violations found: [Map item 'password' at dataValues.yml:5 is not defined in schema]"
+
+		assertYTTWorkflowFailsWithErrorMessage(t, filesToProcess, expectedErr)
 	})
-
-	ui := cmdcore.NewPlainUI(false)
-	opts := cmdtpl.NewOptions()
-	opts.SchemaEnabled = true
-	out := opts.RunWithFiles(cmdtpl.TemplateInput{Files: filesToProcess}, ui)
-
-	if out.Err == nil {
-		t.Fatalf("Expected an error about the schema check failures, but succeeded.")
-	}
-	expectedErr := "Typechecking violations found: [Map item 'password' at dataValues.yml:5 is not defined in schema]"
-	if !strings.Contains(out.Err.Error(), expectedErr) {
-		t.Fatalf("Expected an error about a schema check failure, but got: %s", out.Err.Error())
-	}
-}
-
-func TestArrayDataValuesNotConformingToSchemaFailsCheck(t *testing.T) {
-	schemaYAML := `#@schema/match data_values=True
+	t.Run("null is given to a map item that is not nullable", func(t *testing.T) {
+		schemaYAML := `#@schema/match data_values=True
 ---
-clients:
-- id: 0
-  name: ""
-  flags:
-  - name: ""
-    set: false
+app: 123
 `
-	dataValuesYAML := `#@data/values
+		dataValuesYAML := `#@data/values
 ---
-clients:
-- id: 1
-  name: Alice
-  flags:
-  - name: secure
-    value: true   #! "value" is not in the schema
-- id: 2
-  name: Bob
-  flags:
-  - secure  #! expecting a map, got a string
-- id: 3
-  name: Charlie
-  flags: secure  #! expecting a array, got a string
+app: null
 `
 
-	filesToProcess := files.NewSortedFiles([]*files.File{
-		files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
-		files.MustNewFileFromSource(files.NewBytesSource("dataValues.yml", []byte(dataValuesYAML))),
+		filesToProcess := files.NewSortedFiles([]*files.File{
+			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
+			files.MustNewFileFromSource(files.NewBytesSource("dataValues.yml", []byte(dataValuesYAML))),
+		})
+		expectedErr := "Typechecking violations found: [Map item 'app' at dataValues.yml:3 was type <nil> when *schema.ScalarType was expected"
+
+		assertYTTWorkflowFailsWithErrorMessage(t, filesToProcess, expectedErr)
 	})
-
-	ui := cmdcore.NewPlainUI(false)
-	opts := cmdtpl.NewOptions()
-	opts.SchemaEnabled = true
-	out := opts.RunWithFiles(cmdtpl.TemplateInput{Files: filesToProcess}, ui)
-
-	if out.Err == nil {
-		t.Fatalf("Expected an error about the schema check failures, but succeeded.")
-	}
-	expectedErr := "Typechecking violations found: [Map item 'value' at dataValues.yml:8 is not defined in schema, Array item at dataValues.yml:12 was type string when *yamlmeta.Map was expected, Map item 'flags' at dataValues.yml:15 was type string when *yamlmeta.Array was expected]"
-	if !strings.Contains(out.Err.Error(), expectedErr) {
-		t.Fatalf("Expected an error about a schema check failure, but got: %s", out.Err.Error())
-	}
-}
-
-func TestEmptyArraySchemaErrors(t *testing.T) {
-	schemaYAML := `#@schema/match data_values=True
+	t.Run("data values is given but schema is empty", func(t *testing.T) {
+		schemaYAML := `#@schema/match data_values=True
 ---
-vpc:
-  name: ""
-  subnet_ids: []
 `
-	dataValuesYAML := `#@data/values
+		dataValuesYAML := `#@data/values
 ---
-vpc:
-  name: "beax-a3543-5555"
-  subnet_ids:
-  - 0
-  - 1
-  - 10
+not_in_schema: "this should fail the type check!"
 `
-	templateYAML := `---
-rendered: true`
 
-	filesToProcess := files.NewSortedFiles([]*files.File{
-		files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
-		files.MustNewFileFromSource(files.NewBytesSource("dataValues.yml", []byte(dataValuesYAML))),
-		files.MustNewFileFromSource(files.NewBytesSource("template.yml", []byte(templateYAML))),
+		filesToProcess := files.NewSortedFiles([]*files.File{
+			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
+			files.MustNewFileFromSource(files.NewBytesSource("values.yml", []byte(dataValuesYAML))),
+		})
+		expectedErr := "Typechecking violations found: [Expected node at values.yml:2 to be nil, but was a *yamlmeta.Map]"
+
+		assertYTTWorkflowFailsWithErrorMessage(t, filesToProcess, expectedErr)
 	})
-
-	ui := cmdcore.NewPlainUI(false)
-	opts := cmdtpl.NewOptions()
-	opts.SchemaEnabled = true
-	out := opts.RunWithFiles(cmdtpl.TemplateInput{Files: filesToProcess}, ui)
-
-	if out.Err == nil {
-		t.Fatalf("Expected an error about the empty array in schema, but succeeded.")
-	}
-
-	expectedErr := "Expected one item in array (describing the type of its elements) at schema.yml:5"
-	if !strings.Contains(out.Err.Error(), expectedErr) {
-		t.Fatalf("Expected an error about the empty array schema check failure, but got: %s", out.Err.Error())
-	}
-}
-
-func TestArraySchemaWithMultipleValuesErrors(t *testing.T) {
-	schemaYAML := `#@schema/match data_values=True
----
-vpc:
-  name: ""
-  subnet_ids:
-  - 0
-  - 1
-`
-	dataValuesYAML := `#@data/values
----
-vpc:
-  name: "beax-a3543-5555"
-  subnet_ids: []
-`
-	templateYAML := `---
-rendered: true`
-
-	filesToProcess := files.NewSortedFiles([]*files.File{
-		files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
-		files.MustNewFileFromSource(files.NewBytesSource("dataValues.yml", []byte(dataValuesYAML))),
-		files.MustNewFileFromSource(files.NewBytesSource("template.yml", []byte(templateYAML))),
-	})
-
-	ui := cmdcore.NewPlainUI(false)
-	opts := cmdtpl.NewOptions()
-	opts.SchemaEnabled = true
-	out := opts.RunWithFiles(cmdtpl.TemplateInput{Files: filesToProcess}, ui)
-
-	if out.Err == nil {
-		t.Fatalf("Expected an error about the empty array in schema, but succeeded.")
-	}
-
-	expectedErr := "Expected one item (found 2) in array (describing the type of its elements) at schema.yml:5"
-	if !strings.Contains(out.Err.Error(), expectedErr) {
-		t.Fatalf("Expected an error about the empty array schema check failure, but got: %s", out.Err.Error())
-	}
-}
-
-func TestMultiDataValuesOneDataValuesNotConformingToSchemaFailsCheck(t *testing.T) {
-	schemaYAML := `#@schema/match data_values=True
+	t.Run("second data value conforms but the first data value does not conform", func(t *testing.T) {
+		schemaYAML := `#@schema/match data_values=True
 ---
 hostname: ""
-port: 0
-username: ""
-password: ""
 `
-	dataValuesYAML1 := `#@data/values
+		dataValuesYAML1 := `#@data/values
 ---
-hostname: server.example.com
-port: 5432
 secret: super
 `
 
-	dataValuesYAML2 := `#@ load("@ytt:overlay", "overlay")
+		dataValuesYAML2 := `#@ load("@ytt:overlay", "overlay")
 #@data/values
 ---
 #@overlay/remove
 secret:
-#@overlay/match missing_ok=True
-username: sa
-#@overlay/match missing_ok=True
-password: changeme
 `
-	templateYAML := `---
+		templateYAML := `---
 rendered: true`
 
-	filesToProcess := files.NewSortedFiles([]*files.File{
-		files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
-		files.MustNewFileFromSource(files.NewBytesSource("dataValues1.yml", []byte(dataValuesYAML1))),
-		files.MustNewFileFromSource(files.NewBytesSource("dataValues2.yml", []byte(dataValuesYAML2))),
-		files.MustNewFileFromSource(files.NewBytesSource("template.yml", []byte(templateYAML))),
+		filesToProcess := files.NewSortedFiles([]*files.File{
+			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
+			files.MustNewFileFromSource(files.NewBytesSource("dataValues1.yml", []byte(dataValuesYAML1))),
+			files.MustNewFileFromSource(files.NewBytesSource("dataValues2.yml", []byte(dataValuesYAML2))),
+			files.MustNewFileFromSource(files.NewBytesSource("template.yml", []byte(templateYAML))),
+		})
+		expectedErr := "Typechecking violations found: [Map item 'secret' at dataValues1.yml:3 is not defined in schema]"
+
+		assertYTTWorkflowFailsWithErrorMessage(t, filesToProcess, expectedErr)
 	})
-
-	ui := cmdcore.NewPlainUI(false)
-	opts := cmdtpl.NewOptions()
-	opts.SchemaEnabled = true
-	out := opts.RunWithFiles(cmdtpl.TemplateInput{Files: filesToProcess}, ui)
-	if out.Err == nil {
-		t.Fatalf("Expected an error about a schema check failure, but succeeded.")
-	}
-
-	expectedErr := "Typechecking violations found: [Map item 'secret' at dataValues1.yml:5 is not defined in schema]"
-	if !strings.Contains(out.Err.Error(), expectedErr) {
-		t.Fatalf("Expected an error about a schema check failure, but got: %s", out.Err.Error())
-	}
 }
 
-func TestSchemaFileButNoSchemaFlagExpectsWarning(t *testing.T) {
+func TestDefaultValuesAreFilledIn(t *testing.T) {
+	t.Run("values specified in the schema are the default data values", func(t *testing.T) {
+		schemaYAML := `#@schema/match data_values=True
+---
+system_domain: "foo.domain"
+`
+		templateYAML := `#@ load("@ytt:data", "data")
+---
+system_domain: #@ data.values.system_domain
+`
+		expected := `system_domain: foo.domain
+`
+
+		filesToProcess := files.NewSortedFiles([]*files.File{
+			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
+			files.MustNewFileFromSource(files.NewBytesSource("template.yml", []byte(templateYAML))),
+		})
+		assertYTTWorkflowSucceedsWithOutput(t, filesToProcess, expected)
+	})
+	t.Run("Array defaults to an empty list", func(t *testing.T) {
+		schemaYAML := `#@schema/match data_values=True
+---
+vpc:
+  subnet_config:
+  - id: 0
+    mask: "255.255.0.0"
+    private: true
+`
+		dataValuesYAML := `#@data/values
+---
+vpc: {}
+`
+		templateYAML := `#@ load("@ytt:data", "data")
+---
+vpc: #@ data.values.vpc
+`
+		expected := `vpc:
+  subnet_config: []
+`
+
+		filesToProcess := files.NewSortedFiles([]*files.File{
+			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
+			files.MustNewFileFromSource(files.NewBytesSource("dataValues.yml", []byte(dataValuesYAML))),
+			files.MustNewFileFromSource(files.NewBytesSource("template.yml", []byte(templateYAML))),
+		})
+
+		assertYTTWorkflowSucceedsWithOutput(t, filesToProcess, expected)
+	})
+	t.Run("When a key in the data value is omitted yet present in the schema it is filled in", func(t *testing.T) {
+		schemaYAML := `#@schema/match data_values=True
+---
+vpc:
+  name: "name value"
+  subnet_config:
+  - id: 0
+    mask: "255.255.0.0"
+    private: true
+`
+		dataValuesYAML := `#@data/values
+---
+vpc:
+  subnet_config:
+  #@overlay/append
+  - id: 2
+  #@overlay/append
+  - id: 3
+    mask: 255.255.255.0
+`
+		templateYAML := `#@ load("@ytt:data", "data")
+---
+vpc: #@ data.values.vpc
+`
+		expected := `vpc:
+  name: name value
+  subnet_config:
+  - id: 2
+    mask: 255.255.0.0
+    private: true
+  - id: 3
+    mask: 255.255.255.0
+    private: true
+`
+
+		filesToProcess := files.NewSortedFiles([]*files.File{
+			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
+			files.MustNewFileFromSource(files.NewBytesSource("dataValues.yml", []byte(dataValuesYAML))),
+			files.MustNewFileFromSource(files.NewBytesSource("template.yml", []byte(templateYAML))),
+		})
+
+		assertYTTWorkflowSucceedsWithOutput(t, filesToProcess, expected)
+	})
+}
+
+func TestNoSchemaProvided(t *testing.T) {
+	t.Run("data value is given, provides an error and fails", func(t *testing.T) {
+		dataValuesYAML := `#@data/values
+---
+db_conn:
+`
+		templateYAML := `---`
+
+		filesToProcess := files.NewSortedFiles([]*files.File{
+			files.MustNewFileFromSource(files.NewBytesSource("dataValues.yml", []byte(dataValuesYAML))),
+			files.MustNewFileFromSource(files.NewBytesSource("template.yml", []byte(templateYAML))),
+		})
+		expectedErr := "Schema feature is enabled but no schema document was provided"
+		assertYTTWorkflowFailsWithErrorMessage(t, filesToProcess, expectedErr)
+	})
+	t.Run("data value is not given, should succeed", func(t *testing.T) {
+		templateYAML := `---
+rendered: true`
+		expected := `rendered: true
+`
+		filesToProcess := files.NewSortedFiles([]*files.File{
+			files.MustNewFileFromSource(files.NewBytesSource("template.yml", []byte(templateYAML))),
+		})
+		assertYTTWorkflowSucceedsWithOutput(t, filesToProcess, expected)
+	})
+}
+
+func TestSchemaIsInvalidItFails(t *testing.T) {
+	t.Run("Array value with less than one elements", func(t *testing.T) {
+		schemaYAML := `#@schema/match data_values=True
+---
+vpc:
+  subnet_ids: []
+`
+		dataValuesYAML := `#@data/values
+---
+vpc:
+  subnet_ids:
+  - 0
+`
+		filesToProcess := files.NewSortedFiles([]*files.File{
+			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
+			files.MustNewFileFromSource(files.NewBytesSource("dataValues.yml", []byte(dataValuesYAML))),
+		})
+		expectedErr := "Expected one item in array (describing the type of its elements) at schema.yml:4"
+
+		assertYTTWorkflowFailsWithErrorMessage(t, filesToProcess, expectedErr)
+	})
+	t.Run("Array value with more than one elements", func(t *testing.T) {
+		schemaYAML := `#@schema/match data_values=True
+---
+vpc:
+  subnet_ids:
+  - 0
+  - 1
+`
+		dataValuesYAML := `#@data/values
+---
+vpc:
+  subnet_ids: []
+`
+		filesToProcess := files.NewSortedFiles([]*files.File{
+			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
+			files.MustNewFileFromSource(files.NewBytesSource("dataValues.yml", []byte(dataValuesYAML))),
+		})
+		expectedErr := "Expected one item (found 2) in array (describing the type of its elements) at schema.yml:4"
+
+		assertYTTWorkflowFailsWithErrorMessage(t, filesToProcess, expectedErr)
+	})
+	t.Run("Array value with a nullable annotation", func(t *testing.T) {
+		schemaYAML := `#@schema/match data_values=True
+---
+vpc:
+  subnet_ids:
+  #@schema/nullable
+  - 0
+`
+
+		filesToProcess := files.NewSortedFiles([]*files.File{
+			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
+		})
+		expectedErr := "Array items cannot be annotated with #@schema/nullable (schema.yml:6). If this behaviour would be valuable, please submit an issue on https://github.com/vmware-tanzu/carvel-ytt"
+		assertYTTWorkflowFailsWithErrorMessage(t, filesToProcess, expectedErr)
+	})
+}
+
+func TestSchemaFeatureIsNotEnabledButSchemaIsPresentReportsAWarning(t *testing.T) {
+	opts := cmdtpl.NewOptions()
+	opts.SchemaEnabled = false
+
 	schemaYAML := `#@schema/match data_values=True
 ---
 `
@@ -694,74 +621,35 @@ rendered: true`
 		files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
 		files.MustNewFileFromSource(files.NewBytesSource("template.yml", []byte(templateYAML))),
 	})
-
-	ui := cmdcore.NewPlainUI(false)
-	opts := cmdtpl.NewOptions()
-	out := opts.RunWithFiles(cmdtpl.TemplateInput{Files: filesToProcess}, ui)
-	if out.Err != nil {
-		t.Fatalf("Expected RunWithFiles to succeed, but got failure: %v", out.Err.Error())
-	}
-
-	if len(out.Files) != 1 {
-		t.Fatalf("Expected number of output files to be 1, but was: %d", len(out.Files))
-	}
-
-	if string(out.Files[0].Bytes()) != "rendered: true\n" {
-		t.Fatalf("Expected output to only include template YAML, but got: %s", out.Files[0].Bytes())
-	}
+	expected := "rendered: true\n"
+	assertYTTWorkflowSucceedsWithOutput(t, filesToProcess, expected)
 }
 
-func TestNoSchemaFileSchemaFlagSet(t *testing.T) {
-	dataValuesYAML := `#@data/values
----
-db_conn:
-  hostname: server.example.com
-  port: 5432
-  username: sa
-  password: changeme
-`
-	templateYAML := `---
-rendered: true`
-
-	filesToProcess := files.NewSortedFiles([]*files.File{
-		files.MustNewFileFromSource(files.NewBytesSource("dataValues.yml", []byte(dataValuesYAML))),
-		files.MustNewFileFromSource(files.NewBytesSource("template.yml", []byte(templateYAML))),
-	})
-
-	ui := cmdcore.NewPlainUI(false)
-	opts := cmdtpl.NewOptions()
-	opts.SchemaEnabled = true
-	out := opts.RunWithFiles(cmdtpl.TemplateInput{Files: filesToProcess}, ui)
-	if out.Err == nil {
-		t.Fatalf("Expected RunWithFiles to fail with message about schema enabled but no schema provided, but was a success")
-	}
-
-	if !strings.Contains(out.Err.Error(), "Schema experiment flag was enabled but no schema document was provided") {
-		t.Fatalf("Expected an error about schema enabled but no schema provided, but got: %v", out.Err.Error())
-	}
-}
-
-func testSchemaTemplates(t *testing.T, schemaYAML string, dataValuesYAML string, templateYAML string, expected string) {
-	filesToProcess := files.NewSortedFiles([]*files.File{
-		files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
-		files.MustNewFileFromSource(files.NewBytesSource("dataValues.yml", []byte(dataValuesYAML))),
-		files.MustNewFileFromSource(files.NewBytesSource("template.yml", []byte(templateYAML))),
-	})
-
-	ui := cmdcore.NewPlainUI(false)
-	opts := cmdtpl.NewOptions()
-	opts.SchemaEnabled = true
-	out := opts.RunWithFiles(cmdtpl.TemplateInput{Files: filesToProcess}, ui)
+func assertYTTWorkflowSucceedsWithOutput(t *testing.T, filesToProcess []*files.File, expectedOut string) {
+	t.Helper()
+	out := opts.RunWithFiles(cmdtpl.TemplateInput{Files: filesToProcess}, cmdui.NewTTY(false))
 	if out.Err != nil {
 		t.Fatalf("Expected RunWithFiles to succeed, but was error: %s", out.Err)
 	}
 
 	if len(out.Files) != 1 {
-		t.Fatalf("Expected number of output files to be 1, but was: %d", len(out.Files))
+		t.Errorf("Expected number of output files to be 1, but was: %d", len(out.Files))
 	}
 
-	if string(out.Files[0].Bytes()) != expected {
-		diff := difflib.PPDiff(strings.Split(string(out.Files[0].Bytes()), "\n"), strings.Split(expected, "\n"))
-		t.Fatalf("Expected output to only include template YAML, differences:\n%s", diff)
+	if string(out.Files[0].Bytes()) != expectedOut {
+		diff := difflib.PPDiff(strings.Split(string(out.Files[0].Bytes()), "\n"), strings.Split(expectedOut, "\n"))
+		t.Errorf("Expected output to only include template YAML, differences:\n%s", diff)
+	}
+}
+
+func assertYTTWorkflowFailsWithErrorMessage(t *testing.T, filesToProcess []*files.File, expectedErr string) {
+	t.Helper()
+	out := opts.RunWithFiles(cmdtpl.TemplateInput{Files: filesToProcess}, cmdui.NewTTY(false))
+	if out.Err == nil {
+		t.Fatalf("Expected an error, but succeeded.")
+	}
+
+	if !strings.Contains(out.Err.Error(), expectedErr) {
+		t.Fatalf("Expected an error %s, but got: %s", expectedErr, out.Err.Error())
 	}
 }

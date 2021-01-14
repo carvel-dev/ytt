@@ -7,8 +7,8 @@ import (
 	"strings"
 	"testing"
 
-	cmdcore "github.com/k14s/ytt/pkg/cmd/core"
 	cmdtpl "github.com/k14s/ytt/pkg/cmd/template"
+	cmdui "github.com/k14s/ytt/pkg/cmd/ui"
 	"github.com/k14s/ytt/pkg/files"
 )
 
@@ -60,7 +60,7 @@ end`)
 		files.MustNewFileFromSource(files.NewBytesSource("funcs/funcs.star", starlarkFuncsData)),
 	}
 
-	ui := cmdcore.NewPlainUI(false)
+	ui := cmdui.NewTTY(false)
 	opts := cmdtpl.NewOptions()
 
 	out := opts.RunWithFiles(cmdtpl.TemplateInput{Files: filesToProcess}, ui)
@@ -127,7 +127,7 @@ data: #@ data.read("data")`)
 		files.MustNewFileFromSource(files.NewBytesSource("_ytt_lib/lib1/other", []byte("lib1\ndata"))),
 	})
 
-	ui := cmdcore.NewPlainUI(false)
+	ui := cmdui.NewTTY(false)
 	opts := cmdtpl.NewOptions()
 
 	out := opts.RunWithFiles(cmdtpl.TemplateInput{Files: filesToProcess}, ui)
@@ -207,7 +207,7 @@ data: #@ data.read("/funcs/data")`)
 		files.MustNewFileFromSource(files.NewBytesSource("_ytt_lib/lib1/other", []byte("lib1\ndata"))),
 	})
 
-	ui := cmdcore.NewPlainUI(false)
+	ui := cmdui.NewTTY(false)
 	opts := cmdtpl.NewOptions()
 
 	out := opts.RunWithFiles(cmdtpl.TemplateInput{Files: filesToProcess}, ui)
@@ -272,7 +272,7 @@ libdata2: #@ data.read("/other")
 		files.MustNewFileFromSource(files.NewBytesSource("_ytt_lib/lib1/funcs/funcs.lib.yml", yamlLibFuncsData)),
 	})
 
-	ui := cmdcore.NewPlainUI(false)
+	ui := cmdui.NewTTY(false)
 	opts := cmdtpl.NewOptions()
 
 	out := opts.RunWithFiles(cmdtpl.TemplateInput{Files: filesToProcess}, ui)
@@ -325,7 +325,7 @@ simple_key: #@ another_data()
 		files.MustNewFileFromSource(files.NewBytesSource("funcs/funcs.lib.yml", yamlFuncsData)),
 	}
 
-	ui := cmdcore.NewPlainUI(false)
+	ui := cmdui.NewTTY(false)
 	opts := cmdtpl.NewOptions()
 
 	out := opts.RunWithFiles(cmdtpl.TemplateInput{Files: filesToProcess}, ui)
@@ -351,7 +351,7 @@ func TestDisallowDirectLibraryLoading(t *testing.T) {
 		files.MustNewFileFromSource(files.NewBytesSource("_ytt_lib/data.lib.star", []byte("data = 3"))),
 	}
 
-	ui := cmdcore.NewPlainUI(false)
+	ui := cmdui.NewTTY(false)
 	opts := cmdtpl.NewOptions()
 
 	out := opts.RunWithFiles(cmdtpl.TemplateInput{Files: filesToProcess}, ui)
@@ -418,7 +418,7 @@ end`)
 		files.MustNewFileFromSource(files.NewBytesSource("_ytt_lib/library2/_ytt_lib/funcs/funcs.star", starlarkFuncsLibData)),
 	}
 
-	ui := cmdcore.NewPlainUI(false)
+	ui := cmdui.NewTTY(false)
 	opts := cmdtpl.NewOptions()
 
 	out := opts.RunWithFiles(cmdtpl.TemplateInput{Files: filesToProcess}, ui)
@@ -461,7 +461,7 @@ end`)
 		files.MustNewFileFromSource(files.NewBytesSource("non-top-level/_ytt_lib/funcs/funcs.star", nonTopLevelStarlarkFuncsLibData)),
 	}
 
-	ui := cmdcore.NewPlainUI(false)
+	ui := cmdui.NewTTY(false)
 	opts := cmdtpl.NewOptions()
 
 	out := opts.RunWithFiles(cmdtpl.TemplateInput{Files: filesToProcess}, ui)
@@ -499,7 +499,7 @@ yamlfunc: yamlfunc`)
 		files.MustNewFileFromSource(files.NewBytesSource("funcs/funcs.lib.yml", yamlFuncsData)),
 	}
 
-	ui := cmdcore.NewPlainUI(false)
+	ui := cmdui.NewTTY(false)
 	opts := cmdtpl.NewOptions()
 
 	out := opts.RunWithFiles(cmdtpl.TemplateInput{Files: filesToProcess}, ui)
@@ -531,7 +531,7 @@ yamlfunc: yamlfunc`)
 		files.MustNewFileFromSource(files.NewBytesSource("funcs/funcs.lib.yml", yamlFuncsData)),
 	}
 
-	ui := cmdcore.NewPlainUI(false)
+	ui := cmdui.NewTTY(false)
 	opts := cmdtpl.NewOptions()
 	opts.IgnoreUnknownComments = true
 
@@ -564,7 +564,7 @@ yamlfunc yamlfunc`)
 		files.MustNewFileFromSource(files.NewBytesSource("tpl.yml", yamlTplData)),
 	}
 
-	ui := cmdcore.NewPlainUI(false)
+	ui := cmdui.NewTTY(false)
 	opts := cmdtpl.NewOptions()
 
 	out := opts.RunWithFiles(cmdtpl.TemplateInput{Files: filesToProcess}, ui)
@@ -593,7 +593,7 @@ yamlfunc yamlfunc
 		files.MustNewFileFromSource(files.NewBytesSource("funcs/funcs.lib.yml", yamlFuncsData)),
 	}
 
-	ui := cmdcore.NewPlainUI(false)
+	ui := cmdui.NewTTY(false)
 	opts := cmdtpl.NewOptions()
 
 	out := opts.RunWithFiles(cmdtpl.TemplateInput{Files: filesToProcess}, ui)
@@ -622,7 +622,7 @@ text_template: (@= "string" @)
 
 	filesToProcess[0].MarkTemplate(false)
 
-	ui := cmdcore.NewPlainUI(false)
+	ui := cmdui.NewTTY(false)
 	opts := cmdtpl.NewOptions()
 
 	out := opts.RunWithFiles(cmdtpl.TemplateInput{Files: filesToProcess}, ui)
@@ -655,7 +655,7 @@ func TestPlainTextNoTemplateProcessing(t *testing.T) {
 
 	filesToProcess[0].MarkTemplate(false)
 
-	ui := cmdcore.NewPlainUI(false)
+	ui := cmdui.NewTTY(false)
 	opts := cmdtpl.NewOptions()
 
 	out := opts.RunWithFiles(cmdtpl.TemplateInput{Files: filesToProcess}, ui)
@@ -688,7 +688,7 @@ data_str: yes`)
 		files.MustNewFileFromSource(files.NewBytesSource("tpl.yml", yamlTplData)),
 	})
 
-	ui := cmdcore.NewPlainUI(false)
+	ui := cmdui.NewTTY(false)
 	opts := cmdtpl.NewOptions()
 	opts.StrictYAML = true
 
@@ -722,7 +722,7 @@ str: yes`)
 		files.MustNewFileFromSource(files.NewBytesSource("data.yml", yamlData)),
 	})
 
-	ui := cmdcore.NewPlainUI(false)
+	ui := cmdui.NewTTY(false)
 	opts := cmdtpl.NewOptions()
 	opts.StrictYAML = true
 
@@ -756,7 +756,7 @@ str: `)
 		files.MustNewFileFromSource(files.NewBytesSource("data.yml", yamlData)),
 	})
 
-	ui := cmdcore.NewPlainUI(false)
+	ui := cmdui.NewTTY(false)
 	opts := cmdtpl.NewOptions()
 	opts.StrictYAML = true
 	opts.DataValuesFlags = cmdtpl.DataValuesFlags{
@@ -814,7 +814,7 @@ func TestLoadYTTModuleFailEarly(t *testing.T) {
 		files.MustNewFileFromSource(files.NewBytesSource("config.yml", configTplData)),
 	})
 
-	ui := cmdcore.NewPlainUI(false)
+	ui := cmdui.NewTTY(false)
 	opts := cmdtpl.NewOptions()
 
 	out := opts.RunWithFiles(cmdtpl.TemplateInput{Files: filesToProcess}, ui)

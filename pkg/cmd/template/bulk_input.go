@@ -5,8 +5,8 @@ package template
 
 import (
 	"encoding/json"
+	cmdui "github.com/k14s/ytt/pkg/cmd/ui"
 
-	cmdcore "github.com/k14s/ytt/pkg/cmd/core"
 	"github.com/k14s/ytt/pkg/files"
 	"github.com/spf13/cobra"
 )
@@ -23,7 +23,7 @@ func (s *BulkFilesSourceOpts) Set(cmd *cobra.Command) {
 
 type BulkFilesSource struct {
 	opts BulkFilesSourceOpts
-	ui   cmdcore.PlainUI
+	ui   cmdui.UI
 }
 
 type BulkFiles struct {
@@ -36,7 +36,7 @@ type BulkFile struct {
 	Data string `json:"data"`
 }
 
-func NewBulkFilesSource(opts BulkFilesSourceOpts, ui cmdcore.PlainUI) *BulkFilesSource {
+func NewBulkFilesSource(opts BulkFilesSourceOpts, ui cmdui.UI) *BulkFilesSource {
 	return &BulkFilesSource{opts, ui}
 }
 

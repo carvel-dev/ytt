@@ -6,8 +6,8 @@ package template_test
 import (
 	"testing"
 
-	cmdcore "github.com/k14s/ytt/pkg/cmd/core"
 	cmdtpl "github.com/k14s/ytt/pkg/cmd/template"
+	cmdui "github.com/k14s/ytt/pkg/cmd/ui"
 	"github.com/k14s/ytt/pkg/files"
 )
 
@@ -50,7 +50,7 @@ yamlfunc: yamlfunc`)
 		files.MustNewFileFromSource(files.NewBytesSource("funcs/funcs.lib.yml", yamlFuncsData)),
 	}
 
-	ui := cmdcore.NewPlainUI(false)
+	ui := cmdui.NewTTY(false)
 	opts := cmdtpl.NewOptions()
 
 	out := opts.RunWithFiles(cmdtpl.TemplateInput{Files: filesToProcess}, ui)
@@ -126,7 +126,7 @@ yamlfunc: yamlfunc`)
 		files.MustNewFileFromSource(files.NewBytesSource("funcs/funcs.lib.yml", yamlFuncsData)),
 	})
 
-	ui := cmdcore.NewPlainUI(false)
+	ui := cmdui.NewTTY(false)
 	opts := cmdtpl.NewOptions()
 
 	out := opts.RunWithFiles(cmdtpl.TemplateInput{Files: filesToProcess}, ui)
@@ -181,7 +181,7 @@ map: {}
 		files.MustNewFileFromSource(files.NewBytesSource("overlay2.yml", yamlOverlay2TplData)),
 	})
 
-	ui := cmdcore.NewPlainUI(false)
+	ui := cmdui.NewTTY(false)
 	opts := cmdtpl.NewOptions()
 
 	out := opts.RunWithFiles(cmdtpl.TemplateInput{Files: filesToProcess}, ui)
@@ -221,7 +221,7 @@ overlayed: true
 		files.MustNewFileFromSource(files.NewBytesSource("overlay.yml", yamlOverlayTplData)),
 	})
 
-	ui := cmdcore.NewPlainUI(false)
+	ui := cmdui.NewTTY(false)
 	opts := cmdtpl.NewOptions()
 
 	out := opts.RunWithFiles(cmdtpl.TemplateInput{Files: filesToProcess}, ui)
@@ -264,7 +264,7 @@ key: value_from_data_value_overlay
 		files.MustNewFileFromSource(files.NewBytesSource("datavalue_non_empty.yml", nonEmptyYamlDataValue)),
 	})
 
-	ui := cmdcore.NewPlainUI(false)
+	ui := cmdui.NewTTY(false)
 	opts := cmdtpl.NewOptions()
 
 	out := opts.RunWithFiles(cmdtpl.TemplateInput{Files: filesToProcess}, ui)
@@ -314,7 +314,7 @@ array:
 		files.MustNewFileFromSource(files.NewBytesSource("datavalue.yml", yamlDataValue)),
 	})
 
-	ui := cmdcore.NewPlainUI(false)
+	ui := cmdui.NewTTY(false)
 	opts := cmdtpl.NewOptions()
 
 	out := opts.RunWithFiles(cmdtpl.TemplateInput{Files: filesToProcess}, ui)

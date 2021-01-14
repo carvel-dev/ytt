@@ -4,10 +4,9 @@
 package template
 
 import (
-	"fmt"
 	"time"
 
-	cmdcore "github.com/k14s/ytt/pkg/cmd/core"
+	cmdui "github.com/k14s/ytt/pkg/cmd/ui"
 	"github.com/k14s/ytt/pkg/files"
 	"github.com/k14s/ytt/pkg/schema"
 	"github.com/k14s/ytt/pkg/workspace"
@@ -77,7 +76,7 @@ func NewCmd(o *TemplateOptions) *cobra.Command {
 }
 
 func (o *TemplateOptions) Run() error {
-	ui := cmdcore.NewPlainUI(o.Debug)
+	ui := cmdui.NewTTY(o.Debug)
 	t1 := time.Now()
 
 	defer func() {
@@ -98,7 +97,7 @@ func (o *TemplateOptions) Run() error {
 	return o.pickSource(srcs, func(s FileSource) bool { return s.HasOutput() }).Output(out)
 }
 
-func (o *TemplateOptions) RunWithFiles(in TemplateInput, ui cmdcore.PlainUI) TemplateOutput {
+func (o *TemplateOptions) RunWithFiles(in TemplateInput, ui cmdui.UI) TemplateOutput {
 	var err error
 
 	in.Files, err = o.FileMarksOpts.Apply(in.Files)
@@ -110,7 +109,7 @@ func (o *TemplateOptions) RunWithFiles(in TemplateInput, ui cmdcore.PlainUI) Tem
 	rootLibrary.Print(ui.DebugWriter())
 
 	if o.InspectFiles {
-		return o.inspectFiles(rootLibrary, ui)
+		return o.inspectFiles(rootLibrary)
 	}
 
 	valuesOverlays, libraryValuesOverlays, err := o.DataValuesFlags.AsOverlays(o.StrictYAML)
@@ -131,30 +130,32 @@ func (o *TemplateOptions) RunWithFiles(in TemplateInput, ui cmdcore.PlainUI) Tem
 	if err != nil {
 		return TemplateOutput{Err: err}
 	}
-	var schemaVar workspace.Schema = &schema.AnySchema{}
-	if len(schemaDocs) > 0 {
-		if o.SchemaEnabled {
-			schemaVar, err = schema.NewDocumentSchema(schemaDocs[0])
+
+	var currSchema workspace.Schema
+	var values *workspace.DataValues
+	var libraryValues []*workspace.DataValues
+
+	if o.SchemaEnabled {
+		if len(schemaDocs) > 0 {
+			currSchema, err = schema.NewDocumentSchema(schemaDocs[0])
 			if err != nil {
 				return TemplateOutput{Err: err}
 			}
 		} else {
-			ui.Warnf("Warning: schema document was detected, but schema experiment flag is not enabled. Did you mean to include --enable-experiment-schema?\n")
+			currSchema = schema.NullSchema{}
 		}
 	} else {
-		if o.SchemaEnabled {
-			return TemplateOutput{Err: fmt.Errorf(
-				// TODO: Include documentation on defining a schema with this error when
-				// docs are ready.
-				"Schema experiment flag was enabled but no schema document was provided",
-			)}
+		if len(schemaDocs) > 0 {
+			ui.Warnf("Warning: schema document was detected, but schema experiment flag is not enabled. Did you mean to include --enable-experiment-schema?\n")
 		}
+		currSchema = &schema.AnySchema{}
 	}
 
-	values, libraryValues, err := libraryLoader.Values(valuesOverlays, schemaVar)
+	values, libraryValues, err = libraryLoader.Values(valuesOverlays, currSchema)
 	if err != nil {
 		return TemplateOutput{Err: err}
 	}
+
 	libraryValues = append(libraryValues, libraryValuesOverlays...)
 
 	if o.DataValuesFlags.Inspect {
@@ -182,13 +183,13 @@ func (o *TemplateOptions) pickSource(srcs []FileSource, pickFunc func(FileSource
 	return srcs[len(srcs)-1]
 }
 
-func (o *TemplateOptions) inspectFiles(rootLibrary *workspace.Library, ui cmdcore.PlainUI) TemplateOutput {
-	files := rootLibrary.ListAccessibleFiles()
-	workspace.SortFilesInLibrary(files)
+func (o *TemplateOptions) inspectFiles(rootLibrary *workspace.Library) TemplateOutput {
+	accessibleFiles := rootLibrary.ListAccessibleFiles()
+	workspace.SortFilesInLibrary(accessibleFiles)
 
 	paths := &yamlmeta.Array{}
 
-	for _, fileInLib := range files {
+	for _, fileInLib := range accessibleFiles {
 		paths.Items = append(paths.Items, &yamlmeta.ArrayItem{
 			Value: fileInLib.File.RelativePath(),
 		})
