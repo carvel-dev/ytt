@@ -533,7 +533,7 @@ db_conn:
 			files.MustNewFileFromSource(files.NewBytesSource("dataValues.yml", []byte(dataValuesYAML))),
 			files.MustNewFileFromSource(files.NewBytesSource("template.yml", []byte(templateYAML))),
 		})
-		expectedErr := "Schema experiment flag was enabled but no schema document was provided"
+		expectedErr := "Schema feature is enabled but no schema document was provided"
 		assertYTTWorkflowFailsWithErrorMessage(t, filesToProcess, expectedErr)
 	})
 	t.Run("data value is not given, should succeed", func(t *testing.T) {

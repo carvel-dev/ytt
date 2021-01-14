@@ -27,7 +27,7 @@ func NewDocumentSchema(doc *yamlmeta.Document) (*DocumentSchema, error) {
 	if err != nil {
 		return nil, err
 	}
-	schemaDVs, err := DefaultDataValues(doc)
+	schemaDVs, err := defaultDataValues(doc)
 	if err != nil {
 		return nil, err
 	}
@@ -158,23 +158,27 @@ func newCollectionItemValueType(collectionItemValue interface{}) (yamlmeta.Type,
 	return nil, fmt.Errorf("Collection item type did not match any known types")
 }
 
-func DefaultDataValues(doc *yamlmeta.Document) (*yamlmeta.Document, error) {
+func defaultDataValues(doc *yamlmeta.Document) (*yamlmeta.Document, error) {
 	docCopy := doc.DeepCopyAsNode()
 	for _, value := range docCopy.GetValues() {
-		setDefaultValues(value)
+		if valueAsANode, ok := value.(yamlmeta.Node); ok {
+			setDefaultValues(valueAsANode)
+		}
 	}
 
 	return docCopy.(*yamlmeta.Document), nil
 }
 
-func setDefaultValues(node interface{}) {
+func setDefaultValues(node yamlmeta.Node) {
 	switch typedNode := node.(type) {
 	case *yamlmeta.Map:
 		for _, value := range typedNode.Items {
 			setDefaultValues(value)
 		}
 	case *yamlmeta.MapItem:
-		setDefaultValues(typedNode.Value)
+		if valueAsANode, ok := typedNode.Value.(yamlmeta.Node); ok {
+			setDefaultValues(valueAsANode)
+		}
 	case *yamlmeta.Array:
 		typedNode.Items = []*yamlmeta.ArrayItem{}
 	}
@@ -210,7 +214,7 @@ func (as *AnySchema) ValidateWithValues(valuesFilesCount int) error {
 
 func (n NullSchema) ValidateWithValues(valuesFilesCount int) error {
 	if valuesFilesCount > 0 {
-		return fmt.Errorf("Schema experiment flag was enabled but no schema document was provided")
+		return fmt.Errorf("Schema feature is enabled but no schema document was provided")
 	}
 	return nil
 }
