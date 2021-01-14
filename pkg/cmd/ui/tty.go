@@ -9,33 +9,33 @@ import (
 	"os"
 )
 
-type tty struct {
+type TTY struct {
 	debug  bool
 	stdout io.Writer
 	stderr io.Writer
 }
 
-var _ UI = tty{}
+var _ UI = TTY{}
 
-func NewTTY(debug bool) tty {
-	return tty{debug, os.Stdout, os.Stderr}
+func NewTTY(debug bool) TTY {
+	return TTY{debug, os.Stdout, os.Stderr}
 }
 
-func (t tty) Printf(str string, args ...interface{}) {
+func (t TTY) Printf(str string, args ...interface{}) {
 	fmt.Fprintf(t.stdout, str, args...)
 }
 
-func (t tty) Warnf(str string, args ...interface{}) {
+func (t TTY) Warnf(str string, args ...interface{}) {
 	fmt.Fprintf(t.stderr, str, args...)
 }
 
-func (t tty) Debugf(str string, args ...interface{}) {
+func (t TTY) Debugf(str string, args ...interface{}) {
 	if t.debug {
 		fmt.Fprintf(t.stderr, str, args...)
 	}
 }
 
-func (t tty) DebugWriter() io.Writer {
+func (t TTY) DebugWriter() io.Writer {
 	if t.debug {
 		return os.Stderr
 	}
@@ -47,3 +47,14 @@ type noopWriter struct{}
 var _ io.Writer = noopWriter{}
 
 func (w noopWriter) Write(data []byte) (int, error) { return len(data), nil }
+
+// Used for testing whether TTY writes correct output to stdout/stderr
+func NewCustomWriterTTY(debug bool, stdout, stderr io.Writer) TTY {
+	if stdout == nil {
+		stdout = os.Stdout
+	}
+	if stderr == nil {
+		stderr = os.Stderr
+	}
+	return TTY{debug, stdout, stderr}
+}
