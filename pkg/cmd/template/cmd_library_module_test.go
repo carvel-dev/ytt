@@ -8,7 +8,7 @@ import (
 	"testing"
 
 	cmdtpl "github.com/k14s/ytt/pkg/cmd/template"
-	cmdui "github.com/k14s/ytt/pkg/cmd/ui"
+	"github.com/k14s/ytt/pkg/cmd/ui"
 	"github.com/k14s/ytt/pkg/files"
 )
 
@@ -281,7 +281,7 @@ func TestLibraryModuleWithExportConflicts(t *testing.T) {
 		files.MustNewFileFromSource(files.NewBytesSource("_ytt_lib/lib/config2.lib.yml", libConfig2LibData)),
 	})
 
-	ui := cmdui.NewTTY(false)
+	ui := ui.NewTTY(false)
 	opts := cmdtpl.NewOptions()
 
 	out := opts.RunWithFiles(cmdtpl.TemplateInput{Files: filesToProcess}, ui)
@@ -313,7 +313,7 @@ func TestLibraryModuleWithExportPrivate(t *testing.T) {
 		files.MustNewFileFromSource(files.NewBytesSource("_ytt_lib/lib/config1.lib.yml", libConfig1LibData)),
 	})
 
-	ui := cmdui.NewTTY(false)
+	ui := ui.NewTTY(false)
 	opts := cmdtpl.NewOptions()
 
 	out := opts.RunWithFiles(cmdtpl.TemplateInput{Files: filesToProcess}, ui)
@@ -832,7 +832,7 @@ lib_val2: #@ data.values.lib_val2`)
 		files.MustNewFileFromSource(files.NewBytesSource("_ytt_lib/lib/config.yml", libConfigBytes)),
 	})
 
-	ui := cmdui.NewTTY(false)
+	ui := ui.NewTTY(false)
 	opts := cmdtpl.NewOptions()
 
 	out := opts.RunWithFiles(cmdtpl.TemplateInput{Files: filesToProcess}, ui)
@@ -884,7 +884,7 @@ nested_lib_val1: override-me`)
 		files.MustNewFileFromSource(files.NewBytesSource("_ytt_lib/with-nested-lib/_ytt_lib/lib/config.yml", nestedLibTmplBytes)),
 	})
 
-	ui := cmdui.NewTTY(false)
+	ui := ui.NewTTY(false)
 	opts := cmdtpl.NewOptions()
 
 	out := opts.RunWithFiles(cmdtpl.TemplateInput{Files: filesToProcess}, ui)
@@ -917,7 +917,7 @@ nested_lib_val1: new-val1`)
 		files.MustNewFileFromSource(files.NewBytesSource("_ytt_lib/with-nested-lib/config.yml", withNestedLibTmplBytes)),
 	})
 
-	ui := cmdui.NewTTY(false)
+	ui := ui.NewTTY(false)
 	opts := cmdtpl.NewOptions()
 
 	out := opts.RunWithFiles(cmdtpl.TemplateInput{Files: filesToProcess}, ui)
@@ -950,7 +950,7 @@ nested_lib_val1: new-val1`)
 		files.MustNewFileFromSource(files.NewBytesSource("_ytt_lib/with-nested-lib/config.yml", withNestedLibTmplBytes)),
 	})
 
-	ui := cmdui.NewTTY(false)
+	ui := ui.NewTTY(false)
 	opts := cmdtpl.NewOptions()
 
 	out := opts.RunWithFiles(cmdtpl.TemplateInput{Files: filesToProcess}, ui)
@@ -976,7 +976,7 @@ lib_val1: val1
 		files.MustNewFileFromSource(files.NewBytesSource("values.yml", dataValueBytes)),
 	})
 
-	ui := cmdui.NewTTY(false)
+	ui := ui.NewTTY(false)
 	opts := cmdtpl.NewOptions()
 
 	out := opts.RunWithFiles(cmdtpl.TemplateInput{Files: filesToProcess}, ui)
@@ -1001,7 +1001,7 @@ lib_val1: val1
 		files.MustNewFileFromSource(files.NewBytesSource("values.yml", dataValueBytes)),
 	})
 
-	ui := cmdui.NewTTY(false)
+	ui := ui.NewTTY(false)
 	opts := cmdtpl.NewOptions()
 
 	out := opts.RunWithFiles(cmdtpl.TemplateInput{Files: filesToProcess}, ui)
@@ -1112,7 +1112,7 @@ lib_int: #@ data.values.int`)
 		files.MustNewFileFromSource(files.NewBytesSource("_ytt_lib/lib/config1.yml", libConfig1TplData)),
 	})
 
-	ui := cmdui.NewTTY(false)
+	ui := ui.NewTTY(false)
 	opts := cmdtpl.NewOptions()
 
 	out := opts.RunWithFiles(cmdtpl.TemplateInput{Files: filesToProcess}, ui)
@@ -1126,7 +1126,7 @@ lib_int: #@ data.values.int`)
 }
 
 func runAndCompare(t *testing.T, filesToProcess []*files.File, expectedYAMLTplData string) {
-	ui := cmdui.NewTTY(false)
+	ui := ui.NewTTY(false)
 	opts := cmdtpl.NewOptions()
 
 	out := opts.RunWithFiles(cmdtpl.TemplateInput{Files: filesToProcess}, ui)

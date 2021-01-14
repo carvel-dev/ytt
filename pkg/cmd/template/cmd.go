@@ -6,7 +6,7 @@ package template
 import (
 	"time"
 
-	cmdui "github.com/k14s/ytt/pkg/cmd/ui"
+	"github.com/k14s/ytt/pkg/cmd/ui"
 	"github.com/k14s/ytt/pkg/files"
 	"github.com/k14s/ytt/pkg/schema"
 	"github.com/k14s/ytt/pkg/workspace"
@@ -76,7 +76,7 @@ func NewCmd(o *TemplateOptions) *cobra.Command {
 }
 
 func (o *TemplateOptions) Run() error {
-	ui := cmdui.NewTTY(o.Debug)
+	ui := ui.NewTTY(o.Debug)
 	t1 := time.Now()
 
 	defer func() {
@@ -97,7 +97,7 @@ func (o *TemplateOptions) Run() error {
 	return o.pickSource(srcs, func(s FileSource) bool { return s.HasOutput() }).Output(out)
 }
 
-func (o *TemplateOptions) RunWithFiles(in TemplateInput, ui cmdui.UI) TemplateOutput {
+func (o *TemplateOptions) RunWithFiles(in TemplateInput, ui ui.UI) TemplateOutput {
 	var err error
 
 	in.Files, err = o.FileMarksOpts.Apply(in.Files)

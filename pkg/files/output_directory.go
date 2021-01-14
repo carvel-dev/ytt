@@ -5,10 +5,11 @@ package files
 
 import (
 	"fmt"
-	ui2 "github.com/k14s/ytt/pkg/cmd/ui"
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/k14s/ytt/pkg/cmd/ui"
 )
 
 var (
@@ -18,10 +19,10 @@ var (
 type OutputDirectory struct {
 	path  string
 	files []OutputFile
-	ui    ui2.UI
+	ui    ui.UI
 }
 
-func NewOutputDirectory(path string, files []OutputFile, ui ui2.UI) *OutputDirectory {
+func NewOutputDirectory(path string, files []OutputFile, ui ui.UI) *OutputDirectory {
 	return &OutputDirectory{path, files, ui}
 }
 

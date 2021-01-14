@@ -4,7 +4,7 @@
 package workspace
 
 import (
-	ui2 "github.com/k14s/ytt/pkg/cmd/ui"
+	"github.com/k14s/ytt/pkg/cmd/ui"
 )
 
 type LibraryExecutionContext struct {
@@ -13,11 +13,11 @@ type LibraryExecutionContext struct {
 }
 
 type LibraryExecutionFactory struct {
-	ui                 ui2.UI
+	ui                 ui.UI
 	templateLoaderOpts TemplateLoaderOpts
 }
 
-func NewLibraryExecutionFactory(ui ui2.UI, templateLoaderOpts TemplateLoaderOpts) *LibraryExecutionFactory {
+func NewLibraryExecutionFactory(ui ui.UI, templateLoaderOpts TemplateLoaderOpts) *LibraryExecutionFactory {
 	return &LibraryExecutionFactory{ui, templateLoaderOpts}
 }
 

@@ -5,10 +5,10 @@ package workspace
 
 import (
 	"fmt"
-	ui2 "github.com/k14s/ytt/pkg/cmd/ui"
 	"strings"
 
 	"github.com/k14s/starlark-go/starlark"
+	"github.com/k14s/ytt/pkg/cmd/ui"
 	"github.com/k14s/ytt/pkg/files"
 	"github.com/k14s/ytt/pkg/template"
 	"github.com/k14s/ytt/pkg/texttemplate"
@@ -18,7 +18,7 @@ import (
 )
 
 type TemplateLoader struct {
-	ui                 ui2.UI
+	ui                 ui.UI
 	values             *DataValues
 	libraryValuess     []*DataValues
 	opts               TemplateLoaderOpts
@@ -39,7 +39,7 @@ type TemplateLoaderOptsOverrides struct {
 	StrictYAML              *bool
 }
 
-func NewTemplateLoader(values *DataValues, libraryValuess []*DataValues, ui ui2.UI, opts TemplateLoaderOpts, libraryExecFactory *LibraryExecutionFactory, schema Schema) *TemplateLoader {
+func NewTemplateLoader(values *DataValues, libraryValuess []*DataValues, ui ui.UI, opts TemplateLoaderOpts, libraryExecFactory *LibraryExecutionFactory, schema Schema) *TemplateLoader {
 
 	if values == nil {
 		panic("Expected values to be non-nil")

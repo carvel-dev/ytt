@@ -9,7 +9,7 @@ import (
 
 	"github.com/k14s/difflib"
 	cmdtpl "github.com/k14s/ytt/pkg/cmd/template"
-	cmdui "github.com/k14s/ytt/pkg/cmd/ui"
+	"github.com/k14s/ytt/pkg/cmd/ui"
 	"github.com/k14s/ytt/pkg/files"
 )
 
@@ -627,7 +627,7 @@ rendered: true`
 
 func assertYTTWorkflowSucceedsWithOutput(t *testing.T, filesToProcess []*files.File, expectedOut string) {
 	t.Helper()
-	out := opts.RunWithFiles(cmdtpl.TemplateInput{Files: filesToProcess}, cmdui.NewTTY(false))
+	out := opts.RunWithFiles(cmdtpl.TemplateInput{Files: filesToProcess}, ui.NewTTY(false))
 	if out.Err != nil {
 		t.Fatalf("Expected RunWithFiles to succeed, but was error: %s", out.Err)
 	}
@@ -644,7 +644,7 @@ func assertYTTWorkflowSucceedsWithOutput(t *testing.T, filesToProcess []*files.F
 
 func assertYTTWorkflowFailsWithErrorMessage(t *testing.T, filesToProcess []*files.File, expectedErr string) {
 	t.Helper()
-	out := opts.RunWithFiles(cmdtpl.TemplateInput{Files: filesToProcess}, cmdui.NewTTY(false))
+	out := opts.RunWithFiles(cmdtpl.TemplateInput{Files: filesToProcess}, ui.NewTTY(false))
 	if out.Err == nil {
 		t.Fatalf("Expected an error, but succeeded.")
 	}
