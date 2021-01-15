@@ -1,3 +1,6 @@
+// Copyright 2020 VMware, Inc.
+// SPDX-License-Identifier: Apache-2.0
+
 package yaml
 
 import (
@@ -37,30 +40,30 @@ type node struct {
 // Parser, produces a node tree out of a libyaml event stream.
 
 type parser struct {
-	parser   yaml_parser_t
-	event    yaml_event_t
+	parser   yamlParserT
+	event    yamlEventT
 	doc      *node
 	doneInit bool
 }
 
 func newParser(b []byte) *parser {
 	p := parser{}
-	if !yaml_parser_initialize(&p.parser) {
+	if !yamlParserInitialize(&p.parser) {
 		panic("failed to initialize YAML emitter")
 	}
 	if len(b) == 0 {
 		b = []byte{'\n'}
 	}
-	yaml_parser_set_input_string(&p.parser, b)
+	yamlParserSetInputString(&p.parser, b)
 	return &p
 }
 
 func newParserFromReader(r io.Reader) *parser {
 	p := parser{}
-	if !yaml_parser_initialize(&p.parser) {
+	if !yamlParserInitialize(&p.parser) {
 		panic("failed to initialize YAML emitter")
 	}
-	yaml_parser_set_input_reader(&p.parser, r)
+	yamlParserSetInputReader(&p.parser, r)
 	return &p
 }
 
@@ -68,43 +71,43 @@ func (p *parser) init() {
 	if p.doneInit {
 		return
 	}
-	p.expect(yaml_STREAM_START_EVENT)
+	p.expect(yamlStreamStartEvent)
 	p.doneInit = true
 }
 
 func (p *parser) destroy() {
-	if p.event.typ != yaml_NO_EVENT {
-		yaml_event_delete(&p.event)
+	if p.event.typ != yamlNoEvent {
+		yamlEventDelete(&p.event)
 	}
-	yaml_parser_delete(&p.parser)
+	yamlParserDelete(&p.parser)
 }
 
 // expect consumes an event from the event stream and
 // checks that it's of the expected type.
-func (p *parser) expect(e yaml_event_type_t) {
-	if p.event.typ == yaml_NO_EVENT {
-		if !yaml_parser_parse(&p.parser, &p.event) {
+func (p *parser) expect(e yamlEventTypeT) {
+	if p.event.typ == yamlNoEvent {
+		if !yamlParserParse(&p.parser, &p.event) {
 			p.fail()
 		}
 	}
-	if p.event.typ == yaml_STREAM_END_EVENT {
+	if p.event.typ == yamlStreamEndEvent {
 		failf("attempted to go past the end of stream; corrupted value?")
 	}
 	if p.event.typ != e {
 		p.parser.problem = fmt.Sprintf("expected %s event but got %s", e, p.event.typ)
 		p.fail()
 	}
-	yaml_event_delete(&p.event)
-	p.event.typ = yaml_NO_EVENT
+	yamlEventDelete(&p.event)
+	p.event.typ = yamlNoEvent
 }
 
 // peek peeks at the next event in the event stream,
 // puts the results into p.event and returns the event type.
-func (p *parser) peek() yaml_event_type_t {
-	if p.event.typ != yaml_NO_EVENT {
+func (p *parser) peek() yamlEventTypeT {
+	if p.event.typ != yamlNoEvent {
 		return p.event.typ
 	}
-	if !yaml_parser_parse(&p.parser, &p.event) {
+	if !yamlParserParse(&p.parser, &p.event) {
 		p.fail()
 	}
 	return p.event.typ
@@ -113,14 +116,14 @@ func (p *parser) peek() yaml_event_type_t {
 func (p *parser) fail() {
 	var where string
 	var line int
-	if p.parser.problem_mark.line != 0 {
-		line = p.parser.problem_mark.line
+	if p.parser.problemMark.line != 0 {
+		line = p.parser.problemMark.line
 		// Scanner errors don't iterate line before returning error
-		if p.parser.error == yaml_SCANNER_ERROR {
+		if p.parser.error == yamlScannerError {
 			line++
 		}
-	} else if p.parser.context_mark.line != 0 {
-		line = p.parser.context_mark.line
+	} else if p.parser.contextMark.line != 0 {
+		line = p.parser.contextMark.line
 	}
 	if line != 0 {
 		where = "line " + strconv.Itoa(line) + ": "
@@ -143,17 +146,17 @@ func (p *parser) anchor(n *node, anchor []byte) {
 func (p *parser) parse() *node {
 	p.init()
 	switch p.peek() {
-	case yaml_SCALAR_EVENT:
+	case yamlScalarEvent:
 		return p.scalar()
-	case yaml_ALIAS_EVENT:
+	case yamlAliasEvent:
 		return p.alias()
-	case yaml_MAPPING_START_EVENT:
+	case yamlMappingStartEvent:
 		return p.mapping()
-	case yaml_SEQUENCE_START_EVENT:
+	case yamlSequenceStartEvent:
 		return p.sequence()
-	case yaml_DOCUMENT_START_EVENT:
+	case yamlDocumentStartEvent:
 		return p.document()
-	case yaml_STREAM_END_EVENT:
+	case yamlStreamEndEvent:
 		// Happens when attempting to decode an empty buffer.
 		return nil
 	default:
@@ -164,8 +167,8 @@ func (p *parser) parse() *node {
 func (p *parser) node(kind int) *node {
 	return &node{
 		kind:   kind,
-		line:   p.event.start_mark.line,
-		column: p.event.start_mark.column,
+		line:   p.event.startMark.line,
+		column: p.event.startMark.column,
 	}
 }
 
@@ -173,9 +176,9 @@ func (p *parser) document() *node {
 	n := p.node(documentNode)
 	n.anchors = make(map[string]*node)
 	p.doc = n
-	p.expect(yaml_DOCUMENT_START_EVENT)
+	p.expect(yamlDocumentStartEvent)
 	n.children = append(n.children, p.parse())
-	p.expect(yaml_DOCUMENT_END_EVENT)
+	p.expect(yamlDocumentEndEvent)
 	return n
 }
 
@@ -186,7 +189,7 @@ func (p *parser) alias() *node {
 	if n.alias == nil {
 		failf("unknown anchor '%s' referenced", n.value)
 	}
-	p.expect(yaml_ALIAS_EVENT)
+	p.expect(yamlAliasEvent)
 	return n
 }
 
@@ -196,37 +199,37 @@ func (p *parser) scalar() *node {
 	n.tag = string(p.event.tag)
 	n.implicit = p.event.implicit
 	p.anchor(n, p.event.anchor)
-	p.expect(yaml_SCALAR_EVENT)
+	p.expect(yamlScalarEvent)
 	return n
 }
 
 func (p *parser) sequence() *node {
 	n := p.node(sequenceNode)
 	p.anchor(n, p.event.anchor)
-	p.expect(yaml_SEQUENCE_START_EVENT)
-	for p.peek() != yaml_SEQUENCE_END_EVENT {
+	p.expect(yamlSequenceStartEvent)
+	for p.peek() != yamlSequenceEndEvent {
 		if p.parser.pendingSeqItemEvent != nil {
 			n.children = append(n.children, &node{
 				kind:   sequenceItemNode,
-				line:   p.parser.pendingSeqItemEvent.start_mark.line,
-				column: p.parser.pendingSeqItemEvent.start_mark.column,
+				line:   p.parser.pendingSeqItemEvent.startMark.line,
+				column: p.parser.pendingSeqItemEvent.startMark.column,
 			})
 			p.parser.pendingSeqItemEvent = nil
 		}
 		n.children = append(n.children, p.parse())
 	}
-	p.expect(yaml_SEQUENCE_END_EVENT)
+	p.expect(yamlSequenceEndEvent)
 	return n
 }
 
 func (p *parser) mapping() *node {
 	n := p.node(mappingNode)
 	p.anchor(n, p.event.anchor)
-	p.expect(yaml_MAPPING_START_EVENT)
-	for p.peek() != yaml_MAPPING_END_EVENT {
+	p.expect(yamlMappingStartEvent)
+	for p.peek() != yamlMappingEndEvent {
 		n.children = append(n.children, p.parse())
 	}
-	p.expect(yaml_MAPPING_END_EVENT)
+	p.expect(yamlMappingEndEvent)
 	return n
 }
 
@@ -262,7 +265,7 @@ func (d *decoder) terror(n *node, tag string, out reflect.Value) {
 		tag = n.tag
 	}
 	value := n.value
-	if tag != yaml_SEQ_TAG && tag != yaml_MAP_TAG {
+	if tag != yamlSeqTag && tag != yamlMapTag {
 		if len(value) > 10 {
 			value = " `" + value[:7] + "...`"
 		} else {
@@ -302,7 +305,7 @@ func (d *decoder) callUnmarshaler(n *node, u Unmarshaler) (good bool) {
 //
 // If n holds a null value, prepare returns before doing anything.
 func (d *decoder) prepare(n *node, out reflect.Value) (newout reflect.Value, unmarshaled, good bool) {
-	if n.tag == yaml_NULL_TAG || n.kind == scalarNode && n.tag == "" && (n.value == "null" || n.value == "~" || n.value == "" && n.implicit) {
+	if n.tag == yamlNullTag || n.kind == scalarNode && n.tag == "" && (n.value == "null" || n.value == "~" || n.value == "" && n.implicit) {
 		return out, false, false
 	}
 	again := true
@@ -381,11 +384,11 @@ func (d *decoder) scalar(n *node, out reflect.Value) bool {
 	var tag string
 	var resolved interface{}
 	if n.tag == "" && !n.implicit {
-		tag = yaml_STR_TAG
+		tag = yamlStrTag
 		resolved = n.value
 	} else {
 		tag, resolved = d.resolveFunc(n.tag, n.value)
-		if tag == yaml_BINARY_TAG {
+		if tag == yamlBinaryTag {
 			data, err := base64.StdEncoding.DecodeString(resolved.(string))
 			if err != nil {
 				failf("!!binary value contains invalid base64 data")
@@ -412,7 +415,7 @@ func (d *decoder) scalar(n *node, out reflect.Value) bool {
 		u, ok := out.Addr().Interface().(encoding.TextUnmarshaler)
 		if ok {
 			var text []byte
-			if tag == yaml_BINARY_TAG {
+			if tag == yamlBinaryTag {
 				text = []byte(resolved.(string))
 			} else {
 				// We let any value be unmarshaled into TextUnmarshaler.
@@ -429,7 +432,7 @@ func (d *decoder) scalar(n *node, out reflect.Value) bool {
 	}
 	switch out.Kind() {
 	case reflect.String:
-		if tag == yaml_BINARY_TAG {
+		if tag == yamlBinaryTag {
 			out.SetString(resolved.(string))
 			return true
 		}
@@ -440,7 +443,7 @@ func (d *decoder) scalar(n *node, out reflect.Value) bool {
 	case reflect.Interface:
 		if resolved == nil {
 			out.Set(reflect.Zero(out.Type()))
-		} else if tag == yaml_TIMESTAMP_TAG {
+		} else if tag == yamlTimestampTag {
 			// It looks like a timestamp but for backward compatibility
 			// reasons we set it as a string, so that code that unmarshals
 			// timestamp-like values into interface{} will continue to
@@ -581,7 +584,7 @@ func (d *decoder) sequence(n *node, out reflect.Value) (good bool) {
 		iface = out
 		out = settableValueOf(make([]interface{}, l))
 	default:
-		d.terror(n, yaml_SEQ_TAG, out)
+		d.terror(n, yamlSeqTag, out)
 		return false
 	}
 	et := out.Type().Elem()
@@ -625,7 +628,7 @@ func (d *decoder) mapping(n *node, out reflect.Value) (good bool) {
 			return true
 		}
 	default:
-		d.terror(n, yaml_MAP_TAG, out)
+		d.terror(n, yamlMapTag, out)
 		return false
 	}
 	outt := out.Type()
@@ -676,7 +679,7 @@ func (d *decoder) setMapIndex(n *node, out, k, v reflect.Value) {
 func (d *decoder) mappingSlice(n *node, out reflect.Value) (good bool) {
 	outt := out.Type()
 	if outt.Elem() != mapItemType {
-		d.terror(n, yaml_MAP_TAG, out)
+		d.terror(n, yamlMapTag, out)
 		return false
 	}
 
@@ -738,11 +741,11 @@ func (d *decoder) mappingStruct(n *node, out reflect.Value) (good bool) {
 		}
 		if info, ok := sinfo.FieldsMap[name.String()]; ok {
 			if d.strict {
-				if doneFields[info.Id] {
+				if doneFields[info.ID] {
 					d.terrors = append(d.terrors, fmt.Sprintf("line %d: field %s already set in type %s", ni.line+1, name.String(), out.Type()))
 					continue
 				}
-				doneFields[info.Id] = true
+				doneFields[info.ID] = true
 			}
 			var field reflect.Value
 			if info.Inline == nil {
@@ -799,5 +802,5 @@ func (d *decoder) merge(n *node, out reflect.Value) {
 }
 
 func isMerge(n *node) bool {
-	return n.kind == scalarNode && n.value == "<<" && (n.implicit == true || n.tag == yaml_MERGE_TAG)
+	return n.kind == scalarNode && n.value == "<<" && (n.implicit == true || n.tag == yamlMergeTag)
 }

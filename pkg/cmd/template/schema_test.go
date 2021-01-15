@@ -13,7 +13,7 @@ import (
 	"github.com/k14s/ytt/pkg/files"
 )
 
-var opts *cmdtpl.TemplateOptions
+var opts *cmdtpl.Options
 
 func TestMain(m *testing.M) {
 	opts = cmdtpl.NewOptions()
@@ -627,7 +627,7 @@ rendered: true`
 
 func assertYTTWorkflowSucceedsWithOutput(t *testing.T, filesToProcess []*files.File, expectedOut string) {
 	t.Helper()
-	out := opts.RunWithFiles(cmdtpl.TemplateInput{Files: filesToProcess}, ui.NewTTY(false))
+	out := opts.RunWithFiles(cmdtpl.Input{Files: filesToProcess}, ui.NewTTY(false))
 	if out.Err != nil {
 		t.Fatalf("Expected RunWithFiles to succeed, but was error: %s", out.Err)
 	}
@@ -644,7 +644,7 @@ func assertYTTWorkflowSucceedsWithOutput(t *testing.T, filesToProcess []*files.F
 
 func assertYTTWorkflowFailsWithErrorMessage(t *testing.T, filesToProcess []*files.File, expectedErr string) {
 	t.Helper()
-	out := opts.RunWithFiles(cmdtpl.TemplateInput{Files: filesToProcess}, ui.NewTTY(false))
+	out := opts.RunWithFiles(cmdtpl.Input{Files: filesToProcess}, ui.NewTTY(false))
 	if out.Err == nil {
 		t.Fatalf("Expected an error, but succeeded.")
 	}

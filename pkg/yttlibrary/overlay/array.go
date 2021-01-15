@@ -7,7 +7,7 @@ import (
 	"github.com/k14s/ytt/pkg/yamlmeta"
 )
 
-func (o OverlayOp) mergeArrayItem(
+func (o Op) mergeArrayItem(
 	leftArray *yamlmeta.Array, newItem *yamlmeta.ArrayItem,
 	parentMatchChildDefaults MatchChildDefaultsAnnotation) error {
 
@@ -46,7 +46,7 @@ func (o OverlayOp) mergeArrayItem(
 	return nil
 }
 
-func (o OverlayOp) removeArrayItem(
+func (o Op) removeArrayItem(
 	leftArray *yamlmeta.Array, newItem *yamlmeta.ArrayItem,
 	parentMatchChildDefaults MatchChildDefaultsAnnotation) error {
 
@@ -81,7 +81,7 @@ func (o OverlayOp) removeArrayItem(
 	return nil
 }
 
-func (o OverlayOp) replaceArrayItem(
+func (o Op) replaceArrayItem(
 	leftArray *yamlmeta.Array, newItem *yamlmeta.ArrayItem,
 	parentMatchChildDefaults MatchChildDefaultsAnnotation) error {
 
@@ -116,7 +116,7 @@ func (o OverlayOp) replaceArrayItem(
 	return nil
 }
 
-func (o OverlayOp) insertArrayItem(
+func (o Op) insertArrayItem(
 	leftArray *yamlmeta.Array, newItem *yamlmeta.ArrayItem,
 	parentMatchChildDefaults MatchChildDefaultsAnnotation) error {
 
@@ -165,7 +165,7 @@ func (o OverlayOp) insertArrayItem(
 	return nil
 }
 
-func (o OverlayOp) appendArrayItem(
+func (o Op) appendArrayItem(
 	leftArray *yamlmeta.Array, newItem *yamlmeta.ArrayItem) error {
 
 	// No need to traverse further
@@ -173,7 +173,7 @@ func (o OverlayOp) appendArrayItem(
 	return nil
 }
 
-func (o OverlayOp) assertArrayItem(
+func (o Op) assertArrayItem(
 	leftArray *yamlmeta.Array, newItem *yamlmeta.ArrayItem,
 	parentMatchChildDefaults MatchChildDefaultsAnnotation) error {
 

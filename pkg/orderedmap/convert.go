@@ -82,7 +82,7 @@ func (c Conversion) fromUnorderedMaps(object interface{}) interface{} {
 
 func (Conversion) mapKeysFromInterfaceMap(m map[interface{}]interface{}) []interface{} {
 	var keys []interface{}
-	for k, _ := range m {
+	for k := range m {
 		keys = append(keys, k)
 	}
 	return keys
@@ -90,7 +90,7 @@ func (Conversion) mapKeysFromInterfaceMap(m map[interface{}]interface{}) []inter
 
 func (Conversion) mapKeysFromStringMap(m map[string]interface{}) []interface{} {
 	var keys []interface{}
-	for k, _ := range m {
+	for k := range m {
 		keys = append(keys, k)
 	}
 	return keys

@@ -66,7 +66,7 @@ func (as NodeAnnotations) Kwargs(name structmeta.AnnotationName) []starlark.Tupl
 
 func (as NodeAnnotations) DeleteNs(ns structmeta.AnnotationNs) {
 	prefix := string(ns) + "/"
-	for k, _ := range as {
+	for k := range as {
 		if strings.HasPrefix(string(k), prefix) {
 			delete(as, k)
 		}

@@ -20,7 +20,7 @@ func NewTemplate(name string) *Template {
 }
 
 func (e *Template) CompileInline(rootNode *NodeRoot,
-	instructions *template.InstructionSet, nodes *template.Nodes) ([]template.TemplateLine, error) {
+	instructions *template.InstructionSet, nodes *template.Nodes) ([]template.Line, error) {
 
 	return e.compile(rootNode, instructions, nodes)
 }
@@ -43,12 +43,12 @@ func (e *Template) Compile(rootNode *NodeRoot) (*template.CompiledTemplate, erro
 }
 
 func (e *Template) compile(rootNode *NodeRoot,
-	instructions *template.InstructionSet, nodes *template.Nodes) ([]template.TemplateLine, error) {
+	instructions *template.InstructionSet, nodes *template.Nodes) ([]template.Line, error) {
 
-	code := []template.TemplateLine{}
+	code := []template.Line{}
 	rootNodeTag := nodes.AddRootNode(&NodeRoot{}) // fresh copy to avoid leaking out NodeCode
 
-	code = append(code, []template.TemplateLine{
+	code = append(code, []template.Line{
 		{Instruction: instructions.NewSetCtxType(EvaluationCtxDialectName)},
 		{Instruction: instructions.NewStartCtx(EvaluationCtxDialectName)},
 		{Instruction: instructions.NewStartNode(rootNodeTag)},
@@ -66,12 +66,12 @@ func (e *Template) compile(rootNode *NodeRoot,
 
 			nodeTag := nodes.AddNode(typedNode, rootNodeTag)
 
-			code = append(code, template.TemplateLine{
+			code = append(code, template.Line{
 				Instruction: instructions.NewStartNode(nodeTag),
 				SourceLine:  template.NewSourceLine(typedNode.Position, typedNode.Content),
 			})
 
-			code = append(code, template.TemplateLine{
+			code = append(code, template.Line{
 				Instruction: instructions.NewSetNode(nodeTag),
 				SourceLine:  template.NewSourceLine(typedNode.Position, typedNode.Content),
 			})
@@ -90,12 +90,12 @@ func (e *Template) compile(rootNode *NodeRoot,
 			if meta.ShouldPrint() {
 				nodeTag := nodes.AddNode(&NodeText{}, rootNodeTag)
 
-				code = append(code, template.TemplateLine{
+				code = append(code, template.Line{
 					Instruction: instructions.NewStartNode(nodeTag),
 					SourceLine:  template.NewSourceLine(typedNode.Position, typedNode.Content),
 				})
 
-				code = append(code, template.TemplateLine{
+				code = append(code, template.Line{
 					Instruction: instructions.NewSetNodeValue(nodeTag, meta.Code()),
 					SourceLine:  template.NewSourceLine(typedNode.Position, typedNode.Content),
 				})
@@ -109,7 +109,7 @@ func (e *Template) compile(rootNode *NodeRoot,
 		}
 	}
 
-	code = append(code, template.TemplateLine{
+	code = append(code, template.Line{
 		Instruction: instructions.NewEndCtx(),
 	})
 

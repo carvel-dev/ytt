@@ -1,3 +1,6 @@
+// Copyright 2020 VMware, Inc.
+// SPDX-License-Identifier: Apache-2.0
+
 // Package yaml implements YAML support for the Go language.
 //
 // Source code and other details for the project are available at GitHub:
@@ -177,7 +180,7 @@ func (dec *Decoder) DocumentStartLine() int {
 func (dec *Decoder) Comments() []Comment {
 	var comments []Comment
 	for _, c := range dec.parser.parser.comments {
-		comments = append(comments, Comment{Data: string(c.value), Line: c.start_mark.line})
+		comments = append(comments, Comment{Data: string(c.value), Line: c.startMark.line})
 	}
 	return comments
 }
@@ -204,7 +207,7 @@ func unmarshal(in []byte, out interface{}, strict bool) (comments []Comment, err
 		return nil, &TypeError{d.terrors}
 	}
 	for _, c := range p.parser.comments {
-		comments = append(comments, Comment{Data: string(c.value), Line: c.start_mark.line})
+		comments = append(comments, Comment{Data: string(c.value), Line: c.startMark.line})
 	}
 	return comments, nil
 }
@@ -354,7 +357,7 @@ type fieldInfo struct {
 	Flow      bool
 	// Id holds the unique field identifier, so we can cheaply
 	// check for field duplicates without maintaining an extra map.
-	Id int
+	ID int
 
 	// Inline holds the field index if the field is part of an inlined struct.
 	Inline []int
@@ -403,7 +406,7 @@ func getStructInfo(st reflect.Type) (*structInfo, error) {
 				case "inline":
 					inline = true
 				default:
-					return nil, errors.New(fmt.Sprintf("Unsupported flag %q in tag %q of type %s", flag, tag, st))
+					return nil, fmt.Errorf("Unsupported flag %q in tag %q of type %s", flag, tag, st)
 				}
 			}
 			tag = fields[0]
@@ -434,7 +437,7 @@ func getStructInfo(st reflect.Type) (*structInfo, error) {
 					} else {
 						finfo.Inline = append([]int{i}, finfo.Inline...)
 					}
-					finfo.Id = len(fieldsList)
+					finfo.ID = len(fieldsList)
 					fieldsMap[finfo.Key] = finfo
 					fieldsList = append(fieldsList, finfo)
 				}
@@ -456,7 +459,7 @@ func getStructInfo(st reflect.Type) (*structInfo, error) {
 			return nil, errors.New(msg)
 		}
 
-		info.Id = len(fieldsList)
+		info.ID = len(fieldsList)
 		fieldsList = append(fieldsList, info)
 		fieldsMap[info.Key] = info
 	}

@@ -16,7 +16,7 @@ import (
 
 type ServerOpts struct {
 	ListenAddr      string
-	RedirectToHTTPs bool
+	RedirectToHTTPS bool
 	CheckCookie     bool
 	TemplateFunc    func([]byte) ([]byte, error)
 	ErrorFunc       func(error) ([]byte, error)
@@ -32,13 +32,13 @@ func NewServer(opts ServerOpts) *Server {
 
 func (s *Server) Mux() *http.ServeMux {
 	mux := http.NewServeMux()
-	mux.HandleFunc("/", s.redirectToHTTPs(s.noCacheHandler(s.mainHandler)))
-	mux.HandleFunc("/js/", s.redirectToHTTPs(s.noCacheHandler(s.assetHandler)))
-	mux.HandleFunc("/examples", s.redirectToHTTPs(s.noCacheHandler(s.corsHandler(s.exampleSetsHandler))))
-	mux.HandleFunc("/examples/", s.redirectToHTTPs(s.noCacheHandler(s.corsHandler(s.examplesHandler))))
+	mux.HandleFunc("/", s.redirectToHTTPS(s.noCacheHandler(s.mainHandler)))
+	mux.HandleFunc("/js/", s.redirectToHTTPS(s.noCacheHandler(s.assetHandler)))
+	mux.HandleFunc("/examples", s.redirectToHTTPS(s.noCacheHandler(s.corsHandler(s.exampleSetsHandler))))
+	mux.HandleFunc("/examples/", s.redirectToHTTPS(s.noCacheHandler(s.corsHandler(s.examplesHandler))))
 	// no need for caching as it's a POST
-	mux.HandleFunc("/template", s.redirectToHTTPs(s.corsHandler(s.templateHandler)))
-	mux.HandleFunc("/alpha-test", s.redirectToHTTPs(s.noCacheHandler(s.alphaTestHandler)))
+	mux.HandleFunc("/template", s.redirectToHTTPS(s.corsHandler(s.templateHandler)))
+	mux.HandleFunc("/alpha-test", s.redirectToHTTPS(s.noCacheHandler(s.alphaTestHandler)))
 	mux.HandleFunc("/health", s.healthHandler)
 	return mux
 }
@@ -150,20 +150,20 @@ func (s *Server) write(w http.ResponseWriter, data []byte) {
 	w.Write(data) // not fmt.Fprintf!
 }
 
-func (s *Server) redirectToHTTPs(wrappedFunc func(http.ResponseWriter, *http.Request)) func(http.ResponseWriter, *http.Request) {
-	if !s.opts.RedirectToHTTPs {
+func (s *Server) redirectToHTTPS(wrappedFunc func(http.ResponseWriter, *http.Request)) func(http.ResponseWriter, *http.Request) {
+	if !s.opts.RedirectToHTTPS {
 		return wrappedFunc
 	}
 	return func(w http.ResponseWriter, r *http.Request) {
-		checkHTTPs := true
+		checkHTTPS := true
 		clientIP, _, err := net.SplitHostPort(r.RemoteAddr)
 		if err == nil {
 			if clientIP == "127.0.0.1" {
-				checkHTTPs = false
+				checkHTTPS = false
 			}
 		}
 
-		if checkHTTPs && r.Header.Get(http.CanonicalHeaderKey("x-forwarded-proto")) != "https" {
+		if checkHTTPS && r.Header.Get(http.CanonicalHeaderKey("x-forwarded-proto")) != "https" {
 			if r.Method == http.MethodGet || r.Method == http.MethodHead {
 				host := r.Header.Get("host")
 				if len(host) == 0 {

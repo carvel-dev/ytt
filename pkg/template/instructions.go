@@ -23,22 +23,22 @@ type InstructionSet struct {
 }
 
 var (
-	globalInsSetId = 1
+	globalInsSetID = 1
 )
 
 func NewInstructionSet() *InstructionSet {
-	globalInsSetId += 1
-	uniqueId := globalInsSetId
+	globalInsSetID++
+	uniqueID := globalInsSetID
 	return &InstructionSet{
-		SetCtxType:            InstructionOp{fmt.Sprintf("__ytt_tpl%d_set_ctx_type", uniqueId)},
-		StartCtx:              InstructionOp{fmt.Sprintf("__ytt_tpl%d_start_ctx", uniqueId)},
-		EndCtx:                InstructionOp{fmt.Sprintf("__ytt_tpl%d_end_ctx", uniqueId)},
-		StartNodeAnnotation:   InstructionOp{fmt.Sprintf("__ytt_tpl%d_start_node_annotation", uniqueId)},
-		CollectNodeAnnotation: InstructionOp{fmt.Sprintf("__ytt_tpl%d_collect_node_annotation", uniqueId)},
-		StartNode:             InstructionOp{fmt.Sprintf("__ytt_tpl%d_start_node", uniqueId)},
-		SetNode:               InstructionOp{fmt.Sprintf("__ytt_tpl%d_set_node", uniqueId)},
-		SetMapItemKey:         InstructionOp{fmt.Sprintf("__ytt_tpl%d_set_map_item_key", uniqueId)},
-		ReplaceNode:           InstructionOp{fmt.Sprintf("__ytt_tpl%d_replace_node", uniqueId)},
+		SetCtxType:            InstructionOp{fmt.Sprintf("__ytt_tpl%d_set_ctx_type", uniqueID)},
+		StartCtx:              InstructionOp{fmt.Sprintf("__ytt_tpl%d_start_ctx", uniqueID)},
+		EndCtx:                InstructionOp{fmt.Sprintf("__ytt_tpl%d_end_ctx", uniqueID)},
+		StartNodeAnnotation:   InstructionOp{fmt.Sprintf("__ytt_tpl%d_start_node_annotation", uniqueID)},
+		CollectNodeAnnotation: InstructionOp{fmt.Sprintf("__ytt_tpl%d_collect_node_annotation", uniqueID)},
+		StartNode:             InstructionOp{fmt.Sprintf("__ytt_tpl%d_start_node", uniqueID)},
+		SetNode:               InstructionOp{fmt.Sprintf("__ytt_tpl%d_set_node", uniqueID)},
+		SetMapItemKey:         InstructionOp{fmt.Sprintf("__ytt_tpl%d_set_map_item_key", uniqueID)},
+		ReplaceNode:           InstructionOp{fmt.Sprintf("__ytt_tpl%d_replace_node", uniqueID)},
 	}
 }
 

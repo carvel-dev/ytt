@@ -7,7 +7,7 @@ import (
 	"github.com/k14s/ytt/pkg/yamlmeta"
 )
 
-func (o OverlayOp) mergeDocument(
+func (o Op) mergeDocument(
 	leftDocSets []*yamlmeta.DocumentSet, newDoc *yamlmeta.Document,
 	parentMatchChildDefaults MatchChildDefaultsAnnotation) error {
 
@@ -42,7 +42,7 @@ func (o OverlayOp) mergeDocument(
 	return nil
 }
 
-func (o OverlayOp) removeDocument(
+func (o Op) removeDocument(
 	leftDocSets []*yamlmeta.DocumentSet, newDoc *yamlmeta.Document,
 	parentMatchChildDefaults MatchChildDefaultsAnnotation) error {
 
@@ -79,7 +79,7 @@ func (o OverlayOp) removeDocument(
 	return nil
 }
 
-func (o OverlayOp) replaceDocument(
+func (o Op) replaceDocument(
 	leftDocSets []*yamlmeta.DocumentSet, newDoc *yamlmeta.Document,
 	parentMatchChildDefaults MatchChildDefaultsAnnotation) error {
 
@@ -114,7 +114,7 @@ func (o OverlayOp) replaceDocument(
 	return nil
 }
 
-func (o OverlayOp) insertDocument(
+func (o Op) insertDocument(
 	leftDocSets []*yamlmeta.DocumentSet, newDoc *yamlmeta.Document,
 	parentMatchChildDefaults MatchChildDefaultsAnnotation) error {
 
@@ -165,7 +165,7 @@ func (o OverlayOp) insertDocument(
 	return nil
 }
 
-func (o OverlayOp) appendDocument(
+func (o Op) appendDocument(
 	leftDocSets []*yamlmeta.DocumentSet, newDoc *yamlmeta.Document) error {
 
 	// No need to traverse further
@@ -173,7 +173,7 @@ func (o OverlayOp) appendDocument(
 	return nil
 }
 
-func (o OverlayOp) assertDocument(
+func (o Op) assertDocument(
 	leftDocSets []*yamlmeta.DocumentSet, newDoc *yamlmeta.Document,
 	parentMatchChildDefaults MatchChildDefaultsAnnotation) error {
 

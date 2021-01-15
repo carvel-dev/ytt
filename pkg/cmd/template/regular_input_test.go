@@ -40,7 +40,7 @@ If you want to include those results, use the --output-files or --dangerous-empt
 	rfsOpts := template.RegularFilesSourceOpts{OutputType: "yaml"}
 	rfs := template.NewRegularFilesSource(rfsOpts, ui)
 
-	out := opts.RunWithFiles(cmdtpl.TemplateInput{Files: filesToProcess}, ui)
+	out := opts.RunWithFiles(cmdtpl.Input{Files: filesToProcess}, ui)
 	if out.Err != nil {
 		t.Fatalf("An unexpected error occurred: %v", out.Err)
 	}
@@ -85,7 +85,7 @@ organization=Acme Widgets Inc.`)
 	rfsOpts := template.RegularFilesSourceOpts{OutputType: "yaml", OutputFiles: outputDir}
 	rfs := template.NewRegularFilesSource(rfsOpts, ui)
 
-	out := opts.RunWithFiles(cmdtpl.TemplateInput{Files: filesToProcess}, ui)
+	out := opts.RunWithFiles(cmdtpl.Input{Files: filesToProcess}, ui)
 	if out.Err != nil {
 		t.Fatalf("An unexpected error occurred: %v", out.Err)
 	}
@@ -119,7 +119,7 @@ func Test_FileMark_YAML_Shows_No_Warning(t *testing.T) {
 	rfsOpts := template.RegularFilesSourceOpts{OutputType: "yaml"}
 	rfs := template.NewRegularFilesSource(rfsOpts, ui)
 
-	out := opts.RunWithFiles(cmdtpl.TemplateInput{Files: filesToProcess}, ui)
+	out := opts.RunWithFiles(cmdtpl.Input{Files: filesToProcess}, ui)
 	if out.Err != nil {
 		t.Fatalf("An unexpected error occurred: %v", out.Err)
 	}

@@ -35,7 +35,7 @@ str: str`)
 	ui := ui.NewTTY(false)
 	opts := cmdtpl.NewOptions()
 
-	out := opts.RunWithFiles(cmdtpl.TemplateInput{Files: filesToProcess}, ui)
+	out := opts.RunWithFiles(cmdtpl.Input{Files: filesToProcess}, ui)
 	if out.Err != nil {
 		t.Fatalf("Expected RunWithFiles to succeed, but was error: %s", out.Err)
 	}
@@ -100,7 +100,7 @@ another:
 		KVsFromYAML: []string{"int=124", "boolean=true", "nested.value=\"str\"", "another.nested.map=567"},
 	}
 
-	out := opts.RunWithFiles(cmdtpl.TemplateInput{Files: filesToProcess}, ui)
+	out := opts.RunWithFiles(cmdtpl.Input{Files: filesToProcess}, ui)
 	if out.Err != nil {
 		t.Fatalf("Expected RunWithFiles to succeed, but was error: %s", out.Err)
 	}
@@ -152,7 +152,7 @@ nested:
 		KVsFromYAML: []string{"another_nested+.other_value=str2"},
 	}
 
-	out := opts.RunWithFiles(cmdtpl.TemplateInput{Files: filesToProcess}, ui)
+	out := opts.RunWithFiles(cmdtpl.Input{Files: filesToProcess}, ui)
 	if out.Err != nil {
 		t.Fatalf("Expected RunWithFiles to succeed, but was error: %s", out.Err)
 	}
@@ -227,7 +227,7 @@ nested-lib-val: passes
 		KVsFromYAML: []string{"@~inst1:lib_val=test", "@~inst1@nested-lib:nested_lib_val=passes"},
 	}
 
-	out := opts.RunWithFiles(cmdtpl.TemplateInput{Files: filesToProcess}, ui)
+	out := opts.RunWithFiles(cmdtpl.Input{Files: filesToProcess}, ui)
 	if out.Err != nil {
 		t.Fatalf("Expected RunWithFiles to succeed, but was error: %s", out.Err)
 	}
@@ -277,7 +277,7 @@ str: str2`)
 	ui := ui.NewTTY(false)
 	opts := cmdtpl.NewOptions()
 
-	out := opts.RunWithFiles(cmdtpl.TemplateInput{Files: filesToProcess}, ui)
+	out := opts.RunWithFiles(cmdtpl.Input{Files: filesToProcess}, ui)
 	if out.Err != nil {
 		t.Fatalf("Expected RunWithFiles to succeed, but was error: %s", out.Err)
 	}
@@ -326,7 +326,7 @@ int: 123`)
 	ui := ui.NewTTY(false)
 	opts := cmdtpl.NewOptions()
 
-	out := opts.RunWithFiles(cmdtpl.TemplateInput{Files: filesToProcess}, ui)
+	out := opts.RunWithFiles(cmdtpl.Input{Files: filesToProcess}, ui)
 	if out.Err != nil {
 		t.Fatalf("Expected RunWithFiles to succeed, but was error: %s", out.Err)
 	}
@@ -377,7 +377,7 @@ int: 123`)
 	ui := ui.NewTTY(false)
 	opts := cmdtpl.NewOptions()
 
-	out := opts.RunWithFiles(cmdtpl.TemplateInput{Files: filesToProcess}, ui)
+	out := opts.RunWithFiles(cmdtpl.Input{Files: filesToProcess}, ui)
 	if out.Err != nil {
 		t.Fatalf("Expected RunWithFiles to succeed, but was error: %s", out.Err)
 	}
@@ -429,7 +429,7 @@ data:
 	ui := ui.NewTTY(false)
 	opts := cmdtpl.NewOptions()
 
-	out := opts.RunWithFiles(cmdtpl.TemplateInput{Files: filesToProcess}, ui)
+	out := opts.RunWithFiles(cmdtpl.Input{Files: filesToProcess}, ui)
 	if out.Err != nil {
 		t.Fatalf("Expected RunWithFiles to succeed, but was error: %s", out.Err)
 	}
@@ -464,7 +464,7 @@ non-data-values-doc`)
 	ui := ui.NewTTY(false)
 	opts := cmdtpl.NewOptions()
 
-	out := opts.RunWithFiles(cmdtpl.TemplateInput{Files: filesToProcess}, ui)
+	out := opts.RunWithFiles(cmdtpl.Input{Files: filesToProcess}, ui)
 	if out.Err == nil {
 		t.Fatalf("Expected RunWithFiles to fail, but was no error")
 	}
@@ -487,7 +487,7 @@ str: str`)
 	ui := ui.NewTTY(false)
 	opts := cmdtpl.NewOptions()
 
-	out := opts.RunWithFiles(cmdtpl.TemplateInput{Files: filesToProcess}, ui)
+	out := opts.RunWithFiles(cmdtpl.Input{Files: filesToProcess}, ui)
 	if out.Err == nil {
 		t.Fatalf("Expected RunWithFiles to fail, but was no error")
 	}
@@ -531,7 +531,7 @@ data:
 	ui := ui.NewTTY(false)
 	opts := cmdtpl.NewOptions()
 
-	out := opts.RunWithFiles(cmdtpl.TemplateInput{Files: filesToProcess}, ui)
+	out := opts.RunWithFiles(cmdtpl.Input{Files: filesToProcess}, ui)
 	if out.Err != nil {
 		t.Fatalf("Expected RunWithFiles to succeed, but was error: %s", out.Err)
 	}
@@ -609,7 +609,7 @@ nested_val: nested_from_env
 		},
 	}
 
-	out := opts.RunWithFiles(cmdtpl.TemplateInput{Files: filesToProcess}, ui)
+	out := opts.RunWithFiles(cmdtpl.Input{Files: filesToProcess}, ui)
 	if out.Err != nil {
 		t.Fatalf("Expected RunWithFiles to succeed, but was error: %s", out.Err)
 	}

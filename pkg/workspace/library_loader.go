@@ -249,7 +249,7 @@ func (ll *LibraryLoader) eval(values *DataValues, libraryValues []*DataValues) (
 
 func (*LibraryLoader) sortedOutputDocSets(outputDocSets map[*FileInLibrary]*yamlmeta.DocumentSet) []*FileInLibrary {
 	var files []*FileInLibrary
-	for file, _ := range outputDocSets {
+	for file := range outputDocSets {
 		files = append(files, file)
 	}
 	SortFilesInLibrary(files)

@@ -71,7 +71,7 @@ func (s Symlink) isIn(path, allowedPath string) (bool, error) {
 		return false, nil
 	}
 
-	for i, _ := range allowedPathPieces {
+	for i := range allowedPathPieces {
 		if allowedPathPieces[i] != pathPieces[i] {
 			return false, nil
 		}

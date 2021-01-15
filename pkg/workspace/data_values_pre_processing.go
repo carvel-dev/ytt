@@ -80,30 +80,30 @@ func (o DataValuesPreProcessing) apply(files []*FileInLibrary) (*DataValues, []*
 	return dv, libraryValues, nil
 }
 
-func (p DataValuesPreProcessing) allFileDescs(files []*FileInLibrary) string {
+func (o DataValuesPreProcessing) allFileDescs(files []*FileInLibrary) string {
 	var result []string
 	for _, fileInLib := range files {
 		result = append(result, fileInLib.File.RelativePath())
 	}
-	if len(p.valuesOverlays) > 0 {
+	if len(o.valuesOverlays) > 0 {
 		result = append(result, "additional data values")
 	}
 	return strings.Join(result, ", ")
 }
 
-func (p DataValuesPreProcessing) templateFile(fileInLib *FileInLibrary) ([]*yamlmeta.Document, error) {
+func (o DataValuesPreProcessing) templateFile(fileInLib *FileInLibrary) ([]*yamlmeta.Document, error) {
 	libraryCtx := LibraryExecutionContext{Current: fileInLib.Library, Root: NewRootLibrary(nil)}
 
-	_, resultDocSet, err := p.loader.EvalYAML(libraryCtx, fileInLib.File)
+	_, resultDocSet, err := o.loader.EvalYAML(libraryCtx, fileInLib.File)
 	if err != nil {
 		return nil, err
 	}
-	if _, ok := p.loader.schema.(*schema.AnySchema); !ok {
+	if _, ok := o.loader.schema.(*schema.AnySchema); !ok {
 
 		var outerTypeCheck yamlmeta.TypeCheck
 		// Skip first document because the parser inserts a new doc start at the beginning of every doc
 		for _, doc := range resultDocSet.Items[1:] {
-			outerTypeCheck = p.loader.schema.AssignType(doc)
+			outerTypeCheck = o.loader.schema.AssignType(doc)
 			if len(outerTypeCheck.Violations) > 0 {
 				return resultDocSet.Items, fmt.Errorf("Typechecking violations found: [%v]", strings.Join(outerTypeCheck.Violations, ", "))
 			}
@@ -115,7 +115,7 @@ func (p DataValuesPreProcessing) templateFile(fileInLib *FileInLibrary) ([]*yaml
 		}
 	}
 
-	tplOpts := yamltemplate.MetasOpts{IgnoreUnknown: p.IgnoreUnknownComments}
+	tplOpts := yamltemplate.MetasOpts{IgnoreUnknown: o.IgnoreUnknownComments}
 
 	// Extract _all_ data values docs from the templated result
 	valuesDocs, nonValuesDocs, err := DocExtractor{resultDocSet, tplOpts}.Extract(AnnotationDataValues)
@@ -136,8 +136,8 @@ func (p DataValuesPreProcessing) templateFile(fileInLib *FileInLibrary) ([]*yaml
 	return valuesDocs, nil
 }
 
-func (p DataValuesPreProcessing) overlay(valuesDoc, newValuesDoc *yamlmeta.Document) (*yamlmeta.Document, error) {
-	op := yttoverlay.OverlayOp{
+func (o DataValuesPreProcessing) overlay(valuesDoc, newValuesDoc *yamlmeta.Document) (*yamlmeta.Document, error) {
+	op := yttoverlay.Op{
 		Left:   &yamlmeta.DocumentSet{Items: []*yamlmeta.Document{valuesDoc}},
 		Right:  &yamlmeta.DocumentSet{Items: []*yamlmeta.Document{newValuesDoc}},
 		Thread: &starlark.Thread{Name: "data-values-pre-processing"},
@@ -153,7 +153,7 @@ func (p DataValuesPreProcessing) overlay(valuesDoc, newValuesDoc *yamlmeta.Docum
 	return newLeft.(*yamlmeta.DocumentSet).Items[0], nil
 }
 
-func (p DataValuesPreProcessing) overlayValuesOverlays(valuesDoc *yamlmeta.Document) (*yamlmeta.Document, error) {
+func (o DataValuesPreProcessing) overlayValuesOverlays(valuesDoc *yamlmeta.Document) (*yamlmeta.Document, error) {
 	if valuesDoc == nil {
 		// TODO get rid of assumption that data values is a map?
 		valuesDoc = &yamlmeta.Document{
@@ -167,10 +167,10 @@ func (p DataValuesPreProcessing) overlayValuesOverlays(valuesDoc *yamlmeta.Docum
 	// by default return itself
 	result = valuesDoc
 
-	for _, valuesOverlay := range p.valuesOverlays {
+	for _, valuesOverlay := range o.valuesOverlays {
 		var err error
 
-		result, err = p.overlay(result, valuesOverlay.Doc)
+		result, err = o.overlay(result, valuesOverlay.Doc)
 		if err != nil {
 			// TODO improve error message?
 			return nil, fmt.Errorf("Overlaying additional data values on top of "+

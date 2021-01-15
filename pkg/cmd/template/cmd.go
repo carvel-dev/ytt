@@ -14,7 +14,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-type TemplateOptions struct {
+type Options struct {
 	IgnoreUnknownComments   bool
 	ImplicitMapKeyOverrides bool
 
@@ -29,11 +29,11 @@ type TemplateOptions struct {
 	DataValuesFlags        DataValuesFlags
 }
 
-type TemplateInput struct {
+type Input struct {
 	Files []*files.File
 }
 
-type TemplateOutput struct {
+type Output struct {
 	Files  []files.OutputFile
 	DocSet *yamlmeta.DocumentSet
 	Err    error
@@ -42,17 +42,17 @@ type TemplateOutput struct {
 type FileSource interface {
 	HasInput() bool
 	HasOutput() bool
-	Input() (TemplateInput, error)
-	Output(TemplateOutput) error
+	Input() (Input, error)
+	Output(Output) error
 }
 
 var _ []FileSource = []FileSource{&BulkFilesSource{}, &RegularFilesSource{}}
 
-func NewOptions() *TemplateOptions {
-	return &TemplateOptions{}
+func NewOptions() *Options {
+	return &Options{}
 }
 
-func NewCmd(o *TemplateOptions) *cobra.Command {
+func NewCmd(o *Options) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "template",
 		Aliases: []string{"t", "tpl"},
@@ -75,7 +75,7 @@ func NewCmd(o *TemplateOptions) *cobra.Command {
 	return cmd
 }
 
-func (o *TemplateOptions) Run() error {
+func (o *Options) Run() error {
 	ui := ui.NewTTY(o.Debug)
 	t1 := time.Now()
 
@@ -97,12 +97,12 @@ func (o *TemplateOptions) Run() error {
 	return o.pickSource(srcs, func(s FileSource) bool { return s.HasOutput() }).Output(out)
 }
 
-func (o *TemplateOptions) RunWithFiles(in TemplateInput, ui ui.UI) TemplateOutput {
+func (o *Options) RunWithFiles(in Input, ui ui.UI) Output {
 	var err error
 
 	in.Files, err = o.FileMarksOpts.Apply(in.Files)
 	if err != nil {
-		return TemplateOutput{Err: err}
+		return Output{Err: err}
 	}
 
 	rootLibrary := workspace.NewRootLibrary(in.Files)
@@ -114,7 +114,7 @@ func (o *TemplateOptions) RunWithFiles(in TemplateInput, ui ui.UI) TemplateOutpu
 
 	valuesOverlays, libraryValuesOverlays, err := o.DataValuesFlags.AsOverlays(o.StrictYAML)
 	if err != nil {
-		return TemplateOutput{Err: err}
+		return Output{Err: err}
 	}
 
 	libraryExecutionFactory := workspace.NewLibraryExecutionFactory(ui, workspace.TemplateLoaderOpts{
@@ -128,7 +128,7 @@ func (o *TemplateOptions) RunWithFiles(in TemplateInput, ui ui.UI) TemplateOutpu
 
 	schemaDocs, err := libraryLoader.Schemas()
 	if err != nil {
-		return TemplateOutput{Err: err}
+		return Output{Err: err}
 	}
 
 	var currSchema workspace.Schema
@@ -139,7 +139,7 @@ func (o *TemplateOptions) RunWithFiles(in TemplateInput, ui ui.UI) TemplateOutpu
 		if len(schemaDocs) > 0 {
 			currSchema, err = schema.NewDocumentSchema(schemaDocs[0])
 			if err != nil {
-				return TemplateOutput{Err: err}
+				return Output{Err: err}
 			}
 		} else {
 			currSchema = schema.NullSchema{}
@@ -153,13 +153,13 @@ func (o *TemplateOptions) RunWithFiles(in TemplateInput, ui ui.UI) TemplateOutpu
 
 	values, libraryValues, err = libraryLoader.Values(valuesOverlays, currSchema)
 	if err != nil {
-		return TemplateOutput{Err: err}
+		return Output{Err: err}
 	}
 
 	libraryValues = append(libraryValues, libraryValuesOverlays...)
 
 	if o.DataValuesFlags.Inspect {
-		return TemplateOutput{
+		return Output{
 			DocSet: &yamlmeta.DocumentSet{
 				Items: []*yamlmeta.Document{values.Doc},
 			},
@@ -168,13 +168,13 @@ func (o *TemplateOptions) RunWithFiles(in TemplateInput, ui ui.UI) TemplateOutpu
 
 	result, err := libraryLoader.Eval(values, libraryValues)
 	if err != nil {
-		return TemplateOutput{Err: err}
+		return Output{Err: err}
 	}
 
-	return TemplateOutput{Files: result.Files, DocSet: result.DocSet}
+	return Output{Files: result.Files, DocSet: result.DocSet}
 }
 
-func (o *TemplateOptions) pickSource(srcs []FileSource, pickFunc func(FileSource) bool) FileSource {
+func (o *Options) pickSource(srcs []FileSource, pickFunc func(FileSource) bool) FileSource {
 	for _, src := range srcs {
 		if pickFunc(src) {
 			return src
@@ -183,7 +183,7 @@ func (o *TemplateOptions) pickSource(srcs []FileSource, pickFunc func(FileSource
 	return srcs[len(srcs)-1]
 }
 
-func (o *TemplateOptions) inspectFiles(rootLibrary *workspace.Library) TemplateOutput {
+func (o *Options) inspectFiles(rootLibrary *workspace.Library) Output {
 	accessibleFiles := rootLibrary.ListAccessibleFiles()
 	workspace.SortFilesInLibrary(accessibleFiles)
 
@@ -195,7 +195,7 @@ func (o *TemplateOptions) inspectFiles(rootLibrary *workspace.Library) TemplateO
 		})
 	}
 
-	return TemplateOutput{
+	return Output{
 		DocSet: &yamlmeta.DocumentSet{
 			Items: []*yamlmeta.Document{{Value: paths}},
 		},

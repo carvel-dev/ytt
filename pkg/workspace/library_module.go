@@ -40,7 +40,7 @@ func (b LibraryModule) AsModule() starlark.StringDict {
 	}
 }
 
-func (l LibraryModule) Get(thread *starlark.Thread, f *starlark.Builtin,
+func (b LibraryModule) Get(thread *starlark.Thread, f *starlark.Builtin,
 	args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
 
 	if args.Len() != 1 {
@@ -52,7 +52,7 @@ func (l LibraryModule) Get(thread *starlark.Thread, f *starlark.Builtin,
 		return starlark.None, err
 	}
 
-	libAlias, tplLoaderOptsOverrides, err := l.getOpts(kwargs)
+	libAlias, tplLoaderOptsOverrides, err := b.getOpts(kwargs)
 	if err != nil {
 		return starlark.None, err
 	}
@@ -62,21 +62,21 @@ func (l LibraryModule) Get(thread *starlark.Thread, f *starlark.Builtin,
 			"Expected library '%s' to be specified without '@'", libPath)
 	}
 
-	foundLib, err := l.libraryCtx.Current.FindAccessibleLibrary(libPath)
+	foundLib, err := b.libraryCtx.Current.FindAccessibleLibrary(libPath)
 	if err != nil {
 		return starlark.None, err
 	}
 
 	// copy over library values
-	dataValuess := append([]*DataValues{}, l.libraryValues...)
+	dataValuess := append([]*DataValues{}, b.libraryValues...)
 	libraryCtx := LibraryExecutionContext{Current: foundLib, Root: foundLib}
 
 	return (&libraryValue{libPath, libAlias, dataValuess, libraryCtx,
-		l.libraryExecutionFactory.WithTemplateLoaderOptsOverrides(tplLoaderOptsOverrides),
+		b.libraryExecutionFactory.WithTemplateLoaderOptsOverrides(tplLoaderOptsOverrides),
 	}).AsStarlarkValue(), nil
 }
 
-func (l LibraryModule) getOpts(kwargs []starlark.Tuple) (string, TemplateLoaderOptsOverrides, error) {
+func (b LibraryModule) getOpts(kwargs []starlark.Tuple) (string, TemplateLoaderOptsOverrides, error) {
 	var alias string
 	var overrides TemplateLoaderOptsOverrides
 

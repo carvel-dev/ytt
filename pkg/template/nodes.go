@@ -30,7 +30,7 @@ func NewNodes() *Nodes {
 func (n *Nodes) Ancestors() Ancestors { return NewAncestors(n.childToParentTag) }
 
 func (n *Nodes) AddRootNode(node EvaluationNode) NodeTag {
-	n.id += 1
+	n.id++
 	tag := NodeTag{n.id}
 	n.tagToNode[tag] = node
 	n.childToParentTag[tag] = NodeTagRoot
@@ -38,7 +38,7 @@ func (n *Nodes) AddRootNode(node EvaluationNode) NodeTag {
 }
 
 func (n *Nodes) AddNode(node EvaluationNode, parentTag NodeTag) NodeTag {
-	n.id += 1
+	n.id++
 	tag := NodeTag{n.id}
 	n.tagToNode[tag] = node
 	n.childToParentTag[tag] = parentTag

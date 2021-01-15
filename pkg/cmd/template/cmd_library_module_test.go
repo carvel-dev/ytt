@@ -284,7 +284,7 @@ func TestLibraryModuleWithExportConflicts(t *testing.T) {
 	ui := ui.NewTTY(false)
 	opts := cmdtpl.NewOptions()
 
-	out := opts.RunWithFiles(cmdtpl.TemplateInput{Files: filesToProcess}, ui)
+	out := opts.RunWithFiles(cmdtpl.Input{Files: filesToProcess}, ui)
 	if out.Err == nil {
 		t.Fatalf("Expected RunWithFiles to fail, but was no error")
 	}
@@ -316,7 +316,7 @@ func TestLibraryModuleWithExportPrivate(t *testing.T) {
 	ui := ui.NewTTY(false)
 	opts := cmdtpl.NewOptions()
 
-	out := opts.RunWithFiles(cmdtpl.TemplateInput{Files: filesToProcess}, ui)
+	out := opts.RunWithFiles(cmdtpl.Input{Files: filesToProcess}, ui)
 	if out.Err == nil {
 		t.Fatalf("Expected RunWithFiles to fail, but was no error")
 	}
@@ -835,7 +835,7 @@ lib_val2: #@ data.values.lib_val2`)
 	ui := ui.NewTTY(false)
 	opts := cmdtpl.NewOptions()
 
-	out := opts.RunWithFiles(cmdtpl.TemplateInput{Files: filesToProcess}, ui)
+	out := opts.RunWithFiles(cmdtpl.Input{Files: filesToProcess}, ui)
 	if out.Err == nil {
 		t.Fatalf("Expected RunWithFiles to error but it did not")
 	}
@@ -887,7 +887,7 @@ nested_lib_val1: override-me`)
 	ui := ui.NewTTY(false)
 	opts := cmdtpl.NewOptions()
 
-	out := opts.RunWithFiles(cmdtpl.TemplateInput{Files: filesToProcess}, ui)
+	out := opts.RunWithFiles(cmdtpl.Input{Files: filesToProcess}, ui)
 	if out.Err == nil {
 		t.Fatalf("Expected RunWithFiles to error but it did not")
 	}
@@ -920,7 +920,7 @@ nested_lib_val1: new-val1`)
 	ui := ui.NewTTY(false)
 	opts := cmdtpl.NewOptions()
 
-	out := opts.RunWithFiles(cmdtpl.TemplateInput{Files: filesToProcess}, ui)
+	out := opts.RunWithFiles(cmdtpl.Input{Files: filesToProcess}, ui)
 	if out.Err == nil {
 		t.Fatalf("Expected RunWithFiles to error but it did not")
 	}
@@ -953,7 +953,7 @@ nested_lib_val1: new-val1`)
 	ui := ui.NewTTY(false)
 	opts := cmdtpl.NewOptions()
 
-	out := opts.RunWithFiles(cmdtpl.TemplateInput{Files: filesToProcess}, ui)
+	out := opts.RunWithFiles(cmdtpl.Input{Files: filesToProcess}, ui)
 	if out.Err == nil {
 		t.Fatalf("Expected RunWithFiles to error but it did not")
 	}
@@ -979,7 +979,7 @@ lib_val1: val1
 	ui := ui.NewTTY(false)
 	opts := cmdtpl.NewOptions()
 
-	out := opts.RunWithFiles(cmdtpl.TemplateInput{Files: filesToProcess}, ui)
+	out := opts.RunWithFiles(cmdtpl.Input{Files: filesToProcess}, ui)
 	if out.Err == nil {
 		t.Fatalf("Expected RunWithFiles to error but it did not")
 	}
@@ -1004,7 +1004,7 @@ lib_val1: val1
 	ui := ui.NewTTY(false)
 	opts := cmdtpl.NewOptions()
 
-	out := opts.RunWithFiles(cmdtpl.TemplateInput{Files: filesToProcess}, ui)
+	out := opts.RunWithFiles(cmdtpl.Input{Files: filesToProcess}, ui)
 	if out.Err == nil {
 		t.Fatalf("Expected RunWithFiles to error but it did not")
 	}
@@ -1115,7 +1115,7 @@ lib_int: #@ data.values.int`)
 	ui := ui.NewTTY(false)
 	opts := cmdtpl.NewOptions()
 
-	out := opts.RunWithFiles(cmdtpl.TemplateInput{Files: filesToProcess}, ui)
+	out := opts.RunWithFiles(cmdtpl.Input{Files: filesToProcess}, ui)
 	if out.Err == nil {
 		t.Fatalf("Expected RunWithFiles to error but it did not")
 	}
@@ -1129,7 +1129,7 @@ func runAndCompare(t *testing.T, filesToProcess []*files.File, expectedYAMLTplDa
 	ui := ui.NewTTY(false)
 	opts := cmdtpl.NewOptions()
 
-	out := opts.RunWithFiles(cmdtpl.TemplateInput{Files: filesToProcess}, ui)
+	out := opts.RunWithFiles(cmdtpl.Input{Files: filesToProcess}, ui)
 	if out.Err != nil {
 		t.Fatalf("Expected RunWithFiles to succeed, but was error: %s", out.Err)
 	}

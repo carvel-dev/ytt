@@ -9,7 +9,7 @@ import (
 	"github.com/k14s/ytt/pkg/filepos"
 )
 
-type TemplateLine struct {
+type Line struct {
 	Instruction Instruction
 	SourceLine  *SourceLine
 }
@@ -20,15 +20,15 @@ type SourceLine struct {
 	Selection *SourceLine
 }
 
-func NewCodeFromBytes(bs []byte, instructions *InstructionSet) []TemplateLine {
+func NewCodeFromBytes(bs []byte, instructions *InstructionSet) []Line {
 	return NewCodeFromBytesAtPosition(bs, filepos.NewPosition(1), instructions)
 }
 
-func NewCodeFromBytesAtPosition(bs []byte, pos *filepos.Position, instructions *InstructionSet) []TemplateLine {
-	var result []TemplateLine
+func NewCodeFromBytesAtPosition(bs []byte, pos *filepos.Position, instructions *InstructionSet) []Line {
+	var result []Line
 
 	for i, line := range bytes.Split(bs, []byte("\n")) {
-		result = append(result, TemplateLine{
+		result = append(result, Line{
 			Instruction: instructions.NewCode(string(line)),
 			SourceLine:  NewSourceLine(pos.DeepCopyWithLineOffset(i), string(line)),
 		})

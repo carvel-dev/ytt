@@ -48,7 +48,7 @@ func (b overlayModule) Apply(
 
 	for _, right := range typedVals[1:] {
 		var err error
-		result, err = OverlayOp{Left: result, Right: right, Thread: thread}.Apply() // left is modified
+		result, err = Op{Left: result, Right: right, Thread: thread}.Apply() // left is modified
 		if err != nil {
 			return starlark.None, err
 		}

@@ -47,12 +47,12 @@ func (e *Template) Compile(docSet *yamlmeta.DocumentSet) (*template.CompiledTemp
 		return nil, err
 	}
 
-	code = append([]template.TemplateLine{
+	code = append([]template.Line{
 		e.resetCtxType(),
 		{Instruction: e.instructions.NewStartCtx(EvaluationCtxDialectName)},
 	}, code...)
 
-	code = append(code, template.TemplateLine{
+	code = append(code, template.Line{
 		Instruction: e.instructions.NewEndCtxNone(), // TODO ideally we would return array of docset
 	})
 
@@ -68,20 +68,20 @@ type buildOpts struct {
 	TextTemplatedStrings bool
 }
 
-func (e *Template) build(val interface{}, parentNode yamlmeta.Node, parentTag template.NodeTag, opts buildOpts) ([]template.TemplateLine, error) {
+func (e *Template) build(val interface{}, parentNode yamlmeta.Node, parentTag template.NodeTag, opts buildOpts) ([]template.Line, error) {
 	node, ok := val.(yamlmeta.Node)
 	if !ok {
 		if valStr, ok := val.(string); ok && opts.TextTemplatedStrings {
 			return e.buildString(valStr, parentNode, parentTag, e.instructions.NewSetNodeValue)
 		}
 
-		return []template.TemplateLine{{
+		return []template.Line{{
 			Instruction: e.instructions.NewSetNode(parentTag).WithDebug(e.debugComment(parentNode)),
 			SourceLine:  e.newSourceLine(parentNode.GetPosition()),
 		}}, nil
 	}
 
-	code := []template.TemplateLine{}
+	code := []template.Line{}
 	nodeTag := e.nodes.AddNode(node, parentTag)
 
 	metas, err := NewMetas(node, MetasOpts{IgnoreUnknown: e.opts.IgnoreUnknownComments})
@@ -94,14 +94,14 @@ func (e *Template) build(val interface{}, parentNode yamlmeta.Node, parentTag te
 	}
 
 	for _, blk := range metas.Block {
-		code = append(code, template.TemplateLine{
+		code = append(code, template.Line{
 			Instruction: e.instructions.NewCode(blk.Data),
 			SourceLine:  e.newSourceLine(blk.Position),
 		})
 	}
 
 	for _, metaAndAnn := range metas.Annotations {
-		code = append(code, template.TemplateLine{
+		code = append(code, template.Line{
 			Instruction: e.instructions.NewStartNodeAnnotation(nodeTag, *metaAndAnn.Annotation).WithDebug(e.debugComment(node)),
 			SourceLine:  e.newSourceLine(metaAndAnn.Meta.Position),
 		})
@@ -117,14 +117,14 @@ func (e *Template) build(val interface{}, parentNode yamlmeta.Node, parentTag te
 		}
 	}
 
-	code = append(code, template.TemplateLine{
+	code = append(code, template.Line{
 		Instruction: e.instructions.NewStartNode(nodeTag).WithDebug(e.debugComment(node)),
 		SourceLine:  e.newSourceLine(node.GetPosition()),
 	})
 
 	if len(metas.Values) > 0 {
 		for _, val := range metas.Values {
-			code = append(code, template.TemplateLine{
+			code = append(code, template.Line{
 				Instruction: e.instructions.NewSetNodeValue(nodeTag, val.Data).WithDebug(e.debugComment(node)),
 				SourceLine:  e.newSourceLine(val.Position),
 			})
@@ -140,7 +140,7 @@ func (e *Template) build(val interface{}, parentNode yamlmeta.Node, parentTag te
 	}
 
 	if metas.NeedsEnd() {
-		code = append(code, template.TemplateLine{
+		code = append(code, template.Line{
 			// TODO should we set position to start node?
 			Instruction: e.instructions.NewCode("end"),
 		})
@@ -161,7 +161,7 @@ func (e *Template) allowsTextTemplatedStrings(metas Metas) bool {
 }
 
 func (e *Template) buildString(val string, node yamlmeta.Node, nodeTag template.NodeTag,
-	instruction func(template.NodeTag, string) template.Instruction) ([]template.TemplateLine, error) {
+	instruction func(template.NodeTag, string) template.Instruction) ([]template.Line, error) {
 
 	// TODO line numbers for inlined template are somewhat correct
 	// (does not handle pipe-multi-line string format - off by 1)
@@ -180,7 +180,7 @@ func (e *Template) buildString(val string, node yamlmeta.Node, nodeTag template.
 		return nil, fmt.Errorf("Expected last instruction to be endctx, but was %#v", lastInstruction.Op())
 	}
 
-	code[len(code)-1] = template.TemplateLine{
+	code[len(code)-1] = template.Line{
 		Instruction: instruction(nodeTag, lastInstruction.AsString()).WithDebug(e.debugComment(node)),
 		SourceLine:  e.newSourceLine(node.GetPosition()),
 	}
@@ -192,8 +192,8 @@ func (e *Template) buildString(val string, node yamlmeta.Node, nodeTag template.
 	return code, nil
 }
 
-func (e *Template) resetCtxType() template.TemplateLine {
-	return template.TemplateLine{
+func (e *Template) resetCtxType() template.Line {
+	return template.Line{
 		Instruction: e.instructions.NewSetCtxType(EvaluationCtxDialectName),
 	}
 }
@@ -236,8 +236,8 @@ func (e *Template) sourceCodeLines() map[int]string {
 	return e.srcLinesByLine
 }
 
-func (e *Template) wrapCodeWithSourceLines(code []template.TemplateLine) []template.TemplateLine {
-	var wrappedCode []template.TemplateLine
+func (e *Template) wrapCodeWithSourceLines(code []template.Line) []template.Line {
+	var wrappedCode []template.Line
 	for _, line := range code {
 		if line.SourceLine != nil {
 			newSrcLine := e.newSourceLine(line.SourceLine.Position)

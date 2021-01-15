@@ -1,0 +1,9 @@
+linters:
+  enable:
+    - goheader
+    - golint
+  disable-all: true
+# all available settings of specific linters
+linters-settings:
+  goheader:
+    template-path: code-header-template.txt

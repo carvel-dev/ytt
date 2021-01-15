@@ -95,7 +95,7 @@ func NewMetas(node yamlmeta.Node, opts MetasOpts) (Metas, error) {
 
 				for keyword, replacementKeyword := range nodeSpecificKeywords {
 					if strings.HasPrefix(code, spacePrefix+keyword) {
-						metas.needsEnds += 1
+						metas.needsEnds++
 						code = strings.Replace(code, spacePrefix+keyword, spacePrefix+replacementKeyword, 1)
 					}
 				}

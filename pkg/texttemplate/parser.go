@@ -77,10 +77,10 @@ func (p *Parser) parse(dataBs []byte, associatedName string, startPos *filepos.P
 		}
 
 		if currChar == '\n' {
-			currLine += 1
+			currLine++
 			currCol = 1
 		} else {
-			currCol += 1
+			currCol++
 		}
 
 		lastChar = currChar

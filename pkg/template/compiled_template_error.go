@@ -28,10 +28,10 @@ type CompiledTemplateError struct {
 type CompiledTemplateErrorPosition struct {
 	Filename     string
 	ContextName  string
-	TemplateLine *TemplateLine
+	TemplateLine *Line
 
-	BeforeTemplateLine *TemplateLine
-	AfterTemplateLine  *TemplateLine
+	BeforeTemplateLine *Line
+	AfterTemplateLine  *Line
 }
 
 func NewCompiledTemplateMultiError(err error, loader CompiledTemplateLoader) error {
@@ -173,7 +173,7 @@ func (e CompiledTemplateMultiError) buildPos(pos syntax.Position) CompiledTempla
 	}
 }
 
-func (CompiledTemplateMultiError) findClosestLine(ct *CompiledTemplate, posLine int, lineInc int) *TemplateLine {
+func (CompiledTemplateMultiError) findClosestLine(ct *CompiledTemplate, posLine int, lineInc int) *Line {
 	for {
 		posLine += lineInc
 		if posLine < 1 {
