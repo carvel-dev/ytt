@@ -45,14 +45,14 @@ func (o OverlayPostProcessing) Apply() (map[*FileInLibrary]*yamlmeta.DocumentSet
 
 	// Respect assigned file order for data values overlaying to succeed
 	var sortedOverlayFiles []*FileInLibrary
-	for file, _ := range overlayDocSets {
+	for file := range overlayDocSets {
 		sortedOverlayFiles = append(sortedOverlayFiles, file)
 	}
 	SortFilesInLibrary(sortedOverlayFiles)
 
 	for _, file := range sortedOverlayFiles {
 		for _, overlay := range overlayDocSets[file] {
-			op := yttoverlay.OverlayOp{
+			op := yttoverlay.Op{
 				// special case: array of docsets so that file association can be preserved
 				Left: docSetsWithoutOverlays,
 				Right: &yamlmeta.DocumentSet{

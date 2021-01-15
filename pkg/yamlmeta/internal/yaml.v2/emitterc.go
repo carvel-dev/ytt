@@ -1,3 +1,6 @@
+// Copyright 2020 VMware, Inc.
+// SPDX-License-Identifier: Apache-2.0
+
 package yaml
 
 import (
@@ -6,40 +9,40 @@ import (
 )
 
 // Flush the buffer if needed.
-func flush(emitter *yaml_emitter_t) bool {
-	if emitter.buffer_pos+5 >= len(emitter.buffer) {
-		return yaml_emitter_flush(emitter)
+func flush(emitter *yamlEmitterT) bool {
+	if emitter.bufferPos+5 >= len(emitter.buffer) {
+		return yamlEmitterFlush(emitter)
 	}
 	return true
 }
 
 // Put a character to the output buffer.
-func put(emitter *yaml_emitter_t, value byte) bool {
-	if emitter.buffer_pos+5 >= len(emitter.buffer) && !yaml_emitter_flush(emitter) {
+func put(emitter *yamlEmitterT, value byte) bool {
+	if emitter.bufferPos+5 >= len(emitter.buffer) && !yamlEmitterFlush(emitter) {
 		return false
 	}
-	emitter.buffer[emitter.buffer_pos] = value
-	emitter.buffer_pos++
+	emitter.buffer[emitter.bufferPos] = value
+	emitter.bufferPos++
 	emitter.column++
 	return true
 }
 
 // Put a line break to the output buffer.
-func put_break(emitter *yaml_emitter_t) bool {
-	if emitter.buffer_pos+5 >= len(emitter.buffer) && !yaml_emitter_flush(emitter) {
+func putBreak(emitter *yamlEmitterT) bool {
+	if emitter.bufferPos+5 >= len(emitter.buffer) && !yamlEmitterFlush(emitter) {
 		return false
 	}
-	switch emitter.line_break {
-	case yaml_CR_BREAK:
-		emitter.buffer[emitter.buffer_pos] = '\r'
-		emitter.buffer_pos += 1
-	case yaml_LN_BREAK:
-		emitter.buffer[emitter.buffer_pos] = '\n'
-		emitter.buffer_pos += 1
-	case yaml_CRLN_BREAK:
-		emitter.buffer[emitter.buffer_pos+0] = '\r'
-		emitter.buffer[emitter.buffer_pos+1] = '\n'
-		emitter.buffer_pos += 2
+	switch emitter.lineBreak {
+	case yamlCrBreak:
+		emitter.buffer[emitter.bufferPos] = '\r'
+		emitter.bufferPos++
+	case yamlLnBreak:
+		emitter.buffer[emitter.bufferPos] = '\n'
+		emitter.bufferPos++
+	case yamlCrlnBreak:
+		emitter.buffer[emitter.bufferPos+0] = '\r'
+		emitter.buffer[emitter.bufferPos+1] = '\n'
+		emitter.bufferPos += 2
 	default:
 		panic("unknown line break setting")
 	}
@@ -49,11 +52,11 @@ func put_break(emitter *yaml_emitter_t) bool {
 }
 
 // Copy a character from a string into buffer.
-func write(emitter *yaml_emitter_t, s []byte, i *int) bool {
-	if emitter.buffer_pos+5 >= len(emitter.buffer) && !yaml_emitter_flush(emitter) {
+func write(emitter *yamlEmitterT, s []byte, i *int) bool {
+	if emitter.bufferPos+5 >= len(emitter.buffer) && !yamlEmitterFlush(emitter) {
 		return false
 	}
-	p := emitter.buffer_pos
+	p := emitter.bufferPos
 	w := width(s[*i])
 	switch w {
 	case 4:
@@ -71,13 +74,13 @@ func write(emitter *yaml_emitter_t, s []byte, i *int) bool {
 		panic("unknown character width")
 	}
 	emitter.column++
-	emitter.buffer_pos += w
+	emitter.bufferPos += w
 	*i += w
 	return true
 }
 
 // Write a whole string into buffer.
-func write_all(emitter *yaml_emitter_t, s []byte) bool {
+func writeAll(emitter *yamlEmitterT, s []byte) bool {
 	for i := 0; i < len(s); {
 		if !write(emitter, s, &i) {
 			return false
@@ -87,9 +90,9 @@ func write_all(emitter *yaml_emitter_t, s []byte) bool {
 }
 
 // Copy a line break character from a string into buffer.
-func write_break(emitter *yaml_emitter_t, s []byte, i *int) bool {
+func writeBreak(emitter *yamlEmitterT, s []byte, i *int) bool {
 	if s[*i] == '\n' {
-		if !put_break(emitter) {
+		if !putBreak(emitter) {
 			return false
 		}
 		*i++
@@ -104,25 +107,25 @@ func write_break(emitter *yaml_emitter_t, s []byte, i *int) bool {
 }
 
 // Set an emitter error and return false.
-func yaml_emitter_set_emitter_error(emitter *yaml_emitter_t, problem string) bool {
-	emitter.error = yaml_EMITTER_ERROR
+func yamlEmitterSetEmitterError(emitter *yamlEmitterT, problem string) bool {
+	emitter.error = yamlEmitterError
 	emitter.problem = problem
 	return false
 }
 
 // Emit an event.
-func yaml_emitter_emit(emitter *yaml_emitter_t, event *yaml_event_t) bool {
+func yamlEmitterEmit(emitter *yamlEmitterT, event *yamlEventT) bool {
 	emitter.events = append(emitter.events, *event)
-	for !yaml_emitter_need_more_events(emitter) {
-		event := &emitter.events[emitter.events_head]
-		if !yaml_emitter_analyze_event(emitter, event) {
+	for !yamlEmitterNeedMoreEvents(emitter) {
+		event := &emitter.events[emitter.eventsHead]
+		if !yamlEmitterAnalyzeEvent(emitter, event) {
 			return false
 		}
-		if !yaml_emitter_state_machine(emitter, event) {
+		if !yamlEmitterStateMachine(emitter, event) {
 			return false
 		}
-		yaml_event_delete(event)
-		emitter.events_head++
+		yamlEventDelete(event)
+		emitter.eventsHead++
 	}
 	return true
 }
@@ -134,33 +137,33 @@ func yaml_emitter_emit(emitter *yaml_emitter_t, event *yaml_event_t) bool {
 //  - 2 events for SEQUENCE-START
 //  - 3 events for MAPPING-START
 //
-func yaml_emitter_need_more_events(emitter *yaml_emitter_t) bool {
-	if emitter.events_head == len(emitter.events) {
+func yamlEmitterNeedMoreEvents(emitter *yamlEmitterT) bool {
+	if emitter.eventsHead == len(emitter.events) {
 		return true
 	}
 	var accumulate int
-	switch emitter.events[emitter.events_head].typ {
-	case yaml_DOCUMENT_START_EVENT:
+	switch emitter.events[emitter.eventsHead].typ {
+	case yamlDocumentStartEvent:
 		accumulate = 1
 		break
-	case yaml_SEQUENCE_START_EVENT:
+	case yamlSequenceStartEvent:
 		accumulate = 2
 		break
-	case yaml_MAPPING_START_EVENT:
+	case yamlMappingStartEvent:
 		accumulate = 3
 		break
 	default:
 		return false
 	}
-	if len(emitter.events)-emitter.events_head > accumulate {
+	if len(emitter.events)-emitter.eventsHead > accumulate {
 		return false
 	}
 	var level int
-	for i := emitter.events_head; i < len(emitter.events); i++ {
+	for i := emitter.eventsHead; i < len(emitter.events); i++ {
 		switch emitter.events[i].typ {
-		case yaml_STREAM_START_EVENT, yaml_DOCUMENT_START_EVENT, yaml_SEQUENCE_START_EVENT, yaml_MAPPING_START_EVENT:
+		case yamlStreamStartEvent, yamlDocumentStartEvent, yamlSequenceStartEvent, yamlMappingStartEvent:
 			level++
-		case yaml_STREAM_END_EVENT, yaml_DOCUMENT_END_EVENT, yaml_SEQUENCE_END_EVENT, yaml_MAPPING_END_EVENT:
+		case yamlStreamEndEvent, yamlDocumentEndEvent, yamlSequenceEndEvent, yamlMappingEndEvent:
 			level--
 		}
 		if level == 0 {
@@ -171,126 +174,126 @@ func yaml_emitter_need_more_events(emitter *yaml_emitter_t) bool {
 }
 
 // Append a directive to the directives stack.
-func yaml_emitter_append_tag_directive(emitter *yaml_emitter_t, value *yaml_tag_directive_t, allow_duplicates bool) bool {
-	for i := 0; i < len(emitter.tag_directives); i++ {
-		if bytes.Equal(value.handle, emitter.tag_directives[i].handle) {
-			if allow_duplicates {
+func yamlEmitterAppendTagDirective(emitter *yamlEmitterT, value *yamlTagDirectiveT, allowDuplicates bool) bool {
+	for i := 0; i < len(emitter.tagDirectives); i++ {
+		if bytes.Equal(value.handle, emitter.tagDirectives[i].handle) {
+			if allowDuplicates {
 				return true
 			}
-			return yaml_emitter_set_emitter_error(emitter, "duplicate %TAG directive")
+			return yamlEmitterSetEmitterError(emitter, "duplicate %TAG directive")
 		}
 	}
 
 	// [Go] Do we actually need to copy this given garbage collection
 	// and the lack of deallocating destructors?
-	tag_copy := yaml_tag_directive_t{
+	tagCopy := yamlTagDirectiveT{
 		handle: make([]byte, len(value.handle)),
 		prefix: make([]byte, len(value.prefix)),
 	}
-	copy(tag_copy.handle, value.handle)
-	copy(tag_copy.prefix, value.prefix)
-	emitter.tag_directives = append(emitter.tag_directives, tag_copy)
+	copy(tagCopy.handle, value.handle)
+	copy(tagCopy.prefix, value.prefix)
+	emitter.tagDirectives = append(emitter.tagDirectives, tagCopy)
 	return true
 }
 
 // Increase the indentation level.
-func yaml_emitter_increase_indent(emitter *yaml_emitter_t, flow, indentless bool) bool {
+func yamlEmitterIncreaseIndent(emitter *yamlEmitterT, flow, indentless bool) bool {
 	emitter.indents = append(emitter.indents, emitter.indent)
 	if emitter.indent < 0 {
 		if flow {
-			emitter.indent = emitter.best_indent
+			emitter.indent = emitter.bestIndent
 		} else {
 			emitter.indent = 0
 		}
 	} else if !indentless {
-		emitter.indent += emitter.best_indent
+		emitter.indent += emitter.bestIndent
 	}
 	return true
 }
 
 // State dispatcher.
-func yaml_emitter_state_machine(emitter *yaml_emitter_t, event *yaml_event_t) bool {
+func yamlEmitterStateMachine(emitter *yamlEmitterT, event *yamlEventT) bool {
 	switch emitter.state {
 	default:
-	case yaml_EMIT_STREAM_START_STATE:
-		return yaml_emitter_emit_stream_start(emitter, event)
+	case yamlEmitStreamStartState:
+		return yamlEmitterEmitStreamStart(emitter, event)
 
-	case yaml_EMIT_FIRST_DOCUMENT_START_STATE:
-		return yaml_emitter_emit_document_start(emitter, event, true)
+	case yamlEmitFirstDocumentStartState:
+		return yamlEmitterEmitDocumentStart(emitter, event, true)
 
-	case yaml_EMIT_DOCUMENT_START_STATE:
-		return yaml_emitter_emit_document_start(emitter, event, false)
+	case yamlEmitDocumentStartState:
+		return yamlEmitterEmitDocumentStart(emitter, event, false)
 
-	case yaml_EMIT_DOCUMENT_CONTENT_STATE:
-		return yaml_emitter_emit_document_content(emitter, event)
+	case yamlEmitDocumentContentState:
+		return yamlEmitterEmitDocumentContent(emitter, event)
 
-	case yaml_EMIT_DOCUMENT_END_STATE:
-		return yaml_emitter_emit_document_end(emitter, event)
+	case yamlEmitDocumentEndState:
+		return yamlEmitterEmitDocumentEnd(emitter, event)
 
-	case yaml_EMIT_FLOW_SEQUENCE_FIRST_ITEM_STATE:
-		return yaml_emitter_emit_flow_sequence_item(emitter, event, true)
+	case yamlEmitFlowSequenceFirstItemState:
+		return yamlEmitterEmitFlowSequenceItem(emitter, event, true)
 
-	case yaml_EMIT_FLOW_SEQUENCE_ITEM_STATE:
-		return yaml_emitter_emit_flow_sequence_item(emitter, event, false)
+	case yamlEmitFlowSequenceItemState:
+		return yamlEmitterEmitFlowSequenceItem(emitter, event, false)
 
-	case yaml_EMIT_FLOW_MAPPING_FIRST_KEY_STATE:
-		return yaml_emitter_emit_flow_mapping_key(emitter, event, true)
+	case yamlEmitFlowMappingFirstKeyState:
+		return yamlEmitterEmitFlowMappingKey(emitter, event, true)
 
-	case yaml_EMIT_FLOW_MAPPING_KEY_STATE:
-		return yaml_emitter_emit_flow_mapping_key(emitter, event, false)
+	case yamlEmitFlowMappingKeyState:
+		return yamlEmitterEmitFlowMappingKey(emitter, event, false)
 
-	case yaml_EMIT_FLOW_MAPPING_SIMPLE_VALUE_STATE:
-		return yaml_emitter_emit_flow_mapping_value(emitter, event, true)
+	case yamlEmitFlowMappingSimpleValueState:
+		return yamlEmitterEmitFlowMappingValue(emitter, event, true)
 
-	case yaml_EMIT_FLOW_MAPPING_VALUE_STATE:
-		return yaml_emitter_emit_flow_mapping_value(emitter, event, false)
+	case yamlEmitFlowMappingValueState:
+		return yamlEmitterEmitFlowMappingValue(emitter, event, false)
 
-	case yaml_EMIT_BLOCK_SEQUENCE_FIRST_ITEM_STATE:
-		return yaml_emitter_emit_block_sequence_item(emitter, event, true)
+	case yamlEmitBlockSequenceFirstItemState:
+		return yamlEmitterEmitBlockSequenceItem(emitter, event, true)
 
-	case yaml_EMIT_BLOCK_SEQUENCE_ITEM_STATE:
-		return yaml_emitter_emit_block_sequence_item(emitter, event, false)
+	case yamlEmitBlockSequenceItemState:
+		return yamlEmitterEmitBlockSequenceItem(emitter, event, false)
 
-	case yaml_EMIT_BLOCK_MAPPING_FIRST_KEY_STATE:
-		return yaml_emitter_emit_block_mapping_key(emitter, event, true)
+	case yamlEmitBlockMappingFirstKeyState:
+		return yamlEmitterEmitBlockMappingKey(emitter, event, true)
 
-	case yaml_EMIT_BLOCK_MAPPING_KEY_STATE:
-		return yaml_emitter_emit_block_mapping_key(emitter, event, false)
+	case yamlEmitBlockMappingKeyState:
+		return yamlEmitterEmitBlockMappingKey(emitter, event, false)
 
-	case yaml_EMIT_BLOCK_MAPPING_SIMPLE_VALUE_STATE:
-		return yaml_emitter_emit_block_mapping_value(emitter, event, true)
+	case yamlEmitBlockMappingSimpleValueState:
+		return yamlEmitterEmitBlockMappingValue(emitter, event, true)
 
-	case yaml_EMIT_BLOCK_MAPPING_VALUE_STATE:
-		return yaml_emitter_emit_block_mapping_value(emitter, event, false)
+	case yamlEmitBlockMappingValueState:
+		return yamlEmitterEmitBlockMappingValue(emitter, event, false)
 
-	case yaml_EMIT_END_STATE:
-		return yaml_emitter_set_emitter_error(emitter, "expected nothing after STREAM-END")
+	case yamlEmitEndState:
+		return yamlEmitterSetEmitterError(emitter, "expected nothing after STREAM-END")
 	}
 	panic("invalid emitter state")
 }
 
 // Expect STREAM-START.
-func yaml_emitter_emit_stream_start(emitter *yaml_emitter_t, event *yaml_event_t) bool {
-	if event.typ != yaml_STREAM_START_EVENT {
-		return yaml_emitter_set_emitter_error(emitter, "expected STREAM-START")
+func yamlEmitterEmitStreamStart(emitter *yamlEmitterT, event *yamlEventT) bool {
+	if event.typ != yamlStreamStartEvent {
+		return yamlEmitterSetEmitterError(emitter, "expected STREAM-START")
 	}
-	if emitter.encoding == yaml_ANY_ENCODING {
+	if emitter.encoding == yamlAnyEncoding {
 		emitter.encoding = event.encoding
-		if emitter.encoding == yaml_ANY_ENCODING {
-			emitter.encoding = yaml_UTF8_ENCODING
+		if emitter.encoding == yamlAnyEncoding {
+			emitter.encoding = yamlUtf8Encoding
 		}
 	}
-	if emitter.best_indent < 2 || emitter.best_indent > 9 {
-		emitter.best_indent = 2
+	if emitter.bestIndent < 2 || emitter.bestIndent > 9 {
+		emitter.bestIndent = 2
 	}
-	if emitter.best_width >= 0 && emitter.best_width <= emitter.best_indent*2 {
-		emitter.best_width = 80
+	if emitter.bestWidth >= 0 && emitter.bestWidth <= emitter.bestIndent*2 {
+		emitter.bestWidth = 80
 	}
-	if emitter.best_width < 0 {
-		emitter.best_width = 1<<31 - 1
+	if emitter.bestWidth < 0 {
+		emitter.bestWidth = 1<<31 - 1
 	}
-	if emitter.line_break == yaml_ANY_BREAK {
-		emitter.line_break = yaml_LN_BREAK
+	if emitter.lineBreak == yamlAnyBreak {
+		emitter.lineBreak = yamlLnBreak
 	}
 
 	emitter.indent = -1
@@ -299,39 +302,39 @@ func yaml_emitter_emit_stream_start(emitter *yaml_emitter_t, event *yaml_event_t
 	emitter.whitespace = true
 	emitter.indention = true
 
-	if emitter.encoding != yaml_UTF8_ENCODING {
-		if !yaml_emitter_write_bom(emitter) {
+	if emitter.encoding != yamlUtf8Encoding {
+		if !yamlEmitterWriteBom(emitter) {
 			return false
 		}
 	}
-	emitter.state = yaml_EMIT_FIRST_DOCUMENT_START_STATE
+	emitter.state = yamlEmitFirstDocumentStartState
 	return true
 }
 
 // Expect DOCUMENT-START or STREAM-END.
-func yaml_emitter_emit_document_start(emitter *yaml_emitter_t, event *yaml_event_t, first bool) bool {
+func yamlEmitterEmitDocumentStart(emitter *yamlEmitterT, event *yamlEventT, first bool) bool {
 
-	if event.typ == yaml_DOCUMENT_START_EVENT {
+	if event.typ == yamlDocumentStartEvent {
 
-		if event.version_directive != nil {
-			if !yaml_emitter_analyze_version_directive(emitter, event.version_directive) {
+		if event.versionDirective != nil {
+			if !yamlEmitterAnalyzeVersionDirective(emitter, event.versionDirective) {
 				return false
 			}
 		}
 
-		for i := 0; i < len(event.tag_directives); i++ {
-			tag_directive := &event.tag_directives[i]
-			if !yaml_emitter_analyze_tag_directive(emitter, tag_directive) {
+		for i := 0; i < len(event.tagDirectives); i++ {
+			tagDirective := &event.tagDirectives[i]
+			if !yamlEmitterAnalyzeTagDirective(emitter, tagDirective) {
 				return false
 			}
-			if !yaml_emitter_append_tag_directive(emitter, tag_directive, false) {
+			if !yamlEmitterAppendTagDirective(emitter, tagDirective, false) {
 				return false
 			}
 		}
 
-		for i := 0; i < len(default_tag_directives); i++ {
-			tag_directive := &default_tag_directives[i]
-			if !yaml_emitter_append_tag_directive(emitter, tag_directive, true) {
+		for i := 0; i < len(defaultTagDirectives); i++ {
+			tagDirective := &defaultTagDirectives[i]
+			if !yamlEmitterAppendTagDirective(emitter, tagDirective, true) {
 				return false
 			}
 		}
@@ -341,143 +344,143 @@ func yaml_emitter_emit_document_start(emitter *yaml_emitter_t, event *yaml_event
 			implicit = false
 		}
 
-		if emitter.open_ended && (event.version_directive != nil || len(event.tag_directives) > 0) {
-			if !yaml_emitter_write_indicator(emitter, []byte("..."), true, false, false) {
+		if emitter.openEnded && (event.versionDirective != nil || len(event.tagDirectives) > 0) {
+			if !yamlEmitterWriteIndicator(emitter, []byte("..."), true, false, false) {
 				return false
 			}
-			if !yaml_emitter_write_indent(emitter) {
+			if !yamlEmitterWriteIndent(emitter) {
 				return false
 			}
 		}
 
-		if event.version_directive != nil {
+		if event.versionDirective != nil {
 			implicit = false
-			if !yaml_emitter_write_indicator(emitter, []byte("%YAML"), true, false, false) {
+			if !yamlEmitterWriteIndicator(emitter, []byte("%YAML"), true, false, false) {
 				return false
 			}
-			if !yaml_emitter_write_indicator(emitter, []byte("1.1"), true, false, false) {
+			if !yamlEmitterWriteIndicator(emitter, []byte("1.1"), true, false, false) {
 				return false
 			}
-			if !yaml_emitter_write_indent(emitter) {
+			if !yamlEmitterWriteIndent(emitter) {
 				return false
 			}
 		}
 
-		if len(event.tag_directives) > 0 {
+		if len(event.tagDirectives) > 0 {
 			implicit = false
-			for i := 0; i < len(event.tag_directives); i++ {
-				tag_directive := &event.tag_directives[i]
-				if !yaml_emitter_write_indicator(emitter, []byte("%TAG"), true, false, false) {
+			for i := 0; i < len(event.tagDirectives); i++ {
+				tagDirective := &event.tagDirectives[i]
+				if !yamlEmitterWriteIndicator(emitter, []byte("%TAG"), true, false, false) {
 					return false
 				}
-				if !yaml_emitter_write_tag_handle(emitter, tag_directive.handle) {
+				if !yamlEmitterWriteTagHandle(emitter, tagDirective.handle) {
 					return false
 				}
-				if !yaml_emitter_write_tag_content(emitter, tag_directive.prefix, true) {
+				if !yamlEmitterWriteTagContent(emitter, tagDirective.prefix, true) {
 					return false
 				}
-				if !yaml_emitter_write_indent(emitter) {
+				if !yamlEmitterWriteIndent(emitter) {
 					return false
 				}
 			}
 		}
 
-		if yaml_emitter_check_empty_document(emitter) {
+		if yamlEmitterCheckEmptyDocument(emitter) {
 			implicit = false
 		}
 		if !implicit {
-			if !yaml_emitter_write_indent(emitter) {
+			if !yamlEmitterWriteIndent(emitter) {
 				return false
 			}
-			if !yaml_emitter_write_indicator(emitter, []byte("---"), true, false, false) {
+			if !yamlEmitterWriteIndicator(emitter, []byte("---"), true, false, false) {
 				return false
 			}
 			if emitter.canonical {
-				if !yaml_emitter_write_indent(emitter) {
+				if !yamlEmitterWriteIndent(emitter) {
 					return false
 				}
 			}
 		}
 
-		emitter.state = yaml_EMIT_DOCUMENT_CONTENT_STATE
+		emitter.state = yamlEmitDocumentContentState
 		return true
 	}
 
-	if event.typ == yaml_STREAM_END_EVENT {
-		if emitter.open_ended {
-			if !yaml_emitter_write_indicator(emitter, []byte("..."), true, false, false) {
+	if event.typ == yamlStreamEndEvent {
+		if emitter.openEnded {
+			if !yamlEmitterWriteIndicator(emitter, []byte("..."), true, false, false) {
 				return false
 			}
-			if !yaml_emitter_write_indent(emitter) {
+			if !yamlEmitterWriteIndent(emitter) {
 				return false
 			}
 		}
-		if !yaml_emitter_flush(emitter) {
+		if !yamlEmitterFlush(emitter) {
 			return false
 		}
-		emitter.state = yaml_EMIT_END_STATE
+		emitter.state = yamlEmitEndState
 		return true
 	}
 
-	return yaml_emitter_set_emitter_error(emitter, "expected DOCUMENT-START or STREAM-END")
+	return yamlEmitterSetEmitterError(emitter, "expected DOCUMENT-START or STREAM-END")
 }
 
 // Expect the root node.
-func yaml_emitter_emit_document_content(emitter *yaml_emitter_t, event *yaml_event_t) bool {
-	emitter.states = append(emitter.states, yaml_EMIT_DOCUMENT_END_STATE)
-	return yaml_emitter_emit_node(emitter, event, true, false, false, false)
+func yamlEmitterEmitDocumentContent(emitter *yamlEmitterT, event *yamlEventT) bool {
+	emitter.states = append(emitter.states, yamlEmitDocumentEndState)
+	return yamlEmitterEmitNode(emitter, event, true, false, false, false)
 }
 
 // Expect DOCUMENT-END.
-func yaml_emitter_emit_document_end(emitter *yaml_emitter_t, event *yaml_event_t) bool {
-	if event.typ != yaml_DOCUMENT_END_EVENT {
-		return yaml_emitter_set_emitter_error(emitter, "expected DOCUMENT-END")
+func yamlEmitterEmitDocumentEnd(emitter *yamlEmitterT, event *yamlEventT) bool {
+	if event.typ != yamlDocumentEndEvent {
+		return yamlEmitterSetEmitterError(emitter, "expected DOCUMENT-END")
 	}
-	if !yaml_emitter_write_indent(emitter) {
+	if !yamlEmitterWriteIndent(emitter) {
 		return false
 	}
 	if !event.implicit {
 		// [Go] Allocate the slice elsewhere.
-		if !yaml_emitter_write_indicator(emitter, []byte("..."), true, false, false) {
+		if !yamlEmitterWriteIndicator(emitter, []byte("..."), true, false, false) {
 			return false
 		}
-		if !yaml_emitter_write_indent(emitter) {
+		if !yamlEmitterWriteIndent(emitter) {
 			return false
 		}
 	}
-	if !yaml_emitter_flush(emitter) {
+	if !yamlEmitterFlush(emitter) {
 		return false
 	}
-	emitter.state = yaml_EMIT_DOCUMENT_START_STATE
-	emitter.tag_directives = emitter.tag_directives[:0]
+	emitter.state = yamlEmitDocumentStartState
+	emitter.tagDirectives = emitter.tagDirectives[:0]
 	return true
 }
 
 // Expect a flow item node.
-func yaml_emitter_emit_flow_sequence_item(emitter *yaml_emitter_t, event *yaml_event_t, first bool) bool {
+func yamlEmitterEmitFlowSequenceItem(emitter *yamlEmitterT, event *yamlEventT, first bool) bool {
 	if first {
-		if !yaml_emitter_write_indicator(emitter, []byte{'['}, true, true, false) {
+		if !yamlEmitterWriteIndicator(emitter, []byte{'['}, true, true, false) {
 			return false
 		}
-		if !yaml_emitter_increase_indent(emitter, true, false) {
+		if !yamlEmitterIncreaseIndent(emitter, true, false) {
 			return false
 		}
-		emitter.flow_level++
+		emitter.flowLevel++
 	}
 
-	if event.typ == yaml_SEQUENCE_END_EVENT {
-		emitter.flow_level--
+	if event.typ == yamlSequenceEndEvent {
+		emitter.flowLevel--
 		emitter.indent = emitter.indents[len(emitter.indents)-1]
 		emitter.indents = emitter.indents[:len(emitter.indents)-1]
 		if emitter.canonical && !first {
-			if !yaml_emitter_write_indicator(emitter, []byte{','}, false, false, false) {
+			if !yamlEmitterWriteIndicator(emitter, []byte{','}, false, false, false) {
 				return false
 			}
-			if !yaml_emitter_write_indent(emitter) {
+			if !yamlEmitterWriteIndent(emitter) {
 				return false
 			}
 		}
-		if !yaml_emitter_write_indicator(emitter, []byte{']'}, false, false, false) {
+		if !yamlEmitterWriteIndicator(emitter, []byte{']'}, false, false, false) {
 			return false
 		}
 		emitter.state = emitter.states[len(emitter.states)-1]
@@ -487,45 +490,45 @@ func yaml_emitter_emit_flow_sequence_item(emitter *yaml_emitter_t, event *yaml_e
 	}
 
 	if !first {
-		if !yaml_emitter_write_indicator(emitter, []byte{','}, false, false, false) {
+		if !yamlEmitterWriteIndicator(emitter, []byte{','}, false, false, false) {
 			return false
 		}
 	}
 
-	if emitter.canonical || emitter.column > emitter.best_width {
-		if !yaml_emitter_write_indent(emitter) {
+	if emitter.canonical || emitter.column > emitter.bestWidth {
+		if !yamlEmitterWriteIndent(emitter) {
 			return false
 		}
 	}
-	emitter.states = append(emitter.states, yaml_EMIT_FLOW_SEQUENCE_ITEM_STATE)
-	return yaml_emitter_emit_node(emitter, event, false, true, false, false)
+	emitter.states = append(emitter.states, yamlEmitFlowSequenceItemState)
+	return yamlEmitterEmitNode(emitter, event, false, true, false, false)
 }
 
 // Expect a flow key node.
-func yaml_emitter_emit_flow_mapping_key(emitter *yaml_emitter_t, event *yaml_event_t, first bool) bool {
+func yamlEmitterEmitFlowMappingKey(emitter *yamlEmitterT, event *yamlEventT, first bool) bool {
 	if first {
-		if !yaml_emitter_write_indicator(emitter, []byte{'{'}, true, true, false) {
+		if !yamlEmitterWriteIndicator(emitter, []byte{'{'}, true, true, false) {
 			return false
 		}
-		if !yaml_emitter_increase_indent(emitter, true, false) {
+		if !yamlEmitterIncreaseIndent(emitter, true, false) {
 			return false
 		}
-		emitter.flow_level++
+		emitter.flowLevel++
 	}
 
-	if event.typ == yaml_MAPPING_END_EVENT {
-		emitter.flow_level--
+	if event.typ == yamlMappingEndEvent {
+		emitter.flowLevel--
 		emitter.indent = emitter.indents[len(emitter.indents)-1]
 		emitter.indents = emitter.indents[:len(emitter.indents)-1]
 		if emitter.canonical && !first {
-			if !yaml_emitter_write_indicator(emitter, []byte{','}, false, false, false) {
+			if !yamlEmitterWriteIndicator(emitter, []byte{','}, false, false, false) {
 				return false
 			}
-			if !yaml_emitter_write_indent(emitter) {
+			if !yamlEmitterWriteIndent(emitter) {
 				return false
 			}
 		}
-		if !yaml_emitter_write_indicator(emitter, []byte{'}'}, false, false, false) {
+		if !yamlEmitterWriteIndicator(emitter, []byte{'}'}, false, false, false) {
 			return false
 		}
 		emitter.state = emitter.states[len(emitter.states)-1]
@@ -534,144 +537,144 @@ func yaml_emitter_emit_flow_mapping_key(emitter *yaml_emitter_t, event *yaml_eve
 	}
 
 	if !first {
-		if !yaml_emitter_write_indicator(emitter, []byte{','}, false, false, false) {
+		if !yamlEmitterWriteIndicator(emitter, []byte{','}, false, false, false) {
 			return false
 		}
 	}
-	if emitter.canonical || emitter.column > emitter.best_width {
-		if !yaml_emitter_write_indent(emitter) {
+	if emitter.canonical || emitter.column > emitter.bestWidth {
+		if !yamlEmitterWriteIndent(emitter) {
 			return false
 		}
 	}
 
-	if !emitter.canonical && yaml_emitter_check_simple_key(emitter) {
-		emitter.states = append(emitter.states, yaml_EMIT_FLOW_MAPPING_SIMPLE_VALUE_STATE)
-		return yaml_emitter_emit_node(emitter, event, false, false, true, true)
+	if !emitter.canonical && yamlEmitterCheckSimpleKey(emitter) {
+		emitter.states = append(emitter.states, yamlEmitFlowMappingSimpleValueState)
+		return yamlEmitterEmitNode(emitter, event, false, false, true, true)
 	}
-	if !yaml_emitter_write_indicator(emitter, []byte{'?'}, true, false, false) {
+	if !yamlEmitterWriteIndicator(emitter, []byte{'?'}, true, false, false) {
 		return false
 	}
-	emitter.states = append(emitter.states, yaml_EMIT_FLOW_MAPPING_VALUE_STATE)
-	return yaml_emitter_emit_node(emitter, event, false, false, true, false)
+	emitter.states = append(emitter.states, yamlEmitFlowMappingValueState)
+	return yamlEmitterEmitNode(emitter, event, false, false, true, false)
 }
 
 // Expect a flow value node.
-func yaml_emitter_emit_flow_mapping_value(emitter *yaml_emitter_t, event *yaml_event_t, simple bool) bool {
+func yamlEmitterEmitFlowMappingValue(emitter *yamlEmitterT, event *yamlEventT, simple bool) bool {
 	if simple {
-		if !yaml_emitter_write_indicator(emitter, []byte{':'}, false, false, false) {
+		if !yamlEmitterWriteIndicator(emitter, []byte{':'}, false, false, false) {
 			return false
 		}
 	} else {
-		if emitter.canonical || emitter.column > emitter.best_width {
-			if !yaml_emitter_write_indent(emitter) {
+		if emitter.canonical || emitter.column > emitter.bestWidth {
+			if !yamlEmitterWriteIndent(emitter) {
 				return false
 			}
 		}
-		if !yaml_emitter_write_indicator(emitter, []byte{':'}, true, false, false) {
+		if !yamlEmitterWriteIndicator(emitter, []byte{':'}, true, false, false) {
 			return false
 		}
 	}
-	emitter.states = append(emitter.states, yaml_EMIT_FLOW_MAPPING_KEY_STATE)
-	return yaml_emitter_emit_node(emitter, event, false, false, true, false)
+	emitter.states = append(emitter.states, yamlEmitFlowMappingKeyState)
+	return yamlEmitterEmitNode(emitter, event, false, false, true, false)
 }
 
 // Expect a block item node.
-func yaml_emitter_emit_block_sequence_item(emitter *yaml_emitter_t, event *yaml_event_t, first bool) bool {
+func yamlEmitterEmitBlockSequenceItem(emitter *yamlEmitterT, event *yamlEventT, first bool) bool {
 	if first {
-		if !yaml_emitter_increase_indent(emitter, false, emitter.mapping_context && !emitter.indention) {
+		if !yamlEmitterIncreaseIndent(emitter, false, emitter.mappingContext && !emitter.indention) {
 			return false
 		}
 	}
-	if event.typ == yaml_SEQUENCE_END_EVENT {
+	if event.typ == yamlSequenceEndEvent {
 		emitter.indent = emitter.indents[len(emitter.indents)-1]
 		emitter.indents = emitter.indents[:len(emitter.indents)-1]
 		emitter.state = emitter.states[len(emitter.states)-1]
 		emitter.states = emitter.states[:len(emitter.states)-1]
 		return true
 	}
-	if !yaml_emitter_write_indent(emitter) {
+	if !yamlEmitterWriteIndent(emitter) {
 		return false
 	}
-	if !yaml_emitter_write_indicator(emitter, []byte{'-'}, true, false, true) {
+	if !yamlEmitterWriteIndicator(emitter, []byte{'-'}, true, false, true) {
 		return false
 	}
-	emitter.states = append(emitter.states, yaml_EMIT_BLOCK_SEQUENCE_ITEM_STATE)
-	return yaml_emitter_emit_node(emitter, event, false, true, false, false)
+	emitter.states = append(emitter.states, yamlEmitBlockSequenceItemState)
+	return yamlEmitterEmitNode(emitter, event, false, true, false, false)
 }
 
 // Expect a block key node.
-func yaml_emitter_emit_block_mapping_key(emitter *yaml_emitter_t, event *yaml_event_t, first bool) bool {
+func yamlEmitterEmitBlockMappingKey(emitter *yamlEmitterT, event *yamlEventT, first bool) bool {
 	if first {
-		if !yaml_emitter_increase_indent(emitter, false, false) {
+		if !yamlEmitterIncreaseIndent(emitter, false, false) {
 			return false
 		}
 	}
-	if event.typ == yaml_MAPPING_END_EVENT {
+	if event.typ == yamlMappingEndEvent {
 		emitter.indent = emitter.indents[len(emitter.indents)-1]
 		emitter.indents = emitter.indents[:len(emitter.indents)-1]
 		emitter.state = emitter.states[len(emitter.states)-1]
 		emitter.states = emitter.states[:len(emitter.states)-1]
 		return true
 	}
-	if !yaml_emitter_write_indent(emitter) {
+	if !yamlEmitterWriteIndent(emitter) {
 		return false
 	}
-	if yaml_emitter_check_simple_key(emitter) {
-		emitter.states = append(emitter.states, yaml_EMIT_BLOCK_MAPPING_SIMPLE_VALUE_STATE)
-		return yaml_emitter_emit_node(emitter, event, false, false, true, true)
+	if yamlEmitterCheckSimpleKey(emitter) {
+		emitter.states = append(emitter.states, yamlEmitBlockMappingSimpleValueState)
+		return yamlEmitterEmitNode(emitter, event, false, false, true, true)
 	}
-	if !yaml_emitter_write_indicator(emitter, []byte{'?'}, true, false, true) {
+	if !yamlEmitterWriteIndicator(emitter, []byte{'?'}, true, false, true) {
 		return false
 	}
-	emitter.states = append(emitter.states, yaml_EMIT_BLOCK_MAPPING_VALUE_STATE)
-	return yaml_emitter_emit_node(emitter, event, false, false, true, false)
+	emitter.states = append(emitter.states, yamlEmitBlockMappingValueState)
+	return yamlEmitterEmitNode(emitter, event, false, false, true, false)
 }
 
 // Expect a block value node.
-func yaml_emitter_emit_block_mapping_value(emitter *yaml_emitter_t, event *yaml_event_t, simple bool) bool {
+func yamlEmitterEmitBlockMappingValue(emitter *yamlEmitterT, event *yamlEventT, simple bool) bool {
 	if simple {
-		if !yaml_emitter_write_indicator(emitter, []byte{':'}, false, false, false) {
+		if !yamlEmitterWriteIndicator(emitter, []byte{':'}, false, false, false) {
 			return false
 		}
 	} else {
-		if !yaml_emitter_write_indent(emitter) {
+		if !yamlEmitterWriteIndent(emitter) {
 			return false
 		}
-		if !yaml_emitter_write_indicator(emitter, []byte{':'}, true, false, true) {
+		if !yamlEmitterWriteIndicator(emitter, []byte{':'}, true, false, true) {
 			return false
 		}
 	}
-	emitter.states = append(emitter.states, yaml_EMIT_BLOCK_MAPPING_KEY_STATE)
-	return yaml_emitter_emit_node(emitter, event, false, false, true, false)
+	emitter.states = append(emitter.states, yamlEmitBlockMappingKeyState)
+	return yamlEmitterEmitNode(emitter, event, false, false, true, false)
 }
 
 // Expect a node.
-func yaml_emitter_emit_node(emitter *yaml_emitter_t, event *yaml_event_t,
-	root bool, sequence bool, mapping bool, simple_key bool) bool {
+func yamlEmitterEmitNode(emitter *yamlEmitterT, event *yamlEventT,
+	root bool, sequence bool, mapping bool, simpleKey bool) bool {
 
-	emitter.root_context = root
-	emitter.sequence_context = sequence
-	emitter.mapping_context = mapping
-	emitter.simple_key_context = simple_key
+	emitter.rootContext = root
+	emitter.sequenceContext = sequence
+	emitter.mappingContext = mapping
+	emitter.simpleKeyContext = simpleKey
 
 	switch event.typ {
-	case yaml_ALIAS_EVENT:
-		return yaml_emitter_emit_alias(emitter, event)
-	case yaml_SCALAR_EVENT:
-		return yaml_emitter_emit_scalar(emitter, event)
-	case yaml_SEQUENCE_START_EVENT:
-		return yaml_emitter_emit_sequence_start(emitter, event)
-	case yaml_MAPPING_START_EVENT:
-		return yaml_emitter_emit_mapping_start(emitter, event)
+	case yamlAliasEvent:
+		return yamlEmitterEmitAlias(emitter, event)
+	case yamlScalarEvent:
+		return yamlEmitterEmitScalar(emitter, event)
+	case yamlSequenceStartEvent:
+		return yamlEmitterEmitSequenceStart(emitter, event)
+	case yamlMappingStartEvent:
+		return yamlEmitterEmitMappingStart(emitter, event)
 	default:
-		return yaml_emitter_set_emitter_error(emitter,
+		return yamlEmitterSetEmitterError(emitter,
 			fmt.Sprintf("expected SCALAR, SEQUENCE-START, MAPPING-START, or ALIAS, but got %v", event.typ))
 	}
 }
 
 // Expect ALIAS.
-func yaml_emitter_emit_alias(emitter *yaml_emitter_t, event *yaml_event_t) bool {
-	if !yaml_emitter_process_anchor(emitter) {
+func yamlEmitterEmitAlias(emitter *yamlEmitterT, event *yamlEventT) bool {
+	if !yamlEmitterProcessAnchor(emitter) {
 		return false
 	}
 	emitter.state = emitter.states[len(emitter.states)-1]
@@ -680,20 +683,20 @@ func yaml_emitter_emit_alias(emitter *yaml_emitter_t, event *yaml_event_t) bool 
 }
 
 // Expect SCALAR.
-func yaml_emitter_emit_scalar(emitter *yaml_emitter_t, event *yaml_event_t) bool {
-	if !yaml_emitter_select_scalar_style(emitter, event) {
+func yamlEmitterEmitScalar(emitter *yamlEmitterT, event *yamlEventT) bool {
+	if !yamlEmitterSelectScalarStyle(emitter, event) {
 		return false
 	}
-	if !yaml_emitter_process_anchor(emitter) {
+	if !yamlEmitterProcessAnchor(emitter) {
 		return false
 	}
-	if !yaml_emitter_process_tag(emitter) {
+	if !yamlEmitterProcessTag(emitter) {
 		return false
 	}
-	if !yaml_emitter_increase_indent(emitter, true, false) {
+	if !yamlEmitterIncreaseIndent(emitter, true, false) {
 		return false
 	}
-	if !yaml_emitter_process_scalar(emitter) {
+	if !yamlEmitterProcessScalar(emitter) {
 		return false
 	}
 	emitter.indent = emitter.indents[len(emitter.indents)-1]
@@ -704,90 +707,90 @@ func yaml_emitter_emit_scalar(emitter *yaml_emitter_t, event *yaml_event_t) bool
 }
 
 // Expect SEQUENCE-START.
-func yaml_emitter_emit_sequence_start(emitter *yaml_emitter_t, event *yaml_event_t) bool {
-	if !yaml_emitter_process_anchor(emitter) {
+func yamlEmitterEmitSequenceStart(emitter *yamlEmitterT, event *yamlEventT) bool {
+	if !yamlEmitterProcessAnchor(emitter) {
 		return false
 	}
-	if !yaml_emitter_process_tag(emitter) {
+	if !yamlEmitterProcessTag(emitter) {
 		return false
 	}
-	if emitter.flow_level > 0 || emitter.canonical || event.sequence_style() == yaml_FLOW_SEQUENCE_STYLE ||
-		yaml_emitter_check_empty_sequence(emitter) {
-		emitter.state = yaml_EMIT_FLOW_SEQUENCE_FIRST_ITEM_STATE
+	if emitter.flowLevel > 0 || emitter.canonical || event.sequenceStyle() == yamlFlowSequenceStyle ||
+		yamlEmitterCheckEmptySequence(emitter) {
+		emitter.state = yamlEmitFlowSequenceFirstItemState
 	} else {
-		emitter.state = yaml_EMIT_BLOCK_SEQUENCE_FIRST_ITEM_STATE
+		emitter.state = yamlEmitBlockSequenceFirstItemState
 	}
 	return true
 }
 
 // Expect MAPPING-START.
-func yaml_emitter_emit_mapping_start(emitter *yaml_emitter_t, event *yaml_event_t) bool {
-	if !yaml_emitter_process_anchor(emitter) {
+func yamlEmitterEmitMappingStart(emitter *yamlEmitterT, event *yamlEventT) bool {
+	if !yamlEmitterProcessAnchor(emitter) {
 		return false
 	}
-	if !yaml_emitter_process_tag(emitter) {
+	if !yamlEmitterProcessTag(emitter) {
 		return false
 	}
-	if emitter.flow_level > 0 || emitter.canonical || event.mapping_style() == yaml_FLOW_MAPPING_STYLE ||
-		yaml_emitter_check_empty_mapping(emitter) {
-		emitter.state = yaml_EMIT_FLOW_MAPPING_FIRST_KEY_STATE
+	if emitter.flowLevel > 0 || emitter.canonical || event.mappingStyle() == yamlFlowMappingStyle ||
+		yamlEmitterCheckEmptyMapping(emitter) {
+		emitter.state = yamlEmitFlowMappingFirstKeyState
 	} else {
-		emitter.state = yaml_EMIT_BLOCK_MAPPING_FIRST_KEY_STATE
+		emitter.state = yamlEmitBlockMappingFirstKeyState
 	}
 	return true
 }
 
 // Check if the document content is an empty scalar.
-func yaml_emitter_check_empty_document(emitter *yaml_emitter_t) bool {
+func yamlEmitterCheckEmptyDocument(emitter *yamlEmitterT) bool {
 	return false // [Go] Huh?
 }
 
 // Check if the next events represent an empty sequence.
-func yaml_emitter_check_empty_sequence(emitter *yaml_emitter_t) bool {
-	if len(emitter.events)-emitter.events_head < 2 {
+func yamlEmitterCheckEmptySequence(emitter *yamlEmitterT) bool {
+	if len(emitter.events)-emitter.eventsHead < 2 {
 		return false
 	}
-	return emitter.events[emitter.events_head].typ == yaml_SEQUENCE_START_EVENT &&
-		emitter.events[emitter.events_head+1].typ == yaml_SEQUENCE_END_EVENT
+	return emitter.events[emitter.eventsHead].typ == yamlSequenceStartEvent &&
+		emitter.events[emitter.eventsHead+1].typ == yamlSequenceEndEvent
 }
 
 // Check if the next events represent an empty mapping.
-func yaml_emitter_check_empty_mapping(emitter *yaml_emitter_t) bool {
-	if len(emitter.events)-emitter.events_head < 2 {
+func yamlEmitterCheckEmptyMapping(emitter *yamlEmitterT) bool {
+	if len(emitter.events)-emitter.eventsHead < 2 {
 		return false
 	}
-	return emitter.events[emitter.events_head].typ == yaml_MAPPING_START_EVENT &&
-		emitter.events[emitter.events_head+1].typ == yaml_MAPPING_END_EVENT
+	return emitter.events[emitter.eventsHead].typ == yamlMappingStartEvent &&
+		emitter.events[emitter.eventsHead+1].typ == yamlMappingEndEvent
 }
 
 // Check if the next node can be expressed as a simple key.
-func yaml_emitter_check_simple_key(emitter *yaml_emitter_t) bool {
+func yamlEmitterCheckSimpleKey(emitter *yamlEmitterT) bool {
 	length := 0
-	switch emitter.events[emitter.events_head].typ {
-	case yaml_ALIAS_EVENT:
-		length += len(emitter.anchor_data.anchor)
-	case yaml_SCALAR_EVENT:
-		if emitter.scalar_data.multiline {
+	switch emitter.events[emitter.eventsHead].typ {
+	case yamlAliasEvent:
+		length += len(emitter.anchorData.anchor)
+	case yamlScalarEvent:
+		if emitter.scalarData.multiline {
 			return false
 		}
-		length += len(emitter.anchor_data.anchor) +
-			len(emitter.tag_data.handle) +
-			len(emitter.tag_data.suffix) +
-			len(emitter.scalar_data.value)
-	case yaml_SEQUENCE_START_EVENT:
-		if !yaml_emitter_check_empty_sequence(emitter) {
+		length += len(emitter.anchorData.anchor) +
+			len(emitter.tagData.handle) +
+			len(emitter.tagData.suffix) +
+			len(emitter.scalarData.value)
+	case yamlSequenceStartEvent:
+		if !yamlEmitterCheckEmptySequence(emitter) {
 			return false
 		}
-		length += len(emitter.anchor_data.anchor) +
-			len(emitter.tag_data.handle) +
-			len(emitter.tag_data.suffix)
-	case yaml_MAPPING_START_EVENT:
-		if !yaml_emitter_check_empty_mapping(emitter) {
+		length += len(emitter.anchorData.anchor) +
+			len(emitter.tagData.handle) +
+			len(emitter.tagData.suffix)
+	case yamlMappingStartEvent:
+		if !yamlEmitterCheckEmptyMapping(emitter) {
 			return false
 		}
-		length += len(emitter.anchor_data.anchor) +
-			len(emitter.tag_data.handle) +
-			len(emitter.tag_data.suffix)
+		length += len(emitter.anchorData.anchor) +
+			len(emitter.tagData.handle) +
+			len(emitter.tagData.suffix)
 	default:
 		return false
 	}
@@ -795,92 +798,92 @@ func yaml_emitter_check_simple_key(emitter *yaml_emitter_t) bool {
 }
 
 // Determine an acceptable scalar style.
-func yaml_emitter_select_scalar_style(emitter *yaml_emitter_t, event *yaml_event_t) bool {
+func yamlEmitterSelectScalarStyle(emitter *yamlEmitterT, event *yamlEventT) bool {
 
-	no_tag := len(emitter.tag_data.handle) == 0 && len(emitter.tag_data.suffix) == 0
-	if no_tag && !event.implicit && !event.quoted_implicit {
-		return yaml_emitter_set_emitter_error(emitter, "neither tag nor implicit flags are specified")
+	noTag := len(emitter.tagData.handle) == 0 && len(emitter.tagData.suffix) == 0
+	if noTag && !event.implicit && !event.quotedImplicit {
+		return yamlEmitterSetEmitterError(emitter, "neither tag nor implicit flags are specified")
 	}
 
-	style := event.scalar_style()
-	if style == yaml_ANY_SCALAR_STYLE {
-		style = yaml_PLAIN_SCALAR_STYLE
+	style := event.scalarStyle()
+	if style == yamlAnyScalarStyle {
+		style = yamlPlainScalarStyle
 	}
 	if emitter.canonical {
-		style = yaml_DOUBLE_QUOTED_SCALAR_STYLE
+		style = yamlDoubleQuotedScalarStyle
 	}
-	if emitter.simple_key_context && emitter.scalar_data.multiline {
-		style = yaml_DOUBLE_QUOTED_SCALAR_STYLE
-	}
-
-	if style == yaml_PLAIN_SCALAR_STYLE {
-		if emitter.flow_level > 0 && !emitter.scalar_data.flow_plain_allowed ||
-			emitter.flow_level == 0 && !emitter.scalar_data.block_plain_allowed {
-			style = yaml_SINGLE_QUOTED_SCALAR_STYLE
-		}
-		if len(emitter.scalar_data.value) == 0 && (emitter.flow_level > 0 || emitter.simple_key_context) {
-			style = yaml_SINGLE_QUOTED_SCALAR_STYLE
-		}
-		if no_tag && !event.implicit {
-			style = yaml_SINGLE_QUOTED_SCALAR_STYLE
-		}
-	}
-	if style == yaml_SINGLE_QUOTED_SCALAR_STYLE {
-		if !emitter.scalar_data.single_quoted_allowed {
-			style = yaml_DOUBLE_QUOTED_SCALAR_STYLE
-		}
-	}
-	if style == yaml_LITERAL_SCALAR_STYLE || style == yaml_FOLDED_SCALAR_STYLE {
-		if !emitter.scalar_data.block_allowed || emitter.flow_level > 0 || emitter.simple_key_context {
-			style = yaml_DOUBLE_QUOTED_SCALAR_STYLE
-		}
+	if emitter.simpleKeyContext && emitter.scalarData.multiline {
+		style = yamlDoubleQuotedScalarStyle
 	}
 
-	if no_tag && !event.quoted_implicit && style != yaml_PLAIN_SCALAR_STYLE {
-		emitter.tag_data.handle = []byte{'!'}
+	if style == yamlPlainScalarStyle {
+		if emitter.flowLevel > 0 && !emitter.scalarData.flowPlainAllowed ||
+			emitter.flowLevel == 0 && !emitter.scalarData.blockPlainAllowed {
+			style = yamlSingleQuotedScalarStyle
+		}
+		if len(emitter.scalarData.value) == 0 && (emitter.flowLevel > 0 || emitter.simpleKeyContext) {
+			style = yamlSingleQuotedScalarStyle
+		}
+		if noTag && !event.implicit {
+			style = yamlSingleQuotedScalarStyle
+		}
 	}
-	emitter.scalar_data.style = style
+	if style == yamlSingleQuotedScalarStyle {
+		if !emitter.scalarData.singleQuotedAllowed {
+			style = yamlDoubleQuotedScalarStyle
+		}
+	}
+	if style == yamlLiteralScalarStyle || style == yamlFoldedScalarStyle {
+		if !emitter.scalarData.blockAllowed || emitter.flowLevel > 0 || emitter.simpleKeyContext {
+			style = yamlDoubleQuotedScalarStyle
+		}
+	}
+
+	if noTag && !event.quotedImplicit && style != yamlPlainScalarStyle {
+		emitter.tagData.handle = []byte{'!'}
+	}
+	emitter.scalarData.style = style
 	return true
 }
 
 // Write an anchor.
-func yaml_emitter_process_anchor(emitter *yaml_emitter_t) bool {
-	if emitter.anchor_data.anchor == nil {
+func yamlEmitterProcessAnchor(emitter *yamlEmitterT) bool {
+	if emitter.anchorData.anchor == nil {
 		return true
 	}
 	c := []byte{'&'}
-	if emitter.anchor_data.alias {
+	if emitter.anchorData.alias {
 		c[0] = '*'
 	}
-	if !yaml_emitter_write_indicator(emitter, c, true, false, false) {
+	if !yamlEmitterWriteIndicator(emitter, c, true, false, false) {
 		return false
 	}
-	return yaml_emitter_write_anchor(emitter, emitter.anchor_data.anchor)
+	return yamlEmitterWriteAnchor(emitter, emitter.anchorData.anchor)
 }
 
 // Write a tag.
-func yaml_emitter_process_tag(emitter *yaml_emitter_t) bool {
-	if len(emitter.tag_data.handle) == 0 && len(emitter.tag_data.suffix) == 0 {
+func yamlEmitterProcessTag(emitter *yamlEmitterT) bool {
+	if len(emitter.tagData.handle) == 0 && len(emitter.tagData.suffix) == 0 {
 		return true
 	}
-	if len(emitter.tag_data.handle) > 0 {
-		if !yaml_emitter_write_tag_handle(emitter, emitter.tag_data.handle) {
+	if len(emitter.tagData.handle) > 0 {
+		if !yamlEmitterWriteTagHandle(emitter, emitter.tagData.handle) {
 			return false
 		}
-		if len(emitter.tag_data.suffix) > 0 {
-			if !yaml_emitter_write_tag_content(emitter, emitter.tag_data.suffix, false) {
+		if len(emitter.tagData.suffix) > 0 {
+			if !yamlEmitterWriteTagContent(emitter, emitter.tagData.suffix, false) {
 				return false
 			}
 		}
 	} else {
 		// [Go] Allocate these slices elsewhere.
-		if !yaml_emitter_write_indicator(emitter, []byte("!<"), true, false, false) {
+		if !yamlEmitterWriteIndicator(emitter, []byte("!<"), true, false, false) {
 			return false
 		}
-		if !yaml_emitter_write_tag_content(emitter, emitter.tag_data.suffix, false) {
+		if !yamlEmitterWriteTagContent(emitter, emitter.tagData.suffix, false) {
 			return false
 		}
-		if !yaml_emitter_write_indicator(emitter, []byte{'>'}, false, false, false) {
+		if !yamlEmitterWriteIndicator(emitter, []byte{'>'}, false, false, false) {
 			return false
 		}
 	}
@@ -888,296 +891,296 @@ func yaml_emitter_process_tag(emitter *yaml_emitter_t) bool {
 }
 
 // Write a scalar.
-func yaml_emitter_process_scalar(emitter *yaml_emitter_t) bool {
-	switch emitter.scalar_data.style {
-	case yaml_PLAIN_SCALAR_STYLE:
-		return yaml_emitter_write_plain_scalar(emitter, emitter.scalar_data.value, !emitter.simple_key_context)
+func yamlEmitterProcessScalar(emitter *yamlEmitterT) bool {
+	switch emitter.scalarData.style {
+	case yamlPlainScalarStyle:
+		return yamlEmitterWritePlainScalar(emitter, emitter.scalarData.value, !emitter.simpleKeyContext)
 
-	case yaml_SINGLE_QUOTED_SCALAR_STYLE:
-		return yaml_emitter_write_single_quoted_scalar(emitter, emitter.scalar_data.value, !emitter.simple_key_context)
+	case yamlSingleQuotedScalarStyle:
+		return yamlEmitterWriteSingleQuotedScalar(emitter, emitter.scalarData.value, !emitter.simpleKeyContext)
 
-	case yaml_DOUBLE_QUOTED_SCALAR_STYLE:
-		return yaml_emitter_write_double_quoted_scalar(emitter, emitter.scalar_data.value, !emitter.simple_key_context)
+	case yamlDoubleQuotedScalarStyle:
+		return yamlEmitterWriteDoubleQuotedScalar(emitter, emitter.scalarData.value, !emitter.simpleKeyContext)
 
-	case yaml_LITERAL_SCALAR_STYLE:
-		return yaml_emitter_write_literal_scalar(emitter, emitter.scalar_data.value)
+	case yamlLiteralScalarStyle:
+		return yamlEmitterWriteLiteralScalar(emitter, emitter.scalarData.value)
 
-	case yaml_FOLDED_SCALAR_STYLE:
-		return yaml_emitter_write_folded_scalar(emitter, emitter.scalar_data.value)
+	case yamlFoldedScalarStyle:
+		return yamlEmitterWriteFoldedScalar(emitter, emitter.scalarData.value)
 	}
 	panic("unknown scalar style")
 }
 
 // Check if a %YAML directive is valid.
-func yaml_emitter_analyze_version_directive(emitter *yaml_emitter_t, version_directive *yaml_version_directive_t) bool {
-	if version_directive.major != 1 || version_directive.minor != 1 {
-		return yaml_emitter_set_emitter_error(emitter, "incompatible %YAML directive")
+func yamlEmitterAnalyzeVersionDirective(emitter *yamlEmitterT, versionDirective *yamlVersionDirectiveT) bool {
+	if versionDirective.major != 1 || versionDirective.minor != 1 {
+		return yamlEmitterSetEmitterError(emitter, "incompatible %YAML directive")
 	}
 	return true
 }
 
 // Check if a %TAG directive is valid.
-func yaml_emitter_analyze_tag_directive(emitter *yaml_emitter_t, tag_directive *yaml_tag_directive_t) bool {
-	handle := tag_directive.handle
-	prefix := tag_directive.prefix
+func yamlEmitterAnalyzeTagDirective(emitter *yamlEmitterT, tagDirective *yamlTagDirectiveT) bool {
+	handle := tagDirective.handle
+	prefix := tagDirective.prefix
 	if len(handle) == 0 {
-		return yaml_emitter_set_emitter_error(emitter, "tag handle must not be empty")
+		return yamlEmitterSetEmitterError(emitter, "tag handle must not be empty")
 	}
 	if handle[0] != '!' {
-		return yaml_emitter_set_emitter_error(emitter, "tag handle must start with '!'")
+		return yamlEmitterSetEmitterError(emitter, "tag handle must start with '!'")
 	}
 	if handle[len(handle)-1] != '!' {
-		return yaml_emitter_set_emitter_error(emitter, "tag handle must end with '!'")
+		return yamlEmitterSetEmitterError(emitter, "tag handle must end with '!'")
 	}
 	for i := 1; i < len(handle)-1; i += width(handle[i]) {
-		if !is_alpha(handle, i) {
-			return yaml_emitter_set_emitter_error(emitter, "tag handle must contain alphanumerical characters only")
+		if !isAlpha(handle, i) {
+			return yamlEmitterSetEmitterError(emitter, "tag handle must contain alphanumerical characters only")
 		}
 	}
 	if len(prefix) == 0 {
-		return yaml_emitter_set_emitter_error(emitter, "tag prefix must not be empty")
+		return yamlEmitterSetEmitterError(emitter, "tag prefix must not be empty")
 	}
 	return true
 }
 
 // Check if an anchor is valid.
-func yaml_emitter_analyze_anchor(emitter *yaml_emitter_t, anchor []byte, alias bool) bool {
+func yamlEmitterAnalyzeAnchor(emitter *yamlEmitterT, anchor []byte, alias bool) bool {
 	if len(anchor) == 0 {
 		problem := "anchor value must not be empty"
 		if alias {
 			problem = "alias value must not be empty"
 		}
-		return yaml_emitter_set_emitter_error(emitter, problem)
+		return yamlEmitterSetEmitterError(emitter, problem)
 	}
 	for i := 0; i < len(anchor); i += width(anchor[i]) {
-		if !is_alpha(anchor, i) {
+		if !isAlpha(anchor, i) {
 			problem := "anchor value must contain alphanumerical characters only"
 			if alias {
 				problem = "alias value must contain alphanumerical characters only"
 			}
-			return yaml_emitter_set_emitter_error(emitter, problem)
+			return yamlEmitterSetEmitterError(emitter, problem)
 		}
 	}
-	emitter.anchor_data.anchor = anchor
-	emitter.anchor_data.alias = alias
+	emitter.anchorData.anchor = anchor
+	emitter.anchorData.alias = alias
 	return true
 }
 
 // Check if a tag is valid.
-func yaml_emitter_analyze_tag(emitter *yaml_emitter_t, tag []byte) bool {
+func yamlEmitterAnalyzeTag(emitter *yamlEmitterT, tag []byte) bool {
 	if len(tag) == 0 {
-		return yaml_emitter_set_emitter_error(emitter, "tag value must not be empty")
+		return yamlEmitterSetEmitterError(emitter, "tag value must not be empty")
 	}
-	for i := 0; i < len(emitter.tag_directives); i++ {
-		tag_directive := &emitter.tag_directives[i]
-		if bytes.HasPrefix(tag, tag_directive.prefix) {
-			emitter.tag_data.handle = tag_directive.handle
-			emitter.tag_data.suffix = tag[len(tag_directive.prefix):]
+	for i := 0; i < len(emitter.tagDirectives); i++ {
+		tagDirective := &emitter.tagDirectives[i]
+		if bytes.HasPrefix(tag, tagDirective.prefix) {
+			emitter.tagData.handle = tagDirective.handle
+			emitter.tagData.suffix = tag[len(tagDirective.prefix):]
 			return true
 		}
 	}
-	emitter.tag_data.suffix = tag
+	emitter.tagData.suffix = tag
 	return true
 }
 
 // Check if a scalar is valid.
-func yaml_emitter_analyze_scalar(emitter *yaml_emitter_t, value []byte) bool {
+func yamlEmitterAnalyzeScalar(emitter *yamlEmitterT, value []byte) bool {
 	var (
-		block_indicators   = false
-		flow_indicators    = false
-		line_breaks        = false
-		special_characters = false
+		blockIndicators   = false
+		flowIndicators    = false
+		lineBreaks        = false
+		specialCharacters = false
 
-		leading_space  = false
-		leading_break  = false
-		trailing_space = false
-		trailing_break = false
-		break_space    = false
-		space_break    = false
+		leadingSpace  = false
+		leadingBreak  = false
+		trailingSpace = false
+		trailingBreak = false
+		breakSpace    = false
+		spaceBreak    = false
 
-		preceded_by_whitespace = false
-		followed_by_whitespace = false
-		previous_space         = false
-		previous_break         = false
+		precededByWhitespace = false
+		followedByWhitespace = false
+		previousSpace        = false
+		previousBreak        = false
 	)
 
-	emitter.scalar_data.value = value
+	emitter.scalarData.value = value
 
 	if len(value) == 0 {
-		emitter.scalar_data.multiline = false
-		emitter.scalar_data.flow_plain_allowed = false
-		emitter.scalar_data.block_plain_allowed = true
-		emitter.scalar_data.single_quoted_allowed = true
-		emitter.scalar_data.block_allowed = false
+		emitter.scalarData.multiline = false
+		emitter.scalarData.flowPlainAllowed = false
+		emitter.scalarData.blockPlainAllowed = true
+		emitter.scalarData.singleQuotedAllowed = true
+		emitter.scalarData.blockAllowed = false
 		return true
 	}
 
 	if len(value) >= 3 && ((value[0] == '-' && value[1] == '-' && value[2] == '-') || (value[0] == '.' && value[1] == '.' && value[2] == '.')) {
-		block_indicators = true
-		flow_indicators = true
+		blockIndicators = true
+		flowIndicators = true
 	}
 
-	preceded_by_whitespace = true
+	precededByWhitespace = true
 	for i, w := 0, 0; i < len(value); i += w {
 		w = width(value[i])
-		followed_by_whitespace = i+w >= len(value) || is_blank(value, i+w)
+		followedByWhitespace = i+w >= len(value) || isBlank(value, i+w)
 
 		if i == 0 {
 			switch value[i] {
 			case '#', ',', '[', ']', '{', '}', '&', '*', '!', '|', '>', '\'', '"', '%', '@', '`':
-				flow_indicators = true
-				block_indicators = true
+				flowIndicators = true
+				blockIndicators = true
 			case '?', ':':
-				flow_indicators = true
-				if followed_by_whitespace {
-					block_indicators = true
+				flowIndicators = true
+				if followedByWhitespace {
+					blockIndicators = true
 				}
 			case '-':
-				if followed_by_whitespace {
-					flow_indicators = true
-					block_indicators = true
+				if followedByWhitespace {
+					flowIndicators = true
+					blockIndicators = true
 				}
 			}
 		} else {
 			switch value[i] {
 			case ',', '?', '[', ']', '{', '}':
-				flow_indicators = true
+				flowIndicators = true
 			case ':':
-				flow_indicators = true
-				if followed_by_whitespace {
-					block_indicators = true
+				flowIndicators = true
+				if followedByWhitespace {
+					blockIndicators = true
 				}
 			case '#':
-				if preceded_by_whitespace {
-					flow_indicators = true
-					block_indicators = true
+				if precededByWhitespace {
+					flowIndicators = true
+					blockIndicators = true
 				}
 			}
 		}
 
-		if !is_printable(value, i) || !is_ascii(value, i) && !emitter.unicode {
-			special_characters = true
+		if !isPrintable(value, i) || !isASCII(value, i) && !emitter.unicode {
+			specialCharacters = true
 		}
-		if is_space(value, i) {
+		if isSpace(value, i) {
 			if i == 0 {
-				leading_space = true
+				leadingSpace = true
 			}
 			if i+width(value[i]) == len(value) {
-				trailing_space = true
+				trailingSpace = true
 			}
-			if previous_break {
-				break_space = true
+			if previousBreak {
+				breakSpace = true
 			}
-			previous_space = true
-			previous_break = false
-		} else if is_break(value, i) {
-			line_breaks = true
+			previousSpace = true
+			previousBreak = false
+		} else if isBreak(value, i) {
+			lineBreaks = true
 			if i == 0 {
-				leading_break = true
+				leadingBreak = true
 			}
 			if i+width(value[i]) == len(value) {
-				trailing_break = true
+				trailingBreak = true
 			}
-			if previous_space {
-				space_break = true
+			if previousSpace {
+				spaceBreak = true
 			}
-			previous_space = false
-			previous_break = true
+			previousSpace = false
+			previousBreak = true
 		} else {
-			previous_space = false
-			previous_break = false
+			previousSpace = false
+			previousBreak = false
 		}
 
 		// [Go]: Why 'z'? Couldn't be the end of the string as that's the loop condition.
-		preceded_by_whitespace = is_blankz(value, i)
+		precededByWhitespace = isBlankz(value, i)
 	}
 
-	emitter.scalar_data.multiline = line_breaks
-	emitter.scalar_data.flow_plain_allowed = true
-	emitter.scalar_data.block_plain_allowed = true
-	emitter.scalar_data.single_quoted_allowed = true
-	emitter.scalar_data.block_allowed = true
+	emitter.scalarData.multiline = lineBreaks
+	emitter.scalarData.flowPlainAllowed = true
+	emitter.scalarData.blockPlainAllowed = true
+	emitter.scalarData.singleQuotedAllowed = true
+	emitter.scalarData.blockAllowed = true
 
-	if leading_space || leading_break || trailing_space || trailing_break {
-		emitter.scalar_data.flow_plain_allowed = false
-		emitter.scalar_data.block_plain_allowed = false
+	if leadingSpace || leadingBreak || trailingSpace || trailingBreak {
+		emitter.scalarData.flowPlainAllowed = false
+		emitter.scalarData.blockPlainAllowed = false
 	}
-	if trailing_space {
-		emitter.scalar_data.block_allowed = false
+	if trailingSpace {
+		emitter.scalarData.blockAllowed = false
 	}
-	if break_space {
-		emitter.scalar_data.flow_plain_allowed = false
-		emitter.scalar_data.block_plain_allowed = false
-		emitter.scalar_data.single_quoted_allowed = false
+	if breakSpace {
+		emitter.scalarData.flowPlainAllowed = false
+		emitter.scalarData.blockPlainAllowed = false
+		emitter.scalarData.singleQuotedAllowed = false
 	}
-	if space_break || special_characters {
-		emitter.scalar_data.flow_plain_allowed = false
-		emitter.scalar_data.block_plain_allowed = false
-		emitter.scalar_data.single_quoted_allowed = false
-		emitter.scalar_data.block_allowed = false
+	if spaceBreak || specialCharacters {
+		emitter.scalarData.flowPlainAllowed = false
+		emitter.scalarData.blockPlainAllowed = false
+		emitter.scalarData.singleQuotedAllowed = false
+		emitter.scalarData.blockAllowed = false
 	}
-	if line_breaks {
-		emitter.scalar_data.flow_plain_allowed = false
-		emitter.scalar_data.block_plain_allowed = false
+	if lineBreaks {
+		emitter.scalarData.flowPlainAllowed = false
+		emitter.scalarData.blockPlainAllowed = false
 	}
-	if flow_indicators {
-		emitter.scalar_data.flow_plain_allowed = false
+	if flowIndicators {
+		emitter.scalarData.flowPlainAllowed = false
 	}
-	if block_indicators {
-		emitter.scalar_data.block_plain_allowed = false
+	if blockIndicators {
+		emitter.scalarData.blockPlainAllowed = false
 	}
 	return true
 }
 
 // Check if the event data is valid.
-func yaml_emitter_analyze_event(emitter *yaml_emitter_t, event *yaml_event_t) bool {
+func yamlEmitterAnalyzeEvent(emitter *yamlEmitterT, event *yamlEventT) bool {
 
-	emitter.anchor_data.anchor = nil
-	emitter.tag_data.handle = nil
-	emitter.tag_data.suffix = nil
-	emitter.scalar_data.value = nil
+	emitter.anchorData.anchor = nil
+	emitter.tagData.handle = nil
+	emitter.tagData.suffix = nil
+	emitter.scalarData.value = nil
 
 	switch event.typ {
-	case yaml_ALIAS_EVENT:
-		if !yaml_emitter_analyze_anchor(emitter, event.anchor, true) {
+	case yamlAliasEvent:
+		if !yamlEmitterAnalyzeAnchor(emitter, event.anchor, true) {
 			return false
 		}
 
-	case yaml_SCALAR_EVENT:
+	case yamlScalarEvent:
 		if len(event.anchor) > 0 {
-			if !yaml_emitter_analyze_anchor(emitter, event.anchor, false) {
+			if !yamlEmitterAnalyzeAnchor(emitter, event.anchor, false) {
 				return false
 			}
 		}
-		if len(event.tag) > 0 && (emitter.canonical || (!event.implicit && !event.quoted_implicit)) {
-			if !yaml_emitter_analyze_tag(emitter, event.tag) {
+		if len(event.tag) > 0 && (emitter.canonical || (!event.implicit && !event.quotedImplicit)) {
+			if !yamlEmitterAnalyzeTag(emitter, event.tag) {
 				return false
 			}
 		}
-		if !yaml_emitter_analyze_scalar(emitter, event.value) {
+		if !yamlEmitterAnalyzeScalar(emitter, event.value) {
 			return false
 		}
 
-	case yaml_SEQUENCE_START_EVENT:
+	case yamlSequenceStartEvent:
 		if len(event.anchor) > 0 {
-			if !yaml_emitter_analyze_anchor(emitter, event.anchor, false) {
+			if !yamlEmitterAnalyzeAnchor(emitter, event.anchor, false) {
 				return false
 			}
 		}
 		if len(event.tag) > 0 && (emitter.canonical || !event.implicit) {
-			if !yaml_emitter_analyze_tag(emitter, event.tag) {
+			if !yamlEmitterAnalyzeTag(emitter, event.tag) {
 				return false
 			}
 		}
 
-	case yaml_MAPPING_START_EVENT:
+	case yamlMappingStartEvent:
 		if len(event.anchor) > 0 {
-			if !yaml_emitter_analyze_anchor(emitter, event.anchor, false) {
+			if !yamlEmitterAnalyzeAnchor(emitter, event.anchor, false) {
 				return false
 			}
 		}
 		if len(event.tag) > 0 && (emitter.canonical || !event.implicit) {
-			if !yaml_emitter_analyze_tag(emitter, event.tag) {
+			if !yamlEmitterAnalyzeTag(emitter, event.tag) {
 				return false
 			}
 		}
@@ -1186,25 +1189,25 @@ func yaml_emitter_analyze_event(emitter *yaml_emitter_t, event *yaml_event_t) bo
 }
 
 // Write the BOM character.
-func yaml_emitter_write_bom(emitter *yaml_emitter_t) bool {
+func yamlEmitterWriteBom(emitter *yamlEmitterT) bool {
 	if !flush(emitter) {
 		return false
 	}
-	pos := emitter.buffer_pos
+	pos := emitter.bufferPos
 	emitter.buffer[pos+0] = '\xEF'
 	emitter.buffer[pos+1] = '\xBB'
 	emitter.buffer[pos+2] = '\xBF'
-	emitter.buffer_pos += 3
+	emitter.bufferPos += 3
 	return true
 }
 
-func yaml_emitter_write_indent(emitter *yaml_emitter_t) bool {
+func yamlEmitterWriteIndent(emitter *yamlEmitterT) bool {
 	indent := emitter.indent
 	if indent < 0 {
 		indent = 0
 	}
 	if !emitter.indention || emitter.column > indent || (emitter.column == indent && !emitter.whitespace) {
-		if !put_break(emitter) {
+		if !putBreak(emitter) {
 			return false
 		}
 	}
@@ -1218,23 +1221,23 @@ func yaml_emitter_write_indent(emitter *yaml_emitter_t) bool {
 	return true
 }
 
-func yaml_emitter_write_indicator(emitter *yaml_emitter_t, indicator []byte, need_whitespace, is_whitespace, is_indention bool) bool {
-	if need_whitespace && !emitter.whitespace {
+func yamlEmitterWriteIndicator(emitter *yamlEmitterT, indicator []byte, needWhitespace, isWhitespace, isIndention bool) bool {
+	if needWhitespace && !emitter.whitespace {
 		if !put(emitter, ' ') {
 			return false
 		}
 	}
-	if !write_all(emitter, indicator) {
+	if !writeAll(emitter, indicator) {
 		return false
 	}
-	emitter.whitespace = is_whitespace
-	emitter.indention = (emitter.indention && is_indention)
-	emitter.open_ended = false
+	emitter.whitespace = isWhitespace
+	emitter.indention = (emitter.indention && isIndention)
+	emitter.openEnded = false
 	return true
 }
 
-func yaml_emitter_write_anchor(emitter *yaml_emitter_t, value []byte) bool {
-	if !write_all(emitter, value) {
+func yamlEmitterWriteAnchor(emitter *yamlEmitterT, value []byte) bool {
+	if !writeAll(emitter, value) {
 		return false
 	}
 	emitter.whitespace = false
@@ -1242,13 +1245,13 @@ func yaml_emitter_write_anchor(emitter *yaml_emitter_t, value []byte) bool {
 	return true
 }
 
-func yaml_emitter_write_tag_handle(emitter *yaml_emitter_t, value []byte) bool {
+func yamlEmitterWriteTagHandle(emitter *yamlEmitterT, value []byte) bool {
 	if !emitter.whitespace {
 		if !put(emitter, ' ') {
 			return false
 		}
 	}
-	if !write_all(emitter, value) {
+	if !writeAll(emitter, value) {
 		return false
 	}
 	emitter.whitespace = false
@@ -1256,21 +1259,21 @@ func yaml_emitter_write_tag_handle(emitter *yaml_emitter_t, value []byte) bool {
 	return true
 }
 
-func yaml_emitter_write_tag_content(emitter *yaml_emitter_t, value []byte, need_whitespace bool) bool {
-	if need_whitespace && !emitter.whitespace {
+func yamlEmitterWriteTagContent(emitter *yamlEmitterT, value []byte, needWhitespace bool) bool {
+	if needWhitespace && !emitter.whitespace {
 		if !put(emitter, ' ') {
 			return false
 		}
 	}
 	for i := 0; i < len(value); {
-		var must_write bool
+		var mustWrite bool
 		switch value[i] {
 		case ';', '/', '?', ':', '@', '&', '=', '+', '$', ',', '_', '.', '~', '*', '\'', '(', ')', '[', ']':
-			must_write = true
+			mustWrite = true
 		default:
-			must_write = is_alpha(value, i)
+			mustWrite = isAlpha(value, i)
 		}
-		if must_write {
+		if mustWrite {
 			if !write(emitter, value, &i) {
 				return false
 			}
@@ -1310,7 +1313,7 @@ func yaml_emitter_write_tag_content(emitter *yaml_emitter_t, value []byte, need_
 	return true
 }
 
-func yaml_emitter_write_plain_scalar(emitter *yaml_emitter_t, value []byte, allow_breaks bool) bool {
+func yamlEmitterWritePlainScalar(emitter *yamlEmitterT, value []byte, allowBreaks bool) bool {
 	if !emitter.whitespace {
 		if !put(emitter, ' ') {
 			return false
@@ -1320,9 +1323,9 @@ func yaml_emitter_write_plain_scalar(emitter *yaml_emitter_t, value []byte, allo
 	spaces := false
 	breaks := false
 	for i := 0; i < len(value); {
-		if is_space(value, i) {
-			if allow_breaks && !spaces && emitter.column > emitter.best_width && !is_space(value, i+1) {
-				if !yaml_emitter_write_indent(emitter) {
+		if isSpace(value, i) {
+			if allowBreaks && !spaces && emitter.column > emitter.bestWidth && !isSpace(value, i+1) {
+				if !yamlEmitterWriteIndent(emitter) {
 					return false
 				}
 				i += width(value[i])
@@ -1332,20 +1335,20 @@ func yaml_emitter_write_plain_scalar(emitter *yaml_emitter_t, value []byte, allo
 				}
 			}
 			spaces = true
-		} else if is_break(value, i) {
+		} else if isBreak(value, i) {
 			if !breaks && value[i] == '\n' {
-				if !put_break(emitter) {
+				if !putBreak(emitter) {
 					return false
 				}
 			}
-			if !write_break(emitter, value, &i) {
+			if !writeBreak(emitter, value, &i) {
 				return false
 			}
 			emitter.indention = true
 			breaks = true
 		} else {
 			if breaks {
-				if !yaml_emitter_write_indent(emitter) {
+				if !yamlEmitterWriteIndent(emitter) {
 					return false
 				}
 			}
@@ -1360,25 +1363,25 @@ func yaml_emitter_write_plain_scalar(emitter *yaml_emitter_t, value []byte, allo
 
 	emitter.whitespace = false
 	emitter.indention = false
-	if emitter.root_context {
-		emitter.open_ended = true
+	if emitter.rootContext {
+		emitter.openEnded = true
 	}
 
 	return true
 }
 
-func yaml_emitter_write_single_quoted_scalar(emitter *yaml_emitter_t, value []byte, allow_breaks bool) bool {
+func yamlEmitterWriteSingleQuotedScalar(emitter *yamlEmitterT, value []byte, allowBreaks bool) bool {
 
-	if !yaml_emitter_write_indicator(emitter, []byte{'\''}, true, false, false) {
+	if !yamlEmitterWriteIndicator(emitter, []byte{'\''}, true, false, false) {
 		return false
 	}
 
 	spaces := false
 	breaks := false
 	for i := 0; i < len(value); {
-		if is_space(value, i) {
-			if allow_breaks && !spaces && emitter.column > emitter.best_width && i > 0 && i < len(value)-1 && !is_space(value, i+1) {
-				if !yaml_emitter_write_indent(emitter) {
+		if isSpace(value, i) {
+			if allowBreaks && !spaces && emitter.column > emitter.bestWidth && i > 0 && i < len(value)-1 && !isSpace(value, i+1) {
+				if !yamlEmitterWriteIndent(emitter) {
 					return false
 				}
 				i += width(value[i])
@@ -1388,20 +1391,20 @@ func yaml_emitter_write_single_quoted_scalar(emitter *yaml_emitter_t, value []by
 				}
 			}
 			spaces = true
-		} else if is_break(value, i) {
+		} else if isBreak(value, i) {
 			if !breaks && value[i] == '\n' {
-				if !put_break(emitter) {
+				if !putBreak(emitter) {
 					return false
 				}
 			}
-			if !write_break(emitter, value, &i) {
+			if !writeBreak(emitter, value, &i) {
 				return false
 			}
 			emitter.indention = true
 			breaks = true
 		} else {
 			if breaks {
-				if !yaml_emitter_write_indent(emitter) {
+				if !yamlEmitterWriteIndent(emitter) {
 					return false
 				}
 			}
@@ -1418,7 +1421,7 @@ func yaml_emitter_write_single_quoted_scalar(emitter *yaml_emitter_t, value []by
 			breaks = false
 		}
 	}
-	if !yaml_emitter_write_indicator(emitter, []byte{'\''}, false, false, false) {
+	if !yamlEmitterWriteIndicator(emitter, []byte{'\''}, false, false, false) {
 		return false
 	}
 	emitter.whitespace = false
@@ -1426,15 +1429,15 @@ func yaml_emitter_write_single_quoted_scalar(emitter *yaml_emitter_t, value []by
 	return true
 }
 
-func yaml_emitter_write_double_quoted_scalar(emitter *yaml_emitter_t, value []byte, allow_breaks bool) bool {
+func yamlEmitterWriteDoubleQuotedScalar(emitter *yamlEmitterT, value []byte, allowBreaks bool) bool {
 	spaces := false
-	if !yaml_emitter_write_indicator(emitter, []byte{'"'}, true, false, false) {
+	if !yamlEmitterWriteIndicator(emitter, []byte{'"'}, true, false, false) {
 		return false
 	}
 
 	for i := 0; i < len(value); {
-		if !is_printable(value, i) || (!emitter.unicode && !is_ascii(value, i)) ||
-			is_bom(value, i) || is_break(value, i) ||
+		if !isPrintable(value, i) || (!emitter.unicode && !isASCII(value, i)) ||
+			isBom(value, i) || isBreak(value, i) ||
 			value[i] == '"' || value[i] == '\\' {
 
 			octet := value[i]
@@ -1517,12 +1520,12 @@ func yaml_emitter_write_double_quoted_scalar(emitter *yaml_emitter_t, value []by
 				return false
 			}
 			spaces = false
-		} else if is_space(value, i) {
-			if allow_breaks && !spaces && emitter.column > emitter.best_width && i > 0 && i < len(value)-1 {
-				if !yaml_emitter_write_indent(emitter) {
+		} else if isSpace(value, i) {
+			if allowBreaks && !spaces && emitter.column > emitter.bestWidth && i > 0 && i < len(value)-1 {
+				if !yamlEmitterWriteIndent(emitter) {
 					return false
 				}
-				if is_space(value, i+1) {
+				if isSpace(value, i+1) {
 					if !put(emitter, '\\') {
 						return false
 					}
@@ -1539,7 +1542,7 @@ func yaml_emitter_write_double_quoted_scalar(emitter *yaml_emitter_t, value []by
 			spaces = false
 		}
 	}
-	if !yaml_emitter_write_indicator(emitter, []byte{'"'}, false, false, false) {
+	if !yamlEmitterWriteIndicator(emitter, []byte{'"'}, false, false, false) {
 		return false
 	}
 	emitter.whitespace = false
@@ -1547,71 +1550,71 @@ func yaml_emitter_write_double_quoted_scalar(emitter *yaml_emitter_t, value []by
 	return true
 }
 
-func yaml_emitter_write_block_scalar_hints(emitter *yaml_emitter_t, value []byte) bool {
-	if is_space(value, 0) || is_break(value, 0) {
-		indent_hint := []byte{'0' + byte(emitter.best_indent)}
-		if !yaml_emitter_write_indicator(emitter, indent_hint, false, false, false) {
+func yamlEmitterWriteBlockScalarHints(emitter *yamlEmitterT, value []byte) bool {
+	if isSpace(value, 0) || isBreak(value, 0) {
+		indentHint := []byte{'0' + byte(emitter.bestIndent)}
+		if !yamlEmitterWriteIndicator(emitter, indentHint, false, false, false) {
 			return false
 		}
 	}
 
-	emitter.open_ended = false
+	emitter.openEnded = false
 
-	var chomp_hint [1]byte
+	var chompHint [1]byte
 	if len(value) == 0 {
-		chomp_hint[0] = '-'
+		chompHint[0] = '-'
 	} else {
 		i := len(value) - 1
 		for value[i]&0xC0 == 0x80 {
 			i--
 		}
-		if !is_break(value, i) {
-			chomp_hint[0] = '-'
+		if !isBreak(value, i) {
+			chompHint[0] = '-'
 		} else if i == 0 {
-			chomp_hint[0] = '+'
-			emitter.open_ended = true
+			chompHint[0] = '+'
+			emitter.openEnded = true
 		} else {
 			i--
 			for value[i]&0xC0 == 0x80 {
 				i--
 			}
-			if is_break(value, i) {
-				chomp_hint[0] = '+'
-				emitter.open_ended = true
+			if isBreak(value, i) {
+				chompHint[0] = '+'
+				emitter.openEnded = true
 			}
 		}
 	}
-	if chomp_hint[0] != 0 {
-		if !yaml_emitter_write_indicator(emitter, chomp_hint[:], false, false, false) {
+	if chompHint[0] != 0 {
+		if !yamlEmitterWriteIndicator(emitter, chompHint[:], false, false, false) {
 			return false
 		}
 	}
 	return true
 }
 
-func yaml_emitter_write_literal_scalar(emitter *yaml_emitter_t, value []byte) bool {
-	if !yaml_emitter_write_indicator(emitter, []byte{'|'}, true, false, false) {
+func yamlEmitterWriteLiteralScalar(emitter *yamlEmitterT, value []byte) bool {
+	if !yamlEmitterWriteIndicator(emitter, []byte{'|'}, true, false, false) {
 		return false
 	}
-	if !yaml_emitter_write_block_scalar_hints(emitter, value) {
+	if !yamlEmitterWriteBlockScalarHints(emitter, value) {
 		return false
 	}
-	if !put_break(emitter) {
+	if !putBreak(emitter) {
 		return false
 	}
 	emitter.indention = true
 	emitter.whitespace = true
 	breaks := true
 	for i := 0; i < len(value); {
-		if is_break(value, i) {
-			if !write_break(emitter, value, &i) {
+		if isBreak(value, i) {
+			if !writeBreak(emitter, value, &i) {
 				return false
 			}
 			emitter.indention = true
 			breaks = true
 		} else {
 			if breaks {
-				if !yaml_emitter_write_indent(emitter) {
+				if !yamlEmitterWriteIndent(emitter) {
 					return false
 				}
 			}
@@ -1626,49 +1629,49 @@ func yaml_emitter_write_literal_scalar(emitter *yaml_emitter_t, value []byte) bo
 	return true
 }
 
-func yaml_emitter_write_folded_scalar(emitter *yaml_emitter_t, value []byte) bool {
-	if !yaml_emitter_write_indicator(emitter, []byte{'>'}, true, false, false) {
+func yamlEmitterWriteFoldedScalar(emitter *yamlEmitterT, value []byte) bool {
+	if !yamlEmitterWriteIndicator(emitter, []byte{'>'}, true, false, false) {
 		return false
 	}
-	if !yaml_emitter_write_block_scalar_hints(emitter, value) {
+	if !yamlEmitterWriteBlockScalarHints(emitter, value) {
 		return false
 	}
 
-	if !put_break(emitter) {
+	if !putBreak(emitter) {
 		return false
 	}
 	emitter.indention = true
 	emitter.whitespace = true
 
 	breaks := true
-	leading_spaces := true
+	leadingSpaces := true
 	for i := 0; i < len(value); {
-		if is_break(value, i) {
-			if !breaks && !leading_spaces && value[i] == '\n' {
+		if isBreak(value, i) {
+			if !breaks && !leadingSpaces && value[i] == '\n' {
 				k := 0
-				for is_break(value, k) {
+				for isBreak(value, k) {
 					k += width(value[k])
 				}
-				if !is_blankz(value, k) {
-					if !put_break(emitter) {
+				if !isBlankz(value, k) {
+					if !putBreak(emitter) {
 						return false
 					}
 				}
 			}
-			if !write_break(emitter, value, &i) {
+			if !writeBreak(emitter, value, &i) {
 				return false
 			}
 			emitter.indention = true
 			breaks = true
 		} else {
 			if breaks {
-				if !yaml_emitter_write_indent(emitter) {
+				if !yamlEmitterWriteIndent(emitter) {
 					return false
 				}
-				leading_spaces = is_blank(value, i)
+				leadingSpaces = isBlank(value, i)
 			}
-			if !breaks && is_space(value, i) && !is_space(value, i+1) && emitter.column > emitter.best_width {
-				if !yaml_emitter_write_indent(emitter) {
+			if !breaks && isSpace(value, i) && !isSpace(value, i+1) && emitter.column > emitter.bestWidth {
+				if !yamlEmitterWriteIndent(emitter) {
 					return false
 				}
 				i += width(value[i])

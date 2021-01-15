@@ -9,15 +9,15 @@ import (
 	"github.com/k14s/ytt/pkg/template/core"
 )
 
-type templateModule struct {
+type TemplateModule struct {
 	replaceNodeFunc core.StarlarkFunc
 }
 
-func NewTemplateModule(replaceNodeFunc core.StarlarkFunc) templateModule {
-	return templateModule{replaceNodeFunc}
+func NewTemplateModule(replaceNodeFunc core.StarlarkFunc) TemplateModule {
+	return TemplateModule{replaceNodeFunc}
 }
 
-func (b templateModule) AsModule() starlark.StringDict {
+func (b TemplateModule) AsModule() starlark.StringDict {
 	return starlark.StringDict{
 		"template": &starlarkstruct.Module{
 			Name: "template",

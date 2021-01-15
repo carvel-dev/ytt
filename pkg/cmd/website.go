@@ -17,7 +17,7 @@ import (
 
 type WebsiteOptions struct {
 	ListenAddr      string
-	RedirectToHTTPs bool
+	RedirectToHTTPS bool
 	BinaryPath      string
 	CheckCookie     bool
 }
@@ -35,14 +35,14 @@ func NewWebsiteCmd(o *WebsiteOptions) *cobra.Command {
 		RunE:  func(_ *cobra.Command, _ []string) error { return o.Run() },
 	}
 	cmd.Flags().StringVar(&o.ListenAddr, "listen-addr", "localhost:8080", "Listen address")
-	cmd.Flags().BoolVar(&o.RedirectToHTTPs, "redirect-to-https", true, "Redirect to HTTPs address")
+	cmd.Flags().BoolVar(&o.RedirectToHTTPS, "redirect-to-https", true, "Redirect to HTTPs address")
 	return cmd
 }
 
 func (o *WebsiteOptions) Server() *website.Server {
 	opts := website.ServerOpts{
 		ListenAddr:      o.ListenAddr,
-		RedirectToHTTPs: o.RedirectToHTTPs,
+		RedirectToHTTPS: o.RedirectToHTTPS,
 		TemplateFunc:    o.execBinary,
 		ErrorFunc:       o.bulkOutErr,
 		CheckCookie:     o.CheckCookie,

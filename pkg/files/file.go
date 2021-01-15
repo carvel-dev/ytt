@@ -135,7 +135,7 @@ func NewSortedFilesFromPaths(paths []string, opts SymlinkAllowOpts) ([]*File, er
 
 		for _, file := range files {
 			file.order = currOrder
-			currOrder += 1
+			currOrder++
 		}
 
 		allFiles = append(allFiles, files...)
@@ -148,7 +148,7 @@ func NewSortedFiles(files []*File) []*File {
 	currOrder := 1
 	for _, file := range files {
 		file.order = currOrder
-		currOrder += 1
+		currOrder++
 	}
 	return files
 }

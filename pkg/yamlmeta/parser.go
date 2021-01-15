@@ -248,7 +248,7 @@ func (p *Parser) buildLineLocs(val interface{}, nodeAtLines map[int][]Node) {
 
 func (p *Parser) buildLineNums(nodeAtLines map[int][]Node) []int {
 	var result []int
-	for lineNum, _ := range nodeAtLines {
+	for lineNum := range nodeAtLines {
 		result = append(result, lineNum)
 	}
 	sort.Ints(result)

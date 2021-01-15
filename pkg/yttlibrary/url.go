@@ -172,7 +172,7 @@ func (b urlModule) QueryParamsDecode(thread *starlark.Thread, f *starlark.Builti
 
 func (b urlModule) sortedKeys(vals url.Values) []string {
 	var result []string
-	for k, _ := range vals {
+	for k := range vals {
 		result = append(result, k)
 	}
 	sort.Strings(result)

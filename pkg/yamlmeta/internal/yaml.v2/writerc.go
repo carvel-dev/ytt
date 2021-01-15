@@ -1,26 +1,29 @@
+// Copyright 2020 VMware, Inc.
+// SPDX-License-Identifier: Apache-2.0
+
 package yaml
 
 // Set the writer error and return false.
-func yaml_emitter_set_writer_error(emitter *yaml_emitter_t, problem string) bool {
-	emitter.error = yaml_WRITER_ERROR
+func yamlEmitterSetWriterError(emitter *yamlEmitterT, problem string) bool {
+	emitter.error = yamlWriterError
 	emitter.problem = problem
 	return false
 }
 
 // Flush the output buffer.
-func yaml_emitter_flush(emitter *yaml_emitter_t) bool {
-	if emitter.write_handler == nil {
+func yamlEmitterFlush(emitter *yamlEmitterT) bool {
+	if emitter.writeHandler == nil {
 		panic("write handler not set")
 	}
 
 	// Check if the buffer is empty.
-	if emitter.buffer_pos == 0 {
+	if emitter.bufferPos == 0 {
 		return true
 	}
 
-	if err := emitter.write_handler(emitter, emitter.buffer[:emitter.buffer_pos]); err != nil {
-		return yaml_emitter_set_writer_error(emitter, "write error: "+err.Error())
+	if err := emitter.writeHandler(emitter, emitter.buffer[:emitter.bufferPos]); err != nil {
+		return yamlEmitterSetWriterError(emitter, "write error: "+err.Error())
 	}
-	emitter.buffer_pos = 0
+	emitter.bufferPos = 0
 	return true
 }

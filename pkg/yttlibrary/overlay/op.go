@@ -12,7 +12,7 @@ import (
 	"github.com/k14s/ytt/pkg/yamlmeta"
 )
 
-type OverlayOp struct {
+type Op struct {
 	Left  interface{}
 	Right interface{}
 
@@ -21,7 +21,7 @@ type OverlayOp struct {
 	ExactMatch bool
 }
 
-func (o OverlayOp) Apply() (interface{}, error) {
+func (o Op) Apply() (interface{}, error) {
 	leftObj := yamlmeta.NewASTFromInterface(o.Left)
 	rightObj := yamlmeta.NewASTFromInterface(o.Right)
 
@@ -34,7 +34,7 @@ func (o OverlayOp) Apply() (interface{}, error) {
 	return leftObj, nil
 }
 
-func (o OverlayOp) apply(left, right interface{}, parentMatchChildDefaults MatchChildDefaultsAnnotation) (bool, error) {
+func (o Op) apply(left, right interface{}, parentMatchChildDefaults MatchChildDefaultsAnnotation) (bool, error) {
 	switch typedRight := right.(type) {
 	case *yamlmeta.DocumentSet:
 		var docSetArray []*yamlmeta.DocumentSet
@@ -134,7 +134,7 @@ func (o OverlayOp) apply(left, right interface{}, parentMatchChildDefaults Match
 	return false, nil
 }
 
-func (o OverlayOp) applyDocSet(
+func (o Op) applyDocSet(
 	typedLeft []*yamlmeta.DocumentSet, typedRight *yamlmeta.DocumentSet,
 	parentMatchChildDefaults MatchChildDefaultsAnnotation) (bool, error) {
 
@@ -168,7 +168,7 @@ func (o OverlayOp) applyDocSet(
 	return false, nil
 }
 
-func (o OverlayOp) removeOverlayAnns(val interface{}) {
+func (o Op) removeOverlayAnns(val interface{}) {
 	node, ok := val.(yamlmeta.Node)
 	if !ok {
 		return

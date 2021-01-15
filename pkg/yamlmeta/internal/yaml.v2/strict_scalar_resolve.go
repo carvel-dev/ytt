@@ -46,11 +46,11 @@ func strictScalarResolve(tag, in string) (string, interface{}) {
 func strictScalarResolveConservative(in string) (string, interface{}) {
 	switch in {
 	case "":
-		return yaml_NULL_TAG, nil
+		return yamlNullTag, nil
 	case "true":
-		return yaml_BOOL_TAG, true
+		return yamlBoolTag, true
 	case "false":
-		return yaml_BOOL_TAG, false
+		return yamlBoolTag, false
 
 	default:
 		switch {
@@ -59,16 +59,16 @@ func strictScalarResolveConservative(in string) (string, interface{}) {
 			if err != nil {
 				uintv, err := strconv.ParseUint(in, 0, 64)
 				if err == nil {
-					return yaml_INT_TAG, uintv
+					return yamlIntTag, uintv
 				}
 
 				failf("Strict parsing: Parsing int '%s': %s", in, err)
 				panic("Unreachable")
 			}
 			if intv == int64(int(intv)) {
-				return yaml_INT_TAG, int(intv)
+				return yamlIntTag, int(intv)
 			}
-			return yaml_INT_TAG, intv
+			return yamlIntTag, intv
 
 		case strictStyleFloat.MatchString(in):
 			floatv, err := strconv.ParseFloat(in, 64)
@@ -76,7 +76,7 @@ func strictScalarResolveConservative(in string) (string, interface{}) {
 				failf("Strict parsing: Parsing float '%s': %s", in, err)
 				panic("Unreachable")
 			}
-			return yaml_FLOAT_TAG, floatv
+			return yamlFloatTag, floatv
 
 		case strings.IndexFunc(in, unicode.IsSpace) != -1:
 			failf("Strict parsing: Strings with whitespace must be explicitly quoted: '%s'", in)
@@ -92,7 +92,7 @@ func strictScalarResolveConservative(in string) (string, interface{}) {
 			panic("Unreachable")
 
 		default:
-			return yaml_STR_TAG, in
+			return yamlStrTag, in
 		}
 	}
 }

@@ -43,11 +43,11 @@ func NewBulkFilesSource(opts BulkFilesSourceOpts, ui ui.UI) *BulkFilesSource {
 func (s *BulkFilesSource) HasInput() bool  { return len(s.opts.bulkIn) > 0 }
 func (s *BulkFilesSource) HasOutput() bool { return s.opts.bulkOut }
 
-func (s BulkFilesSource) Input() (TemplateInput, error) {
+func (s BulkFilesSource) Input() (Input, error) {
 	var fs BulkFiles
 	err := json.Unmarshal([]byte(s.opts.bulkIn), &fs)
 	if err != nil {
-		return TemplateInput{}, err
+		return Input{}, err
 	}
 
 	var result []*files.File
@@ -55,16 +55,16 @@ func (s BulkFilesSource) Input() (TemplateInput, error) {
 	for _, f := range fs.Files {
 		file, err := files.NewFileFromSource(files.NewBytesSource(f.Name, []byte(f.Data)))
 		if err != nil {
-			return TemplateInput{}, err
+			return Input{}, err
 		}
 
 		result = append(result, file)
 	}
 
-	return TemplateInput{files.NewSortedFiles(result)}, nil
+	return Input{files.NewSortedFiles(result)}, nil
 }
 
-func (s *BulkFilesSource) Output(out TemplateOutput) error {
+func (s *BulkFilesSource) Output(out Output) error {
 	fs := BulkFiles{}
 
 	if out.Err != nil {

@@ -1,3 +1,6 @@
+// Copyright 2020 VMware, Inc.
+// SPDX-License-Identifier: Apache-2.0
+
 package schema
 
 import (
@@ -50,8 +53,8 @@ func (t *DocumentType) GetValueType() yamlmeta.Type {
 func (m MapType) GetValueType() yamlmeta.Type {
 	panic("Not implemented because it is unreachable")
 }
-func (m MapItemType) GetValueType() yamlmeta.Type {
-	return m.ValueType
+func (t MapItemType) GetValueType() yamlmeta.Type {
+	return t.ValueType
 }
 func (a ArrayType) GetValueType() yamlmeta.Type {
 	panic("Not implemented because it is unreachable")
@@ -87,7 +90,7 @@ func (m *MapType) CheckType(node yamlmeta.TypeWithValues, prependErrorMessage st
 	}
 	return
 }
-func (m MapItemType) CheckType(node yamlmeta.TypeWithValues, prependErrorMessage string) (chk yamlmeta.TypeCheck) {
+func (t MapItemType) CheckType(node yamlmeta.TypeWithValues, prependErrorMessage string) (chk yamlmeta.TypeCheck) {
 	violationErrorMessage := prependErrorMessage + " was type %T when %T was expected"
 
 	mapItem, ok := node.(*yamlmeta.MapItem)
@@ -95,8 +98,8 @@ func (m MapItemType) CheckType(node yamlmeta.TypeWithValues, prependErrorMessage
 		chk.Violations = append(chk.Violations, fmt.Sprintf(violationErrorMessage, node.GetValues()[0], node))
 		return
 	}
-	if mapItem.Value == nil && !m.IsNullable() {
-		chk.Violations = append(chk.Violations, fmt.Sprintf(violationErrorMessage, node.GetValues()[0], m.ValueType))
+	if mapItem.Value == nil && !t.IsNullable() {
+		chk.Violations = append(chk.Violations, fmt.Sprintf(violationErrorMessage, node.GetValues()[0], t.ValueType))
 	}
 
 	return
@@ -182,16 +185,16 @@ func (t *DocumentType) AssignTypeTo(typeable yamlmeta.Typeable) (chk yamlmeta.Ty
 	} // else, at a leaf
 	return
 }
-func (t *MapType) AssignTypeTo(typeable yamlmeta.Typeable) (chk yamlmeta.TypeCheck) {
+func (m *MapType) AssignTypeTo(typeable yamlmeta.Typeable) (chk yamlmeta.TypeCheck) {
 	mapNode, ok := typeable.(*yamlmeta.Map)
 	if !ok {
 		chk.Violations = []string{fmt.Sprintf("Expected node at %s to be a %T, but was a %T", typeable.GetPosition().AsCompactString(), &yamlmeta.Map{}, typeable)}
 		return
 	}
 	var foundKeys []interface{}
-	typeable.SetType(t)
+	typeable.SetType(m)
 	for _, mapItem := range mapNode.Items {
-		for _, itemType := range t.Items {
+		for _, itemType := range m.Items {
 			if mapItem.Key == itemType.Key {
 				foundKeys = append(foundKeys, itemType.Key)
 				childCheck := itemType.AssignTypeTo(mapItem)
@@ -201,12 +204,12 @@ func (t *MapType) AssignTypeTo(typeable yamlmeta.Typeable) (chk yamlmeta.TypeChe
 		}
 	}
 
-	t.applySchemaDefaults(foundKeys, chk, mapNode)
+	m.applySchemaDefaults(foundKeys, chk, mapNode)
 	return
 }
 
-func (t *MapType) applySchemaDefaults(foundKeys []interface{}, chk yamlmeta.TypeCheck, mapNode *yamlmeta.Map) {
-	for _, item := range t.Items {
+func (m *MapType) applySchemaDefaults(foundKeys []interface{}, chk yamlmeta.TypeCheck, mapNode *yamlmeta.Map) {
+	for _, item := range m.Items {
 		if contains(foundKeys, item.Key) {
 			continue
 		}
@@ -248,48 +251,48 @@ func (t *MapItemType) AssignTypeTo(typeable yamlmeta.Typeable) (chk yamlmeta.Typ
 	} // else, at a leaf
 	return
 }
-func (t *ArrayType) AssignTypeTo(typeable yamlmeta.Typeable) (chk yamlmeta.TypeCheck) {
+func (a *ArrayType) AssignTypeTo(typeable yamlmeta.Typeable) (chk yamlmeta.TypeCheck) {
 	arrayNode, ok := typeable.(*yamlmeta.Array)
 	if !ok {
 		chk.Violations = []string{fmt.Sprintf("Expected node at %s to be a %T, but was a %T", typeable.GetPosition().AsCompactString(), &yamlmeta.Array{}, typeable)}
 		return
 	}
-	typeable.SetType(t)
+	typeable.SetType(a)
 	for _, arrayItem := range arrayNode.Items {
-		childCheck := t.ItemsType.AssignTypeTo(arrayItem)
+		childCheck := a.ItemsType.AssignTypeTo(arrayItem)
 		chk.Violations = append(chk.Violations, childCheck.Violations...)
 	}
 	return
 }
-func (t ArrayItemType) AssignTypeTo(typeable yamlmeta.Typeable) (chk yamlmeta.TypeCheck) {
+func (a ArrayItemType) AssignTypeTo(typeable yamlmeta.Typeable) (chk yamlmeta.TypeCheck) {
 	arrayItem, ok := typeable.(*yamlmeta.ArrayItem)
 	if !ok {
 		chk.Violations = []string{fmt.Sprintf("Expected node at %s to be a %T, but was a %T", typeable.GetPosition().AsCompactString(), &yamlmeta.ArrayItem{}, typeable)}
 		return
 	}
-	typeable.SetType(t)
+	typeable.SetType(a)
 	typeableValue, ok := arrayItem.Value.(yamlmeta.Typeable)
 	if ok {
-		childCheck := t.ValueType.AssignTypeTo(typeableValue)
+		childCheck := a.ValueType.AssignTypeTo(typeableValue)
 		chk.Violations = append(chk.Violations, childCheck.Violations...)
 	} // else, at a leaf
 	return
 }
 
-func (t *ScalarType) AssignTypeTo(typeable yamlmeta.Typeable) (chk yamlmeta.TypeCheck) {
-	switch t.Type.(type) {
+func (m *ScalarType) AssignTypeTo(typeable yamlmeta.Typeable) (chk yamlmeta.TypeCheck) {
+	switch m.Type.(type) {
 	case int:
-		typeable.SetType(t)
+		typeable.SetType(m)
 	case string:
-		typeable.SetType(t)
+		typeable.SetType(m)
 	default:
 		chk.Violations = []string{fmt.Sprintf("Expected node at %s to be a %T, but was a %T", typeable.GetPosition().AsCompactString(), &ScalarType{}, typeable)}
 	}
 	return
 }
 
-func (t *MapType) AllowsKey(key interface{}) bool {
-	for _, item := range t.Items {
+func (m *MapType) AllowsKey(key interface{}) bool {
+	for _, item := range m.Items {
 		if item.Key == key {
 			return true
 		}

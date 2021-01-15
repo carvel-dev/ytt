@@ -114,7 +114,7 @@ func (a DocumentMatchAnnotation) MatchNodes(leftDocSets []*yamlmeta.DocumentSet)
 					matches = append(matches, item.Position)
 				}
 
-				combinedIdx += 1
+				combinedIdx++
 			}
 		}
 

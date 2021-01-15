@@ -1,3 +1,6 @@
+// Copyright 2020 VMware, Inc.
+// SPDX-License-Identifier: Apache-2.0
+
 package yaml
 
 import (
@@ -27,8 +30,8 @@ type jsonNumber interface {
 }
 
 type encoder struct {
-	emitter yaml_emitter_t
-	event   yaml_event_t
+	emitter yamlEmitterT
+	event   yamlEventT
 	out     []byte
 	flow    bool
 	// doneInit holds whether the initial stream_start_event has been
@@ -38,17 +41,17 @@ type encoder struct {
 
 func newEncoder() *encoder {
 	e := &encoder{}
-	yaml_emitter_initialize(&e.emitter)
-	yaml_emitter_set_output_string(&e.emitter, &e.out)
-	yaml_emitter_set_unicode(&e.emitter, true)
+	yamlEmitterInitialize(&e.emitter)
+	yamlEmitterSetOutputString(&e.emitter, &e.out)
+	yamlEmitterSetUnicode(&e.emitter, true)
 	return e
 }
 
 func newEncoderWithWriter(w io.Writer) *encoder {
 	e := &encoder{}
-	yaml_emitter_initialize(&e.emitter)
-	yaml_emitter_set_output_writer(&e.emitter, w)
-	yaml_emitter_set_unicode(&e.emitter, true)
+	yamlEmitterInitialize(&e.emitter)
+	yamlEmitterSetOutputWriter(&e.emitter, w)
+	yamlEmitterSetUnicode(&e.emitter, true)
 	return e
 }
 
@@ -56,24 +59,24 @@ func (e *encoder) init() {
 	if e.doneInit {
 		return
 	}
-	yaml_stream_start_event_initialize(&e.event, yaml_UTF8_ENCODING)
+	yamlStreamStartEventInitialize(&e.event, yamlUtf8Encoding)
 	e.emit()
 	e.doneInit = true
 }
 
 func (e *encoder) finish() {
-	e.emitter.open_ended = false
-	yaml_stream_end_event_initialize(&e.event)
+	e.emitter.openEnded = false
+	yamlStreamEndEventInitialize(&e.event)
 	e.emit()
 }
 
 func (e *encoder) destroy() {
-	yaml_emitter_delete(&e.emitter)
+	yamlEmitterDelete(&e.emitter)
 }
 
 func (e *encoder) emit() {
 	// This will internally delete the e.event value.
-	e.must(yaml_emitter_emit(&e.emitter, &e.event))
+	e.must(yamlEmitterEmit(&e.emitter, &e.event))
 }
 
 func (e *encoder) must(ok bool) {
@@ -88,10 +91,10 @@ func (e *encoder) must(ok bool) {
 
 func (e *encoder) marshalDoc(tag string, in reflect.Value) {
 	e.init()
-	yaml_document_start_event_initialize(&e.event, nil, nil, true)
+	yamlDocumentStartEventInitialize(&e.event, nil, nil, true)
 	e.emit()
 	e.marshal(tag, in)
-	yaml_document_end_event_initialize(&e.event, true)
+	yamlDocumentEndEventInitialize(&e.event, true)
 	e.emit()
 }
 
@@ -246,32 +249,32 @@ func (e *encoder) structv(tag string, in reflect.Value) {
 
 func (e *encoder) mappingv(tag string, f func()) {
 	implicit := tag == ""
-	style := yaml_BLOCK_MAPPING_STYLE
+	style := yamlBlockMappingStyle
 	if e.flow {
 		e.flow = false
-		style = yaml_FLOW_MAPPING_STYLE
+		style = yamlFlowMappingStyle
 	}
-	yaml_mapping_start_event_initialize(&e.event, nil, []byte(tag), implicit, style)
+	yamlMappingStartEventInitialize(&e.event, nil, []byte(tag), implicit, style)
 	e.emit()
 	f()
-	yaml_mapping_end_event_initialize(&e.event)
+	yamlMappingEndEventInitialize(&e.event)
 	e.emit()
 }
 
 func (e *encoder) slicev(tag string, in reflect.Value) {
 	implicit := tag == ""
-	style := yaml_BLOCK_SEQUENCE_STYLE
+	style := yamlBlockSequenceStyle
 	if e.flow {
 		e.flow = false
-		style = yaml_FLOW_SEQUENCE_STYLE
+		style = yamlFlowSequenceStyle
 	}
-	e.must(yaml_sequence_start_event_initialize(&e.event, nil, []byte(tag), implicit, style))
+	e.must(yamlSequenceStartEventInitialize(&e.event, nil, []byte(tag), implicit, style))
 	e.emit()
 	n := in.Len()
 	for i := 0; i < n; i++ {
 		e.marshal("", in.Index(i))
 	}
-	e.must(yaml_sequence_end_event_initialize(&e.event))
+	e.must(yamlSequenceEndEventInitialize(&e.event))
 	e.emit()
 }
 
@@ -298,12 +301,12 @@ func isBase60Float(s string) (result bool) {
 var base60float = regexp.MustCompile(`^[-+]?[0-9][0-9_]*(?::[0-5]?[0-9])+(?:\.[0-9_]*)?$`)
 
 func (e *encoder) stringv(tag string, in reflect.Value) {
-	var style yaml_scalar_style_t
+	var style yamlScalarStyleT
 	s := in.String()
 	canUsePlain := true
 	switch {
 	case !utf8.ValidString(s):
-		if tag == yaml_BINARY_TAG {
+		if tag == yamlBinaryTag {
 			failf("explicitly tagged !!binary data must be base64-encoded")
 		}
 		if tag != "" {
@@ -311,25 +314,25 @@ func (e *encoder) stringv(tag string, in reflect.Value) {
 		}
 		// It can't be encoded directly as YAML so use a binary tag
 		// and encode it as base64.
-		tag = yaml_BINARY_TAG
+		tag = yamlBinaryTag
 		s = encodeBase64(s)
 	case tag == "":
 		// Check to see if it would resolve to a specific
 		// tag when encoded unquoted. If it doesn't,
 		// there's no need to quote it.
 		rtag, _ := resolve("", s)
-		canUsePlain = rtag == yaml_STR_TAG && !isBase60Float(s)
+		canUsePlain = rtag == yamlStrTag && !isBase60Float(s)
 	}
 	// Note: it's possible for user code to emit invalid YAML
 	// if they explicitly specify a tag and a string containing
 	// text that's incompatible with that tag.
 	switch {
 	case strings.Contains(s, "\n"):
-		style = yaml_LITERAL_SCALAR_STYLE
+		style = yamlLiteralScalarStyle
 	case canUsePlain:
-		style = yaml_PLAIN_SCALAR_STYLE
+		style = yamlPlainScalarStyle
 	default:
-		style = yaml_DOUBLE_QUOTED_SCALAR_STYLE
+		style = yamlDoubleQuotedScalarStyle
 	}
 	e.emitScalar(s, "", tag, style)
 }
@@ -341,23 +344,23 @@ func (e *encoder) boolv(tag string, in reflect.Value) {
 	} else {
 		s = "false"
 	}
-	e.emitScalar(s, "", tag, yaml_PLAIN_SCALAR_STYLE)
+	e.emitScalar(s, "", tag, yamlPlainScalarStyle)
 }
 
 func (e *encoder) intv(tag string, in reflect.Value) {
 	s := strconv.FormatInt(in.Int(), 10)
-	e.emitScalar(s, "", tag, yaml_PLAIN_SCALAR_STYLE)
+	e.emitScalar(s, "", tag, yamlPlainScalarStyle)
 }
 
 func (e *encoder) uintv(tag string, in reflect.Value) {
 	s := strconv.FormatUint(in.Uint(), 10)
-	e.emitScalar(s, "", tag, yaml_PLAIN_SCALAR_STYLE)
+	e.emitScalar(s, "", tag, yamlPlainScalarStyle)
 }
 
 func (e *encoder) timev(tag string, in reflect.Value) {
 	t := in.Interface().(time.Time)
 	s := t.Format(time.RFC3339Nano)
-	e.emitScalar(s, "", tag, yaml_PLAIN_SCALAR_STYLE)
+	e.emitScalar(s, "", tag, yamlPlainScalarStyle)
 }
 
 func (e *encoder) floatv(tag string, in reflect.Value) {
@@ -376,15 +379,15 @@ func (e *encoder) floatv(tag string, in reflect.Value) {
 	case "NaN":
 		s = ".nan"
 	}
-	e.emitScalar(s, "", tag, yaml_PLAIN_SCALAR_STYLE)
+	e.emitScalar(s, "", tag, yamlPlainScalarStyle)
 }
 
 func (e *encoder) nilv() {
-	e.emitScalar("null", "", "", yaml_PLAIN_SCALAR_STYLE)
+	e.emitScalar("null", "", "", yamlPlainScalarStyle)
 }
 
-func (e *encoder) emitScalar(value, anchor, tag string, style yaml_scalar_style_t) {
+func (e *encoder) emitScalar(value, anchor, tag string, style yamlScalarStyleT) {
 	implicit := tag == ""
-	e.must(yaml_scalar_event_initialize(&e.event, []byte(anchor), []byte(tag), []byte(value), implicit, implicit, style))
+	e.must(yamlScalarEventInitialize(&e.event, []byte(anchor), []byte(tag), []byte(value), implicit, implicit, style))
 	e.emit()
 }

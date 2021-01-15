@@ -1,3 +1,6 @@
+// Copyright 2020 VMware, Inc.
+// SPDX-License-Identifier: Apache-2.0
+
 package yaml
 
 import (
@@ -34,18 +37,18 @@ func init() {
 		tag string
 		l   []string
 	}{
-		{true, yaml_BOOL_TAG, []string{"y", "Y", "yes", "Yes", "YES"}},
-		{true, yaml_BOOL_TAG, []string{"true", "True", "TRUE"}},
-		{true, yaml_BOOL_TAG, []string{"on", "On", "ON"}},
-		{false, yaml_BOOL_TAG, []string{"n", "N", "no", "No", "NO"}},
-		{false, yaml_BOOL_TAG, []string{"false", "False", "FALSE"}},
-		{false, yaml_BOOL_TAG, []string{"off", "Off", "OFF"}},
-		{nil, yaml_NULL_TAG, []string{"", "~", "null", "Null", "NULL"}},
-		{math.NaN(), yaml_FLOAT_TAG, []string{".nan", ".NaN", ".NAN"}},
-		{math.Inf(+1), yaml_FLOAT_TAG, []string{".inf", ".Inf", ".INF"}},
-		{math.Inf(+1), yaml_FLOAT_TAG, []string{"+.inf", "+.Inf", "+.INF"}},
-		{math.Inf(-1), yaml_FLOAT_TAG, []string{"-.inf", "-.Inf", "-.INF"}},
-		{"<<", yaml_MERGE_TAG, []string{"<<"}},
+		{true, yamlBoolTag, []string{"y", "Y", "yes", "Yes", "YES"}},
+		{true, yamlBoolTag, []string{"true", "True", "TRUE"}},
+		{true, yamlBoolTag, []string{"on", "On", "ON"}},
+		{false, yamlBoolTag, []string{"n", "N", "no", "No", "NO"}},
+		{false, yamlBoolTag, []string{"false", "False", "FALSE"}},
+		{false, yamlBoolTag, []string{"off", "Off", "OFF"}},
+		{nil, yamlNullTag, []string{"", "~", "null", "Null", "NULL"}},
+		{math.NaN(), yamlFloatTag, []string{".nan", ".NaN", ".NAN"}},
+		{math.Inf(+1), yamlFloatTag, []string{".inf", ".Inf", ".INF"}},
+		{math.Inf(+1), yamlFloatTag, []string{"+.inf", "+.Inf", "+.INF"}},
+		{math.Inf(-1), yamlFloatTag, []string{"-.inf", "-.Inf", "-.INF"}},
+		{"<<", yamlMergeTag, []string{"<<"}},
 	}
 
 	m := resolveMap
@@ -75,7 +78,7 @@ func longTag(tag string) string {
 
 func resolvableTag(tag string) bool {
 	switch tag {
-	case "", yaml_STR_TAG, yaml_BOOL_TAG, yaml_INT_TAG, yaml_FLOAT_TAG, yaml_NULL_TAG, yaml_TIMESTAMP_TAG:
+	case "", yamlStrTag, yamlBoolTag, yamlIntTag, yamlFloatTag, yamlNullTag, yamlTimestampTag:
 		return true
 	}
 	return false
@@ -90,17 +93,17 @@ func resolve(tag string, in string) (rtag string, out interface{}) {
 
 	defer func() {
 		switch tag {
-		case "", rtag, yaml_STR_TAG, yaml_BINARY_TAG:
+		case "", rtag, yamlStrTag, yamlBinaryTag:
 			return
-		case yaml_FLOAT_TAG:
-			if rtag == yaml_INT_TAG {
+		case yamlFloatTag:
+			if rtag == yamlIntTag {
 				switch v := out.(type) {
 				case int64:
-					rtag = yaml_FLOAT_TAG
+					rtag = yamlFloatTag
 					out = float64(v)
 					return
 				case int:
-					rtag = yaml_FLOAT_TAG
+					rtag = yamlFloatTag
 					out = float64(v)
 					return
 				}
@@ -115,7 +118,7 @@ func resolve(tag string, in string) (rtag string, out interface{}) {
 	if in != "" {
 		hint = resolveTable[in[0]]
 	}
-	if hint != 0 && tag != yaml_STR_TAG && tag != yaml_BINARY_TAG {
+	if hint != 0 && tag != yamlStrTag && tag != yamlBinaryTag {
 		// Handle things we can lookup in a map.
 		if item, ok := resolveMap[in]; ok {
 			return item.tag, item.value
@@ -133,17 +136,17 @@ func resolve(tag string, in string) (rtag string, out interface{}) {
 			// Not in the map, so maybe a normal float.
 			floatv, err := strconv.ParseFloat(in, 64)
 			if err == nil {
-				return yaml_FLOAT_TAG, floatv
+				return yamlFloatTag, floatv
 			}
 
 		case 'D', 'S':
 			// Int, float, or timestamp.
 			// Only try values as a timestamp if the value is unquoted or there's an explicit
 			// !!timestamp tag.
-			if tag == "" || tag == yaml_TIMESTAMP_TAG {
+			if tag == "" || tag == yamlTimestampTag {
 				t, ok := parseTimestamp(in)
 				if ok {
-					return yaml_TIMESTAMP_TAG, t
+					return yamlTimestampTag, t
 				}
 			}
 
@@ -151,49 +154,46 @@ func resolve(tag string, in string) (rtag string, out interface{}) {
 			intv, err := strconv.ParseInt(plain, 0, 64)
 			if err == nil {
 				if intv == int64(int(intv)) {
-					return yaml_INT_TAG, int(intv)
-				} else {
-					return yaml_INT_TAG, intv
+					return yamlIntTag, int(intv)
 				}
+				return yamlIntTag, intv
 			}
 			uintv, err := strconv.ParseUint(plain, 0, 64)
 			if err == nil {
-				return yaml_INT_TAG, uintv
+				return yamlIntTag, uintv
 			}
 			if yamlStyleFloat.MatchString(plain) {
 				floatv, err := strconv.ParseFloat(plain, 64)
 				if err == nil {
-					return yaml_FLOAT_TAG, floatv
+					return yamlFloatTag, floatv
 				}
 			}
 			if strings.HasPrefix(plain, "0b") {
 				intv, err := strconv.ParseInt(plain[2:], 2, 64)
 				if err == nil {
 					if intv == int64(int(intv)) {
-						return yaml_INT_TAG, int(intv)
-					} else {
-						return yaml_INT_TAG, intv
+						return yamlIntTag, int(intv)
 					}
+					return yamlIntTag, intv
 				}
 				uintv, err := strconv.ParseUint(plain[2:], 2, 64)
 				if err == nil {
-					return yaml_INT_TAG, uintv
+					return yamlIntTag, uintv
 				}
 			} else if strings.HasPrefix(plain, "-0b") {
 				intv, err := strconv.ParseInt("-"+plain[3:], 2, 64)
 				if err == nil {
 					if true || intv == int64(int(intv)) {
-						return yaml_INT_TAG, int(intv)
-					} else {
-						return yaml_INT_TAG, intv
+						return yamlIntTag, int(intv)
 					}
+					return yamlIntTag, intv
 				}
 			}
 		default:
 			panic("resolveTable item not yet handled: " + string(rune(hint)) + " (with " + in + ")")
 		}
 	}
-	return yaml_STR_TAG, in
+	return yamlStrTag, in
 }
 
 // encodeBase64 encodes s as base64 that is broken up into multiple lines

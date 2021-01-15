@@ -19,7 +19,7 @@ type EvaluationCtxDialects map[EvaluationCtxDialectName]EvaluationCtxDialect
 
 type CompiledTemplate struct {
 	name         string
-	code         []TemplateLine
+	code         []Line
 	instructions *InstructionSet
 	nodes        *Nodes
 	evalDialects EvaluationCtxDialects
@@ -27,7 +27,7 @@ type CompiledTemplate struct {
 	ctxs         []*EvaluationCtx
 }
 
-func NewCompiledTemplate(name string, code []TemplateLine,
+func NewCompiledTemplate(name string, code []Line,
 	instructions *InstructionSet, nodes *Nodes,
 	evalDialects EvaluationCtxDialects) *CompiledTemplate {
 
@@ -49,9 +49,9 @@ func NewCompiledTemplate(name string, code []TemplateLine,
 	}
 }
 
-func (e *CompiledTemplate) Code() []TemplateLine { return e.code }
+func (e *CompiledTemplate) Code() []Line { return e.code }
 
-func (e *CompiledTemplate) CodeAtLine(pos *filepos.Position) *TemplateLine {
+func (e *CompiledTemplate) CodeAtLine(pos *filepos.Position) *Line {
 	for i, line := range e.code {
 		if i+1 == pos.Line() {
 			return &line
@@ -183,7 +183,7 @@ func (e *CompiledTemplate) eval(
 func (e *CompiledTemplate) hidePrivateGlobals(globals starlark.StringDict) {
 	var privateKeys []string
 
-	for k, _ := range globals {
+	for k := range globals {
 		if strings.HasPrefix(k, "_") {
 			privateKeys = append(privateKeys, k)
 		}
