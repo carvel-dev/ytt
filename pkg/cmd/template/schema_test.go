@@ -605,6 +605,18 @@ vpc:
 		expectedErr := "Array items cannot be annotated with #@schema/nullable (schema.yml:6). If this behaviour would be valuable, please submit an issue on https://github.com/vmware-tanzu/carvel-ytt"
 		assertYTTWorkflowFailsWithErrorMessage(t, filesToProcess, expectedErr)
 	})
+	t.Run("null given as a value", func(t *testing.T) {
+		schemaYAML := `#@schema/match data_values=True
+---
+vpc: null
+`
+
+		filesToProcess := files.NewSortedFiles([]*files.File{
+			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
+		})
+		expectedErr := "Expected a non-null value, of the desired type"
+		assertYTTWorkflowFailsWithErrorMessage(t, filesToProcess, expectedErr)
+	})
 }
 
 func TestSchemaFeatureIsNotEnabledButSchemaIsPresentReportsAWarning(t *testing.T) {

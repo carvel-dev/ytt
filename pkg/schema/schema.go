@@ -153,6 +153,8 @@ func newCollectionItemValueType(collectionItemValue interface{}) (yamlmeta.Type,
 		return &ScalarType{Type: *new(int)}, nil
 	case bool:
 		return &ScalarType{Type: *new(bool)}, nil
+	case nil:
+		return nil, fmt.Errorf("Expected a non-null value, of the desired type")
 	}
 
 	return nil, fmt.Errorf("Collection item type did not match any known types")
