@@ -113,7 +113,7 @@ func evalTemplate(t *testing.T, data string) (string, *testErr) {
 func expectEquals(t *testing.T, resultStr, expectedStr string) error {
 	if resultStr != expectedStr {
 		diff := difflib.PPDiff(strings.Split(expectedStr, "\n"), strings.Split(resultStr, "\n"))
-		return fmt.Errorf("Not equal; diff expected...actual:\n%v\n", diff)
+		return fmt.Errorf("Not equal; diff expected...actual:\n%v", diff)
 	}
 	return nil
 }

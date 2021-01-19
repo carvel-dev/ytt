@@ -1,3 +1,6 @@
+// Copyright 2020 VMware, Inc.
+// SPDX-License-Identifier: Apache-2.0
+
 package yaml_test
 
 import (
@@ -1017,15 +1020,15 @@ func (s *S) TestUnmarshalerTypeErrorProxying(c *C) {
 
 type failingUnmarshaler struct{}
 
-var failingErr = errors.New("failingErr")
+var errFailing = errors.New("errFailing")
 
 func (ft *failingUnmarshaler) UnmarshalYAML(unmarshal func(interface{}) error) error {
-	return failingErr
+	return errFailing
 }
 
 func (s *S) TestUnmarshalerError(c *C) {
 	err := yaml.Unmarshal([]byte("a: b"), &failingUnmarshaler{})
-	c.Assert(err, Equals, failingErr)
+	c.Assert(err, Equals, errFailing)
 }
 
 type sliceUnmarshaler []int

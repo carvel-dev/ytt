@@ -1,3 +1,6 @@
+// Copyright 2020 VMware, Inc.
+// SPDX-License-Identifier: Apache-2.0
+
 package yaml_test
 
 import (
@@ -540,12 +543,12 @@ func (s *S) TestMarshalerWholeDocument(c *C) {
 type failingMarshaler struct{}
 
 func (ft *failingMarshaler) MarshalYAML() (interface{}, error) {
-	return nil, failingErr
+	return nil, errFailing
 }
 
 func (s *S) TestMarshalerError(c *C) {
 	_, err := yaml.Marshal(&failingMarshaler{})
-	c.Assert(err, Equals, failingErr)
+	c.Assert(err, Equals, errFailing)
 }
 
 func (s *S) TestSortedOutput(c *C) {
