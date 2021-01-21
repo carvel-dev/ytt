@@ -97,8 +97,8 @@ func (p *Parser) parseBytes(data []byte, lineCorrection int) (*DocumentSet, erro
 			}
 			return nil, err
 		}
-
 		doc := &Document{
+			RawData:  data,
 			Metas:    lastUnassingedMetas,
 			Value:    p.parse(rawVal, lineCorrection),
 			Position: p.newDocPosition(dec.DocumentStartLine(), lineCorrection, len(docSet.Items) == 0),

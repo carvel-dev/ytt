@@ -30,8 +30,10 @@ func (o DataValuesPreProcessing) Apply() (*DataValues, []*DataValues, error) {
 
 	dataValues, libraryDataValues, err := o.apply(files)
 	if err != nil {
-		errMsg := "Overlaying data values (in following order: %s): %s"
-		return nil, nil, fmt.Errorf(errMsg, o.allFileDescs(files), err)
+		// TODO: put these back?
+		//errMsg := "Overlaying data values (in following order: %s): %s"
+		//return nil, nil, fmt.Errorf(errMsg, o.allFileDescs(files), err)
+		return nil, nil, err
 	}
 
 	return dataValues, libraryDataValues, nil
@@ -43,7 +45,9 @@ func (o DataValuesPreProcessing) apply(files []*FileInLibrary) (*DataValues, []*
 	for _, fileInLib := range files {
 		valuesDocs, err := o.templateFile(fileInLib)
 		if err != nil {
-			return nil, nil, fmt.Errorf("Templating file '%s': %s", fileInLib.File.RelativePath(), err)
+			// TODO: put this back?
+			//return nil, nil, fmt.Errorf("Templating file '%s': %s", fileInLib.File.RelativePath(), err)
+			return nil, nil, err
 		}
 
 		for _, valuesDoc := range valuesDocs {
@@ -98,20 +102,23 @@ func (o DataValuesPreProcessing) templateFile(fileInLib *FileInLibrary) ([]*yaml
 	if err != nil {
 		return nil, err
 	}
-	if _, ok := o.loader.schema.(*schema.AnySchema); !ok {
 
+	if _, ok := o.loader.schema.(*schema.AnySchema); !ok {
 		var outerTypeCheck yamlmeta.TypeCheck
 		// Skip first document because the parser inserts a new doc start at the beginning of every doc
 		for _, doc := range resultDocSet.Items[1:] {
 			outerTypeCheck = o.loader.schema.AssignType(doc)
 			if len(outerTypeCheck.Violations) > 0 {
-				return resultDocSet.Items, fmt.Errorf("Typechecking violations found: [%v]", strings.Join(outerTypeCheck.Violations, ", "))
+				outerTypeCheck.LoadContext(doc)
+				return resultDocSet.Items, outerTypeCheck
 			}
+
 			typeCheck := doc.Check()
+			typeCheck.LoadContext(doc)
 			outerTypeCheck.Violations = append(outerTypeCheck.Violations, typeCheck.Violations...)
 		}
 		if len(outerTypeCheck.Violations) > 0 {
-			return resultDocSet.Items, fmt.Errorf("Typechecking violations found: [%v]", strings.Join(outerTypeCheck.Violations, ", "))
+			return resultDocSet.Items, outerTypeCheck
 		}
 	}
 

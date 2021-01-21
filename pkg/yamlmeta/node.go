@@ -11,98 +11,119 @@ import (
 	"github.com/k14s/ytt/pkg/yamlmeta/internal/yaml.v2"
 )
 
-func (n *DocumentSet) GetPosition() *filepos.Position { return n.Position }
-func (n *Document) GetPosition() *filepos.Position    { return n.Position }
-func (n *Map) GetPosition() *filepos.Position         { return n.Position }
-func (n *MapItem) GetPosition() *filepos.Position     { return n.Position }
-func (n *Array) GetPosition() *filepos.Position       { return n.Position }
-func (n *ArrayItem) GetPosition() *filepos.Position   { return n.Position }
+func (ds *DocumentSet) GetPosition() *filepos.Position { return ds.Position }
+func (d *Document) GetPosition() *filepos.Position     { return d.Position }
+func (m *Map) GetPosition() *filepos.Position          { return m.Position }
+func (mi *MapItem) GetPosition() *filepos.Position     { return mi.Position }
+func (a *Array) GetPosition() *filepos.Position        { return a.Position }
+func (ai *ArrayItem) GetPosition() *filepos.Position   { return ai.Position }
+func (s *Scalar) GetPosition() *filepos.Position       { return s.Position }
 
-func (n *DocumentSet) SetValue(val interface{}) error {
+func (ds *DocumentSet) ValueTypeAsString() string { return "documentSet" }
+func (d *Document) ValueTypeAsString() string     { return typeToString(d.Value) }
+func (m *Map) ValueTypeAsString() string          { return "map" }
+func (mi *MapItem) ValueTypeAsString() string     { return typeToString(mi.Value) }
+func (a *Array) ValueTypeAsString() string        { return "array" }
+func (ai *ArrayItem) ValueTypeAsString() string   { return typeToString(ai.Value) }
+func (s *Scalar) ValueTypeAsString() string       { return typeToString(s.Value) }
+
+func typeToString(value interface{}) string {
+	// TODO: this functions is duplicated
+	switch value.(type) {
+	case int:
+		return "integer"
+	case bool:
+		return "boolean"
+	default:
+		return fmt.Sprintf("%T", value)
+	}
+}
+
+func (ds *DocumentSet) SetValue(val interface{}) error {
 	return fmt.Errorf("cannot set value on a documentset")
 }
 
-func (n *Document) SetValue(val interface{}) error {
-	n.Value = val
+func (d *Document) SetValue(val interface{}) error {
+	d.Value = val
 	return nil
 }
 
-func (n *Map) SetValue(val interface{}) error {
+func (m *Map) SetValue(val interface{}) error {
 	return fmt.Errorf("cannot set value on a map")
 }
 
-func (n *MapItem) SetValue(val interface{}) error {
+func (mi *MapItem) SetValue(val interface{}) error {
 	if isMapOrArrayItem(val) {
 		return fmt.Errorf("cannot set map-or-array-item value (%T) into mapitem", val)
 	}
-	n.Value = val
+	mi.Value = val
 	return nil
 }
 
-func (n *Array) SetValue(val interface{}) error {
+func (a *Array) SetValue(val interface{}) error {
 	return fmt.Errorf("cannot set value on an array")
 }
 
-func (n *ArrayItem) SetValue(val interface{}) error {
+func (ai *ArrayItem) SetValue(val interface{}) error {
 	if isMapOrArrayItem(val) {
 		return fmt.Errorf("cannot set map-or-array-item value (%T) into arrayitem", val)
 	}
-	n.Value = val
+	ai.Value = val
 	return nil
 }
 
-func (n *DocumentSet) ResetValue() { n.Items = nil }
-func (n *Document) ResetValue()    { n.Value = nil }
-func (n *Map) ResetValue()         { n.Items = nil }
-func (n *MapItem) ResetValue()     { n.Value = nil }
-func (n *Array) ResetValue()       { n.Items = nil }
-func (n *ArrayItem) ResetValue()   { n.Value = nil }
+func (ds *DocumentSet) ResetValue() { ds.Items = nil }
+func (d *Document) ResetValue()     { d.Value = nil }
+func (m *Map) ResetValue()          { m.Items = nil }
+func (mi *MapItem) ResetValue()     { mi.Value = nil }
+func (a *Array) ResetValue()        { a.Items = nil }
+func (ai *ArrayItem) ResetValue()   { ai.Value = nil }
 
-func (n *DocumentSet) AddValue(val interface{}) error {
+func (ds *DocumentSet) AddValue(val interface{}) error {
 	if item, ok := val.(*Document); ok {
-		n.Items = append(n.Items, item)
+		ds.Items = append(ds.Items, item)
 		return nil
 	}
 	return fmt.Errorf("cannot add non-document value (%T) into documentset", val)
 }
 
-func (n *Document) AddValue(val interface{}) error {
+func (d *Document) AddValue(val interface{}) error {
 	if isMapOrArrayItem(val) {
 		return fmt.Errorf("cannot add map-or-array-item value (%T) into document", val)
 	}
-	n.Value = val
+	d.Value = val
 	return nil
 }
 
-func (n *Map) AddValue(val interface{}) error {
+func (m *Map) AddValue(val interface{}) error {
 	if item, ok := val.(*MapItem); ok {
-		n.Items = append(n.Items, item)
+		m.Items = append(m.Items, item)
 		return nil
 	}
 	return fmt.Errorf("cannot add non-map-item value (%T) into map", val)
 }
 
-func (n *MapItem) AddValue(val interface{}) error {
+func (mi *MapItem) AddValue(val interface{}) error {
 	if isMapOrArrayItem(val) {
 		return fmt.Errorf("cannot add map-or-array-item value (%T) into mapitem", val)
 	}
-	n.Value = val
+	mi.Value = val
 	return nil
 }
 
-func (n *Array) AddValue(val interface{}) error {
+func (a *Array) AddValue(val interface{}) error {
 	if item, ok := val.(*ArrayItem); ok {
-		n.Items = append(n.Items, item)
+		a.Items = append(a.Items, item)
 		return nil
 	}
 	return fmt.Errorf("cannot add non-array-item value (%T) into array", val)
 }
 
-func (n *ArrayItem) AddValue(val interface{}) error {
+func (ai *ArrayItem) AddValue(val interface{}) error {
 	if isMapOrArrayItem(val) {
 		return fmt.Errorf("cannot add map-or-array-item value (%T) into arrayitem", val)
 	}
-	n.Value = val
+	ai.Value = val
 	return nil
 }
 
@@ -115,93 +136,122 @@ func isMapOrArrayItem(val interface{}) bool {
 	}
 }
 
-func (n *DocumentSet) GetValues() []interface{} {
+func (ds *DocumentSet) GetValues() []interface{} {
 	var result []interface{}
-	for _, item := range n.Items {
+	for _, item := range ds.Items {
 		result = append(result, item)
 	}
 	return result
 }
 
-func (n *Document) GetValues() []interface{} { return []interface{}{n.Value} }
+func (d *Document) GetValues() []interface{} { return []interface{}{d.Value} }
 
-func (n *Map) GetValues() []interface{} {
+func (m *Map) GetValues() []interface{} {
 	var result []interface{}
-	for _, item := range n.Items {
+	for _, item := range m.Items {
 		result = append(result, item)
 	}
 	return result
 }
 
-func (n *MapItem) GetValues() []interface{} { return []interface{}{n.Value} }
+func (mi *MapItem) GetValues() []interface{} { return []interface{}{mi.Value} }
 
-func (n *Array) GetValues() []interface{} {
+func (a *Array) GetValues() []interface{} {
 	var result []interface{}
-	for _, item := range n.Items {
+	for _, item := range a.Items {
 		result = append(result, item)
 	}
 	return result
 }
 
-func (n *ArrayItem) GetValues() []interface{} { return []interface{}{n.Value} }
-func (s *Scalar) GetValues() []interface{}    { return []interface{}{s.Value} }
+func (ai *ArrayItem) GetValues() []interface{} { return []interface{}{ai.Value} }
+func (s *Scalar) GetValues() []interface{}     { return []interface{}{s.Value} }
 
-func (n *DocumentSet) GetMetas() []*Meta { return n.Metas }
-func (n *Document) GetMetas() []*Meta    { return n.Metas }
-func (n *Map) GetMetas() []*Meta         { return n.Metas }
-func (n *MapItem) GetMetas() []*Meta     { return n.Metas }
-func (n *Array) GetMetas() []*Meta       { return n.Metas }
-func (n *ArrayItem) GetMetas() []*Meta   { return n.Metas }
+func (ds *DocumentSet) GetMetas() []*Meta { return ds.Metas }
+func (d *Document) GetMetas() []*Meta     { return d.Metas }
+func (m *Map) GetMetas() []*Meta          { return m.Metas }
+func (mi *MapItem) GetMetas() []*Meta     { return mi.Metas }
+func (a *Array) GetMetas() []*Meta        { return a.Metas }
+func (ai *ArrayItem) GetMetas() []*Meta   { return ai.Metas }
 
-func (n *DocumentSet) addMeta(meta *Meta) { n.Metas = append(n.Metas, meta) }
-func (n *Document) addMeta(meta *Meta)    { n.Metas = append(n.Metas, meta) }
-func (n *Map) addMeta(meta *Meta) {
-	panic(fmt.Sprintf("Attempted to attach metadata (%s) to Map (%v); maps cannot carry metadata", meta.Data, n))
+func (ds *DocumentSet) addMeta(meta *Meta) { ds.Metas = append(ds.Metas, meta) }
+func (d *Document) addMeta(meta *Meta)     { d.Metas = append(d.Metas, meta) }
+func (m *Map) addMeta(meta *Meta) {
+	panic(fmt.Sprintf("Attempted to attach metadata (%s) to Map (%v); maps cannot carry metadata", meta.Data, m))
 }
-func (n *MapItem) addMeta(meta *Meta) { n.Metas = append(n.Metas, meta) }
-func (n *Array) addMeta(meta *Meta) {
-	panic(fmt.Sprintf("Attempted to attach metadata (%s) to Array (%v); arrays cannot carry metadata", meta.Data, n))
+func (mi *MapItem) addMeta(meta *Meta) { mi.Metas = append(mi.Metas, meta) }
+func (a *Array) addMeta(meta *Meta) {
+	panic(fmt.Sprintf("Attempted to attach metadata (%s) to Array (%v); arrays cannot carry metadata", meta.Data, a))
 }
-func (n *ArrayItem) addMeta(meta *Meta) { n.Metas = append(n.Metas, meta) }
+func (ai *ArrayItem) addMeta(meta *Meta) { ai.Metas = append(ai.Metas, meta) }
 
-func (n *DocumentSet) GetAnnotations() interface{} { return n.annotations }
-func (n *Document) GetAnnotations() interface{}    { return n.annotations }
-func (n *Map) GetAnnotations() interface{}         { return n.annotations }
-func (n *MapItem) GetAnnotations() interface{}     { return n.annotations }
-func (n *Array) GetAnnotations() interface{}       { return n.annotations }
-func (n *ArrayItem) GetAnnotations() interface{}   { return n.annotations }
+func (ds *DocumentSet) GetAnnotations() interface{} { return ds.annotations }
+func (d *Document) GetAnnotations() interface{}     { return d.annotations }
+func (m *Map) GetAnnotations() interface{}          { return m.annotations }
+func (mi *MapItem) GetAnnotations() interface{}     { return mi.annotations }
+func (a *Array) GetAnnotations() interface{}        { return a.annotations }
+func (ai *ArrayItem) GetAnnotations() interface{}   { return ai.annotations }
 
-func (n *DocumentSet) SetAnnotations(anns interface{}) { n.annotations = anns }
-func (n *Document) SetAnnotations(anns interface{})    { n.annotations = anns }
-func (n *Map) SetAnnotations(anns interface{})         { n.annotations = anns }
-func (n *MapItem) SetAnnotations(anns interface{})     { n.annotations = anns }
-func (n *Array) SetAnnotations(anns interface{})       { n.annotations = anns }
-func (n *ArrayItem) SetAnnotations(anns interface{})   { n.annotations = anns }
+func (ds *DocumentSet) SetAnnotations(anns interface{}) { ds.annotations = anns }
+func (d *Document) SetAnnotations(anns interface{})     { d.annotations = anns }
+func (m *Map) SetAnnotations(anns interface{})          { m.annotations = anns }
+func (mi *MapItem) SetAnnotations(anns interface{})     { mi.annotations = anns }
+func (a *Array) SetAnnotations(anns interface{})        { a.annotations = anns }
+func (ai *ArrayItem) SetAnnotations(anns interface{})   { ai.annotations = anns }
 
 type TypeCheck struct {
-	Violations []string
+	Violations []error
+}
+
+func (tc *TypeCheck) LoadContext(doc *Document) {
+	if !tc.HasViolations() {
+		return
+	}
+
+	for _, violation := range tc.Violations {
+		if v, ok := violation.(violationWithContext); ok {
+			v.SetContext(doc)
+		}
+	}
+}
+
+func (tc TypeCheck) Error() string {
+	if !tc.HasViolations() {
+		return ""
+	}
+
+	msg := ""
+	for _, err := range tc.Violations {
+		msg += err.Error() + "\n"
+	}
+	return msg
 }
 
 func (tc *TypeCheck) HasViolations() bool {
 	return len(tc.Violations) > 0
 }
 
-func (n *Document) Check() (chk TypeCheck) {
-	switch typedContents := n.Value.(type) {
+type violationWithContext interface {
+	SetContext(doc *Document) error
+}
+
+func (ds *DocumentSet) Check() TypeCheck { return TypeCheck{} }
+func (d *Document) Check() (chk TypeCheck) {
+	switch typedContents := d.Value.(type) {
 	case Node:
 		chk = typedContents.Check()
 	}
 
-	return
+	return chk
 }
-func (n *Map) Check() (chk TypeCheck) {
-	check := n.Type.CheckType(n, "")
+func (m *Map) Check() (chk TypeCheck) {
+	check := m.Type.CheckType(m)
 	if check.HasViolations() {
 		chk.Violations = append(chk.Violations, check.Violations...)
 		return
 	}
 
-	for _, item := range n.Items {
+	for _, item := range m.Items {
 		check = item.Check()
 		if check.HasViolations() {
 			chk.Violations = append(chk.Violations, check.Violations...)
@@ -209,10 +259,8 @@ func (n *Map) Check() (chk TypeCheck) {
 	}
 	return
 }
-func (n *MapItem) Check() (chk TypeCheck) {
-	mapItemViolation := fmt.Sprintf("Map item '%s' at %s", n.Key, n.Position.AsCompactString())
-
-	check := n.Type.CheckType(n, mapItemViolation)
+func (mi *MapItem) Check() (chk TypeCheck) {
+	check := mi.Type.CheckType(mi)
 	if check.HasViolations() {
 		chk.Violations = check.Violations
 		return
@@ -220,18 +268,18 @@ func (n *MapItem) Check() (chk TypeCheck) {
 
 	// If the current value of the item is null
 	// there is no extra validation needed Type wise
-	if n.Value == nil {
+	if mi.Value == nil {
 		return
 	}
 
-	check = checkCollectionItem(n.Value, n.Type.GetValueType(), mapItemViolation)
+	check = checkCollectionItem(mi.Value, mi.Type.GetValueType(), mi.Position)
 	if check.HasViolations() {
 		chk.Violations = append(chk.Violations, check.Violations...)
 	}
 	return
 }
-func (n *Array) Check() (chk TypeCheck) {
-	for _, item := range n.Items {
+func (a *Array) Check() (chk TypeCheck) {
+	for _, item := range a.Items {
 		check := item.Check()
 		if check.HasViolations() {
 			chk.Violations = append(chk.Violations, check.Violations...)
@@ -239,28 +287,26 @@ func (n *Array) Check() (chk TypeCheck) {
 	}
 	return
 }
-func (n *ArrayItem) Check() (chk TypeCheck) {
-	arrayItemViolation := fmt.Sprintf("Array item at %s", n.Position.AsCompactString())
-
-	// TODO: This check only ensures that the n is of ArrayItem type
+func (ai *ArrayItem) Check() (chk TypeCheck) {
+	// TODO: This check only ensures that the ai is of ArrayItem type
 	//       which we know because if it was not we would not assign
 	//       the type to it.
 	//       Given this maybe we can completely remove this check
 	//       Lets not forget that the check of the type of the item
 	//       is done by checkCollectionItem
-	chk = n.Type.CheckType(n, arrayItemViolation)
+	chk = ai.Type.CheckType(ai)
 	if chk.HasViolations() {
 		return
 	}
 
-	check := checkCollectionItem(n.Value, n.Type.GetValueType(), arrayItemViolation)
+	check := checkCollectionItem(ai.Value, ai.Type.GetValueType(), ai.Position)
 	if check.HasViolations() {
 		chk.Violations = append(chk.Violations, check.Violations...)
 	}
 	return chk
 }
 
-func checkCollectionItem(value interface{}, valueType Type, violationErrorMessage string) (chk TypeCheck) {
+func checkCollectionItem(value interface{}, valueType Type, position *filepos.Position) (chk TypeCheck) {
 	switch typedValue := value.(type) {
 	case *Map:
 		check := typedValue.Check()
@@ -270,36 +316,34 @@ func checkCollectionItem(value interface{}, valueType Type, violationErrorMessag
 		check := typedValue.Check()
 		chk.Violations = append(chk.Violations, check.Violations...)
 	default:
-		chk = valueType.CheckType(&Scalar{Value: value}, violationErrorMessage)
+		chk = valueType.CheckType(&Scalar{Value: value, Position: position})
 	}
 	return chk
 }
 
-func (n *DocumentSet) Check() TypeCheck { return TypeCheck{} }
-
 // Below methods disallow marshaling of nodes directly
 var _ []yaml.Marshaler = []yaml.Marshaler{&DocumentSet{}, &Document{}, &Map{}, &MapItem{}, &Array{}, &ArrayItem{}}
 
-func (n *DocumentSet) MarshalYAML() (interface{}, error) { panic("Unexpected marshaling of docset") }
-func (n *Document) MarshalYAML() (interface{}, error)    { panic("Unexpected marshaling of doc") }
-func (n *Map) MarshalYAML() (interface{}, error)         { panic("Unexpected marshaling of map") }
-func (n *MapItem) MarshalYAML() (interface{}, error)     { panic("Unexpected marshaling of mapitem") }
-func (n *Array) MarshalYAML() (interface{}, error)       { panic("Unexpected marshaling of array") }
-func (n *ArrayItem) MarshalYAML() (interface{}, error)   { panic("Unexpected marshaling of arrayitem") }
+func (ds *DocumentSet) MarshalYAML() (interface{}, error) { panic("Unexpected marshaling of docset") }
+func (d *Document) MarshalYAML() (interface{}, error)     { panic("Unexpected marshaling of doc") }
+func (m *Map) MarshalYAML() (interface{}, error)          { panic("Unexpected marshaling of map") }
+func (mi *MapItem) MarshalYAML() (interface{}, error)     { panic("Unexpected marshaling of mapitem") }
+func (a *Array) MarshalYAML() (interface{}, error)        { panic("Unexpected marshaling of array") }
+func (ai *ArrayItem) MarshalYAML() (interface{}, error)   { panic("Unexpected marshaling of arrayitem") }
 
 // Below methods disallow marshaling of nodes directly
 var _ []json.Marshaler = []json.Marshaler{&DocumentSet{}, &Document{}, &Map{}, &MapItem{}, &Array{}, &ArrayItem{}}
 
-func (n *DocumentSet) MarshalJSON() ([]byte, error) { panic("Unexpected marshaling of docset") }
-func (n *Document) MarshalJSON() ([]byte, error)    { panic("Unexpected marshaling of doc") }
-func (n *Map) MarshalJSON() ([]byte, error)         { panic("Unexpected marshaling of map") }
-func (n *MapItem) MarshalJSON() ([]byte, error)     { panic("Unexpected marshaling of mapitem") }
-func (n *Array) MarshalJSON() ([]byte, error)       { panic("Unexpected marshaling of array") }
-func (n *ArrayItem) MarshalJSON() ([]byte, error)   { panic("Unexpected marshaling of arrayitem") }
+func (ds *DocumentSet) MarshalJSON() ([]byte, error) { panic("Unexpected marshaling of docset") }
+func (d *Document) MarshalJSON() ([]byte, error)     { panic("Unexpected marshaling of doc") }
+func (m *Map) MarshalJSON() ([]byte, error)          { panic("Unexpected marshaling of map") }
+func (mi *MapItem) MarshalJSON() ([]byte, error)     { panic("Unexpected marshaling of mapitem") }
+func (a *Array) MarshalJSON() ([]byte, error)        { panic("Unexpected marshaling of array") }
+func (ai *ArrayItem) MarshalJSON() ([]byte, error)   { panic("Unexpected marshaling of arrayitem") }
 
-func (n *DocumentSet) _private() {}
-func (n *Document) _private()    {}
-func (n *Map) _private()         {}
-func (n *MapItem) _private()     {}
-func (n *Array) _private()       {}
-func (n *ArrayItem) _private()   {}
+func (ds *DocumentSet) _private() {}
+func (d *Document) _private()     {}
+func (m *Map) _private()          {}
+func (mi *MapItem) _private()     {}
+func (a *Array) _private()        {}
+func (ai *ArrayItem) _private()   {}

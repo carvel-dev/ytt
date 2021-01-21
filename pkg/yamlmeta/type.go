@@ -10,11 +10,13 @@ import (
 type Type interface {
 	AssignTypeTo(typeable Typeable) TypeCheck
 	GetValueType() Type
-	CheckType(node TypeWithValues, prependErrorMessage string) TypeCheck
+	CheckType(node TypeWithValues) TypeCheck
 }
 
 type TypeWithValues interface {
 	GetValues() []interface{}
+	GetPosition() *filepos.Position
+	ValueTypeAsString() string
 }
 
 type Typeable interface {
@@ -30,8 +32,8 @@ var _ Typeable = (*MapItem)(nil)
 var _ Typeable = (*Array)(nil)
 var _ Typeable = (*ArrayItem)(nil)
 
-func (n *Document) SetType(t Type)  { n.Type = t }
-func (n *Map) SetType(t Type)       { n.Type = t }
-func (n *MapItem) SetType(t Type)   { n.Type = t }
-func (n *Array) SetType(t Type)     { n.Type = t }
-func (n *ArrayItem) SetType(t Type) { n.Type = t }
+func (d *Document) SetType(t Type)   { d.Type = t }
+func (m *Map) SetType(t Type)        { m.Type = t }
+func (mi *MapItem) SetType(t Type)   { mi.Type = t }
+func (a *Array) SetType(t Type)      { a.Type = t }
+func (ai *ArrayItem) SetType(t Type) { ai.Type = t }

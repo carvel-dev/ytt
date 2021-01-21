@@ -40,7 +40,11 @@ not_in_schema: "this must fail validation."
 	schemaVar.AssignType(dataValueDoc)
 	typeCheck := dataValueDoc.Check()
 
-	const expectedErrorMessage = "{[Map item 'not_in_schema' at dataValues.yml:5 is not defined in schema]}"
+	const expectedErrorMessage = `
+dataValues.yml:5 | not_in_schema
+                 | ^^^
+                 |  unexpected key in map (as defined at schema.yml:2)
+`
 	if !typeCheck.HasViolations() {
 		t.Fatalf("Expected schema validation to fail with: %s. But got success", expectedErrorMessage)
 	}

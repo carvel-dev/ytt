@@ -44,6 +44,7 @@ type DocumentSet struct {
 }
 
 type Document struct {
+	RawData  []byte
 	Type     Type
 	Metas    []*Meta
 	Value    interface{}
@@ -91,7 +92,8 @@ type ArrayItem struct {
 }
 
 type Scalar struct {
-	Value interface{}
+	Position *filepos.Position
+	Value    interface{}
 }
 
 type Meta struct {
