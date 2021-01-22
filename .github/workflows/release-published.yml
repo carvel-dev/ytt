@@ -1,0 +1,25 @@
+name: Checks after release is published
+on:
+  release:
+    types: ['published']
+
+jobs:
+  validate-github-action:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: k14s/setup-k14s-action@v1
+        with:
+          only: ytt
+      - run: |
+          ytt version
+          version=`ytt version`
+          tag="${{ github.event.release.tag_name }}"
+          tool_version="$(echo $version | sed 's/^.*[^0-9]\([0-9]*\.[0-9]*\.[0-9]*\).*$/\1/')"
+          if [[ "v${tool_version}" == "${tag}" ]];
+          then
+            echo "Version match with latest"
+            exit 0
+          else
+            echo "Versions do not match v$tool_version != $tag"
+            exit 1
+          fi
