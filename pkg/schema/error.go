@@ -20,7 +20,6 @@ func (e errorWithContent) Error() string {
 	panic("do not use directly")
 }
 
-//contents?
 func (e *errorWithContent) SetContext(doc *yamlmeta.Document) error {
 	contents, err := doc.RawDataAtLine(e.Position)
 

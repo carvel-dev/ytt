@@ -83,7 +83,6 @@ func (ll *LibraryLoader) Values(valuesOverlays []*DataValues, schema Schema) (*D
 		return nil, nil, err
 	}
 
-	// TODO: This only returns nil. Why call it at all?
 	err = schema.ValidateWithValues(len(valuesFiles))
 	if err != nil {
 		return nil, nil, err

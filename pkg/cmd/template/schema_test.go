@@ -1,17 +1,15 @@
 // Copyright 2020 VMware, Inc.
 // SPDX-License-Identifier: Apache-2.0
 
-// TODO: Should these tests be under schema package?
 package template_test
 
 import (
-	"strings"
-	"testing"
-
 	"github.com/k14s/difflib"
 	cmdtpl "github.com/k14s/ytt/pkg/cmd/template"
 	"github.com/k14s/ytt/pkg/cmd/ui"
 	"github.com/k14s/ytt/pkg/files"
+	"strings"
+	"testing"
 )
 
 var opts *cmdtpl.Options
@@ -353,12 +351,12 @@ clients:
 data_values.yml:4 | - flags: secure  #! expecting a array, got a string
                   |          ^^^
                   |  found: string
-                  |  expected: array element (by schema.yml:4)
+                  |  expected: array (by schema.yml:4)
 
 data_values.yml:6 | - secure  #! expecting a map, got a string
                   |   ^^^
                   |  found: string
-                  |  expected: map item (by schema.yml:5)
+                  |  expected: map (by schema.yml:5)
 `
 
 		assertYTTWorkflowFailsWithErrorMessage(t, filesToProcess, expectedErr)
@@ -420,12 +418,31 @@ not_in_schema: "this should fail the type check!"
 			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
 			files.MustNewFileFromSource(files.NewBytesSource("values.yml", []byte(dataValuesYAML))),
 		})
-		// TODO: Special error case for empty schema with values. Maybe just expected: no values (hint: schema is empty: define schema values or do not use schema)?
-		expectedErr := `
-values.yml:2 | ---
-             |   ^^^
-             |  found: map
-             |  expected: nil (by schema.yml:2)`
+		expectedErr := "data values were found in data values file(s), but schema (schema.yml) has no values defined\n"
+		expectedErr += "(hint: define matching keys from data values files(s) in the schema, or do not enable the schema feature)"
+
+		assertYTTWorkflowFailsWithErrorMessage(t, filesToProcess, expectedErr)
+	})
+	t.Run("multiple data values given but schema is empty", func(t *testing.T) {
+		schemaYAML := `#@schema/match data_values=True
+---
+`
+		dataValuesYAML := `#@data/values
+---
+not_in_schema: "this should fail the type check!"
+`
+		dataValuesYAML2 := `#@data/values
+---
+not_in_schema2: "this should fail the type check!"
+`
+
+		filesToProcess := files.NewSortedFiles([]*files.File{
+			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
+			files.MustNewFileFromSource(files.NewBytesSource("values.yml", []byte(dataValuesYAML))),
+			files.MustNewFileFromSource(files.NewBytesSource("values2.yml", []byte(dataValuesYAML2))),
+		})
+		expectedErr := "data values were found in data values file(s), but schema (schema.yml) has no values defined\n"
+		expectedErr += "(hint: define matching keys from data values files(s) in the schema, or do not enable the schema feature)"
 
 		assertYTTWorkflowFailsWithErrorMessage(t, filesToProcess, expectedErr)
 	})

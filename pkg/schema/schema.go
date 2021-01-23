@@ -28,7 +28,7 @@ func NewDocumentSchema(doc *yamlmeta.Document) (*DocumentSchema, error) {
 	docType, err := NewDocumentType(doc)
 	if err != nil {
 		switch err.(type) {
-		//maybe this should be a "can be cast as a errorWithContext"
+		// TODO: maybe this should be cast as a errorWithContext?
 		case *invalidError:
 			invalidErr := err.(*invalidError)
 			err = invalidErr.SetContext(doc)

@@ -39,6 +39,10 @@ func (p *Position) Line() int {
 	return *p.line
 }
 
+func (p *Position) FileString() string {
+	return p.file
+}
+
 func (p *Position) AsString() string {
 	return "line " + p.AsCompactString()
 }

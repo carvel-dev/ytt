@@ -20,21 +20,23 @@ func (ai *ArrayItem) GetPosition() *filepos.Position   { return ai.Position }
 func (s *Scalar) GetPosition() *filepos.Position       { return s.Position }
 
 func (ds *DocumentSet) ValueTypeAsString() string { return "documentSet" }
-func (d *Document) ValueTypeAsString() string     { return typeToString(d.Value) }
+func (d *Document) ValueTypeAsString() string     { return TypeToString(d.Value) }
 func (m *Map) ValueTypeAsString() string          { return "map" }
-func (mi *MapItem) ValueTypeAsString() string     { return typeToString(mi.Value) }
+func (mi *MapItem) ValueTypeAsString() string     { return TypeToString(mi.Value) }
 func (a *Array) ValueTypeAsString() string        { return "array" }
-func (ai *ArrayItem) ValueTypeAsString() string   { return typeToString(ai.Value) }
-func (s *Scalar) ValueTypeAsString() string       { return typeToString(s.Value) }
+func (ai *ArrayItem) ValueTypeAsString() string   { return TypeToString(ai.Value) }
+func (s *Scalar) ValueTypeAsString() string       { return TypeToString(s.Value) }
 
-func typeToString(value interface{}) string {
-	// TODO: this functions is duplicated
+func TypeToString(value interface{}) string {
 	switch value.(type) {
 	case int:
 		return "integer"
 	case bool:
 		return "boolean"
 	default:
+		if t, ok := value.(TypeWithValues); ok {
+			return t.ValueTypeAsString()
+		}
 		return fmt.Sprintf("%T", value)
 	}
 }
@@ -311,7 +313,6 @@ func checkCollectionItem(value interface{}, valueType Type, position *filepos.Po
 	case *Map:
 		check := typedValue.Check()
 		chk.Violations = append(chk.Violations, check.Violations...)
-
 	case *Array:
 		check := typedValue.Check()
 		chk.Violations = append(chk.Violations, check.Violations...)
