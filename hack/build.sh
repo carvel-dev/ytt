@@ -17,6 +17,12 @@ rm -f pkg/website/generated.go
 go build -o ytt ./cmd/ytt/...
 ./ytt version
 
+# build ytt WASM binary
+mkdir -p tmp/wasm/js
+( GOOS=js GOARCH=wasm go build -o ./tmp/ytt.wasm ./cmd/ytt-wasm/main.go )
+base64 -i ./tmp/ytt.wasm >./tmp/wasm/js/ytt.wasm.base64
+cp "$(go env GOROOT)/misc/wasm/wasm_exec.js" ./tmp/wasm/js/wasm_exec.js
+
 (
 	# Use newly built binary to template all website assets
 	# into a single Go file
@@ -26,6 +32,7 @@ go build -o ytt ./cmd/ytt/...
 		-f ../../examples/playground/basics \
 		-f ../../examples/playground/overlays \
 		-f ../../examples/playground/getting-started \
+		-f ../../tmp/wasm/ \
 		--file-mark 'alt-example**/*:type=data' \
 		--file-mark 'example**/*:type=data' \
 		--file-mark 'generated.go.txt:exclusive-for-output=true' \
@@ -48,6 +55,7 @@ go build $repro_flags -o ./tmp/main ./cmd/ytt-lambda-website/...
 	rm -f ytt-lambda-website.zip
 	zip ytt-lambda-website.zip main ytt
 )
+
 
 # TODO ./hack/generate-docs.sh
 

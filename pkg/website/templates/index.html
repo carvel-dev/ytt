@@ -15,6 +15,13 @@
         window.location.replace(window.location.href.replace(defaultDomain, "carvel.dev/ytt"));
       }
     </script>
+    <script src="js/wasm_exec.js"></script>
+    <script>
+        const go = new Go();
+        WebAssembly.instantiateStreaming(fetch("/js/ytt.wasm"), go.importObject).then((result) => {
+            go.run(result.instance);
+        });
+    </script>
   </head>
   <body>
     <div class="content">

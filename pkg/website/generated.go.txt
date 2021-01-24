@@ -18,7 +18,7 @@ assetFiles = []
 exampleFiles = []
 
 for file in data.list():
-  if file.startswith('js/') or file.startswith('templates/'):
+  if file.startswith('js/') or file.startswith('templates/') or file.endswith('base64'):
     assetFiles.append(file)
   elif file.startswith('example'):
     exampleFiles.append(file)

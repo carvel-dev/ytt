@@ -4,6 +4,7 @@
 package website
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -56,6 +57,25 @@ func (s *Server) mainHandler(w http.ResponseWriter, r *http.Request) {
 	s.write(w, []byte(Files["templates/index.html"].Content))
 }
 
+func (s *Server) contentFor(path string) ([]byte, error) {
+	var data []byte
+	filename := strings.TrimPrefix(path, "/")
+	file, found := Files[filename]
+	if found {
+		data = []byte(file.Content)
+	} else {
+		file, found = Files[filename+".base64"]
+		if found {
+			var err error
+			data, err = base64.StdEncoding.DecodeString(file.Content)
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
+	return data, nil
+}
+
 func (s *Server) assetHandler(w http.ResponseWriter, r *http.Request) {
 	if strings.HasSuffix(r.URL.Path, ".css") {
 		w.Header().Set("Content-Type", "text/css")
@@ -63,7 +83,15 @@ func (s *Server) assetHandler(w http.ResponseWriter, r *http.Request) {
 	if strings.HasSuffix(r.URL.Path, ".js") {
 		w.Header().Set("Content-Type", "application/javascript")
 	}
-	s.write(w, []byte(Files[strings.TrimPrefix(r.URL.Path, "/")].Content))
+	if strings.HasSuffix(r.URL.Path, ".wasm") {
+		w.Header().Set("Content-Type", "application/wasm")
+	}
+
+	content, err := s.contentFor(r.URL.Path)
+	if err != nil {
+		s.logError(w, err)
+	}
+	s.write(w, content)
 }
 
 func (s *Server) exampleSetsHandler(w http.ResponseWriter, r *http.Request) {
