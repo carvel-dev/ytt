@@ -1,2 +1,2 @@
-Copyright 2020 VMware, Inc.
+Copyright {{copyright-year}} VMware, Inc.
 SPDX-License-Identifier: Apache-2.0
