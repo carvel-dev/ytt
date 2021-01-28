@@ -8,16 +8,17 @@ import (
 )
 
 type Position struct {
-	line  *int // 1 based
-	file  string
-	known bool
+	lineNum *int // 1 based
+	file    string
+	line    string
+	known   bool
 }
 
-func NewPosition(line int) *Position {
-	if line <= 0 {
+func NewPosition(lineNum int) *Position {
+	if lineNum <= 0 {
 		panic("Lines are 1 based")
 	}
-	return &Position{line: &line, known: true}
+	return &Position{lineNum: &lineNum, known: true}
 }
 
 // NewUnknownPosition is equivalent of zero value *Position
@@ -27,20 +28,26 @@ func NewUnknownPosition() *Position {
 
 func (p *Position) SetFile(file string) { p.file = file }
 
+func (p *Position) SetLine(line string) { p.line = line }
+
 func (p *Position) IsKnown() bool { return p != nil && p.known }
 
-func (p *Position) Line() int {
+func (p *Position) LineNum() int {
 	if !p.IsKnown() {
 		panic("Position is unknown")
 	}
-	if p.line == nil {
+	if p.lineNum == nil {
 		panic("Position was not properly initialized")
 	}
-	return *p.line
+	return *p.lineNum
 }
 
 func (p *Position) FileString() string {
 	return p.file
+}
+
+func (p *Position) GetLine() string {
+	return p.line
 }
 
 func (p *Position) AsString() string {
@@ -53,21 +60,21 @@ func (p *Position) AsCompactString() string {
 		filePrefix += ":"
 	}
 	if p.IsKnown() {
-		return fmt.Sprintf("%s%d", filePrefix, p.Line())
+		return fmt.Sprintf("%s%d", filePrefix, p.LineNum())
 	}
 	return fmt.Sprintf("%s?", filePrefix)
 }
 
 func (p *Position) AsIntString() string {
 	if p.IsKnown() {
-		return fmt.Sprintf("%d", p.Line())
+		return fmt.Sprintf("%d", p.LineNum())
 	}
 	return "?"
 }
 
 func (p *Position) As4DigitString() string {
 	if p.IsKnown() {
-		return fmt.Sprintf("%4d", p.Line())
+		return fmt.Sprintf("%4d", p.LineNum())
 	}
 	return "????"
 }
@@ -77,9 +84,9 @@ func (p *Position) DeepCopy() *Position {
 		return nil
 	}
 	newPos := &Position{file: p.file, known: p.known}
-	if p.line != nil {
-		lineVal := *p.line
-		newPos.line = &lineVal
+	if p.lineNum != nil {
+		lineVal := *p.lineNum
+		newPos.lineNum = &lineVal
 	}
 	return newPos
 }
@@ -92,6 +99,6 @@ func (p *Position) DeepCopyWithLineOffset(offset int) *Position {
 		panic("Unexpected line offset")
 	}
 	newPos := p.DeepCopy()
-	*newPos.line += offset
+	*newPos.lineNum += offset
 	return newPos
 }

@@ -105,12 +105,10 @@ func (o DataValuesPreProcessing) templateFile(fileInLib *FileInLibrary) ([]*yaml
 		for _, doc := range resultDocSet.Items[1:] {
 			outerTypeCheck = o.loader.schema.AssignType(doc)
 			if len(outerTypeCheck.Violations) > 0 {
-				outerTypeCheck.LoadContext(doc)
 				return resultDocSet.Items, outerTypeCheck
 			}
 
 			typeCheck := doc.Check()
-			typeCheck.LoadContext(doc)
 			outerTypeCheck.Violations = append(outerTypeCheck.Violations, typeCheck.Violations...)
 		}
 		if len(outerTypeCheck.Violations) > 0 {

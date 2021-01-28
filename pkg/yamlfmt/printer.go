@@ -183,7 +183,7 @@ func (p *Printer) printMeta(val interface{}, ws whitespace, writer *writer, firs
 
 	if typedVal, ok := val.(yamlmeta.Node); ok {
 		for _, meta := range typedVal.GetMetas() {
-			if typedVal.GetPosition().IsKnown() && meta.Position.Line() == typedVal.GetPosition().Line() {
+			if typedVal.GetPosition().IsKnown() && meta.Position.LineNum() == typedVal.GetPosition().LineNum() {
 				suffix = fmt.Sprintf(" #%s", meta.Data)
 			} else {
 				if !spaced {

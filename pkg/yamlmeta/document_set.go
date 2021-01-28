@@ -43,25 +43,6 @@ func (ds *DocumentSet) AsBytes() ([]byte, error) {
 	return ds.AsBytesWithPrinter(nil)
 }
 
-func (ds *DocumentSet) SetRawBytes(docSet *DocumentSet) {
-	// TODO: DocumentSet.originalBytes already contain this information
-	//       This sets RawData into the documents, but in the end it contains the full document set bits and not
-	//       a document specific raw data. Eventually it might be ok but we should consider this as it might be a problem
-	//       Some options that I see are:
-	//         rename RawData to originalBytesDocumentSet or something.
-	//         templating will split these originalBytes we have into per document string.
-	//       I think the second option would be the one I would like but I think it might be a little bit of a big change
-	//       because we will have to change the yaml parser to do this....
-	for _, item := range docSet.Items {
-		for _, doc := range ds.Items {
-			if doc.Position != nil && doc.Position.AsCompactString() == item.Position.AsCompactString() {
-				doc.RawData = item.RawData
-				break
-			}
-		}
-	}
-}
-
 func (ds *DocumentSet) AsBytesWithPrinter(printerFunc func(io.Writer) DocumentPrinter) ([]byte, error) {
 	if printerFunc == nil {
 		printerFunc = func(w io.Writer) DocumentPrinter { return NewYAMLPrinter(w) }

@@ -469,7 +469,7 @@ non-data-values-doc`)
 		t.Fatalf("Expected RunWithFiles to fail, but was no error")
 	}
 
-	expectedError := "Overlaying data value (in following order: data.yml): Templating file 'data.yml': Expected data values file 'data.yml' to only have data values documents"
+	expectedError := "Overlaying data values (in following order: data.yml): Templating file 'data.yml': Expected data values file 'data.yml' to only have data values documents"
 
 	if out.Err.Error() != expectedError {
 		t.Fatalf("\nExpected '%s'\nGot: '%s'", expectedError, out.Err)

@@ -64,7 +64,7 @@ func NewMetas(node yamlmeta.Node, opts MetasOpts) (Metas, error) {
 				ann.Name = template.AnnotationCode
 
 				if node.GetPosition().IsKnown() {
-					if meta.Position.Line() == node.GetPosition().Line() {
+					if meta.Position.LineNum() == node.GetPosition().LineNum() {
 						if len(node.GetValues()) > 0 && node.GetValues()[0] != nil {
 							return metas, fmt.Errorf(
 								"Expected YAML node at %s to have either computed or YAML value, but found both",

@@ -8,51 +8,29 @@ import (
 	"strings"
 
 	"github.com/k14s/ytt/pkg/filepos"
-	"github.com/k14s/ytt/pkg/yamlmeta"
 )
 
-type errorWithContent struct {
-	contents string
-	Position *filepos.Position
-}
-
-func (e errorWithContent) Error() string {
-	panic("do not use directly")
-}
-
-func (e *errorWithContent) SetContext(doc *yamlmeta.Document) error {
-	contents, err := doc.RawDataAtLine(e.Position)
-
-	if err == nil {
-		e.contents = contents
-	}
-
-	return err
-}
-
-func NewInvalidError(found, expected, hint string, position *filepos.Position) error {
-	return &invalidError{
-		errorWithContent: errorWithContent{
-			Position: position,
-		},
+func NewInvalidSchemaError(found, expected, hint string, position *filepos.Position) error {
+	return &invalidSchemaError{
+		Position: position,
 		Found:    found,
 		Expected: expected,
 		Hint:     hint,
 	}
 }
 
-type invalidError struct {
-	errorWithContent
+type invalidSchemaError struct {
+	Position *filepos.Position
 	Found    string
 	Expected string
 	Message  string
 	Hint     string
 }
 
-func (i invalidError) Error() string {
+func (i invalidSchemaError) Error() string {
 	var result string
 	position := i.Position.AsCompactString()
-	lineContent := strings.TrimSpace(i.contents)
+	lineContent := strings.TrimSpace(i.Position.GetLine())
 	colonPosition := strings.Index(lineContent, ":")
 	result += "\n"
 	result += fmt.Sprintf("%s | %s", position, lineContent)
@@ -77,9 +55,6 @@ func (i invalidError) Error() string {
 
 func NewTypeError(foundType, expectedType string, dataPosition, schemaPosition *filepos.Position) error {
 	return &typeError{
-		errorWithContent: errorWithContent{
-			Position: dataPosition,
-		},
 		Found:          foundType,
 		Expected:       expectedType,
 		DataPosition:   dataPosition,
@@ -88,7 +63,6 @@ func NewTypeError(foundType, expectedType string, dataPosition, schemaPosition *
 }
 
 type typeError struct {
-	errorWithContent
 	Found          string
 	Expected       string
 	DataPosition   *filepos.Position
@@ -98,7 +72,7 @@ type typeError struct {
 func (t typeError) Error() string {
 	var result string
 	position := t.DataPosition.AsCompactString()
-	lineContent := strings.TrimSpace(t.contents)
+	lineContent := strings.TrimSpace(t.DataPosition.GetLine())
 	colonPosition := strings.Index(lineContent, ":")
 	result += "\n"
 	result += fmt.Sprintf("%s | %s", position, lineContent)
@@ -115,19 +89,14 @@ func (t typeError) Error() string {
 	return result
 }
 
-func NewUnexpectedKeyError(keyName string, dataPosition, schemaPosition *filepos.Position) error {
+func NewUnexpectedKeyError(dataPosition, schemaPosition *filepos.Position) error {
 	return &unexpectedKeyError{
-		errorWithContent: errorWithContent{
-			Position: dataPosition,
-			contents: keyName,
-		},
 		DataPosition:   dataPosition,
 		SchemaPosition: schemaPosition,
 	}
 }
 
 type unexpectedKeyError struct {
-	errorWithContent
 	DataPosition   *filepos.Position
 	SchemaPosition *filepos.Position
 }
@@ -135,7 +104,7 @@ type unexpectedKeyError struct {
 func (t unexpectedKeyError) Error() string {
 	var result string
 	position := t.DataPosition.AsCompactString()
-	lineContent := strings.TrimSpace(t.contents)
+	lineContent := strings.TrimSpace(t.DataPosition.GetLine())
 	result += "\n"
 	result += fmt.Sprintf("%s | %s", position, lineContent)
 	result += "\n" + leftPadding(len(position)) + " | ^^^"

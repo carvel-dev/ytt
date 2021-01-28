@@ -27,18 +27,7 @@ type DocumentSchema struct {
 func NewDocumentSchema(doc *yamlmeta.Document) (*DocumentSchema, error) {
 	docType, err := NewDocumentType(doc)
 	if err != nil {
-		switch err.(type) {
-		// TODO: maybe this should be cast as a errorWithContext?
-		case *invalidError:
-			invalidErr := err.(*invalidError)
-			err = invalidErr.SetContext(doc)
-			if err != nil {
-				return nil, err
-			}
-			return nil, invalidErr
-		default:
-			return nil, err
-		}
+		return nil, err
 	}
 
 	schemaDVs, err := defaultDataValues(doc)
@@ -107,7 +96,7 @@ func NewMapItemType(item *yamlmeta.MapItem) (*MapItemType, error) {
 	if _, nullable := templateAnnotations[AnnotationSchemaNullable]; nullable {
 		defaultValue = nil
 	} else if valueType == nil {
-		return nil, NewInvalidError("",
+		return nil, NewInvalidSchemaError("",
 			"a non-null value, of the desired type",
 			"to default to null, specify a value of the desired type and annotate with @schema/nullable",
 			item.Position)
@@ -123,13 +112,13 @@ func NewMapItemType(item *yamlmeta.MapItem) (*MapItemType, error) {
 func NewArrayType(a *yamlmeta.Array) (*ArrayType, error) {
 	// These really are distinct use cases. In the empty list, perhaps the user is unaware that arrays must be typed. In the >1 scenario, they may be expecting the given items to be the defaults.
 	if len(a.Items) == 0 {
-		return nil, NewInvalidError(fmt.Sprintf("%d array items", len(a.Items)),
+		return nil, NewInvalidSchemaError(fmt.Sprintf("%d array items", len(a.Items)),
 			"exactly 1 array item",
 			"to define an array, provide one item of the desired type; the default value of arrays is an empty list",
 			a.Position)
 	}
 	if len(a.Items) > 1 {
-		return nil, NewInvalidError(fmt.Sprintf("%d array items", len(a.Items)),
+		return nil, NewInvalidSchemaError(fmt.Sprintf("%d array items", len(a.Items)),
 			"exactly 1 array item",
 			"to define an array, provide one item of the desired type; the default value of arrays is an empty list",
 			a.Position)
@@ -152,7 +141,7 @@ func NewArrayItemType(item *yamlmeta.ArrayItem) (*ArrayItemType, error) {
 	annotations := template.NewAnnotations(item)
 
 	if _, found := annotations[AnnotationSchemaNullable]; found {
-		return nil, NewInvalidError("array item with an unexpected annotation",
+		return nil, NewInvalidSchemaError("array item with an unexpected annotation",
 			"",
 			"array items cannot be annotated with #@schema/nullable, if this behaviour would be valuable, please submit an issue on https://github.com/vmware-tanzu/carvel-ytt",
 			item.Position)

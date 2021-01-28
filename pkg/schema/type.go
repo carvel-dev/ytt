@@ -5,7 +5,6 @@ package schema
 
 import (
 	"fmt"
-	"log"
 
 	"github.com/k14s/ytt/pkg/filepos"
 	"github.com/k14s/ytt/pkg/structmeta"
@@ -75,6 +74,7 @@ func (m ScalarType) GetValueType() yamlmeta.Type {
 func (t *DocumentType) CheckType(_ yamlmeta.TypeWithValues) (chk yamlmeta.TypeCheck) {
 	return
 }
+
 func (m *MapType) CheckType(node yamlmeta.TypeWithValues) (chk yamlmeta.TypeCheck) {
 	nodeMap, ok := node.(*yamlmeta.Map)
 	if !ok {
@@ -86,16 +86,17 @@ func (m *MapType) CheckType(node yamlmeta.TypeWithValues) (chk yamlmeta.TypeChec
 	for _, item := range nodeMap.Items {
 		if !m.AllowsKey(item.Key) {
 			chk.Violations = append(chk.Violations,
-				NewUnexpectedKeyError(item.Key.(string), item.Position, m.Position))
+				NewUnexpectedKeyError(item.Position, m.Position))
 		}
 	}
 	return
 }
+
 func (t *MapItemType) CheckType(node yamlmeta.TypeWithValues) (chk yamlmeta.TypeCheck) {
 	mapItem, ok := node.(*yamlmeta.MapItem)
 	if !ok {
 		// A Map must've yielded a non-MapItem which is not valid YAML
-		log.Panicf("MapItem type check was called on a non-MapItem: %#v", node)
+		panic(fmt.Sprintf("MapItem type check was called on a non-MapItem: %#v", node))
 	}
 	if mapItem.Value == nil && !t.IsNullable() {
 		chk.Violations = append(chk.Violations,
@@ -107,6 +108,7 @@ func (t *MapItemType) CheckType(node yamlmeta.TypeWithValues) (chk yamlmeta.Type
 
 	return
 }
+
 func (a *ArrayType) CheckType(node yamlmeta.TypeWithValues) (chk yamlmeta.TypeCheck) {
 	_, ok := node.(*yamlmeta.Array)
 	if !ok {
@@ -120,10 +122,11 @@ func (a *ArrayItemType) CheckType(node yamlmeta.TypeWithValues) (chk yamlmeta.Ty
 	_, ok := node.(*yamlmeta.ArrayItem)
 	if !ok {
 		// An Array must've yielded a non-ArrayItem which is not valid YAML
-		log.Panicf("ArrayItem type check was called on a non-ArrayItem: %#v", node)
+		panic(fmt.Sprintf("ArrayItem type check was called on a non-ArrayItem: %#v", node))
 	}
 	return
 }
+
 func (m *ScalarType) CheckType(node yamlmeta.TypeWithValues) (chk yamlmeta.TypeCheck) {
 	value := node.GetValues()[0]
 	switch itemValueType := value.(type) {
@@ -203,6 +206,7 @@ func (t *DocumentType) AssignTypeTo(typeable yamlmeta.Typeable) (chk yamlmeta.Ty
 	} // else, at a leaf
 	return
 }
+
 func (m *MapType) AssignTypeTo(typeable yamlmeta.Typeable) (chk yamlmeta.TypeCheck) {
 	mapNode, ok := typeable.(*yamlmeta.Map)
 	if !ok {
@@ -277,6 +281,7 @@ func (t *MapItemType) AssignTypeTo(typeable yamlmeta.Typeable) (chk yamlmeta.Typ
 	} // else, at a leaf
 	return
 }
+
 func (a *ArrayType) AssignTypeTo(typeable yamlmeta.Typeable) (chk yamlmeta.TypeCheck) {
 	arrayNode, ok := typeable.(*yamlmeta.Array)
 	if !ok {
@@ -294,14 +299,11 @@ func (a *ArrayType) AssignTypeTo(typeable yamlmeta.Typeable) (chk yamlmeta.TypeC
 	}
 	return
 }
+
 func (a *ArrayItemType) AssignTypeTo(typeable yamlmeta.Typeable) (chk yamlmeta.TypeCheck) {
 	arrayItem, ok := typeable.(*yamlmeta.ArrayItem)
 	if !ok {
-		chk.Violations = append(chk.Violations,
-			NewTypeError(typeToString(typeable),
-				typeToString(a),
-				typeable.GetPosition(),
-				a.Position))
+		chk.Violations = append(chk.Violations, NewTypeError(typeToString(typeable), typeToString(a), typeable.GetPosition(), a.Position))
 		return
 	}
 	typeable.SetType(a)
@@ -312,6 +314,7 @@ func (a *ArrayItemType) AssignTypeTo(typeable yamlmeta.Typeable) (chk yamlmeta.T
 	} // else, at a leaf
 	return
 }
+
 func (m *ScalarType) AssignTypeTo(typeable yamlmeta.Typeable) (chk yamlmeta.TypeCheck) {
 	switch m.Type.(type) {
 	case int:
@@ -319,11 +322,7 @@ func (m *ScalarType) AssignTypeTo(typeable yamlmeta.Typeable) (chk yamlmeta.Type
 	case string:
 		typeable.SetType(m)
 	default:
-		chk.Violations = append(chk.Violations,
-			NewTypeError(typeToString(typeable),
-				typeToString(m),
-				typeable.GetPosition(),
-				m.Position))
+		chk.Violations = append(chk.Violations, NewTypeError(typeToString(typeable), typeToString(m), typeable.GetPosition(), m.Position))
 	}
 	return
 }

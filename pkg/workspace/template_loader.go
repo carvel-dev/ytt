@@ -188,7 +188,6 @@ func (l *TemplateLoader) EvalYAML(libraryCtx LibraryExecutionContext, file *file
 		return nil, nil, err
 	}
 
-	resultVal.(*yamlmeta.DocumentSet).SetRawBytes(docSet)
 	return globals, resultVal.(*yamlmeta.DocumentSet), nil
 }
 

@@ -213,7 +213,7 @@ func (e *Template) debugComment(node yamlmeta.Node) string {
 
 func (e *Template) newSourceLine(pos *filepos.Position) *template.SourceLine {
 	if pos.IsKnown() {
-		if content, ok := e.sourceCodeLines()[pos.Line()]; ok {
+		if content, ok := e.sourceCodeLines()[pos.LineNum()]; ok {
 			return template.NewSourceLine(pos, content)
 		}
 	}
@@ -229,7 +229,7 @@ func (e *Template) sourceCodeLines() map[int]string {
 
 	if sourceCode, present := e.docSet.AsSourceBytes(); present {
 		for i, line := range bytes.Split(sourceCode, []byte("\n")) {
-			e.srcLinesByLine[filepos.NewPosition(i+1).Line()] = string(line)
+			e.srcLinesByLine[filepos.NewPosition(i+1).LineNum()] = string(line)
 		}
 	}
 

@@ -33,7 +33,7 @@ func (p *Parser) parse(dataBs []byte, associatedName string, startPos *filepos.P
 	var currCol int = 1
 
 	if startPos.IsKnown() {
-		currLine = startPos.Line()
+		currLine = startPos.LineNum()
 	}
 
 	var lastNode interface{} = &NodeText{Position: p.newPosition(currLine)}

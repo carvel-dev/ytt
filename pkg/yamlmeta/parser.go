@@ -12,6 +12,7 @@ import (
 	"regexp"
 	"sort"
 	"strconv"
+	"strings"
 
 	"github.com/k14s/ytt/pkg/filepos"
 	"github.com/k14s/ytt/pkg/yamlmeta/internal/yaml.v2"
@@ -41,26 +42,23 @@ func NewParser(opts ParserOpts) *Parser {
 func (p *Parser) ParseBytes(data []byte, associatedName string) (*DocumentSet, error) {
 	p.associatedName = associatedName
 
-	// YAML library uses 0 based line numbers for nodes
-	// so by default move the numbering by one
+	// YAML library uses 0-based line numbers for nodes (but, first line in a text file is typically line 1)
 	nodeLineCorrection := 1
-	// Errors seem to use 1 based line numbers
+	// YAML library uses 1-based line numbers for errors
 	errLineCorrection := 0
 	startsWithDocMarker := docStartMarkerCheck.Match(data)
 
 	if !startsWithDocMarker {
-		// Since we are adding doc marker that takes up first line
-		// (0th line from YAML library perspective),
-		// there is no need to line correct
-		nodeLineCorrection = 0
-		// For errors though, we do need to correct
-		errLineCorrection = -1
 		data = append([]byte("---\n"), data...)
+
+        // we just prepended a line to the original input, correct for that:
+		nodeLineCorrection--
+		errLineCorrection--
 	}
 
 	docSet, err := p.parseBytes(data, nodeLineCorrection)
 	if err != nil {
-		return docSet, p.correctLineInErr(err, errLineCorrection)
+		return docSet, p.correctLineNumInErr(err, errLineCorrection)
 	}
 
 	// Change first document's line number to be 1
@@ -78,7 +76,7 @@ func (p *Parser) ParseBytes(data []byte, associatedName string) (*DocumentSet, e
 func (p *Parser) parseBytes(data []byte, lineCorrection int) (*DocumentSet, error) {
 	docSet := &DocumentSet{Position: filepos.NewUnknownPosition()}
 
-	var lastUnassingedMetas []*Meta
+	var lastUnassignedMetas []*Meta
 
 	dec := yaml.NewDecoder(bytes.NewReader(data))
 	dec.SetForceMapSlice(true)
@@ -86,6 +84,8 @@ func (p *Parser) parseBytes(data []byte, lineCorrection int) (*DocumentSet, erro
 	if p.opts.Strict {
 		dec.SetStrictScalarResolve()
 	}
+
+	lines := strings.Split(string(data), "\n")
 
 	for {
 		var rawVal interface{}
@@ -98,22 +98,21 @@ func (p *Parser) parseBytes(data []byte, lineCorrection int) (*DocumentSet, erro
 			return nil, err
 		}
 		doc := &Document{
-			RawData:  data,
-			Metas:    lastUnassingedMetas,
-			Value:    p.parse(rawVal, lineCorrection),
-			Position: p.newDocPosition(dec.DocumentStartLine(), lineCorrection, len(docSet.Items) == 0),
+			Metas:    lastUnassignedMetas,
+			Value:    p.parse(rawVal, lineCorrection, lines),
+			Position: p.newDocPosition(dec.DocumentStartLine(), lineCorrection, len(docSet.Items) == 0, lines),
 		}
 
 		allMetas, unassignedMetas := p.assignMetas(doc, dec.Comments(), lineCorrection)
 		docSet.AllMetas = append(docSet.AllMetas, allMetas...)
-		lastUnassingedMetas = unassignedMetas
+		lastUnassignedMetas = unassignedMetas
 
 		docSet.Items = append(docSet.Items, doc)
 	}
 
-	if len(lastUnassingedMetas) > 0 {
+	if len(lastUnassignedMetas) > 0 {
 		endDoc := &Document{
-			Metas:    lastUnassingedMetas,
+			Metas:    lastUnassignedMetas,
 			Value:    nil,
 			Position: filepos.NewUnknownPosition(),
 			injected: true,
@@ -149,15 +148,15 @@ func setPositionOfCollections(node Node, parent Node) {
 	}
 }
 
-func (p *Parser) parse(val interface{}, lineCorrection int) interface{} {
+func (p *Parser) parse(val interface{}, lineCorrection int, lines []string) interface{} {
 	switch typedVal := val.(type) {
 	case yaml.MapSlice:
 		result := &Map{Position: p.newUnknownPosition()}
 		for _, item := range typedVal {
 			result.Items = append(result.Items, &MapItem{
 				Key:      item.Key,
-				Value:    p.parse(item.Value, lineCorrection),
-				Position: p.newPosition(item.Line, lineCorrection),
+				Value:    p.parse(item.Value, lineCorrection, lines),
+				Position: p.newPosition(item.Line, lineCorrection, lines[item.Line]),
 			})
 		}
 		return result
@@ -171,8 +170,8 @@ func (p *Parser) parse(val interface{}, lineCorrection int) interface{} {
 		for _, item := range typedVal {
 			if typedItem, ok := item.(yaml.ArrayItem); ok {
 				result.Items = append(result.Items, &ArrayItem{
-					Value:    p.parse(typedItem.Value, lineCorrection),
-					Position: p.newPosition(typedItem.Line, lineCorrection),
+					Value:    p.parse(typedItem.Value, lineCorrection, lines),
+					Position: p.newPosition(typedItem.Line, lineCorrection, lines[typedItem.Line]),
 				})
 			} else {
 				panic("unknown item")
@@ -200,7 +199,7 @@ func (p *Parser) assignMetas(val interface{}, comments []yaml.Comment, lineCorre
 	for _, comment := range comments {
 		meta := &Meta{
 			Data:     comment.Data,
-			Position: p.newPosition(comment.Line, lineCorrection),
+			Position: p.newPosition(comment.Line, lineCorrection, comment.Data),
 		}
 		allMetas = append(allMetas, meta)
 
@@ -208,7 +207,7 @@ func (p *Parser) assignMetas(val interface{}, comments []yaml.Comment, lineCorre
 
 		for _, lineNum := range lineNums {
 			// Always looking at the same line or "above" (greater line number)
-			if meta.Position.Line() > lineNum {
+			if meta.Position.LineNum() > lineNum {
 				continue
 			}
 			nodes, ok := nodesAtLines[lineNum]
@@ -216,7 +215,7 @@ func (p *Parser) assignMetas(val interface{}, comments []yaml.Comment, lineCorre
 				// Last node on the line is the one that owns inline meta
 				// otherwise it's the first one (outermost one)
 				// TODO any other better way to determine?
-				if meta.Position.Line() == lineNum {
+				if meta.Position.LineNum() == lineNum {
 					nodes[len(nodes)-1].addMeta(meta)
 				} else {
 					nodes[0].addMeta(meta)
@@ -237,7 +236,7 @@ func (p *Parser) assignMetas(val interface{}, comments []yaml.Comment, lineCorre
 func (p *Parser) buildLineLocs(val interface{}, nodeAtLines map[int][]Node) {
 	if node, ok := val.(Node); ok {
 		if node.GetPosition().IsKnown() {
-			nodeAtLines[node.GetPosition().Line()] = append(nodeAtLines[node.GetPosition().Line()], node)
+			nodeAtLines[node.GetPosition().LineNum()] = append(nodeAtLines[node.GetPosition().LineNum()], node)
 		}
 
 		for _, childVal := range node.GetValues() {
@@ -255,30 +254,31 @@ func (p *Parser) buildLineNums(nodeAtLines map[int][]Node) []int {
 	return result
 }
 
-func (p *Parser) correctLineInErr(err error, correction int) error {
+func (p *Parser) correctLineNumInErr(err error, correction int) error {
 	submatches := lineErrRegexp.FindAllStringSubmatch(err.Error(), -1)
 	if len(submatches) != 1 || len(submatches[0]) != 4 {
 		return err
 	}
 
-	origLine, parseErr := strconv.Atoi(submatches[0][2])
+	actualLineNum, parseErr := strconv.Atoi(submatches[0][2])
 	if parseErr != nil {
 		return err
 	}
 
-	return fmt.Errorf("%s%d%s", submatches[0][1], p.newPosition(origLine, correction).Line(), submatches[0][3])
+	return fmt.Errorf("%s%d%s", submatches[0][1], p.newPosition(actualLineNum, correction, "").LineNum(), submatches[0][3])
 }
 
-func (p *Parser) newDocPosition(actualLine, correction int, firstDoc bool) *filepos.Position {
-	if firstDoc && actualLine+correction == 0 {
+func (p *Parser) newDocPosition(actualLineNum, correction int, firstDoc bool, lines []string) *filepos.Position {
+	if firstDoc && actualLineNum+correction == 0 {
 		return p.newUnknownPosition()
 	}
-	return p.newPosition(actualLine, correction)
+	return p.newPosition(actualLineNum, correction, lines[actualLineNum])
 }
 
-func (p *Parser) newPosition(actualLine, correction int) *filepos.Position {
-	pos := filepos.NewPosition(actualLine + correction)
+func (p *Parser) newPosition(actualLineNum, correction int, line string) *filepos.Position {
+	pos := filepos.NewPosition(actualLineNum + correction)
 	pos.SetFile(p.associatedName)
+	pos.SetLine(line)
 	return pos
 }
 

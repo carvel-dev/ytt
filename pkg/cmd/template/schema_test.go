@@ -4,12 +4,13 @@
 package template_test
 
 import (
+	"strings"
+	"testing"
+
 	"github.com/k14s/difflib"
 	cmdtpl "github.com/k14s/ytt/pkg/cmd/template"
 	"github.com/k14s/ytt/pkg/cmd/ui"
 	"github.com/k14s/ytt/pkg/files"
-	"strings"
-	"testing"
 )
 
 var opts *cmdtpl.Options

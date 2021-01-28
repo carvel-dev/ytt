@@ -44,7 +44,6 @@ type DocumentSet struct {
 }
 
 type Document struct {
-	RawData  []byte
 	Type     Type
 	Metas    []*Meta
 	Value    interface{}

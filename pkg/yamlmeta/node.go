@@ -205,18 +205,6 @@ type TypeCheck struct {
 	Violations []error
 }
 
-func (tc *TypeCheck) LoadContext(doc *Document) {
-	if !tc.HasViolations() {
-		return
-	}
-
-	for _, violation := range tc.Violations {
-		if v, ok := violation.(violationWithContext); ok {
-			v.SetContext(doc)
-		}
-	}
-}
-
 func (tc TypeCheck) Error() string {
 	if !tc.HasViolations() {
 		return ""
@@ -231,10 +219,6 @@ func (tc TypeCheck) Error() string {
 
 func (tc *TypeCheck) HasViolations() bool {
 	return len(tc.Violations) > 0
-}
-
-type violationWithContext interface {
-	SetContext(doc *Document) error
 }
 
 func (ds *DocumentSet) Check() TypeCheck { return TypeCheck{} }
