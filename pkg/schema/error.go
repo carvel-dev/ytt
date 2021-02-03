@@ -125,7 +125,7 @@ func (t unexpectedKeyError) Error() string {
 	position := t.Found.Position.AsCompactString()
 	leftColumnSize := len(position) + 1
 	lineContent := strings.TrimSpace(t.Found.Position.GetLine())
-	keyAsString := fmt.Sprintf("%s", t.Found.Key)
+	keyAsString := fmt.Sprintf("%v", t.Found.Key)
 
 	msg := "\n"
 	msg += formatLine(leftColumnSize, position, lineContent)
