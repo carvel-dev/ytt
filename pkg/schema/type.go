@@ -286,8 +286,7 @@ func contains(haystack []interface{}, needle interface{}) bool {
 func (t *MapItemType) AssignTypeTo(typeable yamlmeta.Typeable) (chk yamlmeta.TypeCheck) {
 	mapItem, ok := typeable.(*yamlmeta.MapItem)
 	if !ok {
-		chk.Violations = append(chk.Violations, NewMismatchedTypeError(typeable, t))
-		return
+		panic(fmt.Sprintf("Attempt to assign type to a non-map-item (children of Maps can only be MapItems). type=%#v; typeable=%#v", t, typeable))
 	}
 	typeable.SetType(t)
 	typeableValue, ok := mapItem.Value.(yamlmeta.Typeable)
@@ -315,8 +314,7 @@ func (a *ArrayType) AssignTypeTo(typeable yamlmeta.Typeable) (chk yamlmeta.TypeC
 func (a *ArrayItemType) AssignTypeTo(typeable yamlmeta.Typeable) (chk yamlmeta.TypeCheck) {
 	arrayItem, ok := typeable.(*yamlmeta.ArrayItem)
 	if !ok {
-		chk.Violations = append(chk.Violations, NewMismatchedTypeError(typeable, a))
-		return
+		panic(fmt.Sprintf("Attempt to assign type to a non-array-item (children of Arrays can only be ArrayItems). type=%#v; typeable=%#v", a, typeable))
 	}
 	typeable.SetType(a)
 	typeableValue, ok := arrayItem.Value.(yamlmeta.Typeable)
@@ -328,15 +326,7 @@ func (a *ArrayItemType) AssignTypeTo(typeable yamlmeta.Typeable) (chk yamlmeta.T
 }
 
 func (m *ScalarType) AssignTypeTo(typeable yamlmeta.Typeable) (chk yamlmeta.TypeCheck) {
-	switch m.Value.(type) {
-	case int:
-		typeable.SetType(m)
-	case string:
-		typeable.SetType(m)
-	default:
-		chk.Violations = append(chk.Violations, NewMismatchedTypeError(typeable, m))
-	}
-	return
+	panic(fmt.Sprintf("Attempt to assign a type to a scalar. (scalars are not nodes in the AST) m=%#v ; typeable=%#v", m, typeable))
 }
 
 func (m *MapType) AllowsKey(key interface{}) bool {
