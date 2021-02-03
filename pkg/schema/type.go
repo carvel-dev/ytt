@@ -46,7 +46,7 @@ type ArrayItemType struct {
 	Position  *filepos.Position
 }
 type ScalarType struct {
-	Type     interface{}
+	Value    interface{}
 	Position *filepos.Position
 }
 
@@ -71,6 +71,51 @@ func (m ScalarType) GetValueType() yamlmeta.Type {
 	panic("Not implemented because it is unreachable")
 }
 
+func (t *DocumentType) PositionOfDefinition() *filepos.Position {
+	return t.Position
+}
+func (m MapType) PositionOfDefinition() *filepos.Position {
+	return m.Position
+}
+func (t MapItemType) PositionOfDefinition() *filepos.Position {
+	return t.Position
+}
+func (a ArrayType) PositionOfDefinition() *filepos.Position {
+	return a.Position
+}
+func (a ArrayItemType) PositionOfDefinition() *filepos.Position {
+	return a.Position
+}
+func (m ScalarType) PositionOfDefinition() *filepos.Position {
+	return m.Position
+}
+
+func (t *DocumentType) String() string {
+	return "document"
+}
+func (m MapType) String() string {
+	return "map"
+}
+func (t MapItemType) String() string {
+	return fmt.Sprintf("%s: %s", t.Key, t.ValueType.String())
+}
+func (a ArrayType) String() string {
+	return "array"
+}
+func (a ArrayItemType) String() string {
+	return fmt.Sprintf("- %s", a.ValueType.String())
+}
+func (m ScalarType) String() string {
+	switch m.Value.(type) {
+	case int:
+		return "integer"
+	case bool:
+		return "boolean"
+	default:
+		return fmt.Sprintf("%T", m.Value)
+	}
+}
+
 func (t *DocumentType) CheckType(_ yamlmeta.TypeWithValues) (chk yamlmeta.TypeCheck) {
 	return
 }
@@ -79,14 +124,14 @@ func (m *MapType) CheckType(node yamlmeta.TypeWithValues) (chk yamlmeta.TypeChec
 	nodeMap, ok := node.(*yamlmeta.Map)
 	if !ok {
 		chk.Violations = append(chk.Violations,
-			NewTypeError(node.ValueTypeAsString(), typeToString(m), node.GetPosition(), m.Position))
+			NewMismatchedTypeError(node, m))
 		return
 	}
 
 	for _, item := range nodeMap.Items {
 		if !m.AllowsKey(item.Key) {
 			chk.Violations = append(chk.Violations,
-				NewUnexpectedKeyError(item.Position, m.Position))
+				NewUnexpectedKeyError(item, m.Position))
 		}
 	}
 	return
@@ -100,10 +145,7 @@ func (t *MapItemType) CheckType(node yamlmeta.TypeWithValues) (chk yamlmeta.Type
 	}
 	if mapItem.Value == nil && !t.IsNullable() {
 		chk.Violations = append(chk.Violations,
-			NewTypeError(node.ValueTypeAsString(),
-				typeToString(t.GetValueType()),
-				node.GetPosition(),
-				t.Position))
+			NewMismatchedTypeError(mapItem, t))
 	}
 
 	return
@@ -113,7 +155,7 @@ func (a *ArrayType) CheckType(node yamlmeta.TypeWithValues) (chk yamlmeta.TypeCh
 	_, ok := node.(*yamlmeta.Array)
 	if !ok {
 		chk.Violations = append(chk.Violations,
-			NewTypeError(node.ValueTypeAsString(), typeToString(a), node.GetPosition(), a.Position))
+			NewMismatchedTypeError(node, a))
 	}
 	return
 }
@@ -129,50 +171,34 @@ func (a *ArrayItemType) CheckType(node yamlmeta.TypeWithValues) (chk yamlmeta.Ty
 
 func (m *ScalarType) CheckType(node yamlmeta.TypeWithValues) (chk yamlmeta.TypeCheck) {
 	value := node.GetValues()[0]
-	switch itemValueType := value.(type) {
+	switch value.(type) {
 	case string:
-		if _, ok := m.Type.(string); !ok {
+		if _, ok := m.Value.(string); !ok {
 			chk.Violations = append(chk.Violations,
-				NewTypeError(node.ValueTypeAsString(), typeToString(m.Type), node.GetPosition(), m.Position))
+				NewMismatchedTypeError(node, m))
 		}
 	case int:
-		if _, ok := m.Type.(int); !ok {
+		if _, ok := m.Value.(int); !ok {
 			chk.Violations = append(chk.Violations,
-				NewTypeError(node.ValueTypeAsString(), typeToString(m.Type), node.GetPosition(), m.Position))
+				NewMismatchedTypeError(node, m))
 		}
 	case bool:
-		if _, ok := m.Type.(bool); !ok {
+		if _, ok := m.Value.(bool); !ok {
 			chk.Violations = append(chk.Violations,
-				NewTypeError(node.ValueTypeAsString(), typeToString(m.Type), node.GetPosition(), m.Position))
+				NewMismatchedTypeError(node, m))
 		}
 	default:
 		chk.Violations = append(chk.Violations,
-			NewTypeError(typeToString(itemValueType), typeToString(m.Type), node.GetPosition(), m.Position))
+			NewMismatchedTypeError(node, m))
 	}
 	return
-}
-
-func typeToString(value interface{}) string {
-	switch typedValue := value.(type) {
-	case *ScalarType:
-		return typeToString(typedValue.Type)
-	case *MapType:
-		return "map"
-	case *ArrayType:
-		return "array"
-	default:
-		return yamlmeta.TypeToString(value)
-	}
 }
 
 func (t *DocumentType) AssignTypeTo(typeable yamlmeta.Typeable) (chk yamlmeta.TypeCheck) {
 	doc, ok := typeable.(*yamlmeta.Document)
 	if !ok {
 		chk.Violations = append(chk.Violations,
-			NewTypeError(typeToString(typeable),
-				typeToString(t),
-				typeable.GetPosition(),
-				t.Position))
+			NewMismatchedTypeError(typeable, t))
 		return
 	}
 
@@ -185,12 +211,10 @@ func (t *DocumentType) AssignTypeTo(typeable yamlmeta.Typeable) (chk yamlmeta.Ty
 				switch t.ValueType.(type) {
 				case *MapType:
 					tChild = &yamlmeta.Map{}
+				case *ArrayType:
+					tChild = &yamlmeta.Array{}
 				default:
-					chk.Violations = append(chk.Violations,
-						NewTypeError(fmt.Sprintf("%T", t.ValueType),
-							typeToString(&yamlmeta.Map{}),
-							typeableChild.GetPosition(),
-							t.Position))
+					panic("implement me!")
 				}
 				doc.Value = tChild
 			}
@@ -199,7 +223,7 @@ func (t *DocumentType) AssignTypeTo(typeable yamlmeta.Typeable) (chk yamlmeta.Ty
 		} else {
 			chk.Violations = append(chk.Violations,
 				fmt.Errorf("data values were found in data values file(s), but schema (%s) has no values defined\n"+
-					"(hint: define matching keys from data values files(s) in the schema, or do not enable the schema feature)", t.Position.FileString()))
+					"(hint: define matching keys from data values files(s) in the schema, or do not enable the schema feature)", t.Position.AsCompactString()))
 		}
 	} else {
 
@@ -210,11 +234,7 @@ func (t *DocumentType) AssignTypeTo(typeable yamlmeta.Typeable) (chk yamlmeta.Ty
 func (m *MapType) AssignTypeTo(typeable yamlmeta.Typeable) (chk yamlmeta.TypeCheck) {
 	mapNode, ok := typeable.(*yamlmeta.Map)
 	if !ok {
-		chk.Violations = append(chk.Violations,
-			NewTypeError(typeToString(typeable),
-				typeToString(m),
-				typeable.GetPosition(),
-				m.Position))
+		chk.Violations = append(chk.Violations, NewMismatchedTypeError(typeable, m))
 		return
 	}
 	var foundKeys []interface{}
@@ -266,11 +286,7 @@ func contains(haystack []interface{}, needle interface{}) bool {
 func (t *MapItemType) AssignTypeTo(typeable yamlmeta.Typeable) (chk yamlmeta.TypeCheck) {
 	mapItem, ok := typeable.(*yamlmeta.MapItem)
 	if !ok {
-		chk.Violations = append(chk.Violations,
-			NewTypeError(fmt.Sprintf("%T", typeable),
-				fmt.Sprintf("%T", &yamlmeta.MapItem{}),
-				typeable.GetPosition(),
-				t.Position))
+		chk.Violations = append(chk.Violations, NewMismatchedTypeError(typeable, t))
 		return
 	}
 	typeable.SetType(t)
@@ -285,11 +301,7 @@ func (t *MapItemType) AssignTypeTo(typeable yamlmeta.Typeable) (chk yamlmeta.Typ
 func (a *ArrayType) AssignTypeTo(typeable yamlmeta.Typeable) (chk yamlmeta.TypeCheck) {
 	arrayNode, ok := typeable.(*yamlmeta.Array)
 	if !ok {
-		chk.Violations = append(chk.Violations,
-			NewTypeError(typeToString(typeable),
-				typeToString(a),
-				typeable.GetPosition(),
-				a.Position))
+		chk.Violations = append(chk.Violations, NewMismatchedTypeError(typeable, a))
 		return
 	}
 	typeable.SetType(a)
@@ -303,7 +315,7 @@ func (a *ArrayType) AssignTypeTo(typeable yamlmeta.Typeable) (chk yamlmeta.TypeC
 func (a *ArrayItemType) AssignTypeTo(typeable yamlmeta.Typeable) (chk yamlmeta.TypeCheck) {
 	arrayItem, ok := typeable.(*yamlmeta.ArrayItem)
 	if !ok {
-		chk.Violations = append(chk.Violations, NewTypeError(typeToString(typeable), typeToString(a), typeable.GetPosition(), a.Position))
+		chk.Violations = append(chk.Violations, NewMismatchedTypeError(typeable, a))
 		return
 	}
 	typeable.SetType(a)
@@ -316,13 +328,13 @@ func (a *ArrayItemType) AssignTypeTo(typeable yamlmeta.Typeable) (chk yamlmeta.T
 }
 
 func (m *ScalarType) AssignTypeTo(typeable yamlmeta.Typeable) (chk yamlmeta.TypeCheck) {
-	switch m.Type.(type) {
+	switch m.Value.(type) {
 	case int:
 		typeable.SetType(m)
 	case string:
 		typeable.SetType(m)
 	default:
-		chk.Violations = append(chk.Violations, NewTypeError(typeToString(typeable), typeToString(m), typeable.GetPosition(), m.Position))
+		chk.Violations = append(chk.Violations, NewMismatchedTypeError(typeable, m))
 	}
 	return
 }

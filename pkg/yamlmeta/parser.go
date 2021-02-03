@@ -51,7 +51,7 @@ func (p *Parser) ParseBytes(data []byte, associatedName string) (*DocumentSet, e
 	if !startsWithDocMarker {
 		data = append([]byte("---\n"), data...)
 
-        // we just prepended a line to the original input, correct for that:
+		// we just prepended a line to the original input, correct for that:
 		nodeLineCorrection--
 		errLineCorrection--
 	}

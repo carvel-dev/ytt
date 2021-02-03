@@ -8,114 +8,133 @@ import (
 	"strings"
 
 	"github.com/k14s/ytt/pkg/filepos"
+	"github.com/k14s/ytt/pkg/yamlmeta"
 )
 
-func NewInvalidSchemaError(found, expected, hint string, position *filepos.Position) error {
+func NewInvalidSchemaError(found yamlmeta.Node, message, hint string) error {
 	return &invalidSchemaError{
-		Position: position,
-		Found:    found,
-		Expected: expected,
-		Hint:     hint,
+		Message: message,
+		Found:   found,
+		Hint:    hint,
+	}
+}
+
+func NewInvalidArrayDefinitionError(found yamlmeta.Node, hint string) error {
+	return &invalidArrayDefinitionError{
+		Found: found,
+		Hint:  hint,
+	}
+}
+
+func NewMismatchedTypeError(foundType yamlmeta.TypeWithValues, expectedType yamlmeta.Type) error {
+	return &mismatchedTypeError{
+		Found:    foundType,
+		Expected: expectedType,
+	}
+}
+
+func NewUnexpectedKeyError(found *yamlmeta.MapItem, definition *filepos.Position) error {
+	return &unexpectedKeyError{
+		Found:                 found,
+		MapDefinitionPosition: definition,
 	}
 }
 
 type invalidSchemaError struct {
-	Position *filepos.Position
-	Found    string
-	Expected string
-	Message  string
-	Hint     string
+	Message string
+	Found   yamlmeta.Node
+	Hint    string
 }
 
-func (i invalidSchemaError) Error() string {
-	var result string
-	position := i.Position.AsCompactString()
-	lineContent := strings.TrimSpace(i.Position.GetLine())
-	colonPosition := strings.Index(lineContent, ":")
-	result += "\n"
-	result += fmt.Sprintf("%s | %s", position, lineContent)
-	result += beginningOfLine(len(position), leftPadding(colonPosition)+" ^^^")
-	if i.Found != "" {
-		result += beginningOfLine(len(position), fmt.Sprintf("found: %s", i.Found))
+func (e invalidSchemaError) Error() string {
+	position := e.Found.GetPosition().AsCompactString()
+	leftColumnSize := len(position) + 1
+	lineContent := e.Found.GetPosition().GetLine()
+
+	msg := "\n"
+	msg += formatLine(leftColumnSize, position, lineContent)
+	msg += formatLine(leftColumnSize, "", "")
+	msg += formatLine(leftColumnSize, "", "INVALID SCHEMA - "+e.Message)
+	if e.Hint != "" {
+		msg += formatLine(leftColumnSize, "", fmt.Sprintf("  (hint: %s)", e.Hint))
 	}
 
-	if i.Expected != "" {
-		result += beginningOfLine(len(position), fmt.Sprintf("expected: %s", i.Expected))
-	}
-
-	if i.Message != "" {
-		result += beginningOfLine(len(position), i.Message)
-	}
-
-	if i.Hint != "" {
-		result += beginningOfLine(len(position), fmt.Sprintf("(hint: %s)", i.Hint))
-	}
-	return result
+	return msg
 }
 
-func NewTypeError(foundType, expectedType string, dataPosition, schemaPosition *filepos.Position) error {
-	return &typeError{
-		Found:          foundType,
-		Expected:       expectedType,
-		DataPosition:   dataPosition,
-		SchemaPosition: schemaPosition,
-	}
+type invalidArrayDefinitionError struct {
+	Found yamlmeta.Node
+	Hint  string
 }
 
-type typeError struct {
-	Found          string
-	Expected       string
-	DataPosition   *filepos.Position
-	SchemaPosition *filepos.Position
+func (i invalidArrayDefinitionError) Error() string {
+	position := i.Found.GetPosition().AsCompactString()
+	leftColumnSize := len(position) + 1
+	lineContent := i.Found.GetPosition().GetLine()
+
+	msg := "\n"
+	msg += formatLine(leftColumnSize, position, lineContent)
+	msg += formatLine(leftColumnSize, "", "")
+	msg += formatLine(leftColumnSize, "", "INVALID ARRAY DEFINITION IN SCHEMA - unable to determine the desired type")
+	msg += formatLine(leftColumnSize, "", fmt.Sprintf("     found: %d array items", len(i.Found.GetValues())))
+	msg += formatLine(leftColumnSize, "", "  expected: exactly 1 array item, of the desired type")
+	msg += formatLine(leftColumnSize, "", fmt.Sprintf("  (hint: %s)", i.Hint))
+
+	return msg
 }
 
-func (t typeError) Error() string {
-	var result string
-	position := t.DataPosition.AsCompactString()
-	lineContent := strings.TrimSpace(t.DataPosition.GetLine())
-	colonPosition := strings.Index(lineContent, ":")
-	result += "\n"
-	result += fmt.Sprintf("%s | %s", position, lineContent)
-	result += beginningOfLine(len(position), leftPadding(colonPosition)+" ^^^")
-	if t.Found != "" {
-		result += beginningOfLine(len(position), fmt.Sprintf("found: %s", t.Found))
-	}
-
-	if t.Expected != "" {
-		result += beginningOfLine(len(position),
-			fmt.Sprintf("expected: %s (by %s)", t.Expected, t.SchemaPosition.AsCompactString()))
-	}
-
-	return result
+type mismatchedTypeError struct {
+	Found    yamlmeta.TypeWithValues
+	Expected yamlmeta.Type
 }
 
-func NewUnexpectedKeyError(dataPosition, schemaPosition *filepos.Position) error {
-	return &unexpectedKeyError{
-		DataPosition:   dataPosition,
-		SchemaPosition: schemaPosition,
+func (t mismatchedTypeError) Error() string {
+	position := t.Found.GetPosition().AsCompactString()
+	lineContent := t.Found.GetPosition().GetLine()
+
+	leftPadLength := len(position) + 1
+	msg := "\n"
+	msg += formatLine(leftPadLength, position, lineContent)
+	msg += formatLine(leftPadLength, "", "")
+	msg += formatLine(leftPadLength, "", "TYPE MISMATCH - the value of this item is not what schema expected:")
+	if t.Found.GetPosition().IsKnown() {
+		msg += formatLine(leftPadLength, "", fmt.Sprintf("     found: %s", t.Found.ValueTypeAsString()))
 	}
+
+	if t.Expected.PositionOfDefinition().IsKnown() {
+		expectedTypeString := ""
+		switch t.Expected.(type) {
+		case *MapItemType, *ArrayItemType:
+			expectedTypeString = t.Expected.GetValueType().String()
+		default:
+			expectedTypeString = t.Expected.String()
+		}
+
+		msg += formatLine(leftPadLength, "", fmt.Sprintf("  expected: %s (by %s)", expectedTypeString, t.Expected.PositionOfDefinition().AsCompactString()))
+	}
+
+	return msg
 }
 
 type unexpectedKeyError struct {
-	DataPosition   *filepos.Position
-	SchemaPosition *filepos.Position
+	Found                 *yamlmeta.MapItem
+	MapDefinitionPosition *filepos.Position
 }
 
 func (t unexpectedKeyError) Error() string {
-	var result string
-	position := t.DataPosition.AsCompactString()
-	lineContent := strings.TrimSpace(t.DataPosition.GetLine())
-	result += "\n"
-	result += fmt.Sprintf("%s | %s", position, lineContent)
-	result += "\n" + leftPadding(len(position)) + " | ^^^"
-	result += beginningOfLine(len(position),
-		fmt.Sprintf("unexpected key in map (as defined at %s)", t.SchemaPosition.AsCompactString()))
+	position := t.Found.Position.AsCompactString()
+	leftColumnSize := len(position) + 1
+	lineContent := strings.TrimSpace(t.Found.Position.GetLine())
+	keyAsString := fmt.Sprintf("%s", t.Found.Key)
 
-	return result
-}
+	msg := "\n"
+	msg += formatLine(leftColumnSize, position, lineContent)
+	msg += formatLine(leftColumnSize, "", "")
+	msg += formatLine(leftColumnSize, "", "UNEXPECTED KEY - the key of this item is not what schema expected:")
+	msg += formatLine(leftColumnSize, "", fmt.Sprintf("     found: %s (%s)", keyAsString, "string"))
+	msg += formatLine(leftColumnSize, "", fmt.Sprintf("  expected: (a key defined in map) (by %s)", t.MapDefinitionPosition.AsCompactString()))
 
-func beginningOfLine(size int, text string) string {
-	return "\n" + leftPadding(size) + " |  " + text
+	return msg
 }
 
 func leftPadding(size int) string {
@@ -124,4 +143,11 @@ func leftPadding(size int) string {
 		result += " "
 	}
 	return result
+}
+
+func formatLine(leftColumnSize int, left, right string) string {
+	if len(right) > 0 {
+		right = " " + right
+	}
+	return fmt.Sprintf("%s%s|%s\n", left, leftPadding(leftColumnSize-len(left)), right)
 }

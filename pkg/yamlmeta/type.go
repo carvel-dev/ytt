@@ -11,6 +11,8 @@ type Type interface {
 	AssignTypeTo(typeable Typeable) TypeCheck
 	GetValueType() Type
 	CheckType(node TypeWithValues) TypeCheck
+	PositionOfDefinition() *filepos.Position
+	String() string
 }
 
 type TypeWithValues interface {
@@ -20,8 +22,7 @@ type TypeWithValues interface {
 }
 
 type Typeable interface {
-	// TODO: extract methods common to Node and Typeable to a shared interface?
-	GetPosition() *filepos.Position
+	TypeWithValues
 
 	SetType(Type)
 }

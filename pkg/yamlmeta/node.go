@@ -20,19 +20,21 @@ func (ai *ArrayItem) GetPosition() *filepos.Position   { return ai.Position }
 func (s *Scalar) GetPosition() *filepos.Position       { return s.Position }
 
 func (ds *DocumentSet) ValueTypeAsString() string { return "documentSet" }
-func (d *Document) ValueTypeAsString() string     { return TypeToString(d.Value) }
+func (d *Document) ValueTypeAsString() string     { return typeToString(d.Value) }
 func (m *Map) ValueTypeAsString() string          { return "map" }
-func (mi *MapItem) ValueTypeAsString() string     { return TypeToString(mi.Value) }
+func (mi *MapItem) ValueTypeAsString() string     { return typeToString(mi.Value) }
 func (a *Array) ValueTypeAsString() string        { return "array" }
-func (ai *ArrayItem) ValueTypeAsString() string   { return TypeToString(ai.Value) }
-func (s *Scalar) ValueTypeAsString() string       { return TypeToString(s.Value) }
+func (ai *ArrayItem) ValueTypeAsString() string   { return typeToString(ai.Value) }
+func (s *Scalar) ValueTypeAsString() string       { return typeToString(s.Value) }
 
-func TypeToString(value interface{}) string {
+func typeToString(value interface{}) string {
 	switch value.(type) {
 	case int:
 		return "integer"
 	case bool:
 		return "boolean"
+	case nil:
+		return "null"
 	default:
 		if t, ok := value.(TypeWithValues); ok {
 			return t.ValueTypeAsString()

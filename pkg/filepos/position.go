@@ -42,10 +42,6 @@ func (p *Position) LineNum() int {
 	return *p.lineNum
 }
 
-func (p *Position) FileString() string {
-	return p.file
-}
-
 func (p *Position) GetLine() string {
 	return p.line
 }
