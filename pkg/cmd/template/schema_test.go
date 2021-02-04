@@ -4,6 +4,7 @@
 package template_test
 
 import (
+	"os"
 	"strings"
 	"testing"
 
@@ -19,7 +20,7 @@ func TestMain(m *testing.M) {
 	opts = cmdtpl.NewOptions()
 	opts.SchemaEnabled = true
 
-	m.Run()
+	os.Exit(m.Run())
 }
 
 func TestDataValueConformingToSchemaSucceeds(t *testing.T) {
@@ -387,9 +388,10 @@ db_conn:
 		})
 		expectedErr := `data_values.yml:5 | password: i should not be here
                   |
-                  | UNEXPECTED KEY - the key of this item is not what schema expected:
-                  |      found: password (string)
-                  |   expected: (a key defined in map) (by schema.yml:3)`
+                  | UNEXPECTED KEY - the schema's corresponding map did not expect this key:
+                  |      found: password
+                  |   expected: (a key defined in map) (by schema.yml:3)
+                  |   (hint: each key in data values must be specified in the schema)`
 
 		assertYTTWorkflowFailsWithErrorMessage(t, filesToProcess, expectedErr)
 	})
@@ -462,9 +464,10 @@ rendered: true`
 		expectedErr := `
 dataValues1.yml:3 | secret: super
                   |
-                  | UNEXPECTED KEY - the key of this item is not what schema expected:
-                  |      found: secret (string)
-                  |   expected: (a key defined in map) (by schema.yml:2)`
+                  | UNEXPECTED KEY - the schema's corresponding map did not expect this key:
+                  |      found: secret
+                  |   expected: (a key defined in map) (by schema.yml:2)
+                  |   (hint: each key in data values must be specified in the schema)`
 
 		assertYTTWorkflowFailsWithErrorMessage(t, filesToProcess, expectedErr)
 	})
