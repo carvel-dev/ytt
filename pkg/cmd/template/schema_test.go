@@ -4,6 +4,7 @@
 package template_test
 
 import (
+	"os"
 	"strings"
 	"testing"
 
