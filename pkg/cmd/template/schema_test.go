@@ -19,7 +19,7 @@ func TestMain(m *testing.M) {
 	opts = cmdtpl.NewOptions()
 	opts.SchemaEnabled = true
 
-	m.Run()
+	os.Exit(m.Run())
 }
 
 func TestDataValueConformingToSchemaSucceeds(t *testing.T) {
