@@ -53,7 +53,7 @@ func (e *CompiledTemplate) Code() []Line { return e.code }
 
 func (e *CompiledTemplate) CodeAtLine(pos *filepos.Position) *Line {
 	for i, line := range e.code {
-		if i+1 == pos.Line() {
+		if i+1 == pos.LineNum() {
 			return &line
 		}
 	}

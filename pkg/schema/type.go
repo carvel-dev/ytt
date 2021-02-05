@@ -24,9 +24,11 @@ var _ yamlmeta.Type = (*ArrayItemType)(nil)
 type DocumentType struct {
 	Source    *yamlmeta.Document
 	ValueType yamlmeta.Type // typically one of: MapType, ArrayType, ScalarType
+	Position  *filepos.Position
 }
 type MapType struct {
-	Items []*MapItemType
+	Items    []*MapItemType
+	Position *filepos.Position
 }
 type MapItemType struct {
 	Key          interface{} // usually a string
@@ -37,12 +39,15 @@ type MapItemType struct {
 }
 type ArrayType struct {
 	ItemsType yamlmeta.Type
+	Position  *filepos.Position
 }
 type ArrayItemType struct {
 	ValueType yamlmeta.Type
+	Position  *filepos.Position
 }
 type ScalarType struct {
-	Type interface{}
+	Value    interface{}
+	Position *filepos.Position
 }
 
 type TypeAnnotations map[structmeta.AnnotationName]interface{}
@@ -66,91 +71,125 @@ func (m ScalarType) GetValueType() yamlmeta.Type {
 	panic("Not implemented because it is unreachable")
 }
 
-func (t *DocumentType) CheckType(_ yamlmeta.TypeWithValues, _ string) (chk yamlmeta.TypeCheck) {
+func (t *DocumentType) PositionOfDefinition() *filepos.Position {
+	return t.Position
+}
+func (m MapType) PositionOfDefinition() *filepos.Position {
+	return m.Position
+}
+func (t MapItemType) PositionOfDefinition() *filepos.Position {
+	return t.Position
+}
+func (a ArrayType) PositionOfDefinition() *filepos.Position {
+	return a.Position
+}
+func (a ArrayItemType) PositionOfDefinition() *filepos.Position {
+	return a.Position
+}
+func (m ScalarType) PositionOfDefinition() *filepos.Position {
+	return m.Position
+}
+
+func (t *DocumentType) String() string {
+	return "document"
+}
+func (m MapType) String() string {
+	return "map"
+}
+func (t MapItemType) String() string {
+	return fmt.Sprintf("%s: %s", t.Key, t.ValueType.String())
+}
+func (a ArrayType) String() string {
+	return "array"
+}
+func (a ArrayItemType) String() string {
+	return fmt.Sprintf("- %s", a.ValueType.String())
+}
+func (m ScalarType) String() string {
+	switch m.Value.(type) {
+	case int:
+		return "integer"
+	case bool:
+		return "boolean"
+	default:
+		return fmt.Sprintf("%T", m.Value)
+	}
+}
+
+func (t *DocumentType) CheckType(_ yamlmeta.TypeWithValues) (chk yamlmeta.TypeCheck) {
 	return
 }
-func (m *MapType) CheckType(node yamlmeta.TypeWithValues, prependErrorMessage string) (chk yamlmeta.TypeCheck) {
-	violationErrorMessage := prependErrorMessage + " was type %T when %T was expected"
 
+func (m *MapType) CheckType(node yamlmeta.TypeWithValues) (chk yamlmeta.TypeCheck) {
 	nodeMap, ok := node.(*yamlmeta.Map)
 	if !ok {
-		scalar, ok := node.(*yamlmeta.Scalar)
-		if ok {
-			chk.Violations = append(chk.Violations, fmt.Sprintf(violationErrorMessage, scalar.Value, &yamlmeta.Map{}))
-		} else {
-			chk.Violations = append(chk.Violations, fmt.Sprintf(violationErrorMessage, node, &yamlmeta.Map{}))
-		}
+		chk.Violations = append(chk.Violations,
+			NewMismatchedTypeError(node, m))
 		return
 	}
 
 	for _, item := range nodeMap.Items {
 		if !m.AllowsKey(item.Key) {
-			chk.Violations = append(chk.Violations, fmt.Sprintf("Map item '%s' at %s is not defined in schema", item.Key, item.Position.AsCompactString()))
+			chk.Violations = append(chk.Violations,
+				NewUnexpectedKeyError(item, m.Position))
 		}
 	}
 	return
 }
-func (t MapItemType) CheckType(node yamlmeta.TypeWithValues, prependErrorMessage string) (chk yamlmeta.TypeCheck) {
-	violationErrorMessage := prependErrorMessage + " was type %T when %T was expected"
 
+func (t *MapItemType) CheckType(node yamlmeta.TypeWithValues) (chk yamlmeta.TypeCheck) {
 	mapItem, ok := node.(*yamlmeta.MapItem)
 	if !ok {
-		chk.Violations = append(chk.Violations, fmt.Sprintf(violationErrorMessage, node.GetValues()[0], node))
-		return
+		// A Map must've yielded a non-MapItem which is not valid YAML
+		panic(fmt.Sprintf("MapItem type check was called on a non-MapItem: %#v", node))
 	}
 	if mapItem.Value == nil && !t.IsNullable() {
-		chk.Violations = append(chk.Violations, fmt.Sprintf(violationErrorMessage, node.GetValues()[0], t.ValueType))
+		chk.Violations = append(chk.Violations,
+			NewMismatchedTypeError(mapItem, t))
 	}
 
 	return
 }
-func (a ArrayType) CheckType(node yamlmeta.TypeWithValues, prependErrorMessage string) (chk yamlmeta.TypeCheck) {
-	violationErrorMessage := prependErrorMessage + " was type %T when %T was expected"
 
+func (a *ArrayType) CheckType(node yamlmeta.TypeWithValues) (chk yamlmeta.TypeCheck) {
 	_, ok := node.(*yamlmeta.Array)
 	if !ok {
-		scalar, ok := node.(*yamlmeta.Scalar)
-		if ok {
-			chk.Violations = append(chk.Violations, fmt.Sprintf(violationErrorMessage, scalar.Value, &yamlmeta.Array{}))
-		} else {
-			chk.Violations = append(chk.Violations, fmt.Sprintf(violationErrorMessage, node, &yamlmeta.Array{}))
-		}
+		chk.Violations = append(chk.Violations,
+			NewMismatchedTypeError(node, a))
 	}
 	return
 }
-func (a ArrayItemType) CheckType(node yamlmeta.TypeWithValues, prependErrorMessage string) (chk yamlmeta.TypeCheck) {
-	violationErrorMessage := prependErrorMessage + " was type %T when %T was expected"
 
+func (a *ArrayItemType) CheckType(node yamlmeta.TypeWithValues) (chk yamlmeta.TypeCheck) {
 	_, ok := node.(*yamlmeta.ArrayItem)
 	if !ok {
-		chk.Violations = append(chk.Violations, fmt.Sprintf(violationErrorMessage, node, &yamlmeta.ArrayItem{}))
-		return
+		// An Array must've yielded a non-ArrayItem which is not valid YAML
+		panic(fmt.Sprintf("ArrayItem type check was called on a non-ArrayItem: %#v", node))
 	}
 	return
 }
-func (m ScalarType) CheckType(node yamlmeta.TypeWithValues, prependErrorMessage string) (chk yamlmeta.TypeCheck) {
-	violationErrorMessage := prependErrorMessage + " was type %T when %T was expected"
 
+func (m *ScalarType) CheckType(node yamlmeta.TypeWithValues) (chk yamlmeta.TypeCheck) {
 	value := node.GetValues()[0]
-	switch itemValueType := value.(type) {
+	switch value.(type) {
 	case string:
-		if _, ok := m.Type.(string); !ok {
-			violation := fmt.Sprintf(violationErrorMessage, itemValueType, m.Type)
-			chk.Violations = append(chk.Violations, violation)
+		if _, ok := m.Value.(string); !ok {
+			chk.Violations = append(chk.Violations,
+				NewMismatchedTypeError(node, m))
 		}
 	case int:
-		if _, ok := m.Type.(int); !ok {
-			violation := fmt.Sprintf(violationErrorMessage, itemValueType, m.Type)
-			chk.Violations = append(chk.Violations, violation)
+		if _, ok := m.Value.(int); !ok {
+			chk.Violations = append(chk.Violations,
+				NewMismatchedTypeError(node, m))
 		}
 	case bool:
-		if _, ok := m.Type.(bool); !ok {
-			violation := fmt.Sprintf(violationErrorMessage, itemValueType, m.Type)
-			chk.Violations = append(chk.Violations, violation)
+		if _, ok := m.Value.(bool); !ok {
+			chk.Violations = append(chk.Violations,
+				NewMismatchedTypeError(node, m))
 		}
 	default:
-		violation := fmt.Sprintf(violationErrorMessage, itemValueType, m.Type)
-		chk.Violations = append(chk.Violations, violation)
+		chk.Violations = append(chk.Violations,
+			NewMismatchedTypeError(node, m))
 	}
 	return
 }
@@ -158,9 +197,11 @@ func (m ScalarType) CheckType(node yamlmeta.TypeWithValues, prependErrorMessage 
 func (t *DocumentType) AssignTypeTo(typeable yamlmeta.Typeable) (chk yamlmeta.TypeCheck) {
 	doc, ok := typeable.(*yamlmeta.Document)
 	if !ok {
-		chk.Violations = []string{fmt.Sprintf("Expected node at %s to be a %T, but was a %T", typeable.GetPosition().AsCompactString(), &yamlmeta.Document{}, typeable)}
+		chk.Violations = append(chk.Violations,
+			NewMismatchedTypeError(typeable, t))
 		return
 	}
+
 	typeable.SetType(t)
 	typeableChild, ok := doc.Value.(yamlmeta.Typeable)
 	if ok || doc.Value == nil {
@@ -170,25 +211,30 @@ func (t *DocumentType) AssignTypeTo(typeable yamlmeta.Typeable) (chk yamlmeta.Ty
 				switch t.ValueType.(type) {
 				case *MapType:
 					tChild = &yamlmeta.Map{}
+				case *ArrayType:
+					tChild = &yamlmeta.Array{}
 				default:
-					chk.Violations = append(chk.Violations, fmt.Sprintf("Expected node at %s to be %s, but was a %T", typeableChild.GetPosition().AsCompactString(), "Map", t.ValueType))
+					panic("implement me!")
 				}
 				doc.Value = tChild
 			}
 			childCheck := t.ValueType.AssignTypeTo(tChild)
 			chk.Violations = append(chk.Violations, childCheck.Violations...)
 		} else {
-			chk.Violations = []string{fmt.Sprintf("Expected node at %s to be %s, but was a %T", typeableChild.GetPosition().AsCompactString(), "nil", typeableChild)}
+			chk.Violations = append(chk.Violations,
+				fmt.Errorf("data values were found in data values file(s), but schema (%s) has no values defined\n"+
+					"(hint: define matching keys from data values files(s) in the schema, or do not enable the schema feature)", t.Position.AsCompactString()))
 		}
 	} else {
 
 	} // else, at a leaf
 	return
 }
+
 func (m *MapType) AssignTypeTo(typeable yamlmeta.Typeable) (chk yamlmeta.TypeCheck) {
 	mapNode, ok := typeable.(*yamlmeta.Map)
 	if !ok {
-		chk.Violations = []string{fmt.Sprintf("Expected node at %s to be a %T, but was a %T", typeable.GetPosition().AsCompactString(), &yamlmeta.Map{}, typeable)}
+		chk.Violations = append(chk.Violations, NewMismatchedTypeError(typeable, m))
 		return
 	}
 	var foundKeys []interface{}
@@ -240,8 +286,7 @@ func contains(haystack []interface{}, needle interface{}) bool {
 func (t *MapItemType) AssignTypeTo(typeable yamlmeta.Typeable) (chk yamlmeta.TypeCheck) {
 	mapItem, ok := typeable.(*yamlmeta.MapItem)
 	if !ok {
-		chk.Violations = []string{fmt.Sprintf("Expected node at %s to be a %T, but was a %T", typeable.GetPosition().AsCompactString(), &yamlmeta.MapItem{}, typeable)}
-		return
+		panic(fmt.Sprintf("Attempt to assign type to a non-map-item (children of Maps can only be MapItems). type=%#v; typeable=%#v", t, typeable))
 	}
 	typeable.SetType(t)
 	typeableValue, ok := mapItem.Value.(yamlmeta.Typeable)
@@ -251,10 +296,11 @@ func (t *MapItemType) AssignTypeTo(typeable yamlmeta.Typeable) (chk yamlmeta.Typ
 	} // else, at a leaf
 	return
 }
+
 func (a *ArrayType) AssignTypeTo(typeable yamlmeta.Typeable) (chk yamlmeta.TypeCheck) {
 	arrayNode, ok := typeable.(*yamlmeta.Array)
 	if !ok {
-		chk.Violations = []string{fmt.Sprintf("Expected node at %s to be a %T, but was a %T", typeable.GetPosition().AsCompactString(), &yamlmeta.Array{}, typeable)}
+		chk.Violations = append(chk.Violations, NewMismatchedTypeError(typeable, a))
 		return
 	}
 	typeable.SetType(a)
@@ -264,11 +310,11 @@ func (a *ArrayType) AssignTypeTo(typeable yamlmeta.Typeable) (chk yamlmeta.TypeC
 	}
 	return
 }
-func (a ArrayItemType) AssignTypeTo(typeable yamlmeta.Typeable) (chk yamlmeta.TypeCheck) {
+
+func (a *ArrayItemType) AssignTypeTo(typeable yamlmeta.Typeable) (chk yamlmeta.TypeCheck) {
 	arrayItem, ok := typeable.(*yamlmeta.ArrayItem)
 	if !ok {
-		chk.Violations = []string{fmt.Sprintf("Expected node at %s to be a %T, but was a %T", typeable.GetPosition().AsCompactString(), &yamlmeta.ArrayItem{}, typeable)}
-		return
+		panic(fmt.Sprintf("Attempt to assign type to a non-array-item (children of Arrays can only be ArrayItems). type=%#v; typeable=%#v", a, typeable))
 	}
 	typeable.SetType(a)
 	typeableValue, ok := arrayItem.Value.(yamlmeta.Typeable)
@@ -280,15 +326,7 @@ func (a ArrayItemType) AssignTypeTo(typeable yamlmeta.Typeable) (chk yamlmeta.Ty
 }
 
 func (m *ScalarType) AssignTypeTo(typeable yamlmeta.Typeable) (chk yamlmeta.TypeCheck) {
-	switch m.Type.(type) {
-	case int:
-		typeable.SetType(m)
-	case string:
-		typeable.SetType(m)
-	default:
-		chk.Violations = []string{fmt.Sprintf("Expected node at %s to be a %T, but was a %T", typeable.GetPosition().AsCompactString(), &ScalarType{}, typeable)}
-	}
-	return
+	panic(fmt.Sprintf("Attempt to assign a type to a scalar. (scalars are not nodes in the AST) m=%#v ; typeable=%#v", m, typeable))
 }
 
 func (m *MapType) AllowsKey(key interface{}) bool {

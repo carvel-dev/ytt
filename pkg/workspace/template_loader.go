@@ -187,6 +187,7 @@ func (l *TemplateLoader) EvalYAML(libraryCtx LibraryExecutionContext, file *file
 	if err != nil {
 		return nil, nil, err
 	}
+
 	return globals, resultVal.(*yamlmeta.DocumentSet), nil
 }
 

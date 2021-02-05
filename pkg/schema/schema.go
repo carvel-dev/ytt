@@ -5,6 +5,8 @@ package schema
 
 import (
 	"fmt"
+
+	"github.com/k14s/ytt/pkg/filepos"
 	"github.com/k14s/ytt/pkg/template"
 	"github.com/k14s/ytt/pkg/yamlmeta"
 )
@@ -27,6 +29,7 @@ func NewDocumentSchema(doc *yamlmeta.Document) (*DocumentSchema, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	schemaDVs, err := defaultDataValues(doc)
 	if err != nil {
 		return nil, err
@@ -41,7 +44,7 @@ func NewDocumentSchema(doc *yamlmeta.Document) (*DocumentSchema, error) {
 }
 
 func NewDocumentType(doc *yamlmeta.Document) (*DocumentType, error) {
-	docType := &DocumentType{Source: doc}
+	docType := &DocumentType{Source: doc, Position: doc.Position}
 	switch typedDocumentValue := doc.Value.(type) {
 	case *yamlmeta.Map:
 		valueType, err := NewMapType(typedDocumentValue)
@@ -61,7 +64,7 @@ func NewDocumentType(doc *yamlmeta.Document) (*DocumentType, error) {
 }
 
 func NewMapType(m *yamlmeta.Map) (*MapType, error) {
-	mapType := &MapType{}
+	mapType := &MapType{Position: m.Position}
 
 	for _, mapItem := range m.Items {
 		mapItemType, err := NewMapItemType(mapItem)
@@ -79,7 +82,7 @@ func NewMapType(m *yamlmeta.Map) (*MapType, error) {
 }
 
 func NewMapItemType(item *yamlmeta.MapItem) (*MapItemType, error) {
-	valueType, err := newCollectionItemValueType(item.Value)
+	valueType, err := newCollectionItemValueType(item.Value, item.Position)
 	if err != nil {
 		return nil, err
 	}
@@ -92,6 +95,10 @@ func NewMapItemType(item *yamlmeta.MapItem) (*MapItemType, error) {
 	templateAnnotations := template.NewAnnotations(item)
 	if _, nullable := templateAnnotations[AnnotationSchemaNullable]; nullable {
 		defaultValue = nil
+	} else if valueType == nil {
+		return nil, NewInvalidSchemaError(item,
+			"null value is not allowed in schema (no type can be inferred from it)",
+			"to default to null, specify a value of the desired type and annotate with @schema/nullable")
 	}
 	annotations := make(TypeAnnotations)
 	for key, val := range templateAnnotations {
@@ -102,12 +109,14 @@ func NewMapItemType(item *yamlmeta.MapItem) (*MapItemType, error) {
 }
 
 func NewArrayType(a *yamlmeta.Array) (*ArrayType, error) {
-	// These really are distinct use cases. In the empty list, perhaps the user is unaware that arrays must be typed. In the >1 scenario, they may be expecting the given items to be the defaults.
+	// what's most useful to hint at depends on the author's input.
 	if len(a.Items) == 0 {
-		return nil, fmt.Errorf("Expected one item in array (describing the type of its elements) at %s", a.Position.AsCompactString())
+		// assumption: the user likely does not understand that the shape of the elements are dependent on this item
+		return nil, NewInvalidArrayDefinitionError(a, "in a schema, the item of an array defines the type of its elements; its default value is an empty list")
 	}
 	if len(a.Items) > 1 {
-		return nil, fmt.Errorf("Expected one item (found %v) in array (describing the type of its elements) at %s", len(a.Items), a.Position.AsCompactString())
+		// assumption: the user wants to supply defaults and (incorrectly) assumed they should go in schema
+		return nil, NewInvalidArrayDefinitionError(a, "to add elements to the default value of an array (i.e. an empty list), declare them in a @data/values document")
 	}
 
 	arrayItemType, err := NewArrayItemType(a.Items[0])
@@ -115,11 +124,11 @@ func NewArrayType(a *yamlmeta.Array) (*ArrayType, error) {
 		return nil, err
 	}
 
-	return &ArrayType{ItemsType: arrayItemType}, nil
+	return &ArrayType{ItemsType: arrayItemType, Position: a.Position}, nil
 }
 
 func NewArrayItemType(item *yamlmeta.ArrayItem) (*ArrayItemType, error) {
-	valueType, err := newCollectionItemValueType(item.Value)
+	valueType, err := newCollectionItemValueType(item.Value, item.Position)
 	if err != nil {
 		return nil, err
 	}
@@ -127,13 +136,13 @@ func NewArrayItemType(item *yamlmeta.ArrayItem) (*ArrayItemType, error) {
 	annotations := template.NewAnnotations(item)
 
 	if _, found := annotations[AnnotationSchemaNullable]; found {
-		return nil, fmt.Errorf("Array items cannot be annotated with #@schema/nullable (%s). If this behaviour would be valuable, please submit an issue on https://github.com/vmware-tanzu/carvel-ytt", item.GetPosition().AsCompactString())
+		return nil, NewInvalidSchemaError(item, fmt.Sprintf("@%s is not supported on array items", AnnotationSchemaNullable), "")
 	}
 
-	return &ArrayItemType{ValueType: valueType}, nil
+	return &ArrayItemType{ValueType: valueType, Position: item.Position}, nil
 }
 
-func newCollectionItemValueType(collectionItemValue interface{}) (yamlmeta.Type, error) {
+func newCollectionItemValueType(collectionItemValue interface{}, position *filepos.Position) (yamlmeta.Type, error) {
 	switch typedContent := collectionItemValue.(type) {
 	case *yamlmeta.Map:
 		mapType, err := NewMapType(typedContent)
@@ -148,13 +157,13 @@ func newCollectionItemValueType(collectionItemValue interface{}) (yamlmeta.Type,
 		}
 		return arrayType, nil
 	case string:
-		return &ScalarType{Type: *new(string)}, nil
+		return &ScalarType{Value: *new(string), Position: position}, nil
 	case int:
-		return &ScalarType{Type: *new(int)}, nil
+		return &ScalarType{Value: *new(int), Position: position}, nil
 	case bool:
-		return &ScalarType{Type: *new(bool)}, nil
+		return &ScalarType{Value: *new(bool), Position: position}, nil
 	case nil:
-		return nil, fmt.Errorf("Expected a non-null value, of the desired type")
+		return nil, nil
 	}
 
 	return nil, fmt.Errorf("Collection item type did not match any known types")

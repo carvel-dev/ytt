@@ -26,24 +26,24 @@ func NewDocumentSetFromBytes(data []byte, opts DocSetOpts) (*DocumentSet, error)
 	return docSet, nil
 }
 
-func (n *DocumentSet) Print(writer io.Writer) {
-	NewPrinter(writer).Print(n)
+func (ds *DocumentSet) Print(writer io.Writer) {
+	NewPrinter(writer).Print(ds)
 }
 
 // AsSourceBytes() returns bytes used to make original DocumentSet.
 // Any changes made to the DocumentSet are not reflected in any way
-func (n *DocumentSet) AsSourceBytes() ([]byte, bool) {
-	if n.originalBytes != nil {
-		return *n.originalBytes, true
+func (ds *DocumentSet) AsSourceBytes() ([]byte, bool) {
+	if ds.originalBytes != nil {
+		return *ds.originalBytes, true
 	}
 	return nil, false
 }
 
-func (n *DocumentSet) AsBytes() ([]byte, error) {
-	return n.AsBytesWithPrinter(nil)
+func (ds *DocumentSet) AsBytes() ([]byte, error) {
+	return ds.AsBytesWithPrinter(nil)
 }
 
-func (n *DocumentSet) AsBytesWithPrinter(printerFunc func(io.Writer) DocumentPrinter) ([]byte, error) {
+func (ds *DocumentSet) AsBytesWithPrinter(printerFunc func(io.Writer) DocumentPrinter) ([]byte, error) {
 	if printerFunc == nil {
 		printerFunc = func(w io.Writer) DocumentPrinter { return NewYAMLPrinter(w) }
 	}
@@ -51,7 +51,7 @@ func (n *DocumentSet) AsBytesWithPrinter(printerFunc func(io.Writer) DocumentPri
 	buf := new(bytes.Buffer)
 	printer := printerFunc(buf)
 
-	for _, item := range n.Items {
+	for _, item := range ds.Items {
 		if item.injected || item.IsEmpty() {
 			continue
 		}

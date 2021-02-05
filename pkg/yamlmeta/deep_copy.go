@@ -3,96 +3,96 @@
 
 package yamlmeta
 
-func (n *DocumentSet) DeepCopyAsNode() Node { return n.DeepCopy() }
-func (n *Document) DeepCopyAsNode() Node    { return n.DeepCopy() }
-func (n *Map) DeepCopyAsNode() Node         { return n.DeepCopy() }
-func (n *MapItem) DeepCopyAsNode() Node     { return n.DeepCopy() }
-func (n *Array) DeepCopyAsNode() Node       { return n.DeepCopy() }
-func (n *ArrayItem) DeepCopyAsNode() Node   { return n.DeepCopy() }
+func (ds *DocumentSet) DeepCopyAsNode() Node { return ds.DeepCopy() }
+func (d *Document) DeepCopyAsNode() Node     { return d.DeepCopy() }
+func (m *Map) DeepCopyAsNode() Node          { return m.DeepCopy() }
+func (mi *MapItem) DeepCopyAsNode() Node     { return mi.DeepCopy() }
+func (a *Array) DeepCopyAsNode() Node        { return a.DeepCopy() }
+func (ai *ArrayItem) DeepCopyAsNode() Node   { return ai.DeepCopy() }
 
-func (n *DocumentSet) DeepCopyAsInterface() interface{} { return n.DeepCopy() }
-func (n *Document) DeepCopyAsInterface() interface{}    { return n.DeepCopy() }
-func (n *Map) DeepCopyAsInterface() interface{}         { return n.DeepCopy() }
-func (n *MapItem) DeepCopyAsInterface() interface{}     { return n.DeepCopy() }
-func (n *Array) DeepCopyAsInterface() interface{}       { return n.DeepCopy() }
-func (n *ArrayItem) DeepCopyAsInterface() interface{}   { return n.DeepCopy() }
+func (ds *DocumentSet) DeepCopyAsInterface() interface{} { return ds.DeepCopy() }
+func (d *Document) DeepCopyAsInterface() interface{}     { return d.DeepCopy() }
+func (m *Map) DeepCopyAsInterface() interface{}          { return m.DeepCopy() }
+func (mi *MapItem) DeepCopyAsInterface() interface{}     { return mi.DeepCopy() }
+func (a *Array) DeepCopyAsInterface() interface{}        { return a.DeepCopy() }
+func (ai *ArrayItem) DeepCopyAsInterface() interface{}   { return ai.DeepCopy() }
 
-func (n *DocumentSet) DeepCopy() *DocumentSet {
+func (ds *DocumentSet) DeepCopy() *DocumentSet {
 	var newItems []*Document
-	for _, item := range n.Items {
+	for _, item := range ds.Items {
 		newItems = append(newItems, item.DeepCopy())
 	}
 
 	return &DocumentSet{
-		Metas:    []*Meta(MetaSlice(n.Metas).DeepCopy()),
-		AllMetas: []*Meta(MetaSlice(n.AllMetas).DeepCopy()),
+		Metas:    []*Meta(MetaSlice(ds.Metas).DeepCopy()),
+		AllMetas: []*Meta(MetaSlice(ds.AllMetas).DeepCopy()),
 
 		Items:    newItems,
-		Position: n.Position,
+		Position: ds.Position,
 
-		annotations: annotationsDeepCopy(n.annotations),
+		annotations: annotationsDeepCopy(ds.annotations),
 	}
 }
 
-func (n *Document) DeepCopy() *Document {
+func (d *Document) DeepCopy() *Document {
 	return &Document{
-		Metas:    []*Meta(MetaSlice(n.Metas).DeepCopy()),
-		Value:    nodeDeepCopy(n.Value),
-		Position: n.Position,
+		Metas:    []*Meta(MetaSlice(d.Metas).DeepCopy()),
+		Value:    nodeDeepCopy(d.Value),
+		Position: d.Position,
 
-		annotations: annotationsDeepCopy(n.annotations),
-		injected:    n.injected,
+		annotations: annotationsDeepCopy(d.annotations),
+		injected:    d.injected,
 	}
 }
 
-func (n *Map) DeepCopy() *Map {
+func (m *Map) DeepCopy() *Map {
 	var newItems []*MapItem
-	for _, item := range n.Items {
+	for _, item := range m.Items {
 		newItems = append(newItems, item.DeepCopy())
 	}
 
 	return &Map{
-		Metas:    []*Meta(MetaSlice(n.Metas).DeepCopy()),
+		Metas:    []*Meta(MetaSlice(m.Metas).DeepCopy()),
 		Items:    newItems,
-		Position: n.Position,
+		Position: m.Position,
 
-		annotations: annotationsDeepCopy(n.annotations),
+		annotations: annotationsDeepCopy(m.annotations),
 	}
 }
 
-func (n *MapItem) DeepCopy() *MapItem {
+func (mi *MapItem) DeepCopy() *MapItem {
 	return &MapItem{
-		Metas:    []*Meta(MetaSlice(n.Metas).DeepCopy()),
-		Key:      n.Key,
-		Value:    nodeDeepCopy(n.Value),
-		Position: n.Position,
+		Metas:    []*Meta(MetaSlice(mi.Metas).DeepCopy()),
+		Key:      mi.Key,
+		Value:    nodeDeepCopy(mi.Value),
+		Position: mi.Position,
 
-		annotations: annotationsDeepCopy(n.annotations),
+		annotations: annotationsDeepCopy(mi.annotations),
 	}
 }
 
-func (n *Array) DeepCopy() *Array {
+func (a *Array) DeepCopy() *Array {
 	var newItems []*ArrayItem
-	for _, item := range n.Items {
+	for _, item := range a.Items {
 		newItems = append(newItems, item.DeepCopy())
 	}
 
 	return &Array{
-		Metas:    []*Meta(MetaSlice(n.Metas).DeepCopy()),
+		Metas:    []*Meta(MetaSlice(a.Metas).DeepCopy()),
 		Items:    newItems,
-		Position: n.Position,
+		Position: a.Position,
 
-		annotations: annotationsDeepCopy(n.annotations),
+		annotations: annotationsDeepCopy(a.annotations),
 	}
 }
 
-func (n *ArrayItem) DeepCopy() *ArrayItem {
+func (ai *ArrayItem) DeepCopy() *ArrayItem {
 	return &ArrayItem{
-		Metas:    []*Meta(MetaSlice(n.Metas).DeepCopy()),
-		Value:    nodeDeepCopy(n.Value),
-		Position: n.Position,
+		Metas:    []*Meta(MetaSlice(ai.Metas).DeepCopy()),
+		Value:    nodeDeepCopy(ai.Value),
+		Position: ai.Position,
 
-		annotations: annotationsDeepCopy(n.annotations),
+		annotations: annotationsDeepCopy(ai.annotations),
 	}
 }
 

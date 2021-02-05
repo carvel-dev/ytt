@@ -98,20 +98,21 @@ func (o DataValuesPreProcessing) templateFile(fileInLib *FileInLibrary) ([]*yaml
 	if err != nil {
 		return nil, err
 	}
-	if _, ok := o.loader.schema.(*schema.AnySchema); !ok {
 
+	if _, ok := o.loader.schema.(*schema.AnySchema); !ok {
 		var outerTypeCheck yamlmeta.TypeCheck
 		// Skip first document because the parser inserts a new doc start at the beginning of every doc
 		for _, doc := range resultDocSet.Items[1:] {
 			outerTypeCheck = o.loader.schema.AssignType(doc)
 			if len(outerTypeCheck.Violations) > 0 {
-				return resultDocSet.Items, fmt.Errorf("Typechecking violations found: [%v]", strings.Join(outerTypeCheck.Violations, ", "))
+				return resultDocSet.Items, outerTypeCheck
 			}
+
 			typeCheck := doc.Check()
 			outerTypeCheck.Violations = append(outerTypeCheck.Violations, typeCheck.Violations...)
 		}
 		if len(outerTypeCheck.Violations) > 0 {
-			return resultDocSet.Items, fmt.Errorf("Typechecking violations found: [%v]", strings.Join(outerTypeCheck.Violations, ", "))
+			return resultDocSet.Items, outerTypeCheck
 		}
 	}
 

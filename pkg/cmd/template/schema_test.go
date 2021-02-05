@@ -306,16 +306,29 @@ db_conn:
 		dataValuesYAML := `#@data/values
 ---
 db_conn:
-  port: localHost
+  port: localhost
   username:
     main: 123
 `
 
 		filesToProcess := files.NewSortedFiles([]*files.File{
 			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
-			files.MustNewFileFromSource(files.NewBytesSource("dataValues.yml", []byte(dataValuesYAML))),
+			files.MustNewFileFromSource(files.NewBytesSource("data_values.yml", []byte(dataValuesYAML))),
 		})
-		expectedErr := "Typechecking violations found: [Map item 'port' at dataValues.yml:4 was type string when int was expected, Map item 'main' at dataValues.yml:6 was type int when string was expected]"
+		expectedErr := `
+data_values.yml:4 |   port: localhost
+                  |
+                  | TYPE MISMATCH - the value of this item is not what schema expected:
+                  |      found: string
+                  |   expected: integer (by schema.yml:4)
+
+
+data_values.yml:6 |     main: 123
+                  |
+                  | TYPE MISMATCH - the value of this item is not what schema expected:
+                  |      found: integer
+                  |   expected: string (by schema.yml:6)
+`
 
 		assertYTTWorkflowFailsWithErrorMessage(t, filesToProcess, expectedErr)
 	})
@@ -336,9 +349,23 @@ clients:
 
 		filesToProcess := files.NewSortedFiles([]*files.File{
 			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
-			files.MustNewFileFromSource(files.NewBytesSource("dataValues.yml", []byte(dataValuesYAML))),
+			files.MustNewFileFromSource(files.NewBytesSource("data_values.yml", []byte(dataValuesYAML))),
 		})
-		expectedErr := "Typechecking violations found: [Map item 'flags' at dataValues.yml:4 was type string when *yamlmeta.Array was expected, Array item at dataValues.yml:6 was type string when *yamlmeta.Map was expected]"
+
+		expectedErr := `
+data_values.yml:4 | - flags: secure  #! expecting a array, got a string
+                  |
+                  | TYPE MISMATCH - the value of this item is not what schema expected:
+                  |      found: string
+                  |   expected: array (by schema.yml:4)
+
+
+data_values.yml:6 |   - secure  #! expecting a map, got a string
+                  |
+                  | TYPE MISMATCH - the value of this item is not what schema expected:
+                  |      found: string
+                  |   expected: map (by schema.yml:5)
+`
 
 		assertYTTWorkflowFailsWithErrorMessage(t, filesToProcess, expectedErr)
 	})
@@ -357,9 +384,14 @@ db_conn:
 
 		filesToProcess := files.NewSortedFiles([]*files.File{
 			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
-			files.MustNewFileFromSource(files.NewBytesSource("dataValues.yml", []byte(dataValuesYAML))),
+			files.MustNewFileFromSource(files.NewBytesSource("data_values.yml", []byte(dataValuesYAML))),
 		})
-		expectedErr := "Typechecking violations found: [Map item 'password' at dataValues.yml:5 is not defined in schema]"
+		expectedErr := `data_values.yml:5 | password: i should not be here
+                  |
+                  | UNEXPECTED KEY - the key of this item was not found in the schema's corresponding map:
+                  |      found: password
+                  |   expected: (a key defined in map) (by schema.yml:3)
+                  |   (hint: declare data values in schema and override them in a data values document)`
 
 		assertYTTWorkflowFailsWithErrorMessage(t, filesToProcess, expectedErr)
 	})
@@ -377,7 +409,12 @@ app: null
 			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
 			files.MustNewFileFromSource(files.NewBytesSource("dataValues.yml", []byte(dataValuesYAML))),
 		})
-		expectedErr := "Typechecking violations found: [Map item 'app' at dataValues.yml:3 was type <nil> when *schema.ScalarType was expected"
+		expectedErr := `
+dataValues.yml:3 | app: null
+                 |
+                 | TYPE MISMATCH - the value of this item is not what schema expected:
+                 |      found: null
+                 |   expected: integer (by schema.yml:3)`
 
 		assertYTTWorkflowFailsWithErrorMessage(t, filesToProcess, expectedErr)
 	})
@@ -394,7 +431,8 @@ not_in_schema: "this should fail the type check!"
 			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
 			files.MustNewFileFromSource(files.NewBytesSource("values.yml", []byte(dataValuesYAML))),
 		})
-		expectedErr := "Typechecking violations found: [Expected node at values.yml:2 to be nil, but was a *yamlmeta.Map]"
+		expectedErr := "data values were found in data values file(s), but schema (schema.yml:2) has no values defined\n"
+		expectedErr += "(hint: define matching keys from data values files(s) in the schema, or do not enable the schema feature)"
 
 		assertYTTWorkflowFailsWithErrorMessage(t, filesToProcess, expectedErr)
 	})
@@ -423,7 +461,13 @@ rendered: true`
 			files.MustNewFileFromSource(files.NewBytesSource("dataValues2.yml", []byte(dataValuesYAML2))),
 			files.MustNewFileFromSource(files.NewBytesSource("template.yml", []byte(templateYAML))),
 		})
-		expectedErr := "Typechecking violations found: [Map item 'secret' at dataValues1.yml:3 is not defined in schema]"
+		expectedErr := `
+dataValues1.yml:3 | secret: super
+                  |
+                  | UNEXPECTED KEY - the key of this item was not found in the schema's corresponding map:
+                  |      found: secret
+                  |   expected: (a key defined in map) (by schema.yml:2)
+                  |   (hint: declare data values in schema and override them in a data values document)`
 
 		assertYTTWorkflowFailsWithErrorMessage(t, filesToProcess, expectedErr)
 	})
@@ -566,8 +610,13 @@ vpc:
 			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
 			files.MustNewFileFromSource(files.NewBytesSource("dataValues.yml", []byte(dataValuesYAML))),
 		})
-		expectedErr := "Expected one item in array (describing the type of its elements) at schema.yml:4"
-
+		expectedErr := `
+schema.yml:4 |   subnet_ids: []
+             |
+             | INVALID ARRAY DEFINITION IN SCHEMA - unable to determine the desired type
+             |      found: 0 array items
+             |   expected: exactly 1 array item, of the desired type
+             |   (hint: in a schema, the item of an array defines the type of its elements; its default value is an empty list)`
 		assertYTTWorkflowFailsWithErrorMessage(t, filesToProcess, expectedErr)
 	})
 	t.Run("array value with more than one elements", func(t *testing.T) {
@@ -587,8 +636,13 @@ vpc:
 			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
 			files.MustNewFileFromSource(files.NewBytesSource("dataValues.yml", []byte(dataValuesYAML))),
 		})
-		expectedErr := "Expected one item (found 2) in array (describing the type of its elements) at schema.yml:4"
-
+		expectedErr := `
+schema.yml:4 |   subnet_ids:
+             |
+             | INVALID ARRAY DEFINITION IN SCHEMA - unable to determine the desired type
+             |      found: 2 array items
+             |   expected: exactly 1 array item, of the desired type
+             |   (hint: to add elements to the default value of an array (i.e. an empty list), declare them in a @data/values document)`
 		assertYTTWorkflowFailsWithErrorMessage(t, filesToProcess, expectedErr)
 	})
 	t.Run("array value with a nullable annotation", func(t *testing.T) {
@@ -603,19 +657,28 @@ vpc:
 		filesToProcess := files.NewSortedFiles([]*files.File{
 			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
 		})
-		expectedErr := "Array items cannot be annotated with #@schema/nullable (schema.yml:6). If this behaviour would be valuable, please submit an issue on https://github.com/vmware-tanzu/carvel-ytt"
+		expectedErr := `
+schema.yml:6 |   - 0
+             |
+             | INVALID SCHEMA - @schema/nullable is not supported on array items`
+
 		assertYTTWorkflowFailsWithErrorMessage(t, filesToProcess, expectedErr)
 	})
-	t.Run("null given as a value", func(t *testing.T) {
+	t.Run("null value", func(t *testing.T) {
 		schemaYAML := `#@schema/match data_values=True
 ---
-vpc: null
+vpc:
+  subnet_ids: null
 `
 
 		filesToProcess := files.NewSortedFiles([]*files.File{
 			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
 		})
-		expectedErr := "Expected a non-null value, of the desired type"
+		expectedErr := `
+schema.yml:4 |   subnet_ids: null
+             |
+             | INVALID SCHEMA - null value is not allowed in schema (no type can be inferred from it)
+             |   (hint: to default to null, specify a value of the desired type and annotate with @schema/nullable)`
 		assertYTTWorkflowFailsWithErrorMessage(t, filesToProcess, expectedErr)
 	})
 }
@@ -663,6 +726,7 @@ func assertYTTWorkflowFailsWithErrorMessage(t *testing.T, filesToProcess []*file
 	}
 
 	if !strings.Contains(out.Err.Error(), expectedErr) {
-		t.Fatalf("Expected an error %s, but got: %s", expectedErr, out.Err.Error())
+		diff := difflib.PPDiff(strings.Split(string(out.Err.Error()), "\n"), strings.Split(expectedErr, "\n"))
+		t.Errorf("%s", diff)
 	}
 }
