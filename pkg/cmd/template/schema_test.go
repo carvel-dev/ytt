@@ -391,7 +391,7 @@ db_conn:
                   | UNEXPECTED KEY - the key of this item was not found in the schema's corresponding map:
                   |      found: password
                   |   expected: (a key defined in map) (by schema.yml:3)
-                  |   (hint: new data values must be declared in the schema)`
+                  |   (hint: declare data values in schema and override them in a data values document)`
 
 		assertYTTWorkflowFailsWithErrorMessage(t, filesToProcess, expectedErr)
 	})
@@ -467,7 +467,7 @@ dataValues1.yml:3 | secret: super
                   | UNEXPECTED KEY - the key of this item was not found in the schema's corresponding map:
                   |      found: secret
                   |   expected: (a key defined in map) (by schema.yml:2)
-                  |   (hint: new data values must be declared in the schema)`
+                  |   (hint: declare data values in schema and override them in a data values document)`
 
 		assertYTTWorkflowFailsWithErrorMessage(t, filesToProcess, expectedErr)
 	})
