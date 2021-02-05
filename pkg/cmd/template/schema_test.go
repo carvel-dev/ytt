@@ -388,10 +388,10 @@ db_conn:
 		})
 		expectedErr := `data_values.yml:5 | password: i should not be here
                   |
-                  | UNEXPECTED KEY - the schema's corresponding map did not expect this key:
+                  | UNEXPECTED KEY - the key of this item was not found in the schema's corresponding map:
                   |      found: password
                   |   expected: (a key defined in map) (by schema.yml:3)
-                  |   (hint: each key in data values must be specified in the schema)`
+                  |   (hint: new data values must be declared in the schema)`
 
 		assertYTTWorkflowFailsWithErrorMessage(t, filesToProcess, expectedErr)
 	})
@@ -464,10 +464,10 @@ rendered: true`
 		expectedErr := `
 dataValues1.yml:3 | secret: super
                   |
-                  | UNEXPECTED KEY - the schema's corresponding map did not expect this key:
+                  | UNEXPECTED KEY - the key of this item was not found in the schema's corresponding map:
                   |      found: secret
                   |   expected: (a key defined in map) (by schema.yml:2)
-                  |   (hint: each key in data values must be specified in the schema)`
+                  |   (hint: new data values must be declared in the schema)`
 
 		assertYTTWorkflowFailsWithErrorMessage(t, filesToProcess, expectedErr)
 	})

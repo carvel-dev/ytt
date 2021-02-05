@@ -130,10 +130,10 @@ func (t unexpectedKeyError) Error() string {
 	msg := "\n"
 	msg += formatLine(leftColumnSize, position, lineContent)
 	msg += formatLine(leftColumnSize, "", "")
-	msg += formatLine(leftColumnSize, "", "UNEXPECTED KEY - the schema's corresponding map did not expect this key:")
+	msg += formatLine(leftColumnSize, "", "UNEXPECTED KEY - the key of this item was not found in the schema's corresponding map:")
 	msg += formatLine(leftColumnSize, "", fmt.Sprintf("     found: %s", keyAsString))
 	msg += formatLine(leftColumnSize, "", fmt.Sprintf("  expected: (a key defined in map) (by %s)", t.MapDefinitionPosition.AsCompactString()))
-	msg += formatLine(leftColumnSize, "", "  (hint: each key in data values must be specified in the schema)")
+	msg += formatLine(leftColumnSize, "", "  (hint: new data values must be declared in the schema)")
 	return msg
 }
 
