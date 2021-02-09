@@ -108,7 +108,10 @@ func (o Op) replaceDocument(
 		}
 
 		leftDocSets[leftIdx[0]].Items[leftIdx[1]] = newDoc.DeepCopy()
-		leftDocSets[leftIdx[0]].Items[leftIdx[1]].SetValue(newVal)
+		err = leftDocSets[leftIdx[0]].Items[leftIdx[1]].SetValue(newVal)
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil

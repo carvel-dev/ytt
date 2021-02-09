@@ -8,6 +8,7 @@ import (
 	"fmt"
 
 	"github.com/k14s/ytt/pkg/filepos"
+	"github.com/k14s/ytt/pkg/orderedmap"
 	"github.com/k14s/ytt/pkg/yamlmeta/internal/yaml.v2"
 )
 
@@ -48,8 +49,8 @@ func (ds *DocumentSet) SetValue(val interface{}) error {
 }
 
 func (d *Document) SetValue(val interface{}) error {
-	d.Value = val
-	return nil
+	d.ResetValue()
+	return d.AddValue(val)
 }
 
 func (m *Map) SetValue(val interface{}) error {
@@ -57,11 +58,8 @@ func (m *Map) SetValue(val interface{}) error {
 }
 
 func (mi *MapItem) SetValue(val interface{}) error {
-	if isMapOrArrayItem(val) {
-		return fmt.Errorf("cannot set map-or-array-item value (%T) into mapitem", val)
-	}
-	mi.Value = val
-	return nil
+	mi.ResetValue()
+	return mi.AddValue(val)
 }
 
 func (a *Array) SetValue(val interface{}) error {
@@ -69,11 +67,24 @@ func (a *Array) SetValue(val interface{}) error {
 }
 
 func (ai *ArrayItem) SetValue(val interface{}) error {
-	if isMapOrArrayItem(val) {
-		return fmt.Errorf("cannot set map-or-array-item value (%T) into arrayitem", val)
+	ai.ResetValue()
+	return ai.AddValue(val)
+}
+
+func isValidValue(val interface{}) bool {
+	switch val.(type) {
+	case *Map, *orderedmap.Map,
+		*Array, []interface{},
+		int, int8, int16, int32, int64,
+		uint, uint8, uint16, uint32, uint64,
+		float32, float64,
+		bool,
+		string,
+		nil:
+		return true
+	default:
+		return false
 	}
-	ai.Value = val
-	return nil
 }
 
 func (ds *DocumentSet) ResetValue() { ds.Items = nil }
@@ -92,8 +103,8 @@ func (ds *DocumentSet) AddValue(val interface{}) error {
 }
 
 func (d *Document) AddValue(val interface{}) error {
-	if isMapOrArrayItem(val) {
-		return fmt.Errorf("cannot add map-or-array-item value (%T) into document", val)
+	if !isValidValue(val) {
+		return fmt.Errorf("documents can only contain arrays, maps, or scalars; this is a %T", val)
 	}
 	d.Value = val
 	return nil
@@ -108,8 +119,8 @@ func (m *Map) AddValue(val interface{}) error {
 }
 
 func (mi *MapItem) AddValue(val interface{}) error {
-	if isMapOrArrayItem(val) {
-		return fmt.Errorf("cannot add map-or-array-item value (%T) into mapitem", val)
+	if !isValidValue(val) {
+		return fmt.Errorf("mapitems can only contain arrays, maps, or scalars; this is a %T", val)
 	}
 	mi.Value = val
 	return nil
@@ -124,20 +135,11 @@ func (a *Array) AddValue(val interface{}) error {
 }
 
 func (ai *ArrayItem) AddValue(val interface{}) error {
-	if isMapOrArrayItem(val) {
-		return fmt.Errorf("cannot add map-or-array-item value (%T) into arrayitem", val)
+	if !isValidValue(val) {
+		return fmt.Errorf("arrayitems can only contain maps, arrays, or scalars; this is a %T", val)
 	}
 	ai.Value = val
 	return nil
-}
-
-func isMapOrArrayItem(val interface{}) bool {
-	switch val.(type) {
-	case *MapItem, *ArrayItem:
-		return true
-	default:
-		return false
-	}
 }
 
 func (ds *DocumentSet) GetValues() []interface{} {

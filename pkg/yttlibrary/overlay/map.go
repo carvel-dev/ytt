@@ -109,7 +109,10 @@ func (o Op) replaceMapItem(leftMap *yamlmeta.Map, newItem *yamlmeta.MapItem,
 		}
 
 		leftMap.Items[leftIdx] = newItem.DeepCopy()
-		leftMap.Items[leftIdx].SetValue(newVal)
+		err = leftMap.Items[leftIdx].SetValue(newVal)
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil

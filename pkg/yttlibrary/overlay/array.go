@@ -110,7 +110,10 @@ func (o Op) replaceArrayItem(
 		}
 
 		leftArray.Items[leftIdx] = newItem.DeepCopy()
-		leftArray.Items[leftIdx].SetValue(newVal)
+		err = leftArray.Items[leftIdx].SetValue(newVal)
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
