@@ -336,3 +336,72 @@ array:
 		t.Fatalf("Expected output file to have specific data, but was: >>>%s<<<", file.Bytes())
 	}
 }
+
+func TestOverlayArrayItemsWithAndWithoutAppendAnnotation(t *testing.T) {
+	yamlTplData := []byte(`
+array:
+- name: item1
+  subarray:
+  - item1
+`)
+
+	yamlOverlayTplData1 := []byte(`
+#@ load("@ytt:overlay", "overlay")
+#@overlay/match by=overlay.all
+---
+array:
+#@overlay/match by="name"
+- name: item1
+  subarray:
+  #@overlay/append
+  - item2
+
+`)
+
+	yamlOverlayTplData2 := []byte(`
+#@ load("@ytt:overlay", "overlay")
+#@overlay/match by=overlay.all
+---
+array:
+#@overlay/match by="name"
+- name: item1
+  subarray:
+  - item3
+`)
+
+	expectedYAMLTplData := `array:
+- name: item1
+  subarray:
+  - item1
+  - item2
+  - item3
+`
+
+	filesToProcess := files.NewSortedFiles([]*files.File{
+		files.MustNewFileFromSource(files.NewBytesSource("tpl.yml", yamlTplData)),
+		files.MustNewFileFromSource(files.NewBytesSource("overlay2.yml", yamlOverlayTplData1)),
+		files.MustNewFileFromSource(files.NewBytesSource("overlay1.yml", yamlOverlayTplData2)),
+	})
+
+	ui := ui.NewTTY(false)
+	opts := cmdtpl.NewOptions()
+
+	out := opts.RunWithFiles(cmdtpl.Input{Files: filesToProcess}, ui)
+	if out.Err != nil {
+		t.Fatalf("Expected RunWithFiles to succeed, but was error: %s", out.Err)
+	}
+
+	if len(out.Files) != 1 {
+		t.Fatalf("Expected number of output files to be 1, but was %d", len(out.Files))
+	}
+
+	file := out.Files[0]
+
+	if file.RelativePath() != "tpl.yml" {
+		t.Fatalf("Expected output file to be tpl.yml, but was %#v", file.RelativePath())
+	}
+
+	if string(file.Bytes()) != expectedYAMLTplData {
+		t.Fatalf("Expected output file to have: >>>%s<<<, but was: >>>%s<<<", expectedYAMLTplData, file.Bytes())
+	}
+}

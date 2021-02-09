@@ -4,7 +4,10 @@
 package template_test
 
 import (
+	"strings"
 	"testing"
+
+	"github.com/k14s/difflib"
 
 	cmdtpl "github.com/k14s/ytt/pkg/cmd/template"
 	"github.com/k14s/ytt/pkg/cmd/ui"
@@ -295,6 +298,164 @@ str: str2`)
 	if string(file.Bytes()) != expectedYAMLTplData {
 		t.Fatalf("Expected output file to have specific data, but was: >>>%s<<<", file.Bytes())
 	}
+}
+
+func TestDataValuesOverlayAppendArray(t *testing.T) {
+	yamlTplData := []byte(`
+#@ load("@ytt:data", "data")
+data_int: #@ data.values.int
+data_str: #@ data.values.str`)
+
+	expectedYAMLTplData := `data_int:
+- 123
+- 456
+data_str:
+- str1
+- str2
+`
+
+	yamlData1 := []byte(`
+#@data/values
+---
+int:
+- 123
+str:
+- str1`)
+
+	yamlData2 := []byte(`
+#@data/values
+---
+int: 
+- 456
+str:
+- str2`)
+
+	filesToProcess := files.NewSortedFiles([]*files.File{
+		files.MustNewFileFromSource(files.NewBytesSource("tpl.yml", yamlTplData)),
+		files.MustNewFileFromSource(files.NewBytesSource("data1.yml", yamlData1)),
+		files.MustNewFileFromSource(files.NewBytesSource("data2.yml", yamlData2)),
+	})
+
+	opts := cmdtpl.NewOptions()
+
+	assertYTTOverlaySucceedsWithOutput(t, filesToProcess, opts, expectedYAMLTplData)
+}
+
+func TestEmptyDataValuesArrayOverlay(t *testing.T) {
+	yamlTplData := []byte(`
+#@ load("@ytt:data", "data")
+containers: #@ data.values.containers`)
+
+	expectedYAMLTplData := `containers:
+- name: app
+- name: app2
+`
+
+	yamlData1 := []byte(`
+#@data/values
+---
+containers: []
+`)
+
+	yamlData2 := []byte(`
+#@data/values
+---
+containers:
+- name: app
+- name: app2
+`)
+
+	filesToProcess := files.NewSortedFiles([]*files.File{
+		files.MustNewFileFromSource(files.NewBytesSource("tpl.yml", yamlTplData)),
+		files.MustNewFileFromSource(files.NewBytesSource("data1.yml", yamlData1)),
+		files.MustNewFileFromSource(files.NewBytesSource("data2.yml", yamlData2)),
+	})
+
+	opts := cmdtpl.NewOptions()
+
+	assertYTTOverlaySucceedsWithOutput(t, filesToProcess, opts, expectedYAMLTplData)
+}
+
+func TestDataValuesEmptyOverlayArray(t *testing.T) {
+	yamlTplData := []byte(`
+#@ load("@ytt:data", "data")
+containers: #@ data.values.containers`)
+
+	expectedYAMLTplData := `containers:
+- name: app
+- name: app2
+`
+
+	yamlData1 := []byte(`
+#@data/values
+---
+containers: 
+- name: app
+- name: app2
+`)
+
+	yamlData2 := []byte(`
+#@data/values
+---
+containers: []
+`)
+
+	filesToProcess := files.NewSortedFiles([]*files.File{
+		files.MustNewFileFromSource(files.NewBytesSource("tpl.yml", yamlTplData)),
+		files.MustNewFileFromSource(files.NewBytesSource("data1.yml", yamlData1)),
+		files.MustNewFileFromSource(files.NewBytesSource("data2.yml", yamlData2)),
+	})
+
+	opts := cmdtpl.NewOptions()
+
+	assertYTTOverlaySucceedsWithOutput(t, filesToProcess, opts, expectedYAMLTplData)
+}
+
+func TestDataValuesOverlayMatchChildDefaultsArray(t *testing.T) {
+	yamlTplData := []byte(`
+#@ load("@ytt:data", "data")
+metadata: #@ data.values.metadata`)
+
+	expectedYAMLTplData := `metadata:
+- annotations:
+    ingress.kubernetes.io/rewrite-target: true
+    nginx.ingress.kubernetes.io/limit-rps: 2000
+    nginx.ingress.kubernetes.io/enable-access-log: "true"
+    nginx.ingress.kubernetes.io/canary: "true"
+    nginx.ingress.kubernetes.io/client-body-buffer-size: 1M
+`
+
+	yamlData1 := []byte(`
+#@data/values
+---
+metadata:
+  - annotations:
+      ingress.kubernetes.io/rewrite-target: true
+`)
+
+	yamlData2 := []byte(`
+#@data/values
+#@ load("@ytt:overlay", "overlay")
+---
+metadata:
+#@overlay/match-child-defaults missing_ok=True
+#@overlay/match by=overlay.all
+- annotations:
+    nginx.ingress.kubernetes.io/limit-rps: 2000
+    nginx.ingress.kubernetes.io/enable-access-log: "true"
+    nginx.ingress.kubernetes.io/canary: "true"
+    nginx.ingress.kubernetes.io/client-body-buffer-size: 1M
+`)
+
+	filesToProcess := files.NewSortedFiles([]*files.File{
+		files.MustNewFileFromSource(files.NewBytesSource("tpl.yml", yamlTplData)),
+		files.MustNewFileFromSource(files.NewBytesSource("data1.yml", yamlData1)),
+		files.MustNewFileFromSource(files.NewBytesSource("data2.yml", yamlData2)),
+	})
+
+	opts := cmdtpl.NewOptions()
+
+	assertYTTOverlaySucceedsWithOutput(t, filesToProcess, opts, expectedYAMLTplData)
 }
 
 func TestDataValuesMultipleInOneFile(t *testing.T) {
@@ -628,5 +789,22 @@ nested_val: nested_from_env
 
 	if string(file.Bytes()) != expectedYAMLTplData {
 		t.Fatalf("Expected output file to have specific data, but was: >>>%s<<< vs >>>%s<<<", file.Bytes(), expectedYAMLTplData)
+	}
+}
+
+func assertYTTOverlaySucceedsWithOutput(t *testing.T, filesToProcess []*files.File, opts *cmdtpl.Options, expectedOut string) {
+	t.Helper()
+	out := opts.RunWithFiles(cmdtpl.Input{Files: filesToProcess}, ui.NewTTY(false))
+	if out.Err != nil {
+		t.Fatalf("Expected RunWithFiles to succeed, but was error: %s", out.Err)
+	}
+
+	if len(out.Files) != 1 {
+		t.Errorf("Expected number of output files to be 1, but was: %d", len(out.Files))
+	}
+
+	if string(out.Files[0].Bytes()) != expectedOut {
+		diff := difflib.PPDiff(strings.Split(string(out.Files[0].Bytes()), "\n"), strings.Split(expectedOut, "\n"))
+		t.Errorf("Expected output to match expected YAML, differences:\n%s", diff)
 	}
 }

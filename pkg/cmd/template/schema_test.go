@@ -76,7 +76,6 @@ top_level: ""
 		dataValuesYAML := `#@data/values
 ---
 db_conn:
-#@overlay/append
 - hostname: server.example.com
   port: 5432
   username: sa
@@ -116,9 +115,7 @@ rendered: #@ data.values
 `
 		dataValuesYAML := `#@data/values
 ---
-#@overlay/append
 - first
-#@overlay/append
 - second
 `
 		templateYAML := `#@ load("@ytt:data", "data")
@@ -536,9 +533,7 @@ vpc:
 ---
 vpc:
   subnet_config:
-  #@overlay/append
   - id: 2
-  #@overlay/append
   - id: 3
     mask: 255.255.255.0
 `
