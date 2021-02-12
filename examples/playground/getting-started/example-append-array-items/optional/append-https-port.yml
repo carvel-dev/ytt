@@ -5,7 +5,6 @@
 ---
 spec:
   ports:
-    #@overlay/append
     - name: https
       port: 30443
       protocol: TCP
@@ -19,6 +18,5 @@ spec:
       containers:
       #@overlay/match by=overlay.subset({"name": "prometheus-operator"})
       - ports:
-        #@overlay/append
         - name: https
           containerPort: 443

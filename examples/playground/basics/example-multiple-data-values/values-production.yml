@@ -11,5 +11,4 @@ names:
 #@overlay/match by=overlay.subset("default.example.com")
 #@overlay/remove
 -
-#@overlay/append
 - production.example.com
