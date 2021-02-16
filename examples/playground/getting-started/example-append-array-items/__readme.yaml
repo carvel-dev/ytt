@@ -36,7 +36,7 @@ readme: |
   2. Examine the output of `config/service.yml`; what's
      wrong there? (hint: ports must be unique)
 
-  3. Just above line 21 in `append-https-port.yml` _add_ the following:
+  3. Just above line 8 in `append-https-port.yml` _add_ the following:
      ```
      #@overlay/remove
      #@overlay/match by="name", missing_ok=True
