@@ -4,10 +4,7 @@
 package template_test
 
 import (
-	"strings"
 	"testing"
-
-	"github.com/k14s/difflib"
 
 	cmdtpl "github.com/k14s/ytt/pkg/cmd/template"
 	"github.com/k14s/ytt/pkg/cmd/ui"
@@ -20,15 +17,15 @@ func TestDataValues(t *testing.T) {
 data_int: #@ data.values.int
 data_str: #@ data.values.str`)
 
-	expectedYAMLTplData := `data_int: 123
-data_str: str
-`
-
 	yamlData := []byte(`
 #@data/values
 ---
 int: 123
 str: str`)
+
+	expectedYAMLTplData := `data_int: 123
+data_str: str
+`
 
 	filesToProcess := files.NewSortedFiles([]*files.File{
 		files.MustNewFileFromSource(files.NewBytesSource("tpl.yml", yamlTplData)),
@@ -65,6 +62,18 @@ data_int: #@ data.values.int
 data_str: #@ data.values.str
 values: #@ data.values`)
 
+	yamlData := []byte(`
+#@data/values
+---
+int: 123
+str: str
+boolean: false
+nested:
+  value: not-str
+another:
+  nested:
+    map: {"a": 123}`)
+
 	expectedYAMLTplData := `data_int: 124
 data_str: str
 values:
@@ -77,18 +86,6 @@ values:
     nested:
       map: 567
 `
-
-	yamlData := []byte(`
-#@data/values
----
-int: 123
-str: str
-boolean: false
-nested:
-  value: not-str
-another:
-  nested:
-    map: {"a": 123}`)
 
 	filesToProcess := files.NewSortedFiles([]*files.File{
 		files.MustNewFileFromSource(files.NewBytesSource("tpl.yml", yamlTplData)),
@@ -128,19 +125,19 @@ func TestDataValuesWithFlagsMarkedMissingOk(t *testing.T) {
 #@ load("@ytt:data", "data")
 values: #@ data.values`)
 
-	expectedYAMLTplData := `values:
-  nested:
-    value: str
-  another_nested:
-    other_value: str2
-`
-
 	yamlData := []byte(`
 #@data/values
 ---
 nested:
   value: str
 `)
+
+	expectedYAMLTplData := `values:
+  nested:
+    value: str
+  another_nested:
+    other_value: str2
+`
 
 	filesToProcess := files.NewSortedFiles([]*files.File{
 		files.MustNewFileFromSource(files.NewBytesSource("tpl.yml", yamlTplData)),
@@ -328,373 +325,6 @@ nested_val: nested_from_env
 	}
 }
 
-func TestDataValuesOverlay(t *testing.T) {
-	t.Run("overlays one data value file onto another", func(t *testing.T) {
-		yamlTplData := []byte(`
-#@ load("@ytt:data", "data")
-data_int: #@ data.values.int
-data_str: #@ data.values.str`)
-
-		expectedYAMLTplData := `data_int: 123
-data_str: str2
-`
-
-		yamlData1 := []byte(`
-#@data/values
----
-int: 123
-str: str`)
-
-		yamlData2 := []byte(`
-#@data/values
----
-str: str2`)
-
-		filesToProcess := files.NewSortedFiles([]*files.File{
-			files.MustNewFileFromSource(files.NewBytesSource("tpl.yml", yamlTplData)),
-			files.MustNewFileFromSource(files.NewBytesSource("data1.yml", yamlData1)),
-			files.MustNewFileFromSource(files.NewBytesSource("data2.yml", yamlData2)),
-		})
-
-		ui := ui.NewTTY(false)
-		opts := cmdtpl.NewOptions()
-
-		out := opts.RunWithFiles(cmdtpl.Input{Files: filesToProcess}, ui)
-		if out.Err != nil {
-			t.Fatalf("Expected RunWithFiles to succeed, but was error: %s", out.Err)
-		}
-
-		if len(out.Files) != 1 {
-			t.Fatalf("Expected number of output files to be 1, but was %d", len(out.Files))
-		}
-
-		file := out.Files[0]
-
-		if file.RelativePath() != "tpl.yml" {
-			t.Fatalf("Expected output file to be tpl.yml, but was %#v", file.RelativePath())
-		}
-
-		if string(file.Bytes()) != expectedYAMLTplData {
-			t.Fatalf("Expected output file to have specific data, but was: >>>%s<<<", file.Bytes())
-		}
-	})
-	t.Run("overlays when two data values documents defined in same file", func(t *testing.T) {
-		yamlTplData := []byte(`
-#@ load("@ytt:data", "data")
-data_int: #@ data.values.int
-data_str: #@ data.values.str`)
-
-		expectedYAMLTplData := `data_int: 123
-data_str: str2
-`
-
-		yamlData := []byte(`
-#@data/values
----
-str: str
-
-#@data/values
----
-str: str2
-#@overlay/match missing_ok=True
-int: 123`)
-
-		filesToProcess := files.NewSortedFiles([]*files.File{
-			files.MustNewFileFromSource(files.NewBytesSource("tpl.yml", yamlTplData)),
-			files.MustNewFileFromSource(files.NewBytesSource("data.yml", yamlData)),
-		})
-
-		ui := ui.NewTTY(false)
-		opts := cmdtpl.NewOptions()
-
-		out := opts.RunWithFiles(cmdtpl.Input{Files: filesToProcess}, ui)
-		if out.Err != nil {
-			t.Fatalf("Expected RunWithFiles to succeed, but was error: %s", out.Err)
-		}
-
-		if len(out.Files) != 1 {
-			t.Fatalf("Expected number of output files to be 1, but was %d", len(out.Files))
-		}
-
-		file := out.Files[0]
-
-		if file.RelativePath() != "tpl.yml" {
-			t.Fatalf("Expected output file to be tpl.yml, but was %#v", file.RelativePath())
-		}
-
-		if string(file.Bytes()) != expectedYAMLTplData {
-			t.Fatalf("Expected output file to have specific data, but was: >>>%s<<<", file.Bytes())
-		}
-	})
-	t.Run("appends array items", func(t *testing.T) {
-		yamlTplData := []byte(`
-#@ load("@ytt:data", "data")
-data_int: #@ data.values.int
-data_str: #@ data.values.str`)
-
-		expectedYAMLTplData := `data_int:
-- 123
-- 456
-data_str:
-- str1
-- str2
-`
-
-		yamlData1 := []byte(`
-#@data/values
----
-int:
-- 123
-str:
-- str1`)
-
-		yamlData2 := []byte(`
-#@data/values
----
-int: 
-- 456
-str:
-- str2`)
-
-		filesToProcess := files.NewSortedFiles([]*files.File{
-			files.MustNewFileFromSource(files.NewBytesSource("tpl.yml", yamlTplData)),
-			files.MustNewFileFromSource(files.NewBytesSource("data1.yml", yamlData1)),
-			files.MustNewFileFromSource(files.NewBytesSource("data2.yml", yamlData2)),
-		})
-
-		opts := cmdtpl.NewOptions()
-
-		assertYTTOverlaySucceedsWithOutput(t, filesToProcess, opts, expectedYAMLTplData)
-	})
-	t.Run("appends array items when base data values is empty array", func(t *testing.T) {
-		yamlTplData := []byte(`
-#@ load("@ytt:data", "data")
-containers: #@ data.values.containers`)
-
-		expectedYAMLTplData := `containers:
-- name: app
-- name: app2
-`
-
-		yamlData1 := []byte(`
-#@data/values
----
-containers: []
-`)
-
-		yamlData2 := []byte(`
-#@data/values
----
-containers:
-- name: app
-- name: app2
-`)
-
-		filesToProcess := files.NewSortedFiles([]*files.File{
-			files.MustNewFileFromSource(files.NewBytesSource("tpl.yml", yamlTplData)),
-			files.MustNewFileFromSource(files.NewBytesSource("data1.yml", yamlData1)),
-			files.MustNewFileFromSource(files.NewBytesSource("data2.yml", yamlData2)),
-		})
-
-		opts := cmdtpl.NewOptions()
-
-		assertYTTOverlaySucceedsWithOutput(t, filesToProcess, opts, expectedYAMLTplData)
-	})
-	t.Run("appends array items when overlay is empty array", func(t *testing.T) {
-		yamlTplData := []byte(`
-#@ load("@ytt:data", "data")
-containers: #@ data.values.containers`)
-
-		expectedYAMLTplData := `containers:
-- name: app
-- name: app2
-`
-
-		yamlData1 := []byte(`
-#@data/values
----
-containers: 
-- name: app
-- name: app2
-`)
-
-		yamlData2 := []byte(`
-#@data/values
----
-containers: []
-`)
-
-		filesToProcess := files.NewSortedFiles([]*files.File{
-			files.MustNewFileFromSource(files.NewBytesSource("tpl.yml", yamlTplData)),
-			files.MustNewFileFromSource(files.NewBytesSource("data1.yml", yamlData1)),
-			files.MustNewFileFromSource(files.NewBytesSource("data2.yml", yamlData2)),
-		})
-
-		opts := cmdtpl.NewOptions()
-
-		assertYTTOverlaySucceedsWithOutput(t, filesToProcess, opts, expectedYAMLTplData)
-	})
-	t.Run("'match-child-defaults' annotation sets default behavior for children", func(t *testing.T) {
-		yamlTplData := []byte(`
-#@ load("@ytt:data", "data")
-metadata: #@ data.values.metadata`)
-
-		expectedYAMLTplData := `metadata:
-- annotations:
-    ingress.kubernetes.io/rewrite-target: true
-    nginx.ingress.kubernetes.io/limit-rps: 2000
-    nginx.ingress.kubernetes.io/enable-access-log: "true"
-`
-
-		yamlData1 := []byte(`
-#@data/values
----
-metadata:
-  - annotations:
-      ingress.kubernetes.io/rewrite-target: true`)
-
-		yamlData2 := []byte(`
-#@data/values
-#@ load("@ytt:overlay", "overlay")
----
-metadata:
-#@overlay/match-child-defaults missing_ok=True
-#@overlay/match by=overlay.all
-- annotations:
-    nginx.ingress.kubernetes.io/limit-rps: 2000
-    nginx.ingress.kubernetes.io/enable-access-log: "true"`)
-
-		filesToProcess := files.NewSortedFiles([]*files.File{
-			files.MustNewFileFromSource(files.NewBytesSource("tpl.yml", yamlTplData)),
-			files.MustNewFileFromSource(files.NewBytesSource("data1.yml", yamlData1)),
-			files.MustNewFileFromSource(files.NewBytesSource("data2.yml", yamlData2)),
-		})
-
-		ui := ui.NewTTY(false)
-		opts := cmdtpl.NewOptions()
-
-		out := opts.RunWithFiles(cmdtpl.Input{Files: filesToProcess}, ui)
-		if out.Err != nil {
-			t.Fatalf("Expected RunWithFiles to succeed, but was error: %s", out.Err)
-		}
-
-		if len(out.Files) != 1 {
-			t.Fatalf("Expected number of output files to be 1, but was %d", len(out.Files))
-		}
-
-		file := out.Files[0]
-
-		if file.RelativePath() != "tpl.yml" {
-			t.Fatalf("Expected output file to be tpl.yml, but was %#v", file.RelativePath())
-		}
-
-		if string(file.Bytes()) != expectedYAMLTplData {
-			t.Fatalf("Expected output file to have specific data, but was: >>>%s<<<", file.Bytes())
-		}
-	})
-	t.Run("allows new key annotated with 'missing_ok=True'", func(t *testing.T) {
-		yamlTplData := []byte(`
-#@ load("@ytt:data", "data")
-data_int: #@ data.values.int
-data_str: #@ data.values.str`)
-
-		expectedYAMLTplData := `data_int: 123
-data_str: str2
-`
-
-		yamlData1 := []byte(`
-#@data/values
----
-str: str`)
-
-		yamlData2 := []byte(`
-#@data/values
----
-str: str2
-#@overlay/match missing_ok=True
-int: 123`)
-
-		filesToProcess := files.NewSortedFiles([]*files.File{
-			files.MustNewFileFromSource(files.NewBytesSource("tpl.yml", yamlTplData)),
-			files.MustNewFileFromSource(files.NewBytesSource("data1.yml", yamlData1)),
-			files.MustNewFileFromSource(files.NewBytesSource("data2.yml", yamlData2)),
-		})
-
-		ui := ui.NewTTY(false)
-		opts := cmdtpl.NewOptions()
-
-		out := opts.RunWithFiles(cmdtpl.Input{Files: filesToProcess}, ui)
-		if out.Err != nil {
-			t.Fatalf("Expected RunWithFiles to succeed, but was error: %s", out.Err)
-		}
-
-		if len(out.Files) != 1 {
-			t.Fatalf("Expected number of output files to be 1, but was %d", len(out.Files))
-		}
-
-		file := out.Files[0]
-
-		if file.RelativePath() != "tpl.yml" {
-			t.Fatalf("Expected output file to be tpl.yml, but was %#v", file.RelativePath())
-		}
-
-		if string(file.Bytes()) != expectedYAMLTplData {
-			t.Fatalf("Expected output file to have specific data, but was: >>>%s<<<", file.Bytes())
-		}
-	})
-	t.Run("removes key annotated with 'remove'", func(t *testing.T) {
-		yamlTplData := []byte(`
-#@ load("@ytt:data", "data")
-data: #@ data.values.data`)
-
-		expectedYAMLTplData := `data:
-  str: str
-`
-
-		yamlData1 := []byte(`
-#@data/values
----
-data:
-  str: str
-  int: 123`)
-
-		yamlData2 := []byte(`
-#@data/values
----
-data:
-  #@overlay/remove
-  int: null`)
-
-		filesToProcess := files.NewSortedFiles([]*files.File{
-			files.MustNewFileFromSource(files.NewBytesSource("tpl.yml", yamlTplData)),
-			files.MustNewFileFromSource(files.NewBytesSource("data1.yml", yamlData1)),
-			files.MustNewFileFromSource(files.NewBytesSource("data2.yml", yamlData2)),
-		})
-
-		ui := ui.NewTTY(false)
-		opts := cmdtpl.NewOptions()
-
-		out := opts.RunWithFiles(cmdtpl.Input{Files: filesToProcess}, ui)
-		if out.Err != nil {
-			t.Fatalf("Expected RunWithFiles to succeed, but was error: %s", out.Err)
-		}
-
-		if len(out.Files) != 1 {
-			t.Fatalf("Expected number of output files to be 1, but was %d", len(out.Files))
-		}
-
-		file := out.Files[0]
-
-		if file.RelativePath() != "tpl.yml" {
-			t.Fatalf("Expected output file to be tpl.yml, but was %#v", file.RelativePath())
-		}
-
-		if string(file.Bytes()) != expectedYAMLTplData {
-			t.Fatalf("Expected output file to have specific data, but was: >>>%s<<<", file.Bytes())
-		}
-	})
-}
-
 func TestDataValuesWithNonDataValuesDocsErr(t *testing.T) {
 	yamlData := []byte(`
 #@data/values
@@ -742,22 +372,5 @@ str: str`)
 
 	if out.Err.Error() != "Expected YAML document to be annotated with data/values but was *yamlmeta.MapItem" {
 		t.Fatalf("Expected RunWithFiles to fail, but was '%s'", out.Err)
-	}
-}
-
-func assertYTTOverlaySucceedsWithOutput(t *testing.T, filesToProcess []*files.File, opts *cmdtpl.Options, expectedOut string) {
-	t.Helper()
-	out := opts.RunWithFiles(cmdtpl.Input{Files: filesToProcess}, ui.NewTTY(false))
-	if out.Err != nil {
-		t.Fatalf("Expected RunWithFiles to succeed, but was error: %s", out.Err)
-	}
-
-	if len(out.Files) != 1 {
-		t.Errorf("Expected number of output files to be 1, but was: %d", len(out.Files))
-	}
-
-	if string(out.Files[0].Bytes()) != expectedOut {
-		diff := difflib.PPDiff(strings.Split(string(out.Files[0].Bytes()), "\n"), strings.Split(expectedOut, "\n"))
-		t.Errorf("Expected output to match expected YAML, differences:\n%s", diff)
 	}
 }
