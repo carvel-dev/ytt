@@ -49,18 +49,8 @@ func whichOp(node yamlmeta.Node) (structmeta.AnnotationName, error) {
 	}
 
 	if len(foundOp) == 0 {
-		foundOp = defaultOp(node)
+		foundOp = AnnotationMerge
 	}
 
 	return foundOp, nil
-}
-
-func defaultOp(node yamlmeta.Node) structmeta.AnnotationName {
-	if _, found := node.(*yamlmeta.ArrayItem); found {
-		if !template.NewAnnotations(node).Has(AnnotationMatch) {
-			// If no overlay/match annotation is present the default array op is append
-			return AnnotationAppend
-		}
-	}
-	return AnnotationMerge
 }
