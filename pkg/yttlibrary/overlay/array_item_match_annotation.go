@@ -22,6 +22,14 @@ type ArrayItemMatchAnnotation struct {
 	expects MatchAnnotationExpectsKwarg
 }
 
+type ArrayItemMatchAnnotationNotExistError struct {
+	message string
+}
+
+func (e ArrayItemMatchAnnotationNotExistError) Error() string {
+	return e.message
+}
+
 func NewArrayItemMatchAnnotation(newItem *yamlmeta.ArrayItem,
 	defaults MatchChildDefaultsAnnotation,
 	thread *starlark.Thread) (ArrayItemMatchAnnotation, error) {
@@ -34,8 +42,9 @@ func NewArrayItemMatchAnnotation(newItem *yamlmeta.ArrayItem,
 	anns := template.NewAnnotations(newItem)
 
 	if !anns.Has(AnnotationMatch) {
-		return annotation, fmt.Errorf(
-			"Expected array item to have '%s' annotation", AnnotationMatch)
+		return annotation, ArrayItemMatchAnnotationNotExistError{
+			message: fmt.Sprintf("Expected array item to have '%s' annotation", AnnotationMatch),
+		}
 	}
 
 	kwargs := anns.Kwargs(AnnotationMatch)

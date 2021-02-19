@@ -240,13 +240,12 @@ overlayed: true
 	}
 }
 
-func TestDocumentOverlayArrayItems(t *testing.T) {
-	t.Run("append with and without 'append' annotation", func(t *testing.T) {
-		yamlTplData := []byte(`
+func TestDocumentOverlayAppendArrayItems(t *testing.T) {
+	yamlTplData := []byte(`
 - item1
 `)
 
-		yamlOverlayTplData := []byte(`
+	yamlOverlayTplData := []byte(`
 #@ load("@ytt:overlay", "overlay")
 #@overlay/match by=overlay.all
 ---
@@ -256,38 +255,37 @@ func TestDocumentOverlayArrayItems(t *testing.T) {
 
 `)
 
-		expectedYAMLTplData := `- item1
+	expectedYAMLTplData := `- item1
 - item2
 - item3
 `
 
-		filesToProcess := files.NewSortedFiles([]*files.File{
-			files.MustNewFileFromSource(files.NewBytesSource("tpl.yml", yamlTplData)),
-			files.MustNewFileFromSource(files.NewBytesSource("overlay.yml", yamlOverlayTplData)),
-		})
-
-		ui := ui.NewTTY(false)
-		opts := cmdtpl.NewOptions()
-
-		out := opts.RunWithFiles(cmdtpl.Input{Files: filesToProcess}, ui)
-		if out.Err != nil {
-			t.Fatalf("Expected RunWithFiles to succeed, but was error: %s", out.Err)
-		}
-
-		if len(out.Files) != 1 {
-			t.Fatalf("Expected number of output files to be 1, but was %d", len(out.Files))
-		}
-
-		file := out.Files[0]
-
-		if file.RelativePath() != "tpl.yml" {
-			t.Fatalf("Expected output file to be tpl.yml, but was %#v", file.RelativePath())
-		}
-
-		if string(file.Bytes()) != expectedYAMLTplData {
-			t.Fatalf("Expected output file to have: >>>%s<<<, but was: >>>%s<<<", expectedYAMLTplData, file.Bytes())
-		}
+	filesToProcess := files.NewSortedFiles([]*files.File{
+		files.MustNewFileFromSource(files.NewBytesSource("tpl.yml", yamlTplData)),
+		files.MustNewFileFromSource(files.NewBytesSource("overlay.yml", yamlOverlayTplData)),
 	})
+
+	ui := ui.NewTTY(false)
+	opts := cmdtpl.NewOptions()
+
+	out := opts.RunWithFiles(cmdtpl.Input{Files: filesToProcess}, ui)
+	if out.Err != nil {
+		t.Fatalf("Expected RunWithFiles to succeed, but was error: %s", out.Err)
+	}
+
+	if len(out.Files) != 1 {
+		t.Fatalf("Expected number of output files to be 1, but was %d", len(out.Files))
+	}
+
+	file := out.Files[0]
+
+	if file.RelativePath() != "tpl.yml" {
+		t.Fatalf("Expected output file to be tpl.yml, but was %#v", file.RelativePath())
+	}
+
+	if string(file.Bytes()) != expectedYAMLTplData {
+		t.Fatalf("Expected output file to have: >>>%s<<<, but was: >>>%s<<<", expectedYAMLTplData, file.Bytes())
+	}
 }
 
 func TestDataValuesOverlay(t *testing.T) {

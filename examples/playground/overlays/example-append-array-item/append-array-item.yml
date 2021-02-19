@@ -9,6 +9,7 @@ awards:
 #! 1. which item(s) in the collection to target (match)
 #! 2. what operation to perform
 
-#! No annotation implies a default 'append' operation:
+#! Omitting an annotation on the array item implies a
+#! default 'append' operation:
 #! 1. implies a match on the last item, and
 #! 2. inserts after that item.

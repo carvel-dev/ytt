@@ -4,17 +4,12 @@
 package overlay
 
 import (
-	"github.com/k14s/ytt/pkg/template"
 	"github.com/k14s/ytt/pkg/yamlmeta"
 )
 
 func (o Op) mergeArrayItem(
 	leftArray *yamlmeta.Array, newItem *yamlmeta.ArrayItem,
 	parentMatchChildDefaults MatchChildDefaultsAnnotation) error {
-
-	if !template.NewAnnotations(newItem).Has(AnnotationMatch) {
-		return o.appendArrayItem(leftArray, newItem)
-	}
 
 	matchChildDefaults, err := NewMatchChildDefaultsAnnotation(newItem, parentMatchChildDefaults)
 	if err != nil {
@@ -23,6 +18,9 @@ func (o Op) mergeArrayItem(
 
 	ann, err := NewArrayItemMatchAnnotation(newItem, parentMatchChildDefaults, o.Thread)
 	if err != nil {
+		if _, ok := err.(ArrayItemMatchAnnotationNotExistError); ok {
+			return o.appendArrayItem(leftArray, newItem)
+		}
 		return err
 	}
 
