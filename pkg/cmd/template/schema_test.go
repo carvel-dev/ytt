@@ -5,7 +5,6 @@ package template_test
 
 import (
 	"bytes"
-	"fmt"
 	"os"
 	"strings"
 	"testing"
@@ -702,8 +701,7 @@ rendered: true`
 		files.MustNewFileFromSource(files.NewBytesSource("template.yml", []byte(templateYAML))),
 	})
 
-	expectedStdErr := fmt.Sprintf(`Warning: schema document was detected, but schema experiment flag is not enabled. Did you mean to include --enable-experiment-schema?
-`)
+	expectedStdErr := "Warning: schema document was detected, but schema experiment flag is not enabled. Did you mean to include --enable-experiment-schema?\n"
 	expectedOut := "rendered: true\n"
 
 	out := opts.RunWithFiles(cmdtpl.Input{Files: filesToProcess}, ui)
