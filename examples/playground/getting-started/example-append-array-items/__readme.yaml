@@ -19,9 +19,6 @@ readme: |
   - `@overlay/remove`
   - `@overlay/insert`
 
-  The one exception is the default 'append' behavior which
-  ignores any `@overlay/match` and always inserts after
-  the last item.
 
   ------------------------
   Append vs. Ensure Exists
