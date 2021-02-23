@@ -18,9 +18,6 @@ func (o Op) mergeArrayItem(
 
 	ann, err := NewArrayItemMatchAnnotation(newItem, parentMatchChildDefaults, o.Thread)
 	if err != nil {
-		if _, ok := err.(ArrayItemMatchAnnotationNotExistError); ok {
-			return o.appendArrayItem(leftArray, newItem)
-		}
 		return err
 	}
 
