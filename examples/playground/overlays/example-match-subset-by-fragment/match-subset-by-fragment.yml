@@ -11,7 +11,7 @@ author: Joshua Foer
 modified: true
 
 #! For more on `overlay.subset()`:
-#!   https://github.com/vmware-tanzu/carvel-ytt/blob/develop/docs/lang-ref-ytt-overlay.md#overlaysubset
+#!   https://carvel.dev/ytt/docs/latest/lang-ref-ytt-overlay/#overlaysubset
 
 #! For more on YAML Fragments:
-#!   https://github.com/vmware-tanzu/carvel-ytt/blob/develop/docs/lang-ref-yaml-fragment.md
+#!   https://carvel.dev/ytt/docs/latest/lang-ref-yaml-fragment/

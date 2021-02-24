@@ -10,4 +10,4 @@ items:
 - modified: true
 
 #! For more on `overlay.index()`:
-#!   https://github.com/vmware-tanzu/carvel-ytt/blob/develop/docs/lang-ref-ytt-overlay.md#overlayindex
+#!   https://carvel.dev/ytt/docs/latest/lang-ref-ytt-overlay/#overlayindex

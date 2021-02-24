@@ -8,4 +8,4 @@ modified: true
 #!   Specify `expects` to override.
 
 #! For more on `@overlay/match`:
-#!   https://github.com/vmware-tanzu/carvel-ytt/blob/develop/docs/lang-ref-ytt-overlay.md#overlaymatch
+#!   https://carvel.dev/ytt/docs/latest/lang-ref-ytt-overlay/#overlaymatch
