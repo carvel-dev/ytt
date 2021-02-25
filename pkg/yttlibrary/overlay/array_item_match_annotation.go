@@ -28,21 +28,20 @@ func NewArrayItemMatchAnnotation(newItem *yamlmeta.ArrayItem,
 	thread *starlark.Thread) (ArrayItemMatchAnnotation, error) {
 
 	annotation := ArrayItemMatchAnnotation{
-		newItem:     newItem,
-		thread:      thread,
-		expects:     MatchAnnotationExpectsKwarg{thread: thread},
-		unannotated: false,
+		newItem: newItem,
+		thread:  thread,
+		expects: MatchAnnotationExpectsKwarg{thread: thread},
 	}
 	anns := template.NewAnnotations(newItem)
 
-	if len(anns) == 0 {
+	if !anns.Has(AnnotationMatch) {
+		var expectsNone starlark.Value = starlark.MakeInt(0)
+		annotation.expects = MatchAnnotationExpectsKwarg{
+			expects: &expectsNone,
+			thread:  thread,
+		}
 		annotation.unannotated = true
 		return annotation, nil
-	}
-
-	if !anns.Has(AnnotationMatch) {
-		return annotation, fmt.Errorf(
-			"Expected array item to have '%s' annotation", AnnotationMatch)
 	}
 
 	kwargs := anns.Kwargs(AnnotationMatch)
@@ -84,7 +83,7 @@ func (a ArrayItemMatchAnnotation) Indexes(leftArray *yamlmeta.Array) ([]int, err
 
 func (a ArrayItemMatchAnnotation) MatchNodes(leftArray *yamlmeta.Array) ([]int, []*filepos.Position, error) {
 	if a.unannotated {
-		return []int{}, []*filepos.Position{leftArray.GetPosition()}, nil
+		return nil, nil, nil
 	}
 
 	matcher := a.matcher
