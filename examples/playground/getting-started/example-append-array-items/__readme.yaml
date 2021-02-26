@@ -4,13 +4,13 @@ readme: |
   Appending Array Items
   =====================
 
-  In ytt v0.32.0+, unannotated array items are appended
-  to the end of the list. This append operation ignores
-  matching annotations and always inserts after the last
+  In ytt v0.32.0+, array items without a matching annotation
+  are appended to the end of the list. This operation ignores
+  other overlay annotations and always inserts after the last
   item.
 
   All other array item operations must specify how to match
-  as they are not indexed by keys. Do so using the same 
+  as they are not indexed by keys. Do so using the same
   `#@overlay/match by=...` annotation used on documents.
 
   So, all of the following action annotations must be

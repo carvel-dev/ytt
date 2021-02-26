@@ -4,12 +4,13 @@
 ---
 awards:
 - Ovid Prize
+#@overlay/append
+- Nobel Prize in Literature
 
-#! Each edit requires two parts:
-#! 1. which item(s) in the collection to target (match)
-#! 2. what operation to perform
-
-#! Omitting an annotation on the array item implies a
-#! default 'append' operation:
-#! 1. implies a match on the last item, and
-#! 2. inserts after that item.
+#! There are two ways to append to an array
+#! 1. Omit an overlay matching annotation
+#!      which implies a merge operation and 0 matches,
+#!      defaulting to insert after the last item.
+#! 2. Include an overlay append annotation
+#!      which defines a match on the last item
+#!      in the array, and inserts after that item.
