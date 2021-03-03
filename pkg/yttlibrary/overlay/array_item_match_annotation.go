@@ -18,8 +18,9 @@ type ArrayItemMatchAnnotation struct {
 	newItem *yamlmeta.ArrayItem
 	thread  *starlark.Thread
 
-	matcher *starlark.Value
-	expects MatchAnnotationExpectsKwarg
+	matcher     *starlark.Value
+	expects     MatchAnnotationExpectsKwarg
+	unannotated bool
 }
 
 func NewArrayItemMatchAnnotation(newItem *yamlmeta.ArrayItem,
@@ -34,8 +35,13 @@ func NewArrayItemMatchAnnotation(newItem *yamlmeta.ArrayItem,
 	anns := template.NewAnnotations(newItem)
 
 	if !anns.Has(AnnotationMatch) {
-		return annotation, fmt.Errorf(
-			"Expected array item to have '%s' annotation", AnnotationMatch)
+		var expectsNone starlark.Value = starlark.MakeInt(0)
+		annotation.expects = MatchAnnotationExpectsKwarg{
+			expects: &expectsNone,
+			thread:  thread,
+		}
+		annotation.unannotated = true
+		return annotation, nil
 	}
 
 	kwargs := anns.Kwargs(AnnotationMatch)
@@ -76,6 +82,10 @@ func (a ArrayItemMatchAnnotation) Indexes(leftArray *yamlmeta.Array) ([]int, err
 }
 
 func (a ArrayItemMatchAnnotation) MatchNodes(leftArray *yamlmeta.Array) ([]int, []*filepos.Position, error) {
+	if a.unannotated {
+		return nil, nil, nil
+	}
+
 	matcher := a.matcher
 
 	if matcher == nil {

@@ -1,0 +1,46 @@
+#@ load("@ytt:overlay", "overlay")
+
+---
+#@ def test1_left():
+- item1
+#@ end
+
+---
+#@ def test1_right():
+- item2
+#@overlay/append
+- item3
+#@ end
+
+---
+#@ def test2_left():
+list1: []
+
+list2:
+  - item1
+#@ end
+
+---
+#@ def test2_right():
+list1:
+  - item1
+
+list2: []
+#@ end
+
+test1: #@ overlay.apply(test1_left(), test1_right())
+---
+test2: #@ overlay.apply(test2_left(), test2_right())
+
++++
+
+test1:
+- item1
+- item2
+- item3
+---
+test2:
+  list1:
+  - item1
+  list2:
+  - item1

@@ -4,28 +4,23 @@ readme: |
   Appending Array Items
   =====================
 
-  Map items are easy to match: if the key of the "left" and
-  the key of the "right" are equal, we can assume they
-  refer to the same item. Lemon squeezy, default behavior.
+  In ytt v0.32.0+, array items without a matching annotation
+  are appended to the end of the list. This operation ignores
+  other overlay annotations and always inserts after the last
+  item.
 
-  Array items don't have keys; they are referenced by index.
-  We can not assume two items at the same position in the
-  array refer to the same item.
+  All other array item operations must specify how to match
+  as they are not indexed by keys. Do so using the same
+  `#@overlay/match by=...` annotation used on documents.
 
-  In ytt, you must specify how to match array items. Do this
-  using the same `#@overlay/match by=...` annotation used on
-  documents.
-
-  So, all of these operations must be paired with a
-  `@overlay/match`:
+  So, all of the following action annotations must be
+  paired with a matching annotation (`@overlay/match`)
 
   - `@overlay/merge`
   - `@overlay/replace`
   - `@overlay/remove`
   - `@overlay/insert`
 
-  The one exception is `@overlay/append` which ignores any
-  `@overlay/match` and always inserts after the last item.
 
   ------------------------
   Append vs. Ensure Exists
@@ -40,7 +35,7 @@ readme: |
   2. Examine the output of `config/service.yml`; what's
      wrong there? (hint: ports must be unique)
 
-  3. Just above `#@overlay/append` _add_ the following:
+  3. Just above line 8 in `append-https-port.yml` _add_ the following:
      ```
      #@overlay/remove
      #@overlay/match by="name", missing_ok=True
