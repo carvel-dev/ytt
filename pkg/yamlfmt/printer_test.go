@@ -20,7 +20,6 @@ var (
 	// Example usage:
 	//   ./hack/test.sh -run TestYAMLFmt TestYAMLFmt.filetest=yield-def.yml
 	selectedFileTestPath = kvArg("TestYAMLFmt.filetest")
-	showTemplateCode     = kvArg("TestYAMLFmt.code") // eg t|...
 	showErrs             = kvArg("TestYAMLFmt.errs") // eg t|...
 )
 
