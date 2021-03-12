@@ -35,9 +35,12 @@ func (o Op) mergeMapItem(leftMap *yamlmeta.Map, newItem *yamlmeta.MapItem,
 	}
 
 	for _, leftIdx := range leftIdxs {
-		replace, err := o.apply(leftMap.Items[leftIdx].Value, newItem.Value, matchChildDefaults)
-		if err != nil {
-			return err
+		replace := true
+		if leftMap.Items[leftIdx].Value != nil {
+			replace, err = o.apply(leftMap.Items[leftIdx].Value, newItem.Value, matchChildDefaults)
+			if err != nil {
+				return err
+			}
 		}
 		if replace {
 			leftMap.Items[leftIdx].Value = newItem.Value

@@ -34,9 +34,12 @@ func (o Op) mergeArrayItem(
 	}
 
 	for _, leftIdx := range leftIdxs {
-		replace, err := o.apply(leftArray.Items[leftIdx].Value, newItem.Value, matchChildDefaults)
-		if err != nil {
-			return err
+		replace := true
+		if leftArray.Items[leftIdx].Value != nil {
+			replace, err = o.apply(leftArray.Items[leftIdx].Value, newItem.Value, matchChildDefaults)
+			if err != nil {
+				return err
+			}
 		}
 		if replace {
 			leftArray.Items[leftIdx].Value = newItem.Value
