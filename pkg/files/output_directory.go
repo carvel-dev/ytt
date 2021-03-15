@@ -6,7 +6,6 @@ package files
 import (
 	"fmt"
 	"os"
-	"path/filepath"
 	"strings"
 
 	"github.com/k14s/ytt/pkg/cmd/ui"
@@ -66,49 +65,6 @@ func (d *OutputDirectory) WriteFiles() error {
 		err := file.Create(d.path)
 		if err != nil {
 			return err
-		}
-	}
-
-	return nil
-}
-
-// clean removes all files that may conflict with output files
-// we don's just use os.RemoveAll to avoid accidently deleting
-// files like .git if incorrect directory is specified.
-func (d *OutputDirectory) removeOldFiles() error {
-	fileInfo, err := os.Stat(d.path)
-	if err != nil {
-		return fmt.Errorf("Checking directory '%s'", d.path)
-	}
-
-	if !fileInfo.IsDir() {
-		return fmt.Errorf("Expected file '%s' to be a directory", d.path)
-	}
-
-	var selectedPaths []string
-
-	err = filepath.Walk(d.path, func(walkedPath string, fi os.FileInfo, err error) error {
-		if err != nil || fi.IsDir() {
-			return err
-		}
-
-		// TODO does not work with filtering of template files
-		if (&File{nil, walkedPath, nil, nil, nil, nil, 0}).IsForOutput() {
-			selectedPaths = append(selectedPaths, walkedPath)
-		}
-
-		return nil
-	})
-	if err != nil {
-		return fmt.Errorf("Listing files '%s'", d.path)
-	}
-
-	for _, selectedPath := range selectedPaths {
-		d.ui.Printf("deleting: %s\n", selectedPath)
-
-		err := os.Remove(selectedPath)
-		if err != nil {
-			return fmt.Errorf("Deleting file '%s'", selectedPath)
 		}
 	}
 

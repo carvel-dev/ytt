@@ -2,6 +2,8 @@ linters:
   enable:
     - goheader
     - golint
+    - deadcode
+    - unused
   disable-all: true
 # all available settings of specific linters
 linters-settings:
@@ -13,3 +15,6 @@ linters-settings:
 issues:
   max-issues-per-linter: 0
   max-same-issues: 0
+run:
+  skip-dirs:
+    - pkg/yamlmeta/internal

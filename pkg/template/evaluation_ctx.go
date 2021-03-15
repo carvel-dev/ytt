@@ -249,17 +249,6 @@ func (e *EvaluationCtx) RootNodeAsStarlarkValue() starlark.Value {
 	return core.NewGoValue(val).AsStarlarkValue()
 }
 
-func (e *EvaluationCtx) unwindToNode(node EvaluationNode) {
-	for i, parentNode := range e.parentNodes {
-		if parentNode == node {
-			e.parentNodes = e.parentNodes[:i+1]
-			e.parentNodeTags = e.parentNodeTags[:i+1]
-			return
-		}
-	}
-	panic(fmt.Sprintf("expected to find node %T when unwinding", node))
-}
-
 func (e *EvaluationCtx) unwindToTag(tag NodeTag) {
 	for i, parentTag := range e.parentNodeTags {
 		if parentTag.Equals(tag) {
