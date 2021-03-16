@@ -116,7 +116,8 @@ func (ll *LibraryLoader) filesByAnnotation(annName structmeta.AnnotationName, lo
 				return nil, err
 			}
 
-			tplOpts := yamltemplate.MetasOpts{IgnoreUnknown: ll.templateLoaderOpts.IgnoreUnknownComments}
+			// we're only peeking at the document to determine its "type", no need to detect (yet) if contains unknowns.
+			tplOpts := yamltemplate.MetasOpts{IgnoreUnknown: true}
 
 			values, _, err := DocExtractor{docSet, tplOpts}.Extract(annName)
 			if err != nil {
