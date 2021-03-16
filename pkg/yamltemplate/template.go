@@ -34,7 +34,11 @@ type TemplateOpts struct {
 	ImplicitMapKeyOverrides bool
 }
 
-func IsTemplate(val interface{}) bool {
+func HasTemplating(docs *yamlmeta.DocumentSet) bool {
+	return hasTemplating(docs)
+}
+
+func hasTemplating(val interface{}) bool {
 	node, ok := val.(yamlmeta.Node)
 	if !ok {
 		return false
@@ -54,7 +58,7 @@ func IsTemplate(val interface{}) bool {
 	}
 
 	for _, childVal := range node.GetValues() {
-		if IsTemplate(childVal) {
+		if hasTemplating(childVal) {
 			return true
 		}
 	}

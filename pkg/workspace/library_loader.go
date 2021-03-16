@@ -14,7 +14,6 @@ import (
 	"github.com/k14s/ytt/pkg/schema"
 	"github.com/k14s/ytt/pkg/structmeta"
 	"github.com/k14s/ytt/pkg/yamlmeta"
-	"github.com/k14s/ytt/pkg/yamltemplate"
 )
 
 type LibraryLoader struct {
@@ -63,9 +62,7 @@ func (ll *LibraryLoader) Schemas() ([]*yamlmeta.Document, error) {
 			return nil, err
 		}
 
-		tplOpts := yamltemplate.MetasOpts{IgnoreUnknown: ll.templateLoaderOpts.IgnoreUnknownComments}
-
-		docs, _, err := DocExtractor{resultDocSet, tplOpts}.Extract(AnnotationSchemaMatch)
+		docs, _, err := DocExtractor{resultDocSet}.Extract(AnnotationSchemaMatch)
 		if err != nil {
 			return nil, err
 		}
@@ -116,10 +113,7 @@ func (ll *LibraryLoader) filesByAnnotation(annName structmeta.AnnotationName, lo
 				return nil, err
 			}
 
-			// we're only peeking at the document to determine its "type", no need to detect (yet) if contains unknowns.
-			tplOpts := yamltemplate.MetasOpts{IgnoreUnknown: true}
-
-			values, _, err := DocExtractor{docSet, tplOpts}.Extract(annName)
+			values, _, err := DocExtractor{docSet}.Extract(annName)
 			if err != nil {
 				return nil, err
 			}

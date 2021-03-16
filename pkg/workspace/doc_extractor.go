@@ -17,8 +17,7 @@ const (
 )
 
 type DocExtractor struct {
-	DocSet    *yamlmeta.DocumentSet
-	MetasOpts yamltemplate.MetasOpts
+	DocSet *yamlmeta.DocumentSet
 }
 
 func (v DocExtractor) Extract(annName structmeta.AnnotationName) ([]*yamlmeta.Document,
@@ -37,6 +36,8 @@ func (v DocExtractor) Extract(annName structmeta.AnnotationName) ([]*yamlmeta.Do
 	return matchedDocs, nonMatchedDocs, nil
 }
 
+var ignoreUnknown = yamltemplate.MetasOpts{IgnoreUnknown: true}
+
 func (v DocExtractor) extract(docSet *yamlmeta.DocumentSet,
 	annName structmeta.AnnotationName) ([]*yamlmeta.Document, []*yamlmeta.Document, error) {
 
@@ -49,7 +50,7 @@ func (v DocExtractor) extract(docSet *yamlmeta.DocumentSet,
 		for _, meta := range doc.GetMetas() {
 			// TODO potentially use template.NewAnnotations(doc).Has(yttoverlay.AnnotationMatch)
 			// however if doc was not processed by the template, it wont have any annotations set
-			structMeta, err := yamltemplate.NewStructMetaFromMeta(meta, v.MetasOpts)
+			structMeta, err := yamltemplate.NewStructMetaFromMeta(meta, ignoreUnknown)
 			if err != nil {
 				return nil, nil, err
 			}
@@ -80,7 +81,7 @@ func (v DocExtractor) checkNonDocs(val interface{}, annName structmeta.Annotatio
 	}
 
 	for _, meta := range node.GetMetas() {
-		structMeta, err := yamltemplate.NewStructMetaFromMeta(meta, v.MetasOpts)
+		structMeta, err := yamltemplate.NewStructMetaFromMeta(meta, ignoreUnknown)
 		if err != nil {
 			return err
 		}

@@ -11,7 +11,6 @@ import (
 	"github.com/k14s/ytt/pkg/filepos"
 	"github.com/k14s/ytt/pkg/schema"
 	"github.com/k14s/ytt/pkg/yamlmeta"
-	"github.com/k14s/ytt/pkg/yamltemplate"
 	yttoverlay "github.com/k14s/ytt/pkg/yttlibrary/overlay"
 )
 
@@ -116,10 +115,8 @@ func (o DataValuesPreProcessing) templateFile(fileInLib *FileInLibrary) ([]*yaml
 		}
 	}
 
-	tplOpts := yamltemplate.MetasOpts{IgnoreUnknown: o.IgnoreUnknownComments}
-
 	// Extract _all_ data values docs from the templated result
-	valuesDocs, nonValuesDocs, err := DocExtractor{resultDocSet, tplOpts}.Extract(AnnotationDataValues)
+	valuesDocs, nonValuesDocs, err := DocExtractor{resultDocSet}.Extract(AnnotationDataValues)
 	if err != nil {
 		return nil, err
 	}
