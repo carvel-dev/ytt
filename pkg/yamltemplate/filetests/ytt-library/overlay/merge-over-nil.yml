@@ -1,0 +1,55 @@
+#@ load("@ytt:overlay", "overlay")
+#@ load("@ytt:template", "template")
+
+#! test1: overlay a map over a null
+#! test2: overlay an array over a null
+#! test3: overlay a document over a null
+
+---
+#@ def null_map():
+foo: null
+#@ end
+---
+#@ def map():
+foo:
+  bar: 42
+#@ end
+---
+
+test1: #@ overlay.apply(null_map(), map())
+
+
+---
+#@ def null_array():
+- null
+#@ end
+---
+#@ def array():
+#@overlay/match by=overlay.all
+- - bar 42
+#@ end
+---
+test2: #@ overlay.apply(null_array(), array())
+
+#@ def null_doc():
+--- null
+#@ end
+
+#@ def doc():
+#@overlay/match by=lambda i,l,r: True
+---
+test3: foo bar
+#@ end
+
+--- #@ template.replace(overlay.apply(null_doc(), doc()))
+
++++
+
+test1:
+  foo:
+    bar: 42
+---
+test2:
+- - bar 42
+---
+test3: foo bar

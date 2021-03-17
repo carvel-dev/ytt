@@ -30,9 +30,12 @@ func (o Op) mergeDocument(
 	}
 
 	for _, leftIdx := range leftIdxs {
-		replace, err := o.apply(leftDocSets[leftIdx[0]].Items[leftIdx[1]].Value, newDoc.Value, matchChildDefaults)
-		if err != nil {
-			return err
+		replace := true
+		if leftDocSets[leftIdx[0]].Items[leftIdx[1]].Value != nil {
+			replace, err = o.apply(leftDocSets[leftIdx[0]].Items[leftIdx[1]].Value, newDoc.Value, matchChildDefaults)
+			if err != nil {
+				return err
+			}
 		}
 		if replace {
 			leftDocSets[leftIdx[0]].Items[leftIdx[1]].Value = newDoc.Value
