@@ -31,6 +31,7 @@ type TemplateLoaderOpts struct {
 	IgnoreUnknownComments   bool
 	ImplicitMapKeyOverrides bool
 	StrictYAML              bool
+	SchemaEnabled           bool
 }
 
 type TemplateLoaderOptsOverrides struct {

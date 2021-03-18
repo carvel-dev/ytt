@@ -319,17 +319,25 @@ func (l *libraryValue) libraryValues(ll *LibraryLoader) (*DataValues, []*DataVal
 	}
 
 	var currSchema Schema
-	// TODO check the schema feature flag
+	schemaEnabled := ll.templateLoaderOpts.SchemaEnabled
+
 	schemaDocs, err := ll.Schemas()
-	if err != nil {
-		return nil, nil, err
-	}
-	if len(schemaDocs) > 0 {
-		currSchema, err = schema.NewDocumentSchema(schemaDocs[0])
+	if schemaEnabled {
 		if err != nil {
 			return nil, nil, err
 		}
+		if len(schemaDocs) > 0 {
+			currSchema, err = schema.NewDocumentSchema(schemaDocs[0])
+			if err != nil {
+				return nil, nil, err
+			}
+		} else {
+			currSchema = &schema.AnySchema{}
+		}
 	} else {
+		if len(schemaDocs) > 0 {
+			ll.ui.Warnf("Warning: schema document was detected, but schema experiment flag is not enabled. Did you mean to include --enable-experiment-schema?\n")
+		}
 		currSchema = &schema.AnySchema{}
 	}
 

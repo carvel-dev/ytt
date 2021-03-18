@@ -121,6 +121,7 @@ func (o *Options) RunWithFiles(in Input, ui ui.UI) Output {
 		IgnoreUnknownComments:   o.IgnoreUnknownComments,
 		ImplicitMapKeyOverrides: o.ImplicitMapKeyOverrides,
 		StrictYAML:              o.StrictYAML,
+		SchemaEnabled:           o.SchemaEnabled,
 	})
 
 	libraryCtx := workspace.LibraryExecutionContext{Current: rootLibrary, Root: rootLibrary}

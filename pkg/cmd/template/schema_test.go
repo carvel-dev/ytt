@@ -804,36 +804,56 @@ schema.yml:4 |   subnet_ids: null
 	})
 }
 
-func TestSchema_Warns_when_feature_disabled_and_schema_provided(t *testing.T) {
+func TestSchema_feature_disabled(t *testing.T) {
 	opts := cmdtpl.NewOptions()
 	opts.SchemaEnabled = false
-	stdout := bytes.NewBufferString("")
-	stderr := bytes.NewBufferString("")
-	ui := ui.NewCustomWriterTTY(false, stdout, stderr)
+	t.Run("warns when a schema is provided", func(t *testing.T) {
+		stdout := bytes.NewBufferString("")
+		stderr := bytes.NewBufferString("")
+		ui := ui.NewCustomWriterTTY(false, stdout, stderr)
 
-	schemaYAML := `#@schema/match data_values=True
+		schemaYAML := `#@schema/match data_values=True
 ---
 `
-	templateYAML := `---
+		templateYAML := `---
 rendered: true`
 
-	filesToProcess := files.NewSortedFiles([]*files.File{
-		files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
-		files.MustNewFileFromSource(files.NewBytesSource("template.yml", []byte(templateYAML))),
+		filesToProcess := files.NewSortedFiles([]*files.File{
+			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
+			files.MustNewFileFromSource(files.NewBytesSource("template.yml", []byte(templateYAML))),
+		})
+
+		expectedStdErr := "Warning: schema document was detected, but schema experiment flag is not enabled. Did you mean to include --enable-experiment-schema?\n"
+		expectedOut := "rendered: true\n"
+
+		out := opts.RunWithFiles(cmdtpl.Input{Files: filesToProcess}, ui)
+		if out.Err != nil {
+			t.Fatalf("Expected RunWithFiles to succeed, but was error: %s", out.Err)
+		}
+
+		err := assertStdoutAndStderr(bytes.NewBuffer(out.Files[0].Bytes()), stderr, expectedOut, expectedStdErr)
+		if err != nil {
+			t.Fatalf("Assertion failed:\n %s", err)
+		}
 	})
+	t.Run("errors when a schema used as a base data values", func(t *testing.T) {
+		schemaYAML := `#@schema/match data_values=True
+---
+system_domain: "foo.domain"
+`
+		templateYAML := `#@ load("@ytt:data", "data")
+---
+system_domain: #@ data.values.system_domain
+`
 
-	expectedStdErr := "Warning: schema document was detected, but schema experiment flag is not enabled. Did you mean to include --enable-experiment-schema?\n"
-	expectedOut := "rendered: true\n"
+		filesToProcess := files.NewSortedFiles([]*files.File{
+			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
+			files.MustNewFileFromSource(files.NewBytesSource("template.yml", []byte(templateYAML))),
+		})
 
-	out := opts.RunWithFiles(cmdtpl.Input{Files: filesToProcess}, ui)
-	if out.Err != nil {
-		t.Fatalf("Expected RunWithFiles to succeed, but was error: %s", out.Err)
-	}
-
-	err := assertStdoutAndStderr(bytes.NewBuffer(out.Files[0].Bytes()), stderr, expectedOut, expectedStdErr)
-	if err != nil {
-		t.Fatalf("Assertion failed:\n %s", err)
-	}
+		expectedErr := "NoneType has no .system_domain field or method"
+		assertFails(t, filesToProcess, expectedErr, opts)
+	})
 }
 
 func assertSucceeds(t *testing.T, filesToProcess []*files.File, expectedOut string, opts *cmdtpl.Options) {
