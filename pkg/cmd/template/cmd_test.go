@@ -607,42 +607,80 @@ yamlfunc yamlfunc
 }
 
 func TestPlainYAMLNoTemplateProcessing(t *testing.T) {
-	yamlTplData := []byte(`
+	t.Run("when explicitly marked as `yaml-plain`", func(t *testing.T) {
+		yamlTplData := []byte(`
 #@ load("funcs/funcs.lib.yml", "yamlfunc")
 annotation: 5 #@ 1 + 2
 text_template: (@= "string" @)`)
 
-	expectedYAMLTplData := `annotation: 5
+		expectedYAMLTplData := `annotation: 5
 text_template: (@= "string" @)
 `
 
-	filesToProcess := []*files.File{
-		files.MustNewFileFromSource(files.NewBytesSource("tpl.yml", yamlTplData)),
-	}
+		filesToProcess := []*files.File{
+			files.MustNewFileFromSource(files.NewBytesSource("tpl.yml", yamlTplData)),
+		}
 
-	filesToProcess[0].MarkTemplate(false)
+		filesToProcess[0].MarkTemplate(false)
 
-	ui := ui.NewTTY(false)
-	opts := cmdtpl.NewOptions()
+		ui := ui.NewTTY(false)
+		opts := cmdtpl.NewOptions()
 
-	out := opts.RunWithFiles(cmdtpl.Input{Files: filesToProcess}, ui)
-	if out.Err != nil {
-		t.Fatalf("Expected RunWithFiles to succeed, but was error: %s", out.Err)
-	}
+		out := opts.RunWithFiles(cmdtpl.Input{Files: filesToProcess}, ui)
+		if out.Err != nil {
+			t.Fatalf("Expected RunWithFiles to succeed, but was error: %s", out.Err)
+		}
 
-	if len(out.Files) != 1 {
-		t.Fatalf("Expected number of output files to be 1, but was %d", len(out.Files))
-	}
+		if len(out.Files) != 1 {
+			t.Fatalf("Expected number of output files to be 1, but was %d", len(out.Files))
+		}
 
-	file := out.Files[0]
+		file := out.Files[0]
 
-	if file.RelativePath() != "tpl.yml" {
-		t.Fatalf("Expected output file to be tpl.yml, but was %#v", file.RelativePath())
-	}
+		if file.RelativePath() != "tpl.yml" {
+			t.Fatalf("Expected output file to be tpl.yml, but was %#v", file.RelativePath())
+		}
 
-	if string(file.Bytes()) != expectedYAMLTplData {
-		t.Fatalf("Expected output file to have specific data, but was: >>>%s<<<", file.Bytes())
-	}
+		if string(file.Bytes()) != expectedYAMLTplData {
+			t.Fatalf("Expected output file to have specific data, but was: >>>%s<<<", file.Bytes())
+		}
+	})
+	t.Run("when YAML file contains no YAML templating", func(t *testing.T) {
+		yamlTplData := []byte(`
+# load("funcs/funcs.lib.yml", "yamlfunc")
+annotation: 5 # 1 + 2
+text_template: (@= "string" @)`)
+
+		expectedYAMLTplData := `annotation: 5
+text_template: (@= "string" @)
+`
+
+		filesToProcess := []*files.File{
+			files.MustNewFileFromSource(files.NewBytesSource("tpl.yml", yamlTplData)),
+		}
+
+		ui := ui.NewTTY(false)
+		opts := cmdtpl.NewOptions()
+
+		out := opts.RunWithFiles(cmdtpl.Input{Files: filesToProcess}, ui)
+		if out.Err != nil {
+			t.Fatalf("Expected RunWithFiles to succeed, but was error: %s", out.Err)
+		}
+
+		if len(out.Files) != 1 {
+			t.Fatalf("Expected number of output files to be 1, but was %d", len(out.Files))
+		}
+
+		file := out.Files[0]
+
+		if file.RelativePath() != "tpl.yml" {
+			t.Fatalf("Expected output file to be tpl.yml, but was %#v", file.RelativePath())
+		}
+
+		if string(file.Bytes()) != expectedYAMLTplData {
+			t.Fatalf("Expected output file to have specific data, but was: >>>%s<<<", file.Bytes())
+		}
+	})
 }
 
 func TestPlainTextNoTemplateProcessing(t *testing.T) {

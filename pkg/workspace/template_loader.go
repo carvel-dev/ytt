@@ -160,7 +160,7 @@ func (l *TemplateLoader) EvalYAML(libraryCtx LibraryExecutionContext, file *file
 	l.ui.Debugf("### ast\n")
 	docSet.Print(l.ui.DebugWriter())
 
-	if !file.IsTemplate() && !file.IsLibrary() {
+	if !file.IsTemplate() && !file.IsLibrary() || !yamltemplate.HasTemplating(docSet) {
 		return nil, docSet, nil
 	}
 

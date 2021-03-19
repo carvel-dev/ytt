@@ -34,6 +34,37 @@ type TemplateOpts struct {
 	ImplicitMapKeyOverrides bool
 }
 
+func HasTemplating(docs *yamlmeta.DocumentSet) bool {
+	return hasTemplating(docs)
+}
+
+func hasTemplating(val interface{}) bool {
+	node, ok := val.(yamlmeta.Node)
+	if !ok {
+		return false
+	}
+
+	metaOpts := MetasOpts{IgnoreUnknown: true}
+	for _, meta := range node.GetMetas() {
+		structMeta, err := NewStructMetaFromMeta(meta, metaOpts)
+		if err != nil {
+			return false
+		}
+		for _, meta := range structMeta.Annotations {
+			if meta.Name != structmeta.AnnotationNameComment {
+				return true
+			}
+		}
+	}
+
+	for _, childVal := range node.GetValues() {
+		if hasTemplating(childVal) {
+			return true
+		}
+	}
+	return false
+}
+
 func NewTemplate(name string, opts TemplateOpts) *Template {
 	return &Template{name: name, opts: opts, instructions: template.NewInstructionSet()}
 }
