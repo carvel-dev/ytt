@@ -10,7 +10,6 @@ import (
 	"github.com/k14s/starlark-go/starlark"
 	"github.com/k14s/starlark-go/starlarkstruct"
 	"github.com/k14s/ytt/pkg/filepos"
-	"github.com/k14s/ytt/pkg/schema"
 	"github.com/k14s/ytt/pkg/template/core"
 	"github.com/k14s/ytt/pkg/yamlmeta"
 	"github.com/k14s/ytt/pkg/yamltemplate"
@@ -318,30 +317,8 @@ func (l *libraryValue) libraryValues(ll *LibraryLoader) (*DataValues, []*DataVal
 		}
 	}
 
-	var currSchema Schema
-	schemaEnabled := ll.templateLoaderOpts.SchemaEnabled
-
-	schemaDocs, err := ll.Schemas()
-	if schemaEnabled {
-		if err != nil {
-			return nil, nil, err
-		}
-		if len(schemaDocs) > 0 {
-			currSchema, err = schema.NewDocumentSchema(schemaDocs[0])
-			if err != nil {
-				return nil, nil, err
-			}
-		} else {
-			currSchema = &schema.AnySchema{}
-		}
-	} else {
-		if len(schemaDocs) > 0 {
-			ll.ui.Warnf("Warning: schema document was detected, but schema experiment flag is not enabled. Did you mean to include --enable-experiment-schema?\n")
-		}
-		currSchema = &schema.AnySchema{}
-	}
-
-	dvs, foundChildDVss, err := ll.Values(append(dvss, afterLibModDVss...), currSchema)
+	schema, err := ll.Schemas()
+	dvs, foundChildDVss, err := ll.Values(append(dvss, afterLibModDVss...), schema)
 	if err != nil {
 		return nil, nil, err
 	}

@@ -46,30 +46,36 @@ func NewLibraryLoader(libraryCtx LibraryExecutionContext,
 	}
 }
 
-func (ll *LibraryLoader) Schemas() ([]*yamlmeta.Document, error) {
+func (ll *LibraryLoader) Schemas() (Schema, error) {
 	loader := NewTemplateLoader(NewEmptyDataValues(), nil, ll.ui, ll.templateLoaderOpts, ll.libraryExecFactory, &schema.AnySchema{})
 
 	schemaFiles, err := ll.schemaFiles(loader)
 	if err != nil {
 		return nil, err
 	}
+	if ll.templateLoaderOpts.SchemaEnabled {
+		if len(schemaFiles) > 0 {
+			libraryCtx := LibraryExecutionContext{Current: schemaFiles[0].Library, Root: NewRootLibrary(nil)}
+
+			_, resultDocSet, err := loader.EvalYAML(libraryCtx, schemaFiles[0].File)
+			if err != nil {
+				return nil, err
+			}
+
+			docs, _, err := DocExtractor{resultDocSet}.Extract(AnnotationSchemaMatch)
+			if err != nil {
+				return nil, err
+			}
+			return schema.NewDocumentSchema(docs[0])
+		}
+		return schema.NullSchema{}, nil
+	}
 
 	if len(schemaFiles) > 0 {
-		libraryCtx := LibraryExecutionContext{Current: schemaFiles[0].Library, Root: NewRootLibrary(nil)}
-
-		_, resultDocSet, err := loader.EvalYAML(libraryCtx, schemaFiles[0].File)
-		if err != nil {
-			return nil, err
-		}
-
-		docs, _, err := DocExtractor{resultDocSet}.Extract(AnnotationSchemaMatch)
-		if err != nil {
-			return nil, err
-		}
-
-		return docs, nil
+		ll.ui.Warnf("Warning: schema document was detected, but schema experiment flag is not enabled. Did you mean to include --enable-experiment-schema?\n")
 	}
-	return nil, nil
+	return &schema.AnySchema{}, nil
+
 }
 
 func (ll *LibraryLoader) Values(valuesOverlays []*DataValues, schema Schema) (*DataValues, []*DataValues, error) {
