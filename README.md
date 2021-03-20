@@ -2,6 +2,7 @@
 
 # ytt
 
+- Discover `ytt` in [video](https://youtu.be/KbB5tI_g3bo)
 * Play: Jump right in by trying out the [online playground](https://carvel.dev/ytt/#playground)
 * For more information about annotations, data values, overlays and other features see [Docs](https://carvel.dev/ytt/docs/latest/) page
 * Slack: [#carvel in Kubernetes slack](https://slack.kubernetes.io/)
