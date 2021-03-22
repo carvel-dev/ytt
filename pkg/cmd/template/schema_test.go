@@ -823,7 +823,7 @@ rendered: true`
 			files.MustNewFileFromSource(files.NewBytesSource("template.yml", []byte(templateYAML))),
 		})
 
-		expectedStdErr := "Warning: schema document was detected, but schema experiment flag is not enabled. Did you mean to include --enable-experiment-schema?\n"
+		expectedStdErr := "Warning: schema document was detected (schema.yml), but schema experiment flag is not enabled. Did you mean to include --enable-experiment-schema?\n"
 		expectedOut := "rendered: true\n"
 
 		out := opts.RunWithFiles(cmdtpl.Input{Files: filesToProcess}, ui)

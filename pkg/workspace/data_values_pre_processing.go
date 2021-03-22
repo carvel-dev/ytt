@@ -37,7 +37,7 @@ func (o DataValuesPreProcessing) Apply() (*DataValues, []*DataValues, error) {
 }
 
 func (o DataValuesPreProcessing) apply(files []*FileInLibrary) (*DataValues, []*DataValues, error) {
-	_, schemaEnabled := o.loader.schema.(*schema.DocumentSchema)
+	_, checkSchema := o.loader.schema.(*schema.DocumentSchema)
 
 	allDvs, err := o.collectDataValuesDocs(files)
 	if err != nil {
@@ -61,7 +61,7 @@ func (o DataValuesPreProcessing) apply(files []*FileInLibrary) (*DataValues, []*
 		default:
 			dataValuesDoc, err = o.overlay(dataValuesDoc, dv.Doc)
 			if err != nil {
-				if schemaEnabled {
+				if checkSchema {
 					// schema error is more direct than overlay error
 					typeCheck := o.typeAndCheck(dv.Doc)
 					if len(typeCheck.Violations) > 0 {
@@ -71,7 +71,7 @@ func (o DataValuesPreProcessing) apply(files []*FileInLibrary) (*DataValues, []*
 				return nil, nil, err
 			}
 		}
-		if schemaEnabled {
+		if checkSchema {
 			typeCheck := o.typeAndCheck(dataValuesDoc)
 			if len(typeCheck.Violations) > 0 {
 				return nil, nil, typeCheck

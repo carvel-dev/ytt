@@ -72,7 +72,7 @@ func (ll *LibraryLoader) Schemas() (Schema, error) {
 	}
 
 	if len(schemaFiles) > 0 {
-		ll.ui.Warnf("Warning: schema document was detected, but schema experiment flag is not enabled. Did you mean to include --enable-experiment-schema?\n")
+		ll.ui.Warnf("Warning: schema document was detected (%s), but schema experiment flag is not enabled. Did you mean to include --enable-experiment-schema?\n", schemaFiles[0].File.RelativePath())
 	}
 	return &schema.AnySchema{}, nil
 
