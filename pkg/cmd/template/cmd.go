@@ -126,15 +126,10 @@ func (o *Options) RunWithFiles(in Input, ui ui.UI) Output {
 	libraryCtx := workspace.LibraryExecutionContext{Current: rootLibrary, Root: rootLibrary}
 	rootLibraryLoader := libraryExecutionFactory.New(libraryCtx)
 
-	currSchema, err := rootLibraryLoader.Schema()
-	if err != nil {
-		return Output{Err: err}
-	}
-
 	var values *workspace.DataValues
 	var libraryValues []*workspace.DataValues
 
-	values, libraryValues, err = rootLibraryLoader.Values(valuesOverlays, currSchema)
+	values, libraryValues, err = rootLibraryLoader.Values(valuesOverlays)
 	if err != nil {
 		return Output{Err: err}
 	}

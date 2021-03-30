@@ -317,8 +317,7 @@ func (l *libraryValue) libraryValues(ll *LibraryLoader) (*DataValues, []*DataVal
 		}
 	}
 
-	schema, err := ll.Schema()
-	dvs, foundChildDVss, err := ll.Values(append(dvss, afterLibModDVss...), schema)
+	dvs, foundChildDVss, err := ll.Values(append(dvss, afterLibModDVss...))
 	if err != nil {
 		return nil, nil, err
 	}

@@ -17,6 +17,7 @@ import (
 type DataValuesPreProcessing struct {
 	valuesFiles           []*FileInLibrary
 	valuesOverlays        []*DataValues
+	schema                Schema
 	loader                *TemplateLoader
 	IgnoreUnknownComments bool // TODO remove?
 }
@@ -37,7 +38,7 @@ func (o DataValuesPreProcessing) Apply() (*DataValues, []*DataValues, error) {
 }
 
 func (o DataValuesPreProcessing) apply(files []*FileInLibrary) (*DataValues, []*DataValues, error) {
-	_, checkSchema := o.loader.schema.(*schema.DocumentSchema)
+	_, checkSchema := o.schema.(*schema.DocumentSchema)
 
 	allDvs, err := o.collectDataValuesDocs(files)
 	if err != nil {
@@ -52,7 +53,7 @@ func (o DataValuesPreProcessing) apply(files []*FileInLibrary) (*DataValues, []*
 		case dv.HasLibRef():
 			otherLibraryDVs = append(otherLibraryDVs, dv)
 		case resultDVsDoc == nil:
-			err := o.loader.schema.ValidateWithValues(1)
+			err := o.schema.ValidateWithValues(1)
 			if err != nil {
 				return nil, nil, err
 			}
@@ -91,7 +92,7 @@ func (o DataValuesPreProcessing) apply(files []*FileInLibrary) (*DataValues, []*
 
 func (o DataValuesPreProcessing) collectDataValuesDocs(files []*FileInLibrary) ([]*DataValues, error) {
 	var allDvs []*DataValues
-	if defaults := o.loader.schema.DefaultDataValues(); defaults != nil {
+	if defaults := o.schema.DefaultDataValues(); defaults != nil {
 		dv, err := NewDataValues(defaults)
 		if err != nil {
 			return nil, err
@@ -116,7 +117,7 @@ func (o DataValuesPreProcessing) collectDataValuesDocs(files []*FileInLibrary) (
 }
 
 func (o DataValuesPreProcessing) typeAndCheck(dataValuesDoc *yamlmeta.Document) yamlmeta.TypeCheck {
-	chk := o.loader.schema.AssignType(dataValuesDoc)
+	chk := o.schema.AssignType(dataValuesDoc)
 	if len(chk.Violations) > 0 {
 		return chk
 	}
