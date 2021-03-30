@@ -46,7 +46,7 @@ func NewLibraryLoader(libraryCtx LibraryExecutionContext,
 	}
 }
 
-func (ll *LibraryLoader) Schemas() (Schema, error) {
+func (ll *LibraryLoader) Schema() (Schema, error) {
 	loader := NewTemplateLoader(NewEmptyDataValues(), nil, ll.ui, ll.templateLoaderOpts, ll.libraryExecFactory, &schema.AnySchema{})
 
 	schemaFiles, err := ll.schemaFiles(loader)

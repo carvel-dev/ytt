@@ -45,21 +45,21 @@ func (o DataValuesPreProcessing) apply(files []*FileInLibrary) (*DataValues, []*
 	}
 
 	// merge all Data Values YAML documents into one
-	var dvsForOtherLibraries []*DataValues
-	var dataValuesDoc *yamlmeta.Document
+	var otherLibraryDVs []*DataValues
+	var resultDVsDoc *yamlmeta.Document
 	for _, dv := range allDvs {
 		switch {
 		case dv.HasLibRef():
-			dvsForOtherLibraries = append(dvsForOtherLibraries, dv)
-		case dataValuesDoc == nil:
+			otherLibraryDVs = append(otherLibraryDVs, dv)
+		case resultDVsDoc == nil:
 			err := o.loader.schema.ValidateWithValues(1)
 			if err != nil {
 				return nil, nil, err
 			}
 
-			dataValuesDoc = dv.Doc
+			resultDVsDoc = dv.Doc
 		default:
-			dataValuesDoc, err = o.overlay(dataValuesDoc, dv.Doc)
+			resultDVsDoc, err = o.overlay(resultDVsDoc, dv.Doc)
 			if err != nil {
 				if checkSchema {
 					// schema error is more direct than overlay error
@@ -72,21 +72,21 @@ func (o DataValuesPreProcessing) apply(files []*FileInLibrary) (*DataValues, []*
 			}
 		}
 		if checkSchema {
-			typeCheck := o.typeAndCheck(dataValuesDoc)
+			typeCheck := o.typeAndCheck(resultDVsDoc)
 			if len(typeCheck.Violations) > 0 {
 				return nil, nil, typeCheck
 			}
 		}
 	}
 
-	if dataValuesDoc == nil {
-		dataValuesDoc = o.NewEmptyDataValuesDocument()
+	if resultDVsDoc == nil {
+		resultDVsDoc = o.NewEmptyDataValuesDocument()
 	}
-	dataValues, err := NewDataValues(dataValuesDoc)
+	dataValues, err := NewDataValues(resultDVsDoc)
 	if err != nil {
 		return nil, nil, err
 	}
-	return dataValues, dvsForOtherLibraries, nil
+	return dataValues, otherLibraryDVs, nil
 }
 
 func (o DataValuesPreProcessing) collectDataValuesDocs(files []*FileInLibrary) ([]*DataValues, error) {
@@ -115,15 +115,13 @@ func (o DataValuesPreProcessing) collectDataValuesDocs(files []*FileInLibrary) (
 	return allDvs, nil
 }
 
-func (o DataValuesPreProcessing) typeAndCheck(dataValuesDoc *yamlmeta.Document) (chk yamlmeta.TypeCheck) {
-	chk = o.loader.schema.AssignType(dataValuesDoc)
+func (o DataValuesPreProcessing) typeAndCheck(dataValuesDoc *yamlmeta.Document) yamlmeta.TypeCheck {
+	chk := o.loader.schema.AssignType(dataValuesDoc)
 	if len(chk.Violations) > 0 {
-		return
+		return chk
 	}
 
-	typeCheck := dataValuesDoc.Check()
-	chk.Violations = append(chk.Violations, typeCheck.Violations...)
-	return
+	return dataValuesDoc.Check()
 }
 
 func (o DataValuesPreProcessing) allFileDescs(files []*FileInLibrary) string {
