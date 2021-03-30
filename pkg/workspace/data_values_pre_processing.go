@@ -55,6 +55,13 @@ func (o DataValuesPreProcessing) apply(files []*FileInLibrary) (*DataValues, []*
 			case dv.HasLib():
 				libraryValues = append(libraryValues, dv)
 			case values == nil:
+				// Confirmed presence of non private lib data value
+				// if schema is a NullSchema, error in due to root lvl data value with no root lvl schema
+				err := o.loader.schema.ValidateWithValues(1)
+				if err != nil {
+					return nil, nil, err
+				}
+
 				values = valuesDoc
 			default:
 				var err error
@@ -62,6 +69,20 @@ func (o DataValuesPreProcessing) apply(files []*FileInLibrary) (*DataValues, []*
 				if err != nil {
 					return nil, nil, err
 				}
+			}
+		}
+
+		if _, ok := o.loader.schema.(*schema.DocumentSchema); ok {
+			outerTypeCheck := o.loader.schema.AssignType(values)
+			if len(outerTypeCheck.Violations) > 0 {
+				return nil, nil, outerTypeCheck
+			}
+
+			typeCheck := values.Check()
+			outerTypeCheck.Violations = append(outerTypeCheck.Violations, typeCheck.Violations...)
+
+			if len(outerTypeCheck.Violations) > 0 {
+				return nil, nil, outerTypeCheck
 			}
 		}
 	}
@@ -96,23 +117,6 @@ func (o DataValuesPreProcessing) templateFile(fileInLib *FileInLibrary) ([]*yaml
 	_, resultDocSet, err := o.loader.EvalYAML(libraryCtx, fileInLib.File)
 	if err != nil {
 		return nil, err
-	}
-
-	if _, ok := o.loader.schema.(*schema.AnySchema); !ok {
-		var outerTypeCheck yamlmeta.TypeCheck
-		// Skip first document because the parser inserts a new doc start at the beginning of every doc
-		for _, doc := range resultDocSet.Items[1:] {
-			outerTypeCheck = o.loader.schema.AssignType(doc)
-			if len(outerTypeCheck.Violations) > 0 {
-				return resultDocSet.Items, outerTypeCheck
-			}
-
-			typeCheck := doc.Check()
-			outerTypeCheck.Violations = append(outerTypeCheck.Violations, typeCheck.Violations...)
-		}
-		if len(outerTypeCheck.Violations) > 0 {
-			return resultDocSet.Items, outerTypeCheck
-		}
 	}
 
 	// Extract _all_ data values docs from the templated result
@@ -160,6 +164,22 @@ func (o DataValuesPreProcessing) overlayValuesOverlays(valuesDoc *yamlmeta.Docum
 		}
 	}
 
+	if _, ok := o.loader.schema.(*schema.DocumentSchema); ok {
+		// loop through values overlays to ensure they conform to schema
+		for _, dv := range o.valuesOverlays {
+			var typeCheck yamlmeta.TypeCheck
+
+			typeCheck = o.loader.schema.AssignType(dv.Doc)
+			if len(typeCheck.Violations) > 0 {
+				return nil, typeCheck
+			}
+
+			typeCheck = dv.Doc.Check()
+			if len(typeCheck.Violations) > 0 {
+				return nil, typeCheck
+			}
+		}
+	}
 	var result *yamlmeta.Document
 
 	// by default return itself
