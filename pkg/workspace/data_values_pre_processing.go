@@ -62,11 +62,6 @@ func (o DataValuesPreProcessing) apply(files []*FileInLibrary) (*DataValues, []*
 		} else {
 			resultDVsDoc, err = o.overlay(resultDVsDoc, dv.Doc)
 			if err != nil {
-				// schema error is more direct than overlay error
-				typeCheck := o.typeAndCheck(dv.Doc)
-				if len(typeCheck.Violations) > 0 {
-					return nil, nil, typeCheck
-				}
 				return nil, nil, err
 			}
 		}
