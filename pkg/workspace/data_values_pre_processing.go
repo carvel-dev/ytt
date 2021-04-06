@@ -38,8 +38,6 @@ func (o DataValuesPreProcessing) Apply() (*DataValues, []*DataValues, error) {
 }
 
 func (o DataValuesPreProcessing) apply(files []*FileInLibrary) (*DataValues, []*DataValues, error) {
-	_, checkSchema := o.schema.(*schema.DocumentSchema)
-
 	allDvs, err := o.collectDataValuesDocs(files)
 	if err != nil {
 		return nil, nil, err
@@ -49,39 +47,37 @@ func (o DataValuesPreProcessing) apply(files []*FileInLibrary) (*DataValues, []*
 	var otherLibraryDVs []*DataValues
 	var resultDVsDoc *yamlmeta.Document
 	for _, dv := range allDvs {
-		switch {
-		case dv.HasLibRef():
+		if dv.HasLibRef() {
 			otherLibraryDVs = append(otherLibraryDVs, dv)
-		case resultDVsDoc == nil:
+			continue
+		}
+
+		if resultDVsDoc == nil {
 			err := o.schema.ValidateWithValues(1)
 			if err != nil {
 				return nil, nil, err
 			}
 
 			resultDVsDoc = dv.Doc
-		default:
+		} else {
 			resultDVsDoc, err = o.overlay(resultDVsDoc, dv.Doc)
 			if err != nil {
-				if checkSchema {
-					// schema error is more direct than overlay error
-					typeCheck := o.typeAndCheck(dv.Doc)
-					if len(typeCheck.Violations) > 0 {
-						return nil, nil, typeCheck
-					}
+				// schema error is more direct than overlay error
+				typeCheck := o.typeAndCheck(dv.Doc)
+				if len(typeCheck.Violations) > 0 {
+					return nil, nil, typeCheck
 				}
 				return nil, nil, err
 			}
 		}
-		if checkSchema {
-			typeCheck := o.typeAndCheck(resultDVsDoc)
-			if len(typeCheck.Violations) > 0 {
-				return nil, nil, typeCheck
-			}
+		typeCheck := o.typeAndCheck(resultDVsDoc)
+		if len(typeCheck.Violations) > 0 {
+			return nil, nil, typeCheck
 		}
 	}
 
 	if resultDVsDoc == nil {
-		resultDVsDoc = o.NewEmptyDataValuesDocument()
+		resultDVsDoc = o.newEmptyDataValuesDocument()
 	}
 	dataValues, err := NewDataValues(resultDVsDoc)
 	if err != nil {
@@ -118,11 +114,13 @@ func (o DataValuesPreProcessing) collectDataValuesDocs(files []*FileInLibrary) (
 
 func (o DataValuesPreProcessing) typeAndCheck(dataValuesDoc *yamlmeta.Document) yamlmeta.TypeCheck {
 	chk := o.schema.AssignType(dataValuesDoc)
-	if len(chk.Violations) > 0 {
-		return chk
+	if _, checkable := o.schema.(*schema.DocumentSchema); checkable {
+		if len(chk.Violations) > 0 {
+			return chk
+		}
+		chk = dataValuesDoc.Check()
 	}
-
-	return dataValuesDoc.Check()
+	return chk
 }
 
 func (o DataValuesPreProcessing) allFileDescs(files []*FileInLibrary) string {
@@ -180,7 +178,7 @@ func (o DataValuesPreProcessing) overlay(valuesDoc, newValuesDoc *yamlmeta.Docum
 	return newLeft.(*yamlmeta.DocumentSet).Items[0], nil
 }
 
-func (o DataValuesPreProcessing) NewEmptyDataValuesDocument() *yamlmeta.Document {
+func (o DataValuesPreProcessing) newEmptyDataValuesDocument() *yamlmeta.Document {
 	return &yamlmeta.Document{
 		Value:    nil,
 		Position: filepos.NewUnknownPosition(),
