@@ -5,6 +5,7 @@ package yamltemplate_test
 
 import (
 	"fmt"
+	"io"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -67,9 +68,14 @@ func TestYAMLTemplate(t *testing.T) {
 		if len(pieces) != 2 {
 			t.Fatalf("expected file %s to include +++ separator", filePath)
 		}
-
-		resultStr, testErr := evalTemplate(t, pieces[0])
 		expectedStr := pieces[1]
+
+		includePositions := false
+		if strings.HasPrefix(expectedStr, "OUTPUT POSITION:") {
+			includePositions = true
+		}
+
+		resultStr, testErr := evalTemplate(t, pieces[0], includePositions)
 
 		if strings.HasPrefix(expectedStr, "ERR: ") {
 			if testErr == nil {
@@ -78,6 +84,12 @@ func TestYAMLTemplate(t *testing.T) {
 				resultStr := testErr.UserErr().Error()
 				resultStr = regexp.MustCompile("__ytt_tpl\\d+_").ReplaceAllString(resultStr, "__ytt_tplXXX_")
 				err = expectEquals(t, resultStr, strings.ReplaceAll(strings.TrimPrefix(expectedStr, "ERR: "), "__YTT_VERSION__", version.Version))
+			}
+		} else if includePositions {
+			if testErr == nil {
+				err = expectEquals(t, resultStr, strings.ReplaceAll(strings.TrimPrefix(expectedStr, "OUTPUT POSITION:"), "__YTT_VERSION__", version.Version))
+			} else {
+				err = testErr.TestErr()
 			}
 		} else {
 			if testErr == nil {
@@ -116,7 +128,7 @@ type testErr struct {
 func (e testErr) UserErr() error { return e.realErr }
 func (e testErr) TestErr() error { return e.testErr }
 
-func evalTemplate(t *testing.T, data string) (string, *testErr) {
+func evalTemplate(t *testing.T, data string, includePositions bool) (string, *testErr) {
 	docSet, err := yamlmeta.NewDocumentSetFromBytes([]byte(data), yamlmeta.DocSetOpts{AssociatedName: "stdin"})
 	if err != nil {
 		return "", &testErr{err, fmt.Errorf("unmarshal error: %v", err)}
@@ -150,6 +162,18 @@ func evalTemplate(t *testing.T, data string) (string, *testErr) {
 	if showTemplateCode == "t" {
 		fmt.Printf("### result ast:\n")
 		typedNewVal.(*yamlmeta.DocumentSet).Print(os.Stdout)
+	}
+
+	if includePositions {
+		printerFunc := func(w io.Writer) yamlmeta.DocumentPrinter {
+			return yamlmeta.WrappedFilePositionPrinter{yamlmeta.NewFilePositionPrinter(w)}
+		}
+		documentSet := typedNewVal.(*yamlmeta.DocumentSet)
+		combinedDocBytes, err := documentSet.AsBytesWithPrinter(printerFunc)
+		if err != nil {
+			return "", &testErr{err, fmt.Errorf("expected result docSet to be printable: %v", err)}
+		}
+		return string(combinedDocBytes), nil
 	}
 
 	resultBytes, err := typedNewVal.AsBytes()
