@@ -70,12 +70,7 @@ func TestYAMLTemplate(t *testing.T) {
 		}
 		expectedStr := pieces[1]
 
-		includePositions := false
-		if strings.HasPrefix(expectedStr, "OUTPUT POSITION:") {
-			includePositions = true
-		}
-
-		resultStr, testErr := evalTemplate(t, pieces[0], includePositions)
+		result, testErr := evalTemplate(t, pieces[0])
 
 		if strings.HasPrefix(expectedStr, "ERR: ") {
 			if testErr == nil {
@@ -85,15 +80,25 @@ func TestYAMLTemplate(t *testing.T) {
 				resultStr = regexp.MustCompile("__ytt_tpl\\d+_").ReplaceAllString(resultStr, "__ytt_tplXXX_")
 				err = expectEquals(t, resultStr, strings.ReplaceAll(strings.TrimPrefix(expectedStr, "ERR: "), "__YTT_VERSION__", version.Version))
 			}
-		} else if includePositions {
+		} else if strings.HasPrefix(expectedStr, "OUTPUT POSITION:") {
 			if testErr == nil {
-				err = expectEquals(t, resultStr, strings.ReplaceAll(strings.TrimPrefix(expectedStr, "OUTPUT POSITION:"), "__YTT_VERSION__", version.Version))
+				resultStr, strErr := asFilePositionsStr(result)
+				if strErr != nil {
+					err = strErr
+				} else {
+					err = expectEquals(t, resultStr, strings.ReplaceAll(strings.TrimPrefix(expectedStr, "OUTPUT POSITION:"), "__YTT_VERSION__", version.Version))
+				}
 			} else {
 				err = testErr.TestErr()
 			}
 		} else {
 			if testErr == nil {
-				err = expectEquals(t, resultStr, expectedStr)
+				resultStr, strErr := asString(result)
+				if strErr != nil {
+					err = strErr
+				} else {
+					err = expectEquals(t, resultStr, expectedStr)
+				}
 			} else {
 				err = testErr.TestErr()
 			}
@@ -120,6 +125,32 @@ func TestYAMLTemplate(t *testing.T) {
 	}
 }
 
+func asFilePositionsStr(result interface{}) (string, error) {
+	printerFunc := func(w io.Writer) yamlmeta.DocumentPrinter {
+		return yamlmeta.WrappedFilePositionPrinter{yamlmeta.NewFilePositionPrinter(w)}
+	}
+	docSet := result.(*yamlmeta.DocumentSet)
+	combinedDocBytes, err := docSet.AsBytesWithPrinter(printerFunc)
+	if err != nil {
+		return "", fmt.Errorf("expected result docSet to be printable: %v", err)
+	}
+	return string(combinedDocBytes), nil
+}
+
+func asString(result interface{}) (string, error) {
+	typedNewVal, ok := result.(interface{ AsBytes() ([]byte, error) })
+	if !ok {
+		return "", fmt.Errorf("expected eval result to be marshalable")
+	}
+
+	resultBytes, err := typedNewVal.AsBytes()
+	if err != nil {
+		return "", fmt.Errorf("marshal error: %v", err)
+	}
+
+	return string(resultBytes), nil
+}
+
 type testErr struct {
 	realErr error // error returned to the user
 	testErr error // error wrapped with helpful test context
@@ -128,15 +159,15 @@ type testErr struct {
 func (e testErr) UserErr() error { return e.realErr }
 func (e testErr) TestErr() error { return e.testErr }
 
-func evalTemplate(t *testing.T, data string, includePositions bool) (string, *testErr) {
+func evalTemplate(t *testing.T, data string) (interface{}, *testErr) {
 	docSet, err := yamlmeta.NewDocumentSetFromBytes([]byte(data), yamlmeta.DocSetOpts{AssociatedName: "stdin"})
 	if err != nil {
-		return "", &testErr{err, fmt.Errorf("unmarshal error: %v", err)}
+		return nil, &testErr{err, fmt.Errorf("unmarshal error: %v", err)}
 	}
 
 	compiledTemplate, err := yamltemplate.NewTemplate("stdin", yamltemplate.TemplateOpts{}).Compile(docSet)
 	if err != nil {
-		return "", &testErr{err, fmt.Errorf("build error: %v", err)}
+		return nil, &testErr{err, fmt.Errorf("build error: %v", err)}
 	}
 
 	if showTemplateCode == "t" {
@@ -151,37 +182,19 @@ func evalTemplate(t *testing.T, data string, includePositions bool) (string, *te
 
 	_, newVal, err := compiledTemplate.Eval(thread, loader)
 	if err != nil {
-		return "", &testErr{err, fmt.Errorf("eval error: %v\ncode:\n%s", err, compiledTemplate.DebugCodeAsString())}
+		return nil, &testErr{err, fmt.Errorf("eval error: %v\ncode:\n%s", err, compiledTemplate.DebugCodeAsString())}
 	}
 
 	typedNewVal, ok := newVal.(interface{ AsBytes() ([]byte, error) })
 	if !ok {
-		return "", &testErr{err, fmt.Errorf("expected eval result to be marshalable")}
+		return nil, &testErr{err, fmt.Errorf("expected eval result to be marshalable")}
 	}
 
 	if showTemplateCode == "t" {
 		fmt.Printf("### result ast:\n")
 		typedNewVal.(*yamlmeta.DocumentSet).Print(os.Stdout)
 	}
-
-	if includePositions {
-		printerFunc := func(w io.Writer) yamlmeta.DocumentPrinter {
-			return yamlmeta.WrappedFilePositionPrinter{yamlmeta.NewFilePositionPrinter(w)}
-		}
-		documentSet := typedNewVal.(*yamlmeta.DocumentSet)
-		combinedDocBytes, err := documentSet.AsBytesWithPrinter(printerFunc)
-		if err != nil {
-			return "", &testErr{err, fmt.Errorf("expected result docSet to be printable: %v", err)}
-		}
-		return string(combinedDocBytes), nil
-	}
-
-	resultBytes, err := typedNewVal.AsBytes()
-	if err != nil {
-		return "", &testErr{err, fmt.Errorf("marshal error: %v", err)}
-	}
-
-	return string(resultBytes), nil
+	return typedNewVal, nil
 }
 
 func expectEquals(t *testing.T, resultStr, expectedStr string) error {
