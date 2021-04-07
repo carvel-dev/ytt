@@ -8,7 +8,6 @@ import (
 
 	"github.com/k14s/ytt/pkg/cmd/ui"
 	"github.com/k14s/ytt/pkg/files"
-	"github.com/k14s/ytt/pkg/schema"
 	"github.com/k14s/ytt/pkg/workspace"
 	"github.com/k14s/ytt/pkg/yamlmeta"
 	"github.com/spf13/cobra"
@@ -121,37 +120,16 @@ func (o *Options) RunWithFiles(in Input, ui ui.UI) Output {
 		IgnoreUnknownComments:   o.IgnoreUnknownComments,
 		ImplicitMapKeyOverrides: o.ImplicitMapKeyOverrides,
 		StrictYAML:              o.StrictYAML,
+		SchemaEnabled:           o.SchemaEnabled,
 	})
 
 	libraryCtx := workspace.LibraryExecutionContext{Current: rootLibrary, Root: rootLibrary}
-	libraryLoader := libraryExecutionFactory.New(libraryCtx)
+	rootLibraryLoader := libraryExecutionFactory.New(libraryCtx)
 
-	schemaDocs, err := libraryLoader.Schemas()
-	if err != nil {
-		return Output{Err: err}
-	}
-
-	var currSchema workspace.Schema
 	var values *workspace.DataValues
 	var libraryValues []*workspace.DataValues
 
-	if o.SchemaEnabled {
-		if len(schemaDocs) > 0 {
-			currSchema, err = schema.NewDocumentSchema(schemaDocs[0])
-			if err != nil {
-				return Output{Err: err}
-			}
-		} else {
-			currSchema = schema.NullSchema{}
-		}
-	} else {
-		if len(schemaDocs) > 0 {
-			ui.Warnf("Warning: schema document was detected, but schema experiment flag is not enabled. Did you mean to include --enable-experiment-schema?\n")
-		}
-		currSchema = &schema.AnySchema{}
-	}
-
-	values, libraryValues, err = libraryLoader.Values(valuesOverlays, currSchema)
+	values, libraryValues, err = rootLibraryLoader.Values(valuesOverlays)
 	if err != nil {
 		return Output{Err: err}
 	}
@@ -166,7 +144,7 @@ func (o *Options) RunWithFiles(in Input, ui ui.UI) Output {
 		}
 	}
 
-	result, err := libraryLoader.Eval(values, libraryValues)
+	result, err := rootLibraryLoader.Eval(values, libraryValues)
 	if err != nil {
 		return Output{Err: err}
 	}

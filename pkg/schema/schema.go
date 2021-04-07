@@ -73,10 +73,6 @@ func NewMapType(m *yamlmeta.Map) (*MapType, error) {
 		}
 		mapType.Items = append(mapType.Items, mapItemType)
 	}
-	annotations := template.NewAnnotations(m)
-	if _, nullable := annotations[AnnotationSchemaNullable]; nullable {
-		mapType.Items = nil
-	}
 
 	return mapType, nil
 }
@@ -211,15 +207,15 @@ func (s *DocumentSchema) AssignType(typeable yamlmeta.Typeable) yamlmeta.TypeChe
 	return s.Allowed.AssignTypeTo(typeable)
 }
 
-func (as *AnySchema) AsDataValue() *yamlmeta.Document {
+func (as *AnySchema) DefaultDataValues() *yamlmeta.Document {
 	return nil
 }
 
-func (n NullSchema) AsDataValue() *yamlmeta.Document {
+func (n NullSchema) DefaultDataValues() *yamlmeta.Document {
 	return nil
 }
 
-func (s *DocumentSchema) AsDataValue() *yamlmeta.Document {
+func (s *DocumentSchema) DefaultDataValues() *yamlmeta.Document {
 	return s.defaultDVs
 }
 

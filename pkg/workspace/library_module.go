@@ -10,7 +10,6 @@ import (
 	"github.com/k14s/starlark-go/starlark"
 	"github.com/k14s/starlark-go/starlarkstruct"
 	"github.com/k14s/ytt/pkg/filepos"
-	"github.com/k14s/ytt/pkg/schema"
 	"github.com/k14s/ytt/pkg/template/core"
 	"github.com/k14s/ytt/pkg/yamlmeta"
 	"github.com/k14s/ytt/pkg/yamltemplate"
@@ -306,7 +305,7 @@ func (l *libraryValue) libraryValues(ll *LibraryLoader) (*DataValues, []*DataVal
 	for _, dv := range l.dataValuess {
 		matchingDVs := dv.UsedInLibrary(LibRefPiece{Path: l.path, Alias: l.alias})
 		if matchingDVs != nil {
-			if matchingDVs.HasLib() {
+			if matchingDVs.HasLibRef() {
 				childDVss = append(childDVss, matchingDVs)
 			} else {
 				if matchingDVs.AfterLibMod {
@@ -318,7 +317,7 @@ func (l *libraryValue) libraryValues(ll *LibraryLoader) (*DataValues, []*DataVal
 		}
 	}
 
-	dvs, foundChildDVss, err := ll.Values(append(dvss, afterLibModDVss...), &schema.AnySchema{})
+	dvs, foundChildDVss, err := ll.Values(append(dvss, afterLibModDVss...))
 	if err != nil {
 		return nil, nil, err
 	}

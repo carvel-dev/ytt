@@ -46,47 +46,55 @@ func NewLibraryLoader(libraryCtx LibraryExecutionContext,
 	}
 }
 
-func (ll *LibraryLoader) Schemas() ([]*yamlmeta.Document, error) {
-	loader := NewTemplateLoader(NewEmptyDataValues(), nil, ll.ui, ll.templateLoaderOpts, ll.libraryExecFactory, &schema.AnySchema{})
+func (ll *LibraryLoader) Schema() (Schema, error) {
+	loader := NewTemplateLoader(NewEmptyDataValues(), nil, ll.ui, ll.templateLoaderOpts, ll.libraryExecFactory)
 
 	schemaFiles, err := ll.schemaFiles(loader)
 	if err != nil {
 		return nil, err
 	}
+	if ll.templateLoaderOpts.SchemaEnabled {
+		if len(schemaFiles) > 0 {
+			libraryCtx := LibraryExecutionContext{Current: schemaFiles[0].Library, Root: NewRootLibrary(nil)}
+
+			_, resultDocSet, err := loader.EvalYAML(libraryCtx, schemaFiles[0].File)
+			if err != nil {
+				return nil, err
+			}
+
+			docs, _, err := DocExtractor{resultDocSet}.Extract(AnnotationSchemaMatch)
+			if err != nil {
+				return nil, err
+			}
+			return schema.NewDocumentSchema(docs[0])
+		}
+		return schema.NullSchema{}, nil
+	}
 
 	if len(schemaFiles) > 0 {
-		libraryCtx := LibraryExecutionContext{Current: schemaFiles[0].Library, Root: NewRootLibrary(nil)}
-
-		_, resultDocSet, err := loader.EvalYAML(libraryCtx, schemaFiles[0].File)
-		if err != nil {
-			return nil, err
-		}
-
-		docs, _, err := DocExtractor{resultDocSet}.Extract(AnnotationSchemaMatch)
-		if err != nil {
-			return nil, err
-		}
-
-		return docs, nil
+		ll.ui.Warnf("Warning: schema document was detected (%s), but schema experiment flag is not enabled. Did you mean to include --enable-experiment-schema?\n", schemaFiles[0].File.RelativePath())
 	}
-	return nil, nil
+	return &schema.AnySchema{}, nil
+
 }
 
-func (ll *LibraryLoader) Values(valuesOverlays []*DataValues, schema Schema) (*DataValues, []*DataValues, error) {
-	loader := NewTemplateLoader(NewEmptyDataValues(), nil, ll.ui, ll.templateLoaderOpts, ll.libraryExecFactory, schema)
+func (ll *LibraryLoader) Values(valuesOverlays []*DataValues) (*DataValues, []*DataValues, error) {
+	schema, err := ll.Schema()
+	if err != nil {
+		return nil, nil, err
+	}
+
+	loader := NewTemplateLoader(NewEmptyDataValues(), nil, ll.ui, ll.templateLoaderOpts, ll.libraryExecFactory)
 
 	valuesFiles, err := ll.valuesFiles(loader)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	err = schema.ValidateWithValues(len(valuesFiles))
-	if err != nil {
-		return nil, nil, err
-	}
 	dvpp := DataValuesPreProcessing{
 		valuesFiles:           valuesFiles,
 		valuesOverlays:        valuesOverlays,
+		schema:                schema,
 		loader:                loader,
 		IgnoreUnknownComments: ll.templateLoaderOpts.IgnoreUnknownComments,
 	}
@@ -164,7 +172,7 @@ func (ll *LibraryLoader) Eval(values *DataValues, libraryValues []*DataValues) (
 func (ll *LibraryLoader) eval(values *DataValues, libraryValues []*DataValues) ([]EvalExport,
 	map[*FileInLibrary]*yamlmeta.DocumentSet, []files.OutputFile, error) {
 
-	loader := NewTemplateLoader(values, libraryValues, ll.ui, ll.templateLoaderOpts, ll.libraryExecFactory, &schema.AnySchema{})
+	loader := NewTemplateLoader(values, libraryValues, ll.ui, ll.templateLoaderOpts, ll.libraryExecFactory)
 
 	exports := []EvalExport{}
 	docSets := map[*FileInLibrary]*yamlmeta.DocumentSet{}
