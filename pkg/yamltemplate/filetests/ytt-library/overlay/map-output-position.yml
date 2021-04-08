@@ -1,0 +1,84 @@
+#@ load("@ytt:overlay", "overlay")
+#@ load("@ytt:template", "template")
+
+#@ def/end test1_left():
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: example-ingress1
+  annotations:
+    key: 1
+
+#@ def/end test1_right():
+#@overlay/match by=overlay.all
+---
+metadata:
+  annotations:
+    key: 2
+
+#@ def/end test2_left():
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: example-ingress1
+  annotations:
+    key: 1
+
+#@ def/end test2_right():
+#@overlay/match by=overlay.all
+---
+metadata:
+  #@overlay/replace
+  annotations:
+    keya: 2
+
+#@ def/end test3_left():
+---
+foo: 1
+
+#@ def return_something():
+#@   return "something"
+#@ end
+
+#@ def/end test3_right():
+#@overlay/match by=overlay.all
+---
+foo: #@ return_something()
+
+---
+test1
+--- #@ template.replace(overlay.apply(test1_left(), test1_right()))
+---
+test2
+--- #@ template.replace(overlay.apply(test2_left(), test2_right()))
+---
+test3
+--- #@ template.replace(overlay.apply(test3_left(), test3_right()))
+---
+
++++
+
+OUTPUT POSITION:          stdin:50 | [doc]
+                   |   test1
+           stdin:5 | [doc]
+           stdin:6 |   apiVersion: extensions/v1beta1
+           stdin:7 |   kind: Ingress
+           stdin:8 |   metadata:
+           stdin:9 |     name: example-ingress1
+          stdin:10 |     annotations:
+          stdin:18 |       key: 2
+          stdin:53 | [doc]
+                   |   test2
+          stdin:21 | [doc]
+          stdin:22 |   apiVersion: extensions/v1beta1
+          stdin:23 |   kind: Ingress
+          stdin:24 |   metadata:
+          stdin:25 |     name: example-ingress1
+          stdin:34 |     annotations:
+          stdin:35 |       keya: 2
+          stdin:56 | [doc]
+                   |   test3
+          stdin:38 | [doc]
+          stdin:48 |   foo: something
