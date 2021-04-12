@@ -1,0 +1,74 @@
+#@ load("@ytt:overlay", "overlay")
+#@ load("@ytt:template", "template")
+
+#@ def/end test1_left():
+---
+clients:
+  - needsSecret: true
+
+#@ def/end test1_right():
+#@overlay/match by=overlay.all
+---
+clients:
+  #@overlay/match by=overlay.subset({"needsSecret": True})
+  - needsSecret: false
+
+#@ def/end test2_left():
+---
+clients:
+  - needsSecret: true
+
+#@ def/end test2_right():
+#@overlay/match by=overlay.all
+---
+clients:
+  #@overlay/match by=overlay.subset({"needsSecret": True})
+  #@overlay/replace
+  - secret: foo
+
+#@ def/end test3_left():
+---
+clients:
+  - needsSecret: true
+
+#@ def return_something():
+#@   return "something"
+#@ end
+
+#@ def/end test3_right():
+#@overlay/match by=overlay.all
+---
+clients:
+  #@overlay/match by=overlay.subset({"needsSecret": True})
+  - #@ return_something()
+
+---
+test1
+--- #@ template.replace(overlay.apply(test1_left(), test1_right()))
+---
+test2
+--- #@ template.replace(overlay.apply(test2_left(), test2_right()))
+---
+test3
+--- #@ template.replace(overlay.apply(test3_left(), test3_right()))
+---
+
++++
+
+OUTPUT POSITION:          stdin:45 | [doc]
+                   |   test1
+           stdin:5 | [doc]
+           stdin:6 |   clients:
+           stdin:7 |     [0]
+          stdin:14 |       needsSecret: false
+          stdin:48 | [doc]
+                   |   test2
+          stdin:17 | [doc]
+          stdin:18 |   clients:
+          stdin:27 |     [0]
+          stdin:27 |       secret: foo
+          stdin:51 | [doc]
+                   |   test3
+          stdin:30 | [doc]
+          stdin:31 |   clients:
+          stdin:43 |     [0] something
