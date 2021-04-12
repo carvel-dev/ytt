@@ -44,7 +44,6 @@ func (o Op) mergeMapItem(leftMap *yamlmeta.Map, newItem *yamlmeta.MapItem,
 		}
 		if replace {
 			leftMap.Items[leftIdx].Value = newItem.Value
-			//todo: should we be setting the position elsewhere? What about annotations?
 			leftMap.Items[leftIdx].Position = newItem.Position
 		}
 	}
