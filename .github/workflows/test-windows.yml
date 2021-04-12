@@ -2,7 +2,7 @@ name: test-windows
 on: 
   push:
   pull_request:
-    types: [opened, reopened]
+    types: [opened, reopened, synchronize]
 jobs:
   test-windows:
     name: Test Windows
