@@ -9,6 +9,7 @@ import (
 
 type Node interface {
 	GetPosition() *filepos.Position
+	SetPosition(*filepos.Position)
 
 	GetValues() []interface{} // ie children
 	SetValue(interface{}) error
