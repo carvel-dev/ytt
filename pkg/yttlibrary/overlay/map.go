@@ -43,6 +43,7 @@ func (o Op) mergeMapItem(leftMap *yamlmeta.Map, newItem *yamlmeta.MapItem,
 			}
 		}
 		if replace {
+			// left side type and metas are preserved
 			err := leftMap.Items[leftIdx].SetValue(newItem.Value)
 			if err != nil {
 				return err
@@ -115,6 +116,8 @@ func (o Op) replaceMapItem(leftMap *yamlmeta.Map, newItem *yamlmeta.MapItem,
 			return err
 		}
 
+		// left side fields are not preserved.
+		// probably need to rethink how to merge left and right once those fields are needed
 		leftMap.Items[leftIdx] = newItem.DeepCopy()
 		err = leftMap.Items[leftIdx].SetValue(newVal)
 		if err != nil {
