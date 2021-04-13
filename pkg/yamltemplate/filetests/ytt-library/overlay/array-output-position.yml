@@ -55,7 +55,8 @@ test3
 
 +++
 
-OUTPUT POSITION:          stdin:45 | [doc]
+OUTPUT POSITION:
+          stdin:45 | [doc]
                    |   test1
            stdin:5 | [doc]
            stdin:6 |   clients:
