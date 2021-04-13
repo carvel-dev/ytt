@@ -42,8 +42,11 @@ func (o Op) mergeArrayItem(
 			}
 		}
 		if replace {
-			leftArray.Items[leftIdx].Value = newItem.Value
-			leftArray.Items[leftIdx].Position = newItem.Position
+			err := leftArray.Items[leftIdx].SetValue(newItem.Value)
+			if err != nil {
+				return err
+			}
+			leftArray.Items[leftIdx].SetPosition(newItem.Position)
 		}
 	}
 

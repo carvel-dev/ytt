@@ -125,7 +125,7 @@ func TestYAMLTemplate(t *testing.T) {
 	}
 }
 
-func asFilePositionsStr(result interface{}) (string, error) {
+func asFilePositionsStr(result interface{ AsBytes() ([]byte, error) }) (string, error) {
 	printerFunc := func(w io.Writer) yamlmeta.DocumentPrinter {
 		return yamlmeta.WrappedFilePositionPrinter{yamlmeta.NewFilePositionPrinter(w)}
 	}
@@ -137,13 +137,8 @@ func asFilePositionsStr(result interface{}) (string, error) {
 	return string(combinedDocBytes), nil
 }
 
-func asString(result interface{}) (string, error) {
-	typedNewVal, ok := result.(interface{ AsBytes() ([]byte, error) })
-	if !ok {
-		return "", fmt.Errorf("expected eval result to be marshalable")
-	}
-
-	resultBytes, err := typedNewVal.AsBytes()
+func asString(result interface{ AsBytes() ([]byte, error) }) (string, error) {
+	resultBytes, err := result.AsBytes()
 	if err != nil {
 		return "", fmt.Errorf("marshal error: %v", err)
 	}
@@ -159,7 +154,7 @@ type testErr struct {
 func (e testErr) UserErr() error { return e.realErr }
 func (e testErr) TestErr() error { return e.testErr }
 
-func evalTemplate(t *testing.T, data string) (interface{}, *testErr) {
+func evalTemplate(t *testing.T, data string) (interface{ AsBytes() ([]byte, error) }, *testErr) {
 	docSet, err := yamlmeta.NewDocumentSetFromBytes([]byte(data), yamlmeta.DocSetOpts{AssociatedName: "stdin"})
 	if err != nil {
 		return nil, &testErr{err, fmt.Errorf("unmarshal error: %v", err)}

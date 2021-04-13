@@ -43,8 +43,11 @@ func (o Op) mergeMapItem(leftMap *yamlmeta.Map, newItem *yamlmeta.MapItem,
 			}
 		}
 		if replace {
-			leftMap.Items[leftIdx].Value = newItem.Value
-			leftMap.Items[leftIdx].Position = newItem.Position
+			err := leftMap.Items[leftIdx].SetValue(newItem.Value)
+			if err != nil {
+				return err
+			}
+			leftMap.Items[leftIdx].SetPosition(newItem.Position)
 		}
 	}
 

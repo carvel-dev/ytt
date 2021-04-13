@@ -20,6 +20,13 @@ func (a *Array) GetPosition() *filepos.Position        { return a.Position }
 func (ai *ArrayItem) GetPosition() *filepos.Position   { return ai.Position }
 func (s *Scalar) GetPosition() *filepos.Position       { return s.Position }
 
+func (ds *DocumentSet) SetPosition(position *filepos.Position) { ds.Position = position }
+func (d *Document) SetPosition(position *filepos.Position)     { d.Position = position }
+func (m *Map) SetPosition(position *filepos.Position)          { m.Position = position }
+func (mi *MapItem) SetPosition(position *filepos.Position)     { mi.Position = position }
+func (a *Array) SetPosition(position *filepos.Position)        { a.Position = position }
+func (ai *ArrayItem) SetPosition(position *filepos.Position)   { ai.Position = position }
+
 func (ds *DocumentSet) ValueTypeAsString() string { return "documentSet" }
 func (d *Document) ValueTypeAsString() string     { return typeToString(d.Value) }
 func (m *Map) ValueTypeAsString() string          { return "map" }
