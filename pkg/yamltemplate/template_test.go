@@ -86,7 +86,7 @@ func TestYAMLTemplate(t *testing.T) {
 				if strErr != nil {
 					err = strErr
 				} else {
-					err = expectEquals(t, resultStr, strings.ReplaceAll(strings.TrimPrefix(expectedStr, "OUTPUT POSITION:"), "__YTT_VERSION__", version.Version))
+					err = expectEquals(t, resultStr, strings.ReplaceAll(strings.TrimPrefix(expectedStr, "OUTPUT POSITION:\n"), "__YTT_VERSION__", version.Version))
 				}
 			} else {
 				err = testErr.TestErr()
