@@ -42,6 +42,7 @@ func (o Op) mergeArrayItem(
 			}
 		}
 		if replace {
+			// left side type and metas are preserved
 			err := leftArray.Items[leftIdx].SetValue(newItem.Value)
 			if err != nil {
 				return err
@@ -116,6 +117,8 @@ func (o Op) replaceArrayItem(
 			return err
 		}
 
+		// left side fields are not preserved.
+		// probably need to rethink how to merge left and right once those fields are needed
 		leftArray.Items[leftIdx] = newItem.DeepCopy()
 		err = leftArray.Items[leftIdx].SetValue(newVal)
 		if err != nil {
