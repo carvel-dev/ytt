@@ -60,7 +60,7 @@ func (o DataValuesPreProcessing) apply(files []*FileInLibrary) (*DataValues, []*
 
 			resultDVsDoc = dv.Doc
 		} else {
-			resultDVsDoc, err = o.overlay(resultDVsDoc, dv.Doc)
+			resultDVsDoc, err = overlay(resultDVsDoc, dv.Doc)
 			if err != nil {
 				return nil, nil, err
 			}
@@ -156,7 +156,7 @@ func (o DataValuesPreProcessing) templateFile(fileInLib *FileInLibrary) ([]*yaml
 	return valuesDocs, nil
 }
 
-func (o DataValuesPreProcessing) overlay(valuesDoc, newValuesDoc *yamlmeta.Document) (*yamlmeta.Document, error) {
+func overlay(valuesDoc, newValuesDoc *yamlmeta.Document) (*yamlmeta.Document, error) {
 	op := yttoverlay.Op{
 		Left:   &yamlmeta.DocumentSet{Items: []*yamlmeta.Document{valuesDoc}},
 		Right:  &yamlmeta.DocumentSet{Items: []*yamlmeta.Document{newValuesDoc}},
