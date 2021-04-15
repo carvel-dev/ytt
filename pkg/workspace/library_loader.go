@@ -54,10 +54,11 @@ func (ll *LibraryLoader) Schema() (Schema, error) {
 		return nil, err
 	}
 	if ll.templateLoaderOpts.SchemaEnabled {
-		if len(schemaFiles) > 0 {
-			libraryCtx := LibraryExecutionContext{Current: schemaFiles[0].Library, Root: NewRootLibrary(nil)}
+		var schemaDocs []*yamlmeta.Document
+		for _, file := range schemaFiles {
+			libraryCtx := LibraryExecutionContext{Current: file.Library, Root: NewRootLibrary(nil)}
 
-			_, resultDocSet, err := loader.EvalYAML(libraryCtx, schemaFiles[0].File)
+			_, resultDocSet, err := loader.EvalYAML(libraryCtx, file.File)
 			if err != nil {
 				return nil, err
 			}
@@ -66,7 +67,27 @@ func (ll *LibraryLoader) Schema() (Schema, error) {
 			if err != nil {
 				return nil, err
 			}
-			return schema.NewDocumentSchema(docs[0])
+			for _, doc := range docs {
+				schemaDocs = append(schemaDocs, doc)
+			}
+		}
+
+		var resultSchemasDoc *yamlmeta.Document
+		for _, doc := range schemaDocs {
+			//if doc.HasLibRef() {
+			//	continue
+			//}
+			if resultSchemasDoc == nil {
+				resultSchemasDoc = doc
+			} else {
+				resultSchemasDoc, err = overlay(resultSchemasDoc, doc)
+				if err != nil {
+					return nil, err
+				}
+			}
+		}
+		if resultSchemasDoc != nil {
+			return schema.NewDocumentSchema(resultSchemasDoc)
 		}
 		return schema.NullSchema{}, nil
 	}
