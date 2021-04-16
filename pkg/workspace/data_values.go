@@ -135,7 +135,7 @@ func parseDVAnnotations(doc *yamlmeta.Document) (bool, []LibRefPiece, bool, erro
 	if hasLibAnn = anns.Has(AnnotationLibraryRef); hasLibAnn {
 		libArgs := anns.Args(AnnotationLibraryRef)
 		if l := libArgs.Len(); l != 1 {
-			return false, nil, false, fmt.Errorf("Expected %s annotation to have one arg, got %d", AnnotationDataValues, l)
+			return false, nil, false, fmt.Errorf("Expected %s annotation to have one arg, got %d", AnnotationLibraryRef, l)
 		}
 
 		argString, err := core.NewStarlarkValue(libArgs[0]).AsString()
