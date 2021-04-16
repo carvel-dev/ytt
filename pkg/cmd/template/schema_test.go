@@ -28,6 +28,8 @@ db_conn:
   password: ""
   metadata:
     run: jobName
+  timeout: 1.0
+  ttl: 3.5
 top_level: ""
 `
 		dataValuesYAML := `#@data/values
@@ -39,6 +41,8 @@ db_conn:
   password: changeme
   metadata:
     run: ./build.sh
+  timeout: 7.5
+  ttl: 1
 top_level: key
 `
 		templateYAML := `#@ load("@ytt:data", "data")
@@ -54,6 +58,8 @@ rendered: #@ data.values
     password: changeme
     metadata:
       run: ./build.sh
+    timeout: 7.5
+    ttl: 1
   top_level: key
 `
 
@@ -208,6 +214,7 @@ db_conn:
   port: 0
   username:
     main: "0"
+  timeout: 1.0
 `
 		dataValuesYAML := `#@data/values
 ---
@@ -215,6 +222,7 @@ db_conn:
   port: localhost
   username:
     main: 123
+  timeout: 5m
 `
 
 		filesToProcess := files.NewSortedFiles([]*files.File{
@@ -234,6 +242,13 @@ data_values.yml:6 |     main: 123
                   | TYPE MISMATCH - the value of this item is not what schema expected:
                   |      found: integer
                   |   expected: string (by schema.yml:6)
+
+
+data_values.yml:7 |   timeout: 5m
+                  |
+                  | TYPE MISMATCH - the value of this item is not what schema expected:
+                  |      found: string
+                  |   expected: float (by schema.yml:7)
 `
 
 		assertFails(t, filesToProcess, expectedErr, opts)
@@ -267,14 +282,19 @@ dataValues.yml:3 | app: null
 ---
 clients:
 - flags:
-  - name: ""
+  - floats:
+    - 1.0
 `
 		dataValuesYAML := `#@data/values
 ---
 clients:
-- flags: secure  #! expecting a array, got a string
+- flags: secure  #! expecting an array, got a string
 - flags:
   - secure  #! expecting a map, got a string
+- flags:
+  - floats:
+    - one  #! expecting a float, got a string
+    - true  #! expecting a float, got a bool
 `
 
 		filesToProcess := files.NewSortedFiles([]*files.File{
@@ -283,7 +303,7 @@ clients:
 		})
 
 		expectedErr := `
-data_values.yml:4 | - flags: secure  #! expecting a array, got a string
+data_values.yml:4 | - flags: secure  #! expecting an array, got a string
                   |
                   | TYPE MISMATCH - the value of this item is not what schema expected:
                   |      found: string
@@ -295,6 +315,20 @@ data_values.yml:6 |   - secure  #! expecting a map, got a string
                   | TYPE MISMATCH - the value of this item is not what schema expected:
                   |      found: string
                   |   expected: map (by schema.yml:5)
+
+
+data_values.yml:9 |     - one  #! expecting a float, got a string
+                  |
+                  | TYPE MISMATCH - the value of this item is not what schema expected:
+                  |      found: string
+                  |   expected: float (by schema.yml:6)
+
+
+data_values.yml:10 |     - true  #! expecting a float, got a bool
+                   |
+                   | TYPE MISMATCH - the value of this item is not what schema expected:
+                   |      found: boolean
+                   |   expected: float (by schema.yml:6)
 `
 
 		assertFails(t, filesToProcess, expectedErr, opts)

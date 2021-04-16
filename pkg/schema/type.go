@@ -107,6 +107,8 @@ func (a ArrayItemType) String() string {
 }
 func (m ScalarType) String() string {
 	switch m.Value.(type) {
+	case float64:
+		return "float"
 	case int:
 		return "integer"
 	case bool:
@@ -177,10 +179,17 @@ func (m *ScalarType) CheckType(node yamlmeta.TypeWithValues) (chk yamlmeta.TypeC
 			chk.Violations = append(chk.Violations,
 				NewMismatchedTypeError(node, m))
 		}
-	case int:
-		if _, ok := m.Value.(int); !ok {
+	case float64:
+		if _, ok := m.Value.(float64); !ok {
 			chk.Violations = append(chk.Violations,
 				NewMismatchedTypeError(node, m))
+		}
+	case int:
+		if _, ok := m.Value.(int); !ok {
+			if _, ok = m.Value.(float64); !ok {
+				chk.Violations = append(chk.Violations,
+					NewMismatchedTypeError(node, m))
+			}
 		}
 	case bool:
 		if _, ok := m.Value.(bool); !ok {

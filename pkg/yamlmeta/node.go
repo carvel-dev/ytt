@@ -37,6 +37,8 @@ func (s *Scalar) ValueTypeAsString() string       { return typeToString(s.Value)
 
 func typeToString(value interface{}) string {
 	switch value.(type) {
+	case float64:
+		return "float"
 	case int:
 		return "integer"
 	case bool:
