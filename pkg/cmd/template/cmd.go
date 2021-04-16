@@ -129,7 +129,12 @@ func (o *Options) RunWithFiles(in Input, ui ui.UI) Output {
 	var values *workspace.DataValues
 	var libraryValues []*workspace.DataValues
 
-	values, libraryValues, err = rootLibraryLoader.Values(valuesOverlays)
+	schema, librarySchemas, err := rootLibraryLoader.Schemas(nil)
+	if err != nil {
+		return Output{Err: err}
+	}
+
+	values, libraryValues, err = rootLibraryLoader.Values(valuesOverlays, schema)
 	if err != nil {
 		return Output{Err: err}
 	}
@@ -144,7 +149,7 @@ func (o *Options) RunWithFiles(in Input, ui ui.UI) Output {
 		}
 	}
 
-	result, err := rootLibraryLoader.Eval(values, libraryValues)
+	result, err := rootLibraryLoader.Eval(values, libraryValues, librarySchemas)
 	if err != nil {
 		return Output{Err: err}
 	}

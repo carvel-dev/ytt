@@ -937,7 +937,7 @@ func TestSchema_Overlay_multiple_schema_files(t *testing.T) {
 	opts := cmdtpl.NewOptions()
 	opts.SchemaEnabled = true
 
-	t.Run("when document's value is a map", func(t *testing.T) {
+	t.Run("when additional schema file is scoped to root library", func(t *testing.T) {
 		schemaYAML1 := `#@schema/match data_values=True
 ---
 db_conn:
@@ -946,7 +946,6 @@ db_conn:
 
 		schemaYAML2 := `#@ load("@ytt:overlay", "overlay")
 #@schema/match data_values=True
-#@overlay/match by=overlay.all
 ---
 db_conn:
 #@overlay/match by=overlay.all, expects="1+"
@@ -986,6 +985,99 @@ rendered: #@ data.values
 		})
 
 		assertSucceeds(t, filesToProcess, expected, opts)
+	})
+	t.Run("when additional schema file is scoped to private library", func(t *testing.T) {
+		rootYAML := []byte(`
+#@ load("@ytt:library", "library")
+#@ load("@ytt:template", "template")
+#@ load("@ytt:data", "data")
+--- #@ template.replace(library.get("libby").with_data_values({"foo": {"ree": "set from root"}}).eval())
+---
+root_data_values: #@ data.values`)
+
+		overlayLibSchemaYAML := []byte(`
+#@library/ref "@libby"
+#@schema/match data_values=True
+---
+foo:
+  #@overlay/match missing_ok=True
+  ree: ""
+`)
+
+		libConfigYAML := []byte(`
+#@ load("@ytt:data", "data")
+---
+libby_data_values: #@ data.values`)
+
+		libSchemaYAML := []byte(`
+#@schema/match data_values=True
+---
+foo:
+  bar: 3`)
+
+		expectedYAMLTplData := `libby_data_values:
+  foo:
+    bar: 3
+    ree: set from root
+---
+root_data_values: null
+`
+
+		filesToProcess := files.NewSortedFiles([]*files.File{
+			files.MustNewFileFromSource(files.NewBytesSource("root.yml", rootYAML)),
+			files.MustNewFileFromSource(files.NewBytesSource("more-schema.yml", overlayLibSchemaYAML)),
+			files.MustNewFileFromSource(files.NewBytesSource("_ytt_lib/libby/config.yml", libConfigYAML)),
+			files.MustNewFileFromSource(files.NewBytesSource("_ytt_lib/libby/schema.yml", libSchemaYAML)),
+		})
+
+		assertSucceeds(t, filesToProcess, expectedYAMLTplData, opts)
+	})
+	t.Run("when additional schema for private library is provided programmatically", func(t *testing.T) {
+		rootYAML := []byte(`
+#@ load("@ytt:library", "library")
+#@ load("@ytt:template", "template")
+#@ load("@ytt:data", "data")
+
+#@ def more_schema():
+foo:
+  #@overlay/match missing_ok=True
+  ree: ""
+#@ end
+
+#@ libby = library.get("libby")
+#@ libby = libby.with_schema(more_schema())
+#@ libby = libby.with_data_values({"foo": {"ree": "set from root"}})
+
+--- #@ template.replace(libby.eval())
+---
+root_data_values: #@ data.values`)
+
+		libConfigYAML := []byte(`
+#@ load("@ytt:data", "data")
+---
+libby_data_values: #@ data.values`)
+
+		libSchemaYAML := []byte(`
+#@schema/match data_values=True
+---
+foo:
+  bar: 3`)
+
+		expectedYAMLTplData := `libby_data_values:
+  foo:
+    bar: 3
+    ree: set from root
+---
+root_data_values: null
+`
+
+		filesToProcess := files.NewSortedFiles([]*files.File{
+			files.MustNewFileFromSource(files.NewBytesSource("root.yml", rootYAML)),
+			files.MustNewFileFromSource(files.NewBytesSource("_ytt_lib/libby/config.yml", libConfigYAML)),
+			files.MustNewFileFromSource(files.NewBytesSource("_ytt_lib/libby/schema.yml", libSchemaYAML)),
+		})
+
+		assertSucceeds(t, filesToProcess, expectedYAMLTplData, opts)
 	})
 }
 

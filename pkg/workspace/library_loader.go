@@ -46,66 +46,73 @@ func NewLibraryLoader(libraryCtx LibraryExecutionContext,
 	}
 }
 
-func (ll *LibraryLoader) Schema() (Schema, error) {
-	loader := NewTemplateLoader(NewEmptyDataValues(), nil, ll.ui, ll.templateLoaderOpts, ll.libraryExecFactory)
+func (ll *LibraryLoader) Schemas(schemaOverlays []*schema.DocumentSchema) (Schema, []*schema.DocumentSchema, error) {
+	loader := NewTemplateLoader(NewEmptyDataValues(), nil, nil, ll.templateLoaderOpts, ll.libraryExecFactory, ll.ui)
 
 	schemaFiles, err := ll.schemaFiles(loader)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	if ll.templateLoaderOpts.SchemaEnabled {
-		var schemaDocs []*yamlmeta.Document
+
+		var documentSchemas []*schema.DocumentSchema
 		for _, file := range schemaFiles {
 			libraryCtx := LibraryExecutionContext{Current: file.Library, Root: NewRootLibrary(nil)}
 
 			_, resultDocSet, err := loader.EvalYAML(libraryCtx, file.File)
 			if err != nil {
-				return nil, err
+				return nil, nil, err
 			}
 
 			docs, _, err := DocExtractor{resultDocSet}.Extract(AnnotationSchemaMatch)
 			if err != nil {
-				return nil, err
+				return nil, nil, err
 			}
 			for _, doc := range docs {
-				schemaDocs = append(schemaDocs, doc)
+				newSchema, err := schema.NewDocumentSchema(doc)
+				if err != nil {
+					return nil, nil, err
+				}
+				documentSchemas = append(documentSchemas, newSchema)
 			}
 		}
+		documentSchemas = append(documentSchemas, schemaOverlays...)
 
 		var resultSchemasDoc *yamlmeta.Document
-		for _, doc := range schemaDocs {
-			//if doc.HasLibRef() {
-			//	continue
-			//}
+		var librarySchemas []*schema.DocumentSchema
+		for _, docSchema := range documentSchemas {
+			if docSchema.HasLibRef() {
+				librarySchemas = append(librarySchemas, docSchema)
+				continue
+			}
 			if resultSchemasDoc == nil {
-				resultSchemasDoc = doc
+				resultSchemasDoc = docSchema.Source
 			} else {
-				resultSchemasDoc, err = overlay(resultSchemasDoc, doc)
+				resultSchemasDoc, err = overlay(resultSchemasDoc, docSchema.Source)
 				if err != nil {
-					return nil, err
+					return nil, nil, err
 				}
 			}
 		}
 		if resultSchemasDoc != nil {
-			return schema.NewDocumentSchema(resultSchemasDoc)
+			finalSchema, err := schema.NewDocumentSchema(resultSchemasDoc)
+			if err != nil {
+				return nil, nil, err
+			}
+			return finalSchema, librarySchemas, nil
 		}
-		return schema.NullSchema{}, nil
+		return schema.NullSchema{}, librarySchemas, nil
 	}
 
 	if len(schemaFiles) > 0 {
 		ll.ui.Warnf("Warning: schema document was detected (%s), but schema experiment flag is not enabled. Did you mean to include --enable-experiment-schema?\n", schemaFiles[0].File.RelativePath())
 	}
-	return &schema.AnySchema{}, nil
+	return &schema.AnySchema{}, nil, nil
 
 }
 
-func (ll *LibraryLoader) Values(valuesOverlays []*DataValues) (*DataValues, []*DataValues, error) {
-	schema, err := ll.Schema()
-	if err != nil {
-		return nil, nil, err
-	}
-
-	loader := NewTemplateLoader(NewEmptyDataValues(), nil, ll.ui, ll.templateLoaderOpts, ll.libraryExecFactory)
+func (ll *LibraryLoader) Values(valuesOverlays []*DataValues, schema Schema) (*DataValues, []*DataValues, error) {
+	loader := NewTemplateLoader(NewEmptyDataValues(), nil, nil, ll.templateLoaderOpts, ll.libraryExecFactory, ll.ui)
 
 	valuesFiles, err := ll.valuesFiles(loader)
 	if err != nil {
@@ -157,8 +164,8 @@ func (ll *LibraryLoader) filesByAnnotation(annName structmeta.AnnotationName, lo
 	return valuesFiles, nil
 }
 
-func (ll *LibraryLoader) Eval(values *DataValues, libraryValues []*DataValues) (*EvalResult, error) {
-	exports, docSets, outputFiles, err := ll.eval(values, libraryValues)
+func (ll *LibraryLoader) Eval(values *DataValues, libraryValues []*DataValues, librarySchemas []*schema.DocumentSchema) (*EvalResult, error) {
+	exports, docSets, outputFiles, err := ll.eval(values, libraryValues, librarySchemas)
 	if err != nil {
 		return nil, err
 	}
@@ -190,10 +197,9 @@ func (ll *LibraryLoader) Eval(values *DataValues, libraryValues []*DataValues) (
 	return result, nil
 }
 
-func (ll *LibraryLoader) eval(values *DataValues, libraryValues []*DataValues) ([]EvalExport,
-	map[*FileInLibrary]*yamlmeta.DocumentSet, []files.OutputFile, error) {
+func (ll *LibraryLoader) eval(values *DataValues, libraryValues []*DataValues, librarySchemas []*schema.DocumentSchema) ([]EvalExport, map[*FileInLibrary]*yamlmeta.DocumentSet, []files.OutputFile, error) {
 
-	loader := NewTemplateLoader(values, libraryValues, ll.ui, ll.templateLoaderOpts, ll.libraryExecFactory)
+	loader := NewTemplateLoader(values, libraryValues, librarySchemas, ll.templateLoaderOpts, ll.libraryExecFactory, ll.ui)
 
 	exports := []EvalExport{}
 	docSets := map[*FileInLibrary]*yamlmeta.DocumentSet{}
