@@ -116,6 +116,51 @@ data_value: #@ data.values
 		assertSucceeds(t, filesToProcess, expected, opts)
 	})
 
+	t.Run("when a data value is passed using --data-value", func(t *testing.T) {
+		cmdOpts := cmdtpl.NewOptions()
+		cmdOpts.SchemaEnabled = true
+		schemaYAML := `#@schema/match data_values=True
+---
+foo: bar
+`
+		templateYAML := `#@ load("@ytt:data", "data")
+---
+rendered: #@ data.values.foo
+`
+		cmdOpts.DataValuesFlags.KVsFromStrings = []string{"foo=myVal"}
+		expected := `rendered: myVal
+`
+
+		filesToProcess := files.NewSortedFiles([]*files.File{
+			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
+			files.MustNewFileFromSource(files.NewBytesSource("template.yml", []byte(templateYAML))),
+		})
+
+		assertSucceeds(t, filesToProcess, expected, cmdOpts)
+	})
+	t.Run("when a data value is passed using --data-value-yaml", func(t *testing.T) {
+		cmdOpts := cmdtpl.NewOptions()
+		cmdOpts.SchemaEnabled = true
+		schemaYAML := `#@schema/match data_values=True
+---
+foo: 7
+`
+		templateYAML := `#@ load("@ytt:data", "data")
+---
+rendered: #@ data.values.foo
+`
+		cmdOpts.DataValuesFlags.KVsFromYAML = []string{"foo=42"}
+		expected := `rendered: 42
+`
+
+		filesToProcess := files.NewSortedFiles([]*files.File{
+			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
+			files.MustNewFileFromSource(files.NewBytesSource("template.yml", []byte(templateYAML))),
+		})
+
+		assertSucceeds(t, filesToProcess, expected, cmdOpts)
+	})
+
 	t.Run("when neither schema nor data values are given", func(t *testing.T) {
 		assertSucceeds(t,
 			files.NewSortedFiles([]*files.File{
@@ -253,6 +298,31 @@ data_values.yml:6 |   - secure  #! expecting a map, got a string
 `
 
 		assertFails(t, filesToProcess, expectedErr, opts)
+	})
+
+	t.Run("when a data value is passed using --data-value, but schema expects a non string", func(t *testing.T) {
+		cmdOpts := cmdtpl.NewOptions()
+		cmdOpts.SchemaEnabled = true
+		schemaYAML := `#@schema/match data_values=True
+---
+foo: 7
+`
+		templateYAML := `#@ load("@ytt:data", "data")
+---
+rendered: #@ data.values.foo
+`
+		cmdOpts.DataValuesFlags.KVsFromStrings = []string{"foo=42"}
+		filesToProcess := files.NewSortedFiles([]*files.File{
+			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
+			files.MustNewFileFromSource(files.NewBytesSource("template.yml", []byte(templateYAML))),
+		})
+
+		expectedErr := `key 'foo' (kv arg):1 |
+                     |
+                     | TYPE MISMATCH - the value of this item is not what schema expected:
+                     |      found: string
+                     |   expected: integer (by schema.yml:3)`
+		assertFails(t, filesToProcess, expectedErr, cmdOpts)
 	})
 
 	t.Run("when schema is null and non-empty data values is given", func(t *testing.T) {
@@ -710,6 +780,122 @@ foo: 42`)
      
      `
 		assertFails(t, filesToProcess, expectedErr, opts)
+	})
+
+	t.Run("when data value ref'ed to a library is passed using --data-value, it is checked by that library's schema", func(t *testing.T) {
+		cmdOpts := cmdtpl.NewOptions()
+		cmdOpts.SchemaEnabled = true
+		rootYAML := []byte(`
+#! root.yml
+#@ load("@ytt:template", "template")
+#@ load("@ytt:library", "library")
+--- #@ template.replace(library.get("lib").eval())`)
+
+		libSchemaYAML := []byte(`
+#! lib/schema.yml
+#@schema/match data_values=True
+---
+foo: bar
+`)
+
+		libConfigYAML := []byte(`
+#! lib/config.yml
+#@ load("@ytt:data", "data")
+---
+foo: #@ data.values.foo
+`)
+
+		cmdOpts.DataValuesFlags.KVsFromStrings = []string{"@lib:foo=myVal"}
+		expectedYAMLTplData := `foo: myVal
+`
+
+		filesToProcess := files.NewSortedFiles([]*files.File{
+			files.MustNewFileFromSource(files.NewBytesSource("root.yml", rootYAML)),
+			files.MustNewFileFromSource(files.NewBytesSource("_ytt_lib/lib/config.yml", libConfigYAML)),
+			files.MustNewFileFromSource(files.NewBytesSource("_ytt_lib/lib/schema.yml", libSchemaYAML)),
+		})
+
+		assertSucceeds(t, filesToProcess, expectedYAMLTplData, cmdOpts)
+	})
+	t.Run("when data value ref'ed to a library is passed using --data-value-yaml, it is checked by that library's schema", func(t *testing.T) {
+		cmdOpts := cmdtpl.NewOptions()
+		cmdOpts.SchemaEnabled = true
+		rootYAML := []byte(`
+#! root.yml
+#@ load("@ytt:template", "template")
+#@ load("@ytt:library", "library")
+--- #@ template.replace(library.get("lib").eval())`)
+
+		libSchemaYAML := []byte(`
+#! lib/schema.yml
+#@schema/match data_values=True
+---
+cow: 7
+`)
+
+		libConfigYAML := []byte(`
+#! lib/config.yml
+#@ load("@ytt:data", "data")
+---
+cow: #@ data.values.cow
+`)
+
+		cmdOpts.DataValuesFlags.KVsFromYAML = []string{"@lib:cow=42"}
+		expectedYAMLTplData := `cow: 42
+`
+
+		filesToProcess := files.NewSortedFiles([]*files.File{
+			files.MustNewFileFromSource(files.NewBytesSource("root.yml", rootYAML)),
+			files.MustNewFileFromSource(files.NewBytesSource("_ytt_lib/lib/config.yml", libConfigYAML)),
+			files.MustNewFileFromSource(files.NewBytesSource("_ytt_lib/lib/schema.yml", libSchemaYAML)),
+		})
+
+		assertSucceeds(t, filesToProcess, expectedYAMLTplData, cmdOpts)
+	})
+	t.Run("when data value ref'ed to a library is passed using --data-value, but schema expects an int, schema violation is reported", func(t *testing.T) {
+		cmdOpts := cmdtpl.NewOptions()
+		cmdOpts.SchemaEnabled = true
+		rootYAML := []byte(`
+#! root.yml
+#@ load("@ytt:template", "template")
+#@ load("@ytt:library", "library")
+--- #@ template.replace(library.get("lib").eval())`)
+
+		libSchemaYAML := []byte(`
+#! lib/schema.yml
+#@schema/match data_values=True
+---
+foo: 7
+`)
+
+		libConfigYAML := []byte(`
+#! lib/config.yml
+#@ load("@ytt:data", "data")
+---
+foo: #@ data.values.foo
+`)
+
+		cmdOpts.DataValuesFlags.KVsFromStrings = []string{"@lib:foo=42"}
+		filesToProcess := files.NewSortedFiles([]*files.File{
+			files.MustNewFileFromSource(files.NewBytesSource("root.yml", rootYAML)),
+			files.MustNewFileFromSource(files.NewBytesSource("_ytt_lib/lib/config.yml", libConfigYAML)),
+			files.MustNewFileFromSource(files.NewBytesSource("_ytt_lib/lib/schema.yml", libSchemaYAML)),
+		})
+
+		expectedErr := `
+- library.eval: Evaluating library 'lib': Overlaying data values (in following order: additional data values): 
+    in <toplevel>
+      root.yml:5 | --- #@ template.replace(library.get("lib").eval())
+
+    reason:
+     key 'foo' (kv arg):1 |
+                          |
+                          | TYPE MISMATCH - the value of this item is not what schema expected:
+                          |      found: string
+                          |   expected: integer (by _ytt_lib/lib/schema.yml:5)
+     
+     `
+		assertFails(t, filesToProcess, expectedErr, cmdOpts)
 	})
 }
 
