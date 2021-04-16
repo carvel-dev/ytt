@@ -10,6 +10,7 @@ import (
 	"github.com/k14s/starlark-go/starlark"
 	"github.com/k14s/starlark-go/starlarkstruct"
 	"github.com/k14s/ytt/pkg/filepos"
+	"github.com/k14s/ytt/pkg/schema"
 	"github.com/k14s/ytt/pkg/template/core"
 	"github.com/k14s/ytt/pkg/yamlmeta"
 	"github.com/k14s/ytt/pkg/yamltemplate"
@@ -19,13 +20,14 @@ type LibraryModule struct {
 	libraryCtx              LibraryExecutionContext
 	libraryExecutionFactory *LibraryExecutionFactory
 	libraryValues           []*DataValues
+	librarySchemas          []*schema.DocumentSchema
 }
 
 func NewLibraryModule(libraryCtx LibraryExecutionContext,
 	libraryExecutionFactory *LibraryExecutionFactory,
-	libraryValues []*DataValues) LibraryModule {
+	libraryValues []*DataValues, librarySchemas []*schema.DocumentSchema) LibraryModule {
 
-	return LibraryModule{libraryCtx, libraryExecutionFactory, libraryValues}
+	return LibraryModule{libraryCtx, libraryExecutionFactory, libraryValues, librarySchemas}
 }
 
 func (b LibraryModule) AsModule() starlark.StringDict {
@@ -70,7 +72,7 @@ func (b LibraryModule) Get(thread *starlark.Thread, f *starlark.Builtin,
 	dataValuess := append([]*DataValues{}, b.libraryValues...)
 	libraryCtx := LibraryExecutionContext{Current: foundLib, Root: foundLib}
 
-	return (&libraryValue{libPath, libAlias, dataValuess, libraryCtx,
+	return (&libraryValue{libPath, libAlias, dataValuess, b.librarySchemas, libraryCtx,
 		b.libraryExecutionFactory.WithTemplateLoaderOptsOverrides(tplLoaderOptsOverrides),
 	}).AsStarlarkValue(), nil
 }
@@ -123,9 +125,10 @@ func (b LibraryModule) getOpts(kwargs []starlark.Tuple) (string, TemplateLoaderO
 }
 
 type libraryValue struct {
-	path        string
-	alias       string
-	dataValuess []*DataValues
+	path           string
+	alias          string
+	dataValuess    []*DataValues
+	librarySchemas []*schema.DocumentSchema
 
 	libraryCtx              LibraryExecutionContext
 	libraryExecutionFactory *LibraryExecutionFactory
@@ -172,7 +175,7 @@ func (l *libraryValue) WithDataValues(thread *starlark.Thread, f *starlark.Built
 	newDataValuess := append([]*DataValues{}, l.dataValuess...)
 	newDataValuess = append(newDataValuess, valsYAML)
 
-	libVal := &libraryValue{l.path, l.alias, newDataValuess, l.libraryCtx, l.libraryExecutionFactory}
+	libVal := &libraryValue{l.path, l.alias, newDataValuess, l.librarySchemas, l.libraryCtx, l.libraryExecutionFactory}
 
 	return libVal.AsStarlarkValue(), nil
 }
@@ -191,7 +194,7 @@ func (l *libraryValue) Eval(thread *starlark.Thread, f *starlark.Builtin,
 		return starlark.None, err
 	}
 
-	result, err := libraryLoader.Eval(astValues, libValues)
+	result, err := libraryLoader.Eval(astValues, libValues, nil)
 	if err != nil {
 		return starlark.None, err
 	}
@@ -237,7 +240,7 @@ func (l *libraryValue) Export(thread *starlark.Thread, f *starlark.Builtin,
 		return starlark.None, err
 	}
 
-	result, err := libraryLoader.Eval(astValues, libValues)
+	result, err := libraryLoader.Eval(astValues, libValues, nil)
 	if err != nil {
 		return starlark.None, err
 	}
@@ -320,7 +323,15 @@ func (l *libraryValue) libraryValues(ll *LibraryLoader) (*DataValues, []*DataVal
 		}
 	}
 
-	dvs, foundChildDVss, err := ll.Values(append(dvss, afterLibModDVss...))
+	//prep library schemas to not have libref if this is the correct lib context
+	for _, docSchema := range l.librarySchemas {
+		docSchema.UsedInLibrary(schema.LibRefPiece{Path: l.path, Alias: l.alias})
+	}
+	schema, _, err := ll.Schemas(l.librarySchemas)
+	if err != nil {
+		return nil, nil, err
+	}
+	dvs, foundChildDVss, err := ll.Values(append(dvss, afterLibModDVss...), schema)
 	if err != nil {
 		return nil, nil, err
 	}
