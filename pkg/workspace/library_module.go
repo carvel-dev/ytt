@@ -125,10 +125,10 @@ func (b LibraryModule) getOpts(kwargs []starlark.Tuple) (string, TemplateLoaderO
 }
 
 type libraryValue struct {
-	path           string
-	alias          string
-	dataValuess    []*DataValues
-	librarySchemas []*schema.DocumentSchema
+	path        string
+	alias       string
+	dataValuess []*DataValues
+	schemas     []*schema.DocumentSchema
 
 	libraryCtx              LibraryExecutionContext
 	libraryExecutionFactory *LibraryExecutionFactory
@@ -176,7 +176,7 @@ func (l *libraryValue) WithDataValues(thread *starlark.Thread, f *starlark.Built
 	newDataValuess := append([]*DataValues{}, l.dataValuess...)
 	newDataValuess = append(newDataValuess, valsYAML)
 
-	libVal := &libraryValue{l.path, l.alias, newDataValuess, l.librarySchemas, l.libraryCtx, l.libraryExecutionFactory}
+	libVal := &libraryValue{l.path, l.alias, newDataValuess, l.schemas, l.libraryCtx, l.libraryExecutionFactory}
 
 	return libVal.AsStarlarkValue(), nil
 }
@@ -201,7 +201,7 @@ func (l *libraryValue) WithSchema(thread *starlark.Thread, f *starlark.Builtin,
 		return starlark.None, err
 	}
 
-	newLibSchemas := append([]*schema.DocumentSchema{}, l.librarySchemas...)
+	newLibSchemas := append([]*schema.DocumentSchema{}, l.schemas...)
 	newLibSchemas = append(newLibSchemas, newDocSchema)
 
 	libVal := &libraryValue{l.path, l.alias, l.dataValuess, newLibSchemas, l.libraryCtx, l.libraryExecutionFactory}
@@ -218,12 +218,16 @@ func (l *libraryValue) Eval(thread *starlark.Thread, f *starlark.Builtin,
 
 	libraryLoader := l.libraryExecutionFactory.New(l.libraryCtx)
 
-	astValues, libValues, err := l.libraryValues(libraryLoader)
+	schema, librarySchemas, err := l.librarySchemas(libraryLoader)
+	if err != nil {
+		return starlark.None, err
+	}
+	astValues, libValues, err := l.libraryValues(libraryLoader, schema)
 	if err != nil {
 		return starlark.None, err
 	}
 
-	result, err := libraryLoader.Eval(astValues, libValues, nil)
+	result, err := libraryLoader.Eval(astValues, libValues, librarySchemas)
 	if err != nil {
 		return starlark.None, err
 	}
@@ -240,7 +244,11 @@ func (l *libraryValue) DataValues(thread *starlark.Thread, f *starlark.Builtin,
 
 	libraryLoader := l.libraryExecutionFactory.New(l.libraryCtx)
 
-	astValues, _, err := l.libraryValues(libraryLoader)
+	schema, _, err := l.librarySchemas(libraryLoader)
+	if err != nil {
+		return starlark.None, err
+	}
+	astValues, _, err := l.libraryValues(libraryLoader, schema)
 	if err != nil {
 		return starlark.None, err
 	}
@@ -264,12 +272,16 @@ func (l *libraryValue) Export(thread *starlark.Thread, f *starlark.Builtin,
 
 	libraryLoader := l.libraryExecutionFactory.New(l.libraryCtx)
 
-	astValues, libValues, err := l.libraryValues(libraryLoader)
+	schema, librarySchemas, err := l.librarySchemas(libraryLoader)
+	if err != nil {
+		return starlark.None, err
+	}
+	astValues, libValues, err := l.libraryValues(libraryLoader, schema)
 	if err != nil {
 		return starlark.None, err
 	}
 
-	result, err := libraryLoader.Eval(astValues, libValues, nil)
+	result, err := libraryLoader.Eval(astValues, libValues, librarySchemas)
 	if err != nil {
 		return starlark.None, err
 	}
@@ -335,7 +347,18 @@ func (l *libraryValue) exportArgs(args starlark.Tuple, kwargs []starlark.Tuple) 
 	return symbolName, locationPath, nil
 }
 
-func (l *libraryValue) libraryValues(ll *LibraryLoader) (*DataValues, []*DataValues, error) {
+func (l *libraryValue) librarySchemas(ll *LibraryLoader) (Schema, []*schema.DocumentSchema, error) {
+	for _, docSchema := range l.schemas {
+		docSchema.UsedInLibrary(schema.LibRefPiece{Path: l.path, Alias: l.alias})
+	}
+	schema, librarySchemas, err := ll.Schemas(l.schemas)
+	if err != nil {
+		return nil, nil, err
+	}
+	return schema, librarySchemas, nil
+}
+
+func (l *libraryValue) libraryValues(ll *LibraryLoader, schema Schema) (*DataValues, []*DataValues, error) {
 	var dvss, afterLibModDVss, childDVss []*DataValues
 	for _, dv := range l.dataValuess {
 		matchingDVs := dv.UsedInLibrary(LibRefPiece{Path: l.path, Alias: l.alias})
@@ -352,14 +375,6 @@ func (l *libraryValue) libraryValues(ll *LibraryLoader) (*DataValues, []*DataVal
 		}
 	}
 
-	//prep library schemas to not have libref if this is the correct lib context
-	for _, docSchema := range l.librarySchemas {
-		docSchema.UsedInLibrary(schema.LibRefPiece{Path: l.path, Alias: l.alias})
-	}
-	schema, _, err := ll.Schemas(l.librarySchemas)
-	if err != nil {
-		return nil, nil, err
-	}
 	dvs, foundChildDVss, err := ll.Values(append(dvss, afterLibModDVss...), schema)
 	if err != nil {
 		return nil, nil, err
