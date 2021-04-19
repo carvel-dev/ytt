@@ -54,27 +54,9 @@ func (ll *LibraryLoader) Schemas(schemaOverlays []*schema.DocumentSchema) (Schem
 		return nil, nil, err
 	}
 	if ll.templateLoaderOpts.SchemaEnabled {
-
-		var documentSchemas []*schema.DocumentSchema
-		for _, file := range schemaFiles {
-			libraryCtx := LibraryExecutionContext{Current: file.Library, Root: NewRootLibrary(nil)}
-
-			_, resultDocSet, err := loader.EvalYAML(libraryCtx, file.File)
-			if err != nil {
-				return nil, nil, err
-			}
-
-			docs, _, err := DocExtractor{resultDocSet}.Extract(AnnotationSchemaMatch)
-			if err != nil {
-				return nil, nil, err
-			}
-			for _, doc := range docs {
-				newSchema, err := schema.NewDocumentSchema(doc)
-				if err != nil {
-					return nil, nil, err
-				}
-				documentSchemas = append(documentSchemas, newSchema)
-			}
+		documentSchemas, err := collectSchemaDocs(schemaFiles, loader)
+		if err != nil {
+			return nil, nil, err
 		}
 		documentSchemas = append(documentSchemas, schemaOverlays...)
 
@@ -109,6 +91,31 @@ func (ll *LibraryLoader) Schemas(schemaOverlays []*schema.DocumentSchema) (Schem
 	}
 	return &schema.AnySchema{}, nil, nil
 
+}
+
+func collectSchemaDocs(schemaFiles []*FileInLibrary, loader *TemplateLoader) ([]*schema.DocumentSchema, error) {
+	var documentSchemas []*schema.DocumentSchema
+	for _, file := range schemaFiles {
+		libraryCtx := LibraryExecutionContext{Current: file.Library, Root: NewRootLibrary(nil)}
+
+		_, resultDocSet, err := loader.EvalYAML(libraryCtx, file.File)
+		if err != nil {
+			return nil, err
+		}
+
+		docs, _, err := DocExtractor{resultDocSet}.Extract(AnnotationSchemaMatch)
+		if err != nil {
+			return nil, err
+		}
+		for _, doc := range docs {
+			newSchema, err := schema.NewDocumentSchema(doc)
+			if err != nil {
+				return nil, err
+			}
+			documentSchemas = append(documentSchemas, newSchema)
+		}
+	}
+	return documentSchemas, nil
 }
 
 func (ll *LibraryLoader) Values(valuesOverlays []*DataValues, schema Schema) (*DataValues, []*DataValues, error) {
