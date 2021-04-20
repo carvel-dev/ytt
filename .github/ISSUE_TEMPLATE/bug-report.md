@@ -1,7 +1,10 @@
 ---
 name: Bug report
 about: Tell us about a problem you are experiencing
-labels: carvel-triage,bug
+title: ''
+labels: bug, carvel-triage
+assignees: ''
+
 ---
 
 **What steps did you take:**
