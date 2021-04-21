@@ -103,10 +103,10 @@ func (s *FileMarksOpts) Apply(filesToProcess []*files.File) ([]*files.File, erro
 		if !matched {
 			return nil, fmt.Errorf("Expected file mark '%s' to match at least one file by path, but did not", mark)
 		}
-	}
 
-	// Remove files that were cleared out
-	filesToProcess = s.clearNils(filesToProcess)
+		// Remove files that were cleared out
+		filesToProcess = s.clearNils(filesToProcess)
+	}
 
 	// If there is at least filtered output file, mark all others as non-templates
 	if len(exclusiveForOutputFiles) > 0 {
