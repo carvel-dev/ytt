@@ -1055,7 +1055,7 @@ key: #@ dvs_from_text()`)
 (@-= str([libDataValues.bar, libDataValues.foo])  @)
 (@- end @)
 `)
-// set schema with "library/ref" to verify that the data is being included in the library
+		// set schema with "library/ref" to verify that the data is being included in the library
 		schemaData := []byte(`
 #@library/ref "@lib"
 #@schema/match data_values=True
@@ -1094,7 +1094,7 @@ def dvs_from_starlark():
 return [libDataValues.bar, libDataValues.foo]
 end
 `)
-// set schema with "library/ref" to verify that the data is being included in the library
+		// set schema with "library/ref" to verify that the data is being included in the library
 		schemaData := []byte(`
 #@library/ref "@lib"
 #@schema/match data_values=True

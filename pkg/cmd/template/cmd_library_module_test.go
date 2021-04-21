@@ -1081,11 +1081,13 @@ lib_int: #@ data.values.int`)
 }
 
 func runAndCompare(t *testing.T, filesToProcess []*files.File, expectedYAMLTplData string) {
+	t.Helper()
 	runAndCompareWithOpts(t, cmdtpl.NewOptions(), filesToProcess, expectedYAMLTplData)
 }
 
 func runAndCompareWithOpts(t *testing.T, opts *cmdtpl.Options,
 	filesToProcess []*files.File, expectedYAMLTplData string) {
+	t.Helper()
 
 	ui := ui.NewTTY(false)
 
