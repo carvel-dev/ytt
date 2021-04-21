@@ -12,6 +12,7 @@ import (
 	"github.com/k14s/ytt/pkg/filepos"
 	"github.com/k14s/ytt/pkg/schema"
 	"github.com/k14s/ytt/pkg/template/core"
+	"github.com/k14s/ytt/pkg/workspace/ref"
 	"github.com/k14s/ytt/pkg/yamlmeta"
 	"github.com/k14s/ytt/pkg/yamltemplate"
 )
@@ -135,7 +136,7 @@ type libraryValue struct {
 }
 
 func (l *libraryValue) AsStarlarkValue() starlark.Value {
-	desc := LibRefPiece{Path: l.path, Alias: l.alias}.AsString()
+	desc := ref.LibraryRef{Path: l.path, Alias: l.alias}.AsString()
 	evalErrMsg := fmt.Sprintf("Evaluating library '%s'", desc)
 	exportErrMsg := fmt.Sprintf("Exporting from library '%s'", desc)
 
@@ -343,7 +344,7 @@ func (l *libraryValue) exportArgs(args starlark.Tuple, kwargs []starlark.Tuple) 
 
 func (l *libraryValue) librarySchemas(ll *LibraryLoader) (Schema, []*schema.DocumentSchema, error) {
 	for _, docSchema := range l.schemas {
-		docSchema.UsedInLibrary(schema.LibRefPiece{Path: l.path, Alias: l.alias})
+		docSchema.UsedInLibrary(ref.LibraryRef{Path: l.path, Alias: l.alias})
 	}
 	schema, librarySchemas, err := ll.Schemas(l.schemas)
 	if err != nil {
@@ -355,7 +356,7 @@ func (l *libraryValue) librarySchemas(ll *LibraryLoader) (Schema, []*schema.Docu
 func (l *libraryValue) libraryValues(ll *LibraryLoader, schema Schema) (*DataValues, []*DataValues, error) {
 	var dvss, afterLibModDVss, childDVss []*DataValues
 	for _, dv := range l.dataValuess {
-		matchingDVs := dv.UsedInLibrary(LibRefPiece{Path: l.path, Alias: l.alias})
+		matchingDVs := dv.UsedInLibrary(ref.LibraryRef{Path: l.path, Alias: l.alias})
 		if matchingDVs != nil {
 			if matchingDVs.HasLibRef() {
 				childDVss = append(childDVss, matchingDVs)

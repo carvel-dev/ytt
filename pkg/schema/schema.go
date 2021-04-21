@@ -5,19 +5,11 @@ package schema
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/k14s/ytt/pkg/filepos"
 	"github.com/k14s/ytt/pkg/template"
-	"github.com/k14s/ytt/pkg/template/core"
+	"github.com/k14s/ytt/pkg/workspace/ref"
 	"github.com/k14s/ytt/pkg/yamlmeta"
-)
-
-const (
-	AnnotationLibraryRef = "library/ref"
-
-	schemaLibrarySep            = "@"
-	schemaLibraryAliasIndicator = "~"
 )
 
 type AnySchema struct {
@@ -32,13 +24,8 @@ type DocumentSchema struct {
 	defaultDVs *yamlmeta.Document
 	Allowed    *DocumentType
 
-	originalLibRef []LibRefPiece
-	libRef         []LibRefPiece
-}
-
-type LibRefPiece struct {
-	Path  string
-	Alias string
+	originalLibRef []ref.LibraryRef
+	libRef         []ref.LibraryRef
 }
 
 func NewDocumentSchema(doc *yamlmeta.Document) (*DocumentSchema, error) {
@@ -52,7 +39,7 @@ func NewDocumentSchema(doc *yamlmeta.Document) (*DocumentSchema, error) {
 		return nil, err
 	}
 
-	libRef, err := getSchemaLibRef(doc)
+	libRef, err := getSchemaLibRef(ref.LibraryRefExtractor{}, doc)
 	if err != nil {
 		return nil, err
 	}
@@ -221,45 +208,15 @@ func setDefaultValues(node yamlmeta.Node) {
 	}
 }
 
-func getSchemaLibRef(doc *yamlmeta.Document) ([]LibRefPiece, error) {
-	var libRef []LibRefPiece
+type ExtractLibRefs interface {
+	FromAnnotation(template.NodeAnnotations) ([]ref.LibraryRef, error)
+}
+
+func getSchemaLibRef(libRefs ExtractLibRefs, doc *yamlmeta.Document) ([]ref.LibraryRef, error) {
 	anns := template.NewAnnotations(doc)
-
-	if hasLibAnn := anns.Has(AnnotationLibraryRef); hasLibAnn {
-		libArgs := anns.Args(AnnotationLibraryRef)
-		if l := libArgs.Len(); l != 1 {
-			return nil, fmt.Errorf("Expected %s annotation to have one arg, got %d", AnnotationLibraryRef, l)
-		}
-		argString, err := core.NewStarlarkValue(libArgs[0]).AsString()
-		if err != nil {
-			return nil, err
-		}
-		if argString == "" {
-			return nil, fmt.Errorf("Expected library ref to not be empty")
-		}
-
-		if !strings.HasPrefix(argString, schemaLibrarySep) {
-			return nil, fmt.Errorf("Expected library ref to start with '%s'", schemaLibrarySep)
-		}
-
-		for _, refPiece := range strings.Split(argString, schemaLibrarySep)[1:] {
-			pathAndAlias := strings.Split(refPiece, schemaLibraryAliasIndicator)
-			switch l := len(pathAndAlias); {
-			case l == 1:
-				libRef = append(libRef, LibRefPiece{Path: pathAndAlias[0]})
-
-			case l == 2:
-				if pathAndAlias[1] == "" {
-					return nil, fmt.Errorf("Expected library alias to not be empty")
-				}
-
-				libRef = append(libRef, LibRefPiece{Path: pathAndAlias[0], Alias: pathAndAlias[1]})
-
-			default:
-				return nil, fmt.Errorf("Expected library ref to have form: '@path', '@~alias', or '@path~alias', got: '%s'", argString)
-			}
-		}
-
+	libRef, err := libRefs.FromAnnotation(anns)
+	if err != nil {
+		return nil, err
 	}
 	return libRef, nil
 }
@@ -307,7 +264,7 @@ func (s *DocumentSchema) HasLibRef() bool {
 	return len(s.libRef) > 0
 }
 
-func (s *DocumentSchema) UsedInLibrary(expectedRefPiece LibRefPiece) {
+func (s *DocumentSchema) UsedInLibrary(expectedRefPiece ref.LibraryRef) {
 	if len(s.libRef) == 0 {
 		return
 	}
