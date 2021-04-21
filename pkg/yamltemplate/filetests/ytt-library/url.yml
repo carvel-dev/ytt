@@ -19,6 +19,16 @@ query_params:
   test3: #@ url.query_params_encode({"w":[]})
   test4: #@ url.query_params_decode("")
 
+parse_credentials:
+  test1: #@ url.extract_username("https://username:password@url.domain:8080")
+  test2: #@ url.extract_password("https://username:password@url.domain:8080")
+  test3: #@ url.trim_credentials("https://username:password@url.domain:8080")
+  test4: #@ url.extract_username("https://url.domain:8080")
+  test5: #@ url.extract_password("https://url.domain:8080")
+  test6: #@ url.trim_credentials("https://url.domain:8080")
+  test7: #@ url.extract_username("https://username@url.domain:8080")
+  test8: #@ url.extract_password("https://username@url.domain:8080")
+  test9: #@ url.trim_credentials("https://username@url.domain:8080")
 +++
 
 path_segment:
@@ -43,3 +53,13 @@ query_params:
     - ""
   test3: ""
   test4: {}
+parse_credentials:
+  test1: username
+  test2: password
+  test3: https://url.domain:8080
+  test4: ""
+  test5: ""
+  test6: https://url.domain:8080
+  test7: username
+  test8: ""
+  test9: https://url.domain:8080

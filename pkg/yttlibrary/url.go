@@ -27,6 +27,10 @@ var (
 
 				"query_params_encode": starlark.NewBuiltin("url.query_params_encode", core.ErrWrapper(urlModule{}.QueryParamsEncode)),
 				"query_params_decode": starlark.NewBuiltin("url.query_params_decode", core.ErrWrapper(urlModule{}.QueryParamsDecode)),
+
+				"extract_username": starlark.NewBuiltin("url.extract_username", core.ErrWrapper(urlModule{}.ExtractUsername)),
+				"extract_password": starlark.NewBuiltin("url.extract_password", core.ErrWrapper(urlModule{}.ExtractPassword)),
+				"trim_credentials": starlark.NewBuiltin("url.trim_credentials", core.ErrWrapper(urlModule{}.TrimCredentials)),
 			},
 		},
 	}
@@ -168,6 +172,65 @@ func (b urlModule) QueryParamsDecode(thread *starlark.Thread, f *starlark.Builti
 	}
 
 	return core.NewGoValue(result).AsStarlarkValue(), nil
+}
+
+func (b urlModule) ExtractUsername(thread *starlark.Thread, f *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
+	if args.Len() != 1 {
+		return starlark.None, fmt.Errorf("expected exactly one argument")
+	}
+
+	val, err := core.NewStarlarkValue(args.Index(0)).AsString()
+	if err != nil {
+		return starlark.None, err
+	}
+
+	parsedURL, err := url.Parse(val)
+	if err != nil {
+		return starlark.None, err
+	}
+
+	return starlark.String(parsedURL.User.Username()), nil
+}
+
+func (b urlModule) ExtractPassword(thread *starlark.Thread, f *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
+	if args.Len() != 1 {
+		return starlark.None, fmt.Errorf("expected exactly one argument")
+	}
+
+	val, err := core.NewStarlarkValue(args.Index(0)).AsString()
+	if err != nil {
+		return starlark.None, err
+	}
+
+	parsedURL, err := url.Parse(val)
+	if err != nil {
+		return starlark.None, err
+	}
+	passwd, passwdSet := parsedURL.User.Password()
+	if !passwdSet {
+		passwd = ""
+	}
+
+	return starlark.String(passwd), nil
+}
+
+func (b urlModule) TrimCredentials(thread *starlark.Thread, f *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
+	if args.Len() != 1 {
+		return starlark.None, fmt.Errorf("expected exactly one argument")
+	}
+
+	val, err := core.NewStarlarkValue(args.Index(0)).AsString()
+	if err != nil {
+		return starlark.None, err
+	}
+
+	parsedURL, err := url.Parse(val)
+	if err != nil {
+		return starlark.None, err
+	}
+	parsedURL.User = nil
+
+	return starlark.String(parsedURL.String()), nil
 }
 
 func (b urlModule) sortedKeys(vals url.Values) []string {
