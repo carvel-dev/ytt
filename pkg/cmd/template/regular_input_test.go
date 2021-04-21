@@ -135,6 +135,20 @@ func Test_FileMark_YAML_Shows_No_Warning(t *testing.T) {
 	}
 }
 
+func TestFileMarkMultipleExcludes(t *testing.T) {
+	filesToProcess := []*files.File{
+		files.MustNewFileFromSource(files.NewBytesSource("a.yml", []byte(`a: bar`))),
+		files.MustNewFileFromSource(files.NewBytesSource("b.yml", []byte(`b: bar`))),
+		files.MustNewFileFromSource(files.NewBytesSource("config.yml", []byte(`config: bar`))),
+		files.MustNewFileFromSource(files.NewBytesSource("d1.yml", []byte(`d: bar`))),
+	}
+
+	opts := cmdtpl.NewOptions()
+	opts.FileMarksOpts.FileMarks = []string{"a.yml:exclude=true", "b.yml:exclude=true", "d*.yml:exclude=true"}
+
+	runAndCompareWithOpts(t, opts, filesToProcess, "config: bar\n")
+}
+
 func assertStdoutAndStderr(stdout *bytes.Buffer, stderr *bytes.Buffer, expectedStdOut string, expectedStdErr string) error {
 	stdoutOutput, err := ioutil.ReadAll(stdout)
 	if err != nil {
