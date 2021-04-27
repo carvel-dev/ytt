@@ -20,6 +20,7 @@ var _ yamlmeta.Type = (*MapType)(nil)
 var _ yamlmeta.Type = (*MapItemType)(nil)
 var _ yamlmeta.Type = (*ArrayType)(nil)
 var _ yamlmeta.Type = (*ArrayItemType)(nil)
+var _ yamlmeta.Type = (*AnyType)(nil)
 
 type DocumentType struct {
 	Source    *yamlmeta.Document
@@ -49,6 +50,9 @@ type ScalarType struct {
 	Value    interface{}
 	Position *filepos.Position
 }
+type AnyType struct {
+	Position *filepos.Position
+}
 
 type TypeAnnotations map[structmeta.AnnotationName]interface{}
 
@@ -70,6 +74,9 @@ func (a ArrayItemType) GetValueType() yamlmeta.Type {
 func (m ScalarType) GetValueType() yamlmeta.Type {
 	panic("Not implemented because it is unreachable")
 }
+func (a AnyType) GetValueType() yamlmeta.Type {
+	return a
+}
 
 func (t *DocumentType) PositionOfDefinition() *filepos.Position {
 	return t.Position
@@ -88,6 +95,9 @@ func (a ArrayItemType) PositionOfDefinition() *filepos.Position {
 }
 func (m ScalarType) PositionOfDefinition() *filepos.Position {
 	return m.Position
+}
+func (a AnyType) PositionOfDefinition() *filepos.Position {
+	return a.Position
 }
 
 func (t *DocumentType) String() string {
@@ -116,6 +126,9 @@ func (m ScalarType) String() string {
 	default:
 		return fmt.Sprintf("%T", m.Value)
 	}
+}
+func (a AnyType) String() string {
+	return "any type"
 }
 
 func (t *DocumentType) CheckType(_ yamlmeta.TypeWithValues) (chk yamlmeta.TypeCheck) {
@@ -203,21 +216,25 @@ func (m *ScalarType) CheckType(node yamlmeta.TypeWithValues) (chk yamlmeta.TypeC
 	return
 }
 
-func (t *DocumentType) AssignTypeTo(typeable yamlmeta.Typeable) (chk yamlmeta.TypeCheck) {
+func (a AnyType) CheckType(_ yamlmeta.TypeWithValues) (chk yamlmeta.TypeCheck) {
+	return
+}
+
+func (schemaDocType *DocumentType) AssignTypeTo(typeable yamlmeta.Typeable) (chk yamlmeta.TypeCheck) {
 	doc, ok := typeable.(*yamlmeta.Document)
 	if !ok {
 		chk.Violations = append(chk.Violations,
-			NewMismatchedTypeError(typeable, t))
+			NewMismatchedTypeError(typeable, schemaDocType))
 		return
 	}
 
-	typeable.SetType(t)
+	typeable.SetType(schemaDocType)
 	typeableChild, ok := doc.Value.(yamlmeta.Typeable)
 	if ok || doc.Value == nil {
-		if t.ValueType != nil {
+		if schemaDocType.ValueType != nil {
 			tChild := typeableChild
 			if doc.Value == nil {
-				switch t.ValueType.(type) {
+				switch schemaDocType.ValueType.(type) {
 				case *MapType:
 					tChild = &yamlmeta.Map{}
 				case *ArrayType:
@@ -227,12 +244,12 @@ func (t *DocumentType) AssignTypeTo(typeable yamlmeta.Typeable) (chk yamlmeta.Ty
 				}
 				doc.Value = tChild
 			}
-			childCheck := t.ValueType.AssignTypeTo(tChild)
+			childCheck := schemaDocType.ValueType.AssignTypeTo(tChild)
 			chk.Violations = append(chk.Violations, childCheck.Violations...)
 		} else {
 			chk.Violations = append(chk.Violations,
 				fmt.Errorf("data values were found in data values file(s), but schema (%s) has no values defined\n"+
-					"(hint: define matching keys from data values files(s) in the schema, or do not enable the schema feature)", t.Position.AsCompactString()))
+					"(hint: define matching keys from data values files(s) in the schema, or do not enable the schema feature)", schemaDocType.Position.AsCompactString()))
 		}
 	} else {
 
@@ -336,6 +353,43 @@ func (a *ArrayItemType) AssignTypeTo(typeable yamlmeta.Typeable) (chk yamlmeta.T
 
 func (m *ScalarType) AssignTypeTo(typeable yamlmeta.Typeable) yamlmeta.TypeCheck {
 	return yamlmeta.TypeCheck{[]error{NewMismatchedTypeError(typeable, m)}}
+}
+
+func (a AnyType) AssignTypeTo(typeable yamlmeta.Typeable) (chk yamlmeta.TypeCheck) {
+
+	switch typedItem := typeable.(type) {
+	case *yamlmeta.Array:
+		//typeable.SetType(a)
+		typeable.SetType(&ArrayType{ItemsType: &ArrayItemType{ValueType: a, Position: a.Position}})
+		for _, arrayItem := range typedItem.Items {
+			a.AssignTypeTo(arrayItem)
+		}
+	case *yamlmeta.Map:
+		//typeable.SetType(a)
+		var mItemTypeS []*MapItemType
+		for _, mapItem := range typedItem.Items {
+			a.AssignTypeTo(mapItem)
+			mItemType := &MapItemType{Key: mapItem.Key, ValueType: a, Position: a.Position}
+			mItemTypeS = append(mItemTypeS, mItemType)
+		}
+		typeable.SetType(&MapType{Items: mItemTypeS})
+	case *yamlmeta.ArrayItem:
+		//typeable.SetType(a)
+		typeable.SetType(&ArrayItemType{ValueType: a, Position: a.Position})
+		typeableValue, ok := typedItem.Value.(yamlmeta.Typeable)
+		if ok {
+			a.AssignTypeTo(typeableValue)
+		}
+	case *yamlmeta.MapItem:
+		//typeable.SetType(a)
+		typeable.SetType(&MapItemType{Key: typedItem.Key, ValueType: a, Position: a.Position})
+		typeableValue, ok := typedItem.Value.(yamlmeta.Typeable)
+		if ok {
+			a.AssignTypeTo(typeableValue)
+		}
+	}
+
+	return
 }
 
 func (m *MapType) AllowsKey(key interface{}) bool {

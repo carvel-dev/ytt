@@ -5,6 +5,7 @@ package schema
 
 import (
 	"fmt"
+	"github.com/k14s/ytt/pkg/template/core"
 
 	"github.com/k14s/ytt/pkg/filepos"
 	"github.com/k14s/ytt/pkg/template"
@@ -96,6 +97,21 @@ func NewMapItemType(item *yamlmeta.MapItem) (*MapItemType, error) {
 			"null value is not allowed in schema (no type can be inferred from it)",
 			"to default to null, specify a value of the desired type and annotate with @schema/nullable")
 	}
+	//TODO: Refactor this (iterable?)
+	if ann, anyType := templateAnnotations["schema/type"]; anyType {
+		kwargName, err := core.NewStarlarkValue(ann.Kwargs[0][0]).AsString()
+		if err != nil {
+			return nil, err
+		}
+		kwargBool, err := core.NewStarlarkValue(ann.Kwargs[0][1]).AsBool()
+		if err != nil {
+			return nil, err
+		}
+
+		if kwargName == "any" && kwargBool {
+			valueType = AnyType{Position: item.Position}
+		}
+	}
 	annotations := make(TypeAnnotations)
 	for key, val := range templateAnnotations {
 		annotations[key] = val
@@ -129,10 +145,24 @@ func NewArrayItemType(item *yamlmeta.ArrayItem) (*ArrayItemType, error) {
 		return nil, err
 	}
 
-	annotations := template.NewAnnotations(item)
+	templateAnnotations := template.NewAnnotations(item)
 
-	if _, found := annotations[AnnotationSchemaNullable]; found {
+	if _, found := templateAnnotations[AnnotationSchemaNullable]; found {
 		return nil, NewInvalidSchemaError(item, fmt.Sprintf("@%s is not supported on array items", AnnotationSchemaNullable), "")
+	}
+	if ann, anyType := templateAnnotations["schema/type"]; anyType {
+		kwargName, err := core.NewStarlarkValue(ann.Kwargs[0][0]).AsString()
+		if err != nil {
+			return nil, err
+		}
+		kwargBool, err := core.NewStarlarkValue(ann.Kwargs[0][1]).AsBool()
+		if err != nil {
+			return nil, err
+		}
+
+		if kwargName == "any" && kwargBool {
+			valueType = AnyType{Position: item.Position}
+		}
 	}
 
 	return &ArrayItemType{ValueType: valueType, Position: item.Position}, nil

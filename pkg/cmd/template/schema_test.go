@@ -688,6 +688,171 @@ overriden:
 	})
 }
 
+func TestSchema_Allows_any_value_via_any_annotation(t *testing.T) {
+	opts := cmdtpl.NewOptions()
+	opts.SchemaEnabled = true
+
+	t.Run("when annotation is true and set on a map and array", func(t *testing.T) {
+		schemaYAML := `#@schema/match data_values=True
+---
+#@schema/type any=True
+foo: ""
+bar:
+#@schema/type any=True
+- 0
+#@schema/type any=True
+baz:
+  a: 1
+`
+		// does a:1 get assigned a 'Type' -> No.
+
+		// should a:1 have a type / what type should it get?
+		// should we build a schema a different way or check in a different way?
+
+		dataValuesYAML := `#@data/values
+---
+foo: 7
+bar: ["", 0, True]
+baz:
+  a: 7
+`
+		templateYAML := `#@ load("@ytt:data", "data")
+---
+foo: #@ data.values.foo
+bar: #@ data.values.bar
+baz: #@ data.values.baz
+`
+		expected := `foo: 7
+bar:
+- ""
+- 0
+- true
+baz:
+  a: 7
+`
+
+		filesToProcess := files.NewSortedFiles([]*files.File{
+			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
+			files.MustNewFileFromSource(files.NewBytesSource("dataValues.yml", []byte(dataValuesYAML))),
+			files.MustNewFileFromSource(files.NewBytesSource("template.yml", []byte(templateYAML))),
+		})
+
+		assertSucceeds(t, filesToProcess, expected, opts)
+	})
+	t.Run("when annotation is true and set on a map but no data values given", func(t *testing.T) {
+		schemaYAML := `#@schema/match data_values=True
+---
+#@schema/type any=True
+foo: ""
+bar:
+#@schema/type any=True
+- 0
+#@schema/type any=True
+baz:
+  a: 1
+`
+		// does a:1 get assigned a 'Type' -> No.
+
+		// should a:1 have a type / what type should it get?
+		// should we build a schema a different way or check in a different way?
+
+		templateYAML := `#@ load("@ytt:data", "data")
+---
+foo: #@ data.values.foo
+bar: #@ data.values.bar
+baz: #@ data.values.baz
+`
+		expected := `foo: ""
+bar: []
+baz:
+  a: 1
+`
+
+		filesToProcess := files.NewSortedFiles([]*files.File{
+			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
+			files.MustNewFileFromSource(files.NewBytesSource("template.yml", []byte(templateYAML))),
+		})
+
+		assertSucceeds(t, filesToProcess, expected, opts)
+	})
+	t.Run("when annotation is false and set on a map", func(t *testing.T) {
+		schemaYAML := `#@schema/match data_values=True
+---
+#@schema/type any=False
+foo: 0
+`
+		dataValuesYAML := `#@data/values
+---
+foo: 7
+`
+		templateYAML := `#@ load("@ytt:data", "data")
+---
+foo: #@ data.values.foo
+`
+		expected := `foo: 7
+`
+
+		filesToProcess := files.NewSortedFiles([]*files.File{
+			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
+			files.MustNewFileFromSource(files.NewBytesSource("dataValues.yml", []byte(dataValuesYAML))),
+			files.MustNewFileFromSource(files.NewBytesSource("template.yml", []byte(templateYAML))),
+		})
+
+		assertSucceeds(t, filesToProcess, expected, opts)
+	})
+	t.Run("when annotation is set on maps and arrays with nested dvs and overlay/replace", func(t *testing.T) {
+		schemaYAML := `#@schema/match data_values=True
+---
+#@schema/type any=True
+foo: ""
+bar:
+#@schema/type any=True
+- 0
+#@schema/type any=True
+baz:
+  a: 1
+`
+		dataValuesYAML := `#@data/values
+---
+#@overlay/replace
+foo:
+  ball: red
+#@overlay/replace
+bar:
+- newMap: 
+  - ""
+  - 8
+#@overlay/replace
+baz:
+- newArray: foobar
+`
+		templateYAML := `#@ load("@ytt:data", "data")
+---
+foo: #@ data.values.foo
+bar: #@ data.values.bar
+baz: #@ data.values.baz
+`
+		expected := `foo:
+  ball: red
+bar:
+- newMap:
+  - ""
+  - 8
+baz:
+- newArray: foobar
+`
+
+		filesToProcess := files.NewSortedFiles([]*files.File{
+			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
+			files.MustNewFileFromSource(files.NewBytesSource("dataValues.yml", []byte(dataValuesYAML))),
+			files.MustNewFileFromSource(files.NewBytesSource("template.yml", []byte(templateYAML))),
+		})
+
+		assertSucceeds(t, filesToProcess, expected, opts)
+	})
+
+}
+
 func TestSchema_Is_scoped_to_a_library(t *testing.T) {
 	opts := cmdtpl.NewOptions()
 	opts.SchemaEnabled = true
