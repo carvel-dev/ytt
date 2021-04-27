@@ -19,6 +19,12 @@ query_params:
   test3: #@ url.query_params_encode({"w":[]})
   test4: #@ url.query_params_decode("")
 
+url_type:
+  #@ testURL = url.parse("http://admin:password@url.domain:8080")
+  test1: #@ testURL.trim_credentials()
+  test2: #@ testURL.username()
+  test3: #@ testURL.password()
+
 +++
 
 path_segment:
@@ -43,3 +49,7 @@ query_params:
     - ""
   test3: ""
   test4: {}
+url_type:
+  test1: http://url.domain:8080
+  test2: admin
+  test3: password

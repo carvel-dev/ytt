@@ -27,12 +27,19 @@ var (
 
 				"query_params_encode": starlark.NewBuiltin("url.query_params_encode", core.ErrWrapper(urlModule{}.QueryParamsEncode)),
 				"query_params_decode": starlark.NewBuiltin("url.query_params_decode", core.ErrWrapper(urlModule{}.QueryParamsDecode)),
+
+				"parse": starlark.NewBuiltin("url.parse", core.ErrWrapper(urlModule{}.ParseURL)),
 			},
 		},
 	}
 )
 
 type urlModule struct{}
+
+// urlValue stores a parsed URL
+type urlValue struct {
+	*url.URL
+}
 
 func (b urlModule) PathSegmentEncode(thread *starlark.Thread, f *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
 	if args.Len() != 1 {
@@ -177,4 +184,60 @@ func (b urlModule) sortedKeys(vals url.Values) []string {
 	}
 	sort.Strings(result)
 	return result
+}
+
+func (b urlModule) ParseURL(thread *starlark.Thread, f *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
+	if args.Len() != 1 {
+		return starlark.None, fmt.Errorf("expected exactly one argument")
+	}
+
+	urlStr, err := core.NewStarlarkValue(args.Index(0)).AsString()
+	if err != nil {
+		return starlark.None, err
+	}
+
+	parsedURL, err := url.Parse(urlStr)
+	if err != nil {
+		return starlark.None, err
+	}
+
+	return (&urlValue{parsedURL}).AsStarlarkValue(), nil
+}
+
+func (uv *urlValue) AsStarlarkValue() starlark.Value {
+	return &starlarkstruct.Module{
+		Name: "url",
+		Members: starlark.StringDict{
+			"username":         starlark.NewBuiltin("url.username", core.ErrWrapper(uv.Username)),
+			"password":         starlark.NewBuiltin("url.password", core.ErrWrapper(uv.Password)),
+			"trim_credentials": starlark.NewBuiltin("url.trim_credentials", core.ErrWrapper(uv.TrimCredentials)),
+		},
+	}
+}
+
+func (uv urlValue) Username(thread *starlark.Thread, f *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
+	if args.Len() != 0 {
+		return starlark.None, fmt.Errorf("expected no argument")
+	}
+	return starlark.String(uv.User.Username()), nil
+}
+
+func (uv urlValue) Password(thread *starlark.Thread, f *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
+	if args.Len() != 0 {
+		return starlark.None, fmt.Errorf("expected no argument")
+	}
+	passwd, passwdSet := uv.User.Password()
+	if !passwdSet {
+		passwd = ""
+	}
+	return starlark.String(passwd), nil
+}
+
+func (uv urlValue) TrimCredentials(thread *starlark.Thread, f *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
+	if args.Len() != 0 {
+		return starlark.None, fmt.Errorf("expected no argument")
+	}
+	urlVar := *uv.URL
+	urlVar.User = nil
+	return starlark.String(urlVar.String()), nil
 }
