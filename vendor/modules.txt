@@ -1,21 +1,27 @@
 # github.com/aws/aws-lambda-go v1.8.2
+## explicit
 github.com/aws/aws-lambda-go/events
 github.com/aws/aws-lambda-go/lambda
 github.com/aws/aws-lambda-go/lambda/messages
 github.com/aws/aws-lambda-go/lambdacontext
 # github.com/cppforlife/cobrautil v0.0.0-20200514214827-bb86e6965d72
+## explicit
 github.com/cppforlife/cobrautil
 # github.com/cppforlife/go-cli-ui v0.0.0-20200505234325-512793797f05
+## explicit
 github.com/cppforlife/go-cli-ui/errors
 # github.com/davecgh/go-spew v1.1.1
 github.com/davecgh/go-spew/spew
 # github.com/hashicorp/go-version v1.2.0
+## explicit
 github.com/hashicorp/go-version
 # github.com/inconshreveable/mousetrap v1.0.0
 github.com/inconshreveable/mousetrap
 # github.com/k14s/difflib v0.0.0-20201117154628-0c031775bf57
+## explicit
 github.com/k14s/difflib
 # github.com/k14s/starlark-go v0.0.0-20200720175618-3a5c849cc368
+## explicit
 github.com/k14s/starlark-go/internal/compile
 github.com/k14s/starlark-go/internal/spell
 github.com/k14s/starlark-go/resolve
@@ -29,11 +35,14 @@ github.com/kr/text
 # github.com/pmezard/go-difflib v1.0.0
 github.com/pmezard/go-difflib/difflib
 # github.com/spf13/cobra v1.0.0
+## explicit
 github.com/spf13/cobra
 # github.com/spf13/pflag v1.0.5
+## explicit
 github.com/spf13/pflag
 # github.com/stretchr/testify v1.2.2
 github.com/stretchr/testify/assert
 github.com/stretchr/testify/require
 # gopkg.in/check.v1 v1.0.0-20190902080502-41f04d3bba15
+## explicit
 gopkg.in/check.v1
