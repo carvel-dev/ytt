@@ -205,40 +205,31 @@ func (b urlModule) ParseURL(thread *starlark.Thread, f *starlark.Builtin, args s
 }
 
 func (uv *urlValue) AsStarlarkValue() starlark.Value {
-	return starlarkstruct.FromKeywords(starlarkstruct.Default, []starlark.Tuple{
-		{starlark.String("string"), starlark.NewBuiltin("url.string", core.ErrWrapper(uv.string))},
-		{starlark.String("username"), starlark.NewBuiltin("url.username", core.ErrWrapper(uv.username))},
-		{starlark.String("password"), starlark.NewBuiltin("url.password", core.ErrWrapper(uv.password))},
+	return starlarkstruct.FromKeywords(starlark.String(uv.String()), []starlark.Tuple{
+		{starlark.String("user"), uv.user()},
 		{starlark.String("without_user"), starlark.NewBuiltin("url.without_user", core.ErrWrapper(uv.withoutUser))},
 	})
 }
 
-func (uv urlValue) string(thread *starlark.Thread, f *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
-	if args.Len() != 0 {
-		return starlark.None, fmt.Errorf("expected no argument")
+func (uv *urlValue) user() starlark.Value {
+	if uv.User == nil {
+		return starlark.None
 	}
-	return starlark.String(uv.String()), nil
+	return starlarkstruct.FromKeywords(starlark.String(uv.User.String()), []starlark.Tuple{
+		{starlark.String("name"), starlark.String(uv.User.Username())},
+		{starlark.String("password"), uv.password()},
+	})
 }
 
-func (uv urlValue) username(thread *starlark.Thread, f *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
-	if args.Len() != 0 {
-		return starlark.None, fmt.Errorf("expected no argument")
-	}
-	return starlark.String(uv.User.Username()), nil
-}
-
-func (uv urlValue) password(thread *starlark.Thread, f *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
-	if args.Len() != 0 {
-		return starlark.None, fmt.Errorf("expected no argument")
-	}
+func (uv *urlValue) password() starlark.Value {
 	passwd, passwdSet := uv.User.Password()
 	if !passwdSet {
-		passwd = ""
+		return starlark.None
 	}
-	return starlark.String(passwd), nil
+	return starlark.String(passwd)
 }
 
-func (uv urlValue) withoutUser(thread *starlark.Thread, f *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
+func (uv *urlValue) withoutUser(thread *starlark.Thread, f *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
 	if args.Len() != 0 {
 		return starlark.None, fmt.Errorf("expected no argument")
 	}

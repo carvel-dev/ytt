@@ -97,7 +97,7 @@ func (e StarlarkValue) asInterface(val starlark.Value) interface{} {
 		return e.itearableAsInterface(typedVal)
 
 	case *starlarkstruct.Struct:
-		return e.nativeStructAsInterface(typedVal)
+		return e.asInterface(typedVal.Constructor())
 
 	default:
 		panic(fmt.Sprintf("unknown type %T for conversion to go value", val))
@@ -111,19 +111,6 @@ func (e StarlarkValue) dictAsInterface(val *starlark.Dict) interface{} {
 			panic("dict item is not KV")
 		}
 		result.Set(e.asInterface(item.Index(0)), e.asInterface(item.Index(1)))
-	}
-	return result
-}
-
-func (e StarlarkValue) nativeStructAsInterface(val *starlarkstruct.Struct) interface{} {
-	// struct's ToStringDict uses map, hence ordering is not deterministic
-	result := orderedmap.NewMap()
-	for _, key := range val.AttrNames() {
-		v, err := val.Attr(key)
-		if err != nil {
-			panic("expected Attr() to succeed for *starlarkstruct.Struct")
-		}
-		result.Set(key, e.asInterface(v))
 	}
 	return result
 }

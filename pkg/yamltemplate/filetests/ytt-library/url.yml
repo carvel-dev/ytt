@@ -22,12 +22,17 @@ query_params:
 url_type:
   #@ testURL1 = url.parse("http://admin:password@url.domain:8080")
   #@ testURL2 = testURL1.without_user()
-  test1: #@ testURL1.string()
-  test2: #@ testURL1.username()
-  test3: #@ testURL1.password()
-  test4: #@ testURL2.string()
-  test5: #@ testURL2.username()
-  test6: #@ testURL2.password()
+  #@ testURL3 = url.parse("http://admin@url.domain:8080")
+  test1: #@ testURL1
+  test2: #@ testURL1.user
+  test3: #@ testURL1.user.name
+  test4: #@ testURL1.user.password
+  test5: #@ testURL2
+  test6: #@ testURL2.user
+  test7: #@ testURL3
+  test8: #@ testURL3.user
+  test9: #@ testURL3.user.name
+  test10: #@ testURL3.user.password
 
 +++
 
@@ -55,8 +60,12 @@ query_params:
   test4: {}
 url_type:
   test1: http://admin:password@url.domain:8080
-  test2: admin
-  test3: password
-  test4: http://url.domain:8080
-  test5: ""
-  test6: ""
+  test2: admin:password
+  test3: admin
+  test4: password
+  test5: http://url.domain:8080
+  test6: null
+  test7: http://admin@url.domain:8080
+  test8: admin
+  test9: admin
+  test10: null
