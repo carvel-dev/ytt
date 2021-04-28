@@ -223,7 +223,7 @@ func (l *TemplateLoader) EvalText(libraryCtx LibraryExecutionContext, file *file
 
 	yttLibrary := yttlibrary.NewAPI(compiledTemplate.TplReplaceNode,
 		yttlibrary.NewDataModule(l.values.Doc, DataLoader{libraryCtx}),
-		NewLibraryModule(libraryCtx, l.libraryExecFactory, l.libraryValuess, nil).AsModule())
+		NewLibraryModule(libraryCtx, l.libraryExecFactory, l.libraryValuess, l.librarySchemas).AsModule())
 
 	thread := l.newThread(libraryCtx, yttLibrary, file)
 
@@ -253,7 +253,7 @@ func (l *TemplateLoader) EvalStarlark(libraryCtx LibraryExecutionContext, file *
 
 	yttLibrary := yttlibrary.NewAPI(compiledTemplate.TplReplaceNode,
 		yttlibrary.NewDataModule(l.values.Doc, DataLoader{libraryCtx}),
-		NewLibraryModule(libraryCtx, l.libraryExecFactory, l.libraryValuess, nil).AsModule())
+		NewLibraryModule(libraryCtx, l.libraryExecFactory, l.libraryValuess, l.librarySchemas).AsModule())
 
 	thread := l.newThread(libraryCtx, yttLibrary, file)
 
