@@ -1041,6 +1041,86 @@ foo: "value exported from library"`)
 
 		assertSucceeds(t, filesToProcess, expectedYAMLTplData, opts)
 	})
+	t.Run("when a library is evaluated in a text template, data values are checked by that library's schema", func(t *testing.T) {
+		configYAML := []byte(`
+#@ load("data.lib.txt", "dvs_from_text")
+---
+key: #@ dvs_from_text()`)
+
+		textTemplateData := []byte(`
+(@ load("@ytt:library", "library") @)
+(@ libDataValues = library.get("lib").data_values() @)
+
+(@ def dvs_from_text(): -@)
+(@-= str([libDataValues.bar, libDataValues.foo])  @)
+(@- end @)
+`)
+// set schema with "library/ref" to verify that the data is being included in the library
+		schemaData := []byte(`
+#@library/ref "@lib"
+#@schema/match data_values=True
+---
+bar: from_root_schema
+foo: ""
+`)
+
+		libDataValues := []byte(`
+#@data/values
+---
+foo: from_library_dv
+`)
+		expectedYAMLTplData := `key: '["from_root_schema", "from_library_dv"]'
+`
+
+		filesToProcess := files.NewSortedFiles([]*files.File{
+			files.MustNewFileFromSource(files.NewBytesSource("config.yml", configYAML)),
+			files.MustNewFileFromSource(files.NewBytesSource("data.lib.txt", textTemplateData)),
+			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", schemaData)),
+			files.MustNewFileFromSource(files.NewBytesSource("_ytt_lib/lib/values.yml", libDataValues)),
+		})
+		assertSucceeds(t, filesToProcess, expectedYAMLTplData, opts)
+	})
+	t.Run("when a library is evaluated in a Starlark file, data values are checked by that library's schema", func(t *testing.T) {
+		configYAML := []byte(`
+#@ load("data.lib.star", "dvs_from_starlark")
+---
+key: #@ dvs_from_starlark()`)
+
+		starTemplateData := []byte(`
+load("@ytt:library", "library")
+libDataValues = library.get("lib").data_values()
+
+def dvs_from_starlark():
+return [libDataValues.bar, libDataValues.foo]
+end
+`)
+// set schema with "library/ref" to verify that the data is being included in the library
+		schemaData := []byte(`
+#@library/ref "@lib"
+#@schema/match data_values=True
+---
+foo: ""
+bar: from_library_schema
+`)
+
+		libConfig := []byte(`
+#@data/values
+---
+foo: from_library_dv
+`)
+		expectedYAMLTplData := `key:
+- from_library_schema
+- from_library_dv
+`
+
+		filesToProcess := files.NewSortedFiles([]*files.File{
+			files.MustNewFileFromSource(files.NewBytesSource("config.yml", configYAML)),
+			files.MustNewFileFromSource(files.NewBytesSource("data.lib.star", starTemplateData)),
+			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", schemaData)),
+			files.MustNewFileFromSource(files.NewBytesSource("_ytt_lib/lib/values.yml", libConfig)),
+		})
+		assertSucceeds(t, filesToProcess, expectedYAMLTplData, opts)
+	})
 	t.Run("when a library is evaluated, schema violations are reported", func(t *testing.T) {
 		configYAML := []byte(`
 #@ load("@ytt:template", "template")
