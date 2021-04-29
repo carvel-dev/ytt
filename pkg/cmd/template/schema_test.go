@@ -413,6 +413,49 @@ nonConforming.yml:3 | not_in_schema: this should be the only violation reported
 
 		assertFails(t, filesToProcess, expectedErr, opts)
 	})
+
+	t.Run("when schema expects a scalar as an array item, but an array is provided", func(t *testing.T) {
+		schemaYAML := `#@schema/match data_values=True
+---
+array: [true]
+`
+		dataValuesYAML := `
+#@data/values
+---
+array: [ [1] ]
+`
+
+		filesToProcess := files.NewSortedFiles([]*files.File{
+			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
+			files.MustNewFileFromSource(files.NewBytesSource("values.yml", []byte(dataValuesYAML))),
+		})
+		expectedErr := `TYPE MISMATCH - the value of this item is not what schema expected:
+             |      found: array
+             |   expected: boolean (by schema.yml:3)`
+
+		assertFails(t, filesToProcess, expectedErr, opts)
+	})
+	t.Run("when schema expects a scalar as an array item, but a map is provided", func(t *testing.T) {
+		schemaYAML := `#@schema/match data_values=True
+---
+array: [true]
+`
+		dataValuesYAML := `
+#@data/values
+---
+array: [ {a: 1} ]
+`
+
+		filesToProcess := files.NewSortedFiles([]*files.File{
+			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
+			files.MustNewFileFromSource(files.NewBytesSource("values.yml", []byte(dataValuesYAML))),
+		})
+		expectedErr := `TYPE MISMATCH - the value of this item is not what schema expected:
+             |      found: map
+             |   expected: boolean (by schema.yml:3)`
+
+		assertFails(t, filesToProcess, expectedErr, opts)
+	})
 }
 
 func TestSchema_Provides_default_values(t *testing.T) {
