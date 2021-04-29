@@ -174,6 +174,56 @@ rendered: #@ data.values.foo
 			}),
 			"true\n", opts)
 	})
+
+	t.Run("when additional schema file is overlay'd", func(t *testing.T) {
+		schemaYAML1 := `#@schema/match data_values=True
+---
+db_conn:
+- hostname: ""
+`
+
+		schemaYAML2 := `#@ load("@ytt:overlay", "overlay")
+#@schema/match data_values=True
+---
+db_conn:
+#@overlay/match by=overlay.all, expects="1+"
+-  
+  #@overlay/match missing_ok=True
+  metadata:
+    run: jobName
+#@overlay/match missing_ok=True
+top_level: ""
+`
+		dataValuesYAML := `#@data/values
+---
+db_conn:
+- hostname: server.example.com
+  metadata:
+    run: ./build.sh
+top_level: key
+`
+		templateYAML := `#@ load("@ytt:data", "data")
+---
+rendered: #@ data.values
+`
+
+		expected := `rendered:
+  db_conn:
+  - hostname: server.example.com
+    metadata:
+      run: ./build.sh
+  top_level: key
+`
+
+		filesToProcess := files.NewSortedFiles([]*files.File{
+			files.MustNewFileFromSource(files.NewBytesSource("schema1.yml", []byte(schemaYAML1))),
+			files.MustNewFileFromSource(files.NewBytesSource("schema2.yml", []byte(schemaYAML2))),
+			files.MustNewFileFromSource(files.NewBytesSource("dataValues.yml", []byte(dataValuesYAML))),
+			files.MustNewFileFromSource(files.NewBytesSource("template.yml", []byte(templateYAML))),
+		})
+
+		assertSucceeds(t, filesToProcess, expected, opts)
+	})
 }
 
 func TestSchema_Reports_violations_when_DataValues_do_NOT_conform(t *testing.T) {
@@ -1011,62 +1061,8 @@ foo: #@ data.values.foo
      `
 		assertFails(t, filesToProcess, expectedErr, cmdOpts)
 	})
-}
 
-func TestSchema_Overlay_multiple_schema_files(t *testing.T) {
-	opts := cmdtpl.NewOptions()
-	opts.SchemaEnabled = true
-
-	t.Run("when additional schema file is scoped to root library", func(t *testing.T) {
-		schemaYAML1 := `#@schema/match data_values=True
----
-db_conn:
-- hostname: ""
-`
-
-		schemaYAML2 := `#@ load("@ytt:overlay", "overlay")
-#@schema/match data_values=True
----
-db_conn:
-#@overlay/match by=overlay.all, expects="1+"
--  
-  #@overlay/match missing_ok=True
-  metadata:
-    run: jobName
-#@overlay/match missing_ok=True
-top_level: ""
-`
-		dataValuesYAML := `#@data/values
----
-db_conn:
-- hostname: server.example.com
-  metadata:
-    run: ./build.sh
-top_level: key
-`
-		templateYAML := `#@ load("@ytt:data", "data")
----
-rendered: #@ data.values
-`
-
-		expected := `rendered:
-  db_conn:
-  - hostname: server.example.com
-    metadata:
-      run: ./build.sh
-  top_level: key
-`
-
-		filesToProcess := files.NewSortedFiles([]*files.File{
-			files.MustNewFileFromSource(files.NewBytesSource("schema1.yml", []byte(schemaYAML1))),
-			files.MustNewFileFromSource(files.NewBytesSource("schema2.yml", []byte(schemaYAML2))),
-			files.MustNewFileFromSource(files.NewBytesSource("dataValues.yml", []byte(dataValuesYAML))),
-			files.MustNewFileFromSource(files.NewBytesSource("template.yml", []byte(templateYAML))),
-		})
-
-		assertSucceeds(t, filesToProcess, expected, opts)
-	})
-	t.Run("when additional schema file is scoped to private library", func(t *testing.T) {
+	t.Run("when schema is ref'd to a library, data values are only checked by that library's schema", func(t *testing.T) {
 		rootYAML := []byte(`
 #@ load("@ytt:library", "library")
 #@ load("@ytt:template", "template")
@@ -1112,7 +1108,7 @@ root_data_values: null
 
 		assertSucceeds(t, filesToProcess, expectedYAMLTplData, opts)
 	})
-	t.Run("when additional schema for private library is provided programmatically", func(t *testing.T) {
+	t.Run("when schema is programmatically set on a library, data values are checked by that library's schema", func(t *testing.T) {
 		rootYAML := []byte(`
 #@ load("@ytt:library", "library")
 #@ load("@ytt:template", "template")
