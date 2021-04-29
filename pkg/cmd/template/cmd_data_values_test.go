@@ -9,6 +9,8 @@ import (
 	cmdtpl "github.com/k14s/ytt/pkg/cmd/template"
 	"github.com/k14s/ytt/pkg/cmd/ui"
 	"github.com/k14s/ytt/pkg/files"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestDataValues(t *testing.T) {
@@ -36,23 +38,13 @@ str: str`)
 	opts := cmdtpl.NewOptions()
 
 	out := opts.RunWithFiles(cmdtpl.Input{Files: filesToProcess}, ui)
-	if out.Err != nil {
-		t.Fatalf("Expected RunWithFiles to succeed, but was error: %s", out.Err)
-	}
-
-	if len(out.Files) != 1 {
-		t.Fatalf("Expected number of output files to be 1, but was %d", len(out.Files))
-	}
+	require.NoError(t, out.Err)
+	require.Len(t, out.Files, 1, "unexpected number of output files")
 
 	file := out.Files[0]
 
-	if file.RelativePath() != "tpl.yml" {
-		t.Fatalf("Expected output file to be tpl.yml, but was %#v", file.RelativePath())
-	}
-
-	if string(file.Bytes()) != expectedYAMLTplData {
-		t.Fatalf("Expected output file to have specific data, but was: >>>%s<<<", file.Bytes())
-	}
+	assert.Equal(t, "tpl.yml", file.RelativePath())
+	assert.Equal(t, expectedYAMLTplData, string(file.Bytes()))
 }
 
 func TestDataValuesWithFlags(t *testing.T) {
@@ -101,23 +93,13 @@ another:
 	}
 
 	out := opts.RunWithFiles(cmdtpl.Input{Files: filesToProcess}, ui)
-	if out.Err != nil {
-		t.Fatalf("Expected RunWithFiles to succeed, but was error: %s", out.Err)
-	}
-
-	if len(out.Files) != 1 {
-		t.Fatalf("Expected number of output files to be 1, but was %d", len(out.Files))
-	}
+	require.NoError(t, out.Err)
+	require.Len(t, out.Files, 1, "unexpected number of output files")
 
 	file := out.Files[0]
 
-	if file.RelativePath() != "tpl.yml" {
-		t.Fatalf("Expected output file to be tpl.yml, but was %#v", file.RelativePath())
-	}
-
-	if string(file.Bytes()) != expectedYAMLTplData {
-		t.Fatalf("Expected output file to have specific data, but was: >>>%s<<< vs >>>%s<<<", file.Bytes(), expectedYAMLTplData)
-	}
+	assert.Equal(t, "tpl.yml", file.RelativePath())
+	assert.Equal(t, expectedYAMLTplData, string(file.Bytes()))
 }
 
 func TestDataValuesWithFlagsMarkedMissingOk(t *testing.T) {
@@ -153,23 +135,13 @@ nested:
 	}
 
 	out := opts.RunWithFiles(cmdtpl.Input{Files: filesToProcess}, ui)
-	if out.Err != nil {
-		t.Fatalf("Expected RunWithFiles to succeed, but was error: %s", out.Err)
-	}
-
-	if len(out.Files) != 1 {
-		t.Fatalf("Expected number of output files to be 1, but was %d", len(out.Files))
-	}
+	require.NoError(t, out.Err)
+	require.Len(t, out.Files, 1, "unexpected number of output files")
 
 	file := out.Files[0]
 
-	if file.RelativePath() != "tpl.yml" {
-		t.Fatalf("Expected output file to be tpl.yml, but was %#v", file.RelativePath())
-	}
-
-	if string(file.Bytes()) != expectedYAMLTplData {
-		t.Fatalf("Expected output file to have specific data, but was: >>>%s<<< vs >>>%s<<<", file.Bytes(), expectedYAMLTplData)
-	}
+	assert.Equal(t, "tpl.yml", file.RelativePath())
+	assert.Equal(t, expectedYAMLTplData, string(file.Bytes()))
 }
 
 func TestDataValuesWithLibraryAttachedFlags(t *testing.T) {
@@ -228,23 +200,13 @@ nested-lib-val: passes
 	}
 
 	out := opts.RunWithFiles(cmdtpl.Input{Files: filesToProcess}, ui)
-	if out.Err != nil {
-		t.Fatalf("Expected RunWithFiles to succeed, but was error: %s", out.Err)
-	}
-
-	if len(out.Files) != 1 {
-		t.Fatalf("Expected number of output files to be 1, but was %d", len(out.Files))
-	}
+	require.NoError(t, out.Err)
+	require.Len(t, out.Files, 1, "unexpected number of output files")
 
 	file := out.Files[0]
 
-	if file.RelativePath() != "config.yml" {
-		t.Fatalf("Expected output file to be config.yml, but was %#v", file.RelativePath())
-	}
-
-	if string(file.Bytes()) != expectedYAMLTplData {
-		t.Fatalf("Expected output file to have specific data, but was: >>>%s<<< vs >>>%s<<<", file.Bytes(), expectedYAMLTplData)
-	}
+	assert.Equal(t, "config.yml", file.RelativePath())
+	assert.Equal(t, expectedYAMLTplData, string(file.Bytes()))
 }
 
 func TestDataValuesMultipleFiles(t *testing.T) {
@@ -278,23 +240,13 @@ str: str2`)
 	opts := cmdtpl.NewOptions()
 
 	out := opts.RunWithFiles(cmdtpl.Input{Files: filesToProcess}, ui)
-	if out.Err != nil {
-		t.Fatalf("Expected RunWithFiles to succeed, but was error: %s", out.Err)
-	}
-
-	if len(out.Files) != 1 {
-		t.Fatalf("Expected number of output files to be 1, but was %d", len(out.Files))
-	}
+	require.NoError(t, out.Err)
+	require.Len(t, out.Files, 1, "unexpected number of output files")
 
 	file := out.Files[0]
 
-	if file.RelativePath() != "tpl.yml" {
-		t.Fatalf("Expected output file to be tpl.yml, but was %#v", file.RelativePath())
-	}
-
-	if string(file.Bytes()) != expectedYAMLTplData {
-		t.Fatalf("Expected output file to have specific data, but was: >>>%s<<<", file.Bytes())
-	}
+	assert.Equal(t, "tpl.yml", file.RelativePath())
+	assert.Equal(t, expectedYAMLTplData, string(file.Bytes()))
 }
 
 func TestDataValuesMultipleInOneFile(t *testing.T) {
@@ -327,23 +279,13 @@ int: 123`)
 	opts := cmdtpl.NewOptions()
 
 	out := opts.RunWithFiles(cmdtpl.Input{Files: filesToProcess}, ui)
-	if out.Err != nil {
-		t.Fatalf("Expected RunWithFiles to succeed, but was error: %s", out.Err)
-	}
-
-	if len(out.Files) != 1 {
-		t.Fatalf("Expected number of output files to be 1, but was %d", len(out.Files))
-	}
+	require.NoError(t, out.Err)
+	require.Len(t, out.Files, 1, "unexpected number of output files")
 
 	file := out.Files[0]
 
-	if file.RelativePath() != "tpl.yml" {
-		t.Fatalf("Expected output file to be tpl.yml, but was %#v", file.RelativePath())
-	}
-
-	if string(file.Bytes()) != expectedYAMLTplData {
-		t.Fatalf("Expected output file to have specific data, but was: >>>%s<<<", file.Bytes())
-	}
+	assert.Equal(t, "tpl.yml", file.RelativePath())
+	assert.Equal(t, expectedYAMLTplData, string(file.Bytes()))
 }
 
 func TestDataValuesOverlayNewKey(t *testing.T) {
@@ -378,23 +320,13 @@ int: 123`)
 	opts := cmdtpl.NewOptions()
 
 	out := opts.RunWithFiles(cmdtpl.Input{Files: filesToProcess}, ui)
-	if out.Err != nil {
-		t.Fatalf("Expected RunWithFiles to succeed, but was error: %s", out.Err)
-	}
-
-	if len(out.Files) != 1 {
-		t.Fatalf("Expected number of output files to be 1, but was %d", len(out.Files))
-	}
+	require.NoError(t, out.Err)
+	require.Len(t, out.Files, 1, "unexpected number of output files")
 
 	file := out.Files[0]
 
-	if file.RelativePath() != "tpl.yml" {
-		t.Fatalf("Expected output file to be tpl.yml, but was %#v", file.RelativePath())
-	}
-
-	if string(file.Bytes()) != expectedYAMLTplData {
-		t.Fatalf("Expected output file to have specific data, but was: >>>%s<<<", file.Bytes())
-	}
+	assert.Equal(t, "tpl.yml", file.RelativePath())
+	assert.Equal(t, expectedYAMLTplData, string(file.Bytes()))
 }
 
 func TestDataValuesOverlayRemoveKey(t *testing.T) {
@@ -430,23 +362,13 @@ data:
 	opts := cmdtpl.NewOptions()
 
 	out := opts.RunWithFiles(cmdtpl.Input{Files: filesToProcess}, ui)
-	if out.Err != nil {
-		t.Fatalf("Expected RunWithFiles to succeed, but was error: %s", out.Err)
-	}
-
-	if len(out.Files) != 1 {
-		t.Fatalf("Expected number of output files to be 1, but was %d", len(out.Files))
-	}
+	require.NoError(t, out.Err)
+	require.Len(t, out.Files, 1, "unexpected number of output files")
 
 	file := out.Files[0]
 
-	if file.RelativePath() != "tpl.yml" {
-		t.Fatalf("Expected output file to be tpl.yml, but was %#v", file.RelativePath())
-	}
-
-	if string(file.Bytes()) != expectedYAMLTplData {
-		t.Fatalf("Expected output file to have specific data, but was: >>>%s<<<", file.Bytes())
-	}
+	assert.Equal(t, "tpl.yml", file.RelativePath())
+	assert.Equal(t, expectedYAMLTplData, string(file.Bytes()))
 }
 
 func TestDataValuesWithNonDataValuesDocsErr(t *testing.T) {
@@ -465,15 +387,9 @@ non-data-values-doc`)
 	opts := cmdtpl.NewOptions()
 
 	out := opts.RunWithFiles(cmdtpl.Input{Files: filesToProcess}, ui)
-	if out.Err == nil {
-		t.Fatalf("Expected RunWithFiles to fail, but was no error")
-	}
 
 	expectedError := "Overlaying data values (in following order: data.yml): Templating file 'data.yml': Expected data values file 'data.yml' to only have data values documents"
-
-	if out.Err.Error() != expectedError {
-		t.Fatalf("\nExpected '%s'\nGot: '%s'", expectedError, out.Err)
-	}
+	require.EqualError(t, out.Err, expectedError)
 }
 
 func TestDataValuesWithNonDocDataValuesErr(t *testing.T) {
@@ -490,13 +406,9 @@ str: str`)
 	opts := cmdtpl.NewOptions()
 
 	out := opts.RunWithFiles(cmdtpl.Input{Files: filesToProcess}, ui)
-	if out.Err == nil {
-		t.Fatalf("Expected RunWithFiles to fail, but was no error")
-	}
 
-	if out.Err.Error() != "Expected YAML document to be annotated with data/values but was *yamlmeta.MapItem" {
-		t.Fatalf("Expected RunWithFiles to fail, but was '%s'", out.Err)
-	}
+	expectedErrorMessage := "Expected YAML document to be annotated with data/values but was *yamlmeta.MapItem"
+	require.EqualError(t, out.Err, expectedErrorMessage)
 }
 
 func TestDataValuesOverlayChildDefaults(t *testing.T) {
@@ -534,23 +446,13 @@ data:
 	opts := cmdtpl.NewOptions()
 
 	out := opts.RunWithFiles(cmdtpl.Input{Files: filesToProcess}, ui)
-	if out.Err != nil {
-		t.Fatalf("Expected RunWithFiles to succeed, but was error: %s", out.Err)
-	}
-
-	if len(out.Files) != 1 {
-		t.Fatalf("Expected number of output files to be 1, but was %d", len(out.Files))
-	}
+	require.NoError(t, out.Err)
+	require.Len(t, out.Files, 1, "unexpected number of output files")
 
 	file := out.Files[0]
 
-	if file.RelativePath() != "tpl.yml" {
-		t.Fatalf("Expected output file to be tpl.yml, but was %#v", file.RelativePath())
-	}
-
-	if string(file.Bytes()) != expectedYAMLTplData {
-		t.Fatalf("Expected output file to have specific data, but was: >>>%s<<<", file.Bytes())
-	}
+	assert.Equal(t, "tpl.yml", file.RelativePath())
+	assert.Equal(t, expectedYAMLTplData, string(file.Bytes()))
 }
 
 func TestDataValuesFromEnv(t *testing.T) {
@@ -612,21 +514,11 @@ nested_val: nested_from_env
 	}
 
 	out := opts.RunWithFiles(cmdtpl.Input{Files: filesToProcess}, ui)
-	if out.Err != nil {
-		t.Fatalf("Expected RunWithFiles to succeed, but was error: %s", out.Err)
-	}
-
-	if len(out.Files) != 1 {
-		t.Fatalf("Expected number of output files to be 1, but was %d", len(out.Files))
-	}
+	require.NoError(t, out.Err)
+	require.Len(t, out.Files, 1, "unexpected number of output files")
 
 	file := out.Files[0]
 
-	if file.RelativePath() != "tpl.yml" {
-		t.Fatalf("Expected output file to be tpl.yml, but was %#v", file.RelativePath())
-	}
-
-	if string(file.Bytes()) != expectedYAMLTplData {
-		t.Fatalf("Expected output file to have specific data, but was: >>>%s<<< vs >>>%s<<<", file.Bytes(), expectedYAMLTplData)
-	}
+	assert.Equal(t, "tpl.yml", file.RelativePath())
+	assert.Equal(t, expectedYAMLTplData, string(file.Bytes()))
 }

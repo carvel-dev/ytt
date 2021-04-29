@@ -14,6 +14,7 @@ import (
 	cmdtpl "github.com/k14s/ytt/pkg/cmd/template"
 	"github.com/k14s/ytt/pkg/cmd/ui"
 	"github.com/k14s/ytt/pkg/files"
+	"github.com/stretchr/testify/require"
 )
 
 func Test_Non_YAML_Files_With_No_Output_Flag_Produces_Warning(t *testing.T) {
@@ -41,19 +42,12 @@ If you want to include those results, use the --output-files or --dangerous-empt
 	rfs := template.NewRegularFilesSource(rfsOpts, ui)
 
 	out := opts.RunWithFiles(cmdtpl.Input{Files: filesToProcess}, ui)
-	if out.Err != nil {
-		t.Fatalf("An unexpected error occurred: %v", out.Err)
-	}
+	require.NoError(t, out.Err)
 
 	err := rfs.Output(out)
-	if err != nil {
-		t.Fatalf("Unexpected error occurred: %v", err)
-	}
+	require.NoError(t, err)
 
-	err = assertStdoutAndStderr(stdout, stderr, expectedStdOut, expectedStdErr)
-	if err != nil {
-		t.Fatalf("Assertion failed:\n %s", err)
-	}
+	assertStdoutAndStderr(t, stdout, stderr, expectedStdOut, expectedStdErr)
 }
 
 func Test_Non_YAML_With_Output_Flag_Shows_No_Warning(t *testing.T) {
@@ -71,9 +65,7 @@ organization=Acme Widgets Inc.`)
 	}
 
 	outputDir, err := ioutil.TempDir(os.TempDir(), "fakedir")
-	if err != nil {
-		t.Fatalf("Expected creating a temp dir to not fail: %v", err)
-	}
+	require.NoError(t, err)
 	defer os.RemoveAll(outputDir)
 
 	expectedStdOut := `creating: ` + outputDir + "/ini.txt" + "\n" + `creating: ` + outputDir + "/foo.yaml" + "\n"
@@ -86,19 +78,12 @@ organization=Acme Widgets Inc.`)
 	rfs := template.NewRegularFilesSource(rfsOpts, ui)
 
 	out := opts.RunWithFiles(cmdtpl.Input{Files: filesToProcess}, ui)
-	if out.Err != nil {
-		t.Fatalf("An unexpected error occurred: %v", out.Err)
-	}
+	require.NoError(t, out.Err)
 
 	err = rfs.Output(out)
-	if err != nil {
-		t.Fatalf("Unexpected error occurred: %v", err)
-	}
+	require.NoError(t, err)
 
-	err = assertStdoutAndStderr(stdout, stderr, expectedStdOut, expectedStdErr)
-	if err != nil {
-		t.Fatalf("Assertion failed:\n %s", err)
-	}
+	assertStdoutAndStderr(t, stdout, stderr, expectedStdOut, expectedStdErr)
 }
 
 func Test_FileMark_YAML_Shows_No_Warning(t *testing.T) {
@@ -120,19 +105,12 @@ func Test_FileMark_YAML_Shows_No_Warning(t *testing.T) {
 	rfs := template.NewRegularFilesSource(rfsOpts, ui)
 
 	out := opts.RunWithFiles(cmdtpl.Input{Files: filesToProcess}, ui)
-	if out.Err != nil {
-		t.Fatalf("An unexpected error occurred: %v", out.Err)
-	}
+	require.NoError(t, out.Err)
 
 	err := rfs.Output(out)
-	if err != nil {
-		t.Fatalf("Unexpected error occurred: %v", err)
-	}
+	require.NoError(t, err)
 
-	err = assertStdoutAndStderr(stdout, stderr, expectedStdOut, expectedStdErr)
-	if err != nil {
-		t.Fatalf("Assertion failed:\n %s", err)
-	}
+	assertStdoutAndStderr(t, stdout, stderr, expectedStdOut, expectedStdErr)
 }
 
 func TestFileMarkMultipleExcludes(t *testing.T) {
@@ -149,23 +127,15 @@ func TestFileMarkMultipleExcludes(t *testing.T) {
 	runAndCompareWithOpts(t, opts, filesToProcess, "config: bar\n")
 }
 
-func assertStdoutAndStderr(stdout *bytes.Buffer, stderr *bytes.Buffer, expectedStdOut string, expectedStdErr string) error {
+func assertStdoutAndStderr(t *testing.T, stdout *bytes.Buffer, stderr *bytes.Buffer, expectedStdOut string, expectedStdErr string) {
 	stdoutOutput, err := ioutil.ReadAll(stdout)
-	if err != nil {
-		return fmt.Errorf("Error reading stdout buffer: %s", err)
-	}
+	require.NoError(t, err, "reading stdout")
 
-	if string(stdoutOutput) != expectedStdOut {
-		return fmt.Errorf("Expected stdout to be >>>%s<<<\nBut was: >>>%s<<<", expectedStdOut, string(stdoutOutput))
-	}
+	require.Equal(t, expectedStdOut, string(stdoutOutput), "comparing stdout")
 
 	stderrOutput, err := ioutil.ReadAll(stderr)
-	if err != nil {
-		return fmt.Errorf("Error reading stderr buffer: %s", err)
-	}
+	require.NoError(t, err, "reading stdout")
 
-	if string(stderrOutput) != expectedStdErr {
-		return fmt.Errorf("Expected stderr to be >>>%s<<<\nBut was: >>>%s<<<", expectedStdErr, string(stderrOutput))
-	}
-	return nil
+	require.Equal(t, expectedStdErr, string(stderrOutput), "comparing stderr")
+	return
 }

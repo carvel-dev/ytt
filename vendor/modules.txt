@@ -7,6 +7,8 @@ github.com/aws/aws-lambda-go/lambdacontext
 github.com/cppforlife/cobrautil
 # github.com/cppforlife/go-cli-ui v0.0.0-20200505234325-512793797f05
 github.com/cppforlife/go-cli-ui/errors
+# github.com/davecgh/go-spew v1.1.1
+github.com/davecgh/go-spew/spew
 # github.com/hashicorp/go-version v1.2.0
 github.com/hashicorp/go-version
 # github.com/inconshreveable/mousetrap v1.0.0
@@ -24,9 +26,14 @@ github.com/k14s/starlark-go/syntax
 github.com/kr/pretty
 # github.com/kr/text v0.1.0
 github.com/kr/text
+# github.com/pmezard/go-difflib v1.0.0
+github.com/pmezard/go-difflib/difflib
 # github.com/spf13/cobra v1.0.0
 github.com/spf13/cobra
 # github.com/spf13/pflag v1.0.5
 github.com/spf13/pflag
+# github.com/stretchr/testify v1.2.2
+github.com/stretchr/testify/assert
+github.com/stretchr/testify/require
 # gopkg.in/check.v1 v1.0.0-20190902080502-41f04d3bba15
 gopkg.in/check.v1

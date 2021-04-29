@@ -4,12 +4,13 @@
 package template_test
 
 import (
-	"strings"
 	"testing"
 
 	cmdtpl "github.com/k14s/ytt/pkg/cmd/template"
 	"github.com/k14s/ytt/pkg/cmd/ui"
 	"github.com/k14s/ytt/pkg/files"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestLibraryModule(t *testing.T) {
@@ -285,18 +286,12 @@ func TestLibraryModuleWithExportConflicts(t *testing.T) {
 	opts := cmdtpl.NewOptions()
 
 	out := opts.RunWithFiles(cmdtpl.Input{Files: filesToProcess}, ui)
-	if out.Err == nil {
-		t.Fatalf("Expected RunWithFiles to fail, but was no error")
-	}
 
 	expectedErr := `
 - library.export: Exporting from library 'lib': Expected to find exactly one exported symbol 'vals', but found multiple across files: config1.lib.yml, config2.lib.yml
     in <toplevel>
       config.yml:3 | #@ library.get("lib").export("vals")`
-
-	if out.Err.Error() != expectedErr {
-		t.Fatalf("Expected RunWithFiles to fail, but was '%s'", out.Err)
-	}
+	require.EqualError(t, out.Err, expectedErr)
 }
 
 func TestLibraryModuleWithExportPrivate(t *testing.T) {
@@ -317,18 +312,12 @@ func TestLibraryModuleWithExportPrivate(t *testing.T) {
 	opts := cmdtpl.NewOptions()
 
 	out := opts.RunWithFiles(cmdtpl.Input{Files: filesToProcess}, ui)
-	if out.Err == nil {
-		t.Fatalf("Expected RunWithFiles to fail, but was no error")
-	}
 
 	expectedErr := `
 - library.export: Exporting from library 'lib': Symbols starting with '_' are private, and cannot be exported
     in <toplevel>
       config.yml:3 | #@ library.get("lib").export("_vals")`
-
-	if out.Err.Error() != expectedErr {
-		t.Fatalf("Expected RunWithFiles to fail, but was '%s'", out.Err)
-	}
+	require.EqualError(t, out.Err, expectedErr)
 }
 
 func TestLibraryModuleWithOverlays(t *testing.T) {
@@ -836,14 +825,10 @@ lib_val2: #@ data.values.lib_val2`)
 	opts := cmdtpl.NewOptions()
 
 	out := opts.RunWithFiles(cmdtpl.Input{Files: filesToProcess}, ui)
-	if out.Err == nil {
-		t.Fatalf("Expected RunWithFiles to error but it did not")
-	}
 
-	if out.Err.Error() != "Expected all provided library data values documents to be used "+
-		"but found unused: library '@~inst2' on line values.yml:9" {
-		t.Fatalf("Expected unused data values error but got '%s'", out.Err)
-	}
+	expectedErr := "Expected all provided library data values documents to be used " +
+		"but found unused: library '@~inst2' on line values.yml:9"
+	require.EqualError(t, out.Err, expectedErr)
 }
 
 func TestUnusedLibraryDataValuesNested(t *testing.T) {
@@ -888,14 +873,9 @@ nested_lib_val1: override-me`)
 	opts := cmdtpl.NewOptions()
 
 	out := opts.RunWithFiles(cmdtpl.Input{Files: filesToProcess}, ui)
-	if out.Err == nil {
-		t.Fatalf("Expected RunWithFiles to error but it did not")
-	}
-
-	if !strings.Contains(out.Err.Error(), "Expected all provided library data values documents to be used "+
-		"but found unused: library '@~inst1@~inst2' on line values.yml:4") {
-		t.Fatalf("Expected unused data values error but got '%s'", out.Err)
-	}
+	require.Error(t, out.Err)
+	require.Contains(t, out.Err.Error(), "Expected all provided library data values documents to be used "+
+		"but found unused: library '@~inst1@~inst2' on line values.yml:4")
 }
 
 func TestUnusedLibraryDataValuesWithoutLibraryEvalChild(t *testing.T) {
@@ -921,14 +901,9 @@ nested_lib_val1: new-val1`)
 	opts := cmdtpl.NewOptions()
 
 	out := opts.RunWithFiles(cmdtpl.Input{Files: filesToProcess}, ui)
-	if out.Err == nil {
-		t.Fatalf("Expected RunWithFiles to error but it did not")
-	}
-
-	if !strings.Contains(out.Err.Error(), "Expected all provided library data values documents to be used "+
-		"but found unused: library '@with-nested-lib@lib' on line values.yml:4") {
-		t.Fatalf("Expected unused data values error but got '%s'", out.Err)
-	}
+	require.Error(t, out.Err)
+	require.Contains(t, out.Err.Error(), "Expected all provided library data values documents to be used "+
+		"but found unused: library '@with-nested-lib@lib' on line values.yml:4")
 }
 
 func TestUnusedLibraryDataValuesNestedWithoutLibraryEval(t *testing.T) {
@@ -954,14 +929,9 @@ nested_lib_val1: new-val1`)
 	opts := cmdtpl.NewOptions()
 
 	out := opts.RunWithFiles(cmdtpl.Input{Files: filesToProcess}, ui)
-	if out.Err == nil {
-		t.Fatalf("Expected RunWithFiles to error but it did not")
-	}
-
-	if !strings.Contains(out.Err.Error(), "Expected all provided library data values documents to be used "+
-		"but found unused: library '@with-nested-lib' on line values.yml:4") {
-		t.Fatalf("Expected unused data values error but got '%s'", out.Err)
-	}
+	require.Error(t, out.Err)
+	require.Contains(t, out.Err.Error(), "Expected all provided library data values documents to be used "+
+		"but found unused: library '@with-nested-lib' on line values.yml:4")
 }
 
 func TestMalformedLibraryRefEmptyAlias(t *testing.T) {
@@ -980,13 +950,8 @@ lib_val1: val1
 	opts := cmdtpl.NewOptions()
 
 	out := opts.RunWithFiles(cmdtpl.Input{Files: filesToProcess}, ui)
-	if out.Err == nil {
-		t.Fatalf("Expected RunWithFiles to error but it did not")
-	}
-
-	if !strings.Contains(out.Err.Error(), "Expected library alias to not be empty") {
-		t.Fatalf("Expected ref error but got '%s'", out.Err)
-	}
+	require.Error(t, out.Err)
+	require.Contains(t, out.Err.Error(), "Expected library alias to not be empty")
 }
 
 func TestMalformedLibraryRefGeneralError(t *testing.T) {
@@ -1005,13 +970,8 @@ lib_val1: val1
 	opts := cmdtpl.NewOptions()
 
 	out := opts.RunWithFiles(cmdtpl.Input{Files: filesToProcess}, ui)
-	if out.Err == nil {
-		t.Fatalf("Expected RunWithFiles to error but it did not")
-	}
-
-	if !strings.Contains(out.Err.Error(), "Expected library ref to have form: '@path', '@~alias', or '@path~alias', got: ") {
-		t.Fatalf("Expected ref error but got '%s'", out.Err)
-	}
+	require.Error(t, out.Err)
+	require.Contains(t, out.Err.Error(), "Expected library ref to have form: '@path', '@~alias', or '@path~alias', got: ")
 }
 
 func TestLibraryModuleDataValuesFunc(t *testing.T) {
@@ -1116,13 +1076,8 @@ lib_int: #@ data.values.int`)
 	opts := cmdtpl.NewOptions()
 
 	out := opts.RunWithFiles(cmdtpl.Input{Files: filesToProcess}, ui)
-	if out.Err == nil {
-		t.Fatalf("Expected RunWithFiles to error but it did not")
-	}
-
-	if !strings.Contains(out.Err.Error(), "'# ignored!': Unrecognized comment type") {
-		t.Fatalf("Expected ref error but got '%s'", out.Err)
-	}
+	require.Error(t, out.Err)
+	require.Contains(t, out.Err.Error(), "'# ignored!': Unrecognized comment type")
 }
 
 func runAndCompare(t *testing.T, filesToProcess []*files.File, expectedYAMLTplData string) {
@@ -1135,21 +1090,11 @@ func runAndCompareWithOpts(t *testing.T, opts *cmdtpl.Options,
 	ui := ui.NewTTY(false)
 
 	out := opts.RunWithFiles(cmdtpl.Input{Files: filesToProcess}, ui)
-	if out.Err != nil {
-		t.Fatalf("Expected RunWithFiles to succeed, but was error: %s", out.Err)
-	}
-
-	if len(out.Files) != 1 {
-		t.Fatalf("Expected number of output files to be 1, but was %d", len(out.Files))
-	}
+	require.NoError(t, out.Err)
+	require.Len(t, out.Files, 1, "unexpected number of output files")
 
 	file := out.Files[0]
 
-	if file.RelativePath() != "config.yml" {
-		t.Fatalf("Expected output file to be config.yml, but was %#v", file.RelativePath())
-	}
-
-	if string(file.Bytes()) != expectedYAMLTplData {
-		t.Fatalf("Expected output file to have specific data, but was: >>>%s<<<", file.Bytes())
-	}
+	assert.Equal(t, "config.yml", file.RelativePath())
+	assert.Equal(t, expectedYAMLTplData, string(file.Bytes()))
 }
