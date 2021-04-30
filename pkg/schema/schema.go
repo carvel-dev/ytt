@@ -97,21 +97,13 @@ func NewMapItemType(item *yamlmeta.MapItem) (*MapItemType, error) {
 			"null value is not allowed in schema (no type can be inferred from it)",
 			"to default to null, specify a value of the desired type and annotate with @schema/nullable")
 	}
-	//TODO: Refactor this (iterable?)
-	if ann, anyType := templateAnnotations["schema/type"]; anyType {
-		kwargName, err := core.NewStarlarkValue(ann.Kwargs[0][0]).AsString()
-		if err != nil {
-			return nil, err
-		}
-		kwargBool, err := core.NewStarlarkValue(ann.Kwargs[0][1]).AsBool()
-		if err != nil {
-			return nil, err
-		}
-
-		if kwargName == "any" && kwargBool {
-			valueType = AnyType{Position: item.Position}
-		}
+	anyType, err := processTypeAnnotation(templateAnnotations)
+	if err != nil {
+		return nil, NewInvalidSchemaTypeAnnotationError(item, err.Error())
+	} else if anyType {
+		valueType = AnyType{Position: item.Position}
 	}
+
 	annotations := make(TypeAnnotations)
 	for key, val := range templateAnnotations {
 		annotations[key] = val
@@ -150,19 +142,11 @@ func NewArrayItemType(item *yamlmeta.ArrayItem) (*ArrayItemType, error) {
 	if _, found := templateAnnotations[AnnotationSchemaNullable]; found {
 		return nil, NewInvalidSchemaError(item, fmt.Sprintf("@%s is not supported on array items", AnnotationSchemaNullable), "")
 	}
-	if ann, anyType := templateAnnotations["schema/type"]; anyType {
-		kwargName, err := core.NewStarlarkValue(ann.Kwargs[0][0]).AsString()
-		if err != nil {
-			return nil, err
-		}
-		kwargBool, err := core.NewStarlarkValue(ann.Kwargs[0][1]).AsBool()
-		if err != nil {
-			return nil, err
-		}
-
-		if kwargName == "any" && kwargBool {
-			valueType = AnyType{Position: item.Position}
-		}
+	anyType, err := processTypeAnnotation(templateAnnotations)
+	if err != nil {
+		return nil, NewInvalidSchemaTypeAnnotationError(item, err.Error())
+	} else if anyType {
+		valueType = AnyType{Position: item.Position}
 	}
 
 	return &ArrayItemType{ValueType: valueType, Position: item.Position}, nil
@@ -195,6 +179,30 @@ func newCollectionItemValueType(collectionItemValue interface{}, position *filep
 	}
 
 	return nil, fmt.Errorf("Collection item type did not match any known types")
+}
+
+func processTypeAnnotation(templateAnnotations template.NodeAnnotations) (bool, error) {
+	if ann, anyType := templateAnnotations[AnnotationSchemaType]; anyType {
+		kwargName, err := core.NewStarlarkValue(ann.Kwargs[0][0]).AsString()
+		if err != nil {
+			return false, err
+		}
+		if kwargName != "any" {
+			return false, fmt.Errorf("unknown '%v' annotation keyword argument '%v'. Supported kwargs are 'any'", AnnotationSchemaType, kwargName)
+		}
+		kwargBool, err := core.NewStarlarkValue(ann.Kwargs[0][1]).AsBool()
+		if kwargBool == false && err != nil {
+			kwargBool := core.NewStarlarkValue(ann.Kwargs[0][1]).AsGoValue()
+			return false, fmt.Errorf("expected '%v' annotation value in keyword argument 'any' to be a boolean, but was '%v'", AnnotationSchemaType, kwargBool)
+		}
+		if err != nil {
+			return false, err
+		}
+		if kwargName == "any" && kwargBool {
+			return true, nil
+		}
+	}
+	return false, nil
 }
 
 func defaultDataValues(doc *yamlmeta.Document) (*yamlmeta.Document, error) {

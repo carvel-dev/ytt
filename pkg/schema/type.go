@@ -13,6 +13,7 @@ import (
 
 const (
 	AnnotationSchemaNullable structmeta.AnnotationName = "schema/nullable"
+	AnnotationSchemaType     structmeta.AnnotationName = "schema/type"
 )
 
 var _ yamlmeta.Type = (*DocumentType)(nil)
@@ -158,6 +159,9 @@ func (t *MapItemType) CheckType(node yamlmeta.TypeWithValues) (chk yamlmeta.Type
 		// A Map must've yielded a non-MapItem which is not valid YAML
 		panic(fmt.Sprintf("MapItem type check was called on a non-MapItem: %#v", node))
 	}
+	if _, anyType := t.ValueType.(AnyType); anyType {
+		return
+	}
 	if mapItem.Value == nil && !t.IsNullable() {
 		chk.Violations = append(chk.Violations,
 			NewMismatchedTypeError(mapItem, t))
@@ -220,21 +224,21 @@ func (a AnyType) CheckType(_ yamlmeta.TypeWithValues) (chk yamlmeta.TypeCheck) {
 	return
 }
 
-func (schemaDocType *DocumentType) AssignTypeTo(typeable yamlmeta.Typeable) (chk yamlmeta.TypeCheck) {
+func (t *DocumentType) AssignTypeTo(typeable yamlmeta.Typeable) (chk yamlmeta.TypeCheck) {
 	doc, ok := typeable.(*yamlmeta.Document)
 	if !ok {
 		chk.Violations = append(chk.Violations,
-			NewMismatchedTypeError(typeable, schemaDocType))
+			NewMismatchedTypeError(typeable, t))
 		return
 	}
 
-	typeable.SetType(schemaDocType)
+	typeable.SetType(t)
 	typeableChild, ok := doc.Value.(yamlmeta.Typeable)
 	if ok || doc.Value == nil {
-		if schemaDocType.ValueType != nil {
+		if t.ValueType != nil {
 			tChild := typeableChild
 			if doc.Value == nil {
-				switch schemaDocType.ValueType.(type) {
+				switch t.ValueType.(type) {
 				case *MapType:
 					tChild = &yamlmeta.Map{}
 				case *ArrayType:
@@ -244,12 +248,12 @@ func (schemaDocType *DocumentType) AssignTypeTo(typeable yamlmeta.Typeable) (chk
 				}
 				doc.Value = tChild
 			}
-			childCheck := schemaDocType.ValueType.AssignTypeTo(tChild)
+			childCheck := t.ValueType.AssignTypeTo(tChild)
 			chk.Violations = append(chk.Violations, childCheck.Violations...)
 		} else {
 			chk.Violations = append(chk.Violations,
 				fmt.Errorf("data values were found in data values file(s), but schema (%s) has no values defined\n"+
-					"(hint: define matching keys from data values files(s) in the schema, or do not enable the schema feature)", schemaDocType.Position.AsCompactString()))
+					"(hint: define matching keys from data values files(s) in the schema, or do not enable the schema feature)", t.Position.AsCompactString()))
 		}
 	} else {
 
@@ -359,13 +363,11 @@ func (a AnyType) AssignTypeTo(typeable yamlmeta.Typeable) (chk yamlmeta.TypeChec
 
 	switch typedItem := typeable.(type) {
 	case *yamlmeta.Array:
-		//typeable.SetType(a)
 		typeable.SetType(&ArrayType{ItemsType: &ArrayItemType{ValueType: a, Position: a.Position}})
 		for _, arrayItem := range typedItem.Items {
 			a.AssignTypeTo(arrayItem)
 		}
 	case *yamlmeta.Map:
-		//typeable.SetType(a)
 		var mItemTypeS []*MapItemType
 		for _, mapItem := range typedItem.Items {
 			a.AssignTypeTo(mapItem)
@@ -374,14 +376,12 @@ func (a AnyType) AssignTypeTo(typeable yamlmeta.Typeable) (chk yamlmeta.TypeChec
 		}
 		typeable.SetType(&MapType{Items: mItemTypeS})
 	case *yamlmeta.ArrayItem:
-		//typeable.SetType(a)
 		typeable.SetType(&ArrayItemType{ValueType: a, Position: a.Position})
 		typeableValue, ok := typedItem.Value.(yamlmeta.Typeable)
 		if ok {
 			a.AssignTypeTo(typeableValue)
 		}
 	case *yamlmeta.MapItem:
-		//typeable.SetType(a)
 		typeable.SetType(&MapItemType{Key: typedItem.Key, ValueType: a, Position: a.Position})
 		typeableValue, ok := typedItem.Value.(yamlmeta.Typeable)
 		if ok {

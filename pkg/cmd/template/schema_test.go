@@ -692,7 +692,7 @@ func TestSchema_Allows_any_value_via_any_annotation(t *testing.T) {
 	opts := cmdtpl.NewOptions()
 	opts.SchemaEnabled = true
 
-	t.Run("when annotation is true and set on a map and array", func(t *testing.T) {
+	t.Run("when any is true and set on a map and array", func(t *testing.T) {
 		schemaYAML := `#@schema/match data_values=True
 ---
 #@schema/type any=True
@@ -704,14 +704,9 @@ bar:
 baz:
   a: 1
 `
-		// does a:1 get assigned a 'Type' -> No.
-
-		// should a:1 have a type / what type should it get?
-		// should we build a schema a different way or check in a different way?
-
 		dataValuesYAML := `#@data/values
 ---
-foo: 7
+foo: ~
 bar: ["", 0, True]
 baz:
   a: 7
@@ -722,7 +717,7 @@ foo: #@ data.values.foo
 bar: #@ data.values.bar
 baz: #@ data.values.baz
 `
-		expected := `foo: 7
+		expected := `foo: null
 bar:
 - ""
 - 0
@@ -739,7 +734,7 @@ baz:
 
 		assertSucceeds(t, filesToProcess, expected, opts)
 	})
-	t.Run("when annotation is true and set on a map but no data values given", func(t *testing.T) {
+	t.Run("when any is true and set on a map but no data values given", func(t *testing.T) {
 		schemaYAML := `#@schema/match data_values=True
 ---
 #@schema/type any=True
@@ -775,7 +770,7 @@ baz:
 
 		assertSucceeds(t, filesToProcess, expected, opts)
 	})
-	t.Run("when annotation is false and set on a map", func(t *testing.T) {
+	t.Run("when any is false and set on a map", func(t *testing.T) {
 		schemaYAML := `#@schema/match data_values=True
 ---
 #@schema/type any=False
@@ -800,7 +795,7 @@ foo: #@ data.values.foo
 
 		assertSucceeds(t, filesToProcess, expected, opts)
 	})
-	t.Run("when annotation is set on maps and arrays with nested dvs and overlay/replace", func(t *testing.T) {
+	t.Run("when any is set on maps and arrays with nested dvs and overlay/replace", func(t *testing.T) {
 		schemaYAML := `#@schema/match data_values=True
 ---
 #@schema/type any=True
@@ -851,6 +846,38 @@ baz:
 		assertSucceeds(t, filesToProcess, expected, opts)
 	})
 
+	t.Run("when schema/type has keyword other than any, error is given", func(t *testing.T) {
+		schemaYAML := `#@schema/match data_values=True
+---
+#@schema/type unknown_kwarg=False
+foo: 0
+`
+		expectedErr := `schema.yml:4 | foo: 0
+             |
+             | INVALID SCHEMA ANNOTATION - unknown 'schema/type' annotation keyword argument 'unknown_kwarg'. Supported kwargs are 'any'
+`
+		filesToProcess := files.NewSortedFiles([]*files.File{
+			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
+		})
+
+		assertFails(t, filesToProcess, expectedErr, opts)
+	})
+	t.Run("when schema/type has value for any other than a bool, error is given", func(t *testing.T) {
+		schemaYAML := `#@schema/match data_values=True
+---
+#@schema/type any=1
+foo: 0
+`
+		expectedErr := `schema.yml:4 | foo: 0
+             |
+             | INVALID SCHEMA ANNOTATION - expected 'schema/type' annotation value in keyword argument 'any' to be a boolean, but was '1'
+`
+		filesToProcess := files.NewSortedFiles([]*files.File{
+			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
+		})
+
+		assertFails(t, filesToProcess, expectedErr, opts)
+	})
 }
 
 func TestSchema_Is_scoped_to_a_library(t *testing.T) {

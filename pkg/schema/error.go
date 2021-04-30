@@ -40,6 +40,13 @@ func NewUnexpectedKeyError(found *yamlmeta.MapItem, definition *filepos.Position
 	}
 }
 
+func NewInvalidSchemaTypeAnnotationError(found yamlmeta.Node, message string) error {
+	return &invalidSchemaTypeAnnotationError{
+		Message: message,
+		Found:   found,
+	}
+}
+
 type invalidSchemaError struct {
 	Message string
 	Found   yamlmeta.Node
@@ -137,6 +144,23 @@ func (t unexpectedKeyError) Error() string {
 	return msg
 }
 
+type invalidSchemaTypeAnnotationError struct {
+	Found   yamlmeta.Node
+	Message string
+}
+
+func (e invalidSchemaTypeAnnotationError) Error() string {
+	position := e.Found.GetPosition().AsCompactString()
+	leftColumnSize := len(position) + 1
+	lineContent := e.Found.GetPosition().GetLine()
+
+	msg := "\n"
+	msg += formatLine(leftColumnSize, position, lineContent)
+	msg += formatLine(leftColumnSize, "", "")
+	msg += formatLine(leftColumnSize, "", "INVALID SCHEMA ANNOTATION - "+e.Message)
+
+	return msg
+}
 func leftPadding(size int) string {
 	result := ""
 	for i := 0; i < size; i++ {
