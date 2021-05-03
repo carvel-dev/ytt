@@ -25,6 +25,6 @@ func (f *LibraryExecutionFactory) WithTemplateLoaderOptsOverrides(overrides Temp
 	return NewLibraryExecutionFactory(f.ui, f.templateLoaderOpts.Merge(overrides))
 }
 
-func (f *LibraryExecutionFactory) New(ctx LibraryExecutionContext) *LibraryLoader {
-	return NewLibraryLoader(ctx, f.ui, f.templateLoaderOpts, f)
+func (f *LibraryExecutionFactory) New(ctx LibraryExecutionContext) *LibraryExecution {
+	return NewLibraryExecution(ctx, f.ui, f.templateLoaderOpts, f)
 }

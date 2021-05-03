@@ -132,7 +132,7 @@ func (l *TemplateLoader) Load(thread *starlark.Thread, module string) (starlark.
 	}
 }
 
-func (l *TemplateLoader) ParseYAML(file *files.File) (*yamlmeta.DocumentSet, error) {
+func (l *TemplateLoader) EvalPlainYAML(file *files.File) (*yamlmeta.DocumentSet, error) {
 	fileBs, err := file.Bytes()
 	if err != nil {
 		return nil, err
@@ -154,7 +154,7 @@ func (l *TemplateLoader) ParseYAML(file *files.File) (*yamlmeta.DocumentSet, err
 }
 
 func (l *TemplateLoader) EvalYAML(libraryCtx LibraryExecutionContext, file *files.File) (starlark.StringDict, *yamlmeta.DocumentSet, error) {
-	docSet, err := l.ParseYAML(file)
+	docSet, err := l.EvalPlainYAML(file)
 	if err != nil {
 		return nil, nil, err
 	}
