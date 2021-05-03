@@ -11,9 +11,6 @@ import (
 	"github.com/k14s/ytt/pkg/yamlmeta"
 )
 
-type AnySchema struct {
-}
-
 type NullSchema struct {
 }
 
@@ -41,6 +38,15 @@ func NewDocumentSchema(doc *yamlmeta.Document) (*DocumentSchema, error) {
 		defaultDVs: schemaDVs,
 		Allowed:    docType,
 	}, nil
+}
+
+func NewPermissiveSchema() *DocumentSchema {
+	return &DocumentSchema{
+		Name:   "anyDataValues",
+		Source: &yamlmeta.Document{},
+		Allowed: &DocumentType{
+			ValueType: &AnyType{}},
+	}
 }
 
 func NewDocumentType(doc *yamlmeta.Document) (*DocumentType, error) {
@@ -209,10 +215,6 @@ func setDefaultValues(node yamlmeta.Node) {
 	}
 }
 
-func (as *AnySchema) AssignType(typeable yamlmeta.Typeable) yamlmeta.TypeCheck {
-	return yamlmeta.TypeCheck{}
-}
-
 func (n NullSchema) AssignType(typeable yamlmeta.Typeable) yamlmeta.TypeCheck {
 	return yamlmeta.TypeCheck{}
 }
@@ -221,20 +223,12 @@ func (s *DocumentSchema) AssignType(typeable yamlmeta.Typeable) yamlmeta.TypeChe
 	return s.Allowed.AssignTypeTo(typeable)
 }
 
-func (as *AnySchema) DefaultDataValues() *yamlmeta.Document {
-	return nil
-}
-
 func (n NullSchema) DefaultDataValues() *yamlmeta.Document {
 	return nil
 }
 
 func (s *DocumentSchema) DefaultDataValues() *yamlmeta.Document {
 	return s.defaultDVs
-}
-
-func (as *AnySchema) ValidateWithValues(valuesFilesCount int) error {
-	return nil
 }
 
 func (n NullSchema) ValidateWithValues(valuesFilesCount int) error {

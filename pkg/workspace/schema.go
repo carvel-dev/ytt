@@ -13,6 +13,5 @@ type Schema interface {
 	ValidateWithValues(valuesFilesCount int) error
 }
 
-var _ Schema = &schema.AnySchema{}
 var _ Schema = &schema.DocumentSchema{}
 var _ Schema = &schema.NullSchema{}

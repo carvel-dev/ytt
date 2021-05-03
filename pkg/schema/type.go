@@ -48,7 +48,6 @@ type ScalarType struct {
 type AnyType struct {
 	Position *filepos.Position
 }
-
 type NullType struct {
 	ValueType yamlmeta.Type
 	Position  *filepos.Position
@@ -262,6 +261,8 @@ func (t *DocumentType) AssignTypeTo(typeable yamlmeta.Typeable) (chk yamlmeta.Ty
 					tChild = &yamlmeta.Map{}
 				case *ArrayType:
 					tChild = &yamlmeta.Array{}
+				case *AnyType:
+					return
 				default:
 					panic("implement me!")
 				}
