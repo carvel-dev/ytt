@@ -19,7 +19,7 @@ var _ = fmt.Sprintf
 func TestParserDocSetEmpty(t *testing.T) {
 	const data = ""
 
-	parsedVal, err := yamlmeta.NewParser(yamlmeta.ParserOpts{WithoutMeta: false}).ParseBytes([]byte(data), "")
+	parsedVal, err := yamlmeta.NewParser(yamlmeta.ParserOpts{WithoutComment: false}).ParseBytes([]byte(data), "")
 	if err != nil {
 		t.Fatalf("error: %s", err)
 	}
@@ -44,7 +44,7 @@ func TestParserDocSetEmpty(t *testing.T) {
 func TestParserDocSetNewline(t *testing.T) {
 	const data = "\n"
 
-	parsedVal, err := yamlmeta.NewParser(yamlmeta.ParserOpts{WithoutMeta: false}).ParseBytes([]byte(data), "")
+	parsedVal, err := yamlmeta.NewParser(yamlmeta.ParserOpts{WithoutComment: false}).ParseBytes([]byte(data), "")
 	if err != nil {
 		t.Fatalf("error: %s", err)
 	}
@@ -69,7 +69,7 @@ func TestParserDocSetNewline(t *testing.T) {
 func TestParserOnlyComment(t *testing.T) {
 	const data = "#"
 
-	parsedVal, err := yamlmeta.NewParser(yamlmeta.ParserOpts{WithoutMeta: false}).ParseBytes([]byte(data), "")
+	parsedVal, err := yamlmeta.NewParser(yamlmeta.ParserOpts{WithoutComment: false}).ParseBytes([]byte(data), "")
 	if err != nil {
 		t.Fatalf("error: %s", err)
 	}
@@ -80,8 +80,8 @@ func TestParserOnlyComment(t *testing.T) {
 				Position: filepos.NewPosition(1),
 			},
 			&yamlmeta.Document{
-				Metas: []*yamlmeta.Meta{
-					&yamlmeta.Meta{Data: "", Position: filepos.NewPosition(1)},
+				Comments: []*yamlmeta.Comment{
+					&yamlmeta.Comment{Data: "", Position: filepos.NewPosition(1)},
 				},
 				Position: filepos.NewUnknownPosition(),
 			},
@@ -102,7 +102,7 @@ func TestParserOnlyComment(t *testing.T) {
 func TestParserDoc(t *testing.T) {
 	const data = "---\n"
 
-	parsedVal, err := yamlmeta.NewParser(yamlmeta.ParserOpts{WithoutMeta: false}).ParseBytes([]byte(data), "")
+	parsedVal, err := yamlmeta.NewParser(yamlmeta.ParserOpts{WithoutComment: false}).ParseBytes([]byte(data), "")
 	if err != nil {
 		t.Fatalf("error: %s", err)
 	}
@@ -127,7 +127,7 @@ func TestParserDoc(t *testing.T) {
 func TestParserDocWithoutDashes(t *testing.T) {
 	const data = "key: 1\n"
 
-	parsedVal, err := yamlmeta.NewParser(yamlmeta.ParserOpts{WithoutMeta: false}).ParseBytes([]byte(data), "")
+	parsedVal, err := yamlmeta.NewParser(yamlmeta.ParserOpts{WithoutComment: false}).ParseBytes([]byte(data), "")
 	if err != nil {
 		t.Fatalf("error: %s", err)
 	}
@@ -218,8 +218,8 @@ func TestParserRootString(t *testing.T) {
 	expectedVal := &yamlmeta.DocumentSet{
 		Items: []*yamlmeta.Document{
 			&yamlmeta.Document{
-				Metas: []*yamlmeta.Meta{
-					&yamlmeta.Meta{Data: " comment", Position: filepos.NewPosition(1)},
+				Comments: []*yamlmeta.Comment{
+					&yamlmeta.Comment{Data: " comment", Position: filepos.NewPosition(1)},
 				},
 				Value:    "abc",
 				Position: filepos.NewPosition(1),
@@ -245,7 +245,7 @@ array:
 - key: value
 `
 
-	parsedVal, err := yamlmeta.NewParser(yamlmeta.ParserOpts{WithoutMeta: false}).ParseBytes([]byte(data), "")
+	parsedVal, err := yamlmeta.NewParser(yamlmeta.ParserOpts{WithoutComment: false}).ParseBytes([]byte(data), "")
 	if err != nil {
 		t.Fatalf("error: %s", err)
 	}
@@ -307,7 +307,7 @@ map:
   key2: val2
 `
 
-	parsedVal, err := yamlmeta.NewParser(yamlmeta.ParserOpts{WithoutMeta: false}).ParseBytes([]byte(data), "")
+	parsedVal, err := yamlmeta.NewParser(yamlmeta.ParserOpts{WithoutComment: false}).ParseBytes([]byte(data), "")
 	if err != nil {
 		t.Fatalf("error: %s", err)
 	}
@@ -318,25 +318,25 @@ map:
 				Value: &yamlmeta.Map{
 					Items: []*yamlmeta.MapItem{
 						&yamlmeta.MapItem{
-							Metas: []*yamlmeta.Meta{
-								&yamlmeta.Meta{Data: " before-map", Position: filepos.NewPosition(2)},
+							Comments: []*yamlmeta.Comment{
+								&yamlmeta.Comment{Data: " before-map", Position: filepos.NewPosition(2)},
 							},
 							Key: "map",
 							Value: &yamlmeta.Map{
 								Items: []*yamlmeta.MapItem{
 									&yamlmeta.MapItem{
-										Metas: []*yamlmeta.Meta{
-											&yamlmeta.Meta{Data: " before-key1", Position: filepos.NewPosition(4)},
-											&yamlmeta.Meta{Data: " inline-key1", Position: filepos.NewPosition(5)},
+										Comments: []*yamlmeta.Comment{
+											&yamlmeta.Comment{Data: " before-key1", Position: filepos.NewPosition(4)},
+											&yamlmeta.Comment{Data: " inline-key1", Position: filepos.NewPosition(5)},
 										},
 										Key:      "key1",
 										Value:    "val1",
 										Position: filepos.NewPosition(5),
 									},
 									&yamlmeta.MapItem{
-										Metas: []*yamlmeta.Meta{
-											&yamlmeta.Meta{Data: " after-key1", Position: filepos.NewPosition(6)},
-											&yamlmeta.Meta{Data: " before-key2", Position: filepos.NewPosition(7)},
+										Comments: []*yamlmeta.Comment{
+											&yamlmeta.Comment{Data: " after-key1", Position: filepos.NewPosition(6)},
+											&yamlmeta.Comment{Data: " before-key2", Position: filepos.NewPosition(7)},
 										},
 										Key:      "key2",
 										Value:    "val2",
@@ -383,7 +383,7 @@ array:
 
 	// TODO comment on top of scalar
 
-	parsedVal, err := yamlmeta.NewParser(yamlmeta.ParserOpts{WithoutMeta: false}).ParseBytes([]byte(data), "")
+	parsedVal, err := yamlmeta.NewParser(yamlmeta.ParserOpts{WithoutComment: false}).ParseBytes([]byte(data), "")
 	if err != nil {
 		t.Fatalf("error: %s", err)
 	}
@@ -398,25 +398,25 @@ array:
 							Value: &yamlmeta.Array{
 								Items: []*yamlmeta.ArrayItem{
 									&yamlmeta.ArrayItem{
-										Metas: []*yamlmeta.Meta{
-											&yamlmeta.Meta{Data: " before-1", Position: filepos.NewPosition(3)},
-											&yamlmeta.Meta{Data: " inline-1", Position: filepos.NewPosition(4)},
+										Comments: []*yamlmeta.Comment{
+											&yamlmeta.Comment{Data: " before-1", Position: filepos.NewPosition(3)},
+											&yamlmeta.Comment{Data: " inline-1", Position: filepos.NewPosition(4)},
 										},
 										Value:    1,
 										Position: filepos.NewPosition(4),
 									},
 									&yamlmeta.ArrayItem{
-										Metas: []*yamlmeta.Meta{
-											&yamlmeta.Meta{Data: " after-1", Position: filepos.NewPosition(5)},
-											&yamlmeta.Meta{Data: " before-2", Position: filepos.NewPosition(6)},
+										Comments: []*yamlmeta.Comment{
+											&yamlmeta.Comment{Data: " after-1", Position: filepos.NewPosition(5)},
+											&yamlmeta.Comment{Data: " before-2", Position: filepos.NewPosition(6)},
 										},
 										Value:    2,
 										Position: filepos.NewPosition(7),
 									},
 									&yamlmeta.ArrayItem{Value: 3, Position: filepos.NewPosition(8)},
 									&yamlmeta.ArrayItem{
-										Metas: []*yamlmeta.Meta{
-											&yamlmeta.Meta{Data: " empty", Position: filepos.NewPosition(9)},
+										Comments: []*yamlmeta.Comment{
+											&yamlmeta.Comment{Data: " empty", Position: filepos.NewPosition(9)},
 										},
 										Value:    nil,
 										Position: filepos.NewPosition(9),
@@ -425,8 +425,8 @@ array:
 										Value: &yamlmeta.Map{
 											Items: []*yamlmeta.MapItem{
 												&yamlmeta.MapItem{
-													Metas: []*yamlmeta.Meta{
-														&yamlmeta.Meta{Data: " on-map", Position: filepos.NewPosition(11)},
+													Comments: []*yamlmeta.Comment{
+														&yamlmeta.Comment{Data: " on-map", Position: filepos.NewPosition(11)},
 													},
 													Key:      "key",
 													Value:    "value",
@@ -438,8 +438,8 @@ array:
 										Position: filepos.NewPosition(10),
 									},
 									&yamlmeta.ArrayItem{
-										Metas: []*yamlmeta.Meta{
-											&yamlmeta.Meta{Data: " on-array-item-with-map", Position: filepos.NewPosition(13)},
+										Comments: []*yamlmeta.Comment{
+											&yamlmeta.Comment{Data: " on-array-item-with-map", Position: filepos.NewPosition(13)},
 										},
 										Value: &yamlmeta.Map{
 											Items: []*yamlmeta.MapItem{
@@ -483,7 +483,7 @@ func TestParserDocSetComments(t *testing.T) {
 # comment-second
 `
 
-	parsedVal, err := yamlmeta.NewParser(yamlmeta.ParserOpts{WithoutMeta: false}).ParseBytes([]byte(data), "")
+	parsedVal, err := yamlmeta.NewParser(yamlmeta.ParserOpts{WithoutComment: false}).ParseBytes([]byte(data), "")
 	if err != nil {
 		t.Fatalf("error: %s", err)
 	}
@@ -494,8 +494,8 @@ func TestParserDocSetComments(t *testing.T) {
 				Position: filepos.NewPosition(1),
 			},
 			&yamlmeta.Document{
-				Metas: []*yamlmeta.Meta{
-					&yamlmeta.Meta{Data: " comment-first", Position: filepos.NewPosition(2)},
+				Comments: []*yamlmeta.Comment{
+					&yamlmeta.Comment{Data: " comment-first", Position: filepos.NewPosition(2)},
 				},
 				Position: filepos.NewPosition(3),
 			},
@@ -503,8 +503,8 @@ func TestParserDocSetComments(t *testing.T) {
 				Position: filepos.NewPosition(4),
 			},
 			&yamlmeta.Document{
-				Metas: []*yamlmeta.Meta{
-					&yamlmeta.Meta{Data: " comment-second", Position: filepos.NewPosition(5)},
+				Comments: []*yamlmeta.Comment{
+					&yamlmeta.Comment{Data: " comment-second", Position: filepos.NewPosition(5)},
 				},
 				Position: filepos.NewUnknownPosition(),
 			},
@@ -523,7 +523,7 @@ func TestParserDocSetComments(t *testing.T) {
 func TestParserDocSetOnlyComments2(t *testing.T) {
 	const data = "---\n# comment-first\n"
 
-	parsedVal, err := yamlmeta.NewParser(yamlmeta.ParserOpts{WithoutMeta: false}).ParseBytes([]byte(data), "")
+	parsedVal, err := yamlmeta.NewParser(yamlmeta.ParserOpts{WithoutComment: false}).ParseBytes([]byte(data), "")
 	if err != nil {
 		t.Fatalf("error: %s", err)
 	}
@@ -534,8 +534,8 @@ func TestParserDocSetOnlyComments2(t *testing.T) {
 				Position: filepos.NewPosition(1),
 			},
 			&yamlmeta.Document{
-				Metas: []*yamlmeta.Meta{
-					&yamlmeta.Meta{Data: " comment-first", Position: filepos.NewPosition(2)},
+				Comments: []*yamlmeta.Comment{
+					&yamlmeta.Comment{Data: " comment-first", Position: filepos.NewPosition(2)},
 				},
 				Position: filepos.NewUnknownPosition(),
 			},
@@ -554,7 +554,7 @@ func TestParserDocSetOnlyComments2(t *testing.T) {
 func TestParserDocSetOnlyComments3(t *testing.T) {
 	const data = "--- # comment\n"
 
-	parsedVal, err := yamlmeta.NewParser(yamlmeta.ParserOpts{WithoutMeta: false}).ParseBytes([]byte(data), "")
+	parsedVal, err := yamlmeta.NewParser(yamlmeta.ParserOpts{WithoutComment: false}).ParseBytes([]byte(data), "")
 	if err != nil {
 		t.Fatalf("error: %s", err)
 	}
@@ -562,8 +562,8 @@ func TestParserDocSetOnlyComments3(t *testing.T) {
 	expectedVal := &yamlmeta.DocumentSet{
 		Items: []*yamlmeta.Document{
 			&yamlmeta.Document{
-				Metas: []*yamlmeta.Meta{
-					&yamlmeta.Meta{Data: " comment", Position: filepos.NewPosition(1)},
+				Comments: []*yamlmeta.Comment{
+					&yamlmeta.Comment{Data: " comment", Position: filepos.NewPosition(1)},
 				},
 				Position: filepos.NewPosition(1),
 			},
@@ -582,7 +582,7 @@ func TestParserDocSetOnlyComments3(t *testing.T) {
 func TestParserDocSetOnlyComments(t *testing.T) {
 	const data = "# comment-first\n"
 
-	parsedVal, err := yamlmeta.NewParser(yamlmeta.ParserOpts{WithoutMeta: false}).ParseBytes([]byte(data), "")
+	parsedVal, err := yamlmeta.NewParser(yamlmeta.ParserOpts{WithoutComment: false}).ParseBytes([]byte(data), "")
 	if err != nil {
 		t.Fatalf("error: %s", err)
 	}
@@ -593,8 +593,8 @@ func TestParserDocSetOnlyComments(t *testing.T) {
 				Position: filepos.NewPosition(1),
 			},
 			&yamlmeta.Document{
-				Metas: []*yamlmeta.Meta{
-					&yamlmeta.Meta{Data: " comment-first", Position: filepos.NewPosition(1)},
+				Comments: []*yamlmeta.Comment{
+					&yamlmeta.Comment{Data: " comment-first", Position: filepos.NewPosition(1)},
 				},
 				Position: filepos.NewUnknownPosition(),
 			},
@@ -617,7 +617,7 @@ func TestParserDocSetCommentsNoFirstDashes(t *testing.T) {
 # comment-second
 `
 
-	parsedVal, err := yamlmeta.NewParser(yamlmeta.ParserOpts{WithoutMeta: false}).ParseBytes([]byte(data), "")
+	parsedVal, err := yamlmeta.NewParser(yamlmeta.ParserOpts{WithoutComment: false}).ParseBytes([]byte(data), "")
 	if err != nil {
 		t.Fatalf("error: %s", err)
 	}
@@ -628,8 +628,8 @@ func TestParserDocSetCommentsNoFirstDashes(t *testing.T) {
 				Position: filepos.NewPosition(1),
 			},
 			&yamlmeta.Document{
-				Metas: []*yamlmeta.Meta{
-					&yamlmeta.Meta{Data: " comment-first", Position: filepos.NewPosition(1)},
+				Comments: []*yamlmeta.Comment{
+					&yamlmeta.Comment{Data: " comment-first", Position: filepos.NewPosition(1)},
 				},
 				Position: filepos.NewPosition(2),
 			},
@@ -637,8 +637,8 @@ func TestParserDocSetCommentsNoFirstDashes(t *testing.T) {
 				Position: filepos.NewPosition(3),
 			},
 			&yamlmeta.Document{
-				Metas: []*yamlmeta.Meta{
-					&yamlmeta.Meta{Data: " comment-second", Position: filepos.NewPosition(4)},
+				Comments: []*yamlmeta.Comment{
+					&yamlmeta.Comment{Data: " comment-second", Position: filepos.NewPosition(4)},
 				},
 				Position: filepos.NewUnknownPosition(),
 			},
@@ -662,7 +662,7 @@ key:
   nested: true
 `
 
-	parsedVal, err := yamlmeta.NewParser(yamlmeta.ParserOpts{WithoutMeta: false}).ParseBytes([]byte(data), "")
+	parsedVal, err := yamlmeta.NewParser(yamlmeta.ParserOpts{WithoutComment: false}).ParseBytes([]byte(data), "")
 	if err != nil {
 		t.Fatalf("error: %s", err)
 	}
@@ -682,8 +682,8 @@ key:
 										Position: filepos.NewPosition(3),
 									},
 									&yamlmeta.MapItem{
-										Metas: []*yamlmeta.Meta{
-											&yamlmeta.Meta{Data: " comment", Position: filepos.NewPosition(4)},
+										Comments: []*yamlmeta.Comment{
+											&yamlmeta.Comment{Data: " comment", Position: filepos.NewPosition(4)},
 										},
 										Key:      "nested",
 										Value:    true,
@@ -751,23 +751,23 @@ anchored_value: *value
 					Items: []*yamlmeta.MapItem{
 						&yamlmeta.MapItem{
 							Key: "value",
-							Metas: []*yamlmeta.Meta{
-								&yamlmeta.Meta{Data: "@ variable = 123", Position: filepos.NewPosition(2)},
+							Comments: []*yamlmeta.Comment{
+								&yamlmeta.Comment{Data: "@ variable = 123", Position: filepos.NewPosition(2)},
 							},
 							Value: &yamlmeta.Map{
 								Items: []*yamlmeta.MapItem{
 									&yamlmeta.MapItem{
 										// TODO should be here as well
-										// Metas: []*yamlmeta.Meta{
-										// 	&yamlmeta.Meta{Data: "@ variable", Position: filepos.NewPosition(4)},
+										// Comments: []*yamlmeta.Comment{
+										// 	&yamlmeta.Comment{Data: "@ variable", Position: filepos.NewPosition(4)},
 										// },
 										Key:      "path",
 										Value:    nil,
 										Position: filepos.NewPosition(4),
 									},
 									&yamlmeta.MapItem{
-										Metas: []*yamlmeta.Meta{
-											&yamlmeta.Meta{Data: "@annotation", Position: filepos.NewPosition(5)},
+										Comments: []*yamlmeta.Comment{
+											&yamlmeta.Comment{Data: "@annotation", Position: filepos.NewPosition(5)},
 										},
 										Key: "args",
 										Value: &yamlmeta.Array{
@@ -795,8 +795,8 @@ anchored_value: *value
 							Value: &yamlmeta.Map{
 								Items: []*yamlmeta.MapItem{
 									&yamlmeta.MapItem{
-										Metas: []*yamlmeta.Meta{
-											&yamlmeta.Meta{Data: "@ variable", Position: filepos.NewPosition(4)},
+										Comments: []*yamlmeta.Comment{
+											&yamlmeta.Comment{Data: "@ variable", Position: filepos.NewPosition(4)},
 										},
 										Key:      "path",
 										Value:    nil,
@@ -804,8 +804,8 @@ anchored_value: *value
 									},
 									&yamlmeta.MapItem{
 										// TODO should be here as well
-										// Metas: []*yamlmeta.Meta{
-										// 	&yamlmeta.Meta{Data: "@annotation", Position: filepos.NewPosition(5)},
+										// Comments: []*yamlmeta.Comment{
+										// 	&yamlmeta.Comment{Data: "@annotation", Position: filepos.NewPosition(5)},
 										// },
 										Key: "args",
 										Value: &yamlmeta.Array{
@@ -862,23 +862,23 @@ merged_value:
 					Items: []*yamlmeta.MapItem{
 						&yamlmeta.MapItem{
 							Key: "value",
-							Metas: []*yamlmeta.Meta{
-								&yamlmeta.Meta{Data: "@ variable = 123", Position: filepos.NewPosition(2)},
+							Comments: []*yamlmeta.Comment{
+								&yamlmeta.Comment{Data: "@ variable = 123", Position: filepos.NewPosition(2)},
 							},
 							Value: &yamlmeta.Map{
 								Items: []*yamlmeta.MapItem{
 									&yamlmeta.MapItem{
 										// TODO should be here as well
-										// Metas: []*yamlmeta.Meta{
-										// 	&yamlmeta.Meta{Data: "@ variable", Position: filepos.NewPosition(4)},
+										// Comments: []*yamlmeta.Comment{
+										// 	&yamlmeta.Comment{Data: "@ variable", Position: filepos.NewPosition(4)},
 										// },
 										Key:      "path",
 										Value:    nil,
 										Position: filepos.NewPosition(4),
 									},
 									&yamlmeta.MapItem{
-										Metas: []*yamlmeta.Meta{
-											&yamlmeta.Meta{Data: "@annotation", Position: filepos.NewPosition(5)},
+										Comments: []*yamlmeta.Comment{
+											&yamlmeta.Comment{Data: "@annotation", Position: filepos.NewPosition(5)},
 										},
 										Key: "args",
 										Value: &yamlmeta.Array{
@@ -906,8 +906,8 @@ merged_value:
 							Value: &yamlmeta.Map{
 								Items: []*yamlmeta.MapItem{
 									&yamlmeta.MapItem{
-										Metas: []*yamlmeta.Meta{
-											&yamlmeta.Meta{Data: "@ variable", Position: filepos.NewPosition(4)},
+										Comments: []*yamlmeta.Comment{
+											&yamlmeta.Comment{Data: "@ variable", Position: filepos.NewPosition(4)},
 										},
 										Key:      "path",
 										Value:    nil,
@@ -915,8 +915,8 @@ merged_value:
 									},
 									&yamlmeta.MapItem{
 										// TODO should be here as well
-										// Metas: []*yamlmeta.Meta{
-										// 	&yamlmeta.Meta{Data: "@annotation", Position: filepos.NewPosition(5)},
+										// Comments: []*yamlmeta.Comment{
+										// 	&yamlmeta.Comment{Data: "@annotation", Position: filepos.NewPosition(5)},
 										// },
 										Key: "args",
 										Value: &yamlmeta.Array{
@@ -960,7 +960,7 @@ merged_value:
 func TestParserDocWithoutDashesPosition(t *testing.T) {
 	const data = "key: 1\n"
 
-	parsedVal, err := yamlmeta.NewParser(yamlmeta.ParserOpts{WithoutMeta: false}).ParseBytes([]byte(data), "data.yml")
+	parsedVal, err := yamlmeta.NewParser(yamlmeta.ParserOpts{WithoutComment: false}).ParseBytes([]byte(data), "data.yml")
 	if err != nil {
 		t.Fatalf("error: %s", err)
 	}
@@ -989,7 +989,7 @@ type parserExample struct {
 }
 
 func (ex parserExample) Check(t *testing.T) {
-	parsedVal, err := yamlmeta.NewParser(yamlmeta.ParserOpts{WithoutMeta: false}).ParseBytes([]byte(ex.Data), "")
+	parsedVal, err := yamlmeta.NewParser(yamlmeta.ParserOpts{WithoutComment: false}).ParseBytes([]byte(ex.Data), "")
 	if len(ex.ExpectedErr) == 0 {
 		ex.checkDocSet(t, parsedVal, err)
 	} else {

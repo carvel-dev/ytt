@@ -9,16 +9,15 @@ import (
 
 	"github.com/k14s/ytt/pkg/filepos"
 
-	"github.com/k14s/ytt/pkg/structmeta"
 	"github.com/k14s/ytt/pkg/template"
 	"github.com/k14s/ytt/pkg/template/core"
 	"github.com/k14s/ytt/pkg/yamlmeta"
 )
 
 const (
-	AnnotationNullable     structmeta.AnnotationName = "schema/nullable"
-	AnnotationType         structmeta.AnnotationName = "schema/type"
-	TypeAnnotationKwargAny string                    = "any"
+	AnnotationNullable     template.AnnotationName = "schema/nullable"
+	AnnotationType         template.AnnotationName = "schema/type"
+	TypeAnnotationKwargAny string                  = "any"
 )
 
 type Annotation interface {
@@ -106,7 +105,7 @@ func (n *NullableAnnotation) NewTypeFromAnn() yamlmeta.Type {
 func collectAnnotations(item yamlmeta.Node) ([]Annotation, error) {
 	var anns []Annotation
 
-	for _, annotation := range []structmeta.AnnotationName{AnnotationType, AnnotationNullable} {
+	for _, annotation := range []template.AnnotationName{AnnotationType, AnnotationNullable} {
 		ann, err := processOptionalAnnotation(item, annotation)
 		if err != nil {
 			return nil, err
@@ -118,7 +117,7 @@ func collectAnnotations(item yamlmeta.Node) ([]Annotation, error) {
 	return anns, nil
 }
 
-func processOptionalAnnotation(node yamlmeta.Node, optionalAnnotation structmeta.AnnotationName) (Annotation, error) {
+func processOptionalAnnotation(node yamlmeta.Node, optionalAnnotation template.AnnotationName) (Annotation, error) {
 	nodeAnnotations := template.NewAnnotations(node)
 
 	if nodeAnnotations.Has(optionalAnnotation) {

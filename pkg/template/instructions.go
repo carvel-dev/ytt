@@ -6,8 +6,6 @@ package template
 import (
 	"fmt"
 	"strings"
-
-	"github.com/k14s/ytt/pkg/structmeta"
 )
 
 type InstructionSet struct {
@@ -58,7 +56,7 @@ func (is *InstructionSet) NewEndCtxNone() Instruction {
 	return is.EndCtx.WithArgs("None")
 }
 
-func (is *InstructionSet) NewStartNodeAnnotation(nodeTag NodeTag, ann structmeta.Annotation) Instruction {
+func (is *InstructionSet) NewStartNodeAnnotation(nodeTag NodeTag, ann Annotation) Instruction {
 	collectedArgs := is.CollectNodeAnnotation.WithArgs(ann.Content).AsString()
 	return is.StartNodeAnnotation.WithArgs(nodeTag.AsString(), `"`+string(ann.Name)+`"`, collectedArgs)
 }

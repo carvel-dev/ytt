@@ -11,7 +11,7 @@ import (
 	"github.com/k14s/ytt/pkg/cmd/ui"
 	"github.com/k14s/ytt/pkg/files"
 	"github.com/k14s/ytt/pkg/schema"
-	"github.com/k14s/ytt/pkg/structmeta"
+	"github.com/k14s/ytt/pkg/template"
 	"github.com/k14s/ytt/pkg/yamlmeta"
 	yttoverlay "github.com/k14s/ytt/pkg/yttlibrary/overlay"
 )
@@ -157,7 +157,7 @@ func (ll *LibraryExecution) valuesFiles(loader *TemplateLoader) ([]*FileInLibrar
 
 }
 
-func (ll *LibraryExecution) filesByAnnotation(annName structmeta.AnnotationName, loader *TemplateLoader) ([]*FileInLibrary, error) {
+func (ll *LibraryExecution) filesByAnnotation(annName template.AnnotationName, loader *TemplateLoader) ([]*FileInLibrary, error) {
 	var valuesFiles []*FileInLibrary
 
 	for _, fileInLib := range ll.libraryCtx.Current.ListAccessibleFiles() {
@@ -253,7 +253,7 @@ func (ll *LibraryExecution) eval(values *DataValues, libraryValues []*DataValues
 				return nil, nil, nil, fmt.Errorf("Unknown file type")
 			}
 
-		case fileInLib.File.IsLibrary():
+		case fileInLib.File.IsModule():
 			// Collect globals produced by library files
 			var evalFunc func(LibraryExecutionContext, *files.File) (starlark.StringDict, error)
 

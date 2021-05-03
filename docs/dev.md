@@ -20,7 +20,6 @@ For those interested in extending and improving `ytt`, below is a quick referenc
 - [pkg/workspace](https://github.com/vmware-tanzu/carvel-ytt/tree/develop/pkg/workspace) keeps read files from the filesystem in memory for later access
   - `load(...)` directive goes through `TemplateLoader` to load files
 - [pkg/yamlmeta](https://github.com/vmware-tanzu/carvel-ytt/tree/develop/pkg/yamlmeta) parses YAML and tracks YAML node annotations (metas)
-- [pkg/structmeta](https://github.com/vmware-tanzu/carvel-ytt/tree/develop/pkg/structmeta) parses annotations (ann name and code) from YAML node annotations (metas)
 - [pkg/yamltemplate](https://github.com/vmware-tanzu/carvel-ytt/tree/develop/pkg/yamltemplate) generates Starlark template based on yamlmeta package structures
 - [pkg/texttemplate](https://github.com/vmware-tanzu/carvel-ytt/tree/develop/pkg/texttemplate) parses text templates and generates Starlark template
 - [pkg/template](https://github.com/vmware-tanzu/carvel-ytt/tree/develop/pkg/template)

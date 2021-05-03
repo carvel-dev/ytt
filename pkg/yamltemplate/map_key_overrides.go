@@ -6,13 +6,12 @@ package yamltemplate
 import (
 	"fmt"
 
-	"github.com/k14s/ytt/pkg/structmeta"
 	"github.com/k14s/ytt/pkg/template"
 	"github.com/k14s/ytt/pkg/yamlmeta"
 )
 
 const (
-	AnnotationMapKeyOverride structmeta.AnnotationName = "yaml/map-key-override"
+	AnnotationMapKeyOverride template.AnnotationName = "yaml/map-key-override"
 )
 
 type MapItemOverride struct {
