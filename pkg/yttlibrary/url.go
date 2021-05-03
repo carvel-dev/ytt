@@ -205,20 +205,34 @@ func (b urlModule) ParseURL(thread *starlark.Thread, f *starlark.Builtin, args s
 }
 
 func (uv *urlValue) AsStarlarkValue() starlark.Value {
-	return starlarkstruct.FromKeywords(starlark.String(uv.String()), []starlark.Tuple{
-		{starlark.String("user"), uv.user()},
-		{starlark.String("without_user"), starlark.NewBuiltin("url.without_user", core.ErrWrapper(uv.withoutUser))},
-	})
+	m := orderedmap.NewMap()
+	m.Set("user", uv.user())
+	m.Set("without_user", starlark.NewBuiltin("url.without_user", core.ErrWrapper(uv.withoutUser)))
+	m.Set("string", starlark.NewBuiltin("url.string", core.ErrWrapper(uv.string)))
+	s := core.NewStarlarkStruct(m)
+	s.SetRepresentation(urlRepresent)
+	return s
+}
+
+func urlRepresent() (starlark.Value, error) {
+	return nil, fmt.Errorf("urlValue cannot be directly referenced, please use urlValue.string()")
+}
+
+func (uv *urlValue) userRepresent() (starlark.Value, error) {
+	return starlark.String(uv.User.String()), nil
 }
 
 func (uv *urlValue) user() starlark.Value {
 	if uv.User == nil {
 		return starlark.None
 	}
-	return starlarkstruct.FromKeywords(starlark.String(uv.User.String()), []starlark.Tuple{
-		{starlark.String("name"), starlark.String(uv.User.Username())},
-		{starlark.String("password"), uv.password()},
-	})
+
+	m := orderedmap.NewMap()
+	m.Set("name", starlark.String(uv.User.Username()))
+	m.Set("password", uv.password())
+	s := core.NewStarlarkStruct(m)
+	s.SetRepresentation(uv.userRepresent)
+	return s
 }
 
 func (uv *urlValue) password() starlark.Value {
@@ -236,4 +250,11 @@ func (uv *urlValue) withoutUser(thread *starlark.Thread, f *starlark.Builtin, ar
 	urlVar := *uv.URL
 	urlVar.User = nil
 	return (&urlValue{&urlVar}).AsStarlarkValue(), nil
+}
+
+func (uv *urlValue) string(thread *starlark.Thread, f *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
+	if args.Len() != 0 {
+		return starlark.None, fmt.Errorf("expected no argument")
+	}
+	return starlark.String(uv.String()), nil
 }
