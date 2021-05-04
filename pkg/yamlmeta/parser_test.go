@@ -19,7 +19,7 @@ var _ = fmt.Sprintf
 func TestParserDocSetEmpty(t *testing.T) {
 	const data = ""
 
-	parsedVal, err := yamlmeta.NewParser(yamlmeta.ParserOpts{WithoutComment: false}).ParseBytes([]byte(data), "")
+	parsedVal, err := yamlmeta.NewParser(yamlmeta.ParserOpts{WithoutComments: false}).ParseBytes([]byte(data), "")
 	if err != nil {
 		t.Fatalf("error: %s", err)
 	}
@@ -44,7 +44,7 @@ func TestParserDocSetEmpty(t *testing.T) {
 func TestParserDocSetNewline(t *testing.T) {
 	const data = "\n"
 
-	parsedVal, err := yamlmeta.NewParser(yamlmeta.ParserOpts{WithoutComment: false}).ParseBytes([]byte(data), "")
+	parsedVal, err := yamlmeta.NewParser(yamlmeta.ParserOpts{WithoutComments: false}).ParseBytes([]byte(data), "")
 	if err != nil {
 		t.Fatalf("error: %s", err)
 	}
@@ -69,7 +69,7 @@ func TestParserDocSetNewline(t *testing.T) {
 func TestParserOnlyComment(t *testing.T) {
 	const data = "#"
 
-	parsedVal, err := yamlmeta.NewParser(yamlmeta.ParserOpts{WithoutComment: false}).ParseBytes([]byte(data), "")
+	parsedVal, err := yamlmeta.NewParser(yamlmeta.ParserOpts{WithoutComments: false}).ParseBytes([]byte(data), "")
 	if err != nil {
 		t.Fatalf("error: %s", err)
 	}
@@ -102,7 +102,7 @@ func TestParserOnlyComment(t *testing.T) {
 func TestParserDoc(t *testing.T) {
 	const data = "---\n"
 
-	parsedVal, err := yamlmeta.NewParser(yamlmeta.ParserOpts{WithoutComment: false}).ParseBytes([]byte(data), "")
+	parsedVal, err := yamlmeta.NewParser(yamlmeta.ParserOpts{WithoutComments: false}).ParseBytes([]byte(data), "")
 	if err != nil {
 		t.Fatalf("error: %s", err)
 	}
@@ -127,7 +127,7 @@ func TestParserDoc(t *testing.T) {
 func TestParserDocWithoutDashes(t *testing.T) {
 	const data = "key: 1\n"
 
-	parsedVal, err := yamlmeta.NewParser(yamlmeta.ParserOpts{WithoutComment: false}).ParseBytes([]byte(data), "")
+	parsedVal, err := yamlmeta.NewParser(yamlmeta.ParserOpts{WithoutComments: false}).ParseBytes([]byte(data), "")
 	if err != nil {
 		t.Fatalf("error: %s", err)
 	}
@@ -245,7 +245,7 @@ array:
 - key: value
 `
 
-	parsedVal, err := yamlmeta.NewParser(yamlmeta.ParserOpts{WithoutComment: false}).ParseBytes([]byte(data), "")
+	parsedVal, err := yamlmeta.NewParser(yamlmeta.ParserOpts{WithoutComments: false}).ParseBytes([]byte(data), "")
 	if err != nil {
 		t.Fatalf("error: %s", err)
 	}
@@ -307,7 +307,7 @@ map:
   key2: val2
 `
 
-	parsedVal, err := yamlmeta.NewParser(yamlmeta.ParserOpts{WithoutComment: false}).ParseBytes([]byte(data), "")
+	parsedVal, err := yamlmeta.NewParser(yamlmeta.ParserOpts{WithoutComments: false}).ParseBytes([]byte(data), "")
 	if err != nil {
 		t.Fatalf("error: %s", err)
 	}
@@ -383,7 +383,7 @@ array:
 
 	// TODO comment on top of scalar
 
-	parsedVal, err := yamlmeta.NewParser(yamlmeta.ParserOpts{WithoutComment: false}).ParseBytes([]byte(data), "")
+	parsedVal, err := yamlmeta.NewParser(yamlmeta.ParserOpts{WithoutComments: false}).ParseBytes([]byte(data), "")
 	if err != nil {
 		t.Fatalf("error: %s", err)
 	}
@@ -483,7 +483,7 @@ func TestParserDocSetComments(t *testing.T) {
 # comment-second
 `
 
-	parsedVal, err := yamlmeta.NewParser(yamlmeta.ParserOpts{WithoutComment: false}).ParseBytes([]byte(data), "")
+	parsedVal, err := yamlmeta.NewParser(yamlmeta.ParserOpts{WithoutComments: false}).ParseBytes([]byte(data), "")
 	if err != nil {
 		t.Fatalf("error: %s", err)
 	}
@@ -523,7 +523,7 @@ func TestParserDocSetComments(t *testing.T) {
 func TestParserDocSetOnlyComments2(t *testing.T) {
 	const data = "---\n# comment-first\n"
 
-	parsedVal, err := yamlmeta.NewParser(yamlmeta.ParserOpts{WithoutComment: false}).ParseBytes([]byte(data), "")
+	parsedVal, err := yamlmeta.NewParser(yamlmeta.ParserOpts{WithoutComments: false}).ParseBytes([]byte(data), "")
 	if err != nil {
 		t.Fatalf("error: %s", err)
 	}
@@ -554,7 +554,7 @@ func TestParserDocSetOnlyComments2(t *testing.T) {
 func TestParserDocSetOnlyComments3(t *testing.T) {
 	const data = "--- # comment\n"
 
-	parsedVal, err := yamlmeta.NewParser(yamlmeta.ParserOpts{WithoutComment: false}).ParseBytes([]byte(data), "")
+	parsedVal, err := yamlmeta.NewParser(yamlmeta.ParserOpts{WithoutComments: false}).ParseBytes([]byte(data), "")
 	if err != nil {
 		t.Fatalf("error: %s", err)
 	}
@@ -582,7 +582,7 @@ func TestParserDocSetOnlyComments3(t *testing.T) {
 func TestParserDocSetOnlyComments(t *testing.T) {
 	const data = "# comment-first\n"
 
-	parsedVal, err := yamlmeta.NewParser(yamlmeta.ParserOpts{WithoutComment: false}).ParseBytes([]byte(data), "")
+	parsedVal, err := yamlmeta.NewParser(yamlmeta.ParserOpts{WithoutComments: false}).ParseBytes([]byte(data), "")
 	if err != nil {
 		t.Fatalf("error: %s", err)
 	}
@@ -617,7 +617,7 @@ func TestParserDocSetCommentsNoFirstDashes(t *testing.T) {
 # comment-second
 `
 
-	parsedVal, err := yamlmeta.NewParser(yamlmeta.ParserOpts{WithoutComment: false}).ParseBytes([]byte(data), "")
+	parsedVal, err := yamlmeta.NewParser(yamlmeta.ParserOpts{WithoutComments: false}).ParseBytes([]byte(data), "")
 	if err != nil {
 		t.Fatalf("error: %s", err)
 	}
@@ -662,7 +662,7 @@ key:
   nested: true
 `
 
-	parsedVal, err := yamlmeta.NewParser(yamlmeta.ParserOpts{WithoutComment: false}).ParseBytes([]byte(data), "")
+	parsedVal, err := yamlmeta.NewParser(yamlmeta.ParserOpts{WithoutComments: false}).ParseBytes([]byte(data), "")
 	if err != nil {
 		t.Fatalf("error: %s", err)
 	}
@@ -960,7 +960,7 @@ merged_value:
 func TestParserDocWithoutDashesPosition(t *testing.T) {
 	const data = "key: 1\n"
 
-	parsedVal, err := yamlmeta.NewParser(yamlmeta.ParserOpts{WithoutComment: false}).ParseBytes([]byte(data), "data.yml")
+	parsedVal, err := yamlmeta.NewParser(yamlmeta.ParserOpts{WithoutComments: false}).ParseBytes([]byte(data), "data.yml")
 	if err != nil {
 		t.Fatalf("error: %s", err)
 	}
@@ -989,7 +989,7 @@ type parserExample struct {
 }
 
 func (ex parserExample) Check(t *testing.T) {
-	parsedVal, err := yamlmeta.NewParser(yamlmeta.ParserOpts{WithoutComment: false}).ParseBytes([]byte(ex.Data), "")
+	parsedVal, err := yamlmeta.NewParser(yamlmeta.ParserOpts{WithoutComments: false}).ParseBytes([]byte(ex.Data), "")
 	if len(ex.ExpectedErr) == 0 {
 		ex.checkDocSet(t, parsedVal, err)
 	} else {

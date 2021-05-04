@@ -25,12 +25,12 @@ var (
 type Metas struct {
 	Block       []*yamlmeta.Comment // meant to execute some code
 	Values      []*yamlmeta.Comment // meant to return interpolated value
-	Annotations []MetaAndAnnotation
+	Annotations []CommentAndAnnotation
 	needsEnds   int
 }
 
-type MetaAndAnnotation struct {
-	Meta       *yamlmeta.Comment
+type CommentAndAnnotation struct {
+	Comment    *yamlmeta.Comment
 	Annotation *template.Annotation
 }
 
@@ -38,7 +38,7 @@ type MetasOpts struct {
 	IgnoreUnknown bool
 }
 
-func NewTemplateMetaFromYamlComment(comment *yamlmeta.Comment, opts MetasOpts) (template.Meta, error) {
+func NewTemplateMetaFromYAMLComment(comment *yamlmeta.Comment, opts MetasOpts) (template.Meta, error) {
 	meta, err := template.NewMetaFromString(comment.Data, template.MetaOpts{IgnoreUnknown: opts.IgnoreUnknown})
 	if err != nil {
 		return template.Meta{}, fmt.Errorf(
@@ -52,7 +52,7 @@ func NewMetas(node yamlmeta.Node, opts MetasOpts) (Metas, error) {
 	metas := Metas{}
 
 	for _, comment := range node.GetComments() {
-		meta, err := NewTemplateMetaFromYamlComment(comment, opts)
+		meta, err := NewTemplateMetaFromYAMLComment(comment, opts)
 		if err != nil {
 			return metas, err
 		}
@@ -108,7 +108,7 @@ func NewMetas(node yamlmeta.Node, opts MetasOpts) (Metas, error) {
 				// ignore
 
 			default:
-				metas.Annotations = append(metas.Annotations, MetaAndAnnotation{comment, ann})
+				metas.Annotations = append(metas.Annotations, CommentAndAnnotation{comment, ann})
 			}
 		}
 	}

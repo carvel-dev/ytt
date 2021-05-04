@@ -230,10 +230,10 @@ func (r *File) IsTemplate() bool {
 
 func (r *File) isTemplate() bool {
 	t := r.Type()
-	return !r.IsModule() && (t == TypeYAML || t == TypeText)
+	return !r.IsLibrary() && (t == TypeYAML || t == TypeText)
 }
 
-func (r *File) IsModule() bool {
+func (r *File) IsLibrary() bool {
 	exts := strings.Split(filepath.Base(r.RelativePath()), ".")
 
 	if len(exts) > 2 && exts[len(exts)-2] == libraryExt {

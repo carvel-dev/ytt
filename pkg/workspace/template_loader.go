@@ -110,7 +110,7 @@ func (l *TemplateLoader) Load(thread *starlark.Thread, module string) (starlark.
 	libraryCtx = LibraryExecutionContext{Current: fileInLib.Library, Root: libraryCtx.Root}
 	file := fileInLib.File
 
-	if !file.IsModule() {
+	if !file.IsLibrary() {
 		return nil, fmt.Errorf("Expected file '%s' to be a library file, but was not "+
 			"(hint: library filename must end with '.lib.yml' or '.star'; use data.read(...) for loading non-templated file contents)", file.RelativePath())
 	}
@@ -139,9 +139,9 @@ func (l *TemplateLoader) EvalPlainYAML(file *files.File) (*yamlmeta.DocumentSet,
 	}
 
 	docSetOpts := yamlmeta.DocSetOpts{
-		AssociatedName: file.RelativePath(),
-		WithoutComment: !file.IsTemplate() && !file.IsModule(),
-		Strict:         l.opts.StrictYAML,
+		AssociatedName:  file.RelativePath(),
+		WithoutComments: !file.IsTemplate() && !file.IsLibrary(),
+		Strict:          l.opts.StrictYAML,
 	}
 	l.ui.Debugf("## file %s (opts %#v)\n", file.RelativePath(), docSetOpts)
 
@@ -162,7 +162,7 @@ func (l *TemplateLoader) EvalYAML(libraryCtx LibraryExecutionContext, file *file
 	l.ui.Debugf("### ast\n")
 	docSet.Print(l.ui.DebugWriter())
 
-	if !file.IsTemplate() && !file.IsModule() || !yamltemplate.HasTemplating(docSet) {
+	if !file.IsTemplate() && !file.IsLibrary() || !yamltemplate.HasTemplating(docSet) {
 		return nil, docSet, nil
 	}
 
@@ -201,7 +201,7 @@ func (l *TemplateLoader) EvalText(libraryCtx LibraryExecutionContext, file *file
 
 	l.ui.Debugf("## file %s\n", file.RelativePath())
 
-	if !file.IsTemplate() && !file.IsModule() {
+	if !file.IsTemplate() && !file.IsLibrary() {
 		plainRootNode := &texttemplate.NodeRoot{
 			Items: []interface{}{&texttemplate.NodeText{Content: string(fileBs)}},
 		}

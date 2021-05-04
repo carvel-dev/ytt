@@ -9,14 +9,14 @@ import (
 )
 
 type DocSetOpts struct {
-	WithoutComment bool
-	Strict         bool
+	WithoutComments bool
+	Strict          bool
 	// associatedName is typically a file name where data came from
 	AssociatedName string
 }
 
 func NewDocumentSetFromBytes(data []byte, opts DocSetOpts) (*DocumentSet, error) {
-	parserOpts := ParserOpts{WithoutComment: opts.WithoutComment, Strict: opts.Strict}
+	parserOpts := ParserOpts{WithoutComments: opts.WithoutComments, Strict: opts.Strict}
 
 	docSet, err := NewParser(parserOpts).ParseBytes(data, opts.AssociatedName)
 	if err != nil {

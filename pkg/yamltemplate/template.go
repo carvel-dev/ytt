@@ -45,7 +45,7 @@ func hasTemplating(val interface{}) bool {
 
 	metaOpts := MetasOpts{IgnoreUnknown: true}
 	for _, comment := range node.GetComments() {
-		meta, err := NewTemplateMetaFromYamlComment(comment, metaOpts)
+		meta, err := NewTemplateMetaFromYAMLComment(comment, metaOpts)
 		if err != nil {
 			return false
 		}
@@ -133,7 +133,7 @@ func (e *Template) build(val interface{}, parentNode yamlmeta.Node, parentTag te
 	for _, metaAndAnn := range metas.Annotations {
 		code = append(code, template.Line{
 			Instruction: e.instructions.NewStartNodeAnnotation(nodeTag, *metaAndAnn.Annotation).WithDebug(e.debugComment(node)),
-			SourceLine:  e.newSourceLine(metaAndAnn.Meta.Position),
+			SourceLine:  e.newSourceLine(metaAndAnn.Comment.Position),
 		})
 	}
 

@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	AnnotationDataValues  template.AnnotationName = "data/values"
+	AnnotationDataValues       template.AnnotationName = "data/values"
 	AnnotationDataValuesSchema template.AnnotationName = "data/values-schema"
 )
 
@@ -48,7 +48,7 @@ func (v DocExtractor) extract(docSet *yamlmeta.DocumentSet,
 		for _, comment := range doc.GetComments() {
 			// TODO potentially use template.NewAnnotations(doc).Has(yttoverlay.AnnotationMatch)
 			// however if doc was not processed by the template, it wont have any annotations set
-			meta, err := yamltemplate.NewTemplateMetaFromYamlComment(comment, yamltemplate.MetasOpts{IgnoreUnknown: true})
+			meta, err := yamltemplate.NewTemplateMetaFromYAMLComment(comment, yamltemplate.MetasOpts{IgnoreUnknown: true})
 			if err != nil {
 				return nil, nil, err
 			}
@@ -79,7 +79,7 @@ func (v DocExtractor) checkNonDocs(val interface{}, annName template.AnnotationN
 	}
 
 	for _, comment := range node.GetComments() {
-		meta, err := yamltemplate.NewTemplateMetaFromYamlComment(comment, yamltemplate.MetasOpts{IgnoreUnknown: true})
+		meta, err := yamltemplate.NewTemplateMetaFromYAMLComment(comment, yamltemplate.MetasOpts{IgnoreUnknown: true})
 		if err != nil {
 			return err
 		}

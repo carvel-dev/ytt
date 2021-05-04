@@ -253,7 +253,7 @@ func (ll *LibraryExecution) eval(values *DataValues, libraryValues []*DataValues
 				return nil, nil, nil, fmt.Errorf("Unknown file type")
 			}
 
-		case fileInLib.File.IsModule():
+		case fileInLib.File.IsLibrary():
 			// Collect globals produced by library files
 			var evalFunc func(LibraryExecutionContext, *files.File) (starlark.StringDict, error)
 

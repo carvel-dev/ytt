@@ -26,8 +26,8 @@ var (
 )
 
 type ParserOpts struct {
-	WithoutComment bool
-	Strict         bool
+	WithoutComments bool
+	Strict          bool
 }
 
 type Parser struct {
@@ -76,7 +76,7 @@ func (p *Parser) ParseBytes(data []byte, associatedName string) (*DocumentSet, e
 func (p *Parser) parseBytes(data []byte, lineCorrection int) (*DocumentSet, error) {
 	docSet := &DocumentSet{Position: filepos.NewUnknownPosition()}
 
-	var lastUnassignedComment []*Comment
+	var lastUnassignedComments []*Comment
 
 	dec := yaml.NewDecoder(bytes.NewReader(data))
 	dec.SetForceMapSlice(true)
@@ -98,21 +98,21 @@ func (p *Parser) parseBytes(data []byte, lineCorrection int) (*DocumentSet, erro
 			return nil, err
 		}
 		doc := &Document{
-			Comments: lastUnassignedComment,
+			Comments: lastUnassignedComments,
 			Value:    p.parse(rawVal, lineCorrection, lines),
 			Position: p.newDocPosition(dec.DocumentStartLine(), lineCorrection, len(docSet.Items) == 0, lines),
 		}
 
 		allComments, unassignedComments := p.assignComments(doc, dec.Comments(), lineCorrection)
 		docSet.AllComments = append(docSet.AllComments, allComments...)
-		lastUnassignedComment = unassignedComments
+		lastUnassignedComments = unassignedComments
 
 		docSet.Items = append(docSet.Items, doc)
 	}
 
-	if len(lastUnassignedComment) > 0 {
+	if len(lastUnassignedComments) > 0 {
 		endDoc := &Document{
-			Comments: lastUnassignedComment,
+			Comments: lastUnassignedComments,
 			Value:    nil,
 			Position: filepos.NewUnknownPosition(),
 			injected: true,
@@ -185,7 +185,7 @@ func (p *Parser) parse(val interface{}, lineCorrection int, lines []string) inte
 }
 
 func (p *Parser) assignComments(val interface{}, comments []yaml.Comment, lineCorrection int) ([]*Comment, []*Comment) {
-	if p.opts.WithoutComment {
+	if p.opts.WithoutComments {
 		return nil, nil
 	}
 

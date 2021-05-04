@@ -7,12 +7,7 @@ import (
 	"fmt"
 
 	"github.com/k14s/ytt/pkg/filepos"
-	"github.com/k14s/ytt/pkg/template"
 	"github.com/k14s/ytt/pkg/yamlmeta"
-)
-
-const (
-	AnnotationSchemaNullable template.AnnotationName = "schema/nullable"
 )
 
 var _ yamlmeta.Type = (*DocumentType)(nil)
