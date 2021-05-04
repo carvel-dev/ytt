@@ -97,10 +97,11 @@ func NewMapItemType(item *yamlmeta.MapItem) (*MapItemType, error) {
 			"null value is not allowed in schema (no type can be inferred from it)",
 			"to default to null, specify a value of the desired type and annotate with @schema/nullable")
 	}
-	anyType, err := processTypeAnnotation(templateAnnotations)
+	isAnyType, err := hasAnyTypeAnnotation(templateAnnotations)
 	if err != nil {
 		return nil, NewInvalidSchemaTypeAnnotationError(item, err.Error())
-	} else if anyType {
+	}
+	if isAnyType {
 		valueType = AnyType{Position: item.Position}
 	}
 
@@ -142,10 +143,11 @@ func NewArrayItemType(item *yamlmeta.ArrayItem) (*ArrayItemType, error) {
 	if _, found := templateAnnotations[AnnotationSchemaNullable]; found {
 		return nil, NewInvalidSchemaError(item, fmt.Sprintf("@%s is not supported on array items", AnnotationSchemaNullable), "")
 	}
-	anyType, err := processTypeAnnotation(templateAnnotations)
+	isAnyType, err := hasAnyTypeAnnotation(templateAnnotations)
 	if err != nil {
 		return nil, NewInvalidSchemaTypeAnnotationError(item, err.Error())
-	} else if anyType {
+	}
+	if isAnyType {
 		valueType = AnyType{Position: item.Position}
 	}
 
@@ -181,26 +183,27 @@ func newCollectionItemValueType(collectionItemValue interface{}, position *filep
 	return nil, fmt.Errorf("Collection item type did not match any known types")
 }
 
-func processTypeAnnotation(templateAnnotations template.NodeAnnotations) (bool, error) {
+func hasAnyTypeAnnotation(templateAnnotations template.NodeAnnotations) (bool, error) {
 	if ann, anyType := templateAnnotations[AnnotationSchemaType]; anyType {
-		kwargName, err := core.NewStarlarkValue(ann.Kwargs[0][0]).AsString()
+		if len(ann.Kwargs) == 0 {
+			return false, fmt.Errorf("expected '%v' annotation to have keyword argument and value. Supported key-value pairs are '%v=True', '%v=False'", AnnotationSchemaType, SchemaTypeAny, SchemaTypeAny)
+		}
+		anyTypeKey, err := core.NewStarlarkValue(ann.Kwargs[0][0]).AsString()
 		if err != nil {
 			return false, err
 		}
-		if kwargName != "any" {
-			return false, fmt.Errorf("unknown '%v' annotation keyword argument '%v'. Supported kwargs are 'any'", AnnotationSchemaType, kwargName)
+		if anyTypeKey != SchemaTypeAny {
+			return false, fmt.Errorf("unknown '%v' annotation keyword argument '%v'. Supported kwargs are '%v'", AnnotationSchemaType, anyTypeKey, SchemaTypeAny)
 		}
-		kwargBool, err := core.NewStarlarkValue(ann.Kwargs[0][1]).AsBool()
-		if kwargBool == false && err != nil {
-			kwargBool := core.NewStarlarkValue(ann.Kwargs[0][1]).AsGoValue()
-			return false, fmt.Errorf("expected '%v' annotation value in keyword argument 'any' to be a boolean, but was '%v'", AnnotationSchemaType, kwargBool)
+		anyTypeBoolVal, err := core.NewStarlarkValue(ann.Kwargs[0][1]).AsBool()
+		if anyTypeBoolVal == false && err != nil {
+			kwargValue := core.NewStarlarkValue(ann.Kwargs[0][1]).AsGoValue()
+			return false, fmt.Errorf("expected '%v' annotation value in keyword argument '%v' to be a boolean, but was '%v'", AnnotationSchemaType, SchemaTypeAny, kwargValue)
 		}
 		if err != nil {
 			return false, err
 		}
-		if kwargName == "any" && kwargBool {
-			return true, nil
-		}
+		return anyTypeBoolVal, nil
 	}
 	return false, nil
 }

@@ -797,7 +797,6 @@ baz:
 #@overlay/replace
 foo:
   ball: red
-#@overlay/replace
 bar:
 - newMap: 
   - ""
@@ -1238,6 +1237,33 @@ foo: 0
 `
 		filesToProcess := files.NewSortedFiles([]*files.File{
 			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
+		})
+
+		assertFails(t, filesToProcess, expectedErr, opts)
+	})
+	t.Run("when schema/type has incomplete key word args", func(t *testing.T) {
+		schemaYAML := `#@schema/match data_values=True
+---
+#@schema/type
+foo: 0
+`
+		expectedErr := `schema.yml:4 | foo: 0
+             |
+             | INVALID SCHEMA ANNOTATION - expected 'schema/type' annotation to have keyword argument and value. Supported key-value pairs are 'any=True', 'any=False'
+`
+		filesToProcess := files.NewSortedFiles([]*files.File{
+			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
+		})
+
+		assertFails(t, filesToProcess, expectedErr, opts)
+
+		schemaYAML2 := `#@schema/match data_values=True
+---
+#@schema/type any
+foo: 0
+`
+		filesToProcess = files.NewSortedFiles([]*files.File{
+			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML2))),
 		})
 
 		assertFails(t, filesToProcess, expectedErr, opts)

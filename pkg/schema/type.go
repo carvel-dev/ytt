@@ -14,6 +14,7 @@ import (
 const (
 	AnnotationSchemaNullable structmeta.AnnotationName = "schema/nullable"
 	AnnotationSchemaType     structmeta.AnnotationName = "schema/type"
+	SchemaTypeAny            string                    = "any"
 )
 
 var _ yamlmeta.Type = (*DocumentType)(nil)
