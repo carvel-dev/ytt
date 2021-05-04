@@ -692,14 +692,11 @@ func TestSchema_Allows_any_value_via_any_annotation(t *testing.T) {
 	opts := cmdtpl.NewOptions()
 	opts.SchemaEnabled = true
 
-	t.Run("when any is true and set on a map and array", func(t *testing.T) {
+	t.Run("when any is true and set on a map", func(t *testing.T) {
 		schemaYAML := `#@schema/match data_values=True
 ---
 #@schema/type any=True
 foo: ""
-bar:
-#@schema/type any=True
-- 0
 #@schema/type any=True
 baz:
   a: 1
@@ -707,21 +704,15 @@ baz:
 		dataValuesYAML := `#@data/values
 ---
 foo: ~
-bar: ["", 0, True]
 baz:
   a: 7
 `
 		templateYAML := `#@ load("@ytt:data", "data")
 ---
 foo: #@ data.values.foo
-bar: #@ data.values.bar
 baz: #@ data.values.baz
 `
 		expected := `foo: null
-bar:
-- ""
-- 0
-- true
 baz:
   a: 7
 `
@@ -734,37 +725,31 @@ baz:
 
 		assertSucceeds(t, filesToProcess, expected, opts)
 	})
-	t.Run("when any is true and set on a map but no data values given", func(t *testing.T) {
+	t.Run("when any is true and set on an array", func(t *testing.T) {
 		schemaYAML := `#@schema/match data_values=True
 ---
+foo: 
 #@schema/type any=True
-foo: ""
-bar:
-#@schema/type any=True
-- 0
-#@schema/type any=True
-baz:
-  a: 1
+- ""
+  
 `
-		// does a:1 get assigned a 'Type' -> No.
-
-		// should a:1 have a type / what type should it get?
-		// should we build a schema a different way or check in a different way?
-
+		dataValuesYAML := `#@data/values
+---
+foo: ["bar", 7, ~]
+`
 		templateYAML := `#@ load("@ytt:data", "data")
 ---
 foo: #@ data.values.foo
-bar: #@ data.values.bar
-baz: #@ data.values.baz
 `
-		expected := `foo: ""
-bar: []
-baz:
-  a: 1
+		expected := `foo:
+- bar
+- 7
+- null
 `
 
 		filesToProcess := files.NewSortedFiles([]*files.File{
 			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
+			files.MustNewFileFromSource(files.NewBytesSource("dataValues.yml", []byte(dataValuesYAML))),
 			files.MustNewFileFromSource(files.NewBytesSource("template.yml", []byte(templateYAML))),
 		})
 
@@ -844,39 +829,6 @@ baz:
 		})
 
 		assertSucceeds(t, filesToProcess, expected, opts)
-	})
-
-	t.Run("when schema/type has keyword other than any, error is given", func(t *testing.T) {
-		schemaYAML := `#@schema/match data_values=True
----
-#@schema/type unknown_kwarg=False
-foo: 0
-`
-		expectedErr := `schema.yml:4 | foo: 0
-             |
-             | INVALID SCHEMA ANNOTATION - unknown 'schema/type' annotation keyword argument 'unknown_kwarg'. Supported kwargs are 'any'
-`
-		filesToProcess := files.NewSortedFiles([]*files.File{
-			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
-		})
-
-		assertFails(t, filesToProcess, expectedErr, opts)
-	})
-	t.Run("when schema/type has value for any other than a bool, error is given", func(t *testing.T) {
-		schemaYAML := `#@schema/match data_values=True
----
-#@schema/type any=1
-foo: 0
-`
-		expectedErr := `schema.yml:4 | foo: 0
-             |
-             | INVALID SCHEMA ANNOTATION - expected 'schema/type' annotation value in keyword argument 'any' to be a boolean, but was '1'
-`
-		filesToProcess := files.NewSortedFiles([]*files.File{
-			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
-		})
-
-		assertFails(t, filesToProcess, expectedErr, opts)
 	})
 }
 
@@ -1256,6 +1208,38 @@ schema.yml:4 |   subnet_ids: null
              |
              | INVALID SCHEMA - null value is not allowed in schema (no type can be inferred from it)
              |   (hint: to default to null, specify a value of the desired type and annotate with @schema/nullable)`
+		assertFails(t, filesToProcess, expectedErr, opts)
+	})
+	t.Run("when schema/type has keyword other than any", func(t *testing.T) {
+		schemaYAML := `#@schema/match data_values=True
+---
+#@schema/type unknown_kwarg=False
+foo: 0
+`
+		expectedErr := `schema.yml:4 | foo: 0
+             |
+             | INVALID SCHEMA ANNOTATION - unknown 'schema/type' annotation keyword argument 'unknown_kwarg'. Supported kwargs are 'any'
+`
+		filesToProcess := files.NewSortedFiles([]*files.File{
+			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
+		})
+
+		assertFails(t, filesToProcess, expectedErr, opts)
+	})
+	t.Run("when schema/type has value for any other than a bool", func(t *testing.T) {
+		schemaYAML := `#@schema/match data_values=True
+---
+#@schema/type any=1
+foo: 0
+`
+		expectedErr := `schema.yml:4 | foo: 0
+             |
+             | INVALID SCHEMA ANNOTATION - expected 'schema/type' annotation value in keyword argument 'any' to be a boolean, but was '1'
+`
+		filesToProcess := files.NewSortedFiles([]*files.File{
+			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
+		})
+
 		assertFails(t, filesToProcess, expectedErr, opts)
 	})
 }
