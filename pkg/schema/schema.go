@@ -5,10 +5,11 @@ package schema
 
 import (
 	"fmt"
-	"github.com/k14s/ytt/pkg/template/core"
 
 	"github.com/k14s/ytt/pkg/filepos"
+	"github.com/k14s/ytt/pkg/structmeta"
 	"github.com/k14s/ytt/pkg/template"
+	"github.com/k14s/ytt/pkg/template/core"
 	"github.com/k14s/ytt/pkg/yamlmeta"
 )
 
@@ -89,19 +90,19 @@ func NewMapItemType(item *yamlmeta.MapItem) (*MapItemType, error) {
 		defaultValue = &yamlmeta.Array{}
 	}
 
-	templateAnnotations := template.NewAnnotations(item)
-	if _, nullable := templateAnnotations[AnnotationSchemaNullable]; nullable {
-		defaultValue = nil
-	} else if valueType == nil {
+	templateAnnotations, ann, err := processSchemaNodeAnnotations(item)
+	if err != nil {
+		return nil, err
+	}
+	if ann == "" && valueType == nil {
 		return nil, NewInvalidSchemaError(item,
 			"null value is not allowed in schema (no type can be inferred from it)",
 			"to default to null, specify a value of the desired type and annotate with @schema/nullable")
 	}
-	isAnyType, err := hasAnyTypeAnnotation(templateAnnotations)
-	if err != nil {
-		return nil, NewInvalidSchemaTypeAnnotationError(item, err.Error())
+	if ann == AnnotationSchemaNullable {
+		defaultValue = nil
 	}
-	if isAnyType {
+	if ann == AnnotationSchemaType {
 		valueType = AnyType{Position: item.Position}
 	}
 
@@ -138,16 +139,12 @@ func NewArrayItemType(item *yamlmeta.ArrayItem) (*ArrayItemType, error) {
 		return nil, err
 	}
 
-	templateAnnotations := template.NewAnnotations(item)
-
-	if _, found := templateAnnotations[AnnotationSchemaNullable]; found {
-		return nil, NewInvalidSchemaError(item, fmt.Sprintf("@%s is not supported on array items", AnnotationSchemaNullable), "")
-	}
-	isAnyType, err := hasAnyTypeAnnotation(templateAnnotations)
+	_, ann, err := processSchemaNodeAnnotations(item)
 	if err != nil {
-		return nil, NewInvalidSchemaTypeAnnotationError(item, err.Error())
+		return nil, err
 	}
-	if isAnyType {
+
+	if ann == AnnotationSchemaType {
 		valueType = AnyType{Position: item.Position}
 	}
 
@@ -183,7 +180,28 @@ func newCollectionItemValueType(collectionItemValue interface{}, position *filep
 	return nil, fmt.Errorf("Collection item type did not match any known types")
 }
 
-func hasAnyTypeAnnotation(templateAnnotations template.NodeAnnotations) (bool, error) {
+func processSchemaNodeAnnotations(item yamlmeta.Node) (template.NodeAnnotations, structmeta.AnnotationName, error) {
+	templateAnnotations := template.NewAnnotations(item)
+	switch {
+	case templateAnnotations.Has(AnnotationSchemaNullable):
+		if _, isArrayItem := item.(*yamlmeta.ArrayItem); isArrayItem {
+			return templateAnnotations, AnnotationSchemaNullable, NewInvalidSchemaError(item, fmt.Sprintf("@%s is not supported on array items", AnnotationSchemaNullable), "")
+		}
+		return templateAnnotations, AnnotationSchemaNullable, nil
+	case templateAnnotations.Has(AnnotationSchemaType):
+		isAnyType, err := hasValidAnyTypeAnnotation(templateAnnotations)
+		if err != nil {
+			return templateAnnotations, AnnotationSchemaType, NewInvalidSchemaTypeAnnotationError(item, err.Error())
+		}
+		if isAnyType {
+			return templateAnnotations, AnnotationSchemaType, nil
+		}
+	}
+	return templateAnnotations, "", nil
+
+}
+
+func hasValidAnyTypeAnnotation(templateAnnotations template.NodeAnnotations) (bool, error) {
 	if ann, anyType := templateAnnotations[AnnotationSchemaType]; anyType {
 		if len(ann.Kwargs) == 0 {
 			return false, fmt.Errorf("expected '%v' annotation to have keyword argument and value. Supported key-value pairs are '%v=True', '%v=False'", AnnotationSchemaType, SchemaTypeAny, SchemaTypeAny)
