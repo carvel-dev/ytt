@@ -182,6 +182,13 @@ func newCollectionItemValueType(collectionItemValue interface{}, position *filep
 
 func processSchemaNodeAnnotations(item yamlmeta.Node) (template.NodeAnnotations, structmeta.AnnotationName, error) {
 	templateAnnotations := template.NewAnnotations(item)
+	// schema/type and schema/nullable are both type inferring annotations and should not bot be present
+	// (#@schema/nullable) is equivalent to
+	// (#@schema/type "null", or_inferred=True
+	// #@schema/default None)
+	if templateAnnotations.Has(AnnotationSchemaNullable) && templateAnnotations.Has(AnnotationSchemaType) {
+		return templateAnnotations, "", NewInvalidSchemaError(item, fmt.Sprintf("expected to find one of @%s, or @%s, but found both", AnnotationSchemaNullable, AnnotationSchemaType), "")
+	}
 	switch {
 	case templateAnnotations.Has(AnnotationSchemaNullable):
 		if _, isArrayItem := item.(*yamlmeta.ArrayItem); isArrayItem {
@@ -204,19 +211,19 @@ func processSchemaNodeAnnotations(item yamlmeta.Node) (template.NodeAnnotations,
 func hasValidAnyTypeAnnotation(templateAnnotations template.NodeAnnotations) (bool, error) {
 	if ann, anyType := templateAnnotations[AnnotationSchemaType]; anyType {
 		if len(ann.Kwargs) == 0 {
-			return false, fmt.Errorf("expected '%v' annotation to have keyword argument and value. Supported key-value pairs are '%v=True', '%v=False'", AnnotationSchemaType, SchemaTypeAny, SchemaTypeAny)
+			return false, fmt.Errorf("expected @%v annotation to have keyword argument and value. Supported key-value pairs are '%v=True', '%v=False'", AnnotationSchemaType, SchemaTypeAny, SchemaTypeAny)
 		}
 		anyTypeKey, err := core.NewStarlarkValue(ann.Kwargs[0][0]).AsString()
 		if err != nil {
 			return false, err
 		}
 		if anyTypeKey != SchemaTypeAny {
-			return false, fmt.Errorf("unknown '%v' annotation keyword argument '%v'. Supported kwargs are '%v'", AnnotationSchemaType, anyTypeKey, SchemaTypeAny)
+			return false, fmt.Errorf("unknown @%v annotation keyword argument '%v'. Supported kwargs are '%v'", AnnotationSchemaType, anyTypeKey, SchemaTypeAny)
 		}
 		anyTypeBoolVal, err := core.NewStarlarkValue(ann.Kwargs[0][1]).AsBool()
 		if anyTypeBoolVal == false && err != nil {
 			kwargValue := core.NewStarlarkValue(ann.Kwargs[0][1]).AsGoValue()
-			return false, fmt.Errorf("expected '%v' annotation value in keyword argument '%v' to be a boolean, but was '%v'", AnnotationSchemaType, SchemaTypeAny, kwargValue)
+			return false, fmt.Errorf("expected @%v annotation value in keyword argument '%v' to be a boolean, but was '%v'", AnnotationSchemaType, SchemaTypeAny, kwargValue)
 		}
 		if err != nil {
 			return false, err

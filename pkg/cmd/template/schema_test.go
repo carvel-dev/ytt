@@ -1217,7 +1217,7 @@ foo: 0
 `
 		expectedErr := `schema.yml:4 | foo: 0
              |
-             | INVALID SCHEMA ANNOTATION - unknown 'schema/type' annotation keyword argument 'unknown_kwarg'. Supported kwargs are 'any'
+             | INVALID SCHEMA ANNOTATION - unknown @schema/type annotation keyword argument 'unknown_kwarg'. Supported kwargs are 'any'
 `
 		filesToProcess := files.NewSortedFiles([]*files.File{
 			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
@@ -1233,7 +1233,7 @@ foo: 0
 `
 		expectedErr := `schema.yml:4 | foo: 0
              |
-             | INVALID SCHEMA ANNOTATION - expected 'schema/type' annotation value in keyword argument 'any' to be a boolean, but was '1'
+             | INVALID SCHEMA ANNOTATION - expected @schema/type annotation value in keyword argument 'any' to be a boolean, but was '1'
 `
 		filesToProcess := files.NewSortedFiles([]*files.File{
 			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
@@ -1249,7 +1249,7 @@ foo: 0
 `
 		expectedErr := `schema.yml:4 | foo: 0
              |
-             | INVALID SCHEMA ANNOTATION - expected 'schema/type' annotation to have keyword argument and value. Supported key-value pairs are 'any=True', 'any=False'
+             | INVALID SCHEMA ANNOTATION - expected @schema/type annotation to have keyword argument and value. Supported key-value pairs are 'any=True', 'any=False'
 `
 		filesToProcess := files.NewSortedFiles([]*files.File{
 			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
@@ -1264,6 +1264,23 @@ foo: 0
 `
 		filesToProcess = files.NewSortedFiles([]*files.File{
 			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML2))),
+		})
+
+		assertFails(t, filesToProcess, expectedErr, opts)
+	})
+	t.Run("when schema/type and schema/nullable annotate a map", func(t *testing.T) {
+		schemaYAML := `#@schema/match data_values=True
+---
+#@schema/type any=True
+#@schema/nullable
+foo: 0
+`
+		expectedErr := `schema.yml:5 | foo: 0
+             |
+             | INVALID SCHEMA - expected to find one of @schema/nullable, or @schema/type, but found both
+`
+		filesToProcess := files.NewSortedFiles([]*files.File{
+			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
 		})
 
 		assertFails(t, filesToProcess, expectedErr, opts)
