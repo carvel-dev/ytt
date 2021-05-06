@@ -5,13 +5,12 @@ package template_test
 
 import (
 	"bytes"
-	"strings"
 	"testing"
 
-	"github.com/k14s/difflib"
 	cmdtpl "github.com/k14s/ytt/pkg/cmd/template"
 	"github.com/k14s/ytt/pkg/cmd/ui"
 	"github.com/k14s/ytt/pkg/files"
+	"github.com/stretchr/testify/require"
 )
 
 func TestSchema_Passes_when_DataValues_conform(t *testing.T) {
@@ -410,6 +409,49 @@ nonConforming.yml:3 | not_in_schema: this should be the only violation reported
                     |      found: not_in_schema
                     |   expected: (a key defined in map) (by schema.yml:2)
                     |   (hint: declare data values in schema and override them in a data values document)`
+
+		assertFails(t, filesToProcess, expectedErr, opts)
+	})
+
+	t.Run("when schema expects a scalar as an array item, but an array is provided", func(t *testing.T) {
+		schemaYAML := `#@schema/match data_values=True
+---
+array: [true]
+`
+		dataValuesYAML := `
+#@data/values
+---
+array: [ [1] ]
+`
+
+		filesToProcess := files.NewSortedFiles([]*files.File{
+			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
+			files.MustNewFileFromSource(files.NewBytesSource("values.yml", []byte(dataValuesYAML))),
+		})
+		expectedErr := `TYPE MISMATCH - the value of this item is not what schema expected:
+             |      found: array
+             |   expected: boolean (by schema.yml:3)`
+
+		assertFails(t, filesToProcess, expectedErr, opts)
+	})
+	t.Run("when schema expects a scalar as an array item, but a map is provided", func(t *testing.T) {
+		schemaYAML := `#@schema/match data_values=True
+---
+array: [true]
+`
+		dataValuesYAML := `
+#@data/values
+---
+array: [ {a: 1} ]
+`
+
+		filesToProcess := files.NewSortedFiles([]*files.File{
+			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
+			files.MustNewFileFromSource(files.NewBytesSource("values.yml", []byte(dataValuesYAML))),
+		})
+		expectedErr := `TYPE MISMATCH - the value of this item is not what schema expected:
+             |      found: map
+             |   expected: boolean (by schema.yml:3)`
 
 		assertFails(t, filesToProcess, expectedErr, opts)
 	})
@@ -1049,14 +1091,9 @@ rendered: true`
 		expectedOut := "rendered: true\n"
 
 		out := opts.RunWithFiles(cmdtpl.Input{Files: filesToProcess}, ui)
-		if out.Err != nil {
-			t.Fatalf("Expected RunWithFiles to succeed, but was error: %s", out.Err)
-		}
+		require.NoError(t, out.Err)
 
-		err := assertStdoutAndStderr(bytes.NewBuffer(out.Files[0].Bytes()), stderr, expectedOut, expectedStdErr)
-		if err != nil {
-			t.Fatalf("Assertion failed:\n %s", err)
-		}
+		assertStdoutAndStderr(t, bytes.NewBuffer(out.Files[0].Bytes()), stderr, expectedOut, expectedStdErr)
 	})
 	t.Run("errors when a schema used as a base data values", func(t *testing.T) {
 		schemaYAML := `#@schema/match data_values=True
@@ -1081,29 +1118,17 @@ system_domain: #@ data.values.system_domain
 func assertSucceeds(t *testing.T, filesToProcess []*files.File, expectedOut string, opts *cmdtpl.Options) {
 	t.Helper()
 	out := opts.RunWithFiles(cmdtpl.Input{Files: filesToProcess}, ui.NewTTY(false))
-	if out.Err != nil {
-		t.Fatalf("Expected RunWithFiles to succeed, but was error: %s", out.Err)
-	}
+	require.NoError(t, out.Err)
 
-	if len(out.Files) != 1 {
-		t.Fatalf("Expected number of output files to be 1, but was: %d", len(out.Files))
-	}
+	require.Len(t, out.Files, 1, "unexpected number of output files")
 
-	if string(out.Files[0].Bytes()) != expectedOut {
-		diff := difflib.PPDiff(strings.Split(string(out.Files[0].Bytes()), "\n"), strings.Split(expectedOut, "\n"))
-		t.Errorf("Expected output to only include template YAML, differences:\n%s", diff)
-	}
+	require.Equal(t, expectedOut, string(out.Files[0].Bytes()))
 }
 
 func assertFails(t *testing.T, filesToProcess []*files.File, expectedErr string, opts *cmdtpl.Options) {
 	t.Helper()
 	out := opts.RunWithFiles(cmdtpl.Input{Files: filesToProcess}, ui.NewTTY(false))
-	if out.Err == nil {
-		t.Fatalf("Expected an error, but succeeded.")
-	}
+	require.Error(t, out.Err)
 
-	if !strings.Contains(out.Err.Error(), expectedErr) {
-		diff := difflib.PPDiff(strings.Split(string(out.Err.Error()), "\n"), strings.Split(expectedErr, "\n"))
-		t.Errorf("%s", diff)
-	}
+	require.Contains(t, out.Err.Error(), expectedErr)
 }

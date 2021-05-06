@@ -334,8 +334,8 @@ func (a *ArrayItemType) AssignTypeTo(typeable yamlmeta.Typeable) (chk yamlmeta.T
 	return
 }
 
-func (m *ScalarType) AssignTypeTo(typeable yamlmeta.Typeable) (chk yamlmeta.TypeCheck) {
-	panic(fmt.Sprintf("Attempt to assign a type to a scalar. (scalars are not nodes in the AST) m=%#v ; typeable=%#v", m, typeable))
+func (m *ScalarType) AssignTypeTo(typeable yamlmeta.Typeable) (yamlmeta.TypeCheck) {
+	return yamlmeta.TypeCheck{[]error{NewMismatchedTypeError(typeable, m)}}
 }
 
 func (m *MapType) AllowsKey(key interface{}) bool {
