@@ -155,7 +155,10 @@ func (l *libraryValue) WithDataValues(thread *starlark.Thread, f *starlark.Built
 		return starlark.None, fmt.Errorf("expected exactly one argument")
 	}
 
-	dataValues := core.NewStarlarkValue(args.Index(0)).AsGoValue()
+	dataValues, err := core.NewStarlarkValue(args.Index(0)).AsGoValue()
+	if err != nil {
+		return starlark.None, err
+	}
 
 	valsYAML, err := NewDataValues(&yamlmeta.Document{
 		Value:    yamlmeta.NewASTFromInterface(dataValues),

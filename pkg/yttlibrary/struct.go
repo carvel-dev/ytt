@@ -5,6 +5,7 @@ package yttlibrary
 
 import (
 	"fmt"
+
 	"github.com/k14s/starlark-go/starlark"
 	"github.com/k14s/starlark-go/starlarkstruct"
 	"github.com/k14s/ytt/pkg/orderedmap"
@@ -95,7 +96,10 @@ func (b structModule) Encode(thread *starlark.Thread, f *starlark.Builtin,
 		return starlark.None, fmt.Errorf("expected exactly one argument")
 	}
 
-	val := core.NewStarlarkValue(args.Index(0)).AsGoValue()
+	val, err := core.NewStarlarkValue(args.Index(0)).AsGoValue()
+	if err != nil {
+		return starlark.None, err
+	}
 	return core.NewGoValueWithOpts(val, core.GoValueOpts{MapIsStruct: true}).AsStarlarkValue(), nil
 }
 
@@ -106,6 +110,9 @@ func (b structModule) Decode(thread *starlark.Thread, f *starlark.Builtin,
 		return starlark.None, fmt.Errorf("expected exactly one argument")
 	}
 
-	val := core.NewStarlarkValue(args.Index(0)).AsGoValue()
+	val, err := core.NewStarlarkValue(args.Index(0)).AsGoValue()
+	if err != nil {
+		return starlark.None, err
+	}
 	return core.NewGoValue(val).AsStarlarkValue(), nil
 }

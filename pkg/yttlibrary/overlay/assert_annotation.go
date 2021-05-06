@@ -85,7 +85,10 @@ func (a AssertAnnotation) Check(existingNode template.EvaluationNode) error {
 			return nil
 
 		default:
-			result := tplcore.NewStarlarkValue(result).AsGoValue()
+			result, err := tplcore.NewStarlarkValue(result).AsGoValue()
+			if err != nil {
+				return err
+			}
 
 			// Extract result tuple(bool, string) to determine success
 			if typedResult, ok := result.([]interface{}); ok {

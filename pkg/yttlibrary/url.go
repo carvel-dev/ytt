@@ -36,9 +36,15 @@ var (
 
 type urlModule struct{}
 
-// urlValue stores a parsed URL
-type urlValue struct {
-	*url.URL
+// URLValue stores a parsed URL
+type URLValue struct {
+	url *url.URL
+	*core.StarlarkStruct
+}
+
+type URLUser struct {
+	user *url.Userinfo
+	*core.StarlarkStruct
 }
 
 func (b urlModule) PathSegmentEncode(thread *starlark.Thread, f *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
@@ -108,7 +114,10 @@ func (b urlModule) QueryParamsEncode(thread *starlark.Thread, f *starlark.Builti
 		return starlark.None, fmt.Errorf("expected exactly one argument")
 	}
 
-	val := core.NewStarlarkValue(args.Index(0)).AsGoValue()
+	val, err := core.NewStarlarkValue(args.Index(0)).AsGoValue()
+	if err != nil {
+		return starlark.None, err
+	}
 
 	typedVal, ok := val.(*orderedmap.Map)
 	if !ok {
@@ -117,7 +126,7 @@ func (b urlModule) QueryParamsEncode(thread *starlark.Thread, f *starlark.Builti
 
 	urlVals := url.Values{}
 
-	err := typedVal.IterateErr(func(key, val interface{}) error {
+	err = typedVal.IterateErr(func(key, val interface{}) error {
 		keyStr, ok := key.(string)
 		if !ok {
 			return fmt.Errorf("expected map key to be string, but was %T", key)
@@ -201,60 +210,57 @@ func (b urlModule) ParseURL(thread *starlark.Thread, f *starlark.Builtin, args s
 		return starlark.None, err
 	}
 
-	return (&urlValue{parsedURL}).AsStarlarkValue(), nil
+	return (&URLValue{parsedURL, nil}).AsStarlarkValue(), nil
 }
 
-func (uv *urlValue) AsStarlarkValue() starlark.Value {
+func (uv *URLValue) AsStarlarkValue() starlark.Value {
 	m := orderedmap.NewMap()
-	m.Set("user", uv.user())
-	m.Set("without_user", starlark.NewBuiltin("url.without_user", core.ErrWrapper(uv.withoutUser)))
+	m.Set("user", uv.User())
+	m.Set("without_user", starlark.NewBuiltin("url.without_user", core.ErrWrapper(uv.WithoutUser)))
 	m.Set("string", starlark.NewBuiltin("url.string", core.ErrWrapper(uv.string)))
-	s := core.NewStarlarkStruct(m)
-	s.SetRepresentation(urlRepresent)
-	return s
+	uv.StarlarkStruct = core.NewStarlarkStruct(m)
+	return uv
 }
 
-func urlRepresent() (starlark.Value, error) {
-	return nil, fmt.Errorf("urlValue cannot be directly referenced, please use urlValue.string()")
+func (uv *URLValue) AsGoValue() (interface{}, error) {
+	return nil, fmt.Errorf("URLValue: cannot coerce to a string; use .string()")
 }
 
-func (uv *urlValue) userRepresent() (starlark.Value, error) {
-	return starlark.String(uv.User.String()), nil
+func (uu *URLUser) AsGoValue() (interface{}, error) {
+	return uu.user.String(), nil
 }
 
-func (uv *urlValue) user() starlark.Value {
-	if uv.User == nil {
+func (uv *URLValue) User() starlark.Value {
+	if uv.url.User == nil {
 		return starlark.None
 	}
 
 	m := orderedmap.NewMap()
-	m.Set("name", starlark.String(uv.User.Username()))
+	m.Set("name", starlark.String(uv.url.User.Username()))
 	m.Set("password", uv.password())
-	s := core.NewStarlarkStruct(m)
-	s.SetRepresentation(uv.userRepresent)
-	return s
+	return &URLUser{uv.url.User, core.NewStarlarkStruct(m)}
 }
 
-func (uv *urlValue) password() starlark.Value {
-	passwd, passwdSet := uv.User.Password()
+func (uv *URLValue) password() starlark.Value {
+	passwd, passwdSet := uv.url.User.Password()
 	if !passwdSet {
 		return starlark.None
 	}
 	return starlark.String(passwd)
 }
 
-func (uv *urlValue) withoutUser(thread *starlark.Thread, f *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
+func (uv *URLValue) WithoutUser(thread *starlark.Thread, f *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
 	if args.Len() != 0 {
 		return starlark.None, fmt.Errorf("expected no argument")
 	}
-	urlVar := *uv.URL
+	urlVar := *(uv.url)
 	urlVar.User = nil
-	return (&urlValue{&urlVar}).AsStarlarkValue(), nil
+	return (&URLValue{&urlVar, nil}).AsStarlarkValue(), nil
 }
 
-func (uv *urlValue) string(thread *starlark.Thread, f *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
+func (uv *URLValue) string(thread *starlark.Thread, f *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
 	if args.Len() != 0 {
 		return starlark.None, fmt.Errorf("expected no argument")
 	}
-	return starlark.String(uv.String()), nil
+	return starlark.String(uv.url.String()), nil
 }
