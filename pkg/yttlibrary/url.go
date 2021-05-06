@@ -227,7 +227,7 @@ func (uv *URLValue) AsGoValue() (interface{}, error) {
 }
 
 func (uu *URLUser) AsGoValue() (interface{}, error) {
-	return nil, fmt.Errorf("URLUser: cannot coerce to a string; use .string()")
+	return uu.user.String(), nil
 }
 
 func (uv *URLValue) User() starlark.Value {
@@ -235,13 +235,10 @@ func (uv *URLValue) User() starlark.Value {
 		return starlark.None
 	}
 
-	uu := &URLUser{uv.url.User, nil}
 	m := orderedmap.NewMap()
 	m.Set("name", starlark.String(uv.url.User.Username()))
 	m.Set("password", uv.password())
-	m.Set("string", starlark.NewBuiltin("string", core.ErrWrapper(uu.string)))
-	uu.StarlarkStruct = core.NewStarlarkStruct(m)
-	return uu
+	return &URLUser{uv.url.User, core.NewStarlarkStruct(m)}
 }
 
 func (uv *URLValue) password() starlark.Value {
@@ -266,11 +263,4 @@ func (uv *URLValue) string(thread *starlark.Thread, f *starlark.Builtin, args st
 		return starlark.None, fmt.Errorf("expected no argument")
 	}
 	return starlark.String(uv.url.String()), nil
-}
-
-func (uu *URLUser) string(thread *starlark.Thread, f *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
-	if args.Len() != 0 {
-		return starlark.None, fmt.Errorf("expected no argument")
-	}
-	return starlark.String(uu.user.String()), nil
 }
