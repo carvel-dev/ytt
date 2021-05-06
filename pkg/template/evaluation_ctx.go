@@ -51,12 +51,9 @@ func (e *EvaluationCtx) TplReplace(thread *starlark.Thread, _ *starlark.Builtin,
 	}
 
 	nodes := append([]EvaluationNode{e.rootNode}, e.parentNodes...)
-	val, err := core.NewStarlarkValue(args.Index(0)).AsGoValue()
-	if err != nil {
-		return starlark.None, err
-	}
+	val := core.NewStarlarkValue(args.Index(0)).AsGoValue()
 
-	err = e.dialect.Replace(nodes, val)
+	err := e.dialect.Replace(nodes, val)
 	if err != nil {
 		return starlark.None, err
 	}
@@ -68,11 +65,7 @@ func (e *EvaluationCtx) TplReplace(thread *starlark.Thread, _ *starlark.Builtin,
 func (e *EvaluationCtx) TplSetNode(thread *starlark.Thread, _ *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
 	if args.Len() > 1 {
 		if _, noop := args.Index(1).(*core.StarlarkNoop); !noop {
-			val, err := core.NewStarlarkValue(args.Index(1)).AsGoValue()
-			if err != nil {
-				return starlark.None, err
-			}
-			err = e.parentNodes[len(e.parentNodes)-1].SetValue(val)
+			err := e.parentNodes[len(e.parentNodes)-1].SetValue(core.NewStarlarkValue(args.Index(1)).AsGoValue())
 			if err != nil {
 				return starlark.None, err
 			}
@@ -119,11 +112,7 @@ func (e *EvaluationCtx) TplSetMapItemKey(
 		panic(fmt.Sprintf("expected to find not map item key for node %s", nodeTag))
 	}
 
-	val, err := core.NewStarlarkValue(args.Index(1)).AsGoValue()
-	if err != nil {
-		return starlark.None, err
-	}
-	e.pendingMapItemKeys[nodeTag] = val
+	e.pendingMapItemKeys[nodeTag] = core.NewStarlarkValue(args.Index(1)).AsGoValue()
 
 	return starlark.None, nil
 }

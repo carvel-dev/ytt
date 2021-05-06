@@ -62,7 +62,7 @@ func (a ReplaceAnnotation) Value(existingNode template.EvaluationNode) (interfac
 			return nil, err
 		}
 
-		return tplcore.NewStarlarkValue(result).AsGoValue()
+		return tplcore.NewStarlarkValue(result).AsGoValue(), nil
 
 	default:
 		return nil, fmt.Errorf("Expected '%s' annotation keyword argument 'via'"+

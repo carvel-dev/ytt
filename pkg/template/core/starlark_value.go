@@ -11,7 +11,7 @@ import (
 )
 
 type StarlarkValueToGoValueConversion interface {
-	AsGoValue() (interface{}, error)
+	AsGoValue() interface{}
 }
 
 type StarlarkValue struct {
@@ -22,8 +22,8 @@ func NewStarlarkValue(val starlark.Value) StarlarkValue {
 	return StarlarkValue{val}
 }
 
-func (e StarlarkValue) AsGoValue() (interface{}, error) {
-	return e.asInterface(e.val), nil
+func (e StarlarkValue) AsGoValue() interface{} {
+	return e.asInterface(e.val)
 }
 
 func (e StarlarkValue) AsString() (string, error) {
@@ -53,11 +53,7 @@ func (e StarlarkValue) AsInt64() (int64, error) {
 
 func (e StarlarkValue) asInterface(val starlark.Value) interface{} {
 	if obj, ok := val.(StarlarkValueToGoValueConversion); ok {
-		res, err := obj.AsGoValue()
-		if err != nil {
-			panic(err)
-		}
-		return res
+		return obj.AsGoValue()
 	}
 
 	switch typedVal := val.(type) {
@@ -116,6 +112,13 @@ func (e StarlarkValue) dictAsInterface(val *starlark.Dict) interface{} {
 }
 
 func (e StarlarkValue) structAsInterface(val *StarlarkStruct) interface{} {
+	if val.represent != nil {
+		repVal, err := val.represent()
+		if err != nil {
+			panic(err)
+		}
+		return e.asInterface(repVal)
+	}
 	// TODO accessing privates
 	result := orderedmap.NewMap()
 	val.data.Iterate(func(k, v interface{}) {
