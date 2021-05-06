@@ -19,21 +19,6 @@ query_params:
   test3: #@ url.query_params_encode({"w":[]})
   test4: #@ url.query_params_decode("")
 
-url_type:
-  #@ testURL1 = url.parse("http://admin:password@url.domain:8080")
-  #@ testURL2 = testURL1.without_user()
-  #@ testURL3 = url.parse("http://admin@url.domain:8080")
-  test1: #@ testURL1.string()
-  test2: #@ testURL1.user
-  test3: #@ testURL1.user.name
-  test4: #@ testURL1.user.password
-  test5: #@ testURL2.string()
-  test6: #@ testURL2.user
-  test7: #@ testURL3.string()
-  test8: #@ testURL3.user
-  test9: #@ testURL3.user.name
-  test10: #@ testURL3.user.password
-
 +++
 
 path_segment:
@@ -58,14 +43,3 @@ query_params:
     - ""
   test3: ""
   test4: {}
-url_type:
-  test1: http://admin:password@url.domain:8080
-  test2: admin:password
-  test3: admin
-  test4: password
-  test5: http://url.domain:8080
-  test6: null
-  test7: http://admin@url.domain:8080
-  test8: admin
-  test9: admin
-  test10: null
