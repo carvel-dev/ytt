@@ -14,6 +14,10 @@ type StarlarkValueToGoValueConversion interface {
 	AsGoValue() interface{}
 }
 
+type UnconvertableStarlarkValue interface {
+	ConversionHint() string
+}
+
 type StarlarkValue struct {
 	val starlark.Value
 }
@@ -52,6 +56,9 @@ func (e StarlarkValue) AsInt64() (int64, error) {
 }
 
 func (e StarlarkValue) asInterface(val starlark.Value) interface{} {
+	if obj, ok := val.(UnconvertableStarlarkValue); ok {
+		panic(obj.ConversionHint())
+	}
 	if obj, ok := val.(StarlarkValueToGoValueConversion); ok {
 		return obj.AsGoValue()
 	}
