@@ -100,7 +100,7 @@ func (e GoValue) dictAsStarlarkValue(val *orderedmap.Map) starlark.Value {
 				panic(fmt.Sprintf("expected struct key %s to be string", k)) // TODO
 			}
 		})
-		return &StarlarkStruct{data, nil}
+		return &StarlarkStruct{data}
 	}
 
 	result := &starlark.Dict{}

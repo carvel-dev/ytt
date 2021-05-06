@@ -11,16 +11,11 @@ import (
 )
 
 type StarlarkStruct struct {
-	data      *orderedmap.Map                // [string]starlark.Value; most common usage: HasAttrs
-	represent func() (starlark.Value, error) // provides a hook for overwriting struct representation
+	data *orderedmap.Map // [string]starlark.Value; most common usage: HasAttrs
 }
 
 func NewStarlarkStruct(goStringKeyToStarlarkValue *orderedmap.Map) *StarlarkStruct {
 	return &StarlarkStruct{data: goStringKeyToStarlarkValue}
-}
-
-func (s *StarlarkStruct) SetRepresentation(f func() (starlark.Value, error)) {
-	s.represent = f
 }
 
 var _ starlark.Value = (*StarlarkStruct)(nil)

@@ -119,13 +119,6 @@ func (e StarlarkValue) dictAsInterface(val *starlark.Dict) interface{} {
 }
 
 func (e StarlarkValue) structAsInterface(val *StarlarkStruct) interface{} {
-	if val.represent != nil {
-		repVal, err := val.represent()
-		if err != nil {
-			panic(err)
-		}
-		return e.asInterface(repVal)
-	}
 	// TODO accessing privates
 	result := orderedmap.NewMap()
 	val.data.Iterate(func(k, v interface{}) {

@@ -38,7 +38,14 @@ type urlModule struct{}
 
 // urlValue stores a parsed URL
 type urlValue struct {
-	*url.URL
+	url *url.URL
+	*core.StarlarkStruct
+}
+
+// urlUser stores the user information
+type urlUser struct {
+	user *url.Userinfo
+	*core.StarlarkStruct
 }
 
 func (b urlModule) PathSegmentEncode(thread *starlark.Thread, f *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
@@ -201,7 +208,7 @@ func (b urlModule) ParseURL(thread *starlark.Thread, f *starlark.Builtin, args s
 		return starlark.None, err
 	}
 
-	return (&urlValue{parsedURL}).AsStarlarkValue(), nil
+	return (&urlValue{parsedURL, nil}).AsStarlarkValue(), nil
 }
 
 func (uv *urlValue) AsStarlarkValue() starlark.Value {
@@ -209,34 +216,41 @@ func (uv *urlValue) AsStarlarkValue() starlark.Value {
 	m.Set("user", uv.user())
 	m.Set("without_user", starlark.NewBuiltin("url.without_user", core.ErrWrapper(uv.withoutUser)))
 	m.Set("string", starlark.NewBuiltin("url.string", core.ErrWrapper(uv.string)))
-	s := core.NewStarlarkStruct(m)
-	s.SetRepresentation(urlRepresent)
-	return s
+	uv.StarlarkStruct = core.NewStarlarkStruct(m)
+	return uv
 }
 
-func urlRepresent() (starlark.Value, error) {
-	return nil, fmt.Errorf("urlValue cannot be directly referenced, please use urlValue.string()")
+func (uv *urlValue) ConversionHint() string {
+	return "urlValue: cannot coerce to a string; use .string()"
 }
 
-func (uv *urlValue) userRepresent() (starlark.Value, error) {
-	return starlark.String(uv.User.String()), nil
+func (uu *urlUser) string(thread *starlark.Thread, f *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
+	if args.Len() != 0 {
+		return starlark.None, fmt.Errorf("expected no argument")
+	}
+	return starlark.String(uu.user.String()), nil
 }
 
 func (uv *urlValue) user() starlark.Value {
-	if uv.User == nil {
+	if uv.url.User == nil {
 		return starlark.None
 	}
 
+	uu := &urlUser{uv.url.User, nil}
 	m := orderedmap.NewMap()
-	m.Set("name", starlark.String(uv.User.Username()))
-	m.Set("password", uv.password())
-	s := core.NewStarlarkStruct(m)
-	s.SetRepresentation(uv.userRepresent)
-	return s
+	m.Set("name", starlark.String(uu.user.Username()))
+	m.Set("password", uu.password())
+	m.Set("string", starlark.NewBuiltin("string", core.ErrWrapper(uu.string)))
+	uu.StarlarkStruct = core.NewStarlarkStruct(m)
+	return uu
 }
 
-func (uv *urlValue) password() starlark.Value {
-	passwd, passwdSet := uv.User.Password()
+func (uu *urlUser) ConversionHint() string {
+	return "urlUser: cannot coerce to a string; use .string()"
+}
+
+func (uu *urlUser) password() starlark.Value {
+	passwd, passwdSet := uu.user.Password()
 	if !passwdSet {
 		return starlark.None
 	}
@@ -247,14 +261,14 @@ func (uv *urlValue) withoutUser(thread *starlark.Thread, f *starlark.Builtin, ar
 	if args.Len() != 0 {
 		return starlark.None, fmt.Errorf("expected no argument")
 	}
-	urlVar := *uv.URL
+	urlVar := *uv.url
 	urlVar.User = nil
-	return (&urlValue{&urlVar}).AsStarlarkValue(), nil
+	return (&urlValue{&urlVar, nil}).AsStarlarkValue(), nil
 }
 
 func (uv *urlValue) string(thread *starlark.Thread, f *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
 	if args.Len() != 0 {
 		return starlark.None, fmt.Errorf("expected no argument")
 	}
-	return starlark.String(uv.String()), nil
+	return starlark.String(uv.url.String()), nil
 }
