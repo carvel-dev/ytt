@@ -7,12 +7,15 @@ import (
 	"fmt"
 
 	"github.com/k14s/starlark-go/starlark"
-	"github.com/k14s/starlark-go/starlarkstruct"
 	"github.com/k14s/ytt/pkg/orderedmap"
 )
 
 type StarlarkValueToGoValueConversion interface {
 	AsGoValue() interface{}
+}
+
+type UnconvertableStarlarkValue interface {
+	ConversionHint() string
 }
 
 type StarlarkValue struct {
@@ -53,6 +56,9 @@ func (e StarlarkValue) AsInt64() (int64, error) {
 }
 
 func (e StarlarkValue) asInterface(val starlark.Value) interface{} {
+	if obj, ok := val.(UnconvertableStarlarkValue); ok {
+		panic(obj.ConversionHint())
+	}
 	if obj, ok := val.(StarlarkValueToGoValueConversion); ok {
 		return obj.AsGoValue()
 	}
@@ -96,9 +102,6 @@ func (e StarlarkValue) asInterface(val starlark.Value) interface{} {
 	case *starlark.Set:
 		return e.itearableAsInterface(typedVal)
 
-	case *starlarkstruct.Struct:
-		return e.nativeStructAsInterface(typedVal)
-
 	default:
 		panic(fmt.Sprintf("unknown type %T for conversion to go value", val))
 	}
@@ -111,19 +114,6 @@ func (e StarlarkValue) dictAsInterface(val *starlark.Dict) interface{} {
 			panic("dict item is not KV")
 		}
 		result.Set(e.asInterface(item.Index(0)), e.asInterface(item.Index(1)))
-	}
-	return result
-}
-
-func (e StarlarkValue) nativeStructAsInterface(val *starlarkstruct.Struct) interface{} {
-	// struct's ToStringDict uses map, hence ordering is not deterministic
-	result := orderedmap.NewMap()
-	for _, key := range val.AttrNames() {
-		v, err := val.Attr(key)
-		if err != nil {
-			panic("expected Attr() to succeed for *starlarkstruct.Struct")
-		}
-		result.Set(key, e.asInterface(v))
 	}
 	return result
 }

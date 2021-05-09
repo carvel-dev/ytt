@@ -27,12 +27,26 @@ var (
 
 				"query_params_encode": starlark.NewBuiltin("url.query_params_encode", core.ErrWrapper(urlModule{}.QueryParamsEncode)),
 				"query_params_decode": starlark.NewBuiltin("url.query_params_decode", core.ErrWrapper(urlModule{}.QueryParamsDecode)),
+
+				"parse": starlark.NewBuiltin("url.parse", core.ErrWrapper(urlModule{}.ParseURL)),
 			},
 		},
 	}
 )
 
 type urlModule struct{}
+
+// URLValue stores a parsed URL
+type URLValue struct {
+	url *url.URL
+	*core.StarlarkStruct
+}
+
+// URLUser stores the user information
+type URLUser struct {
+	user *url.Userinfo
+	*core.StarlarkStruct
+}
 
 func (b urlModule) PathSegmentEncode(thread *starlark.Thread, f *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
 	if args.Len() != 1 {
@@ -177,4 +191,84 @@ func (b urlModule) sortedKeys(vals url.Values) []string {
 	}
 	sort.Strings(result)
 	return result
+}
+
+func (b urlModule) ParseURL(thread *starlark.Thread, f *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
+	if args.Len() != 1 {
+		return starlark.None, fmt.Errorf("expected exactly one argument")
+	}
+
+	urlStr, err := core.NewStarlarkValue(args.Index(0)).AsString()
+	if err != nil {
+		return starlark.None, err
+	}
+
+	parsedURL, err := url.Parse(urlStr)
+	if err != nil {
+		return starlark.None, err
+	}
+
+	return (&URLValue{parsedURL, nil}).AsStarlarkValue(), nil
+}
+
+func (uv *URLValue) AsStarlarkValue() starlark.Value {
+	m := orderedmap.NewMap()
+	m.Set("user", uv.User())
+	m.Set("without_user", starlark.NewBuiltin("url.without_user", core.ErrWrapper(uv.WithoutUser)))
+	m.Set("string", starlark.NewBuiltin("url.string", core.ErrWrapper(uv.string)))
+	uv.StarlarkStruct = core.NewStarlarkStruct(m)
+	return uv
+}
+
+func (uv *URLValue) ConversionHint() string {
+	return "URLValue: cannot coerce to a string; use .string()"
+}
+
+func (uu *URLUser) string(thread *starlark.Thread, f *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
+	if args.Len() != 0 {
+		return starlark.None, fmt.Errorf("expected no argument")
+	}
+	return starlark.String(uu.user.String()), nil
+}
+
+func (uv *URLValue) User() starlark.Value {
+	if uv.url.User == nil {
+		return starlark.None
+	}
+
+	uu := &URLUser{uv.url.User, nil}
+	m := orderedmap.NewMap()
+	m.Set("name", starlark.String(uu.user.Username()))
+	m.Set("password", uu.password())
+	m.Set("string", starlark.NewBuiltin("string", core.ErrWrapper(uu.string)))
+	uu.StarlarkStruct = core.NewStarlarkStruct(m)
+	return uu
+}
+
+func (uu *URLUser) ConversionHint() string {
+	return "URLUser: cannot coerce to a string; use .string()"
+}
+
+func (uu *URLUser) password() starlark.Value {
+	passwd, passwdSet := uu.user.Password()
+	if !passwdSet {
+		return starlark.None
+	}
+	return starlark.String(passwd)
+}
+
+func (uv *URLValue) WithoutUser(thread *starlark.Thread, f *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
+	if args.Len() != 0 {
+		return starlark.None, fmt.Errorf("expected no argument")
+	}
+	urlVar := *uv.url
+	urlVar.User = nil
+	return (&URLValue{&urlVar, nil}).AsStarlarkValue(), nil
+}
+
+func (uv *URLValue) string(thread *starlark.Thread, f *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
+	if args.Len() != 0 {
+		return starlark.None, fmt.Errorf("expected no argument")
+	}
+	return starlark.String(uv.url.String()), nil
 }
