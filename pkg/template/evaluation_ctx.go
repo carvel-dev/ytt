@@ -68,11 +68,11 @@ func (e *EvaluationCtx) TplReplace(thread *starlark.Thread, _ *starlark.Builtin,
 func (e *EvaluationCtx) TplSetNode(thread *starlark.Thread, _ *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
 	if args.Len() > 1 {
 		if _, noop := args.Index(1).(*core.StarlarkNoop); !noop {
-			goValue, err := core.NewStarlarkValue(args.Index(1)).AsGoValue()
+			val, err := core.NewStarlarkValue(args.Index(1)).AsGoValue()
 			if err != nil {
 				return starlark.None, err
 			}
-			err = e.parentNodes[len(e.parentNodes)-1].SetValue(goValue)
+			err = e.parentNodes[len(e.parentNodes)-1].SetValue(val)
 			if err != nil {
 				return starlark.None, err
 			}

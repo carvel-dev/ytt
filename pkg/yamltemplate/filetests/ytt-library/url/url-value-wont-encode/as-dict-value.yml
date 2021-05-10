@@ -5,6 +5,6 @@ url_value: #@ {"key": url.parse("http://example.com")}
 +++
 
 ERR: 
-- __ytt_tplXXX_set_node: URLValue: does not automatically encode; use .string()
+- __ytt_tplXXX_set_node: unable to convert value: URLValue does not automatically encode (hint: use .string())
     in <toplevel>
       stdin:3 | url_value: #@ {"key": url.parse("http://example.com")}

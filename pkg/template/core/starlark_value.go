@@ -4,7 +4,6 @@
 package core
 
 import (
-	"errors"
 	"fmt"
 
 	"github.com/k14s/starlark-go/starlark"
@@ -15,7 +14,7 @@ type StarlarkValueToGoValueConversion interface {
 	AsGoValue() (interface{}, error)
 }
 
-var _ = []StarlarkValueToGoValueConversion{&StarlarkValue{}}
+var _ StarlarkValueToGoValueConversion = &StarlarkValue{}
 
 type UnconvertableStarlarkValue interface {
 	ConversionHint() string
@@ -60,7 +59,7 @@ func (e StarlarkValue) AsInt64() (int64, error) {
 
 func (e StarlarkValue) asInterface(val starlark.Value) (interface{}, error) {
 	if obj, ok := val.(UnconvertableStarlarkValue); ok {
-		return nil, errors.New(obj.ConversionHint())
+		return nil, fmt.Errorf("unable to convert value: %s", obj.ConversionHint())
 	}
 	if obj, ok := val.(StarlarkValueToGoValueConversion); ok {
 		return obj.AsGoValue()
@@ -132,13 +131,11 @@ func (e StarlarkValue) dictAsInterface(val *starlark.Dict) (interface{}, error) 
 func (e StarlarkValue) structAsInterface(val *StarlarkStruct) (interface{}, error) {
 	// TODO accessing privates
 	result := orderedmap.NewMap()
-	var err error
-	val.data.Iterate(func(k, v interface{}) {
-		if err == nil {
-			var value interface{}
-			value, err = e.asInterface(v.(starlark.Value))
-			result.Set(k, value)
-		}
+	err := val.data.IterateWithErr(func(k, v interface{}) error {
+		var value interface{}
+		value, err := e.asInterface(v.(starlark.Value))
+		result.Set(k, value)
+		return err
 	})
 	if err != nil {
 		return nil, err

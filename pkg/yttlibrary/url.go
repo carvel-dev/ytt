@@ -226,7 +226,7 @@ func (uv *URLValue) AsStarlarkValue() starlark.Value {
 }
 
 func (uv *URLValue) ConversionHint() string {
-	return "URLValue: does not automatically encode; use .string()"
+	return "URLValue does not automatically encode (hint: use .string())"
 }
 
 func (uu *URLUser) string(thread *starlark.Thread, f *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
@@ -253,7 +253,7 @@ func (uv *URLValue) User() starlark.Value {
 func (uu *URLUser) Type() string { return "@ytt:url.user" }
 
 func (uu *URLUser) ConversionHint() string {
-	return "URLUser: does not automatically encode; use .string()"
+	return "URLUser does not automatically encode (hint: use .string())"
 }
 
 func (uu *URLUser) password() starlark.Value {
