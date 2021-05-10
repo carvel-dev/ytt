@@ -38,14 +38,14 @@ type urlModule struct{}
 
 // URLValue stores a parsed URL
 type URLValue struct {
-	url *url.URL
-	*core.StarlarkStruct
+	url                  *url.URL
+	*core.StarlarkStruct // TODO: keep authorship of the interface by delegating instead of embedding
 }
 
 // URLUser stores the user information
 type URLUser struct {
-	user *url.Userinfo
-	*core.StarlarkStruct
+	user                 *url.Userinfo
+	*core.StarlarkStruct // TODO: keep authorship of the interface by delegating instead of embedding
 }
 
 func (b urlModule) PathSegmentEncode(thread *starlark.Thread, f *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
@@ -115,7 +115,10 @@ func (b urlModule) QueryParamsEncode(thread *starlark.Thread, f *starlark.Builti
 		return starlark.None, fmt.Errorf("expected exactly one argument")
 	}
 
-	val := core.NewStarlarkValue(args.Index(0)).AsGoValue()
+	val, err := core.NewStarlarkValue(args.Index(0)).AsGoValue()
+	if err != nil {
+		return starlark.None, err
+	}
 
 	typedVal, ok := val.(*orderedmap.Map)
 	if !ok {
@@ -124,7 +127,7 @@ func (b urlModule) QueryParamsEncode(thread *starlark.Thread, f *starlark.Builti
 
 	urlVals := url.Values{}
 
-	err := typedVal.IterateErr(func(key, val interface{}) error {
+	err = typedVal.IterateErr(func(key, val interface{}) error {
 		keyStr, ok := key.(string)
 		if !ok {
 			return fmt.Errorf("expected map key to be string, but was %T", key)
@@ -211,6 +214,8 @@ func (b urlModule) ParseURL(thread *starlark.Thread, f *starlark.Builtin, args s
 	return (&URLValue{parsedURL, nil}).AsStarlarkValue(), nil
 }
 
+func (uv *URLValue) Type() string { return "@ytt:url.value" }
+
 func (uv *URLValue) AsStarlarkValue() starlark.Value {
 	m := orderedmap.NewMap()
 	m.Set("user", uv.User())
@@ -221,7 +226,7 @@ func (uv *URLValue) AsStarlarkValue() starlark.Value {
 }
 
 func (uv *URLValue) ConversionHint() string {
-	return "URLValue: cannot coerce to a string; use .string()"
+	return "URLValue: does not automatically encode; use .string()"
 }
 
 func (uu *URLUser) string(thread *starlark.Thread, f *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
@@ -245,8 +250,10 @@ func (uv *URLValue) User() starlark.Value {
 	return uu
 }
 
+func (uu *URLUser) Type() string { return "@ytt:url.user" }
+
 func (uu *URLUser) ConversionHint() string {
-	return "URLUser: cannot coerce to a string; use .string()"
+	return "URLUser: does not automatically encode; use .string()"
 }
 
 func (uu *URLUser) password() starlark.Value {

@@ -46,7 +46,7 @@ func (s *StarlarkFragment) Hash() (uint32, error) {
 	return 0, fmt.Errorf("unhashable type: %s", starlarkFragmentType)
 }
 
-func (s *StarlarkFragment) AsGoValue() interface{}          { return s.data }
+func (s *StarlarkFragment) AsGoValue() (interface{}, error) { return s.data, nil }
 func (s *StarlarkFragment) AsStarlarkValue() starlark.Value { return s }
 
 func (s *StarlarkFragment) CompareSameType(op syntax.Token, y starlark.Value, depth int) (bool, error) {
@@ -54,7 +54,10 @@ func (s *StarlarkFragment) CompareSameType(op syntax.Token, y starlark.Value, de
 }
 
 func (s *StarlarkFragment) Get(k starlark.Value) (v starlark.Value, found bool, err error) {
-	wantedKey := tplcore.NewStarlarkValue(k).AsGoValue()
+	wantedKey, err := tplcore.NewStarlarkValue(k).AsGoValue()
+	if err != nil {
+		return starlark.None, false, err
+	}
 
 	switch typedData := s.data.(type) {
 	case nil:

@@ -49,7 +49,11 @@ func (s *StarlarkStruct) AttrNames() []string {
 }
 
 func (s *StarlarkStruct) Get(key starlark.Value) (val starlark.Value, found bool, err error) {
-	if attr, ok := NewStarlarkValue(key).AsGoValue().(string); ok {
+	goValue, err := NewStarlarkValue(key).AsGoValue()
+	if err != nil {
+		return starlark.None, false, fmt.Errorf("expected key of type `%s` to coerce to string: %s", key.Type(), err)
+	}
+	if attr, ok := goValue.(string); ok {
 		val, found := s.data.Get(attr)
 		if found {
 			return val.(starlark.Value), true, nil

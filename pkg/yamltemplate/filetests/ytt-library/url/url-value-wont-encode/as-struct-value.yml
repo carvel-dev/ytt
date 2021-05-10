@@ -1,0 +1,11 @@
+#@ load("@ytt:url", "url")
+#@ load("@ytt:struct", "struct")
+
+url_value: #@ struct.make(key=url.parse("http://example.com"))
+
++++
+
+ERR: 
+- __ytt_tplXXX_set_node: URLValue: does not automatically encode; use .string()
+    in <toplevel>
+      stdin:4 | url_value: #@ struct.make(key=url.parse("http://example.com"))
