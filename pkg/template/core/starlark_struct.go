@@ -51,7 +51,7 @@ func (s *StarlarkStruct) AttrNames() []string {
 func (s *StarlarkStruct) Get(key starlark.Value) (val starlark.Value, found bool, err error) {
 	attrName, err := NewStarlarkValue(key).AsString()
 	if err != nil {
-		return starlark.None, false, fmt.Errorf("expected key `%s` to be a string but is a %s", key, key.Type())
+		return starlark.None, false, err
 	}
 	value, found := s.data.Get(attrName)
 	if found {

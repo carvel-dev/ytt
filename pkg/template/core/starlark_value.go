@@ -36,7 +36,7 @@ func (e StarlarkValue) AsString() (string, error) {
 	if typedVal, ok := e.val.(starlark.String); ok {
 		return string(typedVal), nil
 	}
-	return "", fmt.Errorf("expected starlark.String, but was %T", e.val)
+	return "", fmt.Errorf("expected a string, but was %s", e.val.Type())
 }
 
 func (e StarlarkValue) AsBool() (bool, error) {
@@ -59,7 +59,7 @@ func (e StarlarkValue) AsInt64() (int64, error) {
 
 func (e StarlarkValue) asInterface(val starlark.Value) (interface{}, error) {
 	if obj, ok := val.(UnconvertableStarlarkValue); ok {
-		return nil, fmt.Errorf("unable to convert value: %s", obj.ConversionHint())
+		return nil, fmt.Errorf("Unable to convert value: %s", obj.ConversionHint())
 	}
 	if obj, ok := val.(StarlarkValueToGoValueConversion); ok {
 		return obj.AsGoValue()
@@ -131,7 +131,7 @@ func (e StarlarkValue) dictAsInterface(val *starlark.Dict) (interface{}, error) 
 func (e StarlarkValue) structAsInterface(val *StarlarkStruct) (interface{}, error) {
 	// TODO accessing privates
 	result := orderedmap.NewMap()
-	err := val.data.IterateWithErr(func(k, v interface{}) error {
+	err := val.data.IterateErr(func(k, v interface{}) error {
 		var value interface{}
 		value, err := e.asInterface(v.(starlark.Value))
 		result.Set(k, value)

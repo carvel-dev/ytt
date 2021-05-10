@@ -72,16 +72,6 @@ func (m *Map) Iterate(iterFunc func(k, v interface{})) {
 	}
 }
 
-func (m *Map) IterateWithErr(iterFunc func(k, v interface{}) error) (err error) {
-	for _, item := range m.items {
-		err = iterFunc(item.Key, item.Value)
-		if err != nil {
-			break
-		}
-	}
-	return err
-}
-
 func (m *Map) IterateErr(iterFunc func(k, v interface{}) error) error {
 	for _, item := range m.items {
 		err := iterFunc(item.Key, item.Value)
