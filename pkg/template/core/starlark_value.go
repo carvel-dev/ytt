@@ -11,8 +11,10 @@ import (
 )
 
 type StarlarkValueToGoValueConversion interface {
-	AsGoValue() interface{}
+	AsGoValue() (interface{}, error)
 }
+
+var _ StarlarkValueToGoValueConversion = &StarlarkValue{}
 
 type UnconvertableStarlarkValue interface {
 	ConversionHint() string
@@ -26,7 +28,7 @@ func NewStarlarkValue(val starlark.Value) StarlarkValue {
 	return StarlarkValue{val}
 }
 
-func (e StarlarkValue) AsGoValue() interface{} {
+func (e StarlarkValue) AsGoValue() (interface{}, error) {
 	return e.asInterface(e.val)
 }
 
@@ -34,7 +36,7 @@ func (e StarlarkValue) AsString() (string, error) {
 	if typedVal, ok := e.val.(starlark.String); ok {
 		return string(typedVal), nil
 	}
-	return "", fmt.Errorf("expected starlark.String, but was %T", e.val)
+	return "", fmt.Errorf("expected a string, but was %s", e.val.Type())
 }
 
 func (e StarlarkValue) AsBool() (bool, error) {
@@ -55,9 +57,9 @@ func (e StarlarkValue) AsInt64() (int64, error) {
 	return 0, fmt.Errorf("expected starlark.Int")
 }
 
-func (e StarlarkValue) asInterface(val starlark.Value) interface{} {
+func (e StarlarkValue) asInterface(val starlark.Value) (interface{}, error) {
 	if obj, ok := val.(UnconvertableStarlarkValue); ok {
-		panic(obj.ConversionHint())
+		return nil, fmt.Errorf("Unable to convert value: %s", obj.ConversionHint())
 	}
 	if obj, ok := val.(StarlarkValueToGoValueConversion); ok {
 		return obj.AsGoValue()
@@ -65,27 +67,27 @@ func (e StarlarkValue) asInterface(val starlark.Value) interface{} {
 
 	switch typedVal := val.(type) {
 	case nil, starlark.NoneType:
-		return nil // TODO is it nil or is it None
+		return nil, nil // TODO is it nil or is it None
 
 	case starlark.Bool:
-		return bool(typedVal)
+		return bool(typedVal), nil
 
 	case starlark.String:
-		return string(typedVal)
+		return string(typedVal), nil
 
 	case starlark.Int:
 		i1, ok := typedVal.Int64()
 		if ok {
-			return i1
+			return i1, nil
 		}
 		i2, ok := typedVal.Uint64()
 		if ok {
-			return i2
+			return i2, nil
 		}
 		panic("not sure how to get int") // TODO
 
 	case starlark.Float:
-		return float64(typedVal)
+		return float64(typedVal), nil
 
 	case *starlark.Dict:
 		return e.dictAsInterface(typedVal)
@@ -107,34 +109,53 @@ func (e StarlarkValue) asInterface(val starlark.Value) interface{} {
 	}
 }
 
-func (e StarlarkValue) dictAsInterface(val *starlark.Dict) interface{} {
+func (e StarlarkValue) dictAsInterface(val *starlark.Dict) (interface{}, error) {
 	result := orderedmap.NewMap()
 	for _, item := range val.Items() {
 		if item.Len() != 2 {
 			panic("dict item is not KV")
 		}
-		result.Set(e.asInterface(item.Index(0)), e.asInterface(item.Index(1)))
+		key, err := e.asInterface(item.Index(0))
+		if err != nil {
+			return nil, err
+		}
+		value, err := e.asInterface(item.Index(1))
+		if err != nil {
+			return nil, err
+		}
+		result.Set(key, value)
 	}
-	return result
+	return result, nil
 }
 
-func (e StarlarkValue) structAsInterface(val *StarlarkStruct) interface{} {
+func (e StarlarkValue) structAsInterface(val *StarlarkStruct) (interface{}, error) {
 	// TODO accessing privates
 	result := orderedmap.NewMap()
-	val.data.Iterate(func(k, v interface{}) {
-		result.Set(k, e.asInterface(v.(starlark.Value)))
+	err := val.data.IterateErr(func(k, v interface{}) error {
+		value, err := e.asInterface(v.(starlark.Value))
+		if err == nil {
+			result.Set(k, value)
+		}
+		return err
 	})
-	return result
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
 }
 
-func (e StarlarkValue) itearableAsInterface(iterable starlark.Iterable) interface{} {
+func (e StarlarkValue) itearableAsInterface(iterable starlark.Iterable) (interface{}, error) {
 	iter := iterable.Iterate()
 	defer iter.Done()
 
 	var result []interface{}
 	var x starlark.Value
 	for iter.Next(&x) {
-		result = append(result, e.asInterface(x))
+		elem, err := e.asInterface(x)
+		if err != nil {
+			return nil, err
+		}
+		result = append(result, elem)
 	}
-	return result
+	return result, nil
 }

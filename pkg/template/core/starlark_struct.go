@@ -49,14 +49,15 @@ func (s *StarlarkStruct) AttrNames() []string {
 }
 
 func (s *StarlarkStruct) Get(key starlark.Value) (val starlark.Value, found bool, err error) {
-	if attr, ok := NewStarlarkValue(key).AsGoValue().(string); ok {
-		val, found := s.data.Get(attr)
-		if found {
-			return val.(starlark.Value), true, nil
-		}
-		return starlark.None, false, nil
+	attrName, err := NewStarlarkValue(key).AsString()
+	if err != nil {
+		return starlark.None, false, err
 	}
-	return nil, false, fmt.Errorf("expected key `%s` to be a string but is a %T", key, key)
+	value, found := s.data.Get(attrName)
+	if found {
+		return value.(starlark.Value), true, nil
+	}
+	return starlark.None, false, nil
 }
 
 func (s *StarlarkStruct) Iterate() starlark.Iterator {

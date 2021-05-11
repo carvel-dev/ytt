@@ -334,7 +334,7 @@ func (a *ArrayItemType) AssignTypeTo(typeable yamlmeta.Typeable) (chk yamlmeta.T
 	return
 }
 
-func (m *ScalarType) AssignTypeTo(typeable yamlmeta.Typeable) (yamlmeta.TypeCheck) {
+func (m *ScalarType) AssignTypeTo(typeable yamlmeta.Typeable) yamlmeta.TypeCheck {
 	return yamlmeta.TypeCheck{[]error{NewMismatchedTypeError(typeable, m)}}
 }
 
