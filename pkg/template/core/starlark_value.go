@@ -132,9 +132,10 @@ func (e StarlarkValue) structAsInterface(val *StarlarkStruct) (interface{}, erro
 	// TODO accessing privates
 	result := orderedmap.NewMap()
 	err := val.data.IterateErr(func(k, v interface{}) error {
-		var value interface{}
 		value, err := e.asInterface(v.(starlark.Value))
-		result.Set(k, value)
+		if err == nil {
+			result.Set(k, value)
+		}
 		return err
 	})
 	if err != nil {
