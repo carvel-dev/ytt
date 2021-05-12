@@ -1468,6 +1468,42 @@ lib_data_values: #@ data.values.foo`)
 		assertSucceeds(t, filesToProcess, expectedYAMLTplData, opts)
 	})
 
+	t.Run("when schema is ref'ed to a child library that has data values", func(t *testing.T) {
+		configYaml := []byte(`
+#@ load("@ytt:template", "template")
+#@ load("@ytt:library", "library")
+--- #@ template.replace(library.get("libby").eval())`)
+
+		libbyConfigYaml := []byte(`
+#@ load("@ytt:template", "template")
+#@ load("@ytt:library", "library")
+--- #@ template.replace(library.get("libbychild").eval())
+---
+should: succeed`)
+
+		schemaYaml := []byte(`
+#@library/ref "@libby@libbychild"
+#@schema/match
+---
+foo: used
+`)
+		libChildValuesYaml := []byte(`
+#@data/values
+---
+foo: used
+`)
+
+		filesToProcess := files.NewSortedFiles([]*files.File{
+			files.MustNewFileFromSource(files.NewBytesSource("config.yml", configYaml)),
+			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", schemaYaml)),
+			files.MustNewFileFromSource(files.NewBytesSource("_ytt_lib/libby/config.yml", libbyConfigYaml)),
+			files.MustNewFileFromSource(files.NewBytesSource("_ytt_lib/libby/_ytt_lib/libbychild/values.yml", libChildValuesYaml)),
+		})
+
+		assertSucceeds(t, filesToProcess, `should: succeed
+`, opts)
+	})
+
 	t.Run("when schema is ref'd to a library, data values are only checked by that library's schema", func(t *testing.T) {
 		rootYAML := []byte(`
 #@ load("@ytt:library", "library")
@@ -1561,6 +1597,28 @@ root_data_values: null
 
 		assertSucceeds(t, filesToProcess, expectedYAMLTplData, opts)
 	})
+}
+
+func TestSchema_Unused_returns_error(t *testing.T) {
+	opts := cmdtpl.NewOptions()
+	opts.SchemaEnabled = true
+
+	t.Run("An unused schema ref'd to a library", func(t *testing.T) {
+		schemaBytes := []byte(`
+#@library/ref "@libby"
+#@schema/match
+---
+fooX: not-used
+`)
+
+		filesToProcess := files.NewSortedFiles([]*files.File{
+			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", schemaBytes)),
+		})
+
+		assertFails(t, filesToProcess, "Expected all provided library data values documents to be used "+
+			"but found unused: library '@libby' on line schema.yml:4", opts)
+	})
+
 }
 
 func TestSchema_When_invalid_reports_error(t *testing.T) {

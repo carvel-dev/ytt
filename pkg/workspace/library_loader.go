@@ -280,7 +280,7 @@ func (ll *LibraryLoader) eval(values *DataValues, libraryValues []*DataValues, l
 		}
 	}
 
-	return exports, docSets, outputFiles, ll.checkUnusedDVs(libraryValues)
+	return exports, docSets, outputFiles, ll.checkUnusedDVsOrSchemas(libraryValues, librarySchemas)
 }
 
 func (*LibraryLoader) sortedOutputDocSets(outputDocSets map[*FileInLibrary]*yamlmeta.DocumentSet) []*FileInLibrary {
@@ -292,11 +292,17 @@ func (*LibraryLoader) sortedOutputDocSets(outputDocSets map[*FileInLibrary]*yaml
 	return files
 }
 
-func (LibraryLoader) checkUnusedDVs(libraryValues []*DataValues) error {
+func (LibraryLoader) checkUnusedDVsOrSchemas(libraryValues []*DataValues, librarySchemas []*schema.DocumentSchema) error {
 	var unusedValuesDescs []string
 	for _, dv := range libraryValues {
 		if !dv.IsUsed() {
 			unusedValuesDescs = append(unusedValuesDescs, dv.Desc())
+		}
+	}
+
+	for _, s := range librarySchemas {
+		if !s.IsUsed() {
+			unusedValuesDescs = append(unusedValuesDescs, s.Desc())
 		}
 	}
 

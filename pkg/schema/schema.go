@@ -5,6 +5,7 @@ package schema
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/k14s/ytt/pkg/filepos"
 	"github.com/k14s/ytt/pkg/template"
@@ -20,6 +21,7 @@ type DocumentSchema struct {
 	Source     *yamlmeta.Document
 	defaultDVs *yamlmeta.Document
 	Allowed    *DocumentType
+	used       bool
 
 	originalLibRef []ref.LibraryRef
 	libRef         []ref.LibraryRef
@@ -266,6 +268,31 @@ func (s *DocumentSchema) ValidateWithValues(valuesFilesCount int) error {
 	return nil
 }
 
+func (s *DocumentSchema) deepCopy() *DocumentSchema {
+	var copiedPieces []ref.LibraryRef
+	copiedPieces = append(copiedPieces, s.libRef...)
+	return &DocumentSchema{
+		Name:           s.Name,
+		Source:         s.Source.DeepCopy(),
+		defaultDVs:     s.defaultDVs.DeepCopy(),
+		Allowed:        s.Allowed,
+		originalLibRef: s.originalLibRef,
+		libRef:         copiedPieces,
+	}
+}
+
+func (s *DocumentSchema) Desc() string {
+	var desc []string
+	for _, refPiece := range s.originalLibRef {
+		desc = append(desc, refPiece.AsString())
+	}
+	return fmt.Sprintf("library '%s%s' on %s", "@",
+		strings.Join(desc, "@"), s.Source.Position.AsString())
+}
+
+func (s *DocumentSchema) IsUsed() bool { return s.used }
+func (s *DocumentSchema) markUsed()    { s.used = true }
+
 // HasLibRef if a DocumentSchema has a library reference, that signals the documentschema is meant for another
 // library, *not* the current library being processed. If the libref is nil, then that signals the document schema is
 // meant for the 'current' library being processed.
@@ -275,12 +302,16 @@ func (s *DocumentSchema) HasLibRef() bool {
 
 func (s *DocumentSchema) UsedInLibrary(expectedRefPiece ref.LibraryRef) (*DocumentSchema, bool) {
 	if !s.HasLibRef() {
-		return s, true
+		s.markUsed()
+
+		return s.deepCopy(), true
 	}
 
 	if !s.libRef[0].Matches(expectedRefPiece) {
 		return nil, false
 	}
-	s.libRef = s.libRef[1:]
-	return s, !s.HasLibRef()
+	s.markUsed()
+	childSchema := s.deepCopy()
+	childSchema.libRef = childSchema.libRef[1:]
+	return childSchema, !childSchema.HasLibRef()
 }
