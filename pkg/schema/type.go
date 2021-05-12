@@ -5,16 +5,8 @@ package schema
 
 import (
 	"fmt"
-
 	"github.com/k14s/ytt/pkg/filepos"
-	"github.com/k14s/ytt/pkg/structmeta"
 	"github.com/k14s/ytt/pkg/yamlmeta"
-)
-
-const (
-	AnnotationSchemaNullable structmeta.AnnotationName = "schema/nullable"
-	AnnotationSchemaType     structmeta.AnnotationName = "schema/type"
-	SchemaTypeAny            string                    = "any"
 )
 
 var _ yamlmeta.Type = (*DocumentType)(nil)
@@ -23,6 +15,7 @@ var _ yamlmeta.Type = (*MapItemType)(nil)
 var _ yamlmeta.Type = (*ArrayType)(nil)
 var _ yamlmeta.Type = (*ArrayItemType)(nil)
 var _ yamlmeta.Type = (*AnyType)(nil)
+var _ yamlmeta.Type = (*NullType)(nil)
 
 type DocumentType struct {
 	Source    *yamlmeta.Document
@@ -38,7 +31,7 @@ type MapItemType struct {
 	ValueType    yamlmeta.Type
 	DefaultValue interface{}
 	Position     *filepos.Position
-	Annotations  TypeAnnotations
+	//Annotations  TypeAnnotations
 }
 type ArrayType struct {
 	ItemsType yamlmeta.Type
@@ -56,7 +49,75 @@ type AnyType struct {
 	Position *filepos.Position
 }
 
-type TypeAnnotations map[structmeta.AnnotationName]interface{}
+type NullType struct {
+	ValueType yamlmeta.Type
+	Position  *filepos.Position
+}
+
+func (n NullType) AssignTypeTo(typeable yamlmeta.Typeable) (chk yamlmeta.TypeCheck) {
+	switch typedItem := typeable.(type) {
+	// when nullable annotates an arrayItem or mapItem, the value is of that item can be null.
+	// when the value is not null, we must default to
+
+	case *yamlmeta.Map, *yamlmeta.Array:
+		childCheck := n.ValueType.AssignTypeTo(typeable)
+		chk.Violations = append(chk.Violations, childCheck.Violations...)
+
+	case *yamlmeta.MapItem:
+		typeable.SetType(n)
+		typeableValue, ok := typedItem.Value.(yamlmeta.Typeable)
+		if ok {
+			childCheck := n.ValueType.AssignTypeTo(typeableValue)
+			chk.Violations = append(chk.Violations, childCheck.Violations...)
+		}
+	case *yamlmeta.ArrayItem:
+		typeable.SetType(n)
+		typeableValue, ok := typedItem.Value.(yamlmeta.Typeable)
+		if ok {
+			childCheck := n.ValueType.AssignTypeTo(typeableValue)
+			chk.Violations = append(chk.Violations, childCheck.Violations...)
+		}
+	}
+	return
+}
+
+func (n NullType) GetValueType() yamlmeta.Type {
+	return n.ValueType
+}
+
+func (n NullType) CheckType(node yamlmeta.TypeWithValues) (chk yamlmeta.TypeCheck) {
+	switch typedItem := node.(type) {
+	// Arrays and Maps cannot have 'nil' values, so if node is one of those types,
+	// then those will be checked with the proper value type in checkCollectionItem()
+	case *yamlmeta.MapItem:
+		if typedItem.Value == nil {
+			return
+		}
+		check := n.GetValueType().CheckType(node)
+		if check.HasViolations() {
+			chk.Violations = append(chk.Violations, check.Violations...)
+		}
+	case *yamlmeta.ArrayItem:
+		if typedItem.Value == nil {
+			return
+		}
+		check := n.GetValueType().CheckType(node)
+		if check.HasViolations() {
+			chk.Violations = append(chk.Violations, check.Violations...)
+		}
+	}
+	return
+}
+
+func (n NullType) PositionOfDefinition() *filepos.Position {
+	return n.Position
+}
+
+func (n NullType) String() string {
+	return "nullable"
+}
+
+//type TypeAnnotations map[structmeta.AnnotationName]interface{}
 
 func (t *DocumentType) GetValueType() yamlmeta.Type {
 	panic("Not implemented because it is unreachable")
@@ -130,7 +191,7 @@ func (m ScalarType) String() string {
 	}
 }
 func (a AnyType) String() string {
-	return "any type"
+	return "any"
 }
 
 func (t *DocumentType) CheckType(_ yamlmeta.TypeWithValues) (chk yamlmeta.TypeCheck) {
@@ -155,17 +216,10 @@ func (m *MapType) CheckType(node yamlmeta.TypeWithValues) (chk yamlmeta.TypeChec
 }
 
 func (t *MapItemType) CheckType(node yamlmeta.TypeWithValues) (chk yamlmeta.TypeCheck) {
-	mapItem, ok := node.(*yamlmeta.MapItem)
+	_, ok := node.(*yamlmeta.MapItem)
 	if !ok {
 		// A Map must've yielded a non-MapItem which is not valid YAML
 		panic(fmt.Sprintf("MapItem type check was called on a non-MapItem: %#v", node))
-	}
-	if _, anyType := t.ValueType.(AnyType); anyType {
-		return
-	}
-	if mapItem.Value == nil && !t.IsNullable() {
-		chk.Violations = append(chk.Violations,
-			NewMismatchedTypeError(mapItem, t))
 	}
 
 	return
@@ -402,7 +456,56 @@ func (m *MapType) AllowsKey(key interface{}) bool {
 	return false
 }
 
-func (t MapItemType) IsNullable() bool {
-	_, found := t.Annotations[AnnotationSchemaNullable]
-	return found
-}
+//func combineTypes(types []yamlmeta.Type, defaultValueType yamlmeta.Type) (yamlmeta.Type, error) {
+//	// is there 1 type in types?
+//	//   return type
+//	// is there two or more in the array?
+//	//   call compare types on first two types,
+//	//   append result with rest of array
+//	//   return combinetypes() on result
+//	numOfTypes := len(types)
+//	if numOfTypes == 0 {
+//		panic("whoops")
+//	}
+//	if numOfTypes == 1 {
+//		return types[0], nil
+//	}
+//	if numOfTypes > 1 {
+//		dominantType := compareTypes(types[0], types[1])
+//		rest := append(types[2:], dominantType)
+//		return combineTypes(rest, defaultValueType)
+//	}
+//	return nil, fmt.Errorf("reached the end of combine types")
+//}
+//
+//func compareTypes(type1, type2 yamlmeta.Type) yamlmeta.Type {
+//
+//	any := false
+//	nullable := false
+//	switch type1.(type) {
+//	case AnyType:
+//		any = true
+//	case NullType:
+//		nullable = true
+//	default:
+//		panic("another whoops")
+//	}
+//	switch type2.(type) {
+//	case AnyType:
+//		any = true
+//	case NullType:
+//		nullable = true
+//	default:
+//		panic("another whoops")
+//	}
+//	if any && nullable {
+//		panic("expected to find one of @schema/nullable, or @schema/type, but found both")
+//	}
+//	if any {
+//		return AnyType{type1.PositionOfDefinition()}
+//	}
+//	if nullable {
+//		return NullType{type1.PositionOfDefinition()}
+//	}
+//	panic("no types?")
+//}

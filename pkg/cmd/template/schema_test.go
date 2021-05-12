@@ -554,7 +554,6 @@ vpc: #@ data.values.vpc
 func TestSchema_Allows_null_values_via_nullable_annotation(t *testing.T) {
 	opts := cmdtpl.NewOptions()
 	opts.SchemaEnabled = true
-
 	t.Run("when the value is a map", func(t *testing.T) {
 		schemaYAML := `#@schema/match data_values=True
 ---
@@ -1217,7 +1216,7 @@ foo: 0
 `
 		expectedErr := `schema.yml:4 | foo: 0
              |
-             | INVALID SCHEMA ANNOTATION - unknown @schema/type annotation keyword argument 'unknown_kwarg'. Supported kwargs are 'any'
+             | INVALID SCHEMA - unknown @schema/type annotation keyword argument 'unknown_kwarg'. Supported kwargs are 'any'
 `
 		filesToProcess := files.NewSortedFiles([]*files.File{
 			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
@@ -1233,7 +1232,7 @@ foo: 0
 `
 		expectedErr := `schema.yml:4 | foo: 0
              |
-             | INVALID SCHEMA ANNOTATION - expected @schema/type annotation value in keyword argument 'any' to be a boolean, but was '1'
+             | INVALID SCHEMA - processing @schema/type 'any' argument: expected starlark.Bool, but was starlark.Int
 `
 		filesToProcess := files.NewSortedFiles([]*files.File{
 			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
@@ -1249,7 +1248,7 @@ foo: 0
 `
 		expectedErr := `schema.yml:4 | foo: 0
              |
-             | INVALID SCHEMA ANNOTATION - expected @schema/type annotation to have keyword argument and value. Supported key-value pairs are 'any=True', 'any=False'
+             | INVALID SCHEMA - expected @schema/type annotation to have keyword argument and value. Supported key-value pairs are 'any=True', 'any=False'
 `
 		filesToProcess := files.NewSortedFiles([]*files.File{
 			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),

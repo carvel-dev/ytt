@@ -265,12 +265,6 @@ func (mi *MapItem) Check() (chk TypeCheck) {
 		return
 	}
 
-	// If the current value of the item is null
-	// there is no extra validation needed Type wise
-	if mi.Value == nil {
-		return
-	}
-
 	check = checkCollectionItem(mi.Value, mi.Type.GetValueType(), mi.Position)
 	if check.HasViolations() {
 		chk.Violations = append(chk.Violations, check.Violations...)
@@ -305,6 +299,7 @@ func (ai *ArrayItem) Check() (chk TypeCheck) {
 	return chk
 }
 
+// is it possible to enter this function with valueType=NullType or AnyType?
 func checkCollectionItem(value interface{}, valueType Type, position *filepos.Position) (chk TypeCheck) {
 	switch typedValue := value.(type) {
 	case *Map:

@@ -7,9 +7,7 @@ import (
 	"fmt"
 
 	"github.com/k14s/ytt/pkg/filepos"
-	"github.com/k14s/ytt/pkg/structmeta"
 	"github.com/k14s/ytt/pkg/template"
-	"github.com/k14s/ytt/pkg/template/core"
 	"github.com/k14s/ytt/pkg/yamlmeta"
 )
 
@@ -90,28 +88,40 @@ func NewMapItemType(item *yamlmeta.MapItem) (*MapItemType, error) {
 		defaultValue = &yamlmeta.Array{}
 	}
 
-	templateAnnotations, ann, err := processSchemaNodeAnnotations(item)
+	//check for both types of annotations
+	typeAnn, err := processTypeAnnotations(item)
 	if err != nil {
 		return nil, err
 	}
-	if ann == "" && valueType == nil {
+	nullableAnn, err := processNullableAnnotation(item, valueType)
+	if err != nil {
+		return nil, err
+	}
+
+	//contradiction in annotations
+	if typeAnn.any && nullableAnn.bool {
+		return nil, NewInvalidSchemaError(item, "expected to find one of @schema/nullable, or @schema/type, but found both", "")
+	}
+
+	if typeAnn.any {
+		valueType = typeAnn.NewTypeFromAnn(item)
+	}
+	if nullableAnn.bool {
+		valueType = nullableAnn.NewTypeFromAnn(item)
+	}
+	if valueType == nil {
 		return nil, NewInvalidSchemaError(item,
 			"null value is not allowed in schema (no type can be inferred from it)",
 			"to default to null, specify a value of the desired type and annotate with @schema/nullable")
 	}
-	if ann == AnnotationSchemaNullable {
-		defaultValue = nil
-	}
-	if ann == AnnotationSchemaType {
-		valueType = AnyType{Position: item.Position}
-	}
 
-	annotations := make(TypeAnnotations)
-	for key, val := range templateAnnotations {
-		annotations[key] = val
-	}
+	//templateAnnotations := template.NewAnnotations(item)
+	//annotations := make(TypeAnnotations)
+	//for key, val := range templateAnnotations {
+	//	annotations[key] = val
+	//}
 
-	return &MapItemType{Key: item.Key, ValueType: valueType, DefaultValue: defaultValue, Position: item.Position, Annotations: annotations}, nil
+	return &MapItemType{Key: item.Key, ValueType: valueType, DefaultValue: defaultValue, Position: item.Position}, nil
 }
 
 func NewArrayType(a *yamlmeta.Array) (*ArrayType, error) {
@@ -139,13 +149,21 @@ func NewArrayItemType(item *yamlmeta.ArrayItem) (*ArrayItemType, error) {
 		return nil, err
 	}
 
-	_, ann, err := processSchemaNodeAnnotations(item)
+	nullableAnn, err := processNullableAnnotation(item, valueType)
 	if err != nil {
 		return nil, err
 	}
+	if nullableAnn.bool {
+		return nil, NewInvalidSchemaError(item, fmt.Sprintf("@%s is not supported on array items", AnnotationNullable), "")
+	}
 
-	if ann == AnnotationSchemaType {
-		valueType = AnyType{Position: item.Position}
+	typeAnn, err := processTypeAnnotations(item)
+	if err != nil {
+		return nil, err
+	}
+	typeFromAnn := typeAnn.NewTypeFromAnn(item)
+	if typeFromAnn != nil {
+		valueType = typeFromAnn
 	}
 
 	return &ArrayItemType{ValueType: valueType, Position: item.Position}, nil
@@ -180,59 +198,6 @@ func newCollectionItemValueType(collectionItemValue interface{}, position *filep
 	return nil, fmt.Errorf("Collection item type did not match any known types")
 }
 
-func processSchemaNodeAnnotations(item yamlmeta.Node) (template.NodeAnnotations, structmeta.AnnotationName, error) {
-	templateAnnotations := template.NewAnnotations(item)
-	// schema/type and schema/nullable are both type inferring annotations and should not bot be present
-	// (#@schema/nullable) is equivalent to
-	// (#@schema/type "null", or_inferred=True
-	// #@schema/default None)
-	if templateAnnotations.Has(AnnotationSchemaNullable) && templateAnnotations.Has(AnnotationSchemaType) {
-		return templateAnnotations, "", NewInvalidSchemaError(item, fmt.Sprintf("expected to find one of @%s, or @%s, but found both", AnnotationSchemaNullable, AnnotationSchemaType), "")
-	}
-	switch {
-	case templateAnnotations.Has(AnnotationSchemaNullable):
-		if _, isArrayItem := item.(*yamlmeta.ArrayItem); isArrayItem {
-			return templateAnnotations, AnnotationSchemaNullable, NewInvalidSchemaError(item, fmt.Sprintf("@%s is not supported on array items", AnnotationSchemaNullable), "")
-		}
-		return templateAnnotations, AnnotationSchemaNullable, nil
-	case templateAnnotations.Has(AnnotationSchemaType):
-		isAnyType, err := hasValidAnyTypeAnnotation(templateAnnotations)
-		if err != nil {
-			return templateAnnotations, AnnotationSchemaType, NewInvalidSchemaTypeAnnotationError(item, err.Error())
-		}
-		if isAnyType {
-			return templateAnnotations, AnnotationSchemaType, nil
-		}
-	}
-	return templateAnnotations, "", nil
-
-}
-
-func hasValidAnyTypeAnnotation(templateAnnotations template.NodeAnnotations) (bool, error) {
-	if ann, anyType := templateAnnotations[AnnotationSchemaType]; anyType {
-		if len(ann.Kwargs) == 0 {
-			return false, fmt.Errorf("expected @%v annotation to have keyword argument and value. Supported key-value pairs are '%v=True', '%v=False'", AnnotationSchemaType, SchemaTypeAny, SchemaTypeAny)
-		}
-		anyTypeKey, err := core.NewStarlarkValue(ann.Kwargs[0][0]).AsString()
-		if err != nil {
-			return false, err
-		}
-		if anyTypeKey != SchemaTypeAny {
-			return false, fmt.Errorf("unknown @%v annotation keyword argument '%v'. Supported kwargs are '%v'", AnnotationSchemaType, anyTypeKey, SchemaTypeAny)
-		}
-		anyTypeBoolVal, err := core.NewStarlarkValue(ann.Kwargs[0][1]).AsBool()
-		if anyTypeBoolVal == false && err != nil {
-			kwargValue := core.NewStarlarkValue(ann.Kwargs[0][1]).AsGoValue()
-			return false, fmt.Errorf("expected @%v annotation value in keyword argument '%v' to be a boolean, but was '%v'", AnnotationSchemaType, SchemaTypeAny, kwargValue)
-		}
-		if err != nil {
-			return false, err
-		}
-		return anyTypeBoolVal, nil
-	}
-	return false, nil
-}
-
 func defaultDataValues(doc *yamlmeta.Document) (*yamlmeta.Document, error) {
 	docCopy := doc.DeepCopyAsNode()
 	for _, value := range docCopy.GetValues() {
@@ -252,7 +217,7 @@ func setDefaultValues(node yamlmeta.Node) {
 		}
 	case *yamlmeta.MapItem:
 		anns := template.NewAnnotations(typedNode)
-		if anns.Has(AnnotationSchemaNullable) {
+		if anns.Has(AnnotationNullable) {
 			typedNode.Value = nil
 		}
 		if valueAsANode, ok := typedNode.Value.(yamlmeta.Node); ok {
