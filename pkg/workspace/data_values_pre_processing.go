@@ -88,6 +88,9 @@ func (o DataValuesPreProcessing) collectDataValuesDocs(files []*FileInLibrary) (
 		if err != nil {
 			return nil, err
 		}
+		// o.schema has already been determined to be the schema for the current library.
+		// set the default data value libref to nil, signaling that it is for the current library.
+		dv.libRef = nil
 		allDvs = append(allDvs, dv)
 	}
 	for _, fileInLib := range files {

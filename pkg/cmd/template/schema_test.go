@@ -742,6 +742,72 @@ in_library: 0`)
 
 		assertSucceeds(t, filesToProcess, expectedYAMLTplData, opts)
 	})
+
+	t.Run("when data values are ref'ed to a child library, they are only checked by that library's schema", func(t *testing.T) {
+		configYAML := []byte(`
+#@ load("@ytt:template", "template")
+#@ load("@ytt:library", "library")
+--- #@ template.replace(library.get("lib").eval())`)
+
+		valuesYAML := []byte(`
+#@data/values
+---
+in_root_library: "expected-root-value"
+`)
+
+		schemaYAML := []byte(`
+#@schema/match data_values=True
+---
+in_root_library: "override-root-value"
+
+#@library/ref "@lib@child"
+#@schema/match data_values=True
+---
+in_child_library: "override-lib-child-value"
+`)
+
+		libConfigYAML := []byte(`
+#@ load("@ytt:data", "data")
+#@ load("@ytt:template", "template")
+#@ load("@ytt:library", "library")
+
+--- #@ template.replace(library.get("child").eval())
+---
+lib_data_values: #@ data.values.in_library`)
+
+		libSchemaData := []byte(`
+#@schema/match data_values=True
+---
+in_library: 0`)
+
+		libChildConfigYAML := []byte(`
+#@ load("@ytt:data", "data")
+---
+lib_child_data_values: #@ data.values.in_child_library`)
+
+		libChildSchemaData := []byte(`
+#@schema/match data_values=True
+---
+in_child_library: "default-child"`)
+
+		expectedYAMLTplData := `lib_child_data_values: override-lib-child-value
+---
+lib_data_values: 0
+`
+
+		filesToProcess := files.NewSortedFiles([]*files.File{
+			files.MustNewFileFromSource(files.NewBytesSource("config.yml", configYAML)),
+			files.MustNewFileFromSource(files.NewBytesSource("values.yml", valuesYAML)),
+			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", schemaYAML)),
+			files.MustNewFileFromSource(files.NewBytesSource("_ytt_lib/lib/config.yml", libConfigYAML)),
+			files.MustNewFileFromSource(files.NewBytesSource("_ytt_lib/lib/schema.yml", libSchemaData)),
+			files.MustNewFileFromSource(files.NewBytesSource("_ytt_lib/lib/_ytt_lib/child/config.yml", libChildConfigYAML)),
+			files.MustNewFileFromSource(files.NewBytesSource("_ytt_lib/lib/_ytt_lib/child/values.yml", libChildSchemaData)),
+		})
+
+		assertSucceeds(t, filesToProcess, expectedYAMLTplData, opts)
+	})
+
 	t.Run("when data values are programmatically set on a library, they are checked by that library's schema", func(t *testing.T) {
 		configYAML := []byte(`
 #@ load("@ytt:template", "template")
@@ -834,7 +900,7 @@ key: #@ dvs_from_text()`)
 (@-= str([libDataValues.bar, libDataValues.foo])  @)
 (@- end @)
 `)
-// set schema with "library/ref" to verify that the data is being included in the library
+		// set schema with "library/ref" to verify that the data is being included in the library
 		schemaData := []byte(`
 #@library/ref "@lib"
 #@schema/match data_values=True
@@ -873,7 +939,7 @@ def dvs_from_starlark():
 return [libDataValues.bar, libDataValues.foo]
 end
 `)
-// set schema with "library/ref" to verify that the data is being included in the library
+		// set schema with "library/ref" to verify that the data is being included in the library
 		schemaData := []byte(`
 #@library/ref "@lib"
 #@schema/match data_values=True
@@ -1060,6 +1126,75 @@ foo: #@ data.values.foo
      
      `
 		assertFails(t, filesToProcess, expectedErr, cmdOpts)
+	})
+
+	t.Run("when schema is ref'ed to a library, values specified in the schema are the default data values", func(t *testing.T) {
+		rootYAML := []byte(`
+#@ load("@ytt:library", "library")
+#@ load("@ytt:template", "template")
+#@ load("@ytt:data", "data")
+--- #@ template.replace(library.get("libby").eval())`)
+
+		rootSchemaYAML := []byte(`
+#@library/ref "@libby"
+#@schema/match data_values=True
+---
+foo: from_root_schema
+`)
+
+		libConfigYAML := []byte(`
+#@ load("@ytt:data", "data")
+---
+lib_data_values: #@ data.values.foo`)
+
+		expectedYAMLTplData := `lib_data_values: from_root_schema
+`
+
+		filesToProcess := files.NewSortedFiles([]*files.File{
+			files.MustNewFileFromSource(files.NewBytesSource("root.yml", rootYAML)),
+			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", rootSchemaYAML)),
+			files.MustNewFileFromSource(files.NewBytesSource("_ytt_lib/libby/config.yml", libConfigYAML)),
+		})
+
+		assertSucceeds(t, filesToProcess, expectedYAMLTplData, opts)
+	})
+
+	t.Run("when schema is ref'ed to a child library, values specified in the schema are the default data values", func(t *testing.T) {
+		rootYAML := []byte(`
+#@ load("@ytt:library", "library")
+#@ load("@ytt:template", "template")
+#@ load("@ytt:data", "data")
+--- #@ template.replace(library.get("libby").eval())`)
+
+		rootSchemaYAML := []byte(`
+#@library/ref "@libby@child"
+#@schema/match data_values=True
+---
+foo: from_root_schema
+`)
+		libbyConfigYAML := []byte(`
+#@ load("@ytt:data", "data")
+#@ load("@ytt:template", "template")
+#@ load("@ytt:library", "library")
+
+--- #@ template.replace(library.get("child").eval())`)
+
+		libbyChildConfigYAML := []byte(`
+#@ load("@ytt:data", "data")
+---
+lib_data_values: #@ data.values.foo`)
+
+		expectedYAMLTplData := `lib_data_values: from_root_schema
+`
+
+		filesToProcess := files.NewSortedFiles([]*files.File{
+			files.MustNewFileFromSource(files.NewBytesSource("root.yml", rootYAML)),
+			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", rootSchemaYAML)),
+			files.MustNewFileFromSource(files.NewBytesSource("_ytt_lib/libby/config.yml", libbyConfigYAML)),
+			files.MustNewFileFromSource(files.NewBytesSource("_ytt_lib/libby/_ytt_lib/child/config.yml", libbyChildConfigYAML)),
+		})
+
+		assertSucceeds(t, filesToProcess, expectedYAMLTplData, opts)
 	})
 
 	t.Run("when schema is ref'd to a library, data values are only checked by that library's schema", func(t *testing.T) {
