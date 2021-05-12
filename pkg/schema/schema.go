@@ -270,12 +270,13 @@ func (s *DocumentSchema) HasLibRef() bool {
 	return len(s.libRef) > 0
 }
 
-func (s *DocumentSchema) UsedInLibrary(expectedRefPiece ref.LibraryRef) {
+func (s *DocumentSchema) UsedInLibrary(expectedRefPiece ref.LibraryRef) (*DocumentSchema, bool) {
 	if len(s.libRef) == 0 {
-		return
+		return s, true
 	}
-	if s.libRef[0].Path != expectedRefPiece.Path {
-		return
+	if !s.libRef[0].Matches(expectedRefPiece) {
+		return nil, false
 	}
-	s.libRef = nil
+	s.libRef = s.libRef[1:]
+	return s, !s.HasLibRef()
 }

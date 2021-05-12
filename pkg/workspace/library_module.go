@@ -349,14 +349,26 @@ func (l *libraryValue) exportArgs(args starlark.Tuple, kwargs []starlark.Tuple) 
 }
 
 func (l *libraryValue) librarySchemas(ll *LibraryLoader) (Schema, []*schema.DocumentSchema, error) {
+	var schemasForCurrentLib, schemasForChildLib []*schema.DocumentSchema
+
 	for _, docSchema := range l.schemas {
-		docSchema.UsedInLibrary(ref.LibraryRef{Path: l.path, Alias: l.alias})
+		matchingSchema, usedInCurrLibrary := docSchema.UsedInLibrary(ref.LibraryRef{Path: l.path, Alias: l.alias})
+		if matchingSchema != nil {
+			if !usedInCurrLibrary {
+				schemasForChildLib = append(schemasForChildLib, matchingSchema)
+			} else {
+				schemasForCurrentLib = append(schemasForCurrentLib, matchingSchema)
+			}
+		}
 	}
-	schema, librarySchemas, err := ll.Schemas(l.schemas)
+
+	schema, librarySchemas, err := ll.Schemas(schemasForCurrentLib)
 	if err != nil {
 		return nil, nil, err
 	}
-	return schema, librarySchemas, nil
+
+	foundChildSchemas := append(librarySchemas, schemasForChildLib...)
+	return schema, foundChildSchemas, nil
 }
 
 func (l *libraryValue) libraryValues(ll *LibraryLoader, schema Schema) (*DataValues, []*DataValues, error) {
