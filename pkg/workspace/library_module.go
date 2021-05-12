@@ -353,12 +353,10 @@ func (l *libraryValue) librarySchemas(ll *LibraryLoader) (Schema, []*schema.Docu
 
 	for _, docSchema := range l.schemas {
 		matchingSchema, usedInCurrLibrary := docSchema.UsedInLibrary(ref.LibraryRef{Path: l.path, Alias: l.alias})
-		if matchingSchema != nil {
-			if !usedInCurrLibrary {
-				schemasForChildLib = append(schemasForChildLib, matchingSchema)
-			} else {
-				schemasForCurrentLib = append(schemasForCurrentLib, matchingSchema)
-			}
+		if usedInCurrLibrary {
+			schemasForCurrentLib = append(schemasForCurrentLib, matchingSchema)
+		} else {
+			schemasForChildLib = append(schemasForChildLib, matchingSchema)
 		}
 	}
 

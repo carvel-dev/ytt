@@ -266,14 +266,18 @@ func (s *DocumentSchema) ValidateWithValues(valuesFilesCount int) error {
 	return nil
 }
 
+// HasLibRef if a DocumentSchema has a library reference, that signals the documentschema is meant for another
+// library, *not* the current library being processed. If the libref is nil, then that signals the document schema is
+// meant for the 'current' library being processed.
 func (s *DocumentSchema) HasLibRef() bool {
 	return len(s.libRef) > 0
 }
 
 func (s *DocumentSchema) UsedInLibrary(expectedRefPiece ref.LibraryRef) (*DocumentSchema, bool) {
-	if len(s.libRef) == 0 {
+	if !s.HasLibRef() {
 		return s, true
 	}
+
 	if !s.libRef[0].Matches(expectedRefPiece) {
 		return nil, false
 	}
