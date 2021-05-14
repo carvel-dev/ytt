@@ -22,13 +22,15 @@ type Annotation interface {
 	NewTypeFromAnn(item yamlmeta.Node) yamlmeta.Type
 }
 
+// TODO: this could use a  less conflicting name
 type TypeAnnotation struct {
 	//"schema/type" any=True, one_of=[array]
-	any                bool
-	listOfAllowedTypes []string
+	any bool
+	//listOfAllowedTypes []string
 }
 
 type NullableAnnotation struct {
+	//TODO: name member variable
 	bool
 	providedValueType yamlmeta.Type
 }
@@ -75,28 +77,43 @@ func (n *NullableAnnotation) NewTypeFromAnn(item yamlmeta.Node) yamlmeta.Type {
 	return nil
 }
 
-func processNullableAnnotation(item yamlmeta.Node, valueType yamlmeta.Type) (*NullableAnnotation, error) {
+func processNullableAnnotation(item yamlmeta.Node, valueType yamlmeta.Type) (*NullableAnnotation, bool, error) {
 	templateAnnotations := template.NewAnnotations(item)
 	if templateAnnotations.Has(AnnotationNullable) {
-		return &NullableAnnotation{true, valueType}, nil
+		return &NullableAnnotation{true, valueType}, true, nil
 	}
 	//what does returning an empty annotation mean? why not nil?
-	return &NullableAnnotation{}, nil
+	return &NullableAnnotation{}, false, nil
 }
 
-func processTypeAnnotations(item yamlmeta.Node) (*TypeAnnotation, error) {
+func processTypeAnnotations(item yamlmeta.Node) (*TypeAnnotation, bool, error) {
 	templateAnnotations := template.NewAnnotations(item)
 
 	if templateAnnotations.Has(AnnotationType) {
 		ann, _ := templateAnnotations[AnnotationType]
 		typeAnn, err := NewTypeAnnotation(ann)
 		if err != nil {
-			return nil, NewInvalidSchemaError(item, err.Error(), "")
+			return nil, true, NewInvalidSchemaError(item, err.Error(), "")
 		}
-		return &typeAnn, nil
+		return &typeAnn, true, nil
 	}
 	//what does returning an empty annotation mean? why not nil?
-	return &TypeAnnotation{}, nil
+	return &TypeAnnotation{}, false, nil
+}
+
+func ProcessAnnotations(item yamlmeta.Node) (Annotation, error) {
+
+	tAnn, isTypeAnn, err := processTypeAnnotations(item)
+	if err != nil {return nil, err}
+	if isTypeAnn{
+		return tAnn, nil
+	}
+	nAnn, isNullableAnn, err := processNullableAnnotation(item, nil)
+	if err != nil {return nil, err}
+	if isNullableAnn{
+		return nAnn, nil
+	}
+	return nil, nil
 }
 
 //func processAnnotations(item yamlmeta.Node) ([]Annotation, error) {
@@ -114,7 +131,7 @@ func processTypeAnnotations(item yamlmeta.Node) (*TypeAnnotation, error) {
 //	return allAnnotations, nil
 //
 //}
-//
+
 //func getPossibleAnnotationNames() []structmeta.AnnotationName {
 //	return []structmeta.AnnotationName{AnnotationType, AnnotationNullable}
 //}

@@ -70,6 +70,7 @@ func (n NullType) AssignTypeTo(typeable yamlmeta.Typeable) (chk yamlmeta.TypeChe
 			childCheck := n.ValueType.AssignTypeTo(typeableValue)
 			chk.Violations = append(chk.Violations, childCheck.Violations...)
 		}
+	//TODO: Is this ArrayItem case needed? dead code, we think
 	case *yamlmeta.ArrayItem:
 		typeable.SetType(n)
 		typeableValue, ok := typedItem.Value.(yamlmeta.Typeable)
@@ -97,14 +98,10 @@ func (n NullType) CheckType(node yamlmeta.TypeWithValues) (chk yamlmeta.TypeChec
 		if check.HasViolations() {
 			chk.Violations = append(chk.Violations, check.Violations...)
 		}
+	// is this needed? maybe panic?
+	// a: [#@/nu"a", "b", "b]
 	case *yamlmeta.ArrayItem:
-		if typedItem.Value == nil {
-			return
-		}
-		check := n.GetValueType().CheckType(node)
-		if check.HasViolations() {
-			chk.Violations = append(chk.Violations, check.Violations...)
-		}
+		panic("arrayItems cannot be annotated as nullable")
 	}
 	return
 }

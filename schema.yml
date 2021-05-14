@@ -1,0 +1,11 @@
+#@schema/match data_values=True
+---
+#@schema/nullable
+databases:
+  name: ""
+  adapter: postgresql
+  host: ""
+  port: 5432
+  user: admin
+  secretRef:
+    name: ""

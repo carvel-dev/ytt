@@ -1270,7 +1270,7 @@ foo: 0
 	t.Run("when schema/type and schema/nullable annotate a map", func(t *testing.T) {
 		schemaYAML := `#@schema/match data_values=True
 ---
-#@schema/type any=True
+#@schema/type any=env("PIPELINE_ENV") ? true ? false
 #@schema/nullable
 foo: 0
 `

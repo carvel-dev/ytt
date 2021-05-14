@@ -89,16 +89,17 @@ func NewMapItemType(item *yamlmeta.MapItem) (*MapItemType, error) {
 	}
 
 	//check for both types of annotations
-	typeAnn, err := processTypeAnnotations(item)
+	typeAnn, _, err := processTypeAnnotations(item)
 	if err != nil {
 		return nil, err
 	}
-	nullableAnn, err := processNullableAnnotation(item, valueType)
+	nullableAnn, _, err := processNullableAnnotation(item, valueType)
 	if err != nil {
 		return nil, err
 	}
 
-	//contradiction in annotations
+	//TODO: combine types smartly
+	//contradiction in annotations?
 	if typeAnn.any && nullableAnn.bool {
 		return nil, NewInvalidSchemaError(item, "expected to find one of @schema/nullable, or @schema/type, but found both", "")
 	}
@@ -114,12 +115,6 @@ func NewMapItemType(item *yamlmeta.MapItem) (*MapItemType, error) {
 			"null value is not allowed in schema (no type can be inferred from it)",
 			"to default to null, specify a value of the desired type and annotate with @schema/nullable")
 	}
-
-	//templateAnnotations := template.NewAnnotations(item)
-	//annotations := make(TypeAnnotations)
-	//for key, val := range templateAnnotations {
-	//	annotations[key] = val
-	//}
 
 	return &MapItemType{Key: item.Key, ValueType: valueType, DefaultValue: defaultValue, Position: item.Position}, nil
 }
@@ -149,7 +144,7 @@ func NewArrayItemType(item *yamlmeta.ArrayItem) (*ArrayItemType, error) {
 		return nil, err
 	}
 
-	nullableAnn, err := processNullableAnnotation(item, valueType)
+	nullableAnn, _, err := processNullableAnnotation(item, valueType)
 	if err != nil {
 		return nil, err
 	}
@@ -157,13 +152,12 @@ func NewArrayItemType(item *yamlmeta.ArrayItem) (*ArrayItemType, error) {
 		return nil, NewInvalidSchemaError(item, fmt.Sprintf("@%s is not supported on array items", AnnotationNullable), "")
 	}
 
-	typeAnn, err := processTypeAnnotations(item)
+	typeAnn, _, err := processTypeAnnotations(item)
 	if err != nil {
 		return nil, err
 	}
-	typeFromAnn := typeAnn.NewTypeFromAnn(item)
-	if typeFromAnn != nil {
-		valueType = typeFromAnn
+	if typeAnn.any {
+		valueType = typeAnn.NewTypeFromAnn(item)
 	}
 
 	return &ArrayItemType{ValueType: valueType, Position: item.Position}, nil
