@@ -374,7 +374,7 @@ func (l *libraryValue) libraryValues(ll *LibraryLoader, schema Schema) (*DataVal
 	for _, dv := range l.dataValuess {
 		matchingDVs := dv.UsedInLibrary(ref.LibraryRef{Path: l.path, Alias: l.alias})
 		if matchingDVs != nil {
-			if matchingDVs.HasLibRef() {
+			if matchingDVs.IntendedForAnotherLibrary() {
 				childDVss = append(childDVss, matchingDVs)
 			} else {
 				if matchingDVs.AfterLibMod {

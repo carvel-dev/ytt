@@ -7,13 +7,13 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/k14s/ytt/pkg/cmd/ui"
-
 	"github.com/k14s/starlark-go/starlark"
+	"github.com/k14s/ytt/pkg/cmd/ui"
 	"github.com/k14s/ytt/pkg/files"
 	"github.com/k14s/ytt/pkg/schema"
 	"github.com/k14s/ytt/pkg/structmeta"
 	"github.com/k14s/ytt/pkg/yamlmeta"
+	yttoverlay "github.com/k14s/ytt/pkg/yttlibrary/overlay"
 )
 
 type LibraryLoader struct {
@@ -63,14 +63,14 @@ func (ll *LibraryLoader) Schemas(schemaOverlays []*schema.DocumentSchema) (Schem
 		var resultSchemasDoc *yamlmeta.Document
 		var librarySchemas []*schema.DocumentSchema
 		for _, docSchema := range documentSchemas {
-			if docSchema.HasLibRef() {
+			if docSchema.IntendedForAnotherLibrary() {
 				librarySchemas = append(librarySchemas, docSchema)
 				continue
 			}
 			if resultSchemasDoc == nil {
 				resultSchemasDoc = docSchema.Source
 			} else {
-				resultSchemasDoc, err = overlay(resultSchemasDoc, docSchema.Source)
+				resultSchemasDoc, err = ll.overlay(resultSchemasDoc, docSchema.Source)
 				if err != nil {
 					return nil, nil, err
 				}
@@ -115,6 +115,23 @@ func collectSchemaDocs(schemaFiles []*FileInLibrary, loader *TemplateLoader) ([]
 		}
 	}
 	return documentSchemas, nil
+}
+
+func (ll *LibraryLoader) overlay(schema, overlay *yamlmeta.Document) (*yamlmeta.Document, error) {
+	op := yttoverlay.Op{
+		Left:   &yamlmeta.DocumentSet{Items: []*yamlmeta.Document{schema}},
+		Right:  &yamlmeta.DocumentSet{Items: []*yamlmeta.Document{overlay}},
+		Thread: &starlark.Thread{Name: "schema-pre-processing"},
+
+		ExactMatch: true,
+	}
+
+	newLeft, err := op.Apply()
+	if err != nil {
+		return nil, err
+	}
+
+	return newLeft.(*yamlmeta.DocumentSet).Items[0], nil
 }
 
 func (ll *LibraryLoader) Values(valuesOverlays []*DataValues, schema Schema) (*DataValues, []*DataValues, error) {

@@ -293,15 +293,12 @@ func (s *DocumentSchema) Desc() string {
 func (s *DocumentSchema) IsUsed() bool { return s.used }
 func (s *DocumentSchema) markUsed()    { s.used = true }
 
-// HasLibRef if a DocumentSchema has a library reference, that signals the documentschema is meant for another
-// library, *not* the current library being processed. If the libref is nil, then that signals the document schema is
-// meant for the 'current' library being processed.
-func (s *DocumentSchema) HasLibRef() bool {
+func (s *DocumentSchema) IntendedForAnotherLibrary() bool {
 	return len(s.libRef) > 0
 }
 
 func (s *DocumentSchema) UsedInLibrary(expectedRefPiece ref.LibraryRef) (*DocumentSchema, bool) {
-	if !s.HasLibRef() {
+	if !s.IntendedForAnotherLibrary() {
 		s.markUsed()
 
 		return s.deepCopy(), true
@@ -313,5 +310,5 @@ func (s *DocumentSchema) UsedInLibrary(expectedRefPiece ref.LibraryRef) (*Docume
 	s.markUsed()
 	childSchema := s.deepCopy()
 	childSchema.libRef = childSchema.libRef[1:]
-	return childSchema, !childSchema.HasLibRef()
+	return childSchema, !childSchema.IntendedForAnotherLibrary()
 }

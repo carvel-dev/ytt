@@ -47,7 +47,7 @@ func (o DataValuesPreProcessing) apply(files []*FileInLibrary) (*DataValues, []*
 	var otherLibraryDVs []*DataValues
 	var resultDVsDoc *yamlmeta.Document
 	for _, dv := range allDvs {
-		if dv.HasLibRef() {
+		if dv.IntendedForAnotherLibrary() {
 			otherLibraryDVs = append(otherLibraryDVs, dv)
 			continue
 		}
@@ -60,7 +60,7 @@ func (o DataValuesPreProcessing) apply(files []*FileInLibrary) (*DataValues, []*
 
 			resultDVsDoc = dv.Doc
 		} else {
-			resultDVsDoc, err = overlay(resultDVsDoc, dv.Doc)
+			resultDVsDoc, err = o.overlay(resultDVsDoc, dv.Doc)
 			if err != nil {
 				return nil, nil, err
 			}
@@ -159,10 +159,17 @@ func (o DataValuesPreProcessing) templateFile(fileInLib *FileInLibrary) ([]*yaml
 	return valuesDocs, nil
 }
 
-func overlay(valuesDoc, newValuesDoc *yamlmeta.Document) (*yamlmeta.Document, error) {
+func (o DataValuesPreProcessing) newEmptyDataValuesDocument() *yamlmeta.Document {
+	return &yamlmeta.Document{
+		Value:    nil,
+		Position: filepos.NewUnknownPosition(),
+	}
+}
+
+func (o DataValuesPreProcessing) overlay(dataValues, overlay *yamlmeta.Document) (*yamlmeta.Document, error) {
 	op := yttoverlay.Op{
-		Left:   &yamlmeta.DocumentSet{Items: []*yamlmeta.Document{valuesDoc}},
-		Right:  &yamlmeta.DocumentSet{Items: []*yamlmeta.Document{newValuesDoc}},
+		Left:   &yamlmeta.DocumentSet{Items: []*yamlmeta.Document{dataValues}},
+		Right:  &yamlmeta.DocumentSet{Items: []*yamlmeta.Document{overlay}},
 		Thread: &starlark.Thread{Name: "data-values-pre-processing"},
 
 		ExactMatch: true,
@@ -174,11 +181,4 @@ func overlay(valuesDoc, newValuesDoc *yamlmeta.Document) (*yamlmeta.Document, er
 	}
 
 	return newLeft.(*yamlmeta.DocumentSet).Items[0], nil
-}
-
-func (o DataValuesPreProcessing) newEmptyDataValuesDocument() *yamlmeta.Document {
-	return &yamlmeta.Document{
-		Value:    nil,
-		Position: filepos.NewUnknownPosition(),
-	}
 }
