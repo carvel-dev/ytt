@@ -32,7 +32,7 @@ type TypeAnnotation struct {
 type NullableAnnotation struct {
 	//TODO: name member variable
 	bool
-	providedValueType yamlmeta.Type
+	ProvidedValueType yamlmeta.Type
 }
 
 func NewTypeAnnotation(ann template.NodeAnnotation) (TypeAnnotation, error) {
@@ -72,77 +72,75 @@ func (t *TypeAnnotation) NewTypeFromAnn(item yamlmeta.Node) yamlmeta.Type {
 
 func (n *NullableAnnotation) NewTypeFromAnn(item yamlmeta.Node) yamlmeta.Type {
 	if n.bool {
-		return &NullType{ValueType: n.providedValueType, Position: item.GetPosition()}
+		return &NullType{ValueType: n.ProvidedValueType, Position: item.GetPosition()}
 	}
 	return nil
 }
 
-func processNullableAnnotation(item yamlmeta.Node, valueType yamlmeta.Type) (*NullableAnnotation, bool, error) {
+func processNullableAnnotation(item yamlmeta.Node) (*NullableAnnotation, error) {
 	templateAnnotations := template.NewAnnotations(item)
 	if templateAnnotations.Has(AnnotationNullable) {
-		return &NullableAnnotation{true, valueType}, true, nil
+		// TODO: item.GetValues :(
+		valueType, err := newCollectionItemValueType(item.GetValues()[0], item.GetPosition())
+		if err != nil {
+			return nil, err
+		}
+		return &NullableAnnotation{true, valueType}, nil
 	}
 	//what does returning an empty annotation mean? why not nil?
-	return &NullableAnnotation{}, false, nil
+	return nil, nil
 }
 
-func processTypeAnnotations(item yamlmeta.Node) (*TypeAnnotation, bool, error) {
+func processTypeAnnotations(item yamlmeta.Node) (*TypeAnnotation, error) {
 	templateAnnotations := template.NewAnnotations(item)
 
 	if templateAnnotations.Has(AnnotationType) {
 		ann, _ := templateAnnotations[AnnotationType]
 		typeAnn, err := NewTypeAnnotation(ann)
 		if err != nil {
-			return nil, true, NewInvalidSchemaError(item, err.Error(), "")
+			return nil, NewInvalidSchemaError(item, err.Error(), "")
 		}
-		return &typeAnn, true, nil
+		return &typeAnn, nil
 	}
 	//what does returning an empty annotation mean? why not nil?
-	return &TypeAnnotation{}, false, nil
-}
-
-func ProcessAnnotations(item yamlmeta.Node) (Annotation, error) {
-
-	tAnn, isTypeAnn, err := processTypeAnnotations(item)
-	if err != nil {return nil, err}
-	if isTypeAnn{
-		return tAnn, nil
-	}
-	nAnn, isNullableAnn, err := processNullableAnnotation(item, nil)
-	if err != nil {return nil, err}
-	if isNullableAnn{
-		return nAnn, nil
-	}
 	return nil, nil
 }
 
-//func processAnnotations(item yamlmeta.Node) ([]Annotation, error) {
-//	templateAnnotations := template.NewAnnotations(item)
-//	var allAnnotations []Annotation
-//	for _, annName := range getPossibleAnnotationNames() {
-//		if templateAnnotations.Has(annName) {
-//			processedAnn, err := callCorrectAnnMaker(annName, item)
-//			if err != nil {
-//				return nil, err
-//			}
-//			allAnnotations = append(allAnnotations, processedAnn)
-//		}
-//	}
-//	return allAnnotations, nil
-//
-//}
+func ProcessAnnotations(item yamlmeta.Node) ([]Annotation, error) {
+	var anns []Annotation
 
-//func getPossibleAnnotationNames() []structmeta.AnnotationName {
-//	return []structmeta.AnnotationName{AnnotationType, AnnotationNullable}
-//}
-//
-//func callCorrectAnnMaker(annName structmeta.AnnotationName, item yamlmeta.Node) (Annotation, error) {
-//	switch annName {
-//	case AnnotationType:
-//		return processTypeAnnotations(item)
-//	case AnnotationNullable:
-//		return processNullableAnnotation(item)
-//	default:
-//		return nil, fmt.Errorf("HERE")
-//	}
-//}
+	tAnn, err := processTypeAnnotations(item)
+	if err != nil {
+		return nil, err
+	}
+	if tAnn != nil {
+		anns = append(anns, tAnn)
+	}
+	nAnn, err := processNullableAnnotation(item)
+	if err != nil {
+		return nil, err
+	}
+	if nAnn != nil {
+		anns = append(anns, nAnn)
+	}
+	return anns, nil
+}
+
+func ConvertAnnotationsToType(anns []Annotation, item yamlmeta.Node) (yamlmeta.Type, error) {
+	valueType, err := newCollectionItemValueType(item.GetValues()[0], item.GetPosition())
+	if err != nil {
+		return nil, err
+	}
+	listOfTypes := []yamlmeta.Type{valueType}
+	for _, a := range anns {
+		newType := a.NewTypeFromAnn(item)
+		listOfTypes = append(listOfTypes, newType)
+	}
+
+	//finalType, err := combineTypes(listOfTypes)
+	//if err != nil {
+	//	return nil, err
+	//}
+
+	return valueType, nil
+}

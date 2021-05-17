@@ -78,6 +78,13 @@ func NewMapType(m *yamlmeta.Map) (*MapType, error) {
 }
 
 func NewMapItemType(item *yamlmeta.MapItem) (*MapItemType, error) {
+
+	//Get annotations on item
+	//Get Valuetype Type
+	// Get proper types from annotations
+	// combine with item's value type
+	//Get default value
+
 	valueType, err := newCollectionItemValueType(item.Value, item.Position)
 	if err != nil {
 		return nil, err
@@ -89,25 +96,20 @@ func NewMapItemType(item *yamlmeta.MapItem) (*MapItemType, error) {
 	}
 
 	//check for both types of annotations
-	typeAnn, _, err := processTypeAnnotations(item)
+	typeAnn, err := processTypeAnnotations(item)
 	if err != nil {
 		return nil, err
 	}
-	nullableAnn, _, err := processNullableAnnotation(item, valueType)
+	nullableAnn, err := processNullableAnnotation(item)
 	if err != nil {
 		return nil, err
 	}
 
 	//TODO: combine types smartly
-	//contradiction in annotations?
-	if typeAnn.any && nullableAnn.bool {
-		return nil, NewInvalidSchemaError(item, "expected to find one of @schema/nullable, or @schema/type, but found both", "")
-	}
 
-	if typeAnn.any {
+	if typeAnn != nil {
 		valueType = typeAnn.NewTypeFromAnn(item)
-	}
-	if nullableAnn.bool {
+	} else if nullableAnn != nil {
 		valueType = nullableAnn.NewTypeFromAnn(item)
 	}
 	if valueType == nil {
@@ -144,19 +146,19 @@ func NewArrayItemType(item *yamlmeta.ArrayItem) (*ArrayItemType, error) {
 		return nil, err
 	}
 
-	nullableAnn, _, err := processNullableAnnotation(item, valueType)
+	nullableAnn, err := processNullableAnnotation(item)
 	if err != nil {
 		return nil, err
 	}
-	if nullableAnn.bool {
+	if nullableAnn != nil {
 		return nil, NewInvalidSchemaError(item, fmt.Sprintf("@%s is not supported on array items", AnnotationNullable), "")
 	}
 
-	typeAnn, _, err := processTypeAnnotations(item)
+	typeAnn, err := processTypeAnnotations(item)
 	if err != nil {
 		return nil, err
 	}
-	if typeAnn.any {
+	if typeAnn != nil {
 		valueType = typeAnn.NewTypeFromAnn(item)
 	}
 

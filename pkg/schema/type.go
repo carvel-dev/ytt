@@ -31,7 +31,6 @@ type MapItemType struct {
 	ValueType    yamlmeta.Type
 	DefaultValue interface{}
 	Position     *filepos.Position
-	//Annotations  TypeAnnotations
 }
 type ArrayType struct {
 	ItemsType yamlmeta.Type
@@ -54,6 +53,7 @@ type NullType struct {
 	Position  *filepos.Position
 }
 
+// TODO: This is dead code (DL)
 func (n NullType) AssignTypeTo(typeable yamlmeta.Typeable) (chk yamlmeta.TypeCheck) {
 	switch typedItem := typeable.(type) {
 	// when nullable annotates an arrayItem or mapItem, the value is of that item can be null.
@@ -90,6 +90,7 @@ func (n NullType) CheckType(node yamlmeta.TypeWithValues) (chk yamlmeta.TypeChec
 	switch typedItem := node.(type) {
 	// Arrays and Maps cannot have 'nil' values, so if node is one of those types,
 	// then those will be checked with the proper value type in checkCollectionItem()
+	// TODO: are we hitting this case?
 	case *yamlmeta.MapItem:
 		if typedItem.Value == nil {
 			return
@@ -102,6 +103,18 @@ func (n NullType) CheckType(node yamlmeta.TypeWithValues) (chk yamlmeta.TypeChec
 	// a: [#@/nu"a", "b", "b]
 	case *yamlmeta.ArrayItem:
 		panic("arrayItems cannot be annotated as nullable")
+	case *yamlmeta.Map:
+		panic("MAP?")
+		//catch scalars
+	default:
+		//allow for nil TODO: get Values slice
+		if typedItem.GetValues()[0] != nil {
+			check := n.GetValueType().CheckType(node)
+			if check.HasViolations() {
+				chk.Violations = append(chk.Violations, check.Violations...)
+			}
+		}
+
 	}
 	return
 }

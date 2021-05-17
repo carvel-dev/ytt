@@ -275,7 +275,38 @@ dataValues.yml:3 | app: null
 
 		assertFails(t, filesToProcess, expectedErr, opts)
 	})
+	t.Run("when map item's value is wrong type and schema/nullable is set", func(t *testing.T) {
+		schemaYAML := `#@schema/match data_values=True
+---
+#@schema/nullable
+foo: 0
+`
+		dataValuesYAML := `#@data/values
+---
+foo: "bar"
+`
+		templateYAML := `#@ load("@ytt:data", "data")
+---
+foo: #@ data.values.foo
+`
 
+		filesToProcess := files.NewSortedFiles([]*files.File{
+			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
+			files.MustNewFileFromSource(files.NewBytesSource("dataValues.yml", []byte(dataValuesYAML))),
+			files.MustNewFileFromSource(files.NewBytesSource("template.yml", []byte(templateYAML))),
+		})
+
+		expectedErr := `
+dataValues.yml:3 | foo: "bar"
+                 |
+                 | TYPE MISMATCH - the value of this item is not what schema expected:
+                 |      found: string
+                 |   expected: integer (by schema.yml:4)
+
+`
+
+		assertFails(t, filesToProcess, expectedErr, opts)
+	})
 	t.Run("when array item's value is the wrong type", func(t *testing.T) {
 		schemaYAML := `#@schema/match data_values=True
 ---
@@ -755,6 +786,7 @@ foo: #@ data.values.foo
 		assertSucceeds(t, filesToProcess, expected, opts)
 	})
 	t.Run("when any is false and set on a map", func(t *testing.T) {
+		t.Skip("Not yet implemented")
 		schemaYAML := `#@schema/match data_values=True
 ---
 #@schema/type any=False
@@ -820,6 +852,31 @@ baz:
 - newArray: foobar
 `
 
+		filesToProcess := files.NewSortedFiles([]*files.File{
+			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
+			files.MustNewFileFromSource(files.NewBytesSource("dataValues.yml", []byte(dataValuesYAML))),
+			files.MustNewFileFromSource(files.NewBytesSource("template.yml", []byte(templateYAML))),
+		})
+
+		assertSucceeds(t, filesToProcess, expected, opts)
+	})
+	t.Run("when schema/type and schema/nullable annotate a map", func(t *testing.T) {
+		schemaYAML := `#@schema/match data_values=True
+---
+#@schema/type any=True
+#@schema/nullable
+foo: 0
+`
+		dataValuesYAML := `#@data/values
+---
+foo: "bar" 
+`
+		templateYAML := `#@ load("@ytt:data", "data")
+---
+foo: #@ data.values.foo
+`
+		expected := `foo: bar
+`
 		filesToProcess := files.NewSortedFiles([]*files.File{
 			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
 			files.MustNewFileFromSource(files.NewBytesSource("dataValues.yml", []byte(dataValuesYAML))),
@@ -1263,23 +1320,6 @@ foo: 0
 `
 		filesToProcess = files.NewSortedFiles([]*files.File{
 			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML2))),
-		})
-
-		assertFails(t, filesToProcess, expectedErr, opts)
-	})
-	t.Run("when schema/type and schema/nullable annotate a map", func(t *testing.T) {
-		schemaYAML := `#@schema/match data_values=True
----
-#@schema/type any=env("PIPELINE_ENV") ? true ? false
-#@schema/nullable
-foo: 0
-`
-		expectedErr := `schema.yml:5 | foo: 0
-             |
-             | INVALID SCHEMA - expected to find one of @schema/nullable, or @schema/type, but found both
-`
-		filesToProcess := files.NewSortedFiles([]*files.File{
-			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
 		})
 
 		assertFails(t, filesToProcess, expectedErr, opts)
