@@ -78,7 +78,7 @@ func (dvd *DataValues) Desc() string {
 	for _, refPiece := range dvd.originalLibRef {
 		desc = append(desc, refPiece.AsString())
 	}
-	return fmt.Sprintf("library '%s%s' on %s", dvsLibrarySep,
+	return fmt.Sprintf("DataValue belonging to library '%s%s' on %s", dvsLibrarySep,
 		strings.Join(desc, dvsLibrarySep), dvd.Doc.Position.AsString())
 }
 

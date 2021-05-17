@@ -286,7 +286,7 @@ func (s *DocumentSchema) Desc() string {
 	for _, refPiece := range s.originalLibRef {
 		desc = append(desc, refPiece.AsString())
 	}
-	return fmt.Sprintf("library '%s%s' on %s", "@",
+	return fmt.Sprintf("Schema belonging to library '%s%s' on %s", "@",
 		strings.Join(desc, "@"), s.Source.Position.AsString())
 }
 

@@ -1616,7 +1616,7 @@ fooX: not-used
 		})
 
 		assertFails(t, filesToProcess, "Expected all provided library data values documents to be used "+
-			"but found unused: library '@libby' on line schema.yml:4", opts)
+			"but found unused: Schema belonging to library '@libby' on line schema.yml:4", opts)
 	})
 
 }
