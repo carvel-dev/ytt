@@ -102,10 +102,6 @@ func NewMapItemType(item *yamlmeta.MapItem) (*MapItemType, error) {
 			"null value is not allowed in schema (no type can be inferred from it)",
 			"to default to null, specify a value of the desired type and annotate with @schema/nullable") //Get annotations on item
 	}
-	//Get Valuetype Type
-	// Get proper types from annotations
-	// combine with item's value type
-	//Get default value
 
 	return &MapItemType{Key: item.Key, ValueType: valueType, DefaultValue: defaultValue, Position: item.Position}, nil
 }

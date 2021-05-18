@@ -34,8 +34,6 @@ type TypeAnnotation struct {
 }
 
 type NullableAnnotation struct {
-	//TODO: name member variable
-	bool
 	itemPosition      *filepos.Position
 	ProvidedValueType yamlmeta.Type
 }
@@ -76,23 +74,19 @@ func (t *TypeAnnotation) NewTypeFromAnn() yamlmeta.Type {
 }
 
 func (n *NullableAnnotation) NewTypeFromAnn() yamlmeta.Type {
-	if n.bool {
-		return &NullType{ValueType: n.ProvidedValueType, Position: n.itemPosition}
-	}
-	return nil
+	return &NullType{ValueType: n.ProvidedValueType, Position: n.itemPosition}
 }
 
 func processNullableAnnotation(item yamlmeta.Node) (*NullableAnnotation, error) {
 	templateAnnotations := template.NewAnnotations(item)
 	if templateAnnotations.Has(AnnotationNullable) {
-		// TODO: item.GetValues >:(
+		// TODO: `item.GetValues()[0]` best way to pass values?
 		valueType, err := newCollectionItemValueType(item.GetValues()[0], item.GetPosition())
 		if err != nil {
 			return nil, err
 		}
-		return &NullableAnnotation{true, item.GetPosition(), valueType}, nil
+		return &NullableAnnotation{item.GetPosition(), valueType}, nil
 	}
-	//what does returning an empty annotation mean? why not nil?
 	return nil, nil
 }
 
@@ -107,7 +101,6 @@ func processTypeAnnotations(item yamlmeta.Node) (*TypeAnnotation, error) {
 		}
 		return &typeAnn, nil
 	}
-	//what does returning an empty annotation mean? why not nil?
 	return nil, nil
 }
 
@@ -140,11 +133,11 @@ func ConvertAnnotationsToSingleType(anns []Annotation) yamlmeta.Type {
 		}
 	}
 
-	finalType := chooseType(listOfTypes)
+	finalType := chooseStrongestType(listOfTypes)
 	return finalType
 }
 
-func chooseType(types []yamlmeta.Type) yamlmeta.Type {
+func chooseStrongestType(types []yamlmeta.Type) yamlmeta.Type {
 	if len(types) == 0 {
 		return nil
 	}
