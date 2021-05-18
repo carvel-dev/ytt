@@ -5,6 +5,7 @@ package schema
 
 import (
 	"fmt"
+
 	"github.com/k14s/ytt/pkg/filepos"
 	"github.com/k14s/ytt/pkg/template"
 	"github.com/k14s/ytt/pkg/yamlmeta"

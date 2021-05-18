@@ -5,6 +5,7 @@ package schema
 
 import (
 	"fmt"
+
 	"github.com/k14s/ytt/pkg/filepos"
 	"github.com/k14s/ytt/pkg/yamlmeta"
 )
@@ -53,32 +54,9 @@ type NullType struct {
 	Position  *filepos.Position
 }
 
-// TODO: This is dead code (DL)
 func (n NullType) AssignTypeTo(typeable yamlmeta.Typeable) (chk yamlmeta.TypeCheck) {
-	switch typedItem := typeable.(type) {
-	// when nullable annotates an arrayItem or mapItem, the value is of that item can be null.
-	// when the value is not null, we must default to
-
-	case *yamlmeta.Map, *yamlmeta.Array:
-		childCheck := n.ValueType.AssignTypeTo(typeable)
-		chk.Violations = append(chk.Violations, childCheck.Violations...)
-
-	case *yamlmeta.MapItem:
-		typeable.SetType(n)
-		typeableValue, ok := typedItem.Value.(yamlmeta.Typeable)
-		if ok {
-			childCheck := n.ValueType.AssignTypeTo(typeableValue)
-			chk.Violations = append(chk.Violations, childCheck.Violations...)
-		}
-	//TODO: Is this ArrayItem case needed? dead code, we think
-	case *yamlmeta.ArrayItem:
-		typeable.SetType(n)
-		typeableValue, ok := typedItem.Value.(yamlmeta.Typeable)
-		if ok {
-			childCheck := n.ValueType.AssignTypeTo(typeableValue)
-			chk.Violations = append(chk.Violations, childCheck.Violations...)
-		}
-	}
+	childCheck := n.ValueType.AssignTypeTo(typeable)
+	chk.Violations = append(chk.Violations, childCheck.Violations...)
 	return
 }
 
@@ -87,35 +65,13 @@ func (n NullType) GetValueType() yamlmeta.Type {
 }
 
 func (n NullType) CheckType(node yamlmeta.TypeWithValues) (chk yamlmeta.TypeCheck) {
-	switch typedItem := node.(type) {
-	// Arrays and Maps cannot have 'nil' values, so if node is one of those types,
-	// then those will be checked with the proper value type in checkCollectionItem()
-	// TODO: are we hitting this case?
-	case *yamlmeta.MapItem:
-		if typedItem.Value == nil {
-			return
-		}
-		check := n.GetValueType().CheckType(node)
-		if check.HasViolations() {
-			chk.Violations = append(chk.Violations, check.Violations...)
-		}
-	// is this needed? maybe panic?
-	// a: [#@/nu"a", "b", "b]
-	case *yamlmeta.ArrayItem:
-		panic("arrayItems cannot be annotated as nullable")
-	case *yamlmeta.Map:
-		panic("MAP?")
-		//catch scalars
-	default:
-		//allow for nil TODO: get Values slice
-		if typedItem.GetValues()[0] != nil {
-			check := n.GetValueType().CheckType(node)
-			if check.HasViolations() {
-				chk.Violations = append(chk.Violations, check.Violations...)
-			}
-		}
-
+	if len(node.GetValues()) == 1 && node.GetValues()[0] == nil {
+		return
 	}
+
+	check := n.GetValueType().CheckType(node)
+	chk.Violations = check.Violations
+
 	return
 }
 
