@@ -5,7 +5,6 @@ package schema
 
 import (
 	"fmt"
-
 	"github.com/k14s/ytt/pkg/filepos"
 	"github.com/k14s/ytt/pkg/template"
 	"github.com/k14s/ytt/pkg/yamlmeta"
@@ -78,14 +77,7 @@ func NewMapType(m *yamlmeta.Map) (*MapType, error) {
 }
 
 func NewMapItemType(item *yamlmeta.MapItem) (*MapItemType, error) {
-
-	//Get annotations on item
-	//Get Valuetype Type
-	// Get proper types from annotations
-	// combine with item's value type
-	//Get default value
-
-	valueType, err := newCollectionItemValueType(item.Value, item.Position)
+	valueType, err := newCollectionItemValueType(item.Value, item.GetPosition())
 	if err != nil {
 		return nil, err
 	}
@@ -95,28 +87,24 @@ func NewMapItemType(item *yamlmeta.MapItem) (*MapItemType, error) {
 		defaultValue = &yamlmeta.Array{}
 	}
 
-	//check for both types of annotations
-	typeAnn, err := processTypeAnnotations(item)
+	anns, err := ProcessAnnotations(item)
 	if err != nil {
 		return nil, err
 	}
-	nullableAnn, err := processNullableAnnotation(item)
-	if err != nil {
-		return nil, err
+	typeFromAnns := ConvertAnnotationsToSingleType(anns)
+	if typeFromAnns != nil {
+		valueType = typeFromAnns
 	}
 
-	//TODO: combine types smartly
-
-	if typeAnn != nil {
-		valueType = typeAnn.NewTypeFromAnn(item)
-	} else if nullableAnn != nil {
-		valueType = nullableAnn.NewTypeFromAnn(item)
-	}
 	if valueType == nil {
 		return nil, NewInvalidSchemaError(item,
 			"null value is not allowed in schema (no type can be inferred from it)",
-			"to default to null, specify a value of the desired type and annotate with @schema/nullable")
+			"to default to null, specify a value of the desired type and annotate with @schema/nullable") //Get annotations on item
 	}
+	//Get Valuetype Type
+	// Get proper types from annotations
+	// combine with item's value type
+	//Get default value
 
 	return &MapItemType{Key: item.Key, ValueType: valueType, DefaultValue: defaultValue, Position: item.Position}, nil
 }
@@ -146,20 +134,16 @@ func NewArrayItemType(item *yamlmeta.ArrayItem) (*ArrayItemType, error) {
 		return nil, err
 	}
 
-	nullableAnn, err := processNullableAnnotation(item)
+	anns, err := ProcessAnnotations(item)
 	if err != nil {
 		return nil, err
 	}
-	if nullableAnn != nil {
-		return nil, NewInvalidSchemaError(item, fmt.Sprintf("@%s is not supported on array items", AnnotationNullable), "")
-	}
-
-	typeAnn, err := processTypeAnnotations(item)
-	if err != nil {
-		return nil, err
-	}
-	if typeAnn != nil {
-		valueType = typeAnn.NewTypeFromAnn(item)
+	typeFromAnns := ConvertAnnotationsToSingleType(anns)
+	if typeFromAnns != nil {
+		if _, ok := typeFromAnns.(*NullType); ok {
+			return nil, NewInvalidSchemaError(item, fmt.Sprintf("@%s is not supported on array items", AnnotationNullable), "")
+		}
+		valueType = typeFromAnns
 	}
 
 	return &ArrayItemType{ValueType: valueType, Position: item.Position}, nil

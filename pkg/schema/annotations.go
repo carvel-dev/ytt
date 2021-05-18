@@ -5,6 +5,7 @@ package schema
 
 import (
 	"fmt"
+	"github.com/k14s/ytt/pkg/filepos"
 
 	"github.com/k14s/ytt/pkg/structmeta"
 	"github.com/k14s/ytt/pkg/template"
@@ -19,27 +20,29 @@ const (
 )
 
 type Annotation interface {
-	NewTypeFromAnn(item yamlmeta.Node) yamlmeta.Type
+	NewTypeFromAnn() yamlmeta.Type
 }
 
 // TODO: this could use a  less conflicting name
 type TypeAnnotation struct {
 	//"schema/type" any=True, one_of=[array]
-	any bool
+	any          bool
+	itemPosition *filepos.Position
 	//listOfAllowedTypes []string
 }
 
 type NullableAnnotation struct {
 	//TODO: name member variable
 	bool
+	itemPosition      *filepos.Position
 	ProvidedValueType yamlmeta.Type
 }
 
-func NewTypeAnnotation(ann template.NodeAnnotation) (TypeAnnotation, error) {
+func NewTypeAnnotation(ann template.NodeAnnotation, pos *filepos.Position) (TypeAnnotation, error) {
 	if len(ann.Kwargs) == 0 {
 		return TypeAnnotation{}, fmt.Errorf("expected @%v annotation to have keyword argument and value. Supported key-value pairs are '%v=True', '%v=False'", AnnotationType, TypeAnnotationKwargAny, TypeAnnotationKwargAny)
 	}
-	typeAnn := TypeAnnotation{}
+	typeAnn := TypeAnnotation{itemPosition: pos}
 	for _, kwarg := range ann.Kwargs {
 
 		argName, err := core.NewStarlarkValue(kwarg[0]).AsString()
@@ -63,16 +66,16 @@ func NewTypeAnnotation(ann template.NodeAnnotation) (TypeAnnotation, error) {
 	return typeAnn, nil
 }
 
-func (t *TypeAnnotation) NewTypeFromAnn(item yamlmeta.Node) yamlmeta.Type {
+func (t *TypeAnnotation) NewTypeFromAnn() yamlmeta.Type {
 	if t.any {
-		return &AnyType{Position: item.GetPosition()}
+		return &AnyType{Position: t.itemPosition}
 	}
 	return nil
 }
 
-func (n *NullableAnnotation) NewTypeFromAnn(item yamlmeta.Node) yamlmeta.Type {
+func (n *NullableAnnotation) NewTypeFromAnn() yamlmeta.Type {
 	if n.bool {
-		return &NullType{ValueType: n.ProvidedValueType, Position: item.GetPosition()}
+		return &NullType{ValueType: n.ProvidedValueType, Position: n.itemPosition}
 	}
 	return nil
 }
@@ -80,12 +83,12 @@ func (n *NullableAnnotation) NewTypeFromAnn(item yamlmeta.Node) yamlmeta.Type {
 func processNullableAnnotation(item yamlmeta.Node) (*NullableAnnotation, error) {
 	templateAnnotations := template.NewAnnotations(item)
 	if templateAnnotations.Has(AnnotationNullable) {
-		// TODO: item.GetValues :(
+		// TODO: item.GetValues >:(
 		valueType, err := newCollectionItemValueType(item.GetValues()[0], item.GetPosition())
 		if err != nil {
 			return nil, err
 		}
-		return &NullableAnnotation{true, valueType}, nil
+		return &NullableAnnotation{true, item.GetPosition(), valueType}, nil
 	}
 	//what does returning an empty annotation mean? why not nil?
 	return nil, nil
@@ -96,7 +99,7 @@ func processTypeAnnotations(item yamlmeta.Node) (*TypeAnnotation, error) {
 
 	if templateAnnotations.Has(AnnotationType) {
 		ann, _ := templateAnnotations[AnnotationType]
-		typeAnn, err := NewTypeAnnotation(ann)
+		typeAnn, err := NewTypeAnnotation(ann, item.GetPosition())
 		if err != nil {
 			return nil, NewInvalidSchemaError(item, err.Error(), "")
 		}
@@ -126,21 +129,51 @@ func ProcessAnnotations(item yamlmeta.Node) ([]Annotation, error) {
 	return anns, nil
 }
 
-func ConvertAnnotationsToType(anns []Annotation, item yamlmeta.Node) (yamlmeta.Type, error) {
-	valueType, err := newCollectionItemValueType(item.GetValues()[0], item.GetPosition())
-	if err != nil {
-		return nil, err
-	}
-	listOfTypes := []yamlmeta.Type{valueType}
+func ConvertAnnotationsToSingleType(anns []Annotation) yamlmeta.Type {
+	listOfTypes := []yamlmeta.Type{}
 	for _, a := range anns {
-		newType := a.NewTypeFromAnn(item)
-		listOfTypes = append(listOfTypes, newType)
+		newType := a.NewTypeFromAnn()
+		if newType != nil {
+			listOfTypes = append(listOfTypes, newType)
+		}
 	}
 
-	//finalType, err := combineTypes(listOfTypes)
-	//if err != nil {
-	//	return nil, err
-	//}
+	finalType := chooseType(listOfTypes)
+	return finalType
+}
 
-	return valueType, nil
+func chooseType(types []yamlmeta.Type) yamlmeta.Type {
+	if len(types) == 0 {
+		return nil
+	}
+	if len(types) == 1 {
+		return types[0]
+	}
+	if len(types) > 1 {
+		if n, ok := hasAnyType(types); ok {
+			return types[n]
+		}
+		if n, ok := hasNullType(types); ok {
+			return types[n]
+		}
+	}
+	return nil
+}
+
+func hasAnyType(types []yamlmeta.Type) (int, bool) {
+	for n, t := range types {
+		if _, ok := t.(*AnyType); ok {
+			return n, true
+		}
+	}
+	return 0, false
+}
+
+func hasNullType(types []yamlmeta.Type) (int, bool) {
+	for n, t := range types {
+		if _, ok := t.(*NullType); ok {
+			return n, true
+		}
+	}
+	return 0, false
 }

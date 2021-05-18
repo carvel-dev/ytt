@@ -32,7 +32,7 @@ func TestTypeAny(t *testing.T) {
 	item.SetAnnotations(nodeAnnotations)
 	anns, err := ProcessAnnotations(item)
 	require.NoError(t, err)
-	assert.Contains(t, anns, &TypeAnnotation{any: true})
+	assert.Contains(t, anns, &TypeAnnotation{any: true, itemPosition: item.GetPosition()})
 	assert.Len(t, anns, 1)
 
 }
@@ -47,7 +47,7 @@ func TestNullable(t *testing.T) {
 	item.SetAnnotations(nodeAnnotations)
 	anns, err := ProcessAnnotations(item)
 	require.NoError(t, err)
-	assert.Contains(t, anns, &NullableAnnotation{true, &ScalarType{Value: *new(string), Position: item.Position}})
+	assert.Contains(t, anns, &NullableAnnotation{true, item.Position, &ScalarType{Value: *new(string), Position: item.Position}})
 	assert.Len(t, anns, 1)
 
 }
@@ -65,8 +65,8 @@ func TestAnyTrueAndNullable(t *testing.T) {
 	item.SetAnnotations(nodeAnnotations)
 	anns, err := ProcessAnnotations(item)
 	require.NoError(t, err)
-	assert.Contains(t, anns, &TypeAnnotation{any: true})
-	assert.Contains(t, anns, &NullableAnnotation{true, &ScalarType{Value: *new(string), Position: item.Position}})
+	assert.Contains(t, anns, &TypeAnnotation{any: true, itemPosition: item.GetPosition()})
+	assert.Contains(t, anns, &NullableAnnotation{true, item.Position, &ScalarType{Value: *new(string), Position: item.Position}})
 	assert.Len(t, anns, 2)
 }
 
@@ -83,7 +83,7 @@ func TestAnyFalseAndNullable(t *testing.T) {
 	item.SetAnnotations(nodeAnnotations)
 	anns, err := ProcessAnnotations(item)
 	require.NoError(t, err)
-	assert.Contains(t, anns, &TypeAnnotation{any: false})
-	assert.Contains(t, anns, &NullableAnnotation{true, &ScalarType{Value: *new(string), Position: item.Position}})
+	assert.Contains(t, anns, &TypeAnnotation{any: false, itemPosition: item.GetPosition()})
+	assert.Contains(t, anns, &NullableAnnotation{true, item.Position, &ScalarType{Value: *new(string), Position: item.Position}})
 	assert.Len(t, anns, 2)
 }
