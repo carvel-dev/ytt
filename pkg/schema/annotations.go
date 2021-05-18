@@ -5,6 +5,8 @@ package schema
 
 import (
 	"fmt"
+	"sort"
+
 	"github.com/k14s/ytt/pkg/filepos"
 
 	"github.com/k14s/ytt/pkg/structmeta"
@@ -146,34 +148,13 @@ func chooseType(types []yamlmeta.Type) yamlmeta.Type {
 	if len(types) == 0 {
 		return nil
 	}
-	if len(types) == 1 {
-		return types[0]
-	}
-	if len(types) > 1 {
-		if n, ok := hasAnyType(types); ok {
-			return types[n]
-		}
-		if n, ok := hasNullType(types); ok {
-			return types[n]
-		}
-	}
-	return nil
-}
 
-func hasAnyType(types []yamlmeta.Type) (int, bool) {
-	for n, t := range types {
-		if _, ok := t.(*AnyType); ok {
-			return n, true
+	sort.Slice(types, func(i, j int) bool {
+		if _, ok := types[i].(*AnyType); ok {
+			return true
 		}
-	}
-	return 0, false
-}
+		return false
+	})
 
-func hasNullType(types []yamlmeta.Type) (int, bool) {
-	for n, t := range types {
-		if _, ok := t.(*NullType); ok {
-			return n, true
-		}
-	}
-	return 0, false
+	return types[0]
 }
