@@ -786,7 +786,6 @@ foo: #@ data.values.foo
 		assertSucceeds(t, filesToProcess, expected, opts)
 	})
 	t.Run("when any is false and set on a map", func(t *testing.T) {
-		t.Skip("Not yet implemented")
 		schemaYAML := `#@schema/match data_values=True
 ---
 #@schema/type any=False
