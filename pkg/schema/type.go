@@ -378,36 +378,7 @@ func (m *ScalarType) AssignTypeTo(typeable yamlmeta.Typeable) yamlmeta.TypeCheck
 	return yamlmeta.TypeCheck{[]error{NewMismatchedTypeError(typeable, m)}}
 }
 
-func (a AnyType) AssignTypeTo(typeable yamlmeta.Typeable) (chk yamlmeta.TypeCheck) {
-
-	switch typedItem := typeable.(type) {
-	case *yamlmeta.Array:
-		typeable.SetType(&ArrayType{ItemsType: &ArrayItemType{ValueType: a, Position: a.Position}})
-		for _, arrayItem := range typedItem.Items {
-			a.AssignTypeTo(arrayItem)
-		}
-	case *yamlmeta.Map:
-		var mItemTypeS []*MapItemType
-		for _, mapItem := range typedItem.Items {
-			a.AssignTypeTo(mapItem)
-			mItemType := &MapItemType{Key: mapItem.Key, ValueType: a, Position: a.Position}
-			mItemTypeS = append(mItemTypeS, mItemType)
-		}
-		typeable.SetType(&MapType{Items: mItemTypeS})
-	case *yamlmeta.ArrayItem:
-		typeable.SetType(&ArrayItemType{ValueType: a, Position: a.Position})
-		typeableValue, ok := typedItem.Value.(yamlmeta.Typeable)
-		if ok {
-			a.AssignTypeTo(typeableValue)
-		}
-	case *yamlmeta.MapItem:
-		typeable.SetType(&MapItemType{Key: typedItem.Key, ValueType: a, Position: a.Position})
-		typeableValue, ok := typedItem.Value.(yamlmeta.Typeable)
-		if ok {
-			a.AssignTypeTo(typeableValue)
-		}
-	}
-
+func (a AnyType) AssignTypeTo(yamlmeta.Typeable) (chk yamlmeta.TypeCheck) {
 	return
 }
 

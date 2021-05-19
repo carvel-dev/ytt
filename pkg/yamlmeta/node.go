@@ -244,6 +244,9 @@ func (d *Document) Check() (chk TypeCheck) {
 	return chk
 }
 func (m *Map) Check() (chk TypeCheck) {
+	if m.Type == nil {
+		return
+	}
 	check := m.Type.CheckType(m)
 	if check.HasViolations() {
 		chk.Violations = append(chk.Violations, check.Violations...)
@@ -281,6 +284,9 @@ func (a *Array) Check() (chk TypeCheck) {
 	return
 }
 func (ai *ArrayItem) Check() (chk TypeCheck) {
+	if ai.Type == nil {
+		return
+	}
 	// TODO: This check only ensures that the ai is of ArrayItem type
 	//       which we know because if it was not we would not assign
 	//       the type to it.

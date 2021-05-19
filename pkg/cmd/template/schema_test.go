@@ -859,6 +859,37 @@ baz:
 
 		assertSucceeds(t, filesToProcess, expected, opts)
 	})
+
+	t.Run("when any is set on nested maps", func(t *testing.T) {
+		schemaYAML := `#@schema/match data_values=True
+---
+baz:
+  #@schema/type any=True
+  a: 1
+`
+		dataValuesYAML := `#@data/values
+---
+#@overlay/replace
+baz:
+  a: foobar
+`
+		templateYAML := `#@ load("@ytt:data", "data")
+---
+baz: #@ data.values.baz
+`
+		expected := `baz:
+  a: foobar
+`
+
+		filesToProcess := files.NewSortedFiles([]*files.File{
+			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
+			files.MustNewFileFromSource(files.NewBytesSource("dataValues.yml", []byte(dataValuesYAML))),
+			files.MustNewFileFromSource(files.NewBytesSource("template.yml", []byte(templateYAML))),
+		})
+
+		assertSucceeds(t, filesToProcess, expected, opts)
+	})
+
 	t.Run("when schema/type and schema/nullable annotate a map", func(t *testing.T) {
 		schemaYAML := `#@schema/match data_values=True
 ---
