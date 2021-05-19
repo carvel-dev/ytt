@@ -31,8 +31,8 @@ type TypeAnnotation struct {
 }
 
 type NullableAnnotation struct {
+	providedValueType yamlmeta.Type
 	itemPosition      *filepos.Position
-	ProvidedValueType yamlmeta.Type
 }
 
 func NewTypeAnnotation(ann template.NodeAnnotation, pos *filepos.Position) (*TypeAnnotation, error) {
@@ -67,7 +67,7 @@ func NewNullableAnnotation(ann template.NodeAnnotation, valueType yamlmeta.Type,
 		return &NullableAnnotation{}, fmt.Errorf("expected @%v annotation to not contain any keyword arguments", AnnotationNullable)
 	}
 
-	return &NullableAnnotation{pos, valueType}, nil
+	return &NullableAnnotation{valueType, pos}, nil
 }
 
 func (t *TypeAnnotation) NewTypeFromAnn() yamlmeta.Type {
@@ -78,14 +78,14 @@ func (t *TypeAnnotation) NewTypeFromAnn() yamlmeta.Type {
 }
 
 func (n *NullableAnnotation) NewTypeFromAnn() yamlmeta.Type {
-	return &NullType{ValueType: n.ProvidedValueType, Position: n.itemPosition}
+	return &NullType{ValueType: n.providedValueType, Position: n.itemPosition}
 }
 
-func ProcessAnnotations(item yamlmeta.Node) ([]Annotation, error) {
+func collectAnnotations(item yamlmeta.Node) ([]Annotation, error) {
 	var anns []Annotation
 
 	for _, annotation := range []structmeta.AnnotationName{AnnotationType, AnnotationNullable} {
-		ann, err := processOptionalAnnotations(item, annotation)
+		ann, err := processOptionalAnnotation(item, annotation)
 		if err != nil {
 			return nil, err
 		}
@@ -96,13 +96,13 @@ func ProcessAnnotations(item yamlmeta.Node) ([]Annotation, error) {
 	return anns, nil
 }
 
-func processOptionalAnnotations(node yamlmeta.Node, annotation structmeta.AnnotationName) (Annotation, error) {
+func processOptionalAnnotation(node yamlmeta.Node, optionalAnnotation structmeta.AnnotationName) (Annotation, error) {
 	nodeAnnotations := template.NewAnnotations(node)
 
-	if nodeAnnotations.Has(annotation) {
-		ann, _ := nodeAnnotations[annotation]
+	if nodeAnnotations.Has(optionalAnnotation) {
+		ann, _ := nodeAnnotations[optionalAnnotation]
 
-		switch annotation {
+		switch optionalAnnotation {
 		case AnnotationNullable:
 			wrappedValueType, err := newCollectionItemValueType(node.GetValues()[0], node.GetPosition())
 			if err != nil {
@@ -125,30 +125,20 @@ func processOptionalAnnotations(node yamlmeta.Node, annotation structmeta.Annota
 	return nil, nil
 }
 
-func ConvertAnnotationsToSingleType(anns []Annotation) yamlmeta.Type {
-	listOfTypes := []yamlmeta.Type{}
-	for _, a := range anns {
-		newType := a.NewTypeFromAnn()
-		if newType != nil {
-			listOfTypes = append(listOfTypes, newType)
-		}
-	}
+func convertAnnotationsToSingleType(anns []Annotation) yamlmeta.Type {
+	annsCopy := append([]Annotation{}, anns...)
 
-	finalType := chooseStrongestType(listOfTypes)
-	return finalType
-}
-
-func chooseStrongestType(types []yamlmeta.Type) yamlmeta.Type {
-	if len(types) == 0 {
+	if len(annsCopy) == 0 {
 		return nil
 	}
 
-	sort.Slice(types, func(i, j int) bool {
-		if _, ok := types[i].(*AnyType); ok {
+	preferAnyTypeOverNullableType := func(i, j int) bool {
+		if typeAnn, ok := annsCopy[i].(*TypeAnnotation); ok && typeAnn.any {
 			return true
 		}
 		return false
-	})
+	}
 
-	return types[0]
+	sort.Slice(annsCopy, preferAnyTypeOverNullableType)
+	return annsCopy[0].NewTypeFromAnn()
 }

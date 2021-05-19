@@ -78,29 +78,31 @@ func NewMapType(m *yamlmeta.Map) (*MapType, error) {
 }
 
 func NewMapItemType(item *yamlmeta.MapItem) (*MapItemType, error) {
-	valueType, err := newCollectionItemValueType(item.Value, item.GetPosition())
+	var valueType yamlmeta.Type
+
+	anns, err := collectAnnotations(item)
 	if err != nil {
 		return nil, err
 	}
-
-	defaultValue := item.Value
-	if _, ok := item.Value.(*yamlmeta.Array); ok {
-		defaultValue = &yamlmeta.Array{}
-	}
-
-	anns, err := ProcessAnnotations(item)
-	if err != nil {
-		return nil, err
-	}
-	typeFromAnns := ConvertAnnotationsToSingleType(anns)
+	typeFromAnns := convertAnnotationsToSingleType(anns)
 	if typeFromAnns != nil {
 		valueType = typeFromAnns
+	} else {
+		valueType, err = newCollectionItemValueType(item.Value, item.GetPosition())
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	if valueType == nil {
 		return nil, NewInvalidSchemaError(item,
 			"null value is not allowed in schema (no type can be inferred from it)",
 			"to default to null, specify a value of the desired type and annotate with @schema/nullable") //Get annotations on item
+	}
+
+	defaultValue := item.Value
+	if _, ok := item.Value.(*yamlmeta.Array); ok {
+		defaultValue = &yamlmeta.Array{}
 	}
 
 	return &MapItemType{Key: item.Key, ValueType: valueType, DefaultValue: defaultValue, Position: item.Position}, nil
@@ -126,21 +128,23 @@ func NewArrayType(a *yamlmeta.Array) (*ArrayType, error) {
 }
 
 func NewArrayItemType(item *yamlmeta.ArrayItem) (*ArrayItemType, error) {
-	valueType, err := newCollectionItemValueType(item.Value, item.Position)
-	if err != nil {
-		return nil, err
-	}
+	var valueType yamlmeta.Type
 
-	anns, err := ProcessAnnotations(item)
+	anns, err := collectAnnotations(item)
 	if err != nil {
 		return nil, err
 	}
-	typeFromAnns := ConvertAnnotationsToSingleType(anns)
+	typeFromAnns := convertAnnotationsToSingleType(anns)
 	if typeFromAnns != nil {
 		if _, ok := typeFromAnns.(*NullType); ok {
 			return nil, NewInvalidSchemaError(item, fmt.Sprintf("@%s is not supported on array items", AnnotationNullable), "")
 		}
 		valueType = typeFromAnns
+	} else {
+		valueType, err = newCollectionItemValueType(item.Value, item.Position)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return &ArrayItemType{ValueType: valueType, Position: item.Position}, nil
