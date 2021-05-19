@@ -62,7 +62,11 @@ func NewTypeAnnotation(ann template.NodeAnnotation, pos *filepos.Position) (*Typ
 	return typeAnn, nil
 }
 
-func NewNullableAnnotation(valueType yamlmeta.Type, pos *filepos.Position) (*NullableAnnotation, error) {
+func NewNullableAnnotation(ann template.NodeAnnotation, valueType yamlmeta.Type, pos *filepos.Position) (*NullableAnnotation, error) {
+	if len(ann.Kwargs) != 0 {
+		return &NullableAnnotation{}, fmt.Errorf("expected @%v annotation to not contain any keyword arguments", AnnotationNullable)
+	}
+
 	return &NullableAnnotation{pos, valueType}, nil
 }
 
@@ -96,19 +100,20 @@ func processOptionalAnnotations(node yamlmeta.Node, annotation structmeta.Annota
 	nodeAnnotations := template.NewAnnotations(node)
 
 	if nodeAnnotations.Has(annotation) {
+		ann, _ := nodeAnnotations[annotation]
+
 		switch annotation {
 		case AnnotationNullable:
 			wrappedValueType, err := newCollectionItemValueType(node.GetValues()[0], node.GetPosition())
 			if err != nil {
 				return nil, err
 			}
-			nullAnn, err := NewNullableAnnotation(wrappedValueType, node.GetPosition())
+			nullAnn, err := NewNullableAnnotation(ann, wrappedValueType, node.GetPosition())
 			if err != nil {
 				return nil, NewInvalidSchemaError(node, err.Error(), "")
 			}
 			return nullAnn, nil
 		case AnnotationType:
-			ann, _ := nodeAnnotations[AnnotationType]
 			typeAnn, err := NewTypeAnnotation(ann, node.GetPosition())
 			if err != nil {
 				return nil, NewInvalidSchemaError(node, err.Error(), "")
