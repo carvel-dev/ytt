@@ -25,12 +25,9 @@ type Annotation interface {
 	NewTypeFromAnn() yamlmeta.Type
 }
 
-// TODO: this could use a  less conflicting name
 type TypeAnnotation struct {
-	//"schema/type" any=True, one_of=[array]
 	any          bool
 	itemPosition *filepos.Position
-	//listOfAllowedTypes []string
 }
 
 type NullableAnnotation struct {
@@ -38,32 +35,35 @@ type NullableAnnotation struct {
 	ProvidedValueType yamlmeta.Type
 }
 
-func NewTypeAnnotation(ann template.NodeAnnotation, pos *filepos.Position) (TypeAnnotation, error) {
+func NewTypeAnnotation(ann template.NodeAnnotation, pos *filepos.Position) (*TypeAnnotation, error) {
 	if len(ann.Kwargs) == 0 {
-		return TypeAnnotation{}, fmt.Errorf("expected @%v annotation to have keyword argument and value. Supported key-value pairs are '%v=True', '%v=False'", AnnotationType, TypeAnnotationKwargAny, TypeAnnotationKwargAny)
+		return &TypeAnnotation{}, fmt.Errorf("expected @%v annotation to have keyword argument and value. Supported key-value pairs are '%v=True', '%v=False'", AnnotationType, TypeAnnotationKwargAny, TypeAnnotationKwargAny)
 	}
-	typeAnn := TypeAnnotation{itemPosition: pos}
+	typeAnn := &TypeAnnotation{itemPosition: pos}
 	for _, kwarg := range ann.Kwargs {
-
 		argName, err := core.NewStarlarkValue(kwarg[0]).AsString()
 		if err != nil {
-			return TypeAnnotation{}, err
+			return &TypeAnnotation{}, err
 		}
 
 		switch argName {
 		case TypeAnnotationKwargAny:
 			isAnyType, err := core.NewStarlarkValue(kwarg[1]).AsBool()
 			if err != nil {
-				return TypeAnnotation{},
+				return &TypeAnnotation{},
 					fmt.Errorf("processing @%v '%v' argument: %s", AnnotationType, TypeAnnotationKwargAny, err)
 			}
 			typeAnn.any = isAnyType
 
 		default:
-			return TypeAnnotation{}, fmt.Errorf("unknown @%v annotation keyword argument '%v'. Supported kwargs are '%v'", AnnotationType, argName, TypeAnnotationKwargAny)
+			return &TypeAnnotation{}, fmt.Errorf("unknown @%v annotation keyword argument '%v'. Supported kwargs are '%v'", AnnotationType, argName, TypeAnnotationKwargAny)
 		}
 	}
 	return typeAnn, nil
+}
+
+func NewNullableAnnotation(valueType yamlmeta.Type, pos *filepos.Position) (*NullableAnnotation, error) {
+	return &NullableAnnotation{pos, valueType}, nil
 }
 
 func (t *TypeAnnotation) NewTypeFromAnn() yamlmeta.Type {
@@ -77,51 +77,47 @@ func (n *NullableAnnotation) NewTypeFromAnn() yamlmeta.Type {
 	return &NullType{ValueType: n.ProvidedValueType, Position: n.itemPosition}
 }
 
-func processNullableAnnotation(item yamlmeta.Node) (*NullableAnnotation, error) {
-	templateAnnotations := template.NewAnnotations(item)
-	if templateAnnotations.Has(AnnotationNullable) {
-		// TODO: `item.GetValues()[0]` best way to pass values?
-		valueType, err := newCollectionItemValueType(item.GetValues()[0], item.GetPosition())
-		if err != nil {
-			return nil, err
-		}
-		return &NullableAnnotation{item.GetPosition(), valueType}, nil
-	}
-	return nil, nil
-}
-
-func processTypeAnnotations(item yamlmeta.Node) (*TypeAnnotation, error) {
-	templateAnnotations := template.NewAnnotations(item)
-
-	if templateAnnotations.Has(AnnotationType) {
-		ann, _ := templateAnnotations[AnnotationType]
-		typeAnn, err := NewTypeAnnotation(ann, item.GetPosition())
-		if err != nil {
-			return nil, NewInvalidSchemaError(item, err.Error(), "")
-		}
-		return &typeAnn, nil
-	}
-	return nil, nil
-}
-
 func ProcessAnnotations(item yamlmeta.Node) ([]Annotation, error) {
 	var anns []Annotation
 
-	tAnn, err := processTypeAnnotations(item)
-	if err != nil {
-		return nil, err
-	}
-	if tAnn != nil {
-		anns = append(anns, tAnn)
-	}
-	nAnn, err := processNullableAnnotation(item)
-	if err != nil {
-		return nil, err
-	}
-	if nAnn != nil {
-		anns = append(anns, nAnn)
+	for _, annotation := range []structmeta.AnnotationName{AnnotationType, AnnotationNullable} {
+		ann, err := processOptionalAnnotations(item, annotation)
+		if err != nil {
+			return nil, err
+		}
+		if ann != nil {
+			anns = append(anns, ann)
+		}
 	}
 	return anns, nil
+}
+
+func processOptionalAnnotations(node yamlmeta.Node, annotation structmeta.AnnotationName) (Annotation, error) {
+	nodeAnnotations := template.NewAnnotations(node)
+
+	if nodeAnnotations.Has(annotation) {
+		switch annotation {
+		case AnnotationNullable:
+			wrappedValueType, err := newCollectionItemValueType(node.GetValues()[0], node.GetPosition())
+			if err != nil {
+				return nil, err
+			}
+			nullAnn, err := NewNullableAnnotation(wrappedValueType, node.GetPosition())
+			if err != nil {
+				return nil, NewInvalidSchemaError(node, err.Error(), "")
+			}
+			return nullAnn, nil
+		case AnnotationType:
+			ann, _ := nodeAnnotations[AnnotationType]
+			typeAnn, err := NewTypeAnnotation(ann, node.GetPosition())
+			if err != nil {
+				return nil, NewInvalidSchemaError(node, err.Error(), "")
+			}
+			return typeAnn, nil
+		}
+	}
+
+	return nil, nil
 }
 
 func ConvertAnnotationsToSingleType(anns []Annotation) yamlmeta.Type {
