@@ -27,7 +27,7 @@ type Node interface {
 
 	Check() TypeCheck
 
-	_private()
+	sealed() // limit the concrete types of Node to map directly only to types allowed in YAML spec.
 }
 
 // Ensure: all types are — in fact — assignable to Node

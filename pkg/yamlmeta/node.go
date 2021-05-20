@@ -340,9 +340,9 @@ func (mi *MapItem) MarshalJSON() ([]byte, error)     { panic("Unexpected marshal
 func (a *Array) MarshalJSON() ([]byte, error)        { panic("Unexpected marshaling of array") }
 func (ai *ArrayItem) MarshalJSON() ([]byte, error)   { panic("Unexpected marshaling of arrayitem") }
 
-func (ds *DocumentSet) _private() {}
-func (d *Document) _private()     {}
-func (m *Map) _private()          {}
-func (mi *MapItem) _private()     {}
-func (a *Array) _private()        {}
-func (ai *ArrayItem) _private()   {}
+func (ds *DocumentSet) sealed() {}
+func (d *Document) sealed()     {}
+func (m *Map) sealed()          {}
+func (mi *MapItem) sealed()     {}
+func (a *Array) sealed()        {}
+func (ai *ArrayItem) sealed()   {}
