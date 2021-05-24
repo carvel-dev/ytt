@@ -37,26 +37,26 @@ type NullableAnnotation struct {
 
 func NewTypeAnnotation(ann template.NodeAnnotation, pos *filepos.Position) (*TypeAnnotation, error) {
 	if len(ann.Kwargs) == 0 {
-		return &TypeAnnotation{}, fmt.Errorf("expected @%v annotation to have keyword argument and value. Supported key-value pairs are '%v=True', '%v=False'", AnnotationType, TypeAnnotationKwargAny, TypeAnnotationKwargAny)
+		return nil, fmt.Errorf("expected @%v annotation to have keyword argument and value. Supported key-value pairs are '%v=True', '%v=False'", AnnotationType, TypeAnnotationKwargAny, TypeAnnotationKwargAny)
 	}
 	typeAnn := &TypeAnnotation{itemPosition: pos}
 	for _, kwarg := range ann.Kwargs {
 		argName, err := core.NewStarlarkValue(kwarg[0]).AsString()
 		if err != nil {
-			return &TypeAnnotation{}, err
+			return nil, err
 		}
 
 		switch argName {
 		case TypeAnnotationKwargAny:
 			isAnyType, err := core.NewStarlarkValue(kwarg[1]).AsBool()
 			if err != nil {
-				return &TypeAnnotation{},
+				return nil,
 					fmt.Errorf("processing @%v '%v' argument: %s", AnnotationType, TypeAnnotationKwargAny, err)
 			}
 			typeAnn.any = isAnyType
 
 		default:
-			return &TypeAnnotation{}, fmt.Errorf("unknown @%v annotation keyword argument '%v'. Supported kwargs are '%v'", AnnotationType, argName, TypeAnnotationKwargAny)
+			return nil, fmt.Errorf("unknown @%v annotation keyword argument '%v'. Supported kwargs are '%v'", AnnotationType, argName, TypeAnnotationKwargAny)
 		}
 	}
 	return typeAnn, nil
@@ -64,7 +64,7 @@ func NewTypeAnnotation(ann template.NodeAnnotation, pos *filepos.Position) (*Typ
 
 func NewNullableAnnotation(ann template.NodeAnnotation, valueType yamlmeta.Type, pos *filepos.Position) (*NullableAnnotation, error) {
 	if len(ann.Kwargs) != 0 {
-		return &NullableAnnotation{}, fmt.Errorf("expected @%v annotation to not contain any keyword arguments", AnnotationNullable)
+		return nil, fmt.Errorf("expected @%v annotation to not contain any keyword arguments", AnnotationNullable)
 	}
 
 	return &NullableAnnotation{valueType, pos}, nil
@@ -75,6 +75,10 @@ func (t *TypeAnnotation) NewTypeFromAnn() yamlmeta.Type {
 		return &AnyType{Position: t.itemPosition}
 	}
 	return nil
+}
+
+func (t *TypeAnnotation) IsAny() bool {
+	return t.any
 }
 
 func (n *NullableAnnotation) NewTypeFromAnn() yamlmeta.Type {
@@ -133,7 +137,7 @@ func convertAnnotationsToSingleType(anns []Annotation) yamlmeta.Type {
 	}
 
 	preferAnyTypeOverNullableType := func(i, j int) bool {
-		if typeAnn, ok := annsCopy[i].(*TypeAnnotation); ok && typeAnn.any {
+		if typeAnn, ok := annsCopy[i].(*TypeAnnotation); ok && typeAnn.IsAny() {
 			return true
 		}
 		return false
