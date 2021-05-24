@@ -1,0 +1,7 @@
+nothing: "something"
+string: "str"
+bool: true
+int: 123
+new_thing: new
+---
+int: 124

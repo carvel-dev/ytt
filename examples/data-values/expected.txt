@@ -27,3 +27,9 @@ string:
 bool: true
 int: 123
 float: 123.123
+***
+nothing: something
+string: str
+bool: true
+int: 124
+float: 0

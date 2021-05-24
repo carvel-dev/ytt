@@ -31,9 +31,12 @@ type DataValuesFlags struct {
 	KVsFromYAML    []string
 	KVsFromFiles   []string
 
+	FromFiles []string
+
 	Inspect bool
 
-	EnvironFunc func() []string
+	EnvironFunc  func() []string
+	ReadFileFunc func(string) ([]byte, error)
 }
 
 func (s *DataValuesFlags) Set(cmd *cobra.Command) {
@@ -43,6 +46,8 @@ func (s *DataValuesFlags) Set(cmd *cobra.Command) {
 	cmd.Flags().StringArrayVarP(&s.KVsFromStrings, "data-value", "v", nil, "Set specific data value to given value, as string (format: all.key1.subkey=123) (can be specified multiple times)")
 	cmd.Flags().StringArrayVar(&s.KVsFromYAML, "data-value-yaml", nil, "Set specific data value to given value, parsed as YAML (format: all.key1.subkey=true) (can be specified multiple times)")
 	cmd.Flags().StringArrayVar(&s.KVsFromFiles, "data-value-file", nil, "Set specific data value to given file contents, as string (format: all.key1.subkey=/file/path) (can be specified multiple times)")
+
+	cmd.Flags().StringArrayVar(&s.FromFiles, "data-values-file", nil, "Set multiple data values via a YAML file (format: /file/path.yml) (can be specified multiple times)")
 
 	cmd.Flags().BoolVar(&s.Inspect, "data-values-inspect", false, "Inspect data values")
 }
@@ -67,6 +72,17 @@ func (s *DataValuesFlags) AsOverlays(strict bool) ([]*workspace.DataValues, []*w
 
 	var result []*workspace.DataValues
 
+	// Files go first
+	for _, file := range s.FromFiles {
+		vals, err := s.file(file, strict)
+		if err != nil {
+			return nil, nil, fmt.Errorf("Extracting data value from file: %s", err)
+		}
+		result = append(result, vals...)
+	}
+
+	// Then env vars take precedence over files
+	// since env vars are specific to command execution
 	for _, src := range []dataValuesFlagsSource{{s.EnvFromStrings, plainValFunc}, {s.EnvFromYAML, yamlValFunc}} {
 		for _, envPrefix := range src.Values {
 			vals, err := s.env(envPrefix, src.TransformFunc)
@@ -77,7 +93,7 @@ func (s *DataValuesFlags) AsOverlays(strict bool) ([]*workspace.DataValues, []*w
 		}
 	}
 
-	// KVs and files take precedence over environment variables
+	// KVs take precedence over environment variables
 	for _, src := range []dataValuesFlagsSource{{s.KVsFromStrings, plainValFunc}, {s.KVsFromYAML, yamlValFunc}} {
 		for _, kv := range src.Values {
 			val, err := s.kv(kv, src.TransformFunc)
@@ -88,8 +104,10 @@ func (s *DataValuesFlags) AsOverlays(strict bool) ([]*workspace.DataValues, []*w
 		}
 	}
 
+	// Finally KV files take precedence over rest
+	// (technically should be same level as KVs, but gotta pick one)
 	for _, file := range s.KVsFromFiles {
-		val, err := s.file(file)
+		val, err := s.kvFile(file)
 		if err != nil {
 			return nil, nil, fmt.Errorf("Extracting data value from file: %s", err)
 		}
@@ -107,6 +125,46 @@ func (s *DataValuesFlags) AsOverlays(strict bool) ([]*workspace.DataValues, []*w
 	}
 
 	return overlayValues, libraryOverlays, nil
+}
+
+func (s *DataValuesFlags) file(path string, strict bool) ([]*workspace.DataValues, error) {
+	libRef, path, err := s.libraryRefAndKey(path)
+	if err != nil {
+		return nil, err
+	}
+
+	contents, err := s.readFile(path)
+	if err != nil {
+		return nil, fmt.Errorf("Reading file '%s'", path)
+	}
+
+	docSetOpts := yamlmeta.DocSetOpts{
+		AssociatedName: path,
+		Strict:         strict,
+	}
+
+	docSet, err := yamlmeta.NewDocumentSetFromBytes(contents, docSetOpts)
+	if err != nil {
+		return nil, fmt.Errorf("Unmarshaling YAML data values file '%s': %s", path, err)
+	}
+
+	var result []*workspace.DataValues
+
+	for _, doc := range docSet.Items {
+		if doc.Value != nil {
+			dvsOverlay, err := NewDataValuesFile(doc).AsOverlay()
+			if err != nil {
+				return nil, fmt.Errorf("Checking data values file '%s': %s", path, err)
+			}
+			dvs, err := workspace.NewDataValuesWithOptionalLib(dvsOverlay, libRef)
+			if err != nil {
+				return nil, err
+			}
+			result = append(result, dvs)
+		}
+	}
+
+	return result, nil
 }
 
 func (s *DataValuesFlags) env(prefix string, valueFunc valueTransformFunc) ([]*workspace.DataValues, error) {
@@ -186,13 +244,13 @@ func (s *DataValuesFlags) parseYAML(data string, strict bool) (interface{}, erro
 	return docSet.Items[0].Value, nil
 }
 
-func (s *DataValuesFlags) file(kv string) (*workspace.DataValues, error) {
+func (s *DataValuesFlags) kvFile(kv string) (*workspace.DataValues, error) {
 	pieces := strings.SplitN(kv, dvsKVSep, 2)
 	if len(pieces) != 2 {
 		return nil, fmt.Errorf("Expected format key=/file/path")
 	}
 
-	contents, err := ioutil.ReadFile(pieces[1])
+	contents, err := s.readFile(pieces[1])
 	if err != nil {
 		return nil, fmt.Errorf("Reading file '%s'", pieces[1])
 	}
@@ -273,4 +331,11 @@ func (s *DataValuesFlags) buildOverlay(keyPieces []string, value interface{}, de
 	lastMapItem.SetAnnotations(existingAnns)
 
 	return &yamlmeta.Document{Value: resultMap, Position: pos}
+}
+
+func (s *DataValuesFlags) readFile(path string) ([]byte, error) {
+	if s.ReadFileFunc != nil {
+		return s.ReadFileFunc(path)
+	}
+	return ioutil.ReadFile(path)
 }
