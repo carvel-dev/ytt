@@ -7,12 +7,7 @@ import (
 	"fmt"
 
 	"github.com/k14s/ytt/pkg/filepos"
-	"github.com/k14s/ytt/pkg/structmeta"
 	"github.com/k14s/ytt/pkg/yamlmeta"
-)
-
-const (
-	AnnotationSchemaNullable structmeta.AnnotationName = "schema/nullable"
 )
 
 var _ yamlmeta.Type = (*DocumentType)(nil)
@@ -20,6 +15,8 @@ var _ yamlmeta.Type = (*MapType)(nil)
 var _ yamlmeta.Type = (*MapItemType)(nil)
 var _ yamlmeta.Type = (*ArrayType)(nil)
 var _ yamlmeta.Type = (*ArrayItemType)(nil)
+var _ yamlmeta.Type = (*AnyType)(nil)
+var _ yamlmeta.Type = (*NullType)(nil)
 
 type DocumentType struct {
 	Source    *yamlmeta.Document
@@ -35,7 +32,6 @@ type MapItemType struct {
 	ValueType    yamlmeta.Type
 	DefaultValue interface{}
 	Position     *filepos.Position
-	Annotations  TypeAnnotations
 }
 type ArrayType struct {
 	ItemsType yamlmeta.Type
@@ -49,8 +45,42 @@ type ScalarType struct {
 	Value    interface{}
 	Position *filepos.Position
 }
+type AnyType struct {
+	Position *filepos.Position
+}
+type NullType struct {
+	ValueType yamlmeta.Type
+	Position  *filepos.Position
+}
 
-type TypeAnnotations map[structmeta.AnnotationName]interface{}
+func (n NullType) AssignTypeTo(typeable yamlmeta.Typeable) (chk yamlmeta.TypeCheck) {
+	childCheck := n.ValueType.AssignTypeTo(typeable)
+	chk.Violations = append(chk.Violations, childCheck.Violations...)
+	return
+}
+
+func (n NullType) GetValueType() yamlmeta.Type {
+	return n.ValueType
+}
+
+func (n NullType) CheckType(node yamlmeta.TypeWithValues) (chk yamlmeta.TypeCheck) {
+	if len(node.GetValues()) == 1 && node.GetValues()[0] == nil {
+		return
+	}
+
+	check := n.GetValueType().CheckType(node)
+	chk.Violations = check.Violations
+
+	return
+}
+
+func (n NullType) PositionOfDefinition() *filepos.Position {
+	return n.Position
+}
+
+func (n NullType) String() string {
+	return "nullable"
+}
 
 func (t *DocumentType) GetValueType() yamlmeta.Type {
 	panic("Not implemented because it is unreachable")
@@ -70,6 +100,9 @@ func (a ArrayItemType) GetValueType() yamlmeta.Type {
 func (m ScalarType) GetValueType() yamlmeta.Type {
 	panic("Not implemented because it is unreachable")
 }
+func (a AnyType) GetValueType() yamlmeta.Type {
+	return a
+}
 
 func (t *DocumentType) PositionOfDefinition() *filepos.Position {
 	return t.Position
@@ -88,6 +121,9 @@ func (a ArrayItemType) PositionOfDefinition() *filepos.Position {
 }
 func (m ScalarType) PositionOfDefinition() *filepos.Position {
 	return m.Position
+}
+func (a AnyType) PositionOfDefinition() *filepos.Position {
+	return a.Position
 }
 
 func (t *DocumentType) String() string {
@@ -117,6 +153,9 @@ func (m ScalarType) String() string {
 		return fmt.Sprintf("%T", m.Value)
 	}
 }
+func (a AnyType) String() string {
+	return "any"
+}
 
 func (t *DocumentType) CheckType(_ yamlmeta.TypeWithValues) (chk yamlmeta.TypeCheck) {
 	return
@@ -140,14 +179,10 @@ func (m *MapType) CheckType(node yamlmeta.TypeWithValues) (chk yamlmeta.TypeChec
 }
 
 func (t *MapItemType) CheckType(node yamlmeta.TypeWithValues) (chk yamlmeta.TypeCheck) {
-	mapItem, ok := node.(*yamlmeta.MapItem)
+	_, ok := node.(*yamlmeta.MapItem)
 	if !ok {
 		// A Map must've yielded a non-MapItem which is not valid YAML
 		panic(fmt.Sprintf("MapItem type check was called on a non-MapItem: %#v", node))
-	}
-	if mapItem.Value == nil && !t.IsNullable() {
-		chk.Violations = append(chk.Violations,
-			NewMismatchedTypeError(mapItem, t))
 	}
 
 	return
@@ -203,6 +238,10 @@ func (m *ScalarType) CheckType(node yamlmeta.TypeWithValues) (chk yamlmeta.TypeC
 	return
 }
 
+func (a AnyType) CheckType(_ yamlmeta.TypeWithValues) (chk yamlmeta.TypeCheck) {
+	return
+}
+
 func (t *DocumentType) AssignTypeTo(typeable yamlmeta.Typeable) (chk yamlmeta.TypeCheck) {
 	doc, ok := typeable.(*yamlmeta.Document)
 	if !ok {
@@ -222,6 +261,8 @@ func (t *DocumentType) AssignTypeTo(typeable yamlmeta.Typeable) (chk yamlmeta.Ty
 					tChild = &yamlmeta.Map{}
 				case *ArrayType:
 					tChild = &yamlmeta.Array{}
+				case *AnyType:
+					return
 				default:
 					panic("implement me!")
 				}
@@ -338,6 +379,10 @@ func (m *ScalarType) AssignTypeTo(typeable yamlmeta.Typeable) yamlmeta.TypeCheck
 	return yamlmeta.TypeCheck{[]error{NewMismatchedTypeError(typeable, m)}}
 }
 
+func (a AnyType) AssignTypeTo(yamlmeta.Typeable) (chk yamlmeta.TypeCheck) {
+	return
+}
+
 func (m *MapType) AllowsKey(key interface{}) bool {
 	for _, item := range m.Items {
 		if item.Key == key {
@@ -345,9 +390,4 @@ func (m *MapType) AllowsKey(key interface{}) bool {
 		}
 	}
 	return false
-}
-
-func (t MapItemType) IsNullable() bool {
-	_, found := t.Annotations[AnnotationSchemaNullable]
-	return found
 }

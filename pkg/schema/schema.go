@@ -11,9 +11,6 @@ import (
 	"github.com/k14s/ytt/pkg/yamlmeta"
 )
 
-type AnySchema struct {
-}
-
 type NullSchema struct {
 }
 
@@ -41,6 +38,15 @@ func NewDocumentSchema(doc *yamlmeta.Document) (*DocumentSchema, error) {
 		defaultDVs: schemaDVs,
 		Allowed:    docType,
 	}, nil
+}
+
+func NewPermissiveSchema() *DocumentSchema {
+	return &DocumentSchema{
+		Name:   "anyDataValues",
+		Source: &yamlmeta.Document{},
+		Allowed: &DocumentType{
+			ValueType: &AnyType{}},
+	}
 }
 
 func NewDocumentType(doc *yamlmeta.Document) (*DocumentType, error) {
@@ -78,9 +84,26 @@ func NewMapType(m *yamlmeta.Map) (*MapType, error) {
 }
 
 func NewMapItemType(item *yamlmeta.MapItem) (*MapItemType, error) {
-	valueType, err := newCollectionItemValueType(item.Value, item.Position)
+	var valueType yamlmeta.Type
+
+	anns, err := collectAnnotations(item)
 	if err != nil {
 		return nil, err
+	}
+	typeFromAnns := convertAnnotationsToSingleType(anns)
+	if typeFromAnns != nil {
+		valueType = typeFromAnns
+	} else {
+		valueType, err = newCollectionItemValueType(item.Value, item.GetPosition())
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	if valueType == nil {
+		return nil, NewInvalidSchemaError(item,
+			"null value is not allowed in schema (no type can be inferred from it)",
+			"to default to null, specify a value of the desired type and annotate with @schema/nullable")
 	}
 
 	defaultValue := item.Value
@@ -88,20 +111,7 @@ func NewMapItemType(item *yamlmeta.MapItem) (*MapItemType, error) {
 		defaultValue = &yamlmeta.Array{}
 	}
 
-	templateAnnotations := template.NewAnnotations(item)
-	if _, nullable := templateAnnotations[AnnotationSchemaNullable]; nullable {
-		defaultValue = nil
-	} else if valueType == nil {
-		return nil, NewInvalidSchemaError(item,
-			"null value is not allowed in schema (no type can be inferred from it)",
-			"to default to null, specify a value of the desired type and annotate with @schema/nullable")
-	}
-	annotations := make(TypeAnnotations)
-	for key, val := range templateAnnotations {
-		annotations[key] = val
-	}
-
-	return &MapItemType{Key: item.Key, ValueType: valueType, DefaultValue: defaultValue, Position: item.Position, Annotations: annotations}, nil
+	return &MapItemType{Key: item.Key, ValueType: valueType, DefaultValue: defaultValue, Position: item.Position}, nil
 }
 
 func NewArrayType(a *yamlmeta.Array) (*ArrayType, error) {
@@ -124,15 +134,23 @@ func NewArrayType(a *yamlmeta.Array) (*ArrayType, error) {
 }
 
 func NewArrayItemType(item *yamlmeta.ArrayItem) (*ArrayItemType, error) {
-	valueType, err := newCollectionItemValueType(item.Value, item.Position)
+	var valueType yamlmeta.Type
+
+	anns, err := collectAnnotations(item)
 	if err != nil {
 		return nil, err
 	}
-
-	annotations := template.NewAnnotations(item)
-
-	if _, found := annotations[AnnotationSchemaNullable]; found {
-		return nil, NewInvalidSchemaError(item, fmt.Sprintf("@%s is not supported on array items", AnnotationSchemaNullable), "")
+	typeFromAnns := convertAnnotationsToSingleType(anns)
+	if typeFromAnns != nil {
+		if _, ok := typeFromAnns.(*NullType); ok {
+			return nil, NewInvalidSchemaError(item, fmt.Sprintf("@%s is not supported on array items", AnnotationNullable), "")
+		}
+		valueType = typeFromAnns
+	} else {
+		valueType, err = newCollectionItemValueType(item.Value, item.Position)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return &ArrayItemType{ValueType: valueType, Position: item.Position}, nil
@@ -186,7 +204,7 @@ func setDefaultValues(node yamlmeta.Node) {
 		}
 	case *yamlmeta.MapItem:
 		anns := template.NewAnnotations(typedNode)
-		if anns.Has(AnnotationSchemaNullable) {
+		if anns.Has(AnnotationNullable) {
 			typedNode.Value = nil
 		}
 		if valueAsANode, ok := typedNode.Value.(yamlmeta.Node); ok {
@@ -197,10 +215,6 @@ func setDefaultValues(node yamlmeta.Node) {
 	}
 }
 
-func (as *AnySchema) AssignType(typeable yamlmeta.Typeable) yamlmeta.TypeCheck {
-	return yamlmeta.TypeCheck{}
-}
-
 func (n NullSchema) AssignType(typeable yamlmeta.Typeable) yamlmeta.TypeCheck {
 	return yamlmeta.TypeCheck{}
 }
@@ -209,20 +223,12 @@ func (s *DocumentSchema) AssignType(typeable yamlmeta.Typeable) yamlmeta.TypeChe
 	return s.Allowed.AssignTypeTo(typeable)
 }
 
-func (as *AnySchema) DefaultDataValues() *yamlmeta.Document {
-	return nil
-}
-
 func (n NullSchema) DefaultDataValues() *yamlmeta.Document {
 	return nil
 }
 
 func (s *DocumentSchema) DefaultDataValues() *yamlmeta.Document {
 	return s.defaultDVs
-}
-
-func (as *AnySchema) ValidateWithValues(valuesFilesCount int) error {
-	return nil
 }
 
 func (n NullSchema) ValidateWithValues(valuesFilesCount int) error {

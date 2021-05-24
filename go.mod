@@ -1,6 +1,6 @@
 module github.com/k14s/ytt
 
-go 1.13
+go 1.16
 
 require (
 	github.com/aws/aws-lambda-go v1.8.2

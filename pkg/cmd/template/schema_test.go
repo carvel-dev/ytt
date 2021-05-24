@@ -180,7 +180,7 @@ func TestSchema_Reports_violations_when_DataValues_do_NOT_conform(t *testing.T) 
 	opts.SchemaEnabled = true
 
 	t.Run("when map item's key is not among those declared in schema", func(t *testing.T) {
-		t.Skip()
+		t.Skip("This test case will be covered in https://github.com/vmware-tanzu/carvel-ytt/issues/344")
 		schemaYAML := `#@schema/match data_values=True
 ---
 db_conn:
@@ -275,7 +275,38 @@ dataValues.yml:3 | app: null
 
 		assertFails(t, filesToProcess, expectedErr, opts)
 	})
+	t.Run("when map item's value is wrong type and schema/nullable is set", func(t *testing.T) {
+		schemaYAML := `#@schema/match data_values=True
+---
+#@schema/nullable
+foo: 0
+`
+		dataValuesYAML := `#@data/values
+---
+foo: "bar"
+`
+		templateYAML := `#@ load("@ytt:data", "data")
+---
+foo: #@ data.values.foo
+`
 
+		filesToProcess := files.NewSortedFiles([]*files.File{
+			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
+			files.MustNewFileFromSource(files.NewBytesSource("dataValues.yml", []byte(dataValuesYAML))),
+			files.MustNewFileFromSource(files.NewBytesSource("template.yml", []byte(templateYAML))),
+		})
+
+		expectedErr := `
+dataValues.yml:3 | foo: "bar"
+                 |
+                 | TYPE MISMATCH - the value of this item is not what schema expected:
+                 |      found: string
+                 |   expected: integer (by schema.yml:4)
+
+`
+
+		assertFails(t, filesToProcess, expectedErr, opts)
+	})
 	t.Run("when array item's value is the wrong type", func(t *testing.T) {
 		schemaYAML := `#@schema/match data_values=True
 ---
@@ -377,7 +408,7 @@ foo: non-empty data value
 		assertFails(t, filesToProcess, expectedErr, opts)
 	})
 	t.Run("checks after every data values document is processed (and stops if there was a violation)", func(t *testing.T) {
-		t.Skip()
+		t.Skip("This test case will be covered in https://github.com/vmware-tanzu/carvel-ytt/issues/344")
 		schemaYAML := `#@schema/match data_values=True
 ---
 hostname: ""
@@ -554,7 +585,6 @@ vpc: #@ data.values.vpc
 func TestSchema_Allows_null_values_via_nullable_annotation(t *testing.T) {
 	opts := cmdtpl.NewOptions()
 	opts.SchemaEnabled = true
-
 	t.Run("when the value is a map", func(t *testing.T) {
 		schemaYAML := `#@schema/match data_values=True
 ---
@@ -678,6 +708,205 @@ overriden:
   nullable_bool: true
 `
 
+		filesToProcess := files.NewSortedFiles([]*files.File{
+			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
+			files.MustNewFileFromSource(files.NewBytesSource("dataValues.yml", []byte(dataValuesYAML))),
+			files.MustNewFileFromSource(files.NewBytesSource("template.yml", []byte(templateYAML))),
+		})
+
+		assertSucceeds(t, filesToProcess, expected, opts)
+	})
+}
+
+func TestSchema_Allows_any_value_via_any_annotation(t *testing.T) {
+	opts := cmdtpl.NewOptions()
+	opts.SchemaEnabled = true
+
+	t.Run("when any is true and set on a map", func(t *testing.T) {
+		schemaYAML := `#@schema/match data_values=True
+---
+#@schema/type any=True
+foo: ""
+#@schema/type any=True
+baz:
+  a: 1
+`
+		dataValuesYAML := `#@data/values
+---
+foo: ~
+baz:
+  a: 7
+`
+		templateYAML := `#@ load("@ytt:data", "data")
+---
+foo: #@ data.values.foo
+baz: #@ data.values.baz
+`
+		expected := `foo: null
+baz:
+  a: 7
+`
+
+		filesToProcess := files.NewSortedFiles([]*files.File{
+			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
+			files.MustNewFileFromSource(files.NewBytesSource("dataValues.yml", []byte(dataValuesYAML))),
+			files.MustNewFileFromSource(files.NewBytesSource("template.yml", []byte(templateYAML))),
+		})
+
+		assertSucceeds(t, filesToProcess, expected, opts)
+	})
+	t.Run("when any is true and set on an array", func(t *testing.T) {
+		schemaYAML := `#@schema/match data_values=True
+---
+foo: 
+#@schema/type any=True
+- ""
+  
+`
+		dataValuesYAML := `#@data/values
+---
+foo: ["bar", 7, ~]
+`
+		templateYAML := `#@ load("@ytt:data", "data")
+---
+foo: #@ data.values.foo
+`
+		expected := `foo:
+- bar
+- 7
+- null
+`
+
+		filesToProcess := files.NewSortedFiles([]*files.File{
+			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
+			files.MustNewFileFromSource(files.NewBytesSource("dataValues.yml", []byte(dataValuesYAML))),
+			files.MustNewFileFromSource(files.NewBytesSource("template.yml", []byte(templateYAML))),
+		})
+
+		assertSucceeds(t, filesToProcess, expected, opts)
+	})
+	t.Run("when any is false and set on a map", func(t *testing.T) {
+		schemaYAML := `#@schema/match data_values=True
+---
+#@schema/type any=False
+foo: 0
+`
+		dataValuesYAML := `#@data/values
+---
+foo: 7
+`
+		templateYAML := `#@ load("@ytt:data", "data")
+---
+foo: #@ data.values.foo
+`
+		expected := `foo: 7
+`
+
+		filesToProcess := files.NewSortedFiles([]*files.File{
+			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
+			files.MustNewFileFromSource(files.NewBytesSource("dataValues.yml", []byte(dataValuesYAML))),
+			files.MustNewFileFromSource(files.NewBytesSource("template.yml", []byte(templateYAML))),
+		})
+
+		assertSucceeds(t, filesToProcess, expected, opts)
+	})
+	t.Run("when any is set on maps and arrays with nested dvs and overlay/replace", func(t *testing.T) {
+		schemaYAML := `#@schema/match data_values=True
+---
+#@schema/type any=True
+foo: ""
+bar:
+#@schema/type any=True
+- 0
+#@schema/type any=True
+baz:
+  a: 1
+`
+		dataValuesYAML := `#@data/values
+---
+#@overlay/replace
+foo:
+  ball: red
+bar:
+- newMap: 
+  - ""
+  - 8
+#@overlay/replace
+baz:
+- newArray: foobar
+`
+		templateYAML := `#@ load("@ytt:data", "data")
+---
+foo: #@ data.values.foo
+bar: #@ data.values.bar
+baz: #@ data.values.baz
+`
+		expected := `foo:
+  ball: red
+bar:
+- newMap:
+  - ""
+  - 8
+baz:
+- newArray: foobar
+`
+
+		filesToProcess := files.NewSortedFiles([]*files.File{
+			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
+			files.MustNewFileFromSource(files.NewBytesSource("dataValues.yml", []byte(dataValuesYAML))),
+			files.MustNewFileFromSource(files.NewBytesSource("template.yml", []byte(templateYAML))),
+		})
+
+		assertSucceeds(t, filesToProcess, expected, opts)
+	})
+
+	t.Run("when any is set on nested maps", func(t *testing.T) {
+		schemaYAML := `#@schema/match data_values=True
+---
+baz:
+  #@schema/type any=True
+  a: 1
+`
+		dataValuesYAML := `#@data/values
+---
+#@overlay/replace
+baz:
+  a: foobar
+`
+		templateYAML := `#@ load("@ytt:data", "data")
+---
+baz: #@ data.values.baz
+`
+		expected := `baz:
+  a: foobar
+`
+
+		filesToProcess := files.NewSortedFiles([]*files.File{
+			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
+			files.MustNewFileFromSource(files.NewBytesSource("dataValues.yml", []byte(dataValuesYAML))),
+			files.MustNewFileFromSource(files.NewBytesSource("template.yml", []byte(templateYAML))),
+		})
+
+		assertSucceeds(t, filesToProcess, expected, opts)
+	})
+
+	t.Run("when schema/type and schema/nullable annotate a map", func(t *testing.T) {
+		schemaYAML := `#@schema/match data_values=True
+---
+#@schema/type any=True
+#@schema/nullable
+foo: 0
+`
+		dataValuesYAML := `#@data/values
+---
+foo: "bar" 
+`
+		templateYAML := `#@ load("@ytt:data", "data")
+---
+foo: #@ data.values.foo
+`
+		expected := `foo: bar
+`
 		filesToProcess := files.NewSortedFiles([]*files.File{
 			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
 			files.MustNewFileFromSource(files.NewBytesSource("dataValues.yml", []byte(dataValuesYAML))),
@@ -1064,6 +1293,65 @@ schema.yml:4 |   subnet_ids: null
              |
              | INVALID SCHEMA - null value is not allowed in schema (no type can be inferred from it)
              |   (hint: to default to null, specify a value of the desired type and annotate with @schema/nullable)`
+		assertFails(t, filesToProcess, expectedErr, opts)
+	})
+	t.Run("when schema/type has keyword other than any", func(t *testing.T) {
+		schemaYAML := `#@schema/match data_values=True
+---
+#@schema/type unknown_kwarg=False
+foo: 0
+`
+		expectedErr := `schema.yml:4 | foo: 0
+             |
+             | INVALID SCHEMA - unknown @schema/type annotation keyword argument 'unknown_kwarg'. Supported kwargs are 'any'
+`
+		filesToProcess := files.NewSortedFiles([]*files.File{
+			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
+		})
+
+		assertFails(t, filesToProcess, expectedErr, opts)
+	})
+	t.Run("when schema/type has value for any other than a bool", func(t *testing.T) {
+		schemaYAML := `#@schema/match data_values=True
+---
+#@schema/type any=1
+foo: 0
+`
+		expectedErr := `schema.yml:4 | foo: 0
+             |
+             | INVALID SCHEMA - processing @schema/type 'any' argument: expected starlark.Bool, but was starlark.Int
+`
+		filesToProcess := files.NewSortedFiles([]*files.File{
+			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
+		})
+
+		assertFails(t, filesToProcess, expectedErr, opts)
+	})
+	t.Run("when schema/type has incomplete key word args", func(t *testing.T) {
+		schemaYAML := `#@schema/match data_values=True
+---
+#@schema/type
+foo: 0
+`
+		expectedErr := `schema.yml:4 | foo: 0
+             |
+             | INVALID SCHEMA - expected @schema/type annotation to have keyword argument and value. Supported key-value pairs are 'any=True', 'any=False'
+`
+		filesToProcess := files.NewSortedFiles([]*files.File{
+			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
+		})
+
+		assertFails(t, filesToProcess, expectedErr, opts)
+
+		schemaYAML2 := `#@schema/match data_values=True
+---
+#@schema/type any
+foo: 0
+`
+		filesToProcess = files.NewSortedFiles([]*files.File{
+			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML2))),
+		})
+
 		assertFails(t, filesToProcess, expectedErr, opts)
 	})
 }

@@ -74,8 +74,7 @@ func (ll *LibraryLoader) Schema() (Schema, error) {
 	if len(schemaFiles) > 0 {
 		ll.ui.Warnf("Warning: schema document was detected (%s), but schema experiment flag is not enabled. Did you mean to include --enable-experiment-schema?\n", schemaFiles[0].File.RelativePath())
 	}
-	return &schema.AnySchema{}, nil
-
+	return schema.NewPermissiveSchema(), nil
 }
 
 func (ll *LibraryLoader) Values(valuesOverlays []*DataValues) (*DataValues, []*DataValues, error) {

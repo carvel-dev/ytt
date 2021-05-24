@@ -244,6 +244,9 @@ func (d *Document) Check() (chk TypeCheck) {
 	return chk
 }
 func (m *Map) Check() (chk TypeCheck) {
+	if m.Type == nil {
+		return
+	}
 	check := m.Type.CheckType(m)
 	if check.HasViolations() {
 		chk.Violations = append(chk.Violations, check.Violations...)
@@ -265,12 +268,6 @@ func (mi *MapItem) Check() (chk TypeCheck) {
 		return
 	}
 
-	// If the current value of the item is null
-	// there is no extra validation needed Type wise
-	if mi.Value == nil {
-		return
-	}
-
 	check = checkCollectionItem(mi.Value, mi.Type.GetValueType(), mi.Position)
 	if check.HasViolations() {
 		chk.Violations = append(chk.Violations, check.Violations...)
@@ -287,6 +284,9 @@ func (a *Array) Check() (chk TypeCheck) {
 	return
 }
 func (ai *ArrayItem) Check() (chk TypeCheck) {
+	if ai.Type == nil {
+		return
+	}
 	// TODO: This check only ensures that the ai is of ArrayItem type
 	//       which we know because if it was not we would not assign
 	//       the type to it.
@@ -305,6 +305,7 @@ func (ai *ArrayItem) Check() (chk TypeCheck) {
 	return chk
 }
 
+// is it possible to enter this function with valueType=NullType or AnyType?
 func checkCollectionItem(value interface{}, valueType Type, position *filepos.Position) (chk TypeCheck) {
 	switch typedValue := value.(type) {
 	case *Map:
@@ -339,9 +340,9 @@ func (mi *MapItem) MarshalJSON() ([]byte, error)     { panic("Unexpected marshal
 func (a *Array) MarshalJSON() ([]byte, error)        { panic("Unexpected marshaling of array") }
 func (ai *ArrayItem) MarshalJSON() ([]byte, error)   { panic("Unexpected marshaling of arrayitem") }
 
-func (ds *DocumentSet) _private() {}
-func (d *Document) _private()     {}
-func (m *Map) _private()          {}
-func (mi *MapItem) _private()     {}
-func (a *Array) _private()        {}
-func (ai *ArrayItem) _private()   {}
+func (ds *DocumentSet) sealed() {}
+func (d *Document) sealed()     {}
+func (m *Map) sealed()          {}
+func (mi *MapItem) sealed()     {}
+func (a *Array) sealed()        {}
+func (ai *ArrayItem) sealed()   {}
