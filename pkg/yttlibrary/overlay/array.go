@@ -126,6 +126,19 @@ func (o Op) replaceArrayItem(
 		}
 	}
 
+	if len(leftIdxs) == 0 && replaceAnn.OrAdd() {
+		newVal, err := replaceAnn.Value(nil)
+		if err != nil {
+			return err
+		}
+
+		leftArray.Items = append(leftArray.Items, newItem.DeepCopy())
+		err = leftArray.Items[len(leftArray.Items)-1].SetValue(newVal)
+		if err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 
