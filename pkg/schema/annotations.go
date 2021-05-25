@@ -136,6 +136,7 @@ func convertAnnotationsToSingleType(anns []Annotation) yamlmeta.Type {
 		return nil
 	}
 
+	// allow Configuration Author to annotate "nullable" as a fallback if "any" is false.
 	preferAnyTypeOverNullableType := func(i, j int) bool {
 		if typeAnn, ok := annsCopy[i].(*TypeAnnotation); ok && typeAnn.IsAny() {
 			return true
