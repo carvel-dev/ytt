@@ -10,4 +10,4 @@ jobs:
       - uses: docker://k8slt/github-labeler-action@sha256:69b376b059806729c25c7d1f6cb0c88e1547eae6f57451414d108915bf4ddffd
         with:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
-          remove-labels: "carvel-triage"
+          remove-labels: "carvel triage"

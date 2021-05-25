@@ -11,4 +11,4 @@ jobs:
         if: github.event.issue.state == 'closed' && github.event.issue.closed_at != github.event.comment.created_at
         with:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
-          add-labels: "carvel-triage"
+          add-labels: "carvel triage"
