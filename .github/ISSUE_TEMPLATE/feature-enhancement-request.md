@@ -2,7 +2,7 @@
 name: Feature request
 about: Suggest an idea for ytt
 title: ''
-labels: carvel-triage, enhancement
+labels: "carvel triage", enhancement
 assignees: ''
 
 ---
