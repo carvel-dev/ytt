@@ -288,10 +288,6 @@ func (DataValuesFlags) libraryRefAndKey(key string) (string, string, error) {
 }
 
 func (s *DataValuesFlags) buildOverlay(keyPieces []string, value interface{}, desc string) *yamlmeta.Document {
-	const (
-		missingOkSuffix = "+"
-	)
-
 	resultMap := &yamlmeta.Map{}
 	currMap := resultMap
 	var lastMapItem *yamlmeta.MapItem
@@ -301,22 +297,17 @@ func (s *DataValuesFlags) buildOverlay(keyPieces []string, value interface{}, de
 
 	for _, piece := range keyPieces {
 		newMap := &yamlmeta.Map{}
-		nodeAnns := template.NodeAnnotations{}
-
-		if strings.HasSuffix(piece, missingOkSuffix) {
-			piece = piece[:len(piece)-1]
-			nodeAnns = template.NodeAnnotations{
-				yttoverlay.AnnotationMatch: template.NodeAnnotation{
-					Kwargs: []starlark.Tuple{{
-						starlark.String(yttoverlay.MatchAnnotationKwargMissingOK),
-						starlark.Bool(true),
-					}},
-				},
-			}
-		}
-
 		lastMapItem = &yamlmeta.MapItem{Key: piece, Value: newMap, Position: pos}
-		lastMapItem.SetAnnotations(nodeAnns)
+
+		// Data values schemas should be enough to provide key checking/validations.
+		lastMapItem.SetAnnotations(template.NodeAnnotations{
+			yttoverlay.AnnotationMatch: template.NodeAnnotation{
+				Kwargs: []starlark.Tuple{{
+					starlark.String(yttoverlay.MatchAnnotationKwargMissingOK),
+					starlark.Bool(true),
+				}},
+			},
+		})
 
 		currMap.Items = append(currMap.Items, lastMapItem)
 		currMap = newMap
@@ -327,7 +318,12 @@ func (s *DataValuesFlags) buildOverlay(keyPieces []string, value interface{}, de
 	// Explicitly replace entire value at given key
 	// (this allows to specify non-scalar data values)
 	existingAnns := template.NewAnnotations(lastMapItem)
-	existingAnns[yttoverlay.AnnotationReplace] = template.NodeAnnotation{}
+	existingAnns[yttoverlay.AnnotationReplace] = template.NodeAnnotation{
+		Kwargs: []starlark.Tuple{{
+			starlark.String(yttoverlay.ReplaceAnnotationKwargOrAdd),
+			starlark.Bool(true),
+		}},
+	}
 	lastMapItem.SetAnnotations(existingAnns)
 
 	return &yamlmeta.Document{Value: resultMap, Position: pos}

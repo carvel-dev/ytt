@@ -102,24 +102,34 @@ another:
 	assert.Equal(t, expectedYAMLTplData, string(file.Bytes()))
 }
 
-func TestDataValuesWithFlagsMarkedMissingOk(t *testing.T) {
+func TestDataValuesWithFlagsWithoutDataValuesOverlay(t *testing.T) {
 	yamlTplData := []byte(`
 #@ load("@ytt:data", "data")
+data_int: #@ data.values.int
+data_str: #@ data.values.str
 values: #@ data.values`)
 
-	expectedYAMLTplData := `values:
+	expectedYAMLTplData := `data_int: 124
+data_str: str
+values:
+  int: 124
+  another:
+    nested:
+      map: 567
+  str: str
+  boolean: true
   nested:
     value: str
-  another_nested:
-    other_value: str2
 `
 
+	// Only some values are prespecified by the overlay
 	yamlData := []byte(`
 #@data/values
 ---
-nested:
-  value: str
-`)
+int: 123
+another:
+  nested:
+    map: {"a": 123}`)
 
 	filesToProcess := files.NewSortedFiles([]*files.File{
 		files.MustNewFileFromSource(files.NewBytesSource("tpl.yml", yamlTplData)),
@@ -130,8 +140,9 @@ nested:
 	opts := cmdtpl.NewOptions()
 
 	opts.DataValuesFlags = cmdtpl.DataValuesFlags{
-		// TODO add nested.value2*=str2 since replace with 0 nodes does not do anything
-		KVsFromYAML: []string{"another_nested+.other_value=str2"},
+		EnvFromStrings: []string{"DVS"},
+		EnvironFunc:    func() []string { return []string{"DVS_str=str"} },
+		KVsFromYAML:    []string{"int=124", "boolean=true", "nested.value=\"str\"", "another.nested.map=567"},
 	}
 
 	out := opts.RunWithFiles(cmdtpl.Input{Files: filesToProcess}, ui)
