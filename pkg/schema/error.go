@@ -89,17 +89,19 @@ type mismatchedTypeError struct {
 }
 
 func (t mismatchedTypeError) Error() string {
-	position := t.Found.GetPosition().AsCompactString()
-	lineContent := t.Found.GetPosition().GetLine()
+	position := "?"
+	lineContent := ""
+	if t.Found.GetPosition() != nil {
+		position = t.Found.GetPosition().AsCompactString()
+		lineContent = t.Found.GetPosition().GetLine()
+	}
 
 	leftPadLength := len(position) + 1
 	msg := "\n"
 	msg += formatLine(leftPadLength, position, lineContent)
 	msg += formatLine(leftPadLength, "", "")
 	msg += formatLine(leftPadLength, "", "TYPE MISMATCH - the value of this item is not what schema expected:")
-	if t.Found.GetPosition().IsKnown() {
-		msg += formatLine(leftPadLength, "", fmt.Sprintf("     found: %s", t.Found.ValueTypeAsString()))
-	}
+	msg += formatLine(leftPadLength, "", fmt.Sprintf("     found: %s", t.Found.ValueTypeAsString()))
 
 	if t.Expected.PositionOfDefinition().IsKnown() {
 		expectedTypeString := ""

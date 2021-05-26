@@ -422,6 +422,34 @@ data_values.yml:10 |     - true  #! expecting a float, got a bool
 		assertFails(t, filesToProcess, expectedErr, opts)
 	})
 
+	t.Run("when a invalid data value is passed using template replace", func(t *testing.T) {
+		schemaYAML := `#@schema/match data_values=True
+---
+foo: bar
+`
+		dataValuesYAML := `#@ load("@ytt:template", "template")
+#@data/values
+---
+_: #@ template.replace({'foo':9})
+`
+		templateYAML := `#@ load("@ytt:data", "data")
+---
+rendered: #@ data.values.foo
+`
+		expectedErr := `? |
+  |
+  | TYPE MISMATCH - the value of this item is not what schema expected:
+  |      found: int64
+  |   expected: string (by schema.yml:3)`
+
+		filesToProcess := files.NewSortedFiles([]*files.File{
+			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
+			files.MustNewFileFromSource(files.NewBytesSource("dataValues.yml", []byte(dataValuesYAML))),
+			files.MustNewFileFromSource(files.NewBytesSource("template.yml", []byte(templateYAML))),
+		})
+
+		assertFails(t, filesToProcess, expectedErr, opts)
+	})
 	t.Run("when a data value is passed using --data-value, but schema expects a non string", func(t *testing.T) {
 		cmdOpts := cmdtpl.NewOptions()
 		cmdOpts.SchemaEnabled = true
@@ -1605,6 +1633,35 @@ root_data_values: null
 		})
 
 		assertSucceeds(t, filesToProcess, expectedYAMLTplData, opts)
+	})
+	t.Run("when data values are programmatically set on a library, but library's schema expects an int, type violation is reported", func(t *testing.T) {
+		configYAML := []byte(`
+#@ load("@ytt:template", "template")
+#@ load("@ytt:library", "library")
+--- #@ template.replace(library.get("lib").with_data_values({'foo':'4'}).eval())`)
+
+		libSchemaYAML := []byte(`
+#@schema/match data_values=True
+---
+foo: 3`)
+
+		expectedErr := `- library.eval: Evaluating library 'lib': Overlaying data values (in following order: additional data values): 
+    in <toplevel>
+      config.yml:4 | --- #@ template.replace(library.get("lib").with_data_values({'foo':'4'}).eval())
+
+    reason:
+     ? |
+       |
+       | TYPE MISMATCH - the value of this item is not what schema expected:
+       |      found: string
+       |   expected: integer (by _ytt_lib/lib/schema.yml:4)`
+
+		filesToProcess := files.NewSortedFiles([]*files.File{
+			files.MustNewFileFromSource(files.NewBytesSource("config.yml", configYAML)),
+			files.MustNewFileFromSource(files.NewBytesSource("_ytt_lib/lib/schema.yml", libSchemaYAML)),
+		})
+
+		assertFails(t, filesToProcess, expectedErr, opts)
 	})
 }
 
