@@ -6,7 +6,6 @@ package template_test
 import (
 	"bytes"
 	"fmt"
-	"math"
 	"math/rand"
 	"os"
 	"regexp"
@@ -1120,94 +1119,6 @@ foo: ""`)
 		assertSucceeds(t, filesToProcess, expectedYAMLTplData, opts)
 	})
 
-	t.Run("schema is provided a uint64", func(t *testing.T) {
-
-		configYAML := []byte(`
-#@ load("@ytt:data", "data")
----
-foo: #@ data.values.foo`)
-
-		maxUint64 := strconv.FormatUint(math.MaxUint64, 10)
-		schemaYAML := []byte(fmt.Sprintf(`
-#@schema/match data_values=True
----
-foo: %s`, maxUint64))
-
-		expectedYAMLTplData := fmt.Sprintf(`foo: %s
-`, maxUint64)
-
-		filesToProcess := files.NewSortedFiles([]*files.File{
-			files.MustNewFileFromSource(files.NewBytesSource("config.yml", configYAML)),
-			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", schemaYAML)),
-		})
-
-		assertSucceeds(t, filesToProcess, expectedYAMLTplData, opts)
-	})
-
-	t.Run("when data values with an integer are programmatically set on a library, they are checked by that library's schema", func(t *testing.T) {
-
-		configYAML := []byte(`
-#@ load("@ytt:template", "template")
-#@ load("@ytt:library", "library")
----
-#@ def dvs_from_root():
-foo: #@ -9223372036854775808
-#@ end
---- #@ template.replace(library.get("lib").with_data_values(dvs_from_root()).eval())`)
-
-		libConfigYAML := []byte(`
-#@ load("@ytt:data", "data")
----
-foo: #@ data.values.foo`)
-
-		libSchemaYAML := []byte(`
-#@schema/match data_values=True
----
-foo: 0`)
-
-		expectedYAMLTplData := `foo: -9223372036854775808
-`
-
-		filesToProcess := files.NewSortedFiles([]*files.File{
-			files.MustNewFileFromSource(files.NewBytesSource("config.yml", configYAML)),
-			files.MustNewFileFromSource(files.NewBytesSource("_ytt_lib/lib/config.yml", libConfigYAML)),
-			files.MustNewFileFromSource(files.NewBytesSource("_ytt_lib/lib/schema.yml", libSchemaYAML)),
-		})
-
-		assertSucceeds(t, filesToProcess, expectedYAMLTplData, opts)
-	})
-
-	t.Run("when data values with a float are programmatically set on a library, they are checked by that library's schema", func(t *testing.T) {
-		configYAML := []byte(`
-#@ load("@ytt:template", "template")
-#@ load("@ytt:library", "library")
----
-#@ def dvs_from_root():
-foo: #@ 0.1
-#@ end
---- #@ template.replace(library.get("lib").with_data_values(dvs_from_root()).eval())`)
-
-		libConfigYAML := []byte(`
-#@ load("@ytt:data", "data")
----
-foo: #@ data.values.foo`)
-
-		libSchemaYAML := []byte(`
-#@schema/match data_values=True
----
-foo: 0.0`)
-
-		expectedYAMLTplData := `foo: 0.1
-`
-
-		filesToProcess := files.NewSortedFiles([]*files.File{
-			files.MustNewFileFromSource(files.NewBytesSource("config.yml", configYAML)),
-			files.MustNewFileFromSource(files.NewBytesSource("_ytt_lib/lib/config.yml", libConfigYAML)),
-			files.MustNewFileFromSource(files.NewBytesSource("_ytt_lib/lib/schema.yml", libSchemaYAML)),
-		})
-
-		assertSucceeds(t, filesToProcess, expectedYAMLTplData, opts)
-	})
 	t.Run("when data values are programmatically exported from a library, they are checked by that library's schema", func(t *testing.T) {
 		configYAML := []byte(`
 #@ load("@ytt:library", "library")
@@ -1925,7 +1836,7 @@ func TestSchema_With_fuzzed_inputs(t *testing.T) {
 	validIntegerRange := fuzz.UnicodeRange{First: '0', Last: '9'}
 	randSource := getYttRandSource(t)
 
-	fuzzInteger := fuzz.New().RandSource(randSource).Funcs(func(s *string, c fuzz.Continue) {
+	fuzzLargeNumber := fuzz.New().RandSource(randSource).Funcs(func(s *string, c fuzz.Continue) {
 		validIntegerRange.CustomStringFuzzFunc()(s, c)
 		// We remove '0' in the prefix to only test base 10 numbers.
 		// For more info refer to the yaml spec: http://yaml.org/type/int.html
@@ -1938,29 +1849,34 @@ func TestSchema_With_fuzzed_inputs(t *testing.T) {
 
 	fuzzFloat := fuzz.New().RandSource(randSource).Funcs(func(s *string, c fuzz.Continue) {
 		*s = strconv.FormatFloat(c.Float64(), 'f', -1, 64)
+
 	})
 
 	fuzzStrings := fuzz.New().RandSource(randSource).Funcs(func(s *string, c fuzz.Continue) {
 		*s += c.RandString()
 		*s = strings.ReplaceAll(*s, "'", `"`)
+		// starlark uses the '\' char as an escape character. ignore the escape char to simplify writing assertions.
+		*s = strings.ReplaceAll(*s, "\\", `/`)
 	})
 
 	for i := 0; i < 100; i++ {
 		var expectedInt, expectedString, expectedFloat string
-		fuzzInteger.Fuzz(&expectedInt)
+		fuzzLargeNumber.Fuzz(&expectedInt)
 		fuzzStrings.Fuzz(&expectedString)
 		fuzzFloat.Fuzz(&expectedFloat)
+		starlarkEvals := []string{"", "#@ "}
+		starlarkEvalUsed := starlarkEvals[rand.New(randSource).Intn(2)]
 
-		t.Run(fmt.Sprintf("FUZZ: int: [%v], string: [%v], float64: [%v]", expectedInt, expectedString, expectedFloat), func(t *testing.T) {
+		t.Run(fmt.Sprintf("A schema programatically set to a library: int: [%v], string: [%v], float64: [%v], starlark eval: [%v]", expectedInt, expectedString, expectedFloat, starlarkEvalUsed), func(t *testing.T) {
 
 			configYAML := []byte(`
 #@ load("@ytt:template", "template")
 #@ load("@ytt:library", "library")
 ---
 #@ def dvs_from_root():
-someInt: ` + expectedInt + `
-someString: ` + "'" + expectedString + "'" + `
-someFloat: ` + expectedFloat + `
+someInt: ` + starlarkEvalUsed + expectedInt + `
+someString: ` + starlarkEvalUsed + "'" + expectedString + "'" + `
+someFloat: ` + starlarkEvalUsed + expectedFloat + `
 #@ end
 --- #@ template.replace(library.get("lib").with_schema(dvs_from_root()).eval())`)
 
@@ -1972,9 +1888,11 @@ someString: #@ data.values.someString
 someFloat: #@ data.values.someFloat
 `)
 
+			expectedFloatParsed, err := strconv.ParseFloat(expectedFloat, 64)
+			require.NoError(t, err)
 			expectedYAMLTplData := `someInt: ` + expectedInt + `
 someString: ('|")*` + regexp.QuoteMeta(expectedString) + `('|")*
-someFloat: ` + expectedFloat + `
+someFloat: ` + "(" + expectedFloat + "|" + fmt.Sprintf("%g", expectedFloatParsed) + ")" + `
 `
 
 			filesToProcess := files.NewSortedFiles([]*files.File{
@@ -1984,6 +1902,7 @@ someFloat: ` + expectedFloat + `
 
 			assertSucceedsWithRegexp(t, filesToProcess, expectedYAMLTplData, opts)
 		})
+
 	}
 }
 
