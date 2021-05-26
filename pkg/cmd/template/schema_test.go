@@ -5,9 +5,14 @@ package template_test
 
 import (
 	"bytes"
+	"fmt"
+	"math"
+	"regexp"
 	"strconv"
+	"strings"
 	"testing"
 
+	fuzz "github.com/google/gofuzz"
 	cmdtpl "github.com/k14s/ytt/pkg/cmd/template"
 	"github.com/k14s/ytt/pkg/cmd/ui"
 	"github.com/k14s/ytt/pkg/files"
@@ -1187,7 +1192,7 @@ foo: #@ data.values.foo`)
 		libSchemaYAML := []byte(`
 #@schema/match data_values=True
 ---
-foo: 0.0`) // 0 doesn't work. but I think that makes sense.
+foo: 0.0`)
 
 		expectedYAMLTplData := `foo: 0.1
 `
@@ -1910,6 +1915,84 @@ system_domain: #@ data.values.system_domain
 	})
 }
 
+func TestSchema_With_fuzzed_inputs(t *testing.T) {
+	opts := cmdtpl.NewOptions()
+	opts.SchemaEnabled = true
+
+	validIntegerRange := fuzz.UnicodeRange{First: '0', Last: '9'}
+
+	fuzzInteger := fuzz.New().Funcs(func(s *string, c fuzz.Continue) {
+		validIntegerRange.CustomStringFuzzFunc()(s, c)
+		// We remove '0' in the prefix to only test base 10 numbers.
+		// For more info refer to the yaml spec: http://yaml.org/type/int.html
+		removePrefix(s, "0")
+
+		if *s == "" {
+			*s = strconv.Itoa(c.Int())
+		}
+	})
+
+	fuzzFloat := fuzz.New().Funcs(func(s *string, c fuzz.Continue) {
+		*s = strconv.FormatFloat(c.Float64(), 'f', -1, 64)
+	})
+
+	fuzzStrings := fuzz.New().Funcs(func(s *string, c fuzz.Continue) {
+		*s += c.RandString()
+		*s = strings.ReplaceAll(*s, "'", `"`)
+	})
+
+	for i := 0; i < 100; i++ {
+		var expectedInt, expectedString, expectedFloat string
+		fuzzInteger.Fuzz(&expectedInt)
+		fuzzStrings.Fuzz(&expectedString)
+		fuzzFloat.Fuzz(&expectedFloat)
+
+		t.Run(fmt.Sprintf("FUZZ: int: [%v], string: [%v], float64: [%v]", expectedInt, expectedString, expectedFloat), func(t *testing.T) {
+
+			configYAML := []byte(`
+#@ load("@ytt:template", "template")
+#@ load("@ytt:library", "library")
+---
+#@ def dvs_from_root():
+someInt: ` + expectedInt + `
+someString: ` + "'" + expectedString + "'" + `
+someFloat: ` + expectedFloat + `
+#@ end
+--- #@ template.replace(library.get("lib").with_schema(dvs_from_root()).eval())`)
+
+			libConfigYAML := []byte(`
+#@ load("@ytt:data", "data")
+---
+someInt: #@ data.values.someInt
+someString: #@ data.values.someString
+someFloat: #@ data.values.someFloat
+`)
+
+			expectedYAMLTplData := `someInt: ` + expectedInt + `
+someString: ('|")*` + regexp.QuoteMeta(expectedString) + `('|")*
+someFloat: ` + expectedFloat + `
+`
+
+			filesToProcess := files.NewSortedFiles([]*files.File{
+				files.MustNewFileFromSource(files.NewBytesSource("config.yml", configYAML)),
+				files.MustNewFileFromSource(files.NewBytesSource("_ytt_lib/lib/config.yml", libConfigYAML)),
+			})
+
+			assertSucceedsWithRegexp(t, filesToProcess, expectedYAMLTplData, opts)
+		})
+	}
+}
+
+func removePrefix(s *string, prefix string) {
+	for {
+		if strings.HasPrefix(*s, prefix) {
+			*s = strings.TrimPrefix(*s, prefix)
+		} else {
+			break
+		}
+	}
+}
+
 func assertSucceeds(t *testing.T, filesToProcess []*files.File, expectedOut string, opts *cmdtpl.Options) {
 	t.Helper()
 	out := opts.RunWithFiles(cmdtpl.Input{Files: filesToProcess}, ui.NewTTY(false))
@@ -1918,6 +2001,16 @@ func assertSucceeds(t *testing.T, filesToProcess []*files.File, expectedOut stri
 	require.Len(t, out.Files, 1, "unexpected number of output files")
 
 	require.Equal(t, expectedOut, string(out.Files[0].Bytes()))
+}
+
+func assertSucceedsWithRegexp(t *testing.T, filesToProcess []*files.File, expectedOutRegex string, opts *cmdtpl.Options) {
+	t.Helper()
+	out := opts.RunWithFiles(cmdtpl.Input{Files: filesToProcess}, ui.NewTTY(false))
+	require.NoError(t, out.Err)
+
+	require.Len(t, out.Files, 1, "unexpected number of output files")
+
+	require.Regexp(t, expectedOutRegex, string(out.Files[0].Bytes()))
 }
 
 func assertFails(t *testing.T, filesToProcess []*files.File, expectedErr string, opts *cmdtpl.Options) {

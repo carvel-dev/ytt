@@ -6,6 +6,7 @@ require (
 	github.com/aws/aws-lambda-go v1.8.2
 	github.com/cppforlife/cobrautil v0.0.0-20200514214827-bb86e6965d72
 	github.com/cppforlife/go-cli-ui v0.0.0-20200505234325-512793797f05
+	github.com/google/gofuzz v1.2.0
 	github.com/hashicorp/go-version v1.2.0
 	github.com/k14s/difflib v0.0.0-20201117154628-0c031775bf57
 	github.com/k14s/starlark-go v0.0.0-20200720175618-3a5c849cc368
