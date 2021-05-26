@@ -39,7 +39,7 @@ func typeToString(value interface{}) string {
 	switch value.(type) {
 	case float64:
 		return "float"
-	case int:
+	case int, int64, uint64:
 		return "integer"
 	case bool:
 		return "boolean"
