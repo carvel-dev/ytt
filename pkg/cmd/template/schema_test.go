@@ -7,10 +7,13 @@ import (
 	"bytes"
 	"fmt"
 	"math"
+	"math/rand"
+	"os"
 	"regexp"
 	"strconv"
 	"strings"
 	"testing"
+	"time"
 
 	fuzz "github.com/google/gofuzz"
 	cmdtpl "github.com/k14s/ytt/pkg/cmd/template"
@@ -1920,8 +1923,9 @@ func TestSchema_With_fuzzed_inputs(t *testing.T) {
 	opts.SchemaEnabled = true
 
 	validIntegerRange := fuzz.UnicodeRange{First: '0', Last: '9'}
+	randSource := getYttRandSource(t)
 
-	fuzzInteger := fuzz.New().Funcs(func(s *string, c fuzz.Continue) {
+	fuzzInteger := fuzz.New().RandSource(randSource).Funcs(func(s *string, c fuzz.Continue) {
 		validIntegerRange.CustomStringFuzzFunc()(s, c)
 		// We remove '0' in the prefix to only test base 10 numbers.
 		// For more info refer to the yaml spec: http://yaml.org/type/int.html
@@ -1932,11 +1936,11 @@ func TestSchema_With_fuzzed_inputs(t *testing.T) {
 		}
 	})
 
-	fuzzFloat := fuzz.New().Funcs(func(s *string, c fuzz.Continue) {
+	fuzzFloat := fuzz.New().RandSource(randSource).Funcs(func(s *string, c fuzz.Continue) {
 		*s = strconv.FormatFloat(c.Float64(), 'f', -1, 64)
 	})
 
-	fuzzStrings := fuzz.New().Funcs(func(s *string, c fuzz.Continue) {
+	fuzzStrings := fuzz.New().RandSource(randSource).Funcs(func(s *string, c fuzz.Continue) {
 		*s += c.RandString()
 		*s = strings.ReplaceAll(*s, "'", `"`)
 	})
@@ -1981,6 +1985,25 @@ someFloat: ` + expectedFloat + `
 			assertSucceedsWithRegexp(t, filesToProcess, expectedYAMLTplData, opts)
 		})
 	}
+}
+
+func getYttRandSource(t *testing.T) rand.Source {
+	var seed int64
+	if os.Getenv("YTT_SEED") == "" {
+		seed = time.Now().UnixNano()
+	} else {
+		envSeed, err := strconv.Atoi(os.Getenv("YTT_SEED"))
+		require.NoError(t, err)
+		seed = int64(envSeed)
+	}
+
+	t.Log(fmt.Sprintf("YTT Seed used was: [%v]. To reproduce this test failure, re-run the test with `export YTT_SEED=%v`", seed, seed))
+
+	t.Cleanup(func() {
+		fmt.Printf("\n\n*** To reproduce this test run, re-run the test with `export YTT_SEED=%v` ***\n\n", seed)
+	})
+
+	return rand.NewSource(seed)
 }
 
 func removePrefix(s *string, prefix string) {
