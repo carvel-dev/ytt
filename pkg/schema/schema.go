@@ -187,7 +187,7 @@ func newCollectionItemValueType(collectionItemValue interface{}, position *filep
 		return &ScalarType{Value: *new(string), Position: position}, nil
 	case float64:
 		return &ScalarType{Value: *new(float64), Position: position}, nil
-	case int:
+	case int, int64, uint64:
 		return &ScalarType{Value: *new(int), Position: position}, nil
 	case bool:
 		return &ScalarType{Value: *new(bool), Position: position}, nil

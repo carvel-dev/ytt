@@ -5,6 +5,7 @@ package template_test
 
 import (
 	"bytes"
+	"strconv"
 	"testing"
 
 	cmdtpl "github.com/k14s/ytt/pkg/cmd/template"
@@ -1100,6 +1101,95 @@ foo: #@ data.values.foo`)
 foo: ""`)
 
 		expectedYAMLTplData := `foo: from "root" library
+`
+
+		filesToProcess := files.NewSortedFiles([]*files.File{
+			files.MustNewFileFromSource(files.NewBytesSource("config.yml", configYAML)),
+			files.MustNewFileFromSource(files.NewBytesSource("_ytt_lib/lib/config.yml", libConfigYAML)),
+			files.MustNewFileFromSource(files.NewBytesSource("_ytt_lib/lib/schema.yml", libSchemaYAML)),
+		})
+
+		assertSucceeds(t, filesToProcess, expectedYAMLTplData, opts)
+	})
+
+	t.Run("schema is provided a uint64", func(t *testing.T) {
+
+		configYAML := []byte(`
+#@ load("@ytt:data", "data")
+---
+foo: #@ data.values.foo`)
+
+		maxUint64 := strconv.FormatUint(math.MaxUint64, 10)
+		schemaYAML := []byte(fmt.Sprintf(`
+#@schema/match data_values=True
+---
+foo: %s`, maxUint64))
+
+		expectedYAMLTplData := fmt.Sprintf(`foo: %s
+`, maxUint64)
+
+		filesToProcess := files.NewSortedFiles([]*files.File{
+			files.MustNewFileFromSource(files.NewBytesSource("config.yml", configYAML)),
+			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", schemaYAML)),
+		})
+
+		assertSucceeds(t, filesToProcess, expectedYAMLTplData, opts)
+	})
+
+	t.Run("when data values with an integer are programmatically set on a library, they are checked by that library's schema", func(t *testing.T) {
+
+		configYAML := []byte(`
+#@ load("@ytt:template", "template")
+#@ load("@ytt:library", "library")
+---
+#@ def dvs_from_root():
+foo: #@ -9223372036854775808
+#@ end
+--- #@ template.replace(library.get("lib").with_data_values(dvs_from_root()).eval())`)
+
+		libConfigYAML := []byte(`
+#@ load("@ytt:data", "data")
+---
+foo: #@ data.values.foo`)
+
+		libSchemaYAML := []byte(`
+#@schema/match data_values=True
+---
+foo: 0`)
+
+		expectedYAMLTplData := `foo: -9223372036854775808
+`
+
+		filesToProcess := files.NewSortedFiles([]*files.File{
+			files.MustNewFileFromSource(files.NewBytesSource("config.yml", configYAML)),
+			files.MustNewFileFromSource(files.NewBytesSource("_ytt_lib/lib/config.yml", libConfigYAML)),
+			files.MustNewFileFromSource(files.NewBytesSource("_ytt_lib/lib/schema.yml", libSchemaYAML)),
+		})
+
+		assertSucceeds(t, filesToProcess, expectedYAMLTplData, opts)
+	})
+
+	t.Run("when data values with a float are programmatically set on a library, they are checked by that library's schema", func(t *testing.T) {
+		configYAML := []byte(`
+#@ load("@ytt:template", "template")
+#@ load("@ytt:library", "library")
+---
+#@ def dvs_from_root():
+foo: #@ 0.1
+#@ end
+--- #@ template.replace(library.get("lib").with_data_values(dvs_from_root()).eval())`)
+
+		libConfigYAML := []byte(`
+#@ load("@ytt:data", "data")
+---
+foo: #@ data.values.foo`)
+
+		libSchemaYAML := []byte(`
+#@schema/match data_values=True
+---
+foo: 0.0`) // 0 doesn't work. but I think that makes sense.
+
+		expectedYAMLTplData := `foo: 0.1
 `
 
 		filesToProcess := files.NewSortedFiles([]*files.File{
