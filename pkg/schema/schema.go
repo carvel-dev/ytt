@@ -5,9 +5,11 @@ package schema
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/k14s/ytt/pkg/filepos"
 	"github.com/k14s/ytt/pkg/template"
+	"github.com/k14s/ytt/pkg/workspace/ref"
 	"github.com/k14s/ytt/pkg/yamlmeta"
 )
 
@@ -19,6 +21,10 @@ type DocumentSchema struct {
 	Source     *yamlmeta.Document
 	defaultDVs *yamlmeta.Document
 	Allowed    *DocumentType
+	used       bool
+
+	originalLibRef []ref.LibraryRef
+	libRef         []ref.LibraryRef
 }
 
 func NewDocumentSchema(doc *yamlmeta.Document) (*DocumentSchema, error) {
@@ -32,11 +38,18 @@ func NewDocumentSchema(doc *yamlmeta.Document) (*DocumentSchema, error) {
 		return nil, err
 	}
 
+	libRef, err := getSchemaLibRef(ref.LibraryRefExtractor{}, doc)
+	if err != nil {
+		return nil, err
+	}
+
 	return &DocumentSchema{
-		Name:       "dataValues",
-		Source:     doc,
-		defaultDVs: schemaDVs,
-		Allowed:    docType,
+		Name:           "dataValues",
+		Source:         doc,
+		defaultDVs:     schemaDVs,
+		Allowed:        docType,
+		originalLibRef: libRef,
+		libRef:         libRef,
 	}, nil
 }
 
@@ -215,6 +228,19 @@ func setDefaultValues(node yamlmeta.Node) {
 	}
 }
 
+type ExtractLibRefs interface {
+	FromAnnotation(template.NodeAnnotations) ([]ref.LibraryRef, error)
+}
+
+func getSchemaLibRef(libRefs ExtractLibRefs, doc *yamlmeta.Document) ([]ref.LibraryRef, error) {
+	anns := template.NewAnnotations(doc)
+	libRef, err := libRefs.FromAnnotation(anns)
+	if err != nil {
+		return nil, err
+	}
+	return libRef, nil
+}
+
 func (n NullSchema) AssignType(typeable yamlmeta.Typeable) yamlmeta.TypeCheck {
 	return yamlmeta.TypeCheck{}
 }
@@ -240,4 +266,49 @@ func (n NullSchema) ValidateWithValues(valuesFilesCount int) error {
 
 func (s *DocumentSchema) ValidateWithValues(valuesFilesCount int) error {
 	return nil
+}
+
+func (s *DocumentSchema) deepCopy() *DocumentSchema {
+	var copiedPieces []ref.LibraryRef
+	copiedPieces = append(copiedPieces, s.libRef...)
+	return &DocumentSchema{
+		Name:           s.Name,
+		Source:         s.Source.DeepCopy(),
+		defaultDVs:     s.defaultDVs.DeepCopy(),
+		Allowed:        s.Allowed,
+		originalLibRef: s.originalLibRef,
+		libRef:         copiedPieces,
+	}
+}
+
+func (s *DocumentSchema) Desc() string {
+	var desc []string
+	for _, refPiece := range s.originalLibRef {
+		desc = append(desc, refPiece.AsString())
+	}
+	return fmt.Sprintf("Schema belonging to library '%s%s' on %s", "@",
+		strings.Join(desc, "@"), s.Source.Position.AsString())
+}
+
+func (s *DocumentSchema) IsUsed() bool { return s.used }
+func (s *DocumentSchema) markUsed()    { s.used = true }
+
+func (s *DocumentSchema) IntendedForAnotherLibrary() bool {
+	return len(s.libRef) > 0
+}
+
+func (s *DocumentSchema) UsedInLibrary(expectedRefPiece ref.LibraryRef) (*DocumentSchema, bool) {
+	if !s.IntendedForAnotherLibrary() {
+		s.markUsed()
+
+		return s.deepCopy(), true
+	}
+
+	if !s.libRef[0].Matches(expectedRefPiece) {
+		return nil, false
+	}
+	s.markUsed()
+	childSchema := s.deepCopy()
+	childSchema.libRef = childSchema.libRef[1:]
+	return childSchema, !childSchema.IntendedForAnotherLibrary()
 }

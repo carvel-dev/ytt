@@ -827,7 +827,7 @@ lib_val2: #@ data.values.lib_val2`)
 	out := opts.RunWithFiles(cmdtpl.Input{Files: filesToProcess}, ui)
 
 	expectedErr := "Expected all provided library data values documents to be used " +
-		"but found unused: library '@~inst2' on line values.yml:9"
+		"but found unused: DataValue belonging to library '@~inst2' on line values.yml:9"
 	require.EqualError(t, out.Err, expectedErr)
 }
 
@@ -875,7 +875,7 @@ nested_lib_val1: override-me`)
 	out := opts.RunWithFiles(cmdtpl.Input{Files: filesToProcess}, ui)
 	require.Error(t, out.Err)
 	require.Contains(t, out.Err.Error(), "Expected all provided library data values documents to be used "+
-		"but found unused: library '@~inst1@~inst2' on line values.yml:4")
+		"but found unused: DataValue belonging to library '@~inst1@~inst2' on line values.yml:4")
 }
 
 func TestUnusedLibraryDataValuesWithoutLibraryEvalChild(t *testing.T) {
@@ -903,7 +903,7 @@ nested_lib_val1: new-val1`)
 	out := opts.RunWithFiles(cmdtpl.Input{Files: filesToProcess}, ui)
 	require.Error(t, out.Err)
 	require.Contains(t, out.Err.Error(), "Expected all provided library data values documents to be used "+
-		"but found unused: library '@with-nested-lib@lib' on line values.yml:4")
+		"but found unused: DataValue belonging to library '@with-nested-lib@lib' on line values.yml:4")
 }
 
 func TestUnusedLibraryDataValuesNestedWithoutLibraryEval(t *testing.T) {
@@ -931,7 +931,7 @@ nested_lib_val1: new-val1`)
 	out := opts.RunWithFiles(cmdtpl.Input{Files: filesToProcess}, ui)
 	require.Error(t, out.Err)
 	require.Contains(t, out.Err.Error(), "Expected all provided library data values documents to be used "+
-		"but found unused: library '@with-nested-lib' on line values.yml:4")
+		"but found unused: DataValue belonging to library '@with-nested-lib' on line values.yml:4")
 }
 
 func TestMalformedLibraryRefEmptyAlias(t *testing.T) {
@@ -1081,11 +1081,13 @@ lib_int: #@ data.values.int`)
 }
 
 func runAndCompare(t *testing.T, filesToProcess []*files.File, expectedYAMLTplData string) {
+	t.Helper()
 	runAndCompareWithOpts(t, cmdtpl.NewOptions(), filesToProcess, expectedYAMLTplData)
 }
 
 func runAndCompareWithOpts(t *testing.T, opts *cmdtpl.Options,
 	filesToProcess []*files.File, expectedYAMLTplData string) {
+	t.Helper()
 
 	ui := ui.NewTTY(false)
 
