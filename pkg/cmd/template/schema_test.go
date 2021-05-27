@@ -1709,7 +1709,10 @@ vpc:
 schema.yml:4 |   subnet_ids: null
              |
              | INVALID SCHEMA - null value is not allowed in schema (no type can be inferred from it)
-             |   (hint: to default to null, specify a value of the desired type and annotate with @schema/nullable)`
+             | hint: in YAML, omitting a value implies null.
+             | hint: to set the default value to null, annotate with @schema/nullable.
+             | hint: to allow any value, annotate with @schema/type any=True.
+`
 		assertFails(t, filesToProcess, expectedErr, opts)
 	})
 	t.Run("when schema/type has keyword other than any", func(t *testing.T) {
