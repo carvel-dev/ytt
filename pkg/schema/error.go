@@ -13,16 +13,16 @@ import (
 
 func NewInvalidSchemaError(found yamlmeta.Node, message, hint string) error {
 	return &invalidSchemaError{
-		Message: message,
 		Found:   found,
-		Hint:    hint,
+		message: message,
+		hint:    hint,
 	}
 }
 
 func NewInvalidArrayDefinitionError(found yamlmeta.Node, hint string) error {
 	return &invalidArrayDefinitionError{
 		Found: found,
-		Hint:  hint,
+		hint:  hint,
 	}
 }
 
@@ -41,9 +41,9 @@ func NewUnexpectedKeyError(found *yamlmeta.MapItem, definition *filepos.Position
 }
 
 type invalidSchemaError struct {
-	Message string
 	Found   yamlmeta.Node
-	Hint    string
+	message string
+	hint    string
 }
 
 func (e invalidSchemaError) Error() string {
@@ -54,9 +54,9 @@ func (e invalidSchemaError) Error() string {
 	msg := "\n"
 	msg += formatLine(leftColumnSize, position, lineContent)
 	msg += formatLine(leftColumnSize, "", "")
-	msg += formatLine(leftColumnSize, "", "INVALID SCHEMA - "+e.Message)
-	if e.Hint != "" {
-		msg += formatLine(leftColumnSize, "", fmt.Sprintf("  (hint: %s)", e.Hint))
+	msg += formatLine(leftColumnSize, "", "INVALID SCHEMA - "+e.message)
+	if e.hint != "" {
+		msg += formatLine(leftColumnSize, "", fmt.Sprintf("  (hint: %s)", e.hint))
 	}
 
 	return msg
@@ -64,7 +64,7 @@ func (e invalidSchemaError) Error() string {
 
 type invalidArrayDefinitionError struct {
 	Found yamlmeta.Node
-	Hint  string
+	hint  string
 }
 
 func (i invalidArrayDefinitionError) Error() string {
@@ -78,7 +78,7 @@ func (i invalidArrayDefinitionError) Error() string {
 	msg += formatLine(leftColumnSize, "", "INVALID ARRAY DEFINITION IN SCHEMA - unable to determine the desired type")
 	msg += formatLine(leftColumnSize, "", fmt.Sprintf("     found: %d array items", len(i.Found.GetValues())))
 	msg += formatLine(leftColumnSize, "", "  expected: exactly 1 array item, of the desired type")
-	msg += formatLine(leftColumnSize, "", fmt.Sprintf("  (hint: %s)", i.Hint))
+	msg += formatLine(leftColumnSize, "", fmt.Sprintf("  (hint: %s)", i.hint))
 
 	return msg
 }
