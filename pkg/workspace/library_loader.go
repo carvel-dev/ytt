@@ -46,7 +46,7 @@ func NewLibraryLoader(libraryCtx LibraryExecutionContext,
 	}
 }
 
-func (ll *LibraryLoader) Schemas(schemaOverlays []*schema.DocumentSchema) (Schema, []*schema.DocumentSchema, error) {
+func (ll *LibraryLoader) Schemas(schemaOverlays []*schema.DocumentSchemaEnvelope) (Schema, []*schema.DocumentSchemaEnvelope, error) {
 	loader := NewTemplateLoader(NewEmptyDataValues(), nil, nil, ll.templateLoaderOpts, ll.libraryExecFactory, ll.ui)
 
 	schemaFiles, err := ll.schemaFiles(loader)
@@ -61,29 +61,29 @@ func (ll *LibraryLoader) Schemas(schemaOverlays []*schema.DocumentSchema) (Schem
 		documentSchemas = append(documentSchemas, schemaOverlays...)
 
 		var resultSchemasDoc *yamlmeta.Document
-		var librarySchemas []*schema.DocumentSchema
+		var childLibrarySchemas []*schema.DocumentSchemaEnvelope
 		for _, docSchema := range documentSchemas {
 			if docSchema.IntendedForAnotherLibrary() {
-				librarySchemas = append(librarySchemas, docSchema)
+				childLibrarySchemas = append(childLibrarySchemas, docSchema)
 				continue
 			}
 			if resultSchemasDoc == nil {
-				resultSchemasDoc = docSchema.Source
+				resultSchemasDoc = docSchema.Source()
 			} else {
-				resultSchemasDoc, err = ll.overlay(resultSchemasDoc, docSchema.Source)
+				resultSchemasDoc, err = ll.overlay(resultSchemasDoc, docSchema.Source())
 				if err != nil {
 					return nil, nil, err
 				}
 			}
 		}
 		if resultSchemasDoc != nil {
-			finalSchema, err := schema.NewDocumentSchema(resultSchemasDoc)
+			currentLibrarySchema, err := schema.NewDocumentSchema(resultSchemasDoc)
 			if err != nil {
 				return nil, nil, err
 			}
-			return finalSchema, librarySchemas, nil
+			return currentLibrarySchema, childLibrarySchemas, nil
 		}
-		return schema.NullSchema{}, librarySchemas, nil
+		return schema.NullSchema{}, childLibrarySchemas, nil
 	}
 
 	if len(schemaFiles) > 0 {
@@ -92,8 +92,8 @@ func (ll *LibraryLoader) Schemas(schemaOverlays []*schema.DocumentSchema) (Schem
 	return schema.NewPermissiveSchema(), nil, nil
 }
 
-func collectSchemaDocs(schemaFiles []*FileInLibrary, loader *TemplateLoader) ([]*schema.DocumentSchema, error) {
-	var documentSchemas []*schema.DocumentSchema
+func collectSchemaDocs(schemaFiles []*FileInLibrary, loader *TemplateLoader) ([]*schema.DocumentSchemaEnvelope, error) {
+	var documentSchemas []*schema.DocumentSchemaEnvelope
 	for _, file := range schemaFiles {
 		libraryCtx := LibraryExecutionContext{Current: file.Library, Root: NewRootLibrary(nil)}
 
@@ -107,7 +107,7 @@ func collectSchemaDocs(schemaFiles []*FileInLibrary, loader *TemplateLoader) ([]
 			return nil, err
 		}
 		for _, doc := range docs {
-			newSchema, err := schema.NewDocumentSchema(doc)
+			newSchema, err := schema.NewDocumentSchemaEnvelope(doc)
 			if err != nil {
 				return nil, err
 			}
@@ -187,7 +187,7 @@ func (ll *LibraryLoader) filesByAnnotation(annName structmeta.AnnotationName, lo
 	return valuesFiles, nil
 }
 
-func (ll *LibraryLoader) Eval(values *DataValues, libraryValues []*DataValues, librarySchemas []*schema.DocumentSchema) (*EvalResult, error) {
+func (ll *LibraryLoader) Eval(values *DataValues, libraryValues []*DataValues, librarySchemas []*schema.DocumentSchemaEnvelope) (*EvalResult, error) {
 	exports, docSets, outputFiles, err := ll.eval(values, libraryValues, librarySchemas)
 	if err != nil {
 		return nil, err
@@ -220,7 +220,7 @@ func (ll *LibraryLoader) Eval(values *DataValues, libraryValues []*DataValues, l
 	return result, nil
 }
 
-func (ll *LibraryLoader) eval(values *DataValues, libraryValues []*DataValues, librarySchemas []*schema.DocumentSchema) ([]EvalExport, map[*FileInLibrary]*yamlmeta.DocumentSet, []files.OutputFile, error) {
+func (ll *LibraryLoader) eval(values *DataValues, libraryValues []*DataValues, librarySchemas []*schema.DocumentSchemaEnvelope) ([]EvalExport, map[*FileInLibrary]*yamlmeta.DocumentSet, []files.OutputFile, error) {
 
 	loader := NewTemplateLoader(values, libraryValues, librarySchemas, ll.templateLoaderOpts, ll.libraryExecFactory, ll.ui)
 
@@ -309,7 +309,7 @@ func (*LibraryLoader) sortedOutputDocSets(outputDocSets map[*FileInLibrary]*yaml
 	return files
 }
 
-func (LibraryLoader) checkUnusedDVsOrSchemas(libraryValues []*DataValues, librarySchemas []*schema.DocumentSchema) error {
+func (LibraryLoader) checkUnusedDVsOrSchemas(libraryValues []*DataValues, librarySchemas []*schema.DocumentSchemaEnvelope) error {
 	var unusedValuesDescs []string
 	for _, dv := range libraryValues {
 		if !dv.IsUsed() {

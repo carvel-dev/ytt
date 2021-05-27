@@ -21,12 +21,12 @@ type LibraryModule struct {
 	libraryCtx              LibraryExecutionContext
 	libraryExecutionFactory *LibraryExecutionFactory
 	libraryValues           []*DataValues
-	librarySchemas          []*schema.DocumentSchema
+	librarySchemas          []*schema.DocumentSchemaEnvelope
 }
 
 func NewLibraryModule(libraryCtx LibraryExecutionContext,
 	libraryExecutionFactory *LibraryExecutionFactory,
-	libraryValues []*DataValues, librarySchemas []*schema.DocumentSchema) LibraryModule {
+	libraryValues []*DataValues, librarySchemas []*schema.DocumentSchemaEnvelope) LibraryModule {
 
 	return LibraryModule{libraryCtx, libraryExecutionFactory, libraryValues, librarySchemas}
 }
@@ -129,7 +129,7 @@ type libraryValue struct {
 	path        string
 	alias       string
 	dataValuess []*DataValues
-	schemas     []*schema.DocumentSchema
+	schemas     []*schema.DocumentSchemaEnvelope
 
 	libraryCtx              LibraryExecutionContext
 	libraryExecutionFactory *LibraryExecutionFactory
@@ -194,7 +194,7 @@ func (l *libraryValue) WithSchema(thread *starlark.Thread, f *starlark.Builtin,
 		return starlark.None, err
 	}
 
-	newDocSchema, err := schema.NewDocumentSchema(&yamlmeta.Document{
+	newDocSchema, err := schema.NewDocumentSchemaEnvelope(&yamlmeta.Document{
 		Value:    yamlmeta.NewASTFromInterface(libSchema),
 		Position: filepos.NewUnknownPosition(),
 	})
@@ -202,7 +202,7 @@ func (l *libraryValue) WithSchema(thread *starlark.Thread, f *starlark.Builtin,
 		return starlark.None, err
 	}
 
-	newLibSchemas := append([]*schema.DocumentSchema{}, l.schemas...)
+	newLibSchemas := append([]*schema.DocumentSchemaEnvelope{}, l.schemas...)
 	newLibSchemas = append(newLibSchemas, newDocSchema)
 
 	libVal := &libraryValue{l.path, l.alias, l.dataValuess, newLibSchemas, l.libraryCtx, l.libraryExecutionFactory}
@@ -348,8 +348,8 @@ func (l *libraryValue) exportArgs(args starlark.Tuple, kwargs []starlark.Tuple) 
 	return symbolName, locationPath, nil
 }
 
-func (l *libraryValue) librarySchemas(ll *LibraryLoader) (Schema, []*schema.DocumentSchema, error) {
-	var schemasForCurrentLib, schemasForChildLib []*schema.DocumentSchema
+func (l *libraryValue) librarySchemas(ll *LibraryLoader) (Schema, []*schema.DocumentSchemaEnvelope, error) {
+	var schemasForCurrentLib, schemasForChildLib []*schema.DocumentSchemaEnvelope
 
 	for _, docSchema := range l.schemas {
 		matchingSchema, usedInCurrLibrary := docSchema.UsedInLibrary(ref.LibraryRef{Path: l.path, Alias: l.alias})

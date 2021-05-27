@@ -22,7 +22,7 @@ type TemplateLoader struct {
 	ui                 ui.UI
 	values             *DataValues
 	libraryValuess     []*DataValues
-	librarySchemas     []*schema.DocumentSchema
+	librarySchemas     []*schema.DocumentSchemaEnvelope
 	opts               TemplateLoaderOpts
 	compiledTemplates  map[string]*template.CompiledTemplate
 	libraryExecFactory *LibraryExecutionFactory
@@ -41,7 +41,7 @@ type TemplateLoaderOptsOverrides struct {
 	StrictYAML              *bool
 }
 
-func NewTemplateLoader(values *DataValues, libraryValuess []*DataValues, librarySchemas []*schema.DocumentSchema, opts TemplateLoaderOpts, libraryExecFactory *LibraryExecutionFactory, ui ui.UI) *TemplateLoader {
+func NewTemplateLoader(values *DataValues, libraryValuess []*DataValues, librarySchemas []*schema.DocumentSchemaEnvelope, opts TemplateLoaderOpts, libraryExecFactory *LibraryExecutionFactory, ui ui.UI) *TemplateLoader {
 
 	if values == nil {
 		panic("Expected values to be non-nil")
