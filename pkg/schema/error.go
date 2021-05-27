@@ -89,12 +89,8 @@ type mismatchedTypeError struct {
 }
 
 func (t mismatchedTypeError) Error() string {
-	position := "?"
-	lineContent := ""
-	if t.Found.GetPosition() != nil {
-		position = t.Found.GetPosition().AsCompactString()
-		lineContent = t.Found.GetPosition().GetLine()
-	}
+	position := t.Found.GetPosition().AsCompactString()
+	lineContent := t.Found.GetPosition().GetLine()
 
 	leftPadLength := len(position) + 1
 	msg := "\n"

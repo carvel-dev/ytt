@@ -439,7 +439,7 @@ rendered: #@ data.values.foo
 		expectedErr := `? |
   |
   | TYPE MISMATCH - the value of this item is not what schema expected:
-  |      found: int64
+  |      found: integer
   |   expected: string (by schema.yml:3)`
 
 		filesToProcess := files.NewSortedFiles([]*files.File{
