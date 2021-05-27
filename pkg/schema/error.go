@@ -11,11 +11,11 @@ import (
 	"github.com/k14s/ytt/pkg/yamlmeta"
 )
 
-func NewInvalidSchemaError(found yamlmeta.Node, message, hint string) error {
+func NewInvalidSchemaError(found yamlmeta.Node, message string, hints []string) error {
 	return &invalidSchemaError{
 		Found:   found,
 		message: message,
-		hint:    hint,
+		hints:   hints,
 	}
 }
 
@@ -43,7 +43,7 @@ func NewUnexpectedKeyError(found *yamlmeta.MapItem, definition *filepos.Position
 type invalidSchemaError struct {
 	Found   yamlmeta.Node
 	message string
-	hint    string
+	hints   []string
 }
 
 func (e invalidSchemaError) Error() string {
@@ -55,8 +55,10 @@ func (e invalidSchemaError) Error() string {
 	msg += formatLine(leftColumnSize, position, lineContent)
 	msg += formatLine(leftColumnSize, "", "")
 	msg += formatLine(leftColumnSize, "", "INVALID SCHEMA - "+e.message)
-	if e.hint != "" {
-		msg += formatLine(leftColumnSize, "", fmt.Sprintf("  (hint: %s)", e.hint))
+	for _, hint := range e.hints {
+		if hint != "" {
+			msg += formatLine(leftColumnSize, "", fmt.Sprintf("hint: %s", hint))
+		}
 	}
 
 	return msg

@@ -128,7 +128,11 @@ func NewMapItemType(item *yamlmeta.MapItem) (*MapItemType, error) {
 	if valueType == nil {
 		return nil, NewInvalidSchemaError(item,
 			"null value is not allowed in schema (no type can be inferred from it)",
-			"to default to null, specify a value of the desired type and annotate with @schema/nullable")
+			[]string{
+				"in YAML, omitting a value implies null.",
+				"to set the default value to null, annotate with @schema/nullable.",
+				"to allow any value, annotate with @schema/type any=True.",
+			})
 	}
 
 	defaultValue := item.Value
@@ -168,7 +172,7 @@ func NewArrayItemType(item *yamlmeta.ArrayItem) (*ArrayItemType, error) {
 	typeFromAnns := convertAnnotationsToSingleType(anns)
 	if typeFromAnns != nil {
 		if _, ok := typeFromAnns.(*NullType); ok {
-			return nil, NewInvalidSchemaError(item, fmt.Sprintf("@%s is not supported on array items", AnnotationNullable), "")
+			return nil, NewInvalidSchemaError(item, fmt.Sprintf("@%s is not supported on array items", AnnotationNullable), nil)
 		}
 		valueType = typeFromAnns
 	} else {

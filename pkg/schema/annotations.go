@@ -114,13 +114,13 @@ func processOptionalAnnotation(node yamlmeta.Node, optionalAnnotation structmeta
 			}
 			nullAnn, err := NewNullableAnnotation(ann, wrappedValueType, node.GetPosition())
 			if err != nil {
-				return nil, NewInvalidSchemaError(node, err.Error(), "")
+				return nil, NewInvalidSchemaError(node, err.Error(), nil)
 			}
 			return nullAnn, nil
 		case AnnotationType:
 			typeAnn, err := NewTypeAnnotation(ann, node.GetPosition())
 			if err != nil {
-				return nil, NewInvalidSchemaError(node, err.Error(), "")
+				return nil, NewInvalidSchemaError(node, err.Error(), nil)
 			}
 			return typeAnn, nil
 		}
