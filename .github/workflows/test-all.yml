@@ -1,6 +1,8 @@
 name: test-all
-on: 
+on:
   push:
+    branches:
+      - develop
   pull_request:
     types: [opened, reopened, synchronize]
 jobs:
