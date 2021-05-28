@@ -17,12 +17,15 @@ type NullSchema struct {
 }
 
 type DocumentSchema struct {
-	Name       string
 	Source     *yamlmeta.Document
 	defaultDVs *yamlmeta.Document
 	Allowed    *DocumentType
-	used       bool
+}
 
+type DocumentSchemaEnvelope struct {
+	Doc *DocumentSchema
+
+	used           bool
 	originalLibRef []ref.LibraryRef
 	libRef         []ref.LibraryRef
 }
@@ -38,16 +41,26 @@ func NewDocumentSchema(doc *yamlmeta.Document) (*DocumentSchema, error) {
 		return nil, err
 	}
 
+	return &DocumentSchema{
+		Source:     doc,
+		defaultDVs: schemaDVs,
+		Allowed:    docType,
+	}, nil
+}
+
+func NewDocumentSchemaEnvelope(doc *yamlmeta.Document) (*DocumentSchemaEnvelope, error) {
 	libRef, err := getSchemaLibRef(ref.LibraryRefExtractor{}, doc)
 	if err != nil {
 		return nil, err
 	}
 
-	return &DocumentSchema{
-		Name:           "dataValues",
-		Source:         doc,
-		defaultDVs:     schemaDVs,
-		Allowed:        docType,
+	schema, err := NewDocumentSchema(doc)
+	if err != nil {
+		return nil, err
+	}
+
+	return &DocumentSchemaEnvelope{
+		Doc:            schema,
 		originalLibRef: libRef,
 		libRef:         libRef,
 	}, nil
@@ -55,7 +68,6 @@ func NewDocumentSchema(doc *yamlmeta.Document) (*DocumentSchema, error) {
 
 func NewPermissiveSchema() *DocumentSchema {
 	return &DocumentSchema{
-		Name:   "anyDataValues",
 		Source: &yamlmeta.Document{},
 		Allowed: &DocumentType{
 			ValueType: &AnyType{}},
@@ -257,6 +269,14 @@ func (s *DocumentSchema) DefaultDataValues() *yamlmeta.Document {
 	return s.defaultDVs
 }
 
+func (s *DocumentSchema) deepCopy() *DocumentSchema {
+	return &DocumentSchema{
+		Source:     s.Source.DeepCopy(),
+		defaultDVs: s.defaultDVs.DeepCopy(),
+		Allowed:    s.Allowed,
+	}
+}
+
 func (n NullSchema) ValidateWithValues(valuesFilesCount int) error {
 	if valuesFilesCount > 0 {
 		return fmt.Errorf("Schema feature is enabled but no schema document was provided")
@@ -268,47 +288,49 @@ func (s *DocumentSchema) ValidateWithValues(valuesFilesCount int) error {
 	return nil
 }
 
-func (s *DocumentSchema) deepCopy() *DocumentSchema {
-	var copiedPieces []ref.LibraryRef
-	copiedPieces = append(copiedPieces, s.libRef...)
-	return &DocumentSchema{
-		Name:           s.Name,
-		Source:         s.Source.DeepCopy(),
-		defaultDVs:     s.defaultDVs.DeepCopy(),
-		Allowed:        s.Allowed,
-		originalLibRef: s.originalLibRef,
-		libRef:         copiedPieces,
-	}
+func (e *DocumentSchemaEnvelope) Source() *yamlmeta.Document {
+	return e.Doc.Source
 }
 
-func (s *DocumentSchema) Desc() string {
+func (e *DocumentSchemaEnvelope) Desc() string {
 	var desc []string
-	for _, refPiece := range s.originalLibRef {
+	for _, refPiece := range e.originalLibRef {
 		desc = append(desc, refPiece.AsString())
 	}
 	return fmt.Sprintf("Schema belonging to library '%s%s' on %s", "@",
-		strings.Join(desc, "@"), s.Source.Position.AsString())
+		strings.Join(desc, "@"), e.Source().Position.AsString())
 }
 
-func (s *DocumentSchema) IsUsed() bool { return s.used }
-func (s *DocumentSchema) markUsed()    { s.used = true }
+func (e *DocumentSchemaEnvelope) IsUsed() bool { return e.used }
 
-func (s *DocumentSchema) IntendedForAnotherLibrary() bool {
-	return len(s.libRef) > 0
+func (e *DocumentSchemaEnvelope) IntendedForAnotherLibrary() bool {
+	return len(e.libRef) > 0
 }
 
-func (s *DocumentSchema) UsedInLibrary(expectedRefPiece ref.LibraryRef) (*DocumentSchema, bool) {
-	if !s.IntendedForAnotherLibrary() {
-		s.markUsed()
+func (e *DocumentSchemaEnvelope) UsedInLibrary(expectedRefPiece ref.LibraryRef) (*DocumentSchemaEnvelope, bool) {
+	if !e.IntendedForAnotherLibrary() {
+		e.markUsed()
 
-		return s.deepCopy(), true
+		return e.deepCopy(), true
 	}
 
-	if !s.libRef[0].Matches(expectedRefPiece) {
+	if !e.libRef[0].Matches(expectedRefPiece) {
 		return nil, false
 	}
-	s.markUsed()
-	childSchema := s.deepCopy()
-	childSchema.libRef = childSchema.libRef[1:]
-	return childSchema, !childSchema.IntendedForAnotherLibrary()
+	e.markUsed()
+	childSchemaProcessing := e.deepCopy()
+	childSchemaProcessing.libRef = childSchemaProcessing.libRef[1:]
+	return childSchemaProcessing, !childSchemaProcessing.IntendedForAnotherLibrary()
+}
+
+func (e *DocumentSchemaEnvelope) markUsed() { e.used = true }
+
+func (e *DocumentSchemaEnvelope) deepCopy() *DocumentSchemaEnvelope {
+	var copiedPieces []ref.LibraryRef
+	copiedPieces = append(copiedPieces, e.libRef...)
+	return &DocumentSchemaEnvelope{
+		Doc:            e.Doc.deepCopy(),
+		originalLibRef: e.originalLibRef,
+		libRef:         copiedPieces,
+	}
 }
