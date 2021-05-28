@@ -12,6 +12,10 @@ github.com/cppforlife/cobrautil
 github.com/cppforlife/go-cli-ui/errors
 # github.com/davecgh/go-spew v1.1.1
 github.com/davecgh/go-spew/spew
+# github.com/google/gofuzz v1.2.0
+## explicit
+github.com/google/gofuzz
+github.com/google/gofuzz/bytesource
 # github.com/hashicorp/go-version v1.2.0
 ## explicit
 github.com/hashicorp/go-version

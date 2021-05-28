@@ -219,7 +219,7 @@ func (m *ScalarType) CheckType(node yamlmeta.TypeWithValues) (chk yamlmeta.TypeC
 			chk.Violations = append(chk.Violations,
 				NewMismatchedTypeError(node, m))
 		}
-	case int:
+	case int, int64, uint64:
 		if _, ok := m.Value.(int); !ok {
 			if _, ok = m.Value.(float64); !ok {
 				chk.Violations = append(chk.Violations,

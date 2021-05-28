@@ -5,8 +5,16 @@ package template_test
 
 import (
 	"bytes"
+	"fmt"
+	"math/rand"
+	"os"
+	"regexp"
+	"strconv"
+	"strings"
 	"testing"
+	"time"
 
+	fuzz "github.com/google/gofuzz"
 	cmdtpl "github.com/k14s/ytt/pkg/cmd/template"
 	"github.com/k14s/ytt/pkg/cmd/ui"
 	"github.com/k14s/ytt/pkg/files"
@@ -1110,6 +1118,7 @@ foo: ""`)
 
 		assertSucceeds(t, filesToProcess, expectedYAMLTplData, opts)
 	})
+
 	t.Run("when data values are programmatically exported from a library, they are checked by that library's schema", func(t *testing.T) {
 		configYAML := []byte(`
 #@ load("@ytt:library", "library")
@@ -1820,6 +1829,112 @@ system_domain: #@ data.values.system_domain
 	})
 }
 
+func TestSchema_With_fuzzed_inputs(t *testing.T) {
+	opts := cmdtpl.NewOptions()
+	opts.SchemaEnabled = true
+
+	validIntegerRange := fuzz.UnicodeRange{First: '0', Last: '9'}
+	randSource := getYttRandSource(t)
+
+	fuzzLargeNumber := fuzz.New().RandSource(randSource).Funcs(func(s *string, c fuzz.Continue) {
+		validIntegerRange.CustomStringFuzzFunc()(s, c)
+		// We remove '0' in the prefix to only test base 10 numbers.
+		// For more info refer to the yaml spec: http://yaml.org/type/int.html
+		removePrefix(s, "0")
+
+		if *s == "" {
+			*s = strconv.Itoa(c.Int())
+		}
+	})
+
+	fuzzFloat := fuzz.New().RandSource(randSource).Funcs(func(s *string, c fuzz.Continue) {
+		*s = strconv.FormatFloat(c.Float64(), 'f', -1, 64)
+
+	})
+
+	fuzzStrings := fuzz.New().RandSource(randSource).Funcs(func(s *string, c fuzz.Continue) {
+		*s += c.RandString()
+		*s = strings.ReplaceAll(*s, "'", `"`)
+		// starlark uses the '\' char as an escape character. ignore the escape char to simplify writing assertions.
+		*s = strings.ReplaceAll(*s, "\\", `/`)
+	})
+
+	for i := 0; i < 100; i++ {
+		var expectedInt, expectedString, expectedFloat string
+		fuzzLargeNumber.Fuzz(&expectedInt)
+		fuzzStrings.Fuzz(&expectedString)
+		fuzzFloat.Fuzz(&expectedFloat)
+		starlarkEvals := []string{"", "#@ "}
+		starlarkEvalUsed := starlarkEvals[rand.New(randSource).Intn(2)]
+
+		t.Run(fmt.Sprintf("A schema programatically set to a library: int: [%v], string: [%v], float64: [%v], starlark eval: [%v]", expectedInt, expectedString, expectedFloat, starlarkEvalUsed), func(t *testing.T) {
+
+			configYAML := []byte(`
+#@ load("@ytt:template", "template")
+#@ load("@ytt:library", "library")
+---
+#@ def dvs_from_root():
+someInt: ` + starlarkEvalUsed + expectedInt + `
+someString: ` + starlarkEvalUsed + "'" + expectedString + "'" + `
+someFloat: ` + starlarkEvalUsed + expectedFloat + `
+#@ end
+--- #@ template.replace(library.get("lib").with_schema(dvs_from_root()).eval())`)
+
+			libConfigYAML := []byte(`
+#@ load("@ytt:data", "data")
+---
+someInt: #@ data.values.someInt
+someString: #@ data.values.someString
+someFloat: #@ data.values.someFloat
+`)
+
+			expectedFloatParsed, err := strconv.ParseFloat(expectedFloat, 64)
+			require.NoError(t, err)
+			expectedYAMLTplData := `someInt: ` + expectedInt + `
+someString: ('|")*` + regexp.QuoteMeta(expectedString) + `('|")*
+someFloat: ` + "(" + expectedFloat + "|" + fmt.Sprintf("%g", expectedFloatParsed) + ")" + `
+`
+
+			filesToProcess := files.NewSortedFiles([]*files.File{
+				files.MustNewFileFromSource(files.NewBytesSource("config.yml", configYAML)),
+				files.MustNewFileFromSource(files.NewBytesSource("_ytt_lib/lib/config.yml", libConfigYAML)),
+			})
+
+			assertSucceedsWithRegexp(t, filesToProcess, expectedYAMLTplData, opts)
+		})
+
+	}
+}
+
+func getYttRandSource(t *testing.T) rand.Source {
+	var seed int64
+	if os.Getenv("YTT_SEED") == "" {
+		seed = time.Now().UnixNano()
+	} else {
+		envSeed, err := strconv.Atoi(os.Getenv("YTT_SEED"))
+		require.NoError(t, err)
+		seed = int64(envSeed)
+	}
+
+	t.Log(fmt.Sprintf("YTT Seed used was: [%v]. To reproduce this test failure, re-run the test with `export YTT_SEED=%v`", seed, seed))
+
+	t.Cleanup(func() {
+		fmt.Printf("\n\n*** To reproduce this test run, re-run the test with `export YTT_SEED=%v` ***\n\n", seed)
+	})
+
+	return rand.NewSource(seed)
+}
+
+func removePrefix(s *string, prefix string) {
+	for {
+		if strings.HasPrefix(*s, prefix) {
+			*s = strings.TrimPrefix(*s, prefix)
+		} else {
+			break
+		}
+	}
+}
+
 func assertSucceeds(t *testing.T, filesToProcess []*files.File, expectedOut string, opts *cmdtpl.Options) {
 	t.Helper()
 	out := opts.RunWithFiles(cmdtpl.Input{Files: filesToProcess}, ui.NewTTY(false))
@@ -1828,6 +1943,16 @@ func assertSucceeds(t *testing.T, filesToProcess []*files.File, expectedOut stri
 	require.Len(t, out.Files, 1, "unexpected number of output files")
 
 	require.Equal(t, expectedOut, string(out.Files[0].Bytes()))
+}
+
+func assertSucceedsWithRegexp(t *testing.T, filesToProcess []*files.File, expectedOutRegex string, opts *cmdtpl.Options) {
+	t.Helper()
+	out := opts.RunWithFiles(cmdtpl.Input{Files: filesToProcess}, ui.NewTTY(false))
+	require.NoError(t, out.Err)
+
+	require.Len(t, out.Files, 1, "unexpected number of output files")
+
+	require.Regexp(t, expectedOutRegex, string(out.Files[0].Bytes()))
 }
 
 func assertFails(t *testing.T, filesToProcess []*files.File, expectedErr string, opts *cmdtpl.Options) {
