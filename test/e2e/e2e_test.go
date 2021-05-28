@@ -1,3 +1,6 @@
+// Copyright 2020 VMware, Inc.
+// SPDX-License-Identifier: Apache-2.0
+
 package e2e
 
 import (
@@ -357,8 +360,6 @@ func runYtt(t *testing.T, files testInputFiles, stdinFileName string, flags yttF
 	command := exec.Command("../../ytt", append(fileFlags, yttFlags...)...)
 	command.Stderr = nil
 	command.Env = append(command.Env, envs...)
-
-	println(command.String())
 
 	if stdinFileName != "" {
 		fileToUseInStdIn, err := os.OpenFile(stdinFileName, os.O_RDONLY, os.ModeAppend)
