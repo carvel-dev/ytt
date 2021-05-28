@@ -1688,10 +1688,19 @@ vpc:
 		filesToProcess := files.NewSortedFiles([]*files.File{
 			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
 		})
+
 		expectedErr := `
-schema.yml:6 |   - 0
-             |
-             | INVALID SCHEMA - @schema/nullable is not supported on array items`
+Invalid schema — @schema/nullable is not supported on array items
+
+schema.yml:6:
+    |
+  6 |   - 0
+    |
+
+    = found: @schema/nullable
+    = expected: a valid annotation
+    = hint: Remove the @schema/nullable annotation from array item
+`
 
 		assertFails(t, filesToProcess, expectedErr, opts)
 	})
@@ -1706,12 +1715,18 @@ vpc:
 			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
 		})
 		expectedErr := `
-schema.yml:4 |   subnet_ids: null
-             |
-             | INVALID SCHEMA - null value is not allowed in schema (no type can be inferred from it)
-             | hint: in YAML, omitting a value implies null.
-             | hint: to set the default value to null, annotate with @schema/nullable.
-             | hint: to allow any value, annotate with @schema/type any=True.
+Invalid schema — null value not allowed here
+
+schema.yml:4:
+    |
+  4 |   subnet_ids: null
+    |
+
+    = found: null value
+    = expected: non-null value
+    = hint: in YAML, omitting a value implies null.
+    = hint: to set the default value to null, annotate with @schema/nullable.
+    = hint: to allow any value, annotate with @schema/type any=True.
 `
 		assertFails(t, filesToProcess, expectedErr, opts)
 	})
@@ -1721,10 +1736,19 @@ schema.yml:4 |   subnet_ids: null
 #@schema/type unknown_kwarg=False
 foo: 0
 `
-		expectedErr := `schema.yml:4 | foo: 0
-             |
-             | INVALID SCHEMA - unknown @schema/type annotation keyword argument 'unknown_kwarg'. Supported kwargs are 'any'
+		expectedErr := `
+Invalid schema — unknown @schema/type annotation keyword argument
+
+schema.yml:4:
+    |
+  4 | foo: 0
+    |
+
+    = found: unknown_kwarg
+    = expected: A valid kwarg
+    = hint: Supported kwargs are 'any'
 `
+
 		filesToProcess := files.NewSortedFiles([]*files.File{
 			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
 		})
@@ -1737,10 +1761,19 @@ foo: 0
 #@schema/type any=1
 foo: 0
 `
-		expectedErr := `schema.yml:4 | foo: 0
-             |
-             | INVALID SCHEMA - processing @schema/type 'any' argument: expected starlark.Bool, but was starlark.Int
+
+		expectedErr := `
+Invalid schema — unknown @schema/type annotation keyword argument
+
+schema.yml:4:
+    |
+  4 | foo: 0
+    |
+
+    = found: starlark.Int
+    = expected: starlark.Bool
 `
+
 		filesToProcess := files.NewSortedFiles([]*files.File{
 			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
 		})
@@ -1753,10 +1786,20 @@ foo: 0
 #@schema/type
 foo: 0
 `
-		expectedErr := `schema.yml:4 | foo: 0
-             |
-             | INVALID SCHEMA - expected @schema/type annotation to have keyword argument and value. Supported key-value pairs are 'any=True', 'any=False'
+
+		expectedErr := `
+Invalid schema — expected @schema/type annotation keyword argument
+
+schema.yml:4:
+    |
+  4 | foo: 0
+    |
+
+    = found: missing keyword arg
+    = expected: valid keyword arg
+    = hint: Supported key-value pairs are 'any=True', 'any=False'
 `
+
 		filesToProcess := files.NewSortedFiles([]*files.File{
 			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
 		})
