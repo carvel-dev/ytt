@@ -4,18 +4,47 @@
 package schema
 
 import (
+	"bytes"
 	"fmt"
+	"log"
 	"strings"
+	"text/template"
 
 	"github.com/k14s/ytt/pkg/filepos"
 	"github.com/k14s/ytt/pkg/yamlmeta"
 )
 
-func NewInvalidSchemaError(found yamlmeta.Node, message string, hints []string) error {
+const invalidSchemaTemplate = `
+{{.Title}}
+
+{{.FileName}}:
+{{pad "|" false}}
+{{pad "|" true}} {{.Diff}}
+{{pad "|" false}}
+
+{{with .Found}}{{pad "=" false}} found: {{.}}{{end}}
+{{with .Expected}}{{pad "=" false}} expected: {{.}}{{end}}
+{{range .Hints}}{{pad "=" false}} hint: {{.}}
+{{end}}`
+
+func NewInvalidSchemaError(err error, node yamlmeta.Node) error {
+	if schemaErrorInfo, ok := err.(schemaAssertionError); ok {
+		return &invalidSchemaError{
+			Title:    fmt.Sprintf("Invalid schema — %s", schemaErrorInfo.description),
+			FileName: node.GetPosition().AsCompactString(),
+			filePos:  node.GetPosition().AsIntString(),
+			Diff:     node.GetPosition().GetLine(),
+			Expected: schemaErrorInfo.expected,
+			Found:    schemaErrorInfo.found,
+			Hints:    schemaErrorInfo.hints,
+		}
+	}
+
 	return &invalidSchemaError{
-		Found:   found,
-		message: message,
-		hints:   hints,
+		Title:    "Invalid schema",
+		FileName: node.GetPosition().AsCompactString(),
+		filePos:  node.GetPosition().AsIntString(),
+		Diff:     node.GetPosition().GetLine(),
 	}
 }
 
@@ -40,28 +69,49 @@ func NewUnexpectedKeyError(found *yamlmeta.MapItem, definition *filepos.Position
 	}
 }
 
+type schemaAssertionError struct {
+	error
+	description string
+	expected    string
+	found       string
+	hints       []string
+}
+
 type invalidSchemaError struct {
-	Found   yamlmeta.Node
-	message string
-	hints   []string
+	Title    string
+	FileName string
+	Diff     string
+	Expected string
+	Found    string
+	Hints    []string
+
+	filePos string
 }
 
 func (e invalidSchemaError) Error() string {
-	position := e.Found.GetPosition().AsCompactString()
-	leftColumnSize := len(position) + 1
-	lineContent := e.Found.GetPosition().GetLine()
-
-	msg := "\n"
-	msg += formatLine(leftColumnSize, position, lineContent)
-	msg += formatLine(leftColumnSize, "", "")
-	msg += formatLine(leftColumnSize, "", "INVALID SCHEMA - "+e.message)
-	for _, hint := range e.hints {
-		if hint != "" {
-			msg += formatLine(leftColumnSize, "", fmt.Sprintf("hint: %s", hint))
-		}
+	funcMap := template.FuncMap{
+		"pad": func(delim string, includeLineNumber bool) string {
+			padding := "  "
+			if includeLineNumber {
+				return padding + e.filePos + " " + delim
+			}
+			return padding + strings.Repeat(" ", len(e.filePos)) + " " + delim
+		},
 	}
 
-	return msg
+	tmpl, err := template.New("").Funcs(funcMap).Parse(invalidSchemaTemplate)
+	if err != nil {
+		log.Fatalf("parsing: %s", err)
+	}
+
+	output := bytes.NewBufferString("")
+
+	err = tmpl.Execute(output, e)
+	if err != nil {
+		panic(err.Error())
+	}
+
+	return output.String()
 }
 
 type invalidArrayDefinitionError struct {
