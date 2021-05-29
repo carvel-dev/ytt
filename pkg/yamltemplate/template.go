@@ -34,8 +34,8 @@ type TemplateOpts struct {
 	ImplicitMapKeyOverrides bool
 }
 
-func HasTemplating(docs *yamlmeta.DocumentSet) bool {
-	return hasTemplating(docs)
+func HasTemplating(node yamlmeta.Node) bool {
+	return hasTemplating(node)
 }
 
 func hasTemplating(val interface{}) bool {

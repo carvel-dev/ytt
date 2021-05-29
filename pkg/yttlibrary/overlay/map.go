@@ -125,6 +125,19 @@ func (o Op) replaceMapItem(leftMap *yamlmeta.Map, newItem *yamlmeta.MapItem,
 		}
 	}
 
+	if len(leftIdxs) == 0 && replaceAnn.OrAdd() {
+		newVal, err := replaceAnn.Value(nil)
+		if err != nil {
+			return err
+		}
+
+		leftMap.Items = append(leftMap.Items, newItem.DeepCopy())
+		err = leftMap.Items[len(leftMap.Items)-1].SetValue(newVal)
+		if err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 

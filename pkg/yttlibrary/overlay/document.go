@@ -117,6 +117,23 @@ func (o Op) replaceDocument(
 		}
 	}
 
+	if len(leftIdxs) == 0 && replaceAnn.OrAdd() {
+		if len(leftDocSets) == 0 {
+			panic("Internal inconsistency: Expected at least one doc set")
+		}
+
+		newVal, err := replaceAnn.Value(nil)
+		if err != nil {
+			return err
+		}
+
+		leftDocSets[0].Items = append(leftDocSets[0].Items, newDoc.DeepCopy())
+		err = leftDocSets[0].Items[len(leftDocSets[0].Items)-1].SetValue(newVal)
+		if err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 

@@ -12,10 +12,16 @@ import (
 	"github.com/k14s/ytt/pkg/yamltemplate"
 )
 
+const (
+	ReplaceAnnotationKwargVia   string = "via"
+	ReplaceAnnotationKwargOrAdd string = "or_add"
+)
+
 type ReplaceAnnotation struct {
 	newNode template.EvaluationNode
 	thread  *starlark.Thread
 	via     *starlark.Value
+	orAdd   bool
 }
 
 func NewReplaceAnnotation(newNode template.EvaluationNode, thread *starlark.Thread) (ReplaceAnnotation, error) {
@@ -27,9 +33,18 @@ func NewReplaceAnnotation(newNode template.EvaluationNode, thread *starlark.Thre
 
 	for _, kwarg := range kwargs {
 		kwargName := string(kwarg[0].(starlark.String))
+
 		switch kwargName {
-		case "via":
+		case ReplaceAnnotationKwargVia:
 			annotation.via = &kwarg[1]
+
+		case ReplaceAnnotationKwargOrAdd:
+			resultBool, err := tplcore.NewStarlarkValue(kwarg[1]).AsBool()
+			if err != nil {
+				return ReplaceAnnotation{}, err
+			}
+			annotation.orAdd = resultBool
+
 		default:
 			return annotation, fmt.Errorf(
 				"Unknown '%s' annotation keyword argument '%s'", AnnotationReplace, kwargName)
@@ -41,7 +56,6 @@ func NewReplaceAnnotation(newNode template.EvaluationNode, thread *starlark.Thre
 
 func (a ReplaceAnnotation) Value(existingNode template.EvaluationNode) (interface{}, error) {
 	// Make sure original nodes are not affected in any way
-	existingNode = existingNode.DeepCopyAsInterface().(template.EvaluationNode)
 	newNode := a.newNode.DeepCopyAsInterface().(template.EvaluationNode)
 
 	// TODO currently assumes that we can always get at least one value
@@ -51,8 +65,16 @@ func (a ReplaceAnnotation) Value(existingNode template.EvaluationNode) (interfac
 
 	switch typedVal := (*a.via).(type) {
 	case starlark.Callable:
+		var existingVal interface{}
+		if existingNode != nil {
+			// Make sure original nodes are not affected in any way
+			existingVal = existingNode.DeepCopyAsInterface().(template.EvaluationNode).GetValues()[0]
+		} else {
+			existingVal = nil
+		}
+
 		viaArgs := starlark.Tuple{
-			yamltemplate.NewGoValueWithYAML(existingNode.GetValues()[0]).AsStarlarkValue(),
+			yamltemplate.NewGoValueWithYAML(existingVal).AsStarlarkValue(),
 			yamltemplate.NewGoValueWithYAML(newNode.GetValues()[0]).AsStarlarkValue(),
 		}
 
@@ -69,3 +91,5 @@ func (a ReplaceAnnotation) Value(existingNode template.EvaluationNode) (interfac
 			" to be function, but was %T", AnnotationReplace, typedVal)
 	}
 }
+
+func (a ReplaceAnnotation) OrAdd() bool { return a.orAdd }

@@ -37,3 +37,8 @@ export YAML_VAL_string=[1,2,4]
 ./ytt -f examples/data-values/config.yml -f examples/data-values/values.yml \
   --data-value-yaml nothing=[1,2,3] \
   --data-values-env-yaml YAML_VAL
+
+echo '***'
+
+./ytt -f examples/data-values/config.yml -f examples/data-values/values.yml \
+  --data-values-file examples/data-values/values-file.yml
