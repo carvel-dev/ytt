@@ -1758,7 +1758,7 @@ vpc:
 		expectedErr := `
 Invalid schema — @schema/nullable is not supported on array items
 
-schema.yml:6:
+schema.yml:
     |
   6 |   - 0
     |
@@ -1783,7 +1783,7 @@ vpc:
 		expectedErr := `
 Invalid schema — null value not allowed here
 
-schema.yml:4:
+schema.yml:
     |
   4 |   subnet_ids: null
     |
@@ -1805,7 +1805,7 @@ foo: 0
 		expectedErr := `
 Invalid schema — unknown @schema/type annotation keyword argument
 
-schema.yml:4:
+schema.yml:
     |
   4 | foo: 0
     |
@@ -1831,7 +1831,7 @@ foo: 0
 		expectedErr := `
 Invalid schema — unknown @schema/type annotation keyword argument
 
-schema.yml:4:
+schema.yml:
     |
   4 | foo: 0
     |
@@ -1856,7 +1856,7 @@ foo: 0
 		expectedErr := `
 Invalid schema — expected @schema/type annotation keyword argument
 
-schema.yml:4:
+schema.yml:
     |
   4 | foo: 0
     |
