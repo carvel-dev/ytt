@@ -31,7 +31,7 @@ func NewInvalidSchemaError(err error, node yamlmeta.Node) error {
 	if schemaErrorInfo, ok := err.(schemaAssertionError); ok {
 		return &invalidSchemaError{
 			Title:    fmt.Sprintf("Invalid schema — %s", schemaErrorInfo.description),
-			FileName: node.GetPosition().AsCompactString(),
+			FileName: node.GetPosition().GetFile(),
 			filePos:  node.GetPosition().AsIntString(),
 			Diff:     node.GetPosition().GetLine(),
 			Expected: schemaErrorInfo.expected,
