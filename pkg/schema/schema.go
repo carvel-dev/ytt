@@ -131,14 +131,13 @@ func NewMapItemType(item *yamlmeta.MapItem) (*MapItemType, error) {
 }
 
 func NewArrayType(a *yamlmeta.Array) (*ArrayType, error) {
-	// what's most useful to hint at depends on the author's input.
-	if len(a.Items) == 0 {
-		// assumption: the user likely does not understand that the shape of the elements are dependent on this item
-		return nil, NewInvalidArrayDefinitionError(a, "in a schema, the item of an array defines the type of its elements; its default value is an empty list")
-	}
-	if len(a.Items) > 1 {
-		// assumption: the user wants to supply defaults and (incorrectly) assumed they should go in schema
-		return nil, NewInvalidArrayDefinitionError(a, "to add elements to the default value of an array (i.e. an empty list), declare them in a @data/values document")
+	if len(a.Items) != 1 {
+		return nil, NewInvalidSchemaError(schemaAssertionError{
+			description: "wrong number of items in array definition",
+			expected:    "exactly 1 array item, of the desired type",
+			found:       fmt.Sprintf("%d array items", len(a.Items)),
+			hints:       []string{"in schema, the one item of the array implies the type of its elements.", "in schema, the default value for an array is always an empty list.", "default values can be overridden via a data values overlay."},
+		}, a)
 	}
 
 	arrayItemType, err := NewArrayItemType(a.Items[0])

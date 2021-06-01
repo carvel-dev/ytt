@@ -42,16 +42,9 @@ func NewInvalidSchemaError(err error, node yamlmeta.Node) error {
 
 	return &invalidSchemaError{
 		Title:    "Invalid schema",
-		FileName: node.GetPosition().AsCompactString(),
+		FileName: node.GetPosition().GetFile(),
 		filePos:  node.GetPosition().AsIntString(),
 		Diff:     node.GetPosition().GetLine(),
-	}
-}
-
-func NewInvalidArrayDefinitionError(found yamlmeta.Node, hint string) error {
-	return &invalidArrayDefinitionError{
-		Found: found,
-		hint:  hint,
 	}
 }
 
@@ -112,27 +105,6 @@ func (e invalidSchemaError) Error() string {
 	}
 
 	return output.String()
-}
-
-type invalidArrayDefinitionError struct {
-	Found yamlmeta.Node
-	hint  string
-}
-
-func (i invalidArrayDefinitionError) Error() string {
-	position := i.Found.GetPosition().AsCompactString()
-	leftColumnSize := len(position) + 1
-	lineContent := i.Found.GetPosition().GetLine()
-
-	msg := "\n"
-	msg += formatLine(leftColumnSize, position, lineContent)
-	msg += formatLine(leftColumnSize, "", "")
-	msg += formatLine(leftColumnSize, "", "INVALID ARRAY DEFINITION IN SCHEMA - unable to determine the desired type")
-	msg += formatLine(leftColumnSize, "", fmt.Sprintf("     found: %d array items", len(i.Found.GetValues())))
-	msg += formatLine(leftColumnSize, "", "  expected: exactly 1 array item, of the desired type")
-	msg += formatLine(leftColumnSize, "", fmt.Sprintf("  (hint: %s)", i.hint))
-
-	return msg
 }
 
 type mismatchedTypeError struct {
