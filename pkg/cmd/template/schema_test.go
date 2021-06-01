@@ -1707,13 +1707,22 @@ vpc:
 			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
 			files.MustNewFileFromSource(files.NewBytesSource("dataValues.yml", []byte(dataValuesYAML))),
 		})
+
 		expectedErr := `
-schema.yml:4 |   subnet_ids: []
-             |
-             | INVALID ARRAY DEFINITION IN SCHEMA - unable to determine the desired type
-             |      found: 0 array items
-             |   expected: exactly 1 array item, of the desired type
-             |   (hint: in a schema, the item of an array defines the type of its elements; its default value is an empty list)`
+Invalid schema — wrong number of items in array definition
+
+schema.yml:
+    |
+  4 |   subnet_ids: []
+    |
+
+    = found: 0 array items
+    = expected: exactly 1 array item, of the desired type
+    = hint: in schema, the one item of the array implies the type of its elements.
+    = hint: in schema, the default value for an array is always an empty list.
+    = hint: default values can be overridden via a data values overlay.
+`
+
 		assertFails(t, filesToProcess, expectedErr, opts)
 	})
 	t.Run("array with more than one element", func(t *testing.T) {
@@ -1733,13 +1742,22 @@ vpc:
 			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
 			files.MustNewFileFromSource(files.NewBytesSource("dataValues.yml", []byte(dataValuesYAML))),
 		})
+
 		expectedErr := `
-schema.yml:4 |   subnet_ids:
-             |
-             | INVALID ARRAY DEFINITION IN SCHEMA - unable to determine the desired type
-             |      found: 2 array items
-             |   expected: exactly 1 array item, of the desired type
-             |   (hint: to add elements to the default value of an array (i.e. an empty list), declare them in a @data/values document)`
+Invalid schema — wrong number of items in array definition
+
+schema.yml:
+    |
+  4 |   subnet_ids:
+    |
+
+    = found: 2 array items
+    = expected: exactly 1 array item, of the desired type
+    = hint: in schema, the one item of the array implies the type of its elements.
+    = hint: in schema, the default value for an array is always an empty list.
+    = hint: default values can be overridden via a data values overlay.
+`
+
 		assertFails(t, filesToProcess, expectedErr, opts)
 	})
 	t.Run("array with a nullable annotation", func(t *testing.T) {
