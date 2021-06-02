@@ -17,41 +17,80 @@ import (
 const schemaErrorReportTemplate = `
 {{.Title}}
 
-{{.FileName}}:
-{{pad "|" false}}
-{{pad "|" true}} {{.Diff}}
-{{pad "|" false}}
+{{range .AssertionFailures}}{{.FileName}}:
+{{pad "|" ""}}
+{{pad "|" .FilePos}} {{.Source}}
+{{pad "|" ""}}
 
-{{with .Found}}{{pad "=" false}} found: {{.}}{{end}}
-{{with .Expected}}{{pad "=" false}} expected: {{.}}{{end}}
-{{range .Hints}}{{pad "=" false}} hint: {{.}}
-{{end}}`
+{{with .Found}}{{pad "=" ""}} found: {{.}}{{end}}
+{{with .Expected}}{{pad "=" ""}} expected: {{.}}{{end}}
+{{range .Hints}}{{pad "=" ""}} hint: {{.}}
+{{end}}
+{{end}}
+{{.MiscErrorMessage}}
+`
 
-func NewSchemaError(err error, node yamlmeta.Node) error {
+func NewSchemaError(err error) error {
+	if typeCheckError, ok := err.(yamlmeta.TypeCheck); ok {
+		var failures []assertionFailure
+		var miscErrorMessage string
+		for _, checkErr := range typeCheckError.Violations {
+			if typeCheckAssertionErr, ok := checkErr.(schemaAssertionError); ok {
+				failures = append(failures, assertionFailure{
+					FileName: typeCheckAssertionErr.position.GetFile(),
+					FilePos:  typeCheckAssertionErr.position.AsIntString(),
+					Source:   typeCheckAssertionErr.position.GetLine(),
+					Expected: typeCheckAssertionErr.expected,
+					Found:    typeCheckAssertionErr.found,
+					Hints:    typeCheckAssertionErr.hints,
+				})
+			} else {
+				miscErrorMessage += checkErr.Error()
+			}
+		}
+		return &schemaError{
+			Title:             fmt.Sprintf("Schema Typecheck - Value is of wrong type"),
+			AssertionFailures: failures,
+			MiscErrorMessage:  miscErrorMessage,
+		}
+	}
+
 	if schemaErrorInfo, ok := err.(schemaAssertionError); ok {
 		return &schemaError{
-			Title:    fmt.Sprintf("Invalid schema — %s", schemaErrorInfo.description),
-			FileName: node.GetPosition().GetFile(),
-			filePos:  node.GetPosition().AsIntString(),
-			Diff:     node.GetPosition().GetLine(),
-			Expected: schemaErrorInfo.expected,
-			Found:    schemaErrorInfo.found,
-			Hints:    schemaErrorInfo.hints,
+			Title: fmt.Sprintf("Invalid schema — %s", schemaErrorInfo.description),
+			AssertionFailures: []assertionFailure{{
+				FileName: schemaErrorInfo.position.GetFile(),
+				FilePos:  schemaErrorInfo.position.AsIntString(),
+				Source:   schemaErrorInfo.position.GetLine(),
+				Expected: schemaErrorInfo.expected,
+				Found:    schemaErrorInfo.found,
+				Hints:    schemaErrorInfo.hints,
+			}},
 		}
 	}
 
 	return &schemaError{
-		Title:    "Schema Error",
-		FileName: node.GetPosition().GetFile(),
-		filePos:  node.GetPosition().AsIntString(),
-		Diff:     node.GetPosition().GetLine(),
+		Title:            "Schema Error",
+		MiscErrorMessage: err.Error(),
 	}
 }
 
-func NewMismatchedTypeError(foundType yamlmeta.TypeWithValues, expectedType yamlmeta.Type) error {
-	return &mismatchedTypeError{
-		Found:    foundType,
-		Expected: expectedType,
+func NewMismatchedTypeAssertionError(foundType yamlmeta.TypeWithValues, expectedType yamlmeta.Type) error {
+	var expectedTypeString string
+	if expectedType.PositionOfDefinition().IsKnown() {
+		switch expectedType.(type) {
+		case *MapItemType, *ArrayItemType:
+			expectedTypeString = expectedType.GetValueType().String()
+		default:
+			expectedTypeString = expectedType.String()
+		}
+	}
+
+	return schemaAssertionError{
+		description: "Value is of wrong type",
+		position:    foundType.GetPosition(),
+		expected:    fmt.Sprintf("%s (by %s)", expectedTypeString, expectedType.PositionOfDefinition().AsCompactString()),
+		found:       foundType.ValueTypeAsString(),
 	}
 }
 
@@ -64,6 +103,7 @@ func NewUnexpectedKeyError(found *yamlmeta.MapItem, definition *filepos.Position
 
 type schemaAssertionError struct {
 	error
+	position    *filepos.Position
 	description string
 	expected    string
 	found       string
@@ -71,24 +111,33 @@ type schemaAssertionError struct {
 }
 
 type schemaError struct {
-	Title    string
+	Title             string
+	AssertionFailures []assertionFailure
+	MiscErrorMessage  string
+}
+
+type assertionFailure struct {
 	FileName string
-	Diff     string
+	Source   string
+	FilePos  string
 	Expected string
 	Found    string
 	Hints    []string
-
-	filePos string
 }
 
 func (e schemaError) Error() string {
+	maxFilePos := 0
+	for _, hunk := range e.AssertionFailures {
+		if len(hunk.FilePos) > maxFilePos {
+			maxFilePos = len(hunk.FilePos)
+		}
+	}
+
 	funcMap := template.FuncMap{
-		"pad": func(delim string, includeLineNumber bool) string {
+		"pad": func(delim string, filePos string) string {
 			padding := "  "
-			if includeLineNumber {
-				return padding + e.filePos + " " + delim
-			}
-			return padding + strings.Repeat(" ", len(e.filePos)) + " " + delim
+			rightAlignedFilePos := fmt.Sprintf("%*s", maxFilePos, filePos)
+			return padding + rightAlignedFilePos + " " + delim
 		},
 	}
 
@@ -105,37 +154,6 @@ func (e schemaError) Error() string {
 	}
 
 	return output.String()
-}
-
-type mismatchedTypeError struct {
-	Found    yamlmeta.TypeWithValues
-	Expected yamlmeta.Type
-}
-
-func (t mismatchedTypeError) Error() string {
-	position := t.Found.GetPosition().AsCompactString()
-	lineContent := t.Found.GetPosition().GetLine()
-
-	leftPadLength := len(position) + 1
-	msg := "\n"
-	msg += formatLine(leftPadLength, position, lineContent)
-	msg += formatLine(leftPadLength, "", "")
-	msg += formatLine(leftPadLength, "", "TYPE MISMATCH - the value of this item is not what schema expected:")
-	msg += formatLine(leftPadLength, "", fmt.Sprintf("     found: %s", t.Found.ValueTypeAsString()))
-
-	if t.Expected.PositionOfDefinition().IsKnown() {
-		expectedTypeString := ""
-		switch t.Expected.(type) {
-		case *MapItemType, *ArrayItemType:
-			expectedTypeString = t.Expected.GetValueType().String()
-		default:
-			expectedTypeString = t.Expected.String()
-		}
-
-		msg += formatLine(leftPadLength, "", fmt.Sprintf("  expected: %s (by %s)", expectedTypeString, t.Expected.PositionOfDefinition().AsCompactString()))
-	}
-
-	return msg
 }
 
 type unexpectedKeyError struct {

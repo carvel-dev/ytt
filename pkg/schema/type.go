@@ -165,7 +165,7 @@ func (m *MapType) CheckType(node yamlmeta.TypeWithValues) (chk yamlmeta.TypeChec
 	nodeMap, ok := node.(*yamlmeta.Map)
 	if !ok {
 		chk.Violations = append(chk.Violations,
-			NewMismatchedTypeError(node, m))
+			NewMismatchedTypeAssertionError(node, m))
 		return
 	}
 
@@ -192,7 +192,7 @@ func (a *ArrayType) CheckType(node yamlmeta.TypeWithValues) (chk yamlmeta.TypeCh
 	_, ok := node.(*yamlmeta.Array)
 	if !ok {
 		chk.Violations = append(chk.Violations,
-			NewMismatchedTypeError(node, a))
+			NewMismatchedTypeAssertionError(node, a))
 	}
 	return
 }
@@ -212,28 +212,28 @@ func (m *ScalarType) CheckType(node yamlmeta.TypeWithValues) (chk yamlmeta.TypeC
 	case string:
 		if _, ok := m.Value.(string); !ok {
 			chk.Violations = append(chk.Violations,
-				NewMismatchedTypeError(node, m))
+				NewMismatchedTypeAssertionError(node, m))
 		}
 	case float64:
 		if _, ok := m.Value.(float64); !ok {
 			chk.Violations = append(chk.Violations,
-				NewMismatchedTypeError(node, m))
+				NewMismatchedTypeAssertionError(node, m))
 		}
 	case int, int64, uint64:
 		if _, ok := m.Value.(int); !ok {
 			if _, ok = m.Value.(float64); !ok {
 				chk.Violations = append(chk.Violations,
-					NewMismatchedTypeError(node, m))
+					NewMismatchedTypeAssertionError(node, m))
 			}
 		}
 	case bool:
 		if _, ok := m.Value.(bool); !ok {
 			chk.Violations = append(chk.Violations,
-				NewMismatchedTypeError(node, m))
+				NewMismatchedTypeAssertionError(node, m))
 		}
 	default:
 		chk.Violations = append(chk.Violations,
-			NewMismatchedTypeError(node, m))
+			NewMismatchedTypeAssertionError(node, m))
 	}
 	return
 }
@@ -246,7 +246,7 @@ func (t *DocumentType) AssignTypeTo(typeable yamlmeta.Typeable) (chk yamlmeta.Ty
 	doc, ok := typeable.(*yamlmeta.Document)
 	if !ok {
 		chk.Violations = append(chk.Violations,
-			NewMismatchedTypeError(typeable, t))
+			NewMismatchedTypeAssertionError(typeable, t))
 		return
 	}
 
@@ -284,7 +284,7 @@ func (t *DocumentType) AssignTypeTo(typeable yamlmeta.Typeable) (chk yamlmeta.Ty
 func (m *MapType) AssignTypeTo(typeable yamlmeta.Typeable) (chk yamlmeta.TypeCheck) {
 	mapNode, ok := typeable.(*yamlmeta.Map)
 	if !ok {
-		chk.Violations = append(chk.Violations, NewMismatchedTypeError(typeable, m))
+		chk.Violations = append(chk.Violations, NewMismatchedTypeAssertionError(typeable, m))
 		return
 	}
 	var foundKeys []interface{}
@@ -350,7 +350,7 @@ func (t *MapItemType) AssignTypeTo(typeable yamlmeta.Typeable) (chk yamlmeta.Typ
 func (a *ArrayType) AssignTypeTo(typeable yamlmeta.Typeable) (chk yamlmeta.TypeCheck) {
 	arrayNode, ok := typeable.(*yamlmeta.Array)
 	if !ok {
-		chk.Violations = append(chk.Violations, NewMismatchedTypeError(typeable, a))
+		chk.Violations = append(chk.Violations, NewMismatchedTypeAssertionError(typeable, a))
 		return
 	}
 	typeable.SetType(a)
@@ -376,7 +376,7 @@ func (a *ArrayItemType) AssignTypeTo(typeable yamlmeta.Typeable) (chk yamlmeta.T
 }
 
 func (m *ScalarType) AssignTypeTo(typeable yamlmeta.Typeable) yamlmeta.TypeCheck {
-	return yamlmeta.TypeCheck{[]error{NewMismatchedTypeError(typeable, m)}}
+	return yamlmeta.TypeCheck{[]error{NewMismatchedTypeAssertionError(typeable, m)}}
 }
 
 func (a AnyType) AssignTypeTo(yamlmeta.Typeable) (chk yamlmeta.TypeCheck) {

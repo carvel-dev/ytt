@@ -127,11 +127,12 @@ func NewMapItemType(item *yamlmeta.MapItem) (*MapItemType, error) {
 
 	if valueType == nil {
 		return nil, NewSchemaError(schemaAssertionError{
+			position:    item.GetPosition(),
 			description: "null value not allowed here",
 			expected:    "non-null value",
 			found:       "null value",
 			hints:       []string{"in YAML, omitting a value implies null.", "to set the default value to null, annotate with @schema/nullable.", "to allow any value, annotate with @schema/type any=True."},
-		}, item)
+		})
 	}
 
 	defaultValue := item.Value
@@ -145,11 +146,12 @@ func NewMapItemType(item *yamlmeta.MapItem) (*MapItemType, error) {
 func NewArrayType(a *yamlmeta.Array) (*ArrayType, error) {
 	if len(a.Items) != 1 {
 		return nil, NewSchemaError(schemaAssertionError{
+			position:    a.Position,
 			description: "wrong number of items in array definition",
 			expected:    "exactly 1 array item, of the desired type",
 			found:       fmt.Sprintf("%d array items", len(a.Items)),
 			hints:       []string{"in schema, the one item of the array implies the type of its elements.", "in schema, the default value for an array is always an empty list.", "default values can be overridden via a data values overlay."},
-		}, a)
+		})
 	}
 
 	arrayItemType, err := NewArrayItemType(a.Items[0])
@@ -171,12 +173,12 @@ func NewArrayItemType(item *yamlmeta.ArrayItem) (*ArrayItemType, error) {
 	if typeFromAnns != nil {
 		if _, ok := typeFromAnns.(*NullType); ok {
 			return nil, NewSchemaError(schemaAssertionError{
-				error:       nil,
+				position:    item.Position,
 				description: "@schema/nullable is not supported on array items",
 				expected:    "a valid annotation",
 				found:       fmt.Sprintf("@%v", AnnotationNullable),
 				hints:       []string{"Remove the @schema/nullable annotation from array item"},
-			}, item)
+			})
 		}
 		valueType = typeFromAnns
 	} else {
