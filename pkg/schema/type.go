@@ -172,7 +172,7 @@ func (m *MapType) CheckType(node yamlmeta.TypeWithValues) (chk yamlmeta.TypeChec
 	for _, item := range nodeMap.Items {
 		if !m.AllowsKey(item.Key) {
 			chk.Violations = append(chk.Violations,
-				NewUnexpectedKeyError(item, m.Position))
+				NewUnexpectedKeyAssertionError(item, m.Position))
 		}
 	}
 	return

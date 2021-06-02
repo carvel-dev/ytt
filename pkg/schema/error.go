@@ -7,7 +7,6 @@ import (
 	"bytes"
 	"fmt"
 	"log"
-	"strings"
 	"text/template"
 
 	"github.com/k14s/ytt/pkg/filepos"
@@ -87,17 +86,18 @@ func NewMismatchedTypeAssertionError(foundType yamlmeta.TypeWithValues, expected
 	}
 
 	return schemaAssertionError{
-		description: "Value is of wrong type",
-		position:    foundType.GetPosition(),
-		expected:    fmt.Sprintf("%s (by %s)", expectedTypeString, expectedType.PositionOfDefinition().AsCompactString()),
-		found:       foundType.ValueTypeAsString(),
+		position: foundType.GetPosition(),
+		expected: fmt.Sprintf("%s (by %s)", expectedTypeString, expectedType.PositionOfDefinition().AsCompactString()),
+		found:    foundType.ValueTypeAsString(),
 	}
 }
 
-func NewUnexpectedKeyError(found *yamlmeta.MapItem, definition *filepos.Position) error {
-	return &unexpectedKeyError{
-		Found:                 found,
-		MapDefinitionPosition: definition,
+func NewUnexpectedKeyAssertionError(found *yamlmeta.MapItem, definition *filepos.Position) error {
+	return schemaAssertionError{
+		position: definition,
+		expected: fmt.Sprintf("(a key defined in map) (by %s)", definition.AsCompactString()),
+		found:    fmt.Sprintf("%v", found.Key),
+		hints:    []string{"declare data values in schema and override them in a data values document"},
 	}
 }
 
@@ -154,40 +154,4 @@ func (e schemaError) Error() string {
 	}
 
 	return output.String()
-}
-
-type unexpectedKeyError struct {
-	Found                 *yamlmeta.MapItem
-	MapDefinitionPosition *filepos.Position
-}
-
-func (t unexpectedKeyError) Error() string {
-	position := t.Found.Position.AsCompactString()
-	leftColumnSize := len(position) + 1
-	lineContent := strings.TrimSpace(t.Found.Position.GetLine())
-	keyAsString := fmt.Sprintf("%v", t.Found.Key)
-
-	msg := "\n"
-	msg += formatLine(leftColumnSize, position, lineContent)
-	msg += formatLine(leftColumnSize, "", "")
-	msg += formatLine(leftColumnSize, "", "UNEXPECTED KEY - the key of this item was not found in the schema's corresponding map:")
-	msg += formatLine(leftColumnSize, "", fmt.Sprintf("     found: %s", keyAsString))
-	msg += formatLine(leftColumnSize, "", fmt.Sprintf("  expected: (a key defined in map) (by %s)", t.MapDefinitionPosition.AsCompactString()))
-	msg += formatLine(leftColumnSize, "", "  (hint: declare data values in schema and override them in a data values document)")
-	return msg
-}
-
-func leftPadding(size int) string {
-	result := ""
-	for i := 0; i < size; i++ {
-		result += " "
-	}
-	return result
-}
-
-func formatLine(leftColumnSize int, left, right string) string {
-	if len(right) > 0 {
-		right = " " + right
-	}
-	return fmt.Sprintf("%s%s|%s\n", left, leftPadding(leftColumnSize-len(left)), right)
 }
