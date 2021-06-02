@@ -6,6 +6,7 @@ package yamltemplate
 import (
 	"fmt"
 
+	"github.com/k14s/ytt/pkg/filepos"
 	"github.com/k14s/ytt/pkg/orderedmap"
 	"github.com/k14s/ytt/pkg/template"
 	"github.com/k14s/ytt/pkg/yamlmeta"
@@ -114,7 +115,7 @@ func (e EvaluationCtx) convertValToDocSetItems(val interface{}) ([]*yamlmeta.Doc
 	switch typedVal := val.(type) {
 	case []interface{}:
 		for _, item := range typedVal {
-			result = append(result, &yamlmeta.Document{Value: item})
+			result = append(result, &yamlmeta.Document{Value: item, Position: filepos.NewUnknownPosition()})
 		}
 
 	case *yamlmeta.DocumentSet:
@@ -162,7 +163,7 @@ func (e EvaluationCtx) convertValToMapItems(val interface{}) ([]*yamlmeta.MapIte
 	case *orderedmap.Map:
 		result := []*yamlmeta.MapItem{}
 		typedVal.Iterate(func(k, v interface{}) {
-			result = append(result, &yamlmeta.MapItem{Key: k, Value: v})
+			result = append(result, &yamlmeta.MapItem{Key: k, Value: v, Position: filepos.NewUnknownPosition()})
 		})
 		return result, false, nil
 
@@ -199,7 +200,7 @@ func (e EvaluationCtx) convertValToArrayItems(val interface{}) ([]*yamlmeta.Arra
 	switch typedVal := val.(type) {
 	case []interface{}:
 		for _, item := range typedVal {
-			result = append(result, &yamlmeta.ArrayItem{Value: item})
+			result = append(result, &yamlmeta.ArrayItem{Value: item, Position: filepos.NewUnknownPosition()})
 		}
 
 	case *yamlmeta.Array:

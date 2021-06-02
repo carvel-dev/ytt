@@ -97,9 +97,7 @@ func (t mismatchedTypeError) Error() string {
 	msg += formatLine(leftPadLength, position, lineContent)
 	msg += formatLine(leftPadLength, "", "")
 	msg += formatLine(leftPadLength, "", "TYPE MISMATCH - the value of this item is not what schema expected:")
-	if t.Found.GetPosition().IsKnown() {
-		msg += formatLine(leftPadLength, "", fmt.Sprintf("     found: %s", t.Found.ValueTypeAsString()))
-	}
+	msg += formatLine(leftPadLength, "", fmt.Sprintf("     found: %s", t.Found.ValueTypeAsString()))
 
 	if t.Expected.PositionOfDefinition().IsKnown() {
 		expectedTypeString := ""
