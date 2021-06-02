@@ -39,7 +39,7 @@ func NewTypeAnnotation(ann template.NodeAnnotation, pos *filepos.Position) (*Typ
 	if len(ann.Kwargs) == 0 {
 		return nil, schemaAssertionError{
 			position:    pos,
-			description: "expected @schema/type annotation keyword argument",
+			description: "Invalid schema - expected @schema/type annotation keyword argument",
 			expected:    "valid keyword arg",
 			found:       "missing keyword arg",
 			hints:       []string{fmt.Sprintf("Supported key-value pairs are '%v=True', '%v=False'", TypeAnnotationKwargAny, TypeAnnotationKwargAny)},
@@ -58,7 +58,7 @@ func NewTypeAnnotation(ann template.NodeAnnotation, pos *filepos.Position) (*Typ
 			if err != nil {
 				return nil, schemaAssertionError{
 					position:    pos,
-					description: "unknown @schema/type annotation keyword argument",
+					description: "Invalid schema - unknown @schema/type annotation keyword argument",
 					expected:    "starlark.Bool",
 					found:       fmt.Sprintf("%T", kwarg[1]),
 					hints:       []string{fmt.Sprintf("Supported kwargs are '%v'", TypeAnnotationKwargAny)},
@@ -69,7 +69,7 @@ func NewTypeAnnotation(ann template.NodeAnnotation, pos *filepos.Position) (*Typ
 		default:
 			return nil, schemaAssertionError{
 				position:    pos,
-				description: "unknown @schema/type annotation keyword argument",
+				description: "Invalid schema - unknown @schema/type annotation keyword argument",
 				expected:    "A valid kwarg",
 				found:       argName,
 				hints:       []string{fmt.Sprintf("Supported kwargs are '%v'", TypeAnnotationKwargAny)},
@@ -131,13 +131,13 @@ func processOptionalAnnotation(node yamlmeta.Node, optionalAnnotation structmeta
 			}
 			nullAnn, err := NewNullableAnnotation(ann, wrappedValueType, node.GetPosition())
 			if err != nil {
-				return nil, NewSchemaError(err)
+				return nil, NewSchemaError("", err)
 			}
 			return nullAnn, nil
 		case AnnotationType:
 			typeAnn, err := NewTypeAnnotation(ann, node.GetPosition())
 			if err != nil {
-				return nil, NewSchemaError(err)
+				return nil, NewSchemaError("", err)
 			}
 			return typeAnn, nil
 		}

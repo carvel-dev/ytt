@@ -1765,7 +1765,7 @@ vpc:
 		})
 
 		expectedErr := `
-Invalid schema — wrong number of items in array definition
+Invalid schema - wrong number of items in array definition
 
 schema.yml:
     |
@@ -1800,7 +1800,7 @@ vpc:
 		})
 
 		expectedErr := `
-Invalid schema — wrong number of items in array definition
+Invalid schema - wrong number of items in array definition
 
 schema.yml:
     |
@@ -1830,7 +1830,7 @@ vpc:
 		})
 
 		expectedErr := `
-Invalid schema — @schema/nullable is not supported on array items
+Invalid schema - @schema/nullable is not supported on array items
 
 schema.yml:
     |
@@ -1855,7 +1855,7 @@ vpc:
 			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
 		})
 		expectedErr := `
-Invalid schema — null value not allowed here
+Invalid schema - null value not allowed here
 
 schema.yml:
     |
@@ -1877,7 +1877,7 @@ schema.yml:
 foo: 0
 `
 		expectedErr := `
-Invalid schema — unknown @schema/type annotation keyword argument
+Invalid schema - unknown @schema/type annotation keyword argument
 
 schema.yml:
     |
@@ -1903,7 +1903,7 @@ foo: 0
 `
 
 		expectedErr := `
-Invalid schema — unknown @schema/type annotation keyword argument
+Invalid schema - unknown @schema/type annotation keyword argument
 
 schema.yml:
     |
@@ -1912,6 +1912,7 @@ schema.yml:
 
     = found: starlark.Int
     = expected: starlark.Bool
+    = hint: Supported kwargs are 'any'
 `
 
 		filesToProcess := files.NewSortedFiles([]*files.File{
@@ -1928,7 +1929,7 @@ foo: 0
 `
 
 		expectedErr := `
-Invalid schema — expected @schema/type annotation keyword argument
+Invalid schema - expected @schema/type annotation keyword argument
 
 schema.yml:
     |

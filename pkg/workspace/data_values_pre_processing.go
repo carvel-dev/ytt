@@ -67,7 +67,7 @@ func (o DataValuesPreProcessing) apply(files []*FileInLibrary) (*DataValues, []*
 		}
 		typeCheck := o.typeAndCheck(resultDVsDoc)
 		if len(typeCheck.Violations) > 0 {
-			return nil, nil, schema.NewSchemaError(typeCheck)
+			return nil, nil, schema.NewSchemaError("Schema Typecheck - Value is of wrong type", typeCheck.Violations...)
 		}
 	}
 

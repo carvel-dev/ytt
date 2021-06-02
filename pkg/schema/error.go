@@ -14,63 +14,51 @@ import (
 )
 
 const schemaErrorReportTemplate = `
-{{.Title}}
+{{- if .Summary}}
+{{.Summary}}
+{{- end}}
+{{- range .AssertionFailures}}
+{{- if .Description}}
+{{.Description}}
+{{- end}}
 
-{{range .AssertionFailures}}{{.FileName}}:
+{{.FileName}}:
 {{pad "|" ""}}
 {{pad "|" .FilePos}} {{.Source}}
 {{pad "|" ""}}
 
 {{with .Found}}{{pad "=" ""}} found: {{.}}{{end}}
 {{with .Expected}}{{pad "=" ""}} expected: {{.}}{{end}}
-{{range .Hints}}{{pad "=" ""}} hint: {{.}}
-{{end}}
-{{end}}
+{{- range .Hints}}
+{{pad "=" ""}} hint: {{.}}
+{{- end}}
+{{- end}}
 {{.MiscErrorMessage}}
 `
 
-func NewSchemaError(err error) error {
-	if typeCheckError, ok := err.(yamlmeta.TypeCheck); ok {
-		var failures []assertionFailure
-		var miscErrorMessage string
-		for _, checkErr := range typeCheckError.Violations {
-			if typeCheckAssertionErr, ok := checkErr.(schemaAssertionError); ok {
-				failures = append(failures, assertionFailure{
-					FileName: typeCheckAssertionErr.position.GetFile(),
-					FilePos:  typeCheckAssertionErr.position.AsIntString(),
-					Source:   typeCheckAssertionErr.position.GetLine(),
-					Expected: typeCheckAssertionErr.expected,
-					Found:    typeCheckAssertionErr.found,
-					Hints:    typeCheckAssertionErr.hints,
-				})
-			} else {
-				miscErrorMessage += checkErr.Error()
-			}
-		}
-		return &schemaError{
-			Title:             fmt.Sprintf("Schema Typecheck - Value is of wrong type"),
-			AssertionFailures: failures,
-			MiscErrorMessage:  miscErrorMessage,
-		}
-	}
-
-	if schemaErrorInfo, ok := err.(schemaAssertionError); ok {
-		return &schemaError{
-			Title: fmt.Sprintf("Invalid schema — %s", schemaErrorInfo.description),
-			AssertionFailures: []assertionFailure{{
-				FileName: schemaErrorInfo.position.GetFile(),
-				FilePos:  schemaErrorInfo.position.AsIntString(),
-				Source:   schemaErrorInfo.position.GetLine(),
-				Expected: schemaErrorInfo.expected,
-				Found:    schemaErrorInfo.found,
-				Hints:    schemaErrorInfo.hints,
-			}},
+func NewSchemaError(summary string, errs ...error) error {
+	var failures []assertionFailure
+	var miscErrorMessage string
+	for _, err := range errs {
+		if typeCheckAssertionErr, ok := err.(schemaAssertionError); ok {
+			failures = append(failures, assertionFailure{
+				Description: typeCheckAssertionErr.description,
+				FileName:    typeCheckAssertionErr.position.GetFile(),
+				FilePos:     typeCheckAssertionErr.position.AsIntString(),
+				Source:      typeCheckAssertionErr.position.GetLine(),
+				Expected:    typeCheckAssertionErr.expected,
+				Found:       typeCheckAssertionErr.found,
+				Hints:       typeCheckAssertionErr.hints,
+			})
+		} else {
+			miscErrorMessage += fmt.Sprintf("%s \n", err.Error())
 		}
 	}
 
 	return &schemaError{
-		Title:            "Schema Error",
-		MiscErrorMessage: err.Error(),
+		Summary:           summary,
+		AssertionFailures: failures,
+		MiscErrorMessage:  miscErrorMessage,
 	}
 }
 
@@ -101,6 +89,22 @@ func NewUnexpectedKeyAssertionError(found *yamlmeta.MapItem, definition *filepos
 	}
 }
 
+type schemaError struct {
+	Summary           string
+	AssertionFailures []assertionFailure
+	MiscErrorMessage  string
+}
+
+type assertionFailure struct {
+	Description string
+	FileName    string
+	Source      string
+	FilePos     string
+	Expected    string
+	Found       string
+	Hints       []string
+}
+
 type schemaAssertionError struct {
 	error
 	position    *filepos.Position
@@ -108,21 +112,6 @@ type schemaAssertionError struct {
 	expected    string
 	found       string
 	hints       []string
-}
-
-type schemaError struct {
-	Title             string
-	AssertionFailures []assertionFailure
-	MiscErrorMessage  string
-}
-
-type assertionFailure struct {
-	FileName string
-	Source   string
-	FilePos  string
-	Expected string
-	Found    string
-	Hints    []string
 }
 
 func (e schemaError) Error() string {
