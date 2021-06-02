@@ -126,7 +126,7 @@ func NewMapItemType(item *yamlmeta.MapItem) (*MapItemType, error) {
 	}
 
 	if valueType == nil {
-		return nil, NewInvalidSchemaError(schemaAssertionError{
+		return nil, NewSchemaError(schemaAssertionError{
 			description: "null value not allowed here",
 			expected:    "non-null value",
 			found:       "null value",
@@ -144,7 +144,7 @@ func NewMapItemType(item *yamlmeta.MapItem) (*MapItemType, error) {
 
 func NewArrayType(a *yamlmeta.Array) (*ArrayType, error) {
 	if len(a.Items) != 1 {
-		return nil, NewInvalidSchemaError(schemaAssertionError{
+		return nil, NewSchemaError(schemaAssertionError{
 			description: "wrong number of items in array definition",
 			expected:    "exactly 1 array item, of the desired type",
 			found:       fmt.Sprintf("%d array items", len(a.Items)),
@@ -170,7 +170,7 @@ func NewArrayItemType(item *yamlmeta.ArrayItem) (*ArrayItemType, error) {
 	typeFromAnns := convertAnnotationsToSingleType(anns)
 	if typeFromAnns != nil {
 		if _, ok := typeFromAnns.(*NullType); ok {
-			return nil, NewInvalidSchemaError(schemaAssertionError{
+			return nil, NewSchemaError(schemaAssertionError{
 				error:       nil,
 				description: "@schema/nullable is not supported on array items",
 				expected:    "a valid annotation",

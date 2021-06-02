@@ -14,7 +14,7 @@ import (
 	"github.com/k14s/ytt/pkg/yamlmeta"
 )
 
-const invalidSchemaTemplate = `
+const schemaErrorReportTemplate = `
 {{.Title}}
 
 {{.FileName}}:
@@ -27,9 +27,9 @@ const invalidSchemaTemplate = `
 {{range .Hints}}{{pad "=" false}} hint: {{.}}
 {{end}}`
 
-func NewInvalidSchemaError(err error, node yamlmeta.Node) error {
+func NewSchemaError(err error, node yamlmeta.Node) error {
 	if schemaErrorInfo, ok := err.(schemaAssertionError); ok {
-		return &invalidSchemaError{
+		return &schemaError{
 			Title:    fmt.Sprintf("Invalid schema — %s", schemaErrorInfo.description),
 			FileName: node.GetPosition().GetFile(),
 			filePos:  node.GetPosition().AsIntString(),
@@ -40,8 +40,8 @@ func NewInvalidSchemaError(err error, node yamlmeta.Node) error {
 		}
 	}
 
-	return &invalidSchemaError{
-		Title:    "Invalid schema",
+	return &schemaError{
+		Title:    "Schema Error",
 		FileName: node.GetPosition().GetFile(),
 		filePos:  node.GetPosition().AsIntString(),
 		Diff:     node.GetPosition().GetLine(),
@@ -70,7 +70,7 @@ type schemaAssertionError struct {
 	hints       []string
 }
 
-type invalidSchemaError struct {
+type schemaError struct {
 	Title    string
 	FileName string
 	Diff     string
@@ -81,7 +81,7 @@ type invalidSchemaError struct {
 	filePos string
 }
 
-func (e invalidSchemaError) Error() string {
+func (e schemaError) Error() string {
 	funcMap := template.FuncMap{
 		"pad": func(delim string, includeLineNumber bool) string {
 			padding := "  "
@@ -92,7 +92,7 @@ func (e invalidSchemaError) Error() string {
 		},
 	}
 
-	tmpl, err := template.New("").Funcs(funcMap).Parse(invalidSchemaTemplate)
+	tmpl, err := template.New("").Funcs(funcMap).Parse(schemaErrorReportTemplate)
 	if err != nil {
 		log.Fatalf("parsing: %s", err)
 	}
