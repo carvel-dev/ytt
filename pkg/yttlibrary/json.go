@@ -6,6 +6,7 @@ package yttlibrary
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/k14s/starlark-go/starlark"
 	"github.com/k14s/starlark-go/starlarkstruct"
@@ -24,6 +25,9 @@ var (
 			},
 		},
 	}
+	JSONKWARGS = map[string]struct{}{
+		"indent": struct{}{},
+	}
 )
 
 type jsonModule struct{}
@@ -32,6 +36,9 @@ func (b jsonModule) Encode(thread *starlark.Thread, f *starlark.Builtin, args st
 	if args.Len() != 1 {
 		return starlark.None, fmt.Errorf("expected exactly one argument")
 	}
+	if err := core.CheckArgNames(kwargs, JSONKWARGS); err != nil {
+		return starlark.None, err
+	}
 
 	val, err := core.NewStarlarkValue(args.Index(0)).AsGoValue()
 	if err != nil {
@@ -39,7 +46,20 @@ func (b jsonModule) Encode(thread *starlark.Thread, f *starlark.Builtin, args st
 	}
 	val = orderedmap.Conversion{yamlmeta.NewGoFromAST(val)}.AsUnorderedStringMaps()
 
-	valBs, err := json.Marshal(val)
+	var valBs []byte
+	indent, err := core.Int64Arg(kwargs, "indent")
+	if err != nil {
+		return starlark.None, err
+	}
+	if indent > 4 || indent < 0 {
+		return starlark.None, fmt.Errorf("indent value must be between 0 and 4")
+	}
+	if indent > 0 {
+		valBs, err = json.MarshalIndent(val, "", strings.Repeat(" ", int(indent)))
+	} else {
+		valBs, err = json.Marshal(val)
+	}
+
 	if err != nil {
 		return starlark.None, err
 	}
