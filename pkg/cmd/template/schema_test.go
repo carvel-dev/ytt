@@ -448,8 +448,6 @@ data_values.yml:
 	})
 
 	t.Run("when a invalid data value is passed using template replace", func(t *testing.T) {
-		//TODO: unskip this test
-		t.Skip("Figure out what to print as an error message here")
 
 		schemaYAML := `#@schema/match data_values=True
 ---
@@ -464,11 +462,18 @@ _: #@ template.replace({'foo':9})
 ---
 rendered: #@ data.values.foo
 `
-		expectedErr := `? |
-  |
-  | TYPE MISMATCH - the value of this item is not what schema expected:
-  |      found: integer
-  |   expected: string (by schema.yml:3)`
+		expectedErr := `
+Schema Typecheck - Value is of wrong type
+=========================================
+
+:
+    |
+  ? | 
+    |
+
+    = found: integer
+    = expected: string (by schema.yml:3)
+`
 
 		filesToProcess := files.NewSortedFiles([]*files.File{
 			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
@@ -478,10 +483,8 @@ rendered: #@ data.values.foo
 
 		assertFails(t, filesToProcess, expectedErr, opts)
 	})
-	t.Run("when a data value is passed using --data-value, but schema expects a non string", func(t *testing.T) {
-		//TODO: unskip this test
-		t.Skip("Figure out what to print as an error message here")
 
+	t.Run("when a data value is passed using --data-value, but schema expects a non string", func(t *testing.T) {
 		cmdOpts := cmdtpl.NewOptions()
 		cmdOpts.SchemaEnabled = true
 		schemaYAML := `#@schema/match data_values=True
@@ -498,17 +501,22 @@ rendered: #@ data.values.foo
 			files.MustNewFileFromSource(files.NewBytesSource("template.yml", []byte(templateYAML))),
 		})
 
-		expectedErr := `key 'foo' (kv arg):1 |
-                     |
-                     | TYPE MISMATCH - the value of this item is not what schema expected:
-                     |      found: string
-                     |   expected: integer (by schema.yml:3)`
+		expectedErr := `
+Schema Typecheck - Value is of wrong type
+=========================================
+
+key 'foo' (kv arg):
+    |
+  1 | 
+    |
+
+    = found: string
+    = expected: integer (by schema.yml:3)
+`
 		assertFails(t, filesToProcess, expectedErr, cmdOpts)
 	})
 
 	t.Run("when schema is null and non-empty data values is given", func(t *testing.T) {
-		//TODO: figure out how to improve this error message
-
 		schemaYAML := `#@schema/match data_values=True
 ---
 `
@@ -1448,9 +1456,6 @@ cow: #@ data.values.cow
 		assertSucceeds(t, filesToProcess, expectedYAMLTplData, cmdOpts)
 	})
 	t.Run("when data value ref'ed to a library is passed using --data-value, but schema expects an int, schema violation is reported", func(t *testing.T) {
-		//TODO: unskip this test
-		t.Skip("Figure out what to print as an error message here")
-
 		cmdOpts := cmdtpl.NewOptions()
 		cmdOpts.SchemaEnabled = true
 		rootYAML := []byte(`
@@ -1486,13 +1491,17 @@ foo: #@ data.values.foo
       root.yml:5 | --- #@ template.replace(library.get("lib").eval())
 
     reason:
-     key 'foo' (kv arg):1 |
-                          |
-                          | TYPE MISMATCH - the value of this item is not what schema expected:
-                          |      found: string
-                          |   expected: integer (by _ytt_lib/lib/schema.yml:5)
+     Schema Typecheck - Value is of wrong type
+     =========================================
      
-     `
+     key 'foo' (kv arg):
+         |
+       1 | 
+         |
+     
+         = found: string
+         = expected: integer (by _ytt_lib/lib/schema.yml:5)
+`
 		assertFails(t, filesToProcess, expectedErr, cmdOpts)
 	})
 
@@ -1695,9 +1704,6 @@ root_data_values: null
 		assertSucceeds(t, filesToProcess, expectedYAMLTplData, opts)
 	})
 	t.Run("when data values are programmatically set on a library, but library's schema expects an int, type violation is reported", func(t *testing.T) {
-		//TODO: unskip this test
-		t.Skip("Figure out what to print as an error message here")
-
 		configYAML := []byte(`
 #@ load("@ytt:template", "template")
 #@ load("@ytt:library", "library")
@@ -1708,16 +1714,23 @@ root_data_values: null
 ---
 foo: 3`)
 
-		expectedErr := `- library.eval: Evaluating library 'lib': Overlaying data values (in following order: additional data values): 
+		expectedErr := `
+- library.eval: Evaluating library 'lib': Overlaying data values (in following order: additional data values): 
     in <toplevel>
       config.yml:4 | --- #@ template.replace(library.get("lib").with_data_values({'foo':'4'}).eval())
 
     reason:
-     ? |
-       |
-       | TYPE MISMATCH - the value of this item is not what schema expected:
-       |      found: string
-       |   expected: integer (by _ytt_lib/lib/schema.yml:4)`
+     Schema Typecheck - Value is of wrong type
+     =========================================
+     
+     :
+         |
+       ? | 
+         |
+     
+         = found: string
+         = expected: integer (by _ytt_lib/lib/schema.yml:4)
+`
 
 		filesToProcess := files.NewSortedFiles([]*files.File{
 			files.MustNewFileFromSource(files.NewBytesSource("config.yml", configYAML)),
