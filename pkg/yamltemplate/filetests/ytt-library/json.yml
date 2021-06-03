@@ -7,24 +7,45 @@ fragment:
   piece1: false
 #@ end
 
-test1: #@ json.encode({"a": [1,2,3,{"c":456}], "b": "str"})
-test1a: #@ json.encode(yaml_fragment())
-test1b: #@ json.encode({"inside_map": yaml_fragment(), "inside_array": [yaml_fragment()]})
-test2: #@ json.encode({})
-test3: #@ json.decode("{}")
-test4: #@ json.decode('{"a":[1,2,3,{"c":456}],"b":"str"}')
+encode:
+  test1: #@ json.encode({})
+  test2: #@ json.encode({"a": [1,2,3,{"c":456}], "b": "str"})
+  test3: #@ json.encode(yaml_fragment())
+  test4: #@ json.encode({"inside_map": yaml_fragment(), "inside_array": [yaml_fragment()]})
+  indent:
+    test1: #@ json.encode({"a": [1,2,3,{"c":456}], "b": "str"}, indent=4)
+    test2: #@ json.encode({"a": [1,2,3,{"c":456}], "b": "str"}, indent=0)
+decode:
+  test1: #@ json.decode("{}")
+  test2: #@ json.decode('{"a":[1,2,3,{"c":456}],"b":"str"}')
 
 +++
 
-test1: '{"a":[1,2,3,{"c":456}],"b":"str"}'
-test1a: '{"fragment":["piece1",{"piece1":false,"piece2":true}]}'
-test1b: '{"inside_array":[{"fragment":["piece1",{"piece1":false,"piece2":true}]}],"inside_map":{"fragment":["piece1",{"piece1":false,"piece2":true}]}}'
-test2: '{}'
-test3: {}
-test4:
-  a:
-  - 1
-  - 2
-  - 3
-  - c: 456
-  b: str
+encode:
+  test1: '{}'
+  test2: '{"a":[1,2,3,{"c":456}],"b":"str"}'
+  test3: '{"fragment":["piece1",{"piece1":false,"piece2":true}]}'
+  test4: '{"inside_array":[{"fragment":["piece1",{"piece1":false,"piece2":true}]}],"inside_map":{"fragment":["piece1",{"piece1":false,"piece2":true}]}}'
+  indent:
+    test1: |-
+      {
+          "a": [
+              1,
+              2,
+              3,
+              {
+                  "c": 456
+              }
+          ],
+          "b": "str"
+      }
+    test2: '{"a":[1,2,3,{"c":456}],"b":"str"}'
+decode:
+  test1: {}
+  test2:
+    a:
+    - 1
+    - 2
+    - 3
+    - c: 456
+    b: str
