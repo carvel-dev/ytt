@@ -39,9 +39,9 @@ func NewTypeAnnotation(ann template.NodeAnnotation, pos *filepos.Position) (*Typ
 	if len(ann.Kwargs) == 0 {
 		return nil, schemaAssertionError{
 			position:    pos,
-			description: "expected @schema/type annotation keyword argument",
-			expected:    "valid keyword arg",
-			found:       "missing keyword arg",
+			description: fmt.Sprintf("expected @%v annotation to have keyword argument and value", AnnotationType),
+			expected:    "valid keyword argument and value",
+			found:       "missing keyword argument and value",
 			hints:       []string{fmt.Sprintf("Supported key-value pairs are '%v=True', '%v=False'", TypeAnnotationKwargAny, TypeAnnotationKwargAny)},
 		}
 	}

@@ -1959,15 +1959,15 @@ foo: 0
 		expectedErr := `
 Invalid schema
 ==============
-expected @schema/type annotation keyword argument
+expected @schema/type annotation to have keyword argument and value
 
 schema.yml:
     |
   4 | foo: 0
     |
 
-    = found: missing keyword arg
-    = expected: valid keyword arg
+    = found: missing keyword argument and value
+    = expected: valid keyword argument and value
     = hint: Supported key-value pairs are 'any=True', 'any=False'
 `
 
