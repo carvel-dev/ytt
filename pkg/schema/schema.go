@@ -113,7 +113,7 @@ func NewMapItemType(item *yamlmeta.MapItem) (*MapItemType, error) {
 
 	anns, err := collectAnnotations(item)
 	if err != nil {
-		return nil, err
+		return nil, NewSchemaError("Invalid schema", err)
 	}
 	typeFromAnns := convertAnnotationsToSingleType(anns)
 	if typeFromAnns != nil {

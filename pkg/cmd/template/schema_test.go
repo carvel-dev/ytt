@@ -289,6 +289,7 @@ db_conn:
 
 		expectedErr := `
 Schema Typecheck - Value is of wrong type
+=========================================
 
 data_values.yml:
     |
@@ -334,6 +335,7 @@ app: null
 
 		expectedErr := `
 Schema Typecheck - Value is of wrong type
+=========================================
 
 dataValues.yml:
     |
@@ -368,6 +370,7 @@ foo: #@ data.values.foo
 
 		expectedErr := `
 Schema Typecheck - Value is of wrong type
+=========================================
 
 dataValues.yml:
     |
@@ -407,6 +410,7 @@ clients:
 
 		expectedErr := `
 Schema Typecheck - Value is of wrong type
+=========================================
 
 data_values.yml:
      |
@@ -577,6 +581,7 @@ array: [ [1] ]
 
 		expectedErr := `
 Schema Typecheck - Value is of wrong type
+=========================================
 
 values.yml:
     |
@@ -607,6 +612,7 @@ array: [ {a: 1} ]
 
 		expectedErr := `
 Schema Typecheck - Value is of wrong type
+=========================================
 
 values.yml:
     |
@@ -1357,6 +1363,7 @@ foo: 42`)
 
     reason:
      Schema Typecheck - Value is of wrong type
+     =========================================
      
      values.yml:
          |
@@ -1766,6 +1773,7 @@ vpc:
 
 		expectedErr := `
 Invalid schema - wrong number of items in array definition
+==========================================================
 
 schema.yml:
     |
@@ -1801,6 +1809,7 @@ vpc:
 
 		expectedErr := `
 Invalid schema - wrong number of items in array definition
+==========================================================
 
 schema.yml:
     |
@@ -1831,6 +1840,7 @@ vpc:
 
 		expectedErr := `
 Invalid schema - @schema/nullable is not supported on array items
+=================================================================
 
 schema.yml:
     |
@@ -1856,6 +1866,7 @@ vpc:
 		})
 		expectedErr := `
 Invalid schema - null value not allowed here
+============================================
 
 schema.yml:
     |
@@ -1877,7 +1888,9 @@ schema.yml:
 foo: 0
 `
 		expectedErr := `
-Invalid schema - unknown @schema/type annotation keyword argument
+Invalid schema
+==============
+unknown @schema/type annotation keyword argument
 
 schema.yml:
     |
@@ -1903,7 +1916,9 @@ foo: 0
 `
 
 		expectedErr := `
-Invalid schema - unknown @schema/type annotation keyword argument
+Invalid schema
+==============
+unknown @schema/type annotation keyword argument
 
 schema.yml:
     |
@@ -1929,7 +1944,9 @@ foo: 0
 `
 
 		expectedErr := `
-Invalid schema - expected @schema/type annotation keyword argument
+Invalid schema
+==============
+expected @schema/type annotation keyword argument
 
 schema.yml:
     |

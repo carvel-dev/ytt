@@ -7,6 +7,7 @@ import (
 	"bytes"
 	"fmt"
 	"log"
+	"strings"
 	"text/template"
 
 	"github.com/k14s/ytt/pkg/filepos"
@@ -16,6 +17,7 @@ import (
 const schemaErrorReportTemplate = `
 {{- if .Summary}}
 {{.Summary}}
+{{addBreak .Summary}}
 {{- end}}
 {{- range .AssertionFailures}}
 {{- if .Description}}
@@ -127,6 +129,9 @@ func (e schemaError) Error() string {
 			padding := "  "
 			rightAlignedFilePos := fmt.Sprintf("%*s", maxFilePos, filePos)
 			return padding + rightAlignedFilePos + " " + delim
+		},
+		"addBreak": func(title string) string {
+			return strings.Repeat("=", len(title))
 		},
 	}
 
