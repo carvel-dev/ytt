@@ -50,6 +50,10 @@ func (p *Position) AsString() string {
 	return "line " + p.AsCompactString()
 }
 
+func (p *Position) GetFile() string {
+	return p.file
+}
+
 func (p *Position) AsCompactString() string {
 	filePrefix := p.file
 	if len(filePrefix) > 0 {

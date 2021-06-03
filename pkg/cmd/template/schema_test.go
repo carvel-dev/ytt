@@ -286,26 +286,34 @@ db_conn:
 			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
 			files.MustNewFileFromSource(files.NewBytesSource("data_values.yml", []byte(dataValuesYAML))),
 		})
+
 		expectedErr := `
-data_values.yml:4 |   port: localhost
-                  |
-                  | TYPE MISMATCH - the value of this item is not what schema expected:
-                  |      found: string
-                  |   expected: integer (by schema.yml:4)
+Schema Typecheck - Value is of wrong type
+=========================================
 
+data_values.yml:
+    |
+  4 |   port: localhost
+    |
 
-data_values.yml:6 |     main: 123
-                  |
-                  | TYPE MISMATCH - the value of this item is not what schema expected:
-                  |      found: integer
-                  |   expected: string (by schema.yml:6)
+    = found: string
+    = expected: integer (by schema.yml:4)
 
+data_values.yml:
+    |
+  6 |     main: 123
+    |
 
-data_values.yml:7 |   timeout: 5m
-                  |
-                  | TYPE MISMATCH - the value of this item is not what schema expected:
-                  |      found: string
-                  |   expected: float (by schema.yml:7)
+    = found: integer
+    = expected: string (by schema.yml:6)
+
+data_values.yml:
+    |
+  7 |   timeout: 5m
+    |
+
+    = found: string
+    = expected: float (by schema.yml:7)
 `
 
 		assertFails(t, filesToProcess, expectedErr, opts)
@@ -324,13 +332,19 @@ app: null
 			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
 			files.MustNewFileFromSource(files.NewBytesSource("dataValues.yml", []byte(dataValuesYAML))),
 		})
-		expectedErr := `
-dataValues.yml:3 | app: null
-                 |
-                 | TYPE MISMATCH - the value of this item is not what schema expected:
-                 |      found: null
-                 |   expected: integer (by schema.yml:3)`
 
+		expectedErr := `
+Schema Typecheck - Value is of wrong type
+=========================================
+
+dataValues.yml:
+    |
+  3 | app: null
+    |
+
+    = found: null
+    = expected: integer (by schema.yml:3)
+`
 		assertFails(t, filesToProcess, expectedErr, opts)
 	})
 	t.Run("when map item's value is wrong type and schema/nullable is set", func(t *testing.T) {
@@ -355,12 +369,16 @@ foo: #@ data.values.foo
 		})
 
 		expectedErr := `
-dataValues.yml:3 | foo: "bar"
-                 |
-                 | TYPE MISMATCH - the value of this item is not what schema expected:
-                 |      found: string
-                 |   expected: integer (by schema.yml:4)
+Schema Typecheck - Value is of wrong type
+=========================================
 
+dataValues.yml:
+    |
+  3 | foo: "bar"
+    |
+
+    = found: string
+    = expected: integer (by schema.yml:4)
 `
 
 		assertFails(t, filesToProcess, expectedErr, opts)
@@ -391,38 +409,46 @@ clients:
 		})
 
 		expectedErr := `
-data_values.yml:4 | - flags: secure  #! expecting an array, got a string
-                  |
-                  | TYPE MISMATCH - the value of this item is not what schema expected:
-                  |      found: string
-                  |   expected: array (by schema.yml:4)
+Schema Typecheck - Value is of wrong type
+=========================================
 
+data_values.yml:
+     |
+   4 | - flags: secure  #! expecting an array, got a string
+     |
 
-data_values.yml:6 |   - secure  #! expecting a map, got a string
-                  |
-                  | TYPE MISMATCH - the value of this item is not what schema expected:
-                  |      found: string
-                  |   expected: map (by schema.yml:5)
+     = found: string
+     = expected: array (by schema.yml:4)
 
+data_values.yml:
+     |
+   6 |   - secure  #! expecting a map, got a string
+     |
 
-data_values.yml:9 |     - one  #! expecting a float, got a string
-                  |
-                  | TYPE MISMATCH - the value of this item is not what schema expected:
-                  |      found: string
-                  |   expected: float (by schema.yml:6)
+     = found: string
+     = expected: map (by schema.yml:5)
 
+data_values.yml:
+     |
+   9 |     - one  #! expecting a float, got a string
+     |
 
-data_values.yml:10 |     - true  #! expecting a float, got a bool
-                   |
-                   | TYPE MISMATCH - the value of this item is not what schema expected:
-                   |      found: boolean
-                   |   expected: float (by schema.yml:6)
+     = found: string
+     = expected: float (by schema.yml:6)
+
+data_values.yml:
+     |
+  10 |     - true  #! expecting a float, got a bool
+     |
+
+     = found: boolean
+     = expected: float (by schema.yml:6)
 `
-
 		assertFails(t, filesToProcess, expectedErr, opts)
 	})
 
 	t.Run("when a invalid data value is passed using template replace", func(t *testing.T) {
+
 		schemaYAML := `#@schema/match data_values=True
 ---
 foo: bar
@@ -436,11 +462,18 @@ _: #@ template.replace({'foo':9})
 ---
 rendered: #@ data.values.foo
 `
-		expectedErr := `? |
-  |
-  | TYPE MISMATCH - the value of this item is not what schema expected:
-  |      found: integer
-  |   expected: string (by schema.yml:3)`
+		expectedErr := `
+Schema Typecheck - Value is of wrong type
+=========================================
+
+:
+    |
+  ? | 
+    |
+
+    = found: integer
+    = expected: string (by schema.yml:3)
+`
 
 		filesToProcess := files.NewSortedFiles([]*files.File{
 			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
@@ -450,6 +483,7 @@ rendered: #@ data.values.foo
 
 		assertFails(t, filesToProcess, expectedErr, opts)
 	})
+
 	t.Run("when a data value is passed using --data-value, but schema expects a non string", func(t *testing.T) {
 		cmdOpts := cmdtpl.NewOptions()
 		cmdOpts.SchemaEnabled = true
@@ -467,11 +501,18 @@ rendered: #@ data.values.foo
 			files.MustNewFileFromSource(files.NewBytesSource("template.yml", []byte(templateYAML))),
 		})
 
-		expectedErr := `key 'foo' (kv arg):1 |
-                     |
-                     | TYPE MISMATCH - the value of this item is not what schema expected:
-                     |      found: string
-                     |   expected: integer (by schema.yml:3)`
+		expectedErr := `
+Schema Typecheck - Value is of wrong type
+=========================================
+
+key 'foo' (kv arg):
+    |
+  1 | 
+    |
+
+    = found: string
+    = expected: integer (by schema.yml:3)
+`
 		assertFails(t, filesToProcess, expectedErr, cmdOpts)
 	})
 
@@ -545,9 +586,19 @@ array: [ [1] ]
 			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
 			files.MustNewFileFromSource(files.NewBytesSource("values.yml", []byte(dataValuesYAML))),
 		})
-		expectedErr := `TYPE MISMATCH - the value of this item is not what schema expected:
-             |      found: array
-             |   expected: boolean (by schema.yml:3)`
+
+		expectedErr := `
+Schema Typecheck - Value is of wrong type
+=========================================
+
+values.yml:
+    |
+  4 | array: [ [1] ]
+    |
+
+    = found: array
+    = expected: boolean (by schema.yml:3)
+`
 
 		assertFails(t, filesToProcess, expectedErr, opts)
 	})
@@ -566,10 +617,19 @@ array: [ {a: 1} ]
 			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
 			files.MustNewFileFromSource(files.NewBytesSource("values.yml", []byte(dataValuesYAML))),
 		})
-		expectedErr := `TYPE MISMATCH - the value of this item is not what schema expected:
-             |      found: map
-             |   expected: boolean (by schema.yml:3)`
 
+		expectedErr := `
+Schema Typecheck - Value is of wrong type
+=========================================
+
+values.yml:
+    |
+  4 | array: [ {a: 1} ]
+    |
+
+    = found: map
+    = expected: boolean (by schema.yml:3)
+`
 		assertFails(t, filesToProcess, expectedErr, opts)
 	})
 }
@@ -1310,11 +1370,16 @@ foo: 42`)
       config.yml:4 | --- #@ template.replace(library.get("lib").eval())
 
     reason:
-     values.yml:5 | foo: bar
-                  |
-                  | TYPE MISMATCH - the value of this item is not what schema expected:
-                  |      found: string
-                  |   expected: integer (by _ytt_lib/lib/schema.yml:4)
+     Schema Typecheck - Value is of wrong type
+     =========================================
+     
+     values.yml:
+         |
+       5 | foo: bar
+         |
+     
+         = found: string
+         = expected: integer (by _ytt_lib/lib/schema.yml:4)
      
      `
 		assertFails(t, filesToProcess, expectedErr, opts)
@@ -1426,13 +1491,17 @@ foo: #@ data.values.foo
       root.yml:5 | --- #@ template.replace(library.get("lib").eval())
 
     reason:
-     key 'foo' (kv arg):1 |
-                          |
-                          | TYPE MISMATCH - the value of this item is not what schema expected:
-                          |      found: string
-                          |   expected: integer (by _ytt_lib/lib/schema.yml:5)
+     Schema Typecheck - Value is of wrong type
+     =========================================
      
-     `
+     key 'foo' (kv arg):
+         |
+       1 | 
+         |
+     
+         = found: string
+         = expected: integer (by _ytt_lib/lib/schema.yml:5)
+`
 		assertFails(t, filesToProcess, expectedErr, cmdOpts)
 	})
 
@@ -1645,16 +1714,23 @@ root_data_values: null
 ---
 foo: 3`)
 
-		expectedErr := `- library.eval: Evaluating library 'lib': Overlaying data values (in following order: additional data values): 
+		expectedErr := `
+- library.eval: Evaluating library 'lib': Overlaying data values (in following order: additional data values): 
     in <toplevel>
       config.yml:4 | --- #@ template.replace(library.get("lib").with_data_values({'foo':'4'}).eval())
 
     reason:
-     ? |
-       |
-       | TYPE MISMATCH - the value of this item is not what schema expected:
-       |      found: string
-       |   expected: integer (by _ytt_lib/lib/schema.yml:4)`
+     Schema Typecheck - Value is of wrong type
+     =========================================
+     
+     :
+         |
+       ? | 
+         |
+     
+         = found: string
+         = expected: integer (by _ytt_lib/lib/schema.yml:4)
+`
 
 		filesToProcess := files.NewSortedFiles([]*files.File{
 			files.MustNewFileFromSource(files.NewBytesSource("config.yml", configYAML)),
@@ -1707,13 +1783,23 @@ vpc:
 			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
 			files.MustNewFileFromSource(files.NewBytesSource("dataValues.yml", []byte(dataValuesYAML))),
 		})
+
 		expectedErr := `
-schema.yml:4 |   subnet_ids: []
-             |
-             | INVALID ARRAY DEFINITION IN SCHEMA - unable to determine the desired type
-             |      found: 0 array items
-             |   expected: exactly 1 array item, of the desired type
-             |   (hint: in a schema, the item of an array defines the type of its elements; its default value is an empty list)`
+Invalid schema - wrong number of items in array definition
+==========================================================
+
+schema.yml:
+    |
+  4 |   subnet_ids: []
+    |
+
+    = found: 0 array items
+    = expected: exactly 1 array item, of the desired type
+    = hint: in schema, the one item of the array implies the type of its elements.
+    = hint: in schema, the default value for an array is always an empty list.
+    = hint: default values can be overridden via a data values overlay.
+`
+
 		assertFails(t, filesToProcess, expectedErr, opts)
 	})
 	t.Run("array with more than one element", func(t *testing.T) {
@@ -1733,13 +1819,23 @@ vpc:
 			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
 			files.MustNewFileFromSource(files.NewBytesSource("dataValues.yml", []byte(dataValuesYAML))),
 		})
+
 		expectedErr := `
-schema.yml:4 |   subnet_ids:
-             |
-             | INVALID ARRAY DEFINITION IN SCHEMA - unable to determine the desired type
-             |      found: 2 array items
-             |   expected: exactly 1 array item, of the desired type
-             |   (hint: to add elements to the default value of an array (i.e. an empty list), declare them in a @data/values document)`
+Invalid schema - wrong number of items in array definition
+==========================================================
+
+schema.yml:
+    |
+  4 |   subnet_ids:
+    |
+
+    = found: 2 array items
+    = expected: exactly 1 array item, of the desired type
+    = hint: in schema, the one item of the array implies the type of its elements.
+    = hint: in schema, the default value for an array is always an empty list.
+    = hint: default values can be overridden via a data values overlay.
+`
+
 		assertFails(t, filesToProcess, expectedErr, opts)
 	})
 	t.Run("array with a nullable annotation", func(t *testing.T) {
@@ -1754,10 +1850,20 @@ vpc:
 		filesToProcess := files.NewSortedFiles([]*files.File{
 			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
 		})
+
 		expectedErr := `
-schema.yml:6 |   - 0
-             |
-             | INVALID SCHEMA - @schema/nullable is not supported on array items`
+Invalid schema - @schema/nullable is not supported on array items
+=================================================================
+
+schema.yml:
+    |
+  6 |   - 0
+    |
+
+    = found: @schema/nullable
+    = expected: a valid annotation
+    = hint: Remove the @schema/nullable annotation from array item
+`
 
 		assertFails(t, filesToProcess, expectedErr, opts)
 	})
@@ -1772,10 +1878,20 @@ vpc:
 			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
 		})
 		expectedErr := `
-schema.yml:4 |   subnet_ids: null
-             |
-             | INVALID SCHEMA - null value is not allowed in schema (no type can be inferred from it)
-             |   (hint: to default to null, specify a value of the desired type and annotate with @schema/nullable)`
+Invalid schema - null value not allowed here
+============================================
+
+schema.yml:
+    |
+  4 |   subnet_ids: null
+    |
+
+    = found: null value
+    = expected: non-null value
+    = hint: in YAML, omitting a value implies null.
+    = hint: to set the default value to null, annotate with @schema/nullable.
+    = hint: to allow any value, annotate with @schema/type any=True.
+`
 		assertFails(t, filesToProcess, expectedErr, opts)
 	})
 	t.Run("when schema/type has keyword other than any", func(t *testing.T) {
@@ -1784,10 +1900,21 @@ schema.yml:4 |   subnet_ids: null
 #@schema/type unknown_kwarg=False
 foo: 0
 `
-		expectedErr := `schema.yml:4 | foo: 0
-             |
-             | INVALID SCHEMA - unknown @schema/type annotation keyword argument 'unknown_kwarg'. Supported kwargs are 'any'
+		expectedErr := `
+Invalid schema
+==============
+unknown @schema/type annotation keyword argument
+
+schema.yml:
+    |
+  4 | foo: 0
+    |
+
+    = found: unknown_kwarg
+    = expected: A valid kwarg
+    = hint: Supported kwargs are 'any'
 `
+
 		filesToProcess := files.NewSortedFiles([]*files.File{
 			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
 		})
@@ -1800,10 +1927,22 @@ foo: 0
 #@schema/type any=1
 foo: 0
 `
-		expectedErr := `schema.yml:4 | foo: 0
-             |
-             | INVALID SCHEMA - processing @schema/type 'any' argument: expected starlark.Bool, but was starlark.Int
+
+		expectedErr := `
+Invalid schema
+==============
+unknown @schema/type annotation keyword argument
+
+schema.yml:
+    |
+  4 | foo: 0
+    |
+
+    = found: starlark.Int
+    = expected: starlark.Bool
+    = hint: Supported kwargs are 'any'
 `
+
 		filesToProcess := files.NewSortedFiles([]*files.File{
 			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
 		})
@@ -1816,10 +1955,22 @@ foo: 0
 #@schema/type
 foo: 0
 `
-		expectedErr := `schema.yml:4 | foo: 0
-             |
-             | INVALID SCHEMA - expected @schema/type annotation to have keyword argument and value. Supported key-value pairs are 'any=True', 'any=False'
+
+		expectedErr := `
+Invalid schema
+==============
+expected @schema/type annotation to have keyword argument and value
+
+schema.yml:
+    |
+  4 | foo: 0
+    |
+
+    = found: missing keyword argument and value
+    = expected: valid keyword argument and value
+    = hint: Supported key-value pairs are 'any=True', 'any=False'
 `
+
 		filesToProcess := files.NewSortedFiles([]*files.File{
 			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
 		})

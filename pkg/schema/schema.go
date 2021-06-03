@@ -113,7 +113,7 @@ func NewMapItemType(item *yamlmeta.MapItem) (*MapItemType, error) {
 
 	anns, err := collectAnnotations(item)
 	if err != nil {
-		return nil, err
+		return nil, NewSchemaError("Invalid schema", err)
 	}
 	typeFromAnns := convertAnnotationsToSingleType(anns)
 	if typeFromAnns != nil {
@@ -126,9 +126,12 @@ func NewMapItemType(item *yamlmeta.MapItem) (*MapItemType, error) {
 	}
 
 	if valueType == nil {
-		return nil, NewInvalidSchemaError(item,
-			"null value is not allowed in schema (no type can be inferred from it)",
-			"to default to null, specify a value of the desired type and annotate with @schema/nullable")
+		return nil, NewSchemaError("Invalid schema - null value not allowed here", schemaAssertionError{
+			position: item.GetPosition(),
+			expected: "non-null value",
+			found:    "null value",
+			hints:    []string{"in YAML, omitting a value implies null.", "to set the default value to null, annotate with @schema/nullable.", "to allow any value, annotate with @schema/type any=True."},
+		})
 	}
 
 	defaultValue := item.Value
@@ -140,14 +143,13 @@ func NewMapItemType(item *yamlmeta.MapItem) (*MapItemType, error) {
 }
 
 func NewArrayType(a *yamlmeta.Array) (*ArrayType, error) {
-	// what's most useful to hint at depends on the author's input.
-	if len(a.Items) == 0 {
-		// assumption: the user likely does not understand that the shape of the elements are dependent on this item
-		return nil, NewInvalidArrayDefinitionError(a, "in a schema, the item of an array defines the type of its elements; its default value is an empty list")
-	}
-	if len(a.Items) > 1 {
-		// assumption: the user wants to supply defaults and (incorrectly) assumed they should go in schema
-		return nil, NewInvalidArrayDefinitionError(a, "to add elements to the default value of an array (i.e. an empty list), declare them in a @data/values document")
+	if len(a.Items) != 1 {
+		return nil, NewSchemaError("Invalid schema - wrong number of items in array definition", schemaAssertionError{
+			position: a.Position,
+			expected: "exactly 1 array item, of the desired type",
+			found:    fmt.Sprintf("%d array items", len(a.Items)),
+			hints:    []string{"in schema, the one item of the array implies the type of its elements.", "in schema, the default value for an array is always an empty list.", "default values can be overridden via a data values overlay."},
+		})
 	}
 
 	arrayItemType, err := NewArrayItemType(a.Items[0])
@@ -168,7 +170,12 @@ func NewArrayItemType(item *yamlmeta.ArrayItem) (*ArrayItemType, error) {
 	typeFromAnns := convertAnnotationsToSingleType(anns)
 	if typeFromAnns != nil {
 		if _, ok := typeFromAnns.(*NullType); ok {
-			return nil, NewInvalidSchemaError(item, fmt.Sprintf("@%s is not supported on array items", AnnotationNullable), "")
+			return nil, NewSchemaError("Invalid schema - @schema/nullable is not supported on array items", schemaAssertionError{
+				position: item.Position,
+				expected: "a valid annotation",
+				found:    fmt.Sprintf("@%v", AnnotationNullable),
+				hints:    []string{"Remove the @schema/nullable annotation from array item"},
+			})
 		}
 		valueType = typeFromAnns
 	} else {
