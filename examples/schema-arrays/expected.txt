@@ -1,0 +1,18 @@
+jobs: []
+***
+jobs:
+- name: capi-k8s-release
+  github_release: false
+  vendir_github_release: false
+  github_org: cloudfoundry
+  build_dir: ""
+- name: eirini-release
+  github_org: cloudfoundry-incubator
+  build_dir: build/eirini
+  github_release: true
+  vendir_github_release: true
+- name: metric-proxy
+  github_release: true
+  github_org: cloudfoundry
+  vendir_github_release: true
+  build_dir: ""

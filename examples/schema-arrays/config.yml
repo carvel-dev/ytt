@@ -1,0 +1,3 @@
+#@ load("@ytt:data", "data")
+---
+jobs: #@ data.values.releases

@@ -1,0 +1,8 @@
+#@schema/match data_values=True
+---
+releases:
+  - name: ""
+    github_release: true
+    github_org: cloudfoundry
+    vendir_github_release: true
+    build_dir: ""
