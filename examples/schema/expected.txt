@@ -1,0 +1,26 @@
+nothing: null
+string: a string
+bool: false
+int: 0
+float: 0.1
+any: anything
+***
+nothing: a new string
+string: str
+bool: true
+int: 123
+float: 123.123
+any:
+- 1
+- 2
+- 4
+***
+nothing: a new string
+string: str
+bool: true
+int: 123
+float: 123.123
+any:
+- 1
+- 2
+- 4

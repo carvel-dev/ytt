@@ -1,0 +1,10 @@
+#@schema/match data_values=True
+---
+#@schema/nullable
+nothing: "a string"
+string: "a string"
+bool: false
+int: 0
+float: 0.1
+#@schema/type any=True
+any: "anything"
