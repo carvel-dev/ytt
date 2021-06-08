@@ -1,8 +1,12 @@
 #@schema/match data_values=True
 ---
-releases:
-  - name: ""
-    github_release: true
-    github_org: cloudfoundry
-    vendir_github_release: true
-    build_dir: ""
+resources:
+- name: ""
+  type: git
+  icon: github
+  source:
+    branch: develop
+    uri: git@github.com:cloudfoundry/cf-for-k8s
+    private_key: ((cf_for_k8s_readonly_deploy_key.private_key))
+    ignore_paths:
+    - ""

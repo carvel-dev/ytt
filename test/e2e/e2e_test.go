@@ -143,6 +143,22 @@ func TestDifferentUsages(t *testing.T) {
 			require.Equal(t, string(expectedOutput), actualOutput)
 		})
 	}
+
+	dirs = []string{
+		"schema",
+		"schema-arrays",
+	}
+	for _, schemaDirToTest := range dirs {
+		t.Run(fmt.Sprintf("schema: %s", schemaDirToTest), func(t *testing.T) {
+			dirPath := fmt.Sprintf("../../examples/%s", schemaDirToTest)
+			actualOutput := runYtt(t, testInputFiles{dirPath}, "", yttFlags{{"--enable-experiment-schema": ""}}, nil)
+
+			expectedOutput, err := ioutil.ReadFile(filepath.Join(dirPath, "expected.txt"))
+			require.NoError(t, err)
+
+			require.Equal(t, string(expectedOutput), actualOutput)
+		})
+	}
 }
 
 func TestJsonOutput(t *testing.T) {
@@ -260,28 +276,20 @@ float: 123.123
 }
 
 func TestSchema(t *testing.T) {
-	t.Run("scalar and map defaults", func(t *testing.T) {
+	t.Run("--data-value flag", func(t *testing.T) {
 		flags := yttFlags{
+			{"--data-value": "nothing=a new string"},
+			{"--data-value": "string=str"},
 			{"--enable-experiment-schema": ""},
 		}
+
 		actualOutput := runYtt(t, testInputFiles{"../../examples/schema/config.yml", "../../examples/schema/schema.yml"}, "", flags, nil)
-		expectedOutput := `nothing: null
-string: a string
+		expectedOutput := `nothing: a new string
+string: str
 bool: false
 int: 0
 float: 0.1
 any: anything
-`
-
-		require.Equal(t, expectedOutput, actualOutput)
-	})
-
-	t.Run("array defaults", func(t *testing.T) {
-		flags := yttFlags{
-			{"--enable-experiment-schema": ""},
-		}
-		actualOutput := runYtt(t, testInputFiles{"../../examples/schema-arrays/config.yml", "../../examples/schema-arrays/schema.yml"}, "", flags, nil)
-		expectedOutput := `jobs: []
 `
 
 		require.Equal(t, expectedOutput, actualOutput)
@@ -312,7 +320,7 @@ any:
 		require.Equal(t, expectedOutput, actualOutput)
 	})
 
-	t.Run("--data-values-env flag", func(t *testing.T) {
+	t.Run("--data-values-env && --data-values-env-yaml flag", func(t *testing.T) {
 		flags := yttFlags{
 			{"--data-values-env": "STR_VAL"},
 			{"--data-values-env-yaml": "YAML_VAL"},
@@ -336,32 +344,6 @@ any:
 - 1
 - 2
 - 4
-`
-
-		require.Equal(t, expectedOutput, actualOutput)
-	})
-
-	t.Run("array with data values file", func(t *testing.T) {
-		flags := yttFlags{
-			{"--enable-experiment-schema": ""},
-		}
-		actualOutput := runYtt(t, testInputFiles{"../../examples/schema-arrays/config.yml", "../../examples/schema-arrays/values.yml", "../../examples/schema-arrays/schema.yml"}, "", flags, nil)
-		expectedOutput := `jobs:
-- name: capi-k8s-release
-  github_release: false
-  vendir_github_release: false
-  github_org: cloudfoundry
-  build_dir: ""
-- name: eirini-release
-  github_org: cloudfoundry-incubator
-  build_dir: build/eirini
-  github_release: true
-  vendir_github_release: true
-- name: metric-proxy
-  github_release: true
-  github_org: cloudfoundry
-  vendir_github_release: true
-  build_dir: ""
 `
 
 		require.Equal(t, expectedOutput, actualOutput)
