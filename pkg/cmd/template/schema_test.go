@@ -26,7 +26,7 @@ func TestSchema_Passes_when_DataValues_conform(t *testing.T) {
 	opts.SchemaEnabled = true
 
 	t.Run("when document's value is a map", func(t *testing.T) {
-		schemaYAML := `#@schema/match data_values=True
+		schemaYAML := `#@data/values-schema
 ---
 db_conn:
 - hostname: ""
@@ -79,7 +79,7 @@ rendered: #@ data.values
 		assertSucceeds(t, filesToProcess, expected, opts)
 	})
 	t.Run("when document's value is an array", func(t *testing.T) {
-		schemaYAML := `#@schema/match data_values=True
+		schemaYAML := `#@data/values-schema
 ---
 - ""
 `
@@ -106,7 +106,7 @@ rendered: #@ data.values
 		assertSucceeds(t, filesToProcess, expected, opts)
 	})
 	t.Run("when document's value is a scalar", func(t *testing.T) {
-		schemaYAML := `#@schema/match data_values=True
+		schemaYAML := `#@data/values-schema
 ---
 42
 `
@@ -132,7 +132,7 @@ data_value: #@ data.values
 	t.Run("when a data value is passed using --data-value", func(t *testing.T) {
 		cmdOpts := cmdtpl.NewOptions()
 		cmdOpts.SchemaEnabled = true
-		schemaYAML := `#@schema/match data_values=True
+		schemaYAML := `#@data/values-schema
 ---
 foo: bar
 `
@@ -154,7 +154,7 @@ rendered: #@ data.values.foo
 	t.Run("when a data value is passed using --data-value-yaml", func(t *testing.T) {
 		cmdOpts := cmdtpl.NewOptions()
 		cmdOpts.SchemaEnabled = true
-		schemaYAML := `#@schema/match data_values=True
+		schemaYAML := `#@data/values-schema
 ---
 foo: 7
 `
@@ -183,14 +183,14 @@ rendered: #@ data.values.foo
 	})
 
 	t.Run("when additional schema file is overlay'd", func(t *testing.T) {
-		schemaYAML1 := `#@schema/match data_values=True
+		schemaYAML1 := `#@data/values-schema
 ---
 db_conn:
 - hostname: ""
 `
 
 		schemaYAML2 := `#@ load("@ytt:overlay", "overlay")
-#@schema/match data_values=True
+#@data/values-schema
 ---
 db_conn:
 #@overlay/match by=overlay.all, expects="1+"
@@ -239,7 +239,7 @@ func TestSchema_Reports_violations_when_DataValues_do_NOT_conform(t *testing.T) 
 
 	t.Run("when map item's key is not among those declared in schema", func(t *testing.T) {
 		t.Skip("This test case will be covered in https://github.com/vmware-tanzu/carvel-ytt/issues/344")
-		schemaYAML := `#@schema/match data_values=True
+		schemaYAML := `#@data/values-schema
 ---
 db_conn:
   port: 0
@@ -265,7 +265,7 @@ db_conn:
 		assertFails(t, filesToProcess, expectedErr, opts)
 	})
 	t.Run("when map item's value is the wrong type", func(t *testing.T) {
-		schemaYAML := `#@schema/match data_values=True
+		schemaYAML := `#@data/values-schema
 ---
 db_conn:
   port: 0
@@ -319,7 +319,7 @@ data_values.yml:
 		assertFails(t, filesToProcess, expectedErr, opts)
 	})
 	t.Run("when map item's value is null but is not nullable", func(t *testing.T) {
-		schemaYAML := `#@schema/match data_values=True
+		schemaYAML := `#@data/values-schema
 ---
 app: 123
 `
@@ -348,7 +348,7 @@ dataValues.yml:
 		assertFails(t, filesToProcess, expectedErr, opts)
 	})
 	t.Run("when map item's value is wrong type and schema/nullable is set", func(t *testing.T) {
-		schemaYAML := `#@schema/match data_values=True
+		schemaYAML := `#@data/values-schema
 ---
 #@schema/nullable
 foo: 0
@@ -384,7 +384,7 @@ dataValues.yml:
 		assertFails(t, filesToProcess, expectedErr, opts)
 	})
 	t.Run("when array item's value is the wrong type", func(t *testing.T) {
-		schemaYAML := `#@schema/match data_values=True
+		schemaYAML := `#@data/values-schema
 ---
 clients:
 - flags:
@@ -449,7 +449,7 @@ data_values.yml:
 
 	t.Run("when a invalid data value is passed using template replace", func(t *testing.T) {
 
-		schemaYAML := `#@schema/match data_values=True
+		schemaYAML := `#@data/values-schema
 ---
 foo: bar
 `
@@ -487,7 +487,7 @@ Schema Typecheck - Value is of wrong type
 	t.Run("when a data value is passed using --data-value, but schema expects a non string", func(t *testing.T) {
 		cmdOpts := cmdtpl.NewOptions()
 		cmdOpts.SchemaEnabled = true
-		schemaYAML := `#@schema/match data_values=True
+		schemaYAML := `#@data/values-schema
 ---
 foo: 7
 `
@@ -517,7 +517,7 @@ key 'foo' (kv arg):
 	})
 
 	t.Run("when schema is null and non-empty data values is given", func(t *testing.T) {
-		schemaYAML := `#@schema/match data_values=True
+		schemaYAML := `#@data/values-schema
 ---
 `
 		dataValuesYAML := `#@data/values
@@ -536,7 +536,7 @@ foo: non-empty data value
 	})
 	t.Run("checks after every data values document is processed (and stops if there was a violation)", func(t *testing.T) {
 		t.Skip("This test case will be covered in https://github.com/vmware-tanzu/carvel-ytt/issues/344")
-		schemaYAML := `#@schema/match data_values=True
+		schemaYAML := `#@data/values-schema
 ---
 hostname: ""
 `
@@ -572,7 +572,7 @@ nonConforming.yml:3 | not_in_schema: this should be the only violation reported
 	})
 
 	t.Run("when schema expects a scalar as an array item, but an array is provided", func(t *testing.T) {
-		schemaYAML := `#@schema/match data_values=True
+		schemaYAML := `#@data/values-schema
 ---
 array: [true]
 `
@@ -603,7 +603,7 @@ values.yml:
 		assertFails(t, filesToProcess, expectedErr, opts)
 	})
 	t.Run("when schema expects a scalar as an array item, but a map is provided", func(t *testing.T) {
-		schemaYAML := `#@schema/match data_values=True
+		schemaYAML := `#@data/values-schema
 ---
 array: [true]
 `
@@ -639,7 +639,7 @@ func TestSchema_Provides_default_values(t *testing.T) {
 	opts.SchemaEnabled = true
 
 	t.Run("values specified in the schema are the default data values", func(t *testing.T) {
-		schemaYAML := `#@schema/match data_values=True
+		schemaYAML := `#@data/values-schema
 ---
 system_domain: "foo.domain"
 `
@@ -657,7 +657,7 @@ system_domain: #@ data.values.system_domain
 		assertSucceeds(t, filesToProcess, expected, opts)
 	})
 	t.Run("array default to an empty list", func(t *testing.T) {
-		schemaYAML := `#@schema/match data_values=True
+		schemaYAML := `#@data/values-schema
 ---
 vpc:
   subnet_config:
@@ -686,7 +686,7 @@ vpc: #@ data.values.vpc
 		assertSucceeds(t, filesToProcess, expected, opts)
 	})
 	t.Run("when a key in the data value is omitted yet present in the schema, it is filled in", func(t *testing.T) {
-		schemaYAML := `#@schema/match data_values=True
+		schemaYAML := `#@data/values-schema
 ---
 vpc:
   name: "name value"
@@ -732,7 +732,7 @@ func TestSchema_Allows_null_values_via_nullable_annotation(t *testing.T) {
 	opts := cmdtpl.NewOptions()
 	opts.SchemaEnabled = true
 	t.Run("when the value is a map", func(t *testing.T) {
-		schemaYAML := `#@schema/match data_values=True
+		schemaYAML := `#@data/values-schema
 ---
 defaults:
   #@schema/nullable
@@ -774,7 +774,7 @@ overriden:
 		assertSucceeds(t, filesToProcess, expected, opts)
 	})
 	t.Run("when the value is a array", func(t *testing.T) {
-		schemaYAML := `#@schema/match data_values=True
+		schemaYAML := `#@data/values-schema
 ---
 defaults:
   #@schema/nullable
@@ -814,7 +814,7 @@ overriden:
 		assertSucceeds(t, filesToProcess, expected, opts)
 	})
 	t.Run("when the value is a scalar", func(t *testing.T) {
-		schemaYAML := `#@schema/match data_values=True
+		schemaYAML := `#@data/values-schema
 ---
 defaults:
   #@schema/nullable
@@ -869,7 +869,7 @@ func TestSchema_Allows_any_value_via_any_annotation(t *testing.T) {
 	opts.SchemaEnabled = true
 
 	t.Run("when any is true and set on a map", func(t *testing.T) {
-		schemaYAML := `#@schema/match data_values=True
+		schemaYAML := `#@data/values-schema
 ---
 #@schema/type any=True
 foo: ""
@@ -902,7 +902,7 @@ baz:
 		assertSucceeds(t, filesToProcess, expected, opts)
 	})
 	t.Run("when any is true and set on an array", func(t *testing.T) {
-		schemaYAML := `#@schema/match data_values=True
+		schemaYAML := `#@data/values-schema
 ---
 foo: 
 #@schema/type any=True
@@ -932,7 +932,7 @@ foo: #@ data.values.foo
 		assertSucceeds(t, filesToProcess, expected, opts)
 	})
 	t.Run("when any is false and set on a map", func(t *testing.T) {
-		schemaYAML := `#@schema/match data_values=True
+		schemaYAML := `#@data/values-schema
 ---
 #@schema/type any=False
 foo: 0
@@ -957,7 +957,7 @@ foo: #@ data.values.foo
 		assertSucceeds(t, filesToProcess, expected, opts)
 	})
 	t.Run("when any is set on maps and arrays with nested dvs and overlay/replace", func(t *testing.T) {
-		schemaYAML := `#@schema/match data_values=True
+		schemaYAML := `#@data/values-schema
 ---
 #@schema/type any=True
 foo: ""
@@ -1007,7 +1007,7 @@ baz:
 	})
 
 	t.Run("when any is set on nested maps", func(t *testing.T) {
-		schemaYAML := `#@schema/match data_values=True
+		schemaYAML := `#@data/values-schema
 ---
 baz:
   #@schema/type any=True
@@ -1037,7 +1037,7 @@ baz: #@ data.values.baz
 	})
 
 	t.Run("when schema/type and schema/nullable annotate a map", func(t *testing.T) {
-		schemaYAML := `#@schema/match data_values=True
+		schemaYAML := `#@data/values-schema
 ---
 #@schema/type any=True
 #@schema/nullable
@@ -1081,7 +1081,7 @@ in_library: 7
 `)
 
 		schemaYAML := []byte(`
-#@schema/match data_values=True
+#@data/values-schema
 ---
 in_root_library: ""
 `)
@@ -1092,7 +1092,7 @@ in_root_library: ""
 lib_data_values: #@ data.values.in_library`)
 
 		libSchemaData := []byte(`
-#@schema/match data_values=True
+#@data/values-schema
 ---
 in_library: 0`)
 
@@ -1123,12 +1123,12 @@ in_root_library: "expected-root-value"
 `)
 
 		schemaYAML := []byte(`
-#@schema/match data_values=True
+#@data/values-schema
 ---
 in_root_library: "override-root-value"
 
 #@library/ref "@lib@child"
-#@schema/match data_values=True
+#@data/values-schema
 ---
 in_child_library: "override-lib-child-value"
 `)
@@ -1143,7 +1143,7 @@ in_child_library: "override-lib-child-value"
 lib_data_values: #@ data.values.in_library`)
 
 		libSchemaData := []byte(`
-#@schema/match data_values=True
+#@data/values-schema
 ---
 in_library: 0`)
 
@@ -1153,7 +1153,7 @@ in_library: 0`)
 lib_child_data_values: #@ data.values.in_child_library`)
 
 		libChildSchemaData := []byte(`
-#@schema/match data_values=True
+#@data/values-schema
 ---
 in_child_library: "default-child"`)
 
@@ -1191,7 +1191,7 @@ foo: from "root" library
 foo: #@ data.values.foo`)
 
 		libSchemaYAML := []byte(`
-#@schema/match data_values=True
+#@data/values-schema
 ---
 foo: ""`)
 
@@ -1213,7 +1213,7 @@ foo: ""`)
 --- #@ library.get("lib").data_values()`)
 
 		libSchemaYAML := []byte(`
-#@schema/match data_values=True
+#@data/values-schema
 ---
 foo: "from library"`)
 
@@ -1239,7 +1239,7 @@ foo: "from library"`)
 #@ def exported_func(): return data.values`)
 
 		libSchemaYAML := []byte(`
-#@schema/match data_values=True
+#@data/values-schema
 ---
 foo: "value exported from library"`)
 
@@ -1271,7 +1271,7 @@ key: #@ dvs_from_text()`)
 		// set schema with "library/ref" to verify that the data is being included in the library
 		schemaData := []byte(`
 #@library/ref "@lib"
-#@schema/match data_values=True
+#@data/values-schema
 ---
 bar: from_root_schema
 foo: ""
@@ -1310,7 +1310,7 @@ end
 		// set schema with "library/ref" to verify that the data is being included in the library
 		schemaData := []byte(`
 #@library/ref "@lib"
-#@schema/match data_values=True
+#@data/values-schema
 ---
 foo: ""
 bar: from_library_schema
@@ -1353,7 +1353,7 @@ foo: bar
 foo: #@ data.values.foo`)
 
 		libSchemaYAML := []byte(`
-#@schema/match data_values=True
+#@data/values-schema
 ---
 foo: 42`)
 
@@ -1396,7 +1396,7 @@ foo: 42`)
 
 		libSchemaYAML := []byte(`
 #! lib/schema.yml
-#@schema/match data_values=True
+#@data/values-schema
 ---
 foo: bar
 `)
@@ -1431,7 +1431,7 @@ foo: #@ data.values.foo
 
 		libSchemaYAML := []byte(`
 #! lib/schema.yml
-#@schema/match data_values=True
+#@data/values-schema
 ---
 cow: 7
 `)
@@ -1466,7 +1466,7 @@ cow: #@ data.values.cow
 
 		libSchemaYAML := []byte(`
 #! lib/schema.yml
-#@schema/match data_values=True
+#@data/values-schema
 ---
 foo: 7
 `)
@@ -1514,7 +1514,7 @@ foo: #@ data.values.foo
 
 		rootSchemaYAML := []byte(`
 #@library/ref "@libby"
-#@schema/match data_values=True
+#@data/values-schema
 ---
 foo: from_root_schema
 `)
@@ -1545,7 +1545,7 @@ lib_data_values: #@ data.values.foo`)
 
 		rootSchemaYAML := []byte(`
 #@library/ref "@libby@child"
-#@schema/match data_values=True
+#@data/values-schema
 ---
 foo: from_root_schema
 `)
@@ -1589,7 +1589,7 @@ should: succeed`)
 
 		schemaYaml := []byte(`
 #@library/ref "@libby@libbychild"
-#@schema/match
+#@data/values-schema
 ---
 foo: used
 `)
@@ -1621,7 +1621,7 @@ root_data_values: #@ data.values`)
 
 		overlayLibSchemaYAML := []byte(`
 #@library/ref "@libby"
-#@schema/match data_values=True
+#@data/values-schema
 ---
 foo:
   #@overlay/match missing_ok=True
@@ -1634,7 +1634,7 @@ foo:
 libby_data_values: #@ data.values`)
 
 		libSchemaYAML := []byte(`
-#@schema/match data_values=True
+#@data/values-schema
 ---
 foo:
   bar: 3`)
@@ -1682,7 +1682,7 @@ root_data_values: #@ data.values`)
 libby_data_values: #@ data.values`)
 
 		libSchemaYAML := []byte(`
-#@schema/match data_values=True
+#@data/values-schema
 ---
 foo:
   bar: 3`)
@@ -1710,7 +1710,7 @@ root_data_values: null
 --- #@ template.replace(library.get("lib").with_data_values({'foo':'4'}).eval())`)
 
 		libSchemaYAML := []byte(`
-#@schema/match data_values=True
+#@data/values-schema
 ---
 foo: 3`)
 
@@ -1748,7 +1748,7 @@ func TestSchema_Unused_returns_error(t *testing.T) {
 	t.Run("An unused schema ref'd to a library", func(t *testing.T) {
 		schemaBytes := []byte(`
 #@library/ref "@libby"
-#@schema/match
+#@data/values-schema
 ---
 fooX: not-used
 `)
@@ -1768,7 +1768,7 @@ func TestSchema_When_invalid_reports_error(t *testing.T) {
 	opts.SchemaEnabled = true
 
 	t.Run("array with fewer than one element", func(t *testing.T) {
-		schemaYAML := `#@schema/match data_values=True
+		schemaYAML := `#@data/values-schema
 ---
 vpc:
   subnet_ids: []
@@ -1803,7 +1803,7 @@ schema.yml:
 		assertFails(t, filesToProcess, expectedErr, opts)
 	})
 	t.Run("array with more than one element", func(t *testing.T) {
-		schemaYAML := `#@schema/match data_values=True
+		schemaYAML := `#@data/values-schema
 ---
 vpc:
   subnet_ids:
@@ -1839,7 +1839,7 @@ schema.yml:
 		assertFails(t, filesToProcess, expectedErr, opts)
 	})
 	t.Run("array with a nullable annotation", func(t *testing.T) {
-		schemaYAML := `#@schema/match data_values=True
+		schemaYAML := `#@data/values-schema
 ---
 vpc:
   subnet_ids:
@@ -1868,7 +1868,7 @@ schema.yml:
 		assertFails(t, filesToProcess, expectedErr, opts)
 	})
 	t.Run("item with null value", func(t *testing.T) {
-		schemaYAML := `#@schema/match data_values=True
+		schemaYAML := `#@data/values-schema
 ---
 vpc:
   subnet_ids: null
@@ -1895,7 +1895,7 @@ schema.yml:
 		assertFails(t, filesToProcess, expectedErr, opts)
 	})
 	t.Run("when schema/type has keyword other than any", func(t *testing.T) {
-		schemaYAML := `#@schema/match data_values=True
+		schemaYAML := `#@data/values-schema
 ---
 #@schema/type unknown_kwarg=False
 foo: 0
@@ -1922,7 +1922,7 @@ schema.yml:
 		assertFails(t, filesToProcess, expectedErr, opts)
 	})
 	t.Run("when schema/type has value for any other than a bool", func(t *testing.T) {
-		schemaYAML := `#@schema/match data_values=True
+		schemaYAML := `#@data/values-schema
 ---
 #@schema/type any=1
 foo: 0
@@ -1950,7 +1950,7 @@ schema.yml:
 		assertFails(t, filesToProcess, expectedErr, opts)
 	})
 	t.Run("when schema/type has incomplete key word args", func(t *testing.T) {
-		schemaYAML := `#@schema/match data_values=True
+		schemaYAML := `#@data/values-schema
 ---
 #@schema/type
 foo: 0
@@ -1977,7 +1977,7 @@ schema.yml:
 
 		assertFails(t, filesToProcess, expectedErr, opts)
 
-		schemaYAML2 := `#@schema/match data_values=True
+		schemaYAML2 := `#@data/values-schema
 ---
 #@schema/type any
 foo: 0
@@ -1998,7 +1998,7 @@ func TestSchema_feature_disabled(t *testing.T) {
 		stderr := bytes.NewBufferString("")
 		ui := ui.NewCustomWriterTTY(false, stdout, stderr)
 
-		schemaYAML := `#@schema/match data_values=True
+		schemaYAML := `#@data/values-schema
 ---
 `
 		templateYAML := `---
@@ -2018,7 +2018,7 @@ rendered: true`
 		assertStdoutAndStderr(t, bytes.NewBuffer(out.Files[0].Bytes()), stderr, expectedOut, expectedStdErr)
 	})
 	t.Run("errors when a schema used as a base data values", func(t *testing.T) {
-		schemaYAML := `#@schema/match data_values=True
+		schemaYAML := `#@data/values-schema
 ---
 system_domain: "foo.domain"
 `

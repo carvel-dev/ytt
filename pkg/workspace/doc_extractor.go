@@ -12,8 +12,8 @@ import (
 )
 
 const (
-	AnnotationDataValues  structmeta.AnnotationName = "data/values"
-	AnnotationSchemaMatch structmeta.AnnotationName = "schema/match"
+	AnnotationDataValues       structmeta.AnnotationName = "data/values"
+	AnnotationDataValuesSchema structmeta.AnnotationName = "data/values-schema"
 )
 
 type DocExtractor struct {
