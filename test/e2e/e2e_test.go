@@ -428,6 +428,10 @@ func TestDataValuesUsages(t *testing.T) {
 	})
 }
 
+func TestVersionIsValid(t *testing.T) {
+	runYtt(t, testInputFiles{"../../examples/version-constraint"}, "", yttFlags{}, nil)
+}
+
 type testInputFiles []string
 
 type yttFlags []map[string]string

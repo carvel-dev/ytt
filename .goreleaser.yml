@@ -1,0 +1,78 @@
+# This is an example .goreleaser.yml file with some sane defaults.
+# Make sure to check the documentation at http://goreleaser.com
+before:
+  hooks:
+    - go mod tidy
+builds:
+  - env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - windows
+      - darwin
+    goarch:
+      - amd64
+      - arm64
+    main: ./cmd/ytt
+    binary: ytt-{{ .Os }}-{{ .Arch }}
+
+    flags:
+      - -trimpath
+
+    ldflags:
+      - -buildid=
+      - -X github.com/k14s/ytt/pkg/version.Version={{ .Version }}
+
+archives:
+  - format: binary
+    name_template: "{{ .Binary }}"
+    replacements:
+      darwin: Darwin
+      linux: Linux
+      windows: Windows
+      amd64: x86_64
+checksum:
+  name_template: 'checksums.txt'
+  algorithm: sha256
+  disable: false
+snapshot:
+  name_template: "{{ .Tag }}-next"
+release:
+  # Repo in which the release will be created.
+  github:
+    owner: vmware-tanzu
+    name: carvel-ytt
+
+  # If set to true, will not auto-publish the release.
+  draft: true
+
+  # If set to auto, will mark the release as not ready for production
+  # in case there is an indicator for this in the tag e.g. v1.0.0-rc1
+  # If set to true, will mark the release as not ready for production.
+  # Default is false.
+  prerelease: auto
+
+  # use to change the name of the release.
+  name_template: "{{.Tag}}"
+
+  # You can disable this pipe in order to not upload any artifacts.
+  # Defaults to false.
+  disable: false
+
+changelog:
+  # Set it to true if you wish to skip the changelog generation.
+  # This may result in an empty release notes on GitHub/GitLab/Gitea.
+  skip: false
+
+  # Sorts the changelog by the commit's messages.
+  # Could either be asc, desc or empty
+  # Default is empty
+  sort: asc
+
+  filters:
+    # Commit messages matching the regexp listed here will be removed from
+    # the changelog
+    # Default is empty
+    exclude:
+      - '^docs:'
+      - typo

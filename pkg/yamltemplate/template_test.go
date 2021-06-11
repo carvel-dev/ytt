@@ -32,6 +32,7 @@ var (
 
 func TestYAMLTemplate(t *testing.T) {
 	var files []string
+	version.Version = "0.0.0"
 
 	err := filepath.Walk("filetests", func(walkedPath string, fi os.FileInfo, err error) error {
 		if err != nil || fi.IsDir() {
