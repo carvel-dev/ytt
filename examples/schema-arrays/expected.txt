@@ -1,0 +1,22 @@
+resources:
+- name: cf-for-k8s-develop
+  source:
+    private_key: ((cf_for_k8s_readwrite_deploy_key.private_key))
+    branch: develop
+    uri: git@github.com:cloudfoundry/cf-for-k8s
+  type: git
+  icon: github
+- name: cf-for-k8s-ci
+  type: git
+  icon: github
+  source:
+    branch: develop
+    uri: git@github.com:cloudfoundry/cf-for-k8s
+    private_key: ((cf_for_k8s_readonly_deploy_key.private_key))
+- name: cf-acceptance-tests
+  source:
+    uri: git@github.com:cloudfoundry/cf-acceptance-tests
+    branch: develop
+    private_key: ((cf_for_k8s_readonly_deploy_key.private_key))
+  type: git
+  icon: github

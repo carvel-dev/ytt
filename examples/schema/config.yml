@@ -1,0 +1,8 @@
+#@ load("@ytt:data", "data")
+---
+nothing: #@ data.values.nothing
+string: #@ data.values.string
+bool: #@ data.values.bool
+int: #@ data.values.int
+float: #@ data.values.float
+any: #@ data.values.any

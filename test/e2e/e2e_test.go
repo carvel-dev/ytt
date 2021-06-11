@@ -4,6 +4,7 @@
 package e2e
 
 import (
+	"bytes"
 	"fmt"
 	"io/fs"
 	"io/ioutil"
@@ -142,6 +143,22 @@ func TestDifferentUsages(t *testing.T) {
 			require.Equal(t, string(expectedOutput), actualOutput)
 		})
 	}
+
+	dirs = []string{
+		"schema",
+		"schema-arrays",
+	}
+	for _, schemaDirToTest := range dirs {
+		t.Run(fmt.Sprintf("schema: %s", schemaDirToTest), func(t *testing.T) {
+			dirPath := fmt.Sprintf("../../examples/%s", schemaDirToTest)
+			actualOutput := runYtt(t, testInputFiles{dirPath}, "", yttFlags{{"--enable-experiment-schema": ""}}, nil)
+
+			expectedOutput, err := ioutil.ReadFile(filepath.Join(dirPath, "expected.txt"))
+			require.NoError(t, err)
+
+			require.Equal(t, string(expectedOutput), actualOutput)
+		})
+	}
 }
 
 func TestJsonOutput(t *testing.T) {
@@ -258,6 +275,81 @@ float: 123.123
 	})
 }
 
+func TestSchema(t *testing.T) {
+	t.Run("--data-value flag", func(t *testing.T) {
+		flags := yttFlags{
+			{"--data-value": "nothing=a new string"},
+			{"--data-value": "string=str"},
+			{"--enable-experiment-schema": ""},
+		}
+
+		actualOutput := runYtt(t, testInputFiles{"../../examples/schema/config.yml", "../../examples/schema/schema.yml"}, "", flags, nil)
+		expectedOutput := `nothing: a new string
+string: str
+bool: false
+int: 0
+float: 0.1
+any: anything
+`
+
+		require.Equal(t, expectedOutput, actualOutput)
+	})
+
+	t.Run("--data-value-yaml flag", func(t *testing.T) {
+		flags := yttFlags{
+			{"--data-value-yaml": "nothing=a new string"},
+			{"--data-value-yaml": "string=str"},
+			{"--data-value-yaml": "bool=true"},
+			{"--data-value-yaml": "int=123"},
+			{"--data-value-yaml": "float=123.123"},
+			{"--data-value-yaml": "any=[1,2,4]"},
+			{"--enable-experiment-schema": ""},
+		}
+		actualOutput := runYtt(t, testInputFiles{"../../examples/schema/config.yml", "../../examples/schema/schema.yml"}, "", flags, nil)
+		expectedOutput := `nothing: a new string
+string: str
+bool: true
+int: 123
+float: 123.123
+any:
+- 1
+- 2
+- 4
+`
+
+		require.Equal(t, expectedOutput, actualOutput)
+	})
+
+	t.Run("--data-values-env && --data-values-env-yaml flag", func(t *testing.T) {
+		flags := yttFlags{
+			{"--data-values-env": "STR_VAL"},
+			{"--data-values-env-yaml": "YAML_VAL"},
+			{"--enable-experiment-schema": ""},
+		}
+		envs := []string{
+			"STR_VAL_nothing=a new string",
+			"YAML_VAL_string=str",
+			"YAML_VAL_bool=true",
+			"YAML_VAL_int=123",
+			"YAML_VAL_float=123.123",
+			"YAML_VAL_any=[1,2,4]",
+		}
+		actualOutput := runYtt(t, testInputFiles{"../../examples/schema/config.yml", "../../examples/schema/schema.yml"}, "", flags, envs)
+		expectedOutput := `nothing: a new string
+string: str
+bool: true
+int: 123
+float: 123.123
+any:
+- 1
+- 2
+- 4
+`
+
+		require.Equal(t, expectedOutput, actualOutput)
+	})
+}
+
 func TestDataValuesRequired(t *testing.T) {
 	expectedFileOutput, err := ioutil.ReadFile("../../examples/data-values-required/expected.txt")
 	require.NoError(t, err)
@@ -358,7 +450,8 @@ func runYtt(t *testing.T, files testInputFiles, stdinFileName string, flags yttF
 	}
 
 	command := exec.Command("../../ytt", append(fileFlags, yttFlags...)...)
-	command.Stderr = nil
+	stdError := bytes.NewBufferString("")
+	command.Stderr = stdError
 	command.Env = append(command.Env, envs...)
 
 	if stdinFileName != "" {
@@ -367,7 +460,7 @@ func runYtt(t *testing.T, files testInputFiles, stdinFileName string, flags yttF
 		command.Stdin = fileToUseInStdIn
 	}
 	output, err := command.Output()
-	require.NoError(t, err)
+	require.NoError(t, err, stdError.String())
 
 	return string(output)
 }

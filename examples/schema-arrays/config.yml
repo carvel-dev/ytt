@@ -1,0 +1,3 @@
+#@ load("@ytt:data", "data")
+---
+resources: #@ data.values.resources

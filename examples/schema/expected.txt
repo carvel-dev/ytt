@@ -1,0 +1,6 @@
+nothing: null
+string: a string
+bool: false
+int: 0
+float: 0.1
+any: anything

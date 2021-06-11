@@ -1,0 +1,10 @@
+#@data/values-schema
+---
+resources:
+- name: ""
+  type: git
+  icon: github
+  source:
+    branch: develop
+    uri: git@github.com:cloudfoundry/cf-for-k8s
+    private_key: ((cf_for_k8s_readonly_deploy_key.private_key))

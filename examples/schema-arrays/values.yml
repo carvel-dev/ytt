@@ -1,0 +1,10 @@
+#@data/values
+---
+resources:
+- name: cf-for-k8s-develop
+  source:
+    private_key: ((cf_for_k8s_readwrite_deploy_key.private_key))
+- name: cf-for-k8s-ci
+- name: cf-acceptance-tests
+  source:
+    uri: git@github.com:cloudfoundry/cf-acceptance-tests
