@@ -102,7 +102,7 @@ func collectSchemaDocs(schemaFiles []*FileInLibrary, loader *TemplateLoader) ([]
 			return nil, err
 		}
 
-		docs, _, err := DocExtractor{resultDocSet}.Extract(AnnotationSchemaMatch)
+		docs, _, err := DocExtractor{resultDocSet}.Extract(AnnotationDataValuesSchema)
 		if err != nil {
 			return nil, err
 		}
@@ -154,7 +154,7 @@ func (ll *LibraryLoader) Values(valuesOverlays []*DataValues, schema Schema) (*D
 }
 
 func (ll *LibraryLoader) schemaFiles(loader *TemplateLoader) ([]*FileInLibrary, error) {
-	return ll.filesByAnnotation(AnnotationSchemaMatch, loader)
+	return ll.filesByAnnotation(AnnotationDataValuesSchema, loader)
 }
 
 func (ll *LibraryLoader) valuesFiles(loader *TemplateLoader) ([]*FileInLibrary, error) {
