@@ -161,7 +161,7 @@ func (o DataValuesPreProcessing) templateFile(fileInLib *FileInLibrary) ([]*yaml
 
 func (o DataValuesPreProcessing) newEmptyDataValuesDocument() *yamlmeta.Document {
 	return &yamlmeta.Document{
-		Value:    nil,
+		Value:    &yamlmeta.Map{},
 		Position: filepos.NewUnknownPosition(),
 	}
 }

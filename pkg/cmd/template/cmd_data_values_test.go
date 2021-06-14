@@ -13,6 +13,30 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestEmptyDataValues(t *testing.T) {
+	yamlTplData := []byte(`
+#@ load("@ytt:data", "data")
+data_int: #@ data.values`)
+
+	expectedYAMLTplData := `data_int: {}
+`
+	filesToProcess := files.NewSortedFiles([]*files.File{
+		files.MustNewFileFromSource(files.NewBytesSource("tpl.yml", yamlTplData)),
+	})
+
+	ui := ui.NewTTY(false)
+	opts := cmdtpl.NewOptions()
+
+	out := opts.RunWithFiles(cmdtpl.Input{Files: filesToProcess}, ui)
+	require.NoError(t, out.Err)
+	require.Len(t, out.Files, 1, "unexpected number of output files")
+
+	file := out.Files[0]
+
+	assert.Equal(t, "tpl.yml", file.RelativePath())
+	assert.Equal(t, expectedYAMLTplData, string(file.Bytes()))
+}
+
 func TestDataValues(t *testing.T) {
 	yamlTplData := []byte(`
 #@ load("@ytt:data", "data")
