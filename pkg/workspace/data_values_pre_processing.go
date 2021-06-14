@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	"github.com/k14s/starlark-go/starlark"
-	"github.com/k14s/ytt/pkg/filepos"
 	"github.com/k14s/ytt/pkg/schema"
 	"github.com/k14s/ytt/pkg/yamlmeta"
 	yttoverlay "github.com/k14s/ytt/pkg/yttlibrary/overlay"
@@ -72,7 +71,7 @@ func (o DataValuesPreProcessing) apply(files []*FileInLibrary) (*DataValues, []*
 	}
 
 	if resultDVsDoc == nil {
-		resultDVsDoc = o.newEmptyDataValuesDocument()
+		resultDVsDoc = newEmptyDataValuesDocument()
 	}
 	dataValues, err := NewDataValues(resultDVsDoc)
 	if err != nil {
@@ -157,13 +156,6 @@ func (o DataValuesPreProcessing) templateFile(fileInLib *FileInLibrary) ([]*yaml
 	}
 
 	return valuesDocs, nil
-}
-
-func (o DataValuesPreProcessing) newEmptyDataValuesDocument() *yamlmeta.Document {
-	return &yamlmeta.Document{
-		Value:    &yamlmeta.Map{},
-		Position: filepos.NewUnknownPosition(),
-	}
 }
 
 func (o DataValuesPreProcessing) overlay(dataValues, overlay *yamlmeta.Document) (*yamlmeta.Document, error) {
