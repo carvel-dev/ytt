@@ -31,6 +31,7 @@ func NewAPI(replaceNodeFunc tplcore.StarlarkFunc, dataMod DataModule,
 		"json":   JSONAPI,
 		"yaml":   YAMLAPI,
 		"url":    URLAPI,
+		"net":    NETAPI,
 
 		// Templating
 		"template": NewTemplateModule(replaceNodeFunc).AsModule(),

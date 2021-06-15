@@ -1,0 +1,21 @@
+#@ load("@ytt:net", "net")
+
+ipv4:
+  ip: #@ net.parse_ip("192.0.2.1")
+  is_ipv4: #@ net.parse_ip("192.0.2.1").is_ipv4()
+  is_ipv6: #@ net.parse_ip("192.0.2.1").is_ipv6()
+ipv6:
+  ip: #@ net.parse_ip("2001:db8::1")
+  is_ipv4: #@ net.parse_ip("2001:db8::1").is_ipv4()
+  is_ipv6: #@ net.parse_ip("2001:db8::1").is_ipv6()
+
++++
+
+ipv4:
+  ip: 192.0.2.1
+  is_ipv4: true
+  is_ipv6: false
+ipv6:
+  ip: 2001:db8::1
+  is_ipv4: false
+  is_ipv6: true

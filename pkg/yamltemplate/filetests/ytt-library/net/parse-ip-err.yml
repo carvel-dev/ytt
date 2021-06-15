@@ -1,0 +1,11 @@
+#@ load("@ytt:net", "net")
+
+ipv4:
+  ip: #@ net.parse_ip("not-a-valid-ip")
+
++++
+
+ERR: 
+- net.parse_ip: input IP string is invalid
+    in <toplevel>
+      stdin:4 |   ip: #@ net.parse_ip("not-a-valid-ip")

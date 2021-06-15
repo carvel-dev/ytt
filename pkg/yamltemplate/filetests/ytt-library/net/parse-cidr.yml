@@ -1,0 +1,37 @@
+#@ load("@ytt:net", "net")
+
+ipv4:
+  cidr: #@ net.parse_cidr("192.0.2.1/24")
+  cidr_net: #@ net.parse_cidr("192.0.2.1/24").net
+  cidr_ip: #@ net.parse_cidr("192.0.2.1/24").ip
+  cidr_is_ipv4: #@ net.parse_cidr("192.0.2.1/24").is_ipv4()
+  cidr_is_ipv6: #@ net.parse_cidr("192.0.2.1/24").is_ipv6()
+  cidr_ip_is_ipv4: #@ net.parse_cidr("192.0.2.1/24").ip.is_ipv4()
+  cidr_ip_is_ipv6: #@ net.parse_cidr("192.0.2.1/24").ip.is_ipv6()
+ipv6:
+  cidr: #@ net.parse_cidr("2001:db8::1/96")
+  cidr_net: #@ net.parse_cidr("2001:db8::1/96").net
+  cidr_ip: #@ net.parse_cidr("2001:db8::1/96").ip
+  cidr_is_ipv4: #@ net.parse_cidr("2001:db8::1/96").is_ipv4()
+  cidr_is_ipv6: #@ net.parse_cidr("2001:db8::1/96").is_ipv6()
+  cidr_ip_is_ipv4: #@ net.parse_cidr("2001:db8::1/96").ip.is_ipv4()
+  cidr_ip_is_ipv6: #@ net.parse_cidr("2001:db8::1/96").ip.is_ipv6()
+
++++
+
+ipv4:
+  cidr: 192.0.2.1/24
+  cidr_net: 192.0.2.0/24
+  cidr_ip: 192.0.2.1
+  cidr_is_ipv4: true
+  cidr_is_ipv6: false
+  cidr_ip_is_ipv4: true
+  cidr_ip_is_ipv6: false
+ipv6:
+  cidr: 2001:db8::1/96
+  cidr_net: 2001:db8::/96
+  cidr_ip: 2001:db8::1
+  cidr_is_ipv4: false
+  cidr_is_ipv6: true
+  cidr_ip_is_ipv4: false
+  cidr_ip_is_ipv6: true
