@@ -1644,7 +1644,7 @@ foo:
     bar: 3
     ree: set from root
 ---
-root_data_values: null
+root_data_values: {}
 `
 
 		filesToProcess := files.NewSortedFiles([]*files.File{
@@ -1692,7 +1692,7 @@ foo:
     bar: 3
     ree: set from root
 ---
-root_data_values: null
+root_data_values: {}
 `
 
 		filesToProcess := files.NewSortedFiles([]*files.File{
@@ -2032,7 +2032,7 @@ system_domain: #@ data.values.system_domain
 			files.MustNewFileFromSource(files.NewBytesSource("template.yml", []byte(templateYAML))),
 		})
 
-		expectedErr := "NoneType has no .system_domain field or method"
+		expectedErr := "struct has no .system_domain field or method"
 		assertFails(t, filesToProcess, expectedErr, opts)
 	})
 }

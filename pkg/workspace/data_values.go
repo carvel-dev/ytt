@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/k14s/ytt/pkg/filepos"
 	"github.com/k14s/ytt/pkg/template"
 	"github.com/k14s/ytt/pkg/template/core"
 	"github.com/k14s/ytt/pkg/workspace/ref"
@@ -38,7 +39,14 @@ func NewDataValues(doc *yamlmeta.Document) (*DataValues, error) {
 }
 
 func NewEmptyDataValues() *DataValues {
-	return &DataValues{Doc: &yamlmeta.Document{}}
+	return &DataValues{Doc: newEmptyDataValuesDocument()}
+}
+
+func newEmptyDataValuesDocument() *yamlmeta.Document {
+	return &yamlmeta.Document{
+		Value:    &yamlmeta.Map{},
+		Position: filepos.NewUnknownPosition(),
+	}
 }
 
 type ExtractLibRefs interface {
