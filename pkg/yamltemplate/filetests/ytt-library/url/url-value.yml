@@ -14,6 +14,10 @@ url_value:
   test8: #@ testURL3.user.string()
   test9: #@ testURL3.user.name
   test10: #@ testURL3.user.password
+hostname:
+  name: #@ url.parse("http://admin:password@url.domain:8080").hostname()
+  ipv4: #@ url.parse("http://admin:password@192.168.2.1:8080").hostname()
+  ipv6: #@ url.parse("https://[2001:db8::1]:17000").hostname()
 
 +++
 
@@ -28,3 +32,7 @@ url_value:
   test8: admin
   test9: admin
   test10: null
+hostname:
+  name: url.domain
+  ipv4: 192.168.2.1
+  ipv6: 2001:db8::1
