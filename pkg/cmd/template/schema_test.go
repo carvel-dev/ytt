@@ -238,31 +238,53 @@ func TestSchema_Reports_violations_when_DataValues_do_NOT_conform(t *testing.T) 
 	opts.SchemaEnabled = true
 
 	t.Run("when map item's key is not among those declared in schema", func(t *testing.T) {
-		t.Skip("This test case will be covered in https://github.com/vmware-tanzu/carvel-ytt/issues/344")
-		schemaYAML := `#@data/values-schema
+		yamlTplData := []byte(`
+#@ load("@ytt:data", "data")
+values: #@ data.values`)
+
+		schemaData := []byte(`#@data/values-schema
 ---
-db_conn:
-  port: 0
-`
-		dataValuesYAML := `#@data/values
----
-db_conn:
-  port: not an int  #! wrong type, but check values only when all keys in the map are valid
-  password: i should not be here
-`
+foo:
+  bar: 42
+`)
+		dvs1 := `
+foo:
+  wrong_key: not right key`
 
 		filesToProcess := files.NewSortedFiles([]*files.File{
-			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
-			files.MustNewFileFromSource(files.NewBytesSource("data_values.yml", []byte(dataValuesYAML))),
+			files.MustNewFileFromSource(files.NewBytesSource("tpl.yml", yamlTplData)),
+			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", schemaData)),
 		})
-		expectedErr := `data_values.yml:5 | password: i should not be here
-                  |
-                  | UNEXPECTED KEY - the key of this item was not found in the schema's corresponding map:
-                  |      found: password
-                  |   expected: (a key defined in map) (by schema.yml:3)
-                  |   (hint: declare data values in schema and override them in a data values document)`
 
-		assertFails(t, filesToProcess, expectedErr, opts)
+		opts := cmdtpl.NewOptions()
+		opts.SchemaEnabled = true
+
+		opts.DataValuesFlags = cmdtpl.DataValuesFlags{
+			FromFiles: []string{"dvs1.yml"},
+			ReadFileFunc: func(path string) ([]byte, error) {
+				switch path {
+				case "dvs1.yml":
+					return []byte(dvs1), nil
+				default:
+					return nil, fmt.Errorf("Unknown file '%s'", path)
+				}
+			},
+		}
+
+		expectedErrMsg := `Overlaying data values (in following order: additional data values): 
+Schema Typecheck - Value is of wrong type
+=========================================
+
+dvs1.yml:
+    |
+  3 |   wrong_key: not right key
+    |
+
+    = found: wrong_key
+    = expected: (a key defined in map) (by schema.yml:3)
+    = hint: declare data values in schema and override them in a data values document
+`
+		assertFails(t, filesToProcess, expectedErrMsg, opts)
 	})
 	t.Run("when map item's value is the wrong type", func(t *testing.T) {
 		schemaYAML := `#@data/values-schema
@@ -535,40 +557,52 @@ foo: non-empty data value
 		assertFails(t, filesToProcess, expectedErr, opts)
 	})
 	t.Run("checks after every data values document is processed (and stops if there was a violation)", func(t *testing.T) {
-		t.Skip("This test case will be covered in https://github.com/vmware-tanzu/carvel-ytt/issues/344")
 		schemaYAML := `#@data/values-schema
 ---
 hostname: ""
 `
-		nonConformingDataValueYAML := `#@data/values
----
+		dvs1Data := `---
 not_in_schema: this should be the only violation reported
 `
 
-		wouldFixNonConformingDataValueYAML := `#@ load("@ytt:overlay", "overlay")
-#@data/values
----
-#@overlay/remove
-not_in_schema:
+		dvs2Data := `---
+hostname: 14   # wrong type; but will never be caught
 `
 		templateYAML := `---
 rendered: true`
 
 		filesToProcess := files.NewSortedFiles([]*files.File{
 			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
-			files.MustNewFileFromSource(files.NewBytesSource("nonConforming.yml", []byte(nonConformingDataValueYAML))),
-			files.MustNewFileFromSource(files.NewBytesSource("fixNonConforming.yml", []byte(wouldFixNonConformingDataValueYAML))),
 			files.MustNewFileFromSource(files.NewBytesSource("template.yml", []byte(templateYAML))),
 		})
-		expectedErr := `
-nonConforming.yml:3 | not_in_schema: this should be the only violation reported
-                    |
-                    | UNEXPECTED KEY - the key of this item was not found in the schema's corresponding map:
-                    |      found: not_in_schema
-                    |   expected: (a key defined in map) (by schema.yml:2)
-                    |   (hint: declare data values in schema and override them in a data values document)`
+		opts.DataValuesFlags = cmdtpl.DataValuesFlags{
+			FromFiles: []string{"dvs1.yml", "dvs2.yml"},
+			ReadFileFunc: func(path string) ([]byte, error) {
+				switch path {
+				case "dvs1.yml":
+					return []byte(dvs1Data), nil
+				case "dvs2.yml":
+					return []byte(dvs2Data), nil
+				default:
+					return nil, fmt.Errorf("Unknown file '%s'", path)
+				}
+			},
+		}
 
-		assertFails(t, filesToProcess, expectedErr, opts)
+		expectedErrMsg := `Overlaying data values (in following order: additional data values): 
+Schema Typecheck - Value is of wrong type
+=========================================
+
+dvs1.yml:
+    |
+  2 | not_in_schema: this should be the only violation reported
+    |
+
+    = found: not_in_schema
+    = expected: (a key defined in map) (by schema.yml:2)
+    = hint: declare data values in schema and override them in a data values document
+`
+		assertFails(t, filesToProcess, expectedErrMsg, opts)
 	})
 
 	t.Run("when schema expects a scalar as an array item, but an array is provided", func(t *testing.T) {
