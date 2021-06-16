@@ -84,7 +84,7 @@ func NewMismatchedTypeAssertionError(foundType yamlmeta.TypeWithValues, expected
 
 func NewUnexpectedKeyAssertionError(found *yamlmeta.MapItem, definition *filepos.Position) error {
 	return schemaAssertionError{
-		position: definition,
+		position: found.GetPosition(),
 		expected: fmt.Sprintf("(a key defined in map) (by %s)", definition.AsCompactString()),
 		found:    fmt.Sprintf("%v", found.Key),
 		hints:    []string{"declare data values in schema and override them in a data values document"},
