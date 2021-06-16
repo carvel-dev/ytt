@@ -221,12 +221,20 @@ func (uv *URLValue) AsStarlarkValue() starlark.Value {
 	m.Set("user", uv.User())
 	m.Set("without_user", starlark.NewBuiltin("url.without_user", core.ErrWrapper(uv.WithoutUser)))
 	m.Set("string", starlark.NewBuiltin("url.string", core.ErrWrapper(uv.string)))
+	m.Set("hostname", starlark.NewBuiltin("url.hostname", core.ErrWrapper(uv.Hostname)))
 	uv.StarlarkStruct = core.NewStarlarkStruct(m)
 	return uv
 }
 
 func (uv *URLValue) ConversionHint() string {
 	return "URLValue does not automatically encode (hint: use .string())"
+}
+
+func (uv *URLValue) Hostname(thread *starlark.Thread, f *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
+	if args.Len() != 0 {
+		return starlark.None, fmt.Errorf("expected no argument")
+	}
+	return starlark.String(uv.url.Hostname()), nil
 }
 
 func (uu *URLUser) string(thread *starlark.Thread, f *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
