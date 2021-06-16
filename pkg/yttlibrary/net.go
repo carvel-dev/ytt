@@ -4,7 +4,6 @@
 package yttlibrary
 
 import (
-	"errors"
 	"fmt"
 	"net"
 
@@ -45,10 +44,6 @@ func (b netModule) ParseIP(thread *starlark.Thread, f *starlark.Builtin, args st
 	}
 
 	parsedIP := net.ParseIP(ipStr)
-	if parsedIP == nil {
-		return starlark.None, errors.New("input IP string is invalid")
-	}
-
 	return (&IPValue{parsedIP, nil}).AsStarlarkValue(), nil
 }
 
