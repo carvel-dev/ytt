@@ -272,8 +272,8 @@ foo:
 		}
 
 		expectedErrMsg := `Overlaying data values (in following order: additional data values): 
-Schema Typecheck - Value is of wrong type
-=========================================
+One or more data values were invalid
+====================================
 
 dvs1.yml:
     |
@@ -310,8 +310,8 @@ db_conn:
 		})
 
 		expectedErr := `
-Schema Typecheck - Value is of wrong type
-=========================================
+One or more data values were invalid
+====================================
 
 data_values.yml:
     |
@@ -356,8 +356,8 @@ app: null
 		})
 
 		expectedErr := `
-Schema Typecheck - Value is of wrong type
-=========================================
+One or more data values were invalid
+====================================
 
 dataValues.yml:
     |
@@ -391,8 +391,8 @@ foo: #@ data.values.foo
 		})
 
 		expectedErr := `
-Schema Typecheck - Value is of wrong type
-=========================================
+One or more data values were invalid
+====================================
 
 dataValues.yml:
     |
@@ -431,8 +431,8 @@ clients:
 		})
 
 		expectedErr := `
-Schema Typecheck - Value is of wrong type
-=========================================
+One or more data values were invalid
+====================================
 
 data_values.yml:
      |
@@ -485,8 +485,8 @@ _: #@ template.replace({'foo':9})
 rendered: #@ data.values.foo
 `
 		expectedErr := `
-Schema Typecheck - Value is of wrong type
-=========================================
+One or more data values were invalid
+====================================
 
 :
     |
@@ -524,8 +524,8 @@ rendered: #@ data.values.foo
 		})
 
 		expectedErr := `
-Schema Typecheck - Value is of wrong type
-=========================================
+One or more data values were invalid
+====================================
 
 key 'foo' (kv arg):
     |
@@ -590,8 +590,8 @@ rendered: true`
 		}
 
 		expectedErrMsg := `Overlaying data values (in following order: additional data values): 
-Schema Typecheck - Value is of wrong type
-=========================================
+One or more data values were invalid
+====================================
 
 dvs1.yml:
     |
@@ -622,8 +622,8 @@ array: [ [1] ]
 		})
 
 		expectedErr := `
-Schema Typecheck - Value is of wrong type
-=========================================
+One or more data values were invalid
+====================================
 
 values.yml:
     |
@@ -653,8 +653,8 @@ array: [ {a: 1} ]
 		})
 
 		expectedErr := `
-Schema Typecheck - Value is of wrong type
-=========================================
+One or more data values were invalid
+====================================
 
 values.yml:
     |
@@ -1404,8 +1404,8 @@ foo: 42`)
       config.yml:4 | --- #@ template.replace(library.get("lib").eval())
 
     reason:
-     Schema Typecheck - Value is of wrong type
-     =========================================
+     One or more data values were invalid
+     ====================================
      
      values.yml:
          |
@@ -1525,8 +1525,8 @@ foo: #@ data.values.foo
       root.yml:5 | --- #@ template.replace(library.get("lib").eval())
 
     reason:
-     Schema Typecheck - Value is of wrong type
-     =========================================
+     One or more data values were invalid
+     ====================================
      
      key 'foo' (kv arg):
          |
@@ -1754,8 +1754,8 @@ foo: 3`)
       config.yml:4 | --- #@ template.replace(library.get("lib").with_data_values({'foo':'4'}).eval())
 
     reason:
-     Schema Typecheck - Value is of wrong type
-     =========================================
+     One or more data values were invalid
+     ====================================
      
      :
          |
