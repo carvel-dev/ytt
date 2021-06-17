@@ -14,7 +14,7 @@ import (
 )
 
 var (
-	NETAPI = starlark.StringDict{
+	NetAPI = starlark.StringDict{
 		"net": &starlarkstruct.Module{
 			Name: "net",
 			Members: starlark.StringDict{
