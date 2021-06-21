@@ -36,14 +36,11 @@ func NewDocumentSchema(doc *yamlmeta.Document) (*DocumentSchema, error) {
 		return nil, err
 	}
 
-	schemaDVs, err := defaultDataValues(doc)
-	if err != nil {
-		return nil, err
-	}
+	schemaDVs := docType.GetDefaultValue()
 
 	return &DocumentSchema{
 		Source:     doc,
-		defaultDVs: schemaDVs,
+		defaultDVs: schemaDVs.(*yamlmeta.Document),
 		Allowed:    docType,
 	}, nil
 }
@@ -76,21 +73,11 @@ func NewPermissiveSchema() *DocumentSchema {
 
 func NewDocumentType(doc *yamlmeta.Document) (*DocumentType, error) {
 	docType := &DocumentType{Source: doc, Position: doc.Position}
-	switch typedDocumentValue := doc.Value.(type) {
-	case *yamlmeta.Map:
-		valueType, err := NewMapType(typedDocumentValue)
-		if err != nil {
-			return nil, err
-		}
-
-		docType.ValueType = valueType
-	case *yamlmeta.Array:
-		valueType, err := NewArrayType(typedDocumentValue)
-		if err != nil {
-			return nil, err
-		}
-		docType.ValueType = valueType
+	valueType, err := newCollectionItemValueType(doc.Value, doc.Position)
+	if err != nil {
+		return nil, err
 	}
+	docType.ValueType = valueType
 	return docType, nil
 }
 
@@ -134,12 +121,9 @@ func NewMapItemType(item *yamlmeta.MapItem) (*MapItemType, error) {
 		})
 	}
 
-	defaultValue := item.Value
-	if _, ok := item.Value.(*yamlmeta.Array); ok {
-		defaultValue = &yamlmeta.Array{}
-	}
+	defaultValue := valueType.GetDefaultValue()
 
-	return &MapItemType{Key: item.Key, ValueType: valueType, DefaultValue: defaultValue, Position: item.Position}, nil
+	return &MapItemType{Key: item.Key, ValueType: valueType, defaultValue: defaultValue, Position: item.Position}, nil
 }
 
 func NewArrayType(a *yamlmeta.Array) (*ArrayType, error) {
@@ -157,7 +141,7 @@ func NewArrayType(a *yamlmeta.Array) (*ArrayType, error) {
 		return nil, err
 	}
 
-	return &ArrayType{ItemsType: arrayItemType, Position: a.Position}, nil
+	return &ArrayType{ItemsType: arrayItemType, defaultValue: &yamlmeta.Array{}, Position: a.Position}, nil
 }
 
 func NewArrayItemType(item *yamlmeta.ArrayItem) (*ArrayItemType, error) {
@@ -185,7 +169,7 @@ func NewArrayItemType(item *yamlmeta.ArrayItem) (*ArrayItemType, error) {
 		}
 	}
 
-	return &ArrayItemType{ValueType: valueType, Position: item.Position}, nil
+	return &ArrayItemType{ValueType: valueType, defaultValue: valueType.GetDefaultValue(), Position: item.Position}, nil
 }
 
 func newCollectionItemValueType(collectionItemValue interface{}, position *filepos.Position) (yamlmeta.Type, error) {
@@ -203,48 +187,18 @@ func newCollectionItemValueType(collectionItemValue interface{}, position *filep
 		}
 		return arrayType, nil
 	case string:
-		return &ScalarType{Value: *new(string), Position: position}, nil
+		return &ScalarType{ValueType: *new(string), defaultValue: typedContent, Position: position}, nil
 	case float64:
-		return &ScalarType{Value: *new(float64), Position: position}, nil
+		return &ScalarType{ValueType: *new(float64), defaultValue: typedContent, Position: position}, nil
 	case int, int64, uint64:
-		return &ScalarType{Value: *new(int), Position: position}, nil
+		return &ScalarType{ValueType: *new(int), defaultValue: typedContent, Position: position}, nil
 	case bool:
-		return &ScalarType{Value: *new(bool), Position: position}, nil
+		return &ScalarType{ValueType: *new(bool), defaultValue: typedContent, Position: position}, nil
 	case nil:
 		return nil, nil
 	}
 
 	return nil, fmt.Errorf("Collection item type did not match any known types")
-}
-
-func defaultDataValues(doc *yamlmeta.Document) (*yamlmeta.Document, error) {
-	docCopy := doc.DeepCopyAsNode()
-	for _, value := range docCopy.GetValues() {
-		if valueAsANode, ok := value.(yamlmeta.Node); ok {
-			setDefaultValues(valueAsANode)
-		}
-	}
-
-	return docCopy.(*yamlmeta.Document), nil
-}
-
-func setDefaultValues(node yamlmeta.Node) {
-	switch typedNode := node.(type) {
-	case *yamlmeta.Map:
-		for _, value := range typedNode.Items {
-			setDefaultValues(value)
-		}
-	case *yamlmeta.MapItem:
-		anns := template.NewAnnotations(typedNode)
-		if anns.Has(AnnotationNullable) {
-			typedNode.Value = nil
-		}
-		if valueAsANode, ok := typedNode.Value.(yamlmeta.Node); ok {
-			setDefaultValues(valueAsANode)
-		}
-	case *yamlmeta.Array:
-		typedNode.Items = []*yamlmeta.ArrayItem{}
-	}
 }
 
 type ExtractLibRefs interface {

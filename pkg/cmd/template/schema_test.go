@@ -719,6 +719,43 @@ vpc: #@ data.values.vpc
 
 		assertSucceeds(t, filesToProcess, expected, opts)
 	})
+	t.Run("array default to an empty list when grandparent map is omitted", func(t *testing.T) {
+		schemaYAML := `#@data/values-schema
+---
+db_conn:
+- hostname: ""
+  port:
+    job: 
+    - I should not show
+    #@schema/nullable
+    cow: I also should not be here
+`
+		dataValuesYAML := `#@data/values
+---
+db_conn:
+- hostname: server.example.com
+`
+		templateYAML := `#@ load("@ytt:data", "data")
+---
+rendered: #@ data.values
+`
+
+		expected := `rendered:
+  db_conn:
+  - hostname: server.example.com
+    port:
+      job: []
+      cow: null
+`
+
+		filesToProcess := files.NewSortedFiles([]*files.File{
+			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
+			files.MustNewFileFromSource(files.NewBytesSource("dataValues.yml", []byte(dataValuesYAML))),
+			files.MustNewFileFromSource(files.NewBytesSource("template.yml", []byte(templateYAML))),
+		})
+
+		assertSucceeds(t, filesToProcess, expected, opts)
+	})
 	t.Run("when a key in the data value is omitted yet present in the schema, it is filled in", func(t *testing.T) {
 		schemaYAML := `#@data/values-schema
 ---
@@ -755,6 +792,32 @@ vpc: #@ data.values.vpc
 		filesToProcess := files.NewSortedFiles([]*files.File{
 			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
 			files.MustNewFileFromSource(files.NewBytesSource("dataValues.yml", []byte(dataValuesYAML))),
+			files.MustNewFileFromSource(files.NewBytesSource("template.yml", []byte(templateYAML))),
+		})
+
+		assertSucceeds(t, filesToProcess, expected, opts)
+	})
+	t.Run("even under schema/type any=True for schema/nullable nodes and arrays", func(t *testing.T) {
+		schemaYAML := `#@data/values-schema
+---
+#@schema/type any=True
+foo:
+  bar:
+  - 7
+  #@schema/nullable
+  bat: I should not be there
+`
+		templateYAML := `#@ load("@ytt:data", "data")
+---
+foo: #@ data.values.foo
+`
+		expected := `foo:
+  bar: []
+  bat: null
+`
+
+		filesToProcess := files.NewSortedFiles([]*files.File{
+			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
 			files.MustNewFileFromSource(files.NewBytesSource("template.yml", []byte(templateYAML))),
 		})
 

@@ -10,6 +10,7 @@ import (
 type Type interface {
 	AssignTypeTo(typeable Typeable) TypeCheck
 	GetValueType() Type
+	GetDefaultValue() interface{}
 	CheckType(node TypeWithValues) TypeCheck
 	PositionOfDefinition() *filepos.Position
 	String() string
