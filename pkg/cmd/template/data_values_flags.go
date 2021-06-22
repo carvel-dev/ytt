@@ -202,7 +202,7 @@ func (s *DataValuesFlags) env(prefix string, valueFunc valueTransformFunc) ([]*w
 
 		// '__' gets translated into a '.' since periods may not be liked by shells
 		keyPieces := strings.Split(strings.TrimPrefix(pieces[0], keyPrefix+envKeyPrefix), envMapKeySep)
-		overlay := s.buildOverlay(keyPieces, val, "env var")
+		overlay := s.buildOverlay(keyPieces, val, "env var", envVar)
 
 		dvs, err := workspace.NewDataValuesWithOptionalLib(overlay, libRef)
 		if err != nil {
@@ -231,7 +231,7 @@ func (s *DataValuesFlags) kv(kv string, valueFunc valueTransformFunc) (*workspac
 		return nil, err
 	}
 
-	overlay := s.buildOverlay(strings.Split(key, dvsMapKeySep), val, "kv arg")
+	overlay := s.buildOverlay(strings.Split(key, dvsMapKeySep), val, "kv arg", kv)
 
 	return workspace.NewDataValuesWithOptionalLib(overlay, libRef)
 }
@@ -260,7 +260,8 @@ func (s *DataValuesFlags) kvFile(kv string) (*workspace.DataValues, error) {
 		return nil, err
 	}
 
-	overlay := s.buildOverlay(strings.Split(key, dvsMapKeySep), string(contents), "key=file arg")
+	line := fmt.Sprintf("%s=%s", key, string(contents))
+	overlay := s.buildOverlay(strings.Split(key, dvsMapKeySep), string(contents), "key=file arg", line)
 
 	return workspace.NewDataValuesWithOptionalLib(overlay, libRef)
 }
@@ -287,13 +288,14 @@ func (DataValuesFlags) libraryRefAndKey(key string) (string, string, error) {
 	}
 }
 
-func (s *DataValuesFlags) buildOverlay(keyPieces []string, value interface{}, desc string) *yamlmeta.Document {
+func (s *DataValuesFlags) buildOverlay(keyPieces []string, value interface{}, desc string, line string) *yamlmeta.Document {
 	resultMap := &yamlmeta.Map{}
 	currMap := resultMap
 	var lastMapItem *yamlmeta.MapItem
 
 	pos := filepos.NewPosition(1)
 	pos.SetFile(fmt.Sprintf("key '%s' (%s)", strings.Join(keyPieces, dvsMapKeySep), desc))
+	pos.SetLine(line)
 
 	for _, piece := range keyPieces {
 		newMap := &yamlmeta.Map{}
