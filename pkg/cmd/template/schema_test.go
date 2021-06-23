@@ -609,9 +609,55 @@ rendered: #@ data.values.foo
 One or more data values were invalid
 ====================================
 
-key 'foo' (key=file arg):
+key 'foo' (key=file arg) dvs1.yml:
     |
-  1 | foo=not an integer
+  1 | not an integer
+    |
+
+    = found: string
+    = expected: integer (by schema.yml:3)
+`
+		assertFails(t, filesToProcess, expectedErr, cmdOpts)
+	})
+
+	t.Run("when a data value of the wrong type is passed using --data-values-file", func(t *testing.T) {
+		cmdOpts := cmdtpl.NewOptions()
+		cmdOpts.SchemaEnabled = true
+		schemaYAML := `#@data/values-schema
+---
+foo: 0
+`
+
+		dvs1 := `foo: not an integer`
+
+		templateYAML := `#@ load("@ytt:data", "data")
+---
+rendered: #@ data.values.foo
+`
+		cmdOpts.DataValuesFlags = cmdtpl.DataValuesFlags{
+			FromFiles: []string{"dvs1.yml"},
+			ReadFileFunc: func(path string) ([]byte, error) {
+				switch path {
+				case "dvs1.yml":
+					return []byte(dvs1), nil
+				default:
+					return nil, fmt.Errorf("Unknown file '%s'", path)
+				}
+			},
+		}
+
+		filesToProcess := files.NewSortedFiles([]*files.File{
+			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
+			files.MustNewFileFromSource(files.NewBytesSource("template.yml", []byte(templateYAML))),
+		})
+
+		expectedErr := `
+One or more data values were invalid
+====================================
+
+dvs1.yml:
+    |
+  1 | foo: not an integer
     |
 
     = found: string

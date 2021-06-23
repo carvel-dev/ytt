@@ -202,7 +202,8 @@ func (s *DataValuesFlags) env(prefix string, valueFunc valueTransformFunc) ([]*w
 
 		// '__' gets translated into a '.' since periods may not be liked by shells
 		keyPieces := strings.Split(strings.TrimPrefix(pieces[0], keyPrefix+envKeyPrefix), envMapKeySep)
-		overlay := s.buildOverlay(keyPieces, val, "env var", envVar)
+		desc := fmt.Sprintf("key '%s' (env var)", strings.Join(keyPieces, dvsMapKeySep))
+		overlay := s.buildOverlay(keyPieces, val, desc, envVar)
 
 		dvs, err := workspace.NewDataValuesWithOptionalLib(overlay, libRef)
 		if err != nil {
@@ -230,8 +231,8 @@ func (s *DataValuesFlags) kv(kv string, valueFunc valueTransformFunc) (*workspac
 	if err != nil {
 		return nil, err
 	}
-
-	overlay := s.buildOverlay(strings.Split(key, dvsMapKeySep), val, "kv arg", kv)
+	desc := fmt.Sprintf("key '%s' (kv arg)", key)
+	overlay := s.buildOverlay(strings.Split(key, dvsMapKeySep), val, desc, kv)
 
 	return workspace.NewDataValuesWithOptionalLib(overlay, libRef)
 }
@@ -259,9 +260,8 @@ func (s *DataValuesFlags) kvFile(kv string) (*workspace.DataValues, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	line := fmt.Sprintf("%s=%s", key, string(contents))
-	overlay := s.buildOverlay(strings.Split(key, dvsMapKeySep), string(contents), "key=file arg", line)
+	desc := fmt.Sprintf("key '%s' (key=file arg) %s", key, pieces[1])
+	overlay := s.buildOverlay(strings.Split(key, dvsMapKeySep), string(contents), desc, string(contents))
 
 	return workspace.NewDataValuesWithOptionalLib(overlay, libRef)
 }
@@ -294,7 +294,7 @@ func (s *DataValuesFlags) buildOverlay(keyPieces []string, value interface{}, de
 	var lastMapItem *yamlmeta.MapItem
 
 	pos := filepos.NewPosition(1)
-	pos.SetFile(fmt.Sprintf("key '%s' (%s)", strings.Join(keyPieces, dvsMapKeySep), desc))
+	pos.SetFile(desc)
 	pos.SetLine(line)
 
 	for _, piece := range keyPieces {
