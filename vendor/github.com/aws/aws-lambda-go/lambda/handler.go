@@ -7,6 +7,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"reflect"
+
+	"github.com/aws/aws-lambda-go/lambda/handlertrace"
 )
 
 type Handler interface {
@@ -56,22 +58,25 @@ func validateArguments(handler reflect.Type) (bool, error) {
 
 func validateReturns(handler reflect.Type) error {
 	errorType := reflect.TypeOf((*error)(nil)).Elem()
-	if handler.NumOut() > 2 {
+
+	switch n := handler.NumOut(); {
+	case n > 2:
 		return fmt.Errorf("handler may not return more than two values")
-	} else if handler.NumOut() > 1 {
+	case n > 1:
 		if !handler.Out(1).Implements(errorType) {
 			return fmt.Errorf("handler returns two values, but the second does not implement error")
 		}
-	} else if handler.NumOut() == 1 {
+	case n == 1:
 		if !handler.Out(0).Implements(errorType) {
 			return fmt.Errorf("handler returns a single value, but it does not implement error")
 		}
 	}
+
 	return nil
 }
 
 // NewHandler creates a base lambda handler from the given handler function. The
-// returned Handler performs JSON deserialization and deserialization, and
+// returned Handler performs JSON serialization and deserialization, and
 // delegates to the input handler function.  The handler function parameter must
 // satisfy the rules documented by Start.  If handlerFunc is not a valid
 // handler, the returned Handler simply reports the validation error.
@@ -95,6 +100,9 @@ func NewHandler(handlerFunc interface{}) Handler {
 	}
 
 	return lambdaHandler(func(ctx context.Context, payload []byte) (interface{}, error) {
+
+		trace := handlertrace.FromContext(ctx)
+
 		// construct arguments
 		var args []reflect.Value
 		if takesContext {
@@ -107,7 +115,9 @@ func NewHandler(handlerFunc interface{}) Handler {
 			if err := json.Unmarshal(payload, event.Interface()); err != nil {
 				return nil, err
 			}
-
+			if nil != trace.RequestEvent {
+				trace.RequestEvent(ctx, event.Elem().Interface())
+			}
 			args = append(args, event.Elem())
 		}
 
@@ -123,6 +133,10 @@ func NewHandler(handlerFunc interface{}) Handler {
 		var val interface{}
 		if len(response) > 1 {
 			val = response[0].Interface()
+
+			if nil != trace.ResponseEvent {
+				trace.ResponseEvent(ctx, val)
+			}
 		}
 
 		return val, err

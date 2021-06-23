@@ -1,6 +1,6 @@
 # Overview
 
-[![GoDoc](https://godoc.org/github.com/aws/aws-lambda-go/events?status.svg)](https://godoc.org/github.com/aws/aws-lambda-go/events)
+[![Go Reference](https://pkg.go.dev/badge/github.com/aws/aws-lambda-go/events.svg)](https://pkg.go.dev/github.com/aws/aws-lambda-go/events)
 
 This package provides input types for Lambda functions that process AWS events.
 
@@ -12,7 +12,15 @@ This package provides input types for Lambda functions that process AWS events.
 
 [AppSync](README_AppSync.md)
 
+[ClientVPN Connection Handler](README_ClientVPN.md)
+
 [CloudFormation Events](../cfn/README.md)
+
+[CloudWatch Events](README_CloudWatch_Events.md)
+
+[CloudWatch Logs](README_CloudWatch_Logs.md)
+
+[Chime Bot Events](README_Chime_Bots.md)
 
 [Code Commit Events](README_CodeCommit.md)
 
@@ -31,6 +39,8 @@ This package provides input types for Lambda functions that process AWS events.
 [Kinesis Events](README_Kinesis.md)
 
 [Kinesis Firehose Events](README_KinesisFirehose.md)
+
+[Lex Events](README_Lex.md)
 
 [S3 Events](README_S3.md)
 

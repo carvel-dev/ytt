@@ -1,16 +1,17 @@
 package events
 
 type LexEvent struct {
-	MessageVersion    string            `json:"messageVersion,omitempty"`
-	InvocationSource  string            `json:"invocationSource,omitempty"`
-	UserID            string            `json:"userId,omitempty"`
-	InputTranscript   string            `json:"inputTranscript,omitempty"`
-	SessionAttributes map[string]string `json:"sessionAttributes,omitempty"`
-	RequestAttributes map[string]string `json:"requestAttributes,omitempty"`
-	Bot               *LexBot           `json:"bot,omitempty"`
-	OutputDialogMode  string            `json:"outputDialogMode,omitempty"`
-	CurrentIntent     *LexCurrentIntent `json:"currentIntent,omitempty"`
-	DialogAction      *LexDialogAction  `json:"dialogAction,omitempty"`
+	MessageVersion     string                  `json:"messageVersion,omitempty"`
+	InvocationSource   string                  `json:"invocationSource,omitempty"`
+	UserID             string                  `json:"userId,omitempty"`
+	InputTranscript    string                  `json:"inputTranscript,omitempty"`
+	SessionAttributes  SessionAttributes       `json:"sessionAttributes,omitempty"`
+	RequestAttributes  map[string]string       `json:"requestAttributes,omitempty"`
+	Bot                *LexBot                 `json:"bot,omitempty"`
+	OutputDialogMode   string                  `json:"outputDialogMode,omitempty"`
+	CurrentIntent      *LexCurrentIntent       `json:"currentIntent,omitempty"`
+	AlternativeIntents []LexAlternativeIntents `json:"alternativeIntents,omitempty"`
+	DialogAction       *LexDialogAction        `json:"dialogAction,omitempty"`
 }
 
 type LexBot struct {
@@ -20,10 +21,19 @@ type LexBot struct {
 }
 
 type LexCurrentIntent struct {
-	Name               string                `json:"name,omitempty"`
-	Slots              Slots                 `json:"slots,omitempty"`
-	SlotDetails        map[string]SlotDetail `json:"slotDetails,omitempty"`
-	ConfirmationStatus string                `json:"confirmationStatus,omitempty"`
+	Name                     string                `json:"name,omitempty"`
+	NLUIntentConfidenceScore float64               `json:"nluIntentConfidenceScore,omitempty"`
+	Slots                    Slots                 `json:"slots,omitempty"`
+	SlotDetails              map[string]SlotDetail `json:"slotDetails,omitempty"`
+	ConfirmationStatus       string                `json:"confirmationStatus,omitempty"`
+}
+
+type LexAlternativeIntents struct {
+	Name                     string                `json:"name,omitempty"`
+	NLUIntentConfidenceScore float64               `json:"nluIntentConfidenceScore,omitempty"`
+	Slots                    Slots                 `json:"slots,omitempty"`
+	SlotDetails              map[string]SlotDetail `json:"slotDetails,omitempty"`
+	ConfirmationStatus       string                `json:"confirmationStatus,omitempty"`
 }
 
 type SlotDetail struct {
@@ -41,7 +51,14 @@ type LexDialogAction struct {
 	ResponseCard     *LexResponseCard  `json:"responseCard,omitempty"`
 }
 
+type SessionAttributes map[string]string
+
 type Slots map[string]*string
+
+type LexResponse struct {
+	SessionAttributes SessionAttributes `json:"sessionAttributes"`
+	DialogAction      LexDialogAction   `json:"dialogAction,omitempty"`
+}
 
 type LexResponseCard struct {
 	Version            int64        `json:"version,omitempty"`
