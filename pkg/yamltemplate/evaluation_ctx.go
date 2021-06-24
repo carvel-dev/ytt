@@ -131,7 +131,8 @@ func (e EvaluationCtx) convertValToDocSetItems(val interface{}) ([]*yamlmeta.Doc
 func (e EvaluationCtx) replaceItemInMap(
 	dstMap *yamlmeta.Map, placeholderItem *yamlmeta.MapItem, val interface{}) error {
 
-	insertItems, carryMeta, err := e.convertValToMapItems(val)
+	parentPos := dstMap.Items[0].Position.DeepCopy()
+	insertItems, carryMeta, err := e.convertValToMapItems(val, parentPos)
 	if err != nil {
 		return err
 	}
@@ -158,16 +159,17 @@ func (e EvaluationCtx) replaceItemInMap(
 	return fmt.Errorf("expected to find placeholder map item in map")
 }
 
-func (e EvaluationCtx) convertValToMapItems(val interface{}) ([]*yamlmeta.MapItem, bool, error) {
+func (e EvaluationCtx) convertValToMapItems(val interface{}, position *filepos.Position) ([]*yamlmeta.MapItem, bool, error) {
 	switch typedVal := val.(type) {
 	case *orderedmap.Map:
 		result := []*yamlmeta.MapItem{}
 		typedVal.Iterate(func(k, v interface{}) {
-			result = append(result, &yamlmeta.MapItem{Key: k, Value: v, Position: filepos.NewUnknownPosition()})
+			result = append(result, &yamlmeta.MapItem{Key: k, Value: v, Position: position})
 		})
 		return result, false, nil
 
 	case *yamlmeta.Map:
+		//TODO: need to set position here?
 		return typedVal.Items, true, nil
 
 	default:

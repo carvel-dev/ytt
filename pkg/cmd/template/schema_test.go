@@ -469,16 +469,16 @@ data_values.yml:
 		assertFails(t, filesToProcess, expectedErr, opts)
 	})
 
-	t.Run("when a invalid data value is passed using template replace", func(t *testing.T) {
+	t.Run("when a data value of the wrong type is passed using template replace", func(t *testing.T) {
 
 		schemaYAML := `#@data/values-schema
 ---
-foo: bar
+foo: 0
 `
 		dataValuesYAML := `#@ load("@ytt:template", "template")
 #@data/values
 ---
-_: #@ template.replace({'foo':9})
+_: #@ template.replace({'foo':'not a integer'})
 `
 		templateYAML := `#@ load("@ytt:data", "data")
 ---
@@ -488,13 +488,13 @@ rendered: #@ data.values.foo
 One or more data values were invalid
 ====================================
 
-:
+dataValues.yml:
     |
-  ? | 
+  4 | _: #@ template.replace({'foo':'not a integer'})
     |
 
-    = found: integer
-    = expected: string (by schema.yml:3)
+    = found: string
+    = expected: integer (by schema.yml:3)
 `
 
 		filesToProcess := files.NewSortedFiles([]*files.File{
