@@ -12,7 +12,7 @@ type Type interface {
 	GetValueType() Type
 	GetDefaultValue() interface{}
 	CheckType(node TypeWithValues) TypeCheck
-	PositionOfDefinition() *filepos.Position
+	GetDefinitionPosition() *filepos.Position
 	String() string
 }
 

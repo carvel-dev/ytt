@@ -19,7 +19,7 @@ type NullSchema struct {
 type DocumentSchema struct {
 	Source     *yamlmeta.Document
 	defaultDVs *yamlmeta.Document
-	Allowed    *DocumentType
+	DocType    *DocumentType
 }
 
 type DocumentSchemaEnvelope struct {
@@ -41,7 +41,7 @@ func NewDocumentSchema(doc *yamlmeta.Document) (*DocumentSchema, error) {
 	return &DocumentSchema{
 		Source:     doc,
 		defaultDVs: schemaDVs.(*yamlmeta.Document),
-		Allowed:    docType,
+		DocType:    docType,
 	}, nil
 }
 
@@ -66,14 +66,14 @@ func NewDocumentSchemaEnvelope(doc *yamlmeta.Document) (*DocumentSchemaEnvelope,
 func NewPermissiveSchema() *DocumentSchema {
 	return &DocumentSchema{
 		Source: &yamlmeta.Document{},
-		Allowed: &DocumentType{
+		DocType: &DocumentType{
 			ValueType: &AnyType{}},
 	}
 }
 
 func NewDocumentType(doc *yamlmeta.Document) (*DocumentType, error) {
 	docType := &DocumentType{Source: doc, Position: doc.Position}
-	valueType, err := newCollectionItemValueType(doc.Value, doc.Position)
+	valueType, err := inferTypeFromValue(doc.Value, doc.Position)
 	if err != nil {
 		return nil, err
 	}
@@ -96,23 +96,22 @@ func NewMapType(m *yamlmeta.Map) (*MapType, error) {
 }
 
 func NewMapItemType(item *yamlmeta.MapItem) (*MapItemType, error) {
-	var valueType yamlmeta.Type
+	var typeOfValue yamlmeta.Type
 
 	anns, err := collectAnnotations(item)
 	if err != nil {
 		return nil, NewSchemaError("Invalid schema", err)
 	}
-	typeFromAnns := convertAnnotationsToSingleType(anns)
-	if typeFromAnns != nil {
-		valueType = typeFromAnns
-	} else {
-		valueType, err = newCollectionItemValueType(item.Value, item.GetPosition())
+	typeOfValue = getTypeFromAnnotations(anns)
+
+	if typeOfValue == nil {
+		typeOfValue, err = inferTypeFromValue(item.Value, item.GetPosition())
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	if valueType == nil {
+	if typeOfValue == nil {
 		return nil, NewSchemaError("Invalid schema - null value not allowed here", schemaAssertionError{
 			position: item.GetPosition(),
 			expected: "non-null value",
@@ -121,9 +120,9 @@ func NewMapItemType(item *yamlmeta.MapItem) (*MapItemType, error) {
 		})
 	}
 
-	defaultValue := valueType.GetDefaultValue()
+	defaultValue := typeOfValue.GetDefaultValue()
 
-	return &MapItemType{Key: item.Key, ValueType: valueType, defaultValue: defaultValue, Position: item.Position}, nil
+	return &MapItemType{Key: item.Key, ValueType: typeOfValue, defaultValue: defaultValue, Position: item.Position}, nil
 }
 
 func NewArrayType(a *yamlmeta.Array) (*ArrayType, error) {
@@ -145,15 +144,15 @@ func NewArrayType(a *yamlmeta.Array) (*ArrayType, error) {
 }
 
 func NewArrayItemType(item *yamlmeta.ArrayItem) (*ArrayItemType, error) {
-	var valueType yamlmeta.Type
+	var typeOfValue yamlmeta.Type
 
 	anns, err := collectAnnotations(item)
 	if err != nil {
 		return nil, err
 	}
-	typeFromAnns := convertAnnotationsToSingleType(anns)
-	if typeFromAnns != nil {
-		if _, ok := typeFromAnns.(*NullType); ok {
+	typeOfValue = getTypeFromAnnotations(anns)
+	if typeOfValue != nil {
+		if _, ok := typeOfValue.(*NullType); ok {
 			return nil, NewSchemaError("Invalid schema - @schema/nullable is not supported on array items", schemaAssertionError{
 				position: item.Position,
 				expected: "a valid annotation",
@@ -161,19 +160,20 @@ func NewArrayItemType(item *yamlmeta.ArrayItem) (*ArrayItemType, error) {
 				hints:    []string{"Remove the @schema/nullable annotation from array item"},
 			})
 		}
-		valueType = typeFromAnns
-	} else {
-		valueType, err = newCollectionItemValueType(item.Value, item.Position)
+	}
+
+	if typeOfValue == nil {
+		typeOfValue, err = inferTypeFromValue(item.Value, item.Position)
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	return &ArrayItemType{ValueType: valueType, defaultValue: valueType.GetDefaultValue(), Position: item.Position}, nil
+	return &ArrayItemType{ValueType: typeOfValue, defaultValue: typeOfValue.GetDefaultValue(), Position: item.Position}, nil
 }
 
-func newCollectionItemValueType(collectionItemValue interface{}, position *filepos.Position) (yamlmeta.Type, error) {
-	switch typedContent := collectionItemValue.(type) {
+func inferTypeFromValue(value interface{}, position *filepos.Position) (yamlmeta.Type, error) {
+	switch typedContent := value.(type) {
 	case *yamlmeta.Map:
 		mapType, err := NewMapType(typedContent)
 		if err != nil {
@@ -198,7 +198,7 @@ func newCollectionItemValueType(collectionItemValue interface{}, position *filep
 		return nil, nil
 	}
 
-	return nil, fmt.Errorf("Collection item type did not match any known types")
+	return nil, fmt.Errorf("Expected value '%s' to be a map, array, or scalar, but was %T", value, value)
 }
 
 type ExtractLibRefs interface {
@@ -219,7 +219,7 @@ func (n NullSchema) AssignType(typeable yamlmeta.Typeable) yamlmeta.TypeCheck {
 }
 
 func (s *DocumentSchema) AssignType(typeable yamlmeta.Typeable) yamlmeta.TypeCheck {
-	return s.Allowed.AssignTypeTo(typeable)
+	return s.DocType.AssignTypeTo(typeable)
 }
 
 func (n NullSchema) DefaultDataValues() *yamlmeta.Document {
@@ -234,7 +234,7 @@ func (s *DocumentSchema) deepCopy() *DocumentSchema {
 	return &DocumentSchema{
 		Source:     s.Source.DeepCopy(),
 		defaultDVs: s.defaultDVs.DeepCopy(),
-		Allowed:    s.Allowed,
+		DocType:    s.DocType,
 	}
 }
 

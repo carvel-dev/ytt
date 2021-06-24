@@ -60,23 +60,28 @@ type NullType struct {
 func (n NullType) GetDefaultValue() interface{} {
 	return nil
 }
-func (a AnyType) GetDefaultValue() interface{} {
-	return a.ValueType.GetDefaultValue()
-}
-func (m ScalarType) GetDefaultValue() interface{} {
 
-	return m.defaultValue
+func (a AnyType) GetDefaultValue() interface{} {
+	return a.ValueType.GetDefaultValue() // delegate GetDefaultValue() functions will make defensive copy 👍
 }
+
+func (m ScalarType) GetDefaultValue() interface{} {
+	return m.defaultValue // scalar values are copied (even through an interface{} reference)
+}
+
 func (a ArrayItemType) GetDefaultValue() interface{} {
-	panic("not implemented")
+	panic(fmt.Sprintf("Unexpected call to GetDefaultValue() on %+v", a))
 }
+
 func (a ArrayType) GetDefaultValue() interface{} {
 	defaultValues := &yamlmeta.Array{Position: a.Position}
 	return defaultValues
 }
+
 func (t MapItemType) GetDefaultValue() interface{} {
 	return &yamlmeta.MapItem{Key: t.Key, Value: t.ValueType.GetDefaultValue(), Position: t.Position}
 }
+
 func (m MapType) GetDefaultValue() interface{} {
 	defaultValues := &yamlmeta.Map{Position: m.Position}
 	for _, item := range m.Items {
@@ -85,6 +90,7 @@ func (m MapType) GetDefaultValue() interface{} {
 	}
 	return defaultValues
 }
+
 func (t DocumentType) GetDefaultValue() interface{} {
 	if t.ValueType == nil {
 		return &yamlmeta.Document{Position: t.Position}
@@ -114,12 +120,12 @@ func (n NullType) CheckType(node yamlmeta.TypeWithValues) (chk yamlmeta.TypeChec
 	return
 }
 
-func (n NullType) PositionOfDefinition() *filepos.Position {
+func (n NullType) GetDefinitionPosition() *filepos.Position {
 	return n.Position
 }
 
 func (n NullType) String() string {
-	return "nullable"
+	return "null"
 }
 
 func (t *DocumentType) GetValueType() yamlmeta.Type {
@@ -144,25 +150,25 @@ func (a AnyType) GetValueType() yamlmeta.Type {
 	return a
 }
 
-func (t *DocumentType) PositionOfDefinition() *filepos.Position {
+func (t *DocumentType) GetDefinitionPosition() *filepos.Position {
 	return t.Position
 }
-func (m MapType) PositionOfDefinition() *filepos.Position {
+func (m MapType) GetDefinitionPosition() *filepos.Position {
 	return m.Position
 }
-func (t MapItemType) PositionOfDefinition() *filepos.Position {
+func (t MapItemType) GetDefinitionPosition() *filepos.Position {
 	return t.Position
 }
-func (a ArrayType) PositionOfDefinition() *filepos.Position {
+func (a ArrayType) GetDefinitionPosition() *filepos.Position {
 	return a.Position
 }
-func (a ArrayItemType) PositionOfDefinition() *filepos.Position {
+func (a ArrayItemType) GetDefinitionPosition() *filepos.Position {
 	return a.Position
 }
-func (m ScalarType) PositionOfDefinition() *filepos.Position {
+func (m ScalarType) GetDefinitionPosition() *filepos.Position {
 	return m.Position
 }
-func (a AnyType) PositionOfDefinition() *filepos.Position {
+func (a AnyType) GetDefinitionPosition() *filepos.Position {
 	return a.Position
 }
 

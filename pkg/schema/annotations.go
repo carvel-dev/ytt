@@ -124,7 +124,7 @@ func processOptionalAnnotation(node yamlmeta.Node, optionalAnnotation structmeta
 	if nodeAnnotations.Has(optionalAnnotation) {
 		ann, _ := nodeAnnotations[optionalAnnotation]
 
-		wrappedValueType, err := newCollectionItemValueType(node.GetValues()[0], node.GetPosition())
+		wrappedValueType, err := inferTypeFromValue(node.GetValues()[0], node.GetPosition())
 		if err != nil {
 			return nil, err
 		}
@@ -148,7 +148,7 @@ func processOptionalAnnotation(node yamlmeta.Node, optionalAnnotation structmeta
 	return nil, nil
 }
 
-func convertAnnotationsToSingleType(anns []Annotation) yamlmeta.Type {
+func getTypeFromAnnotations(anns []Annotation) yamlmeta.Type {
 	annsCopy := append([]Annotation{}, anns...)
 
 	if len(annsCopy) == 0 {
