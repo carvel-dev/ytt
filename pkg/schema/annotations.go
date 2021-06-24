@@ -27,6 +27,7 @@ type Annotation interface {
 
 type TypeAnnotation struct {
 	any          bool
+	inferredType yamlmeta.Type
 	itemPosition *filepos.Position
 }
 
@@ -35,7 +36,7 @@ type NullableAnnotation struct {
 	itemPosition      *filepos.Position
 }
 
-func NewTypeAnnotation(ann template.NodeAnnotation, pos *filepos.Position) (*TypeAnnotation, error) {
+func NewTypeAnnotation(ann template.NodeAnnotation, inferredType yamlmeta.Type, pos *filepos.Position) (*TypeAnnotation, error) {
 	if len(ann.Kwargs) == 0 {
 		return nil, schemaAssertionError{
 			position:    pos,
@@ -45,7 +46,7 @@ func NewTypeAnnotation(ann template.NodeAnnotation, pos *filepos.Position) (*Typ
 			hints:       []string{fmt.Sprintf("Supported key-value pairs are '%v=True', '%v=False'", TypeAnnotationKwargAny, TypeAnnotationKwargAny)},
 		}
 	}
-	typeAnn := &TypeAnnotation{itemPosition: pos}
+	typeAnn := &TypeAnnotation{inferredType: inferredType, itemPosition: pos}
 	for _, kwarg := range ann.Kwargs {
 		argName, err := core.NewStarlarkValue(kwarg[0]).AsString()
 		if err != nil {
@@ -89,7 +90,7 @@ func NewNullableAnnotation(ann template.NodeAnnotation, valueType yamlmeta.Type,
 
 func (t *TypeAnnotation) NewTypeFromAnn() yamlmeta.Type {
 	if t.any {
-		return &AnyType{Position: t.itemPosition}
+		return &AnyType{ValueType: t.inferredType, Position: t.itemPosition}
 	}
 	return nil
 }
@@ -123,19 +124,20 @@ func processOptionalAnnotation(node yamlmeta.Node, optionalAnnotation structmeta
 	if nodeAnnotations.Has(optionalAnnotation) {
 		ann, _ := nodeAnnotations[optionalAnnotation]
 
+		wrappedValueType, err := inferTypeFromValue(node.GetValues()[0], node.GetPosition())
+		if err != nil {
+			return nil, err
+		}
+
 		switch optionalAnnotation {
 		case AnnotationNullable:
-			wrappedValueType, err := newCollectionItemValueType(node.GetValues()[0], node.GetPosition())
-			if err != nil {
-				return nil, err
-			}
 			nullAnn, err := NewNullableAnnotation(ann, wrappedValueType, node.GetPosition())
 			if err != nil {
 				return nil, err
 			}
 			return nullAnn, nil
 		case AnnotationType:
-			typeAnn, err := NewTypeAnnotation(ann, node.GetPosition())
+			typeAnn, err := NewTypeAnnotation(ann, wrappedValueType, node.GetPosition())
 			if err != nil {
 				return nil, err
 			}
@@ -146,7 +148,7 @@ func processOptionalAnnotation(node yamlmeta.Node, optionalAnnotation structmeta
 	return nil, nil
 }
 
-func convertAnnotationsToSingleType(anns []Annotation) yamlmeta.Type {
+func getTypeFromAnnotations(anns []Annotation) yamlmeta.Type {
 	annsCopy := append([]Annotation{}, anns...)
 
 	if len(annsCopy) == 0 {

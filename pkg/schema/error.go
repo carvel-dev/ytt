@@ -66,7 +66,7 @@ func NewSchemaError(summary string, errs ...error) error {
 
 func NewMismatchedTypeAssertionError(foundType yamlmeta.TypeWithValues, expectedType yamlmeta.Type) error {
 	var expectedTypeString string
-	if expectedType.PositionOfDefinition().IsKnown() {
+	if expectedType.GetDefinitionPosition().IsKnown() {
 		switch expectedType.(type) {
 		case *MapItemType, *ArrayItemType:
 			expectedTypeString = expectedType.GetValueType().String()
@@ -77,7 +77,7 @@ func NewMismatchedTypeAssertionError(foundType yamlmeta.TypeWithValues, expected
 
 	return schemaAssertionError{
 		position: foundType.GetPosition(),
-		expected: fmt.Sprintf("%s (by %s)", expectedTypeString, expectedType.PositionOfDefinition().AsCompactString()),
+		expected: fmt.Sprintf("%s (by %s)", expectedTypeString, expectedType.GetDefinitionPosition().AsCompactString()),
 		found:    foundType.ValueTypeAsString(),
 	}
 }

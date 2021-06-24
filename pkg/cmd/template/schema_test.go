@@ -672,7 +672,7 @@ func TestSchema_Provides_default_values(t *testing.T) {
 	opts := cmdtpl.NewOptions()
 	opts.SchemaEnabled = true
 
-	t.Run("values specified in the schema are the default data values", func(t *testing.T) {
+	t.Run("initializes data values to the values set in the schema", func(t *testing.T) {
 		schemaYAML := `#@data/values-schema
 ---
 system_domain: "foo.domain"
@@ -690,7 +690,7 @@ system_domain: #@ data.values.system_domain
 		})
 		assertSucceeds(t, filesToProcess, expected, opts)
 	})
-	t.Run("array default to an empty list", func(t *testing.T) {
+	t.Run("defaults arrays to an empty list", func(t *testing.T) {
 		schemaYAML := `#@data/values-schema
 ---
 vpc:
@@ -719,8 +719,9 @@ vpc: #@ data.values.vpc
 
 		assertSucceeds(t, filesToProcess, expected, opts)
 	})
-	t.Run("when a key in the data value is omitted yet present in the schema, it is filled in", func(t *testing.T) {
-		schemaYAML := `#@data/values-schema
+	t.Run("as data values are typed, schema 'fills in' missing parts", func(t *testing.T) {
+		t.Run("when a map item is missing, adds it (with its defaults)", func(t *testing.T) {
+			schemaYAML := `#@data/values-schema
 ---
 vpc:
   name: "name value"
@@ -729,7 +730,7 @@ vpc:
     mask: "255.255.0.0"
     private: true
 `
-		dataValuesYAML := `#@data/values
+			dataValuesYAML := `#@data/values
 ---
 vpc:
   subnet_config:
@@ -737,11 +738,11 @@ vpc:
   - id: 3
     mask: 255.255.255.0
 `
-		templateYAML := `#@ load("@ytt:data", "data")
+			templateYAML := `#@ load("@ytt:data", "data")
 ---
 vpc: #@ data.values.vpc
 `
-		expected := `vpc:
+			expected := `vpc:
   name: name value
   subnet_config:
   - id: 2
@@ -752,13 +753,80 @@ vpc: #@ data.values.vpc
     private: true
 `
 
-		filesToProcess := files.NewSortedFiles([]*files.File{
-			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
-			files.MustNewFileFromSource(files.NewBytesSource("dataValues.yml", []byte(dataValuesYAML))),
-			files.MustNewFileFromSource(files.NewBytesSource("template.yml", []byte(templateYAML))),
-		})
+			filesToProcess := files.NewSortedFiles([]*files.File{
+				files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
+				files.MustNewFileFromSource(files.NewBytesSource("dataValues.yml", []byte(dataValuesYAML))),
+				files.MustNewFileFromSource(files.NewBytesSource("template.yml", []byte(templateYAML))),
+			})
 
-		assertSucceeds(t, filesToProcess, expected, opts)
+			assertSucceeds(t, filesToProcess, expected, opts)
+		})
+		t.Run("including the entire sub-contents of the missing item", func(t *testing.T) {
+			schemaYAML := `#@data/values-schema
+---
+clients:
+- name: ""
+  config:
+    args:
+    - arg: ""
+      value: ""
+    #@schema/nullable
+    options:
+      a: true
+      b: false
+`
+			dataValuesYAML := `#@data/values
+---
+clients:
+- name: foo
+`
+			templateYAML := `#@ load("@ytt:data", "data")
+---
+rendered: #@ data.values
+`
+
+			expected := `rendered:
+  clients:
+  - name: foo
+    config:
+      args: []
+      options: null
+`
+
+			filesToProcess := files.NewSortedFiles([]*files.File{
+				files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
+				files.MustNewFileFromSource(files.NewBytesSource("dataValues.yml", []byte(dataValuesYAML))),
+				files.MustNewFileFromSource(files.NewBytesSource("template.yml", []byte(templateYAML))),
+			})
+
+			assertSucceeds(t, filesToProcess, expected, opts)
+		})
+		t.Run("even when a data value is marked schema/type any=True", func(t *testing.T) {
+			schemaYAML := `#@data/values-schema
+---
+#@schema/type any=True
+foo:
+  bar:
+  - 7
+  #@schema/nullable
+  bat: I should not be there
+`
+			templateYAML := `#@ load("@ytt:data", "data")
+---
+foo: #@ data.values.foo
+`
+			expected := `foo:
+  bar: []
+  bat: null
+`
+
+			filesToProcess := files.NewSortedFiles([]*files.File{
+				files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
+				files.MustNewFileFromSource(files.NewBytesSource("template.yml", []byte(templateYAML))),
+			})
+
+			assertSucceeds(t, filesToProcess, expected, opts)
+		})
 	})
 }
 

@@ -30,27 +30,73 @@ type MapType struct {
 type MapItemType struct {
 	Key          interface{} // usually a string
 	ValueType    yamlmeta.Type
-	DefaultValue interface{}
 	Position     *filepos.Position
+	defaultValue interface{}
 }
 type ArrayType struct {
-	ItemsType yamlmeta.Type
-	Position  *filepos.Position
+	ItemsType    yamlmeta.Type
+	Position     *filepos.Position
+	defaultValue interface{}
 }
 type ArrayItemType struct {
-	ValueType yamlmeta.Type
-	Position  *filepos.Position
+	ValueType    yamlmeta.Type
+	Position     *filepos.Position
+	defaultValue interface{}
 }
 type ScalarType struct {
-	Value    interface{}
-	Position *filepos.Position
+	ValueType    interface{}
+	Position     *filepos.Position
+	defaultValue interface{}
 }
 type AnyType struct {
-	Position *filepos.Position
+	ValueType yamlmeta.Type
+	Position  *filepos.Position
 }
 type NullType struct {
 	ValueType yamlmeta.Type
 	Position  *filepos.Position
+}
+
+func (n NullType) GetDefaultValue() interface{} {
+	return nil
+}
+
+func (a AnyType) GetDefaultValue() interface{} {
+	return a.ValueType.GetDefaultValue() // delegate GetDefaultValue() functions will make defensive copy 👍
+}
+
+func (m ScalarType) GetDefaultValue() interface{} {
+	return m.defaultValue // scalar values are copied (even through an interface{} reference)
+}
+
+func (a ArrayItemType) GetDefaultValue() interface{} {
+	panic(fmt.Sprintf("Unexpected call to GetDefaultValue() on %+v", a))
+}
+
+func (a ArrayType) GetDefaultValue() interface{} {
+	defaultValues := &yamlmeta.Array{Position: a.Position}
+	return defaultValues
+}
+
+func (t MapItemType) GetDefaultValue() interface{} {
+	return &yamlmeta.MapItem{Key: t.Key, Value: t.ValueType.GetDefaultValue(), Position: t.Position}
+}
+
+func (m MapType) GetDefaultValue() interface{} {
+	defaultValues := &yamlmeta.Map{Position: m.Position}
+	for _, item := range m.Items {
+		newItem := item.GetDefaultValue()
+		defaultValues.Items = append(defaultValues.Items, newItem.(*yamlmeta.MapItem))
+	}
+	return defaultValues
+}
+
+func (t DocumentType) GetDefaultValue() interface{} {
+	if t.ValueType == nil {
+		return &yamlmeta.Document{Position: t.Position}
+	}
+	defaultValue := &yamlmeta.Document{Value: t.ValueType.GetDefaultValue(), Position: t.Position}
+	return defaultValue
 }
 
 func (n NullType) AssignTypeTo(typeable yamlmeta.Typeable) (chk yamlmeta.TypeCheck) {
@@ -74,12 +120,12 @@ func (n NullType) CheckType(node yamlmeta.TypeWithValues) (chk yamlmeta.TypeChec
 	return
 }
 
-func (n NullType) PositionOfDefinition() *filepos.Position {
+func (n NullType) GetDefinitionPosition() *filepos.Position {
 	return n.Position
 }
 
 func (n NullType) String() string {
-	return "nullable"
+	return "null"
 }
 
 func (t *DocumentType) GetValueType() yamlmeta.Type {
@@ -104,25 +150,25 @@ func (a AnyType) GetValueType() yamlmeta.Type {
 	return a
 }
 
-func (t *DocumentType) PositionOfDefinition() *filepos.Position {
+func (t *DocumentType) GetDefinitionPosition() *filepos.Position {
 	return t.Position
 }
-func (m MapType) PositionOfDefinition() *filepos.Position {
+func (m MapType) GetDefinitionPosition() *filepos.Position {
 	return m.Position
 }
-func (t MapItemType) PositionOfDefinition() *filepos.Position {
+func (t MapItemType) GetDefinitionPosition() *filepos.Position {
 	return t.Position
 }
-func (a ArrayType) PositionOfDefinition() *filepos.Position {
+func (a ArrayType) GetDefinitionPosition() *filepos.Position {
 	return a.Position
 }
-func (a ArrayItemType) PositionOfDefinition() *filepos.Position {
+func (a ArrayItemType) GetDefinitionPosition() *filepos.Position {
 	return a.Position
 }
-func (m ScalarType) PositionOfDefinition() *filepos.Position {
+func (m ScalarType) GetDefinitionPosition() *filepos.Position {
 	return m.Position
 }
-func (a AnyType) PositionOfDefinition() *filepos.Position {
+func (a AnyType) GetDefinitionPosition() *filepos.Position {
 	return a.Position
 }
 
@@ -142,7 +188,7 @@ func (a ArrayItemType) String() string {
 	return fmt.Sprintf("- %s", a.ValueType.String())
 }
 func (m ScalarType) String() string {
-	switch m.Value.(type) {
+	switch m.ValueType.(type) {
 	case float64:
 		return "float"
 	case int:
@@ -150,7 +196,7 @@ func (m ScalarType) String() string {
 	case bool:
 		return "boolean"
 	default:
-		return fmt.Sprintf("%T", m.Value)
+		return fmt.Sprintf("%T", m.ValueType)
 	}
 }
 func (a AnyType) String() string {
@@ -210,24 +256,24 @@ func (m *ScalarType) CheckType(node yamlmeta.TypeWithValues) (chk yamlmeta.TypeC
 	value := node.GetValues()[0]
 	switch value.(type) {
 	case string:
-		if _, ok := m.Value.(string); !ok {
+		if _, ok := m.ValueType.(string); !ok {
 			chk.Violations = append(chk.Violations,
 				NewMismatchedTypeAssertionError(node, m))
 		}
 	case float64:
-		if _, ok := m.Value.(float64); !ok {
+		if _, ok := m.ValueType.(float64); !ok {
 			chk.Violations = append(chk.Violations,
 				NewMismatchedTypeAssertionError(node, m))
 		}
 	case int, int64, uint64:
-		if _, ok := m.Value.(int); !ok {
-			if _, ok = m.Value.(float64); !ok {
+		if _, ok := m.ValueType.(int); !ok {
+			if _, ok = m.ValueType.(float64); !ok {
 				chk.Violations = append(chk.Violations,
 					NewMismatchedTypeAssertionError(node, m))
 			}
 		}
 	case bool:
-		if _, ok := m.Value.(bool); !ok {
+		if _, ok := m.ValueType.(bool); !ok {
 			chk.Violations = append(chk.Violations,
 				NewMismatchedTypeAssertionError(node, m))
 		}
@@ -310,12 +356,13 @@ func (m *MapType) applySchemaDefaults(foundKeys []interface{}, chk yamlmeta.Type
 			continue
 		}
 
-		val := &yamlmeta.MapItem{
-			Key:      item.Key,
-			Value:    item.DefaultValue,
-			Position: item.Position,
-		}
-		childCheck := item.AssignTypeTo(val)
+		val := item.GetDefaultValue()
+		//&yamlmeta.MapItem{
+		//Key:      item.Key,
+		//Value:    item.GetDefaultValue(),
+		//Position: item.Position,
+		//}
+		childCheck := item.AssignTypeTo(val.(*yamlmeta.MapItem))
 		chk.Violations = append(chk.Violations, childCheck.Violations...)
 		err := mapNode.AddValue(val)
 		if err != nil {
