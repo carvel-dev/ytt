@@ -506,7 +506,7 @@ One or more data values were invalid
 		assertFails(t, filesToProcess, expectedErr, opts)
 	})
 
-	t.Run("when a data value is passed using --data-value, but schema expects a non string", func(t *testing.T) {
+	t.Run("when a data value of the wrong type is passed using --data-value", func(t *testing.T) {
 		cmdOpts := cmdtpl.NewOptions()
 		cmdOpts.SchemaEnabled = true
 		schemaYAML := `#@data/values-schema
@@ -517,7 +517,7 @@ foo: 7
 ---
 rendered: #@ data.values.foo
 `
-		cmdOpts.DataValuesFlags.KVsFromStrings = []string{"foo=42"}
+		cmdOpts.DataValuesFlags.KVsFromStrings = []string{"foo=not an integer"}
 		filesToProcess := files.NewSortedFiles([]*files.File{
 			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
 			files.MustNewFileFromSource(files.NewBytesSource("template.yml", []byte(templateYAML))),
@@ -527,9 +527,203 @@ rendered: #@ data.values.foo
 One or more data values were invalid
 ====================================
 
-key 'foo' (kv arg):
+(data-value arg):
     |
-  1 | 
+  1 | foo=not an integer
+    |
+
+    = found: string
+    = expected: integer (by schema.yml:3)
+`
+		assertFails(t, filesToProcess, expectedErr, cmdOpts)
+	})
+	t.Run("when a data value of the wrong type is passed using --data-value-yaml", func(t *testing.T) {
+		cmdOpts := cmdtpl.NewOptions()
+		cmdOpts.SchemaEnabled = true
+		schemaYAML := `#@data/values-schema
+---
+foo: 7
+`
+		templateYAML := `#@ load("@ytt:data", "data")
+---
+rendered: #@ data.values.foo
+`
+		cmdOpts.DataValuesFlags.KVsFromYAML = []string{"foo=not an integer"}
+		filesToProcess := files.NewSortedFiles([]*files.File{
+			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
+			files.MustNewFileFromSource(files.NewBytesSource("template.yml", []byte(templateYAML))),
+		})
+
+		expectedErr := `
+One or more data values were invalid
+====================================
+
+(data-value-yaml arg):
+    |
+  1 | foo=not an integer
+    |
+
+    = found: string
+    = expected: integer (by schema.yml:3)
+`
+		assertFails(t, filesToProcess, expectedErr, cmdOpts)
+	})
+
+	t.Run("when a data value of the wrong type is passed using --data-value-env", func(t *testing.T) {
+		cmdOpts := cmdtpl.NewOptions()
+		cmdOpts.SchemaEnabled = true
+		schemaYAML := `#@data/values-schema
+---
+foo: 0
+`
+		templateYAML := `#@ load("@ytt:data", "data")
+---
+rendered: #@ data.values.foo
+`
+		cmdOpts.DataValuesFlags = cmdtpl.DataValuesFlags{
+			EnvFromStrings: []string{"DVS"},
+			EnvironFunc:    func() []string { return []string{"DVS_foo=not an integer"} },
+		}
+
+		filesToProcess := files.NewSortedFiles([]*files.File{
+			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
+			files.MustNewFileFromSource(files.NewBytesSource("template.yml", []byte(templateYAML))),
+		})
+
+		expectedErr := `
+One or more data values were invalid
+====================================
+
+(data-values-env arg) DVS:
+    |
+  1 | DVS_foo=not an integer
+    |
+
+    = found: string
+    = expected: integer (by schema.yml:3)
+`
+		assertFails(t, filesToProcess, expectedErr, cmdOpts)
+	})
+	t.Run("when a data value of the wrong type is passed using --data-value-env-yaml", func(t *testing.T) {
+		cmdOpts := cmdtpl.NewOptions()
+		cmdOpts.SchemaEnabled = true
+		schemaYAML := `#@data/values-schema
+---
+foo: 0
+`
+		templateYAML := `#@ load("@ytt:data", "data")
+---
+rendered: #@ data.values.foo
+`
+		cmdOpts.DataValuesFlags = cmdtpl.DataValuesFlags{
+			EnvFromYAML: []string{"DVS"},
+			EnvironFunc:    func() []string { return []string{"DVS_foo=not an integer"} },
+		}
+
+		filesToProcess := files.NewSortedFiles([]*files.File{
+			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
+			files.MustNewFileFromSource(files.NewBytesSource("template.yml", []byte(templateYAML))),
+		})
+
+		expectedErr := `
+One or more data values were invalid
+====================================
+
+(data-values-env-yaml arg) DVS:
+    |
+  1 | DVS_foo=not an integer
+    |
+
+    = found: string
+    = expected: integer (by schema.yml:3)
+`
+		assertFails(t, filesToProcess, expectedErr, cmdOpts)
+	})
+
+	t.Run("when a data value of the wrong type is passed using --data-value-file", func(t *testing.T) {
+		cmdOpts := cmdtpl.NewOptions()
+		cmdOpts.SchemaEnabled = true
+		schemaYAML := `#@data/values-schema
+---
+foo: 0
+`
+
+		dvs1 := `not an integer`
+
+		templateYAML := `#@ load("@ytt:data", "data")
+---
+rendered: #@ data.values.foo
+`
+		cmdOpts.DataValuesFlags = cmdtpl.DataValuesFlags{
+			KVsFromFiles: []string{"foo=dvs1.yml"},
+			ReadFileFunc: func(path string) ([]byte, error) {
+				switch path {
+				case "dvs1.yml":
+					return []byte(dvs1), nil
+				default:
+					return nil, fmt.Errorf("Unknown file '%s'", path)
+				}
+			},
+		}
+
+		filesToProcess := files.NewSortedFiles([]*files.File{
+			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
+			files.MustNewFileFromSource(files.NewBytesSource("template.yml", []byte(templateYAML))),
+		})
+
+		expectedErr := `
+One or more data values were invalid
+====================================
+
+(data-value-file arg) foo=dvs1.yml:
+    |
+  1 | not an integer
+    |
+
+    = found: string
+    = expected: integer (by schema.yml:3)
+`
+		assertFails(t, filesToProcess, expectedErr, cmdOpts)
+	})
+
+	t.Run("when a data value of the wrong type is passed using --data-values-file", func(t *testing.T) {
+		cmdOpts := cmdtpl.NewOptions()
+		cmdOpts.SchemaEnabled = true
+		schemaYAML := `#@data/values-schema
+---
+foo: 0
+`
+
+		dvs1 := `foo: not an integer`
+
+		templateYAML := `#@ load("@ytt:data", "data")
+---
+rendered: #@ data.values.foo
+`
+		cmdOpts.DataValuesFlags = cmdtpl.DataValuesFlags{
+			FromFiles: []string{"dvs1.yml"},
+			ReadFileFunc: func(path string) ([]byte, error) {
+				switch path {
+				case "dvs1.yml":
+					return []byte(dvs1), nil
+				default:
+					return nil, fmt.Errorf("Unknown file '%s'", path)
+				}
+			},
+		}
+
+		filesToProcess := files.NewSortedFiles([]*files.File{
+			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
+			files.MustNewFileFromSource(files.NewBytesSource("template.yml", []byte(templateYAML))),
+		})
+
+		expectedErr := `
+One or more data values were invalid
+====================================
+
+dvs1.yml:
+    |
+  1 | foo: not an integer
     |
 
     = found: string
@@ -1596,9 +1790,9 @@ foo: #@ data.values.foo
      One or more data values were invalid
      ====================================
      
-     key 'foo' (kv arg):
+     (data-value arg):
          |
-       1 | 
+       1 | @lib:foo=42
          |
      
          = found: string
