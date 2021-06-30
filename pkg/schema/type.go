@@ -62,6 +62,9 @@ func (n NullType) GetDefaultValue() interface{} {
 }
 
 func (a AnyType) GetDefaultValue() interface{} {
+	if a.ValueType == nil {
+		return nil
+	}
 	return a.ValueType.GetDefaultValue() // delegate GetDefaultValue() functions will make defensive copy 👍
 }
 

@@ -109,6 +109,10 @@ func NewMapItemType(item *yamlmeta.MapItem) (*MapItemType, error) {
 		if err != nil {
 			return nil, err
 		}
+	} else {
+		if !(valueTypeAllowsItemValue(typeOfValue, item.Value)) {
+			typeOfValue = nil
+		}
 	}
 
 	if typeOfValue == nil {
@@ -199,6 +203,16 @@ func inferTypeFromValue(value interface{}, position *filepos.Position) (yamlmeta
 	}
 
 	return nil, fmt.Errorf("Expected value '%s' to be a map, array, or scalar, but was %T", value, value)
+}
+
+func valueTypeAllowsItemValue(explicitType yamlmeta.Type, itemValue interface{}) bool {
+	switch explicitType.(type) {
+	case *NullType:
+		if itemValue == nil {
+			return false
+		}
+	}
+	return true
 }
 
 type ExtractLibRefs interface {
