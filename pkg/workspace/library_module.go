@@ -144,11 +144,11 @@ func (l *libraryValue) AsStarlarkValue() starlark.Value {
 	return &starlarkstruct.Module{
 		Name: "library",
 		Members: starlark.StringDict{
-			"with_data_values": starlark.NewBuiltin("library.with_data_values", core.ErrWrapper(l.WithDataValues)),
-			"with_schema":      starlark.NewBuiltin("library.with_schema", core.ErrWrapper(l.WithSchema)),
-			"eval":             starlark.NewBuiltin("library.eval", core.ErrWrapper(core.ErrDescWrapper(evalErrMsg, l.Eval))),
-			"export":           starlark.NewBuiltin("library.export", core.ErrWrapper(core.ErrDescWrapper(exportErrMsg, l.Export))),
-			"data_values":      starlark.NewBuiltin("library.data_values", core.ErrWrapper(core.ErrDescWrapper(exportErrMsg, l.DataValues))),
+			"with_data_values":        starlark.NewBuiltin("library.with_data_values", core.ErrWrapper(l.WithDataValues)),
+			"with_data_values_schema": starlark.NewBuiltin("library.with_data_values_schema", core.ErrWrapper(l.WithDataValuesSchema)),
+			"eval":                    starlark.NewBuiltin("library.eval", core.ErrWrapper(core.ErrDescWrapper(evalErrMsg, l.Eval))),
+			"export":                  starlark.NewBuiltin("library.export", core.ErrWrapper(core.ErrDescWrapper(exportErrMsg, l.Export))),
+			"data_values":             starlark.NewBuiltin("library.data_values", core.ErrWrapper(core.ErrDescWrapper(exportErrMsg, l.DataValues))),
 		},
 	}
 }
@@ -182,7 +182,7 @@ func (l *libraryValue) WithDataValues(thread *starlark.Thread, f *starlark.Built
 	return libVal.AsStarlarkValue(), nil
 }
 
-func (l *libraryValue) WithSchema(thread *starlark.Thread, f *starlark.Builtin,
+func (l *libraryValue) WithDataValuesSchema(thread *starlark.Thread, f *starlark.Builtin,
 	args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
 
 	if args.Len() != 1 {
