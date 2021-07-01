@@ -617,7 +617,7 @@ rendered: #@ data.values.foo
 `
 		cmdOpts.DataValuesFlags = cmdtpl.DataValuesFlags{
 			EnvFromYAML: []string{"DVS"},
-			EnvironFunc:    func() []string { return []string{"DVS_foo=not an integer"} },
+			EnvironFunc: func() []string { return []string{"DVS_foo=not an integer"} },
 		}
 
 		filesToProcess := files.NewSortedFiles([]*files.File{
@@ -2163,6 +2163,36 @@ schema.yml:
 
 		assertFails(t, filesToProcess, expectedErr, opts)
 	})
+	t.Run("array with a null value", func(t *testing.T) {
+		schemaYAML := `#@data/values-schema
+---
+vpc:
+  subnet_ids:
+  - null
+`
+
+		filesToProcess := files.NewSortedFiles([]*files.File{
+			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
+		})
+
+		expectedErr := `
+Invalid schema - null value not allowed here
+============================================
+
+schema.yml:
+    |
+  5 |   - null
+    |
+
+    = found: null value
+    = expected: non-null value
+    = hint: in YAML, omitting a value implies null.
+    = hint: to set the default value to null, annotate with @schema/nullable.
+    = hint: to allow any value, annotate with @schema/type any=True.
+`
+
+		assertFails(t, filesToProcess, expectedErr, opts)
+	})
 	t.Run("item with null value", func(t *testing.T) {
 		schemaYAML := `#@data/values-schema
 ---
@@ -2180,6 +2210,36 @@ Invalid schema - null value not allowed here
 schema.yml:
     |
   4 |   subnet_ids: null
+    |
+
+    = found: null value
+    = expected: non-null value
+    = hint: in YAML, omitting a value implies null.
+    = hint: to set the default value to null, annotate with @schema/nullable.
+    = hint: to allow any value, annotate with @schema/type any=True.
+`
+		assertFails(t, filesToProcess, expectedErr, opts)
+	})
+	t.Run("when a nullable map item has null value", func(t *testing.T) {
+		schemaYAML := `#@data/values-schema
+---
+foo:
+  #@schema/nullable  
+  bar: null
+  #@schema/type any=True
+  baz: null
+`
+
+		filesToProcess := files.NewSortedFiles([]*files.File{
+			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
+		})
+		expectedErr := `
+Invalid schema - null value not allowed here
+============================================
+
+schema.yml:
+    |
+  5 |   bar: null
     |
 
     = found: null value

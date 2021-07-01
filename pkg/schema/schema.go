@@ -111,13 +111,9 @@ func NewMapItemType(item *yamlmeta.MapItem) (*MapItemType, error) {
 		}
 	}
 
-	if typeOfValue == nil {
-		return nil, NewSchemaError("Invalid schema - null value not allowed here", schemaAssertionError{
-			position: item.GetPosition(),
-			expected: "non-null value",
-			found:    "null value",
-			hints:    []string{"in YAML, omitting a value implies null.", "to set the default value to null, annotate with @schema/nullable.", "to allow any value, annotate with @schema/type any=True."},
-		})
+	err = valueTypeAllowsItemValue(typeOfValue, item.Value, item.Position)
+	if err != nil {
+		return nil, err
 	}
 
 	defaultValue := typeOfValue.GetDefaultValue()
@@ -151,7 +147,13 @@ func NewArrayItemType(item *yamlmeta.ArrayItem) (*ArrayItemType, error) {
 		return nil, err
 	}
 	typeOfValue = getTypeFromAnnotations(anns)
-	if typeOfValue != nil {
+
+	if typeOfValue == nil {
+		typeOfValue, err = inferTypeFromValue(item.Value, item.Position)
+		if err != nil {
+			return nil, err
+		}
+	} else {
 		if _, ok := typeOfValue.(*NullType); ok {
 			return nil, NewSchemaError("Invalid schema - @schema/nullable is not supported on array items", schemaAssertionError{
 				position: item.Position,
@@ -161,12 +163,9 @@ func NewArrayItemType(item *yamlmeta.ArrayItem) (*ArrayItemType, error) {
 			})
 		}
 	}
-
-	if typeOfValue == nil {
-		typeOfValue, err = inferTypeFromValue(item.Value, item.Position)
-		if err != nil {
-			return nil, err
-		}
+	err = valueTypeAllowsItemValue(typeOfValue, item.Value, item.Position)
+	if err != nil {
+		return nil, err
 	}
 
 	return &ArrayItemType{ValueType: typeOfValue, defaultValue: typeOfValue.GetDefaultValue(), Position: item.Position}, nil
@@ -199,6 +198,23 @@ func inferTypeFromValue(value interface{}, position *filepos.Position) (yamlmeta
 	}
 
 	return nil, fmt.Errorf("Expected value '%s' to be a map, array, or scalar, but was %T", value, value)
+}
+
+func valueTypeAllowsItemValue(explicitType yamlmeta.Type, itemValue interface{}, position *filepos.Position) error {
+	switch explicitType.(type) {
+	case *AnyType:
+		return nil
+	default:
+		if itemValue == nil {
+			return NewSchemaError("Invalid schema - null value not allowed here", schemaAssertionError{
+				position: position,
+				expected: "non-null value",
+				found:    "null value",
+				hints:    []string{"in YAML, omitting a value implies null.", "to set the default value to null, annotate with @schema/nullable.", "to allow any value, annotate with @schema/type any=True."},
+			})
+		}
+	}
+	return nil
 }
 
 type ExtractLibRefs interface {
