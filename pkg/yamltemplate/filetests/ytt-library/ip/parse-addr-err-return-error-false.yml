@@ -1,0 +1,11 @@
+#@ load("@ytt:ip", "ip")
+
+ipv4:
+  addr: #@ ip.parse_addr("not-a-valid-addr", return_error=False)
+
++++
+
+ERR: 
+- ip.parse_addr: invalid IP address: not-a-valid-addr
+    in <toplevel>
+      stdin:4 |   addr: #@ ip.parse_addr("not-a-valid-addr", return_error=False)
