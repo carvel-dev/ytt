@@ -1965,7 +1965,7 @@ foo:
 #@ end
 
 #@ libby = library.get("libby")
-#@ libby = libby.with_schema(more_schema())
+#@ libby = libby.with_data_values_schema(more_schema())
 #@ libby = libby.with_data_values({"foo": {"ree": "set from root"}})
 
 --- #@ template.replace(libby.eval())
@@ -2442,7 +2442,7 @@ someInt: ` + starlarkEvalUsed + expectedInt + `
 someString: ` + starlarkEvalUsed + "'" + expectedString + "'" + `
 someFloat: ` + starlarkEvalUsed + expectedFloat + `
 #@ end
---- #@ template.replace(library.get("lib").with_schema(dvs_from_root()).eval())`)
+--- #@ template.replace(library.get("lib").with_data_values_schema(dvs_from_root()).eval())`)
 
 			libConfigYAML := []byte(`
 #@ load("@ytt:data", "data")
