@@ -9,6 +9,25 @@ ipv6:
   is_ipv4: #@ net.parse_ip("2001:db8::1").is_ipv4()
   is_ipv6: #@ net.parse_ip("2001:db8::1").is_ipv6()
 
+#@ def get_parse_err(ip):
+#@   _, err = net.parse_ip(ip, return_error=True)
+#@   return err
+#@ end
+
+
+#@ def get_parse_success(ip):
+#@   ip, _ = net.parse_ip(ip, return_error=True)
+#@   return ip
+#@ end
+
+return-error:
+  invalid: #@ get_parse_err("not-a-valid-ip")
+  not_a_string: #@ get_parse_err(["not-a-string"])
+  success: #@ get_parse_success("192.0.2.1")
+  success_is_ipv4: #@ get_parse_success("192.0.2.1").is_ipv4()
+  success_is_ipv6: #@ get_parse_success("192.0.2.1").is_ipv6()
+  return_error_false: #@ net.parse_ip("192.0.2.1", return_error=False)
+
 +++
 
 ipv4:
@@ -19,3 +38,10 @@ ipv6:
   ip: 2001:db8::1
   is_ipv4: false
   is_ipv6: true
+return-error:
+  invalid: 'invalid IP address: not-a-valid-ip'
+  not_a_string: expected a string, but was list
+  success: 192.0.2.1
+  success_is_ipv4: true
+  success_is_ipv6: false
+  return_error_false: 192.0.2.1
