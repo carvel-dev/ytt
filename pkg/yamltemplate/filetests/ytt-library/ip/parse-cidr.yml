@@ -1,0 +1,74 @@
+#@ load("@ytt:ip", "ip")
+
+ipv4:
+  cidr: #@ ip.parse_cidr("192.0.2.1/24")
+  cidr_net: #@ ip.parse_cidr("192.0.2.1/24").net
+  cidr_addr: #@ ip.parse_cidr("192.0.2.1/24").addr
+  cidr_is_ipv4: #@ ip.parse_cidr("192.0.2.1/24").is_ipv4()
+  cidr_is_ipv6: #@ ip.parse_cidr("192.0.2.1/24").is_ipv6()
+  cidr_addr_is_ipv4: #@ ip.parse_cidr("192.0.2.1/24").addr.is_ipv4()
+  cidr_addr_is_ipv6: #@ ip.parse_cidr("192.0.2.1/24").addr.is_ipv6()
+ipv6:
+  cidr: #@ ip.parse_cidr("2001:db8::1/96")
+  cidr_net: #@ ip.parse_cidr("2001:db8::1/96").net
+  cidr_addr: #@ ip.parse_cidr("2001:db8::1/96").addr
+  cidr_is_ipv4: #@ ip.parse_cidr("2001:db8::1/96").is_ipv4()
+  cidr_is_ipv6: #@ ip.parse_cidr("2001:db8::1/96").is_ipv6()
+  cidr_addr_is_ipv4: #@ ip.parse_cidr("2001:db8::1/96").addr.is_ipv4()
+  cidr_addr_is_ipv6: #@ ip.parse_cidr("2001:db8::1/96").addr.is_ipv6()
+
+#@ def get_parse_err(cidr):
+#@   _, err = ip.parse_cidr(cidr, return_error=True)
+#@   return err
+#@ end
+
+#@ def get_parse_success(cidr):
+#@   cidr, _ = ip.parse_cidr(cidr, return_error=True)
+#@   return cidr
+#@ end
+
+return-error:
+  error-case:
+    cidr_invalid: #@ get_parse_err("not-a-valid-cidr")
+    cidr_not_a_string: #@ get_parse_err(["not-a-string"])
+  success-case:
+    cidr: #@ get_parse_success("192.0.2.1/24")
+    cidr_net: #@ get_parse_success("192.0.2.1/24").net
+    cidr_addr: #@ get_parse_success("192.0.2.1/24").addr
+    cidr_is_ipv4: #@ get_parse_success("192.0.2.1/24").is_ipv4()
+    cidr_is_ipv6: #@ get_parse_success("192.0.2.1/24").is_ipv6()
+    cidr_addr_is_ipv4: #@ get_parse_success("192.0.2.1/24").addr.is_ipv4()
+    cidr_addr_is_ipv6: #@ get_parse_success("192.0.2.1/24").addr.is_ipv6()
+    cidr_return_error_false: #@ ip.parse_cidr("192.0.2.1/24", return_error=False)
+
++++
+
+ipv4:
+  cidr: 192.0.2.1/24
+  cidr_net: 192.0.2.0/24
+  cidr_addr: 192.0.2.1
+  cidr_is_ipv4: true
+  cidr_is_ipv6: false
+  cidr_addr_is_ipv4: true
+  cidr_addr_is_ipv6: false
+ipv6:
+  cidr: 2001:db8::1/96
+  cidr_net: 2001:db8::/96
+  cidr_addr: 2001:db8::1
+  cidr_is_ipv4: false
+  cidr_is_ipv6: true
+  cidr_addr_is_ipv4: false
+  cidr_addr_is_ipv6: true
+return-error:
+  error-case:
+    cidr_invalid: 'invalid CIDR address: not-a-valid-cidr'
+    cidr_not_a_string: expected a string, but was list
+  success-case:
+    cidr: 192.0.2.1/24
+    cidr_net: 192.0.2.0/24
+    cidr_addr: 192.0.2.1
+    cidr_is_ipv4: true
+    cidr_is_ipv6: false
+    cidr_addr_is_ipv4: true
+    cidr_addr_is_ipv6: false
+    cidr_return_error_false: 192.0.2.1/24

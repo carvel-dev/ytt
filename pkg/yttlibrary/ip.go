@@ -14,33 +14,33 @@ import (
 )
 
 var (
-	NetAPI = starlark.StringDict{
-		"net": &starlarkstruct.Module{
-			Name: "net",
+	IPAPI = starlark.StringDict{
+		"ip": &starlarkstruct.Module{
+			Name: "ip",
 			Members: starlark.StringDict{
-				"parse_ip":   starlark.NewBuiltin("net.parse_ip", core.ErrWrapper(netModule{}.ParseIP)),
-				"parse_cidr": starlark.NewBuiltin("net.parse_cidr", core.ErrWrapper(netModule{}.ParseCIDR)),
+				"parse_addr": starlark.NewBuiltin("ip.parse_addr", core.ErrWrapper(ipModule{}.ParseAddr)),
+				"parse_cidr": starlark.NewBuiltin("ip.parse_cidr", core.ErrWrapper(ipModule{}.ParseCIDR)),
 			},
 		},
 	}
-	NetKWARGS = map[string]struct{}{
+	IPKWARGS = map[string]struct{}{
 		"return_error": struct{}{},
 	}
 )
 
-type netModule struct{}
+type ipModule struct{}
 
-// IPValue stores a parsed IP
-type IPValue struct {
-	ip                   net.IP
+// AddrValue stores a parsed IP
+type AddrValue struct {
+	addr                 net.IP
 	*core.StarlarkStruct // TODO: keep authorship of the interface by delegating instead of embedding
 }
 
-func (b netModule) ParseIP(thread *starlark.Thread, f *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
+func (m ipModule) ParseAddr(thread *starlark.Thread, f *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
 	if args.Len() != 1 {
 		return starlark.None, fmt.Errorf("expected exactly one argument")
 	}
-	if err := core.CheckArgNames(kwargs, NetKWARGS); err != nil {
+	if err := core.CheckArgNames(kwargs, IPKWARGS); err != nil {
 		return starlark.None, err
 	}
 
@@ -58,53 +58,53 @@ func (b netModule) ParseIP(thread *starlark.Thread, f *starlark.Builtin, args st
 	if parsedIP == nil {
 		return valueOrTuple(starlark.None, fmt.Errorf("invalid IP address: %s", ipStr), returnTuple)
 	}
-	return valueOrTuple((&IPValue{parsedIP, nil}).AsStarlarkValue(), nil, returnTuple)
+	return valueOrTuple((&AddrValue{parsedIP, nil}).AsStarlarkValue(), nil, returnTuple)
 }
 
-func (iv *IPValue) Type() string { return "@ytt:net.ip" }
+func (av *AddrValue) Type() string { return "@ytt:ip.addr" }
 
-func (iv *IPValue) AsStarlarkValue() starlark.Value {
+func (av *AddrValue) AsStarlarkValue() starlark.Value {
 	m := orderedmap.NewMap()
-	m.Set("is_ipv4", starlark.NewBuiltin("ip.is_ipv4", core.ErrWrapper(iv.IsIPv4)))
-	m.Set("is_ipv6", starlark.NewBuiltin("ip.is_ipv6", core.ErrWrapper(iv.IsIPv6)))
-	iv.StarlarkStruct = core.NewStarlarkStruct(m)
-	return iv
+	m.Set("is_ipv4", starlark.NewBuiltin("addr.is_ipv4", core.ErrWrapper(av.IsIPv4)))
+	m.Set("is_ipv6", starlark.NewBuiltin("addr.is_ipv6", core.ErrWrapper(av.IsIPv6)))
+	av.StarlarkStruct = core.NewStarlarkStruct(m)
+	return av
 }
 
-func (iv *IPValue) AsGoValue() (interface{}, error) {
-	return iv.ip.String(), nil
+func (av *AddrValue) AsGoValue() (interface{}, error) {
+	return av.addr.String(), nil
 }
 
-func (iv *IPValue) IsIPv4(thread *starlark.Thread, f *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
+func (av *AddrValue) IsIPv4(thread *starlark.Thread, f *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
 	if args.Len() != 0 {
 		return starlark.None, fmt.Errorf("expected no argument")
 	}
-	isV4 := iv.ip != nil && iv.ip.To4() != nil
+	isV4 := av.addr != nil && av.addr.To4() != nil
 	return starlark.Bool(isV4), nil
 }
 
-func (iv *IPValue) IsIPv6(thread *starlark.Thread, f *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
+func (av *AddrValue) IsIPv6(thread *starlark.Thread, f *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
 	if args.Len() != 0 {
 		return starlark.None, fmt.Errorf("expected no argument")
 	}
-	isV6 := iv.ip != nil && iv.ip.To4() == nil
+	isV6 := av.addr != nil && av.addr.To4() == nil
 	return starlark.Bool(isV6), nil
 }
 
 // CIDRValue stores a parsed CIDR
 type CIDRValue struct {
-	ip                   net.IP
-	ipNet                *net.IPNet
+	addr                 net.IP
+	net                  *net.IPNet
 	*core.StarlarkStruct // TODO: keep authorship of the interface by delegating instead of embedding
 }
 
-func (cv *CIDRValue) Type() string { return "@ytt:net.cidr" }
+func (cv *CIDRValue) Type() string { return "@ytt:ip.cidr" }
 
-func (b netModule) ParseCIDR(thread *starlark.Thread, f *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
+func (m ipModule) ParseCIDR(thread *starlark.Thread, f *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
 	if args.Len() != 1 {
 		return starlark.None, fmt.Errorf("expected exactly one argument")
 	}
-	if err := core.CheckArgNames(kwargs, NetKWARGS); err != nil {
+	if err := core.CheckArgNames(kwargs, IPKWARGS); err != nil {
 		return starlark.None, err
 	}
 
@@ -130,37 +130,37 @@ func (cv *CIDRValue) AsStarlarkValue() starlark.Value {
 	m := orderedmap.NewMap()
 	m.Set("is_ipv4", starlark.NewBuiltin("cidr.is_ipv4", core.ErrWrapper(cv.isIPv4)))
 	m.Set("is_ipv6", starlark.NewBuiltin("cidr.is_ipv6", core.ErrWrapper(cv.isIPv6)))
-	m.Set("ip", cv.IP())
-	m.Set("net", cv.IPNet())
+	m.Set("addr", cv.Addr())
+	m.Set("net", cv.Net())
 	cv.StarlarkStruct = core.NewStarlarkStruct(m)
 	return cv
 }
 
 func (cv *CIDRValue) AsGoValue() (interface{}, error) {
 	hostIPNet := net.IPNet{
-		IP:   cv.ip,
-		Mask: cv.ipNet.Mask,
+		IP:   cv.addr,
+		Mask: cv.net.Mask,
 	}
 	return hostIPNet.String(), nil
 }
 
-func (cv *CIDRValue) IP() starlark.Value {
-	if cv.ip == nil {
+func (cv *CIDRValue) Addr() starlark.Value {
+	if cv.addr == nil {
 		return starlark.None
 	}
 
-	ip := &IPValue{cv.ip, nil}
-	return ip.AsStarlarkValue()
+	av := &AddrValue{cv.addr, nil}
+	return av.AsStarlarkValue()
 }
 
-func (cv *CIDRValue) IPNet() starlark.Value {
-	if cv.ipNet == nil {
+func (cv *CIDRValue) Net() starlark.Value {
+	if cv.net == nil {
 		return starlark.None
 	}
 
-	ipNet := &IPNetValue{cv.ipNet, nil}
+	ipNet := &NetValue{cv.net, nil}
 	m := orderedmap.NewMap()
-	m.Set("ip", ipNet.IP())
+	m.Set("addr", ipNet.IP())
 	ipNet.StarlarkStruct = core.NewStarlarkStruct(m)
 	return ipNet
 }
@@ -169,7 +169,7 @@ func (cv *CIDRValue) isIPv4(thread *starlark.Thread, f *starlark.Builtin, args s
 	if args.Len() != 0 {
 		return starlark.None, fmt.Errorf("expected no argument")
 	}
-	isV4 := cv.ipNet != nil && cv.ip.To4() != nil
+	isV4 := cv.net != nil && cv.addr.To4() != nil
 	return starlark.Bool(isV4), nil
 }
 
@@ -177,27 +177,27 @@ func (cv *CIDRValue) isIPv6(thread *starlark.Thread, f *starlark.Builtin, args s
 	if args.Len() != 0 {
 		return starlark.None, fmt.Errorf("expected no argument")
 	}
-	isV6 := cv.ip != nil && cv.ip.To4() == nil
+	isV6 := cv.addr != nil && cv.addr.To4() == nil
 	return starlark.Bool(isV6), nil
 }
 
-type IPNetValue struct {
-	ipNet                *net.IPNet
+type NetValue struct {
+	net                  *net.IPNet
 	*core.StarlarkStruct // TODO: keep authorship of the interface by delegating instead of embedding
 }
 
-func (inv *IPNetValue) Type() string { return "@ytt:net.net" }
+func (inv *NetValue) Type() string { return "@ytt:ip.net" }
 
-func (inv *IPNetValue) AsGoValue() (interface{}, error) {
-	return inv.ipNet.String(), nil
+func (inv *NetValue) AsGoValue() (interface{}, error) {
+	return inv.net.String(), nil
 }
 
-func (inv *IPNetValue) IP() starlark.Value {
-	if inv.ipNet.IP == nil {
+func (inv *NetValue) IP() starlark.Value {
+	if inv.net.IP == nil {
 		return starlark.None
 	}
 
-	ip := &IPValue{inv.ipNet.IP, nil}
+	ip := &AddrValue{inv.net.IP, nil}
 	return ip.AsStarlarkValue()
 }
 
