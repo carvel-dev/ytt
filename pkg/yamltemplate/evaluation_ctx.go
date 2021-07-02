@@ -164,12 +164,12 @@ func (e EvaluationCtx) convertValToMapItems(val interface{}, position *filepos.P
 	case *orderedmap.Map:
 		result := []*yamlmeta.MapItem{}
 		typedVal.Iterate(func(k, v interface{}) {
-			result = append(result, &yamlmeta.MapItem{Key: k, Value: v, Position: position})
+			item := &yamlmeta.MapItem{Key: k, Value: yamlmeta.NewASTFromInterfaceWithPosition(v, position), Position: position}
+			result = append(result, item)
 		})
 		return result, false, nil
 
 	case *yamlmeta.Map:
-		//TODO: need to set position here?
 		return typedVal.Items, true, nil
 
 	default:

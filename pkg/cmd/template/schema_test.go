@@ -473,16 +473,25 @@ data_values.yml:
 
 		schemaYAML := `#@data/values-schema
 ---
-foo: 0
+map:
+  nestedMap:
+    key: 1
+  otherMap: 2
+  array:
+  - 3
 `
 		dataValuesYAML := `#@ load("@ytt:template", "template")
 #@data/values
 ---
-_: #@ template.replace({'foo':'not a integer'})
+#@ def frag_func():
+key: one
+#@ end
+
+_: #@ template.replace({'map': { 'nestedMap': frag_func(), 'otherMap': 'two', 'array': ['three']}})
 `
 		templateYAML := `#@ load("@ytt:data", "data")
 ---
-rendered: #@ data.values.foo
+rendered: #@ data.values.map
 `
 		expectedErr := `
 One or more data values were invalid
@@ -490,11 +499,28 @@ One or more data values were invalid
 
 dataValues.yml:
     |
-  4 | _: #@ template.replace({'foo':'not a integer'})
+  5 | key: one
     |
 
     = found: string
-    = expected: integer (by schema.yml:3)
+    = expected: integer (by schema.yml:5)
+
+dataValues.yml:
+    |
+  8 | _: #@ template.replace({'map': { 'nestedMap': frag_func(), 'otherMap': 'two', 'array': ['three']}})
+    |
+
+    = found: string
+    = expected: integer (by schema.yml:6)
+
+dataValues.yml:
+    |
+  8 | _: #@ template.replace({'map': { 'nestedMap': frag_func(), 'otherMap': 'two', 'array': ['three']}})
+    |
+
+    = found: string
+    = expected: integer (by schema.yml:8)
+
 `
 
 		filesToProcess := files.NewSortedFiles([]*files.File{
