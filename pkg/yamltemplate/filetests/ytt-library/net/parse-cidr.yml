@@ -22,24 +22,24 @@ ipv6:
 #@   return err
 #@ end
 
-
 #@ def get_parse_success(cidr):
 #@   cidr, _ = net.parse_cidr(cidr, return_error=True)
 #@   return cidr
 #@ end
 
 return-error:
-  cidr_invalid: #@ get_parse_err("not-a-valid-cidr")
-  cidr_not_a_string: #@ get_parse_err(["not-a-string"])
-  cidr_success: #@ get_parse_success("192.0.2.1/24")
-  cidr_success_net: #@ get_parse_success("192.0.2.1/24").net
-  cidr_success_ip: #@ get_parse_success("192.0.2.1/24").ip
-  cidr_success_is_ipv4: #@ get_parse_success("192.0.2.1/24").is_ipv4()
-  cidr_success_is_ipv6: #@ get_parse_success("192.0.2.1/24").is_ipv6()
-  cidr_success_ip_is_ipv4: #@ get_parse_success("192.0.2.1/24").ip.is_ipv4()
-  cidr_success_ip_is_ipv6: #@ get_parse_success("192.0.2.1/24").ip.is_ipv6()
-  cidr_return_error_false: #@ net.parse_cidr("192.0.2.1/24", return_error=False)
-
+  error-case:
+    cidr_invalid: #@ get_parse_err("not-a-valid-cidr")
+    cidr_not_a_string: #@ get_parse_err(["not-a-string"])
+  success-case:
+    cidr: #@ get_parse_success("192.0.2.1/24")
+    cidr_net: #@ get_parse_success("192.0.2.1/24").net
+    cidr_ip: #@ get_parse_success("192.0.2.1/24").ip
+    cidr_is_ipv4: #@ get_parse_success("192.0.2.1/24").is_ipv4()
+    cidr_is_ipv6: #@ get_parse_success("192.0.2.1/24").is_ipv6()
+    cidr_ip_is_ipv4: #@ get_parse_success("192.0.2.1/24").ip.is_ipv4()
+    cidr_ip_is_ipv6: #@ get_parse_success("192.0.2.1/24").ip.is_ipv6()
+    cidr_return_error_false: #@ net.parse_cidr("192.0.2.1/24", return_error=False)
 
 +++
 
@@ -60,13 +60,15 @@ ipv6:
   cidr_ip_is_ipv4: false
   cidr_ip_is_ipv6: true
 return-error:
-  cidr_invalid: 'invalid CIDR address: not-a-valid-cidr'
-  cidr_not_a_string: expected a string, but was list
-  cidr_success: 192.0.2.1/24
-  cidr_success_net: 192.0.2.0/24
-  cidr_success_ip: 192.0.2.1
-  cidr_success_is_ipv4: true
-  cidr_success_is_ipv6: false
-  cidr_success_ip_is_ipv4: true
-  cidr_success_ip_is_ipv6: false
-  cidr_return_error_false: 192.0.2.1/24
+  error-case:
+    cidr_invalid: 'invalid CIDR address: not-a-valid-cidr'
+    cidr_not_a_string: expected a string, but was list
+  success-case:
+    cidr: 192.0.2.1/24
+    cidr_net: 192.0.2.0/24
+    cidr_ip: 192.0.2.1
+    cidr_is_ipv4: true
+    cidr_is_ipv6: false
+    cidr_ip_is_ipv4: true
+    cidr_ip_is_ipv6: false
+    cidr_return_error_false: 192.0.2.1/24
