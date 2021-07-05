@@ -151,7 +151,7 @@ func TestDifferentUsages(t *testing.T) {
 	for _, schemaDirToTest := range dirs {
 		t.Run(fmt.Sprintf("schema: %s", schemaDirToTest), func(t *testing.T) {
 			dirPath := fmt.Sprintf("../../examples/%s", schemaDirToTest)
-			actualOutput := runYtt(t, testInputFiles{dirPath}, "", yttFlags{{"--enable-experiment-schema": ""}}, nil)
+			actualOutput := runYtt(t, testInputFiles{dirPath}, "", nil, nil)
 
 			expectedOutput, err := ioutil.ReadFile(filepath.Join(dirPath, "expected.txt"))
 			require.NoError(t, err)
@@ -280,7 +280,6 @@ func TestSchema(t *testing.T) {
 		flags := yttFlags{
 			{"--data-value": "nothing=a new string"},
 			{"--data-value": "string=str"},
-			{"--enable-experiment-schema": ""},
 		}
 
 		actualOutput := runYtt(t, testInputFiles{"../../examples/schema/config.yml", "../../examples/schema/schema.yml"}, "", flags, nil)
@@ -303,7 +302,6 @@ any: anything
 			{"--data-value-yaml": "int=123"},
 			{"--data-value-yaml": "float=123.123"},
 			{"--data-value-yaml": "any=[1,2,4]"},
-			{"--enable-experiment-schema": ""},
 		}
 		actualOutput := runYtt(t, testInputFiles{"../../examples/schema/config.yml", "../../examples/schema/schema.yml"}, "", flags, nil)
 		expectedOutput := `nothing: a new string
@@ -324,7 +322,6 @@ any:
 		flags := yttFlags{
 			{"--data-values-env": "STR_VAL"},
 			{"--data-values-env-yaml": "YAML_VAL"},
-			{"--enable-experiment-schema": ""},
 		}
 		envs := []string{
 			"STR_VAL_nothing=a new string",

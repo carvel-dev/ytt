@@ -10,8 +10,6 @@ import (
 type Schema interface {
 	AssignType(typeable yamlmeta.Typeable) yamlmeta.TypeCheck
 	DefaultDataValues() *yamlmeta.Document
-	ValidateWithValues(valuesFilesCount int) error
 }
 
 var _ Schema = &schema.DocumentSchema{}
-var _ Schema = &schema.NullSchema{}

@@ -53,43 +53,38 @@ func (ll *LibraryLoader) Schemas(schemaOverlays []*schema.DocumentSchemaEnvelope
 	if err != nil {
 		return nil, nil, err
 	}
-	if ll.templateLoaderOpts.SchemaEnabled {
-		documentSchemas, err := collectSchemaDocs(schemaFiles, loader)
-		if err != nil {
-			return nil, nil, err
-		}
-		documentSchemas = append(documentSchemas, schemaOverlays...)
 
-		var resultSchemasDoc *yamlmeta.Document
-		var childLibrarySchemas []*schema.DocumentSchemaEnvelope
-		for _, docSchema := range documentSchemas {
-			if docSchema.IntendedForAnotherLibrary() {
-				childLibrarySchemas = append(childLibrarySchemas, docSchema)
-				continue
-			}
-			if resultSchemasDoc == nil {
-				resultSchemasDoc = docSchema.Source()
-			} else {
-				resultSchemasDoc, err = ll.overlay(resultSchemasDoc, docSchema.Source())
-				if err != nil {
-					return nil, nil, err
-				}
-			}
+	documentSchemas, err := collectSchemaDocs(schemaFiles, loader)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	documentSchemas = append(documentSchemas, schemaOverlays...)
+
+	var resultSchemasDoc *yamlmeta.Document
+	var childLibrarySchemas []*schema.DocumentSchemaEnvelope
+	for _, docSchema := range documentSchemas {
+		if docSchema.IntendedForAnotherLibrary() {
+			childLibrarySchemas = append(childLibrarySchemas, docSchema)
+			continue
 		}
-		if resultSchemasDoc != nil {
-			currentLibrarySchema, err := schema.NewDocumentSchema(resultSchemasDoc)
+		if resultSchemasDoc == nil {
+			resultSchemasDoc = docSchema.Source()
+		} else {
+			resultSchemasDoc, err = ll.overlay(resultSchemasDoc, docSchema.Source())
 			if err != nil {
 				return nil, nil, err
 			}
-			return currentLibrarySchema, childLibrarySchemas, nil
 		}
-		return schema.NullSchema{}, childLibrarySchemas, nil
 	}
-
-	if len(schemaFiles) > 0 {
-		ll.ui.Warnf("Warning: schema document was detected (%s), but schema experiment flag is not enabled. Did you mean to include --enable-experiment-schema?\n", schemaFiles[0].File.RelativePath())
+	if resultSchemasDoc != nil {
+		currentLibrarySchema, err := schema.NewDocumentSchema(resultSchemasDoc)
+		if err != nil {
+			return nil, nil, err
+		}
+		return currentLibrarySchema, childLibrarySchemas, nil
 	}
-	return schema.NewPermissiveSchema(), nil, nil
+	return schema.NewPermissiveSchema(), childLibrarySchemas, nil
 }
 
 func collectSchemaDocs(schemaFiles []*FileInLibrary, loader *TemplateLoader) ([]*schema.DocumentSchemaEnvelope, error) {

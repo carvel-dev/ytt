@@ -17,10 +17,9 @@ type Options struct {
 	IgnoreUnknownComments   bool
 	ImplicitMapKeyOverrides bool
 
-	StrictYAML    bool
-	Debug         bool
-	InspectFiles  bool
-	SchemaEnabled bool
+	StrictYAML   bool
+	Debug        bool
+	InspectFiles bool
 
 	BulkFilesSourceOpts    BulkFilesSourceOpts
 	RegularFilesSourceOpts RegularFilesSourceOpts
@@ -65,7 +64,6 @@ func NewCmd(o *Options) *cobra.Command {
 	cmd.Flags().BoolVarP(&o.StrictYAML, "strict", "s", false, "Configure to use _strict_ YAML subset")
 	cmd.Flags().BoolVar(&o.Debug, "debug", false, "Enable debug output")
 	cmd.Flags().BoolVar(&o.InspectFiles, "files-inspect", false, "Inspect files")
-	cmd.Flags().BoolVar(&o.SchemaEnabled, "enable-experiment-schema", false, "Enable experimental schema features")
 
 	o.BulkFilesSourceOpts.Set(cmd)
 	o.RegularFilesSourceOpts.Set(cmd)
@@ -120,7 +118,6 @@ func (o *Options) RunWithFiles(in Input, ui ui.UI) Output {
 		IgnoreUnknownComments:   o.IgnoreUnknownComments,
 		ImplicitMapKeyOverrides: o.ImplicitMapKeyOverrides,
 		StrictYAML:              o.StrictYAML,
-		SchemaEnabled:           o.SchemaEnabled,
 	})
 
 	libraryCtx := workspace.LibraryExecutionContext{Current: rootLibrary, Root: rootLibrary}
