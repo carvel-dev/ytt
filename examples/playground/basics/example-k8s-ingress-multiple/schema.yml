@@ -1,0 +1,7 @@
+#@data/values-schema
+---
+apps:
+- name: ""
+  path: ""
+  port: 8080
+  text: ""

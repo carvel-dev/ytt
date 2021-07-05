@@ -4,5 +4,5 @@ This example was created to show how to configure `kubernetes.io/dockerconfigjso
 export CFG_docker__server=https://docker.io
 export CFG_docker__username=dkalinin
 export CFG_docker__password=secret
-ytt -f config.yml -f values.yml --data-values-env CFG
+ytt -f config.yml -f schema.yml --data-values-env CFG
 ```

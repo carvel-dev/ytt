@@ -1,3 +1,3 @@
-#@data/values
+#@data/values-schema
 ---
 app_name: "prometheus-operator"

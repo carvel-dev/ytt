@@ -1,4 +1,4 @@
-#@data/values
+#@data/values-schema
 ---
 my_map:
   key1: value1

@@ -1,4 +1,4 @@
-#@data/values
+#@data/values-schema
 ---
 Release:
   Name: release-name
@@ -9,7 +9,8 @@ Chart:
   AppVersion: chart-appver
   Version: chart-ver
 
-nameOverride:
+#@schema/nullable
+nameOverride: ""
 replicaCount: 1
 image:
   repository: nginx
@@ -20,15 +21,16 @@ service:
   type: ClusterIP
   externalPort: 80
   internalPort: 80
+
+#@schema/nullable
 ingress:
-  enabled: false
   hosts:
   - chart-example.local
+  #@schema/type any=True
   annotations:
     #! kubernetes.io/ingress.class: nginx
     #! kubernetes.io/tls-acme: "true"
   tls:
-    #! Secrets must be manually created in the namespace.
-    #! - secretName: chart-example-tls
-    #!   hosts:
-    #!     - chart-example.local
+  - secretName: chart-example-tls
+    hosts:
+      - chart-example.local

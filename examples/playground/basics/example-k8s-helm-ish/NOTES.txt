@@ -2,7 +2,7 @@
 (@ load("helpers.star", "fullname", "name") -@)
 
 1. Get the application URL by running these commands:
-(@- if data.values.ingress.enabled: @)
+(@- if data.values.ingress: @)
   (@- for h in data.values.ingress.hosts: @)
     http(@= "s" if data.values.ingress.tls else "" @)://(@= h @)
   (@ end @)

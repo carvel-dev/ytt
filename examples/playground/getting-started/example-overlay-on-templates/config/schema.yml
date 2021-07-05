@@ -1,4 +1,4 @@
-#@data/values
+#@data/values-schema
 ---
 app_name: "prometheus-operator"
 scaling_factor: 2
