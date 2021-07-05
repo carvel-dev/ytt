@@ -2,7 +2,7 @@ This example was created to show various patterns to validate data values (https
 
 In following examples, we validate that `version` is not null, and port is > 0.
 
-User is forced to provide `version` value via cmd line or additional data values file because default `values.yml` specifies it as `null` and configuration validates it to be non-null.
+User is forced to provide `version` value via cmd line or additional data values file because default `schema.yml` specifies it as `@schema/nullable` and configuration validates it to be non-null.
 
 Inline approach shows how to have short validations in places where data.values... is used:
 

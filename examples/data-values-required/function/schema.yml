@@ -1,4 +1,4 @@
-#@data/values-schema
+#@data/values
 ---
 #@schema/nullable
 version: ""
