@@ -131,8 +131,7 @@ func (e EvaluationCtx) convertValToDocSetItems(val interface{}) ([]*yamlmeta.Doc
 func (e EvaluationCtx) replaceItemInMap(
 	dstMap *yamlmeta.Map, placeholderItem *yamlmeta.MapItem, val interface{}) error {
 
-	parentPos := dstMap.Items[0].Position.DeepCopy()
-	insertItems, carryMeta, err := e.convertValToMapItems(val, parentPos)
+	insertItems, carryMeta, err := e.convertValToMapItems(val, placeholderItem.Position.DeepCopy())
 	if err != nil {
 		return err
 	}
@@ -178,7 +177,7 @@ func (e EvaluationCtx) convertValToMapItems(val interface{}, position *filepos.P
 }
 
 func (e EvaluationCtx) replaceItemInArray(dstArray *yamlmeta.Array, placeholderItem *yamlmeta.ArrayItem, val interface{}) error {
-	insertItems, err := e.convertValToArrayItems(val)
+	insertItems, err := e.convertValToArrayItems(val, placeholderItem.Position.DeepCopy())
 	if err != nil {
 		return err
 	}
@@ -196,13 +195,13 @@ func (e EvaluationCtx) replaceItemInArray(dstArray *yamlmeta.Array, placeholderI
 	return fmt.Errorf("expected to find placeholder array item in array")
 }
 
-func (e EvaluationCtx) convertValToArrayItems(val interface{}) ([]*yamlmeta.ArrayItem, error) {
+func (e EvaluationCtx) convertValToArrayItems(val interface{}, position *filepos.Position) ([]*yamlmeta.ArrayItem, error) {
 	result := []*yamlmeta.ArrayItem{}
 
 	switch typedVal := val.(type) {
 	case []interface{}:
 		for _, item := range typedVal {
-			result = append(result, &yamlmeta.ArrayItem{Value: item, Position: filepos.NewUnknownPosition()})
+			result = append(result, &yamlmeta.ArrayItem{Value: yamlmeta.NewASTFromInterfaceWithPosition(item, position), Position: position})
 		}
 
 	case *yamlmeta.Array:

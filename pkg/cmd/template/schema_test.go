@@ -469,7 +469,7 @@ data_values.yml:
 		assertFails(t, filesToProcess, expectedErr, opts)
 	})
 
-	t.Run("when a data value of the wrong type is passed using template replace", func(t *testing.T) {
+	t.Run("when a data value map of the wrong type is passed using template replace", func(t *testing.T) {
 
 		schemaYAML := `#@data/values-schema
 ---
@@ -520,6 +520,43 @@ dataValues.yml:
 
     = found: string
     = expected: integer (by schema.yml:8)
+
+`
+
+		filesToProcess := files.NewSortedFiles([]*files.File{
+			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
+			files.MustNewFileFromSource(files.NewBytesSource("dataValues.yml", []byte(dataValuesYAML))),
+			files.MustNewFileFromSource(files.NewBytesSource("template.yml", []byte(templateYAML))),
+		})
+
+		assertFails(t, filesToProcess, expectedErr, opts)
+	})
+	t.Run("when a data value array of the wrong type is passed using template replace", func(t *testing.T) {
+
+		schemaYAML := `#@data/values-schema
+---
+- key: 1
+`
+		dataValuesYAML := `#@ load("@ytt:template", "template")
+#@data/values
+---
+- #@ template.replace([{'key': 'not an integer'}])
+`
+		templateYAML := `#@ load("@ytt:data", "data")
+---
+rendered: #@ data.values
+`
+		expectedErr := `
+One or more data values were invalid
+====================================
+
+dataValues.yml:
+    |
+  4 | - #@ template.replace([{'key': 'not an integer'}])
+    |
+
+    = found: string
+    = expected: integer (by schema.yml:3)
 
 `
 
