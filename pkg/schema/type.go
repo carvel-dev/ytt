@@ -19,9 +19,10 @@ var _ yamlmeta.Type = (*AnyType)(nil)
 var _ yamlmeta.Type = (*NullType)(nil)
 
 type DocumentType struct {
-	Source    *yamlmeta.Document
-	ValueType yamlmeta.Type // typically one of: MapType, ArrayType, ScalarType
-	Position  *filepos.Position
+	Source       *yamlmeta.Document
+	ValueType    yamlmeta.Type // typically one of: MapType, ArrayType, ScalarType
+	Position     *filepos.Position
+	defaultValue interface{}
 }
 type MapType struct {
 	Items    []*MapItemType
@@ -96,6 +97,7 @@ func (m MapType) GetDefaultValue() interface{} {
 
 func (t DocumentType) GetDefaultValue() interface{} {
 	if t.ValueType == nil {
+		// TODO: is ValueType now ever nil?
 		return &yamlmeta.Document{Position: t.Position}
 	}
 	defaultValue := &yamlmeta.Document{Value: t.ValueType.GetDefaultValue(), Position: t.Position}
@@ -298,36 +300,13 @@ func (t *DocumentType) AssignTypeTo(typeable yamlmeta.Typeable) (chk yamlmeta.Ty
 			NewMismatchedTypeAssertionError(typeable, t))
 		return
 	}
-
-	typeable.SetType(t)
-	typeableChild, ok := doc.Value.(yamlmeta.Typeable)
-	if ok || doc.Value == nil {
-		if t.ValueType != nil {
-			tChild := typeableChild
-			if doc.Value == nil {
-				switch t.ValueType.(type) {
-				case *MapType:
-					tChild = &yamlmeta.Map{}
-				case *ArrayType:
-					tChild = &yamlmeta.Array{}
-				case *AnyType:
-					return
-				default:
-					panic("implement me!")
-				}
-				doc.Value = tChild
-			}
-			childCheck := t.ValueType.AssignTypeTo(tChild)
-			chk.Violations = append(chk.Violations, childCheck.Violations...)
-		} else {
-			chk.Violations = append(chk.Violations,
-				fmt.Errorf("data values were found in data values file(s), but schema (%s) has no values defined\n"+
-					"(hint: define matching keys from data values files(s) in the schema, or do not enable the schema feature)", t.Position.AsCompactString()))
-		}
-	} else {
-
-	} // else, at a leaf
-	return
+	doc.SetType(t)
+	typeableValue, isNode := doc.Value.(yamlmeta.Typeable)
+	if isNode {
+		childCheck := t.ValueType.AssignTypeTo(typeableValue)
+		chk.Violations = append(chk.Violations, childCheck.Violations...)
+	} // else, is a scalar
+	return chk
 }
 
 func (m *MapType) AssignTypeTo(typeable yamlmeta.Typeable) (chk yamlmeta.TypeCheck) {
@@ -360,11 +339,6 @@ func (m *MapType) applySchemaDefaults(foundKeys []interface{}, chk yamlmeta.Type
 		}
 
 		val := item.GetDefaultValue()
-		//&yamlmeta.MapItem{
-		//Key:      item.Key,
-		//Value:    item.GetDefaultValue(),
-		//Position: item.Position,
-		//}
 		childCheck := item.AssignTypeTo(val.(*yamlmeta.MapItem))
 		chk.Violations = append(chk.Violations, childCheck.Violations...)
 		err := mapNode.AddValue(val)
@@ -389,11 +363,11 @@ func (t *MapItemType) AssignTypeTo(typeable yamlmeta.Typeable) (chk yamlmeta.Typ
 		panic(fmt.Sprintf("Attempt to assign type to a non-map-item (children of Maps can only be MapItems). type=%#v; typeable=%#v", t, typeable))
 	}
 	typeable.SetType(t)
-	typeableValue, ok := mapItem.Value.(yamlmeta.Typeable)
-	if ok {
+	typeableValue, isNode := mapItem.Value.(yamlmeta.Typeable)
+	if isNode {
 		childCheck := t.ValueType.AssignTypeTo(typeableValue)
 		chk.Violations = append(chk.Violations, childCheck.Violations...)
-	} // else, at a leaf
+	} // else, is scalar
 	return
 }
 
@@ -417,11 +391,11 @@ func (a *ArrayItemType) AssignTypeTo(typeable yamlmeta.Typeable) (chk yamlmeta.T
 		panic(fmt.Sprintf("Attempt to assign type to a non-array-item (children of Arrays can only be ArrayItems). type=%#v; typeable=%#v", a, typeable))
 	}
 	typeable.SetType(a)
-	typeableValue, ok := arrayItem.Value.(yamlmeta.Typeable)
-	if ok {
+	typeableValue, isNode := arrayItem.Value.(yamlmeta.Typeable)
+	if isNode {
 		childCheck := a.ValueType.AssignTypeTo(typeableValue)
 		chk.Violations = append(chk.Violations, childCheck.Violations...)
-	} // else, at a leaf
+	} // else, is scalar
 	return
 }
 

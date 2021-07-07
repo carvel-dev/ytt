@@ -783,24 +783,6 @@ dvs1.yml:
 		assertFails(t, filesToProcess, expectedErr, cmdOpts)
 	})
 
-	t.Run("when schema is null and non-empty data values is given", func(t *testing.T) {
-		schemaYAML := `#@data/values-schema
----
-`
-		dataValuesYAML := `#@data/values
----
-foo: non-empty data value
-`
-
-		filesToProcess := files.NewSortedFiles([]*files.File{
-			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
-			files.MustNewFileFromSource(files.NewBytesSource("values.yml", []byte(dataValuesYAML))),
-		})
-		expectedErr := "data values were found in data values file(s), but schema (schema.yml:2) has no values defined\n"
-		expectedErr += "(hint: define matching keys from data values files(s) in the schema, or do not enable the schema feature)"
-
-		assertFails(t, filesToProcess, expectedErr, opts)
-	})
 	t.Run("checks after every data values document is processed (and stops if there was a violation)", func(t *testing.T) {
 		schemaYAML := `#@data/values-schema
 ---
@@ -1071,11 +1053,59 @@ foo: #@ data.values.foo
 
 			assertSucceeds(t, filesToProcess, expected, opts)
 		})
+		t.Run("when a document is nullable, and then a data value makes it non-null", func(t *testing.T) {
+			schemaYAML := `#@data/values-schema
+#@schema/nullable
+---
+foo: 0
+bar: Hello, world
+`
+			dataValuesYAML := `#@data/values
+---
+foo: 42
+`
+			templateYAML := `#@ load("@ytt:data", "data")
+---
+rendered: #@ data.values
+`
+			expected := `rendered:
+  foo: 42
+  bar: Hello, world
+`
+
+			filesToProcess := files.NewSortedFiles([]*files.File{
+				files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
+				files.MustNewFileFromSource(files.NewBytesSource("dataValues.yml", []byte(dataValuesYAML))),
+				files.MustNewFileFromSource(files.NewBytesSource("template.yml", []byte(templateYAML))),
+			})
+
+			assertSucceeds(t, filesToProcess, expected, opts)
+		})
 	})
 }
 
 func TestSchema_Allows_null_values_via_nullable_annotation(t *testing.T) {
 	opts := cmdtpl.NewOptions()
+	t.Run("on a document", func(t *testing.T) {
+		schemaYAML := `#@data/values-schema
+#@schema/nullable
+---
+optional: true
+`
+		templateYAML := `#@ load("@ytt:data", "data")
+---
+rendered: #@ data.values
+`
+		expected := `rendered: null
+`
+
+		filesToProcess := files.NewSortedFiles([]*files.File{
+			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
+			files.MustNewFileFromSource(files.NewBytesSource("template.yml", []byte(templateYAML))),
+		})
+
+		assertSucceeds(t, filesToProcess, expected, opts)
+	})
 	t.Run("when the value is a map", func(t *testing.T) {
 		schemaYAML := `#@data/values-schema
 ---
@@ -1212,8 +1242,9 @@ overriden:
 func TestSchema_Allows_any_value_via_any_annotation(t *testing.T) {
 	opts := cmdtpl.NewOptions()
 
-	t.Run("when any is true and set on a map", func(t *testing.T) {
-		schemaYAML := `#@data/values-schema
+	t.Run("on a map", func(t *testing.T) {
+		t.Run("when any=True", func(t *testing.T) {
+			schemaYAML := `#@data/values-schema
 ---
 #@schema/type any=True
 foo: ""
@@ -1221,31 +1252,68 @@ foo: ""
 baz:
   a: 1
 `
-		dataValuesYAML := `#@data/values
+			dataValuesYAML := `#@data/values
 ---
 foo: ~
 baz:
   a: 7
 `
-		templateYAML := `#@ load("@ytt:data", "data")
+			templateYAML := `#@ load("@ytt:data", "data")
 ---
 foo: #@ data.values.foo
 baz: #@ data.values.baz
 `
-		expected := `foo: null
+			expected := `foo: null
 baz:
   a: 7
 `
 
-		filesToProcess := files.NewSortedFiles([]*files.File{
-			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
-			files.MustNewFileFromSource(files.NewBytesSource("dataValues.yml", []byte(dataValuesYAML))),
-			files.MustNewFileFromSource(files.NewBytesSource("template.yml", []byte(templateYAML))),
-		})
+			filesToProcess := files.NewSortedFiles([]*files.File{
+				files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
+				files.MustNewFileFromSource(files.NewBytesSource("dataValues.yml", []byte(dataValuesYAML))),
+				files.MustNewFileFromSource(files.NewBytesSource("template.yml", []byte(templateYAML))),
+			})
 
-		assertSucceeds(t, filesToProcess, expected, opts)
+			assertSucceeds(t, filesToProcess, expected, opts)
+		})
+		t.Run("but not when any=False (meaning values *are* checked against schema)", func(t *testing.T) {
+			schemaYAML := `#@data/values-schema
+---
+#@schema/type any=False
+foo: 0
+`
+			dataValuesYAML := `#@data/values
+---
+foo: ""
+`
+			templateYAML := `#@ load("@ytt:data", "data")
+---
+foo: #@ data.values.foo
+`
+			expected := `Overlaying data values (in following order: dataValues.yml): 
+One or more data values were invalid
+====================================
+
+dataValues.yml:
+    |
+  3 | foo: ""
+    |
+
+    = found: string
+    = expected: integer (by schema.yml:4)
+
+`
+
+			filesToProcess := files.NewSortedFiles([]*files.File{
+				files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
+				files.MustNewFileFromSource(files.NewBytesSource("dataValues.yml", []byte(dataValuesYAML))),
+				files.MustNewFileFromSource(files.NewBytesSource("template.yml", []byte(templateYAML))),
+			})
+
+			assertFails(t, filesToProcess, expected, opts)
+		})
 	})
-	t.Run("when any is true and set on an array", func(t *testing.T) {
+	t.Run("on an array", func(t *testing.T) {
 		schemaYAML := `#@data/values-schema
 ---
 foo: 
@@ -1275,21 +1343,26 @@ foo: #@ data.values.foo
 
 		assertSucceeds(t, filesToProcess, expected, opts)
 	})
-	t.Run("when any is false and set on a map", func(t *testing.T) {
+	t.Run("on a document", func(t *testing.T) {
 		schemaYAML := `#@data/values-schema
+#@schema/type any=True
 ---
-#@schema/type any=False
-foo: 0
+foo: 13
+  
 `
 		dataValuesYAML := `#@data/values
+#@overlay/match-child-defaults missing_ok=True
 ---
-foo: 7
+foo: ""
+bar: 42
 `
 		templateYAML := `#@ load("@ytt:data", "data")
 ---
-foo: #@ data.values.foo
+rendered: #@ data.values
 `
-		expected := `foo: 7
+		expected := `rendered:
+  foo: ""
+  bar: 42
 `
 
 		filesToProcess := files.NewSortedFiles([]*files.File{

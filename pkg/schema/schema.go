@@ -16,7 +16,7 @@ import (
 type DocumentSchema struct {
 	Source     *yamlmeta.Document
 	defaultDVs *yamlmeta.Document
-	DocType    *DocumentType
+	DocType    yamlmeta.Type
 }
 
 type DocumentSchemaEnvelope struct {
@@ -28,7 +28,7 @@ type DocumentSchemaEnvelope struct {
 }
 
 func NewDocumentSchema(doc *yamlmeta.Document) (*DocumentSchema, error) {
-	docType, err := NewDocumentType(doc)
+	docType, err := inferTypeFromValue(doc, doc.Position)
 	if err != nil {
 		return nil, err
 	}
@@ -70,13 +70,29 @@ func NewNullSchema() *DocumentSchema {
 }
 
 func NewDocumentType(doc *yamlmeta.Document) (*DocumentType, error) {
-	docType := &DocumentType{Source: doc, Position: doc.Position}
-	valueType, err := inferTypeFromValue(doc.Value, doc.Position)
+	var typeOfValue yamlmeta.Type
+
+	anns, err := collectAnnotations(doc)
+	if err != nil {
+		return nil, NewSchemaError("Invalid schema", err)
+	}
+	typeOfValue = getTypeFromAnnotations(anns)
+
+	if typeOfValue == nil {
+		typeOfValue, err = inferTypeFromValue(doc.Value, doc.GetPosition())
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	err = valueTypeAllowsItemValue(typeOfValue, doc.Value, doc.Position)
 	if err != nil {
 		return nil, err
 	}
-	docType.ValueType = valueType
-	return docType, nil
+
+	defaultValue := typeOfValue.GetDefaultValue()
+
+	return &DocumentType{Source: doc, Position: doc.Position, ValueType: typeOfValue, defaultValue: defaultValue}, nil
 }
 
 func NewMapType(m *yamlmeta.Map) (*MapType, error) {
@@ -171,6 +187,12 @@ func NewArrayItemType(item *yamlmeta.ArrayItem) (*ArrayItemType, error) {
 
 func inferTypeFromValue(value interface{}, position *filepos.Position) (yamlmeta.Type, error) {
 	switch typedContent := value.(type) {
+	case *yamlmeta.Document:
+		docType, err := NewDocumentType(typedContent)
+		if err != nil {
+			return nil, err
+		}
+		return docType, nil
 	case *yamlmeta.Map:
 		mapType, err := NewMapType(typedContent)
 		if err != nil {
