@@ -83,7 +83,7 @@ func (p *Position) DeepCopy() *Position {
 	if p == nil {
 		return nil
 	}
-	newPos := &Position{file: p.file, known: p.known}
+	newPos := &Position{file: p.file, known: p.known, line: p.line}
 	if p.lineNum != nil {
 		lineVal := *p.lineNum
 		newPos.lineNum = &lineVal
