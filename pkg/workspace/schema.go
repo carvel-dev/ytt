@@ -9,6 +9,8 @@ import (
 
 type Schema interface {
 	AssignType(typeable yamlmeta.Typeable) yamlmeta.TypeCheck
+	// DefaultDataValues yields default values for Data Values...
+	//   if schema was built by schema.NewNullSchema (i.e. no schema was provided), returns nil
 	DefaultDataValues() *yamlmeta.Document
 }
 

@@ -84,7 +84,7 @@ func (ll *LibraryLoader) Schemas(schemaOverlays []*schema.DocumentSchemaEnvelope
 		}
 		return currentLibrarySchema, childLibrarySchemas, nil
 	}
-	return schema.NewPermissiveSchema(), childLibrarySchemas, nil
+	return schema.NewNullSchema(), childLibrarySchemas, nil
 }
 
 func collectSchemaDocs(schemaFiles []*FileInLibrary, loader *TemplateLoader) ([]*schema.DocumentSchemaEnvelope, error) {

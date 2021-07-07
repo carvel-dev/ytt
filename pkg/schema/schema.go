@@ -60,7 +60,8 @@ func NewDocumentSchemaEnvelope(doc *yamlmeta.Document) (*DocumentSchemaEnvelope,
 	}, nil
 }
 
-func NewPermissiveSchema() *DocumentSchema {
+// NewNullSchema provides the "Null Object" value of Schema. This is used in the case where no schema was provided.
+func NewNullSchema() *DocumentSchema {
 	return &DocumentSchema{
 		Source: &yamlmeta.Document{},
 		DocType: &DocumentType{
