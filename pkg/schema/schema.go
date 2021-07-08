@@ -167,15 +167,6 @@ func NewArrayItemType(item *yamlmeta.ArrayItem) (*ArrayItemType, error) {
 		if err != nil {
 			return nil, err
 		}
-	} else {
-		if _, ok := typeOfValue.(*NullType); ok {
-			return nil, NewSchemaError("Invalid schema - @schema/nullable is not supported on array items", schemaAssertionError{
-				position: item.Position,
-				expected: "a valid annotation",
-				found:    fmt.Sprintf("@%v", AnnotationNullable),
-				hints:    []string{"Remove the @schema/nullable annotation from array item"},
-			})
-		}
 	}
 	err = valueTypeAllowsItemValue(typeOfValue, item.Value, item.Position)
 	if err != nil {

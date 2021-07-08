@@ -1106,7 +1106,7 @@ rendered: #@ data.values
 
 		assertSucceeds(t, filesToProcess, expected, opts)
 	})
-	t.Run("when the value is a map", func(t *testing.T) {
+	t.Run("on a map", func(t *testing.T) {
 		schemaYAML := `#@data/values-schema
 ---
 defaults:
@@ -1148,7 +1148,38 @@ overriden:
 
 		assertSucceeds(t, filesToProcess, expected, opts)
 	})
-	t.Run("when the value is a array", func(t *testing.T) {
+	t.Run("on a map item", func(t *testing.T) {
+		schemaYAML := `#@data/values-schema
+---
+map:
+  #@schema/nullable
+  a: 1
+  #@schema/nullable
+  b: 2
+`
+		dataValuesYAML := `#@data/values
+---
+map:
+  a: 1
+`
+		templateYAML := `#@ load("@ytt:data", "data")
+---
+map: #@ data.values.map
+`
+		expected := `map:
+  a: 1
+  b: null
+`
+
+		filesToProcess := files.NewSortedFiles([]*files.File{
+			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
+			files.MustNewFileFromSource(files.NewBytesSource("dataValues.yml", []byte(dataValuesYAML))),
+			files.MustNewFileFromSource(files.NewBytesSource("template.yml", []byte(templateYAML))),
+		})
+
+		assertSucceeds(t, filesToProcess, expected, opts)
+	})
+	t.Run("on an array", func(t *testing.T) {
 		schemaYAML := `#@data/values-schema
 ---
 defaults:
@@ -1188,7 +1219,41 @@ overriden:
 
 		assertSucceeds(t, filesToProcess, expected, opts)
 	})
-	t.Run("when the value is a scalar", func(t *testing.T) {
+	t.Run("on an array item", func(t *testing.T) {
+		schemaYAML := `#@data/values-schema
+---
+array:
+#@schema/nullable
+- ""
+`
+		dataValuesYAML := `#@data/values
+---
+array:
+- one
+- null
+- two
+-
+`
+		templateYAML := `#@ load("@ytt:data", "data")
+---
+array: #@ data.values.array
+`
+		expected := `array:
+- one
+- null
+- two
+- null
+`
+
+		filesToProcess := files.NewSortedFiles([]*files.File{
+			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
+			files.MustNewFileFromSource(files.NewBytesSource("dataValues.yml", []byte(dataValuesYAML))),
+			files.MustNewFileFromSource(files.NewBytesSource("template.yml", []byte(templateYAML))),
+		})
+
+		assertSucceeds(t, filesToProcess, expected, opts)
+	})
+	t.Run("on a scalar", func(t *testing.T) {
 		schemaYAML := `#@data/values-schema
 ---
 defaults:
@@ -2242,35 +2307,6 @@ schema.yml:
     = hint: in schema, the one item of the array implies the type of its elements.
     = hint: in schema, the default value for an array is always an empty list.
     = hint: default values can be overridden via a data values overlay.
-`
-
-		assertFails(t, filesToProcess, expectedErr, opts)
-	})
-	t.Run("array with a nullable annotation", func(t *testing.T) {
-		schemaYAML := `#@data/values-schema
----
-vpc:
-  subnet_ids:
-  #@schema/nullable
-  - 0
-`
-
-		filesToProcess := files.NewSortedFiles([]*files.File{
-			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
-		})
-
-		expectedErr := `
-Invalid schema - @schema/nullable is not supported on array items
-=================================================================
-
-schema.yml:
-    |
-  6 |   - 0
-    |
-
-    = found: @schema/nullable
-    = expected: a valid annotation
-    = hint: Remove the @schema/nullable annotation from array item
 `
 
 		assertFails(t, filesToProcess, expectedErr, opts)
