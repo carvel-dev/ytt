@@ -1,0 +1,13 @@
+#! we declare "name:" and "image:" as "nullable"
+#! requiring the user to supply an override
+#! (see validations.star)
+
+#@data/values-schema
+---
+namespace: default
+#@schema/nullable
+name: app
+replicas: 1
+port: 80
+#@schema/nullable
+image: ""

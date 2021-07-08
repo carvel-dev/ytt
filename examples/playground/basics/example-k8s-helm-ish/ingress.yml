@@ -2,7 +2,7 @@
 #@ load("helpers.star", "fullname")
 #@ load("helpers.lib.yml", "labels")
 
-#@ if/end data.values.ingress.enabled:
+#@ if/end data.values.ingress:
 ---
 apiVersion: extensions/v1beta1
 kind: Ingress

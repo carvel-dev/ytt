@@ -1,4 +1,4 @@
-#@data/values
+#@data/values-schema
 ---
 docker:
   server: "DOCKER_REGISTRY_SERVER"

@@ -13,13 +13,10 @@ import (
 	"github.com/k14s/ytt/pkg/yamlmeta"
 )
 
-type NullSchema struct {
-}
-
 type DocumentSchema struct {
 	Source     *yamlmeta.Document
 	defaultDVs *yamlmeta.Document
-	DocType    *DocumentType
+	DocType    yamlmeta.Type
 }
 
 type DocumentSchemaEnvelope struct {
@@ -31,7 +28,7 @@ type DocumentSchemaEnvelope struct {
 }
 
 func NewDocumentSchema(doc *yamlmeta.Document) (*DocumentSchema, error) {
-	docType, err := NewDocumentType(doc)
+	docType, err := inferTypeFromValue(doc, doc.Position)
 	if err != nil {
 		return nil, err
 	}
@@ -63,7 +60,8 @@ func NewDocumentSchemaEnvelope(doc *yamlmeta.Document) (*DocumentSchemaEnvelope,
 	}, nil
 }
 
-func NewPermissiveSchema() *DocumentSchema {
+// NewNullSchema provides the "Null Object" value of Schema. This is used in the case where no schema was provided.
+func NewNullSchema() *DocumentSchema {
 	return &DocumentSchema{
 		Source: &yamlmeta.Document{},
 		DocType: &DocumentType{
@@ -72,13 +70,29 @@ func NewPermissiveSchema() *DocumentSchema {
 }
 
 func NewDocumentType(doc *yamlmeta.Document) (*DocumentType, error) {
-	docType := &DocumentType{Source: doc, Position: doc.Position}
-	valueType, err := inferTypeFromValue(doc.Value, doc.Position)
+	var typeOfValue yamlmeta.Type
+
+	anns, err := collectAnnotations(doc)
+	if err != nil {
+		return nil, NewSchemaError("Invalid schema", err)
+	}
+	typeOfValue = getTypeFromAnnotations(anns)
+
+	if typeOfValue == nil {
+		typeOfValue, err = inferTypeFromValue(doc.Value, doc.GetPosition())
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	err = valueTypeAllowsItemValue(typeOfValue, doc.Value, doc.Position)
 	if err != nil {
 		return nil, err
 	}
-	docType.ValueType = valueType
-	return docType, nil
+
+	defaultValue := typeOfValue.GetDefaultValue()
+
+	return &DocumentType{Source: doc, Position: doc.Position, ValueType: typeOfValue, defaultValue: defaultValue}, nil
 }
 
 func NewMapType(m *yamlmeta.Map) (*MapType, error) {
@@ -173,6 +187,12 @@ func NewArrayItemType(item *yamlmeta.ArrayItem) (*ArrayItemType, error) {
 
 func inferTypeFromValue(value interface{}, position *filepos.Position) (yamlmeta.Type, error) {
 	switch typedContent := value.(type) {
+	case *yamlmeta.Document:
+		docType, err := NewDocumentType(typedContent)
+		if err != nil {
+			return nil, err
+		}
+		return docType, nil
 	case *yamlmeta.Map:
 		mapType, err := NewMapType(typedContent)
 		if err != nil {
@@ -230,16 +250,8 @@ func getSchemaLibRef(libRefs ExtractLibRefs, doc *yamlmeta.Document) ([]ref.Libr
 	return libRef, nil
 }
 
-func (n NullSchema) AssignType(typeable yamlmeta.Typeable) yamlmeta.TypeCheck {
-	return yamlmeta.TypeCheck{}
-}
-
 func (s *DocumentSchema) AssignType(typeable yamlmeta.Typeable) yamlmeta.TypeCheck {
 	return s.DocType.AssignTypeTo(typeable)
-}
-
-func (n NullSchema) DefaultDataValues() *yamlmeta.Document {
-	return nil
 }
 
 func (s *DocumentSchema) DefaultDataValues() *yamlmeta.Document {
@@ -252,13 +264,6 @@ func (s *DocumentSchema) deepCopy() *DocumentSchema {
 		defaultDVs: s.defaultDVs.DeepCopy(),
 		DocType:    s.DocType,
 	}
-}
-
-func (n NullSchema) ValidateWithValues(valuesFilesCount int) error {
-	if valuesFilesCount > 0 {
-		return fmt.Errorf("Schema feature is enabled but no schema document was provided")
-	}
-	return nil
 }
 
 func (s *DocumentSchema) ValidateWithValues(valuesFilesCount int) error {

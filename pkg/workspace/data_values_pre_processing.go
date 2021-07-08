@@ -52,11 +52,6 @@ func (o DataValuesPreProcessing) apply(files []*FileInLibrary) (*DataValues, []*
 		}
 
 		if resultDVsDoc == nil {
-			err := o.schema.ValidateWithValues(1)
-			if err != nil {
-				return nil, nil, err
-			}
-
 			resultDVsDoc = dv.Doc
 		} else {
 			resultDVsDoc, err = o.overlay(resultDVsDoc, dv.Doc)

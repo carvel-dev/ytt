@@ -1,5 +1,6 @@
-#@data/values
+#@data/values-schema
 ---
 scaling_factor: 8
 #@overlay/match missing_ok=True
+#@schema/nullable
 ingress_path: ""

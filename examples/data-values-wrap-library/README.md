@@ -3,8 +3,8 @@ This example showcases how to wrap an upstream set of templates to expose a simp
 In this example:
 
 - `_ytt_lib/app1`: contains app1 templates
-  - `values.yml`: contains data values to configure image (e.g. image.url)
-- `values.yml`: introduces simplified data value to configure part of image (e.g. image.username)
+  - `schema.yml`: declares data values that configure image (e.g. image.url)
+- `schema.yml`: declares simplified data value to configure part of image (e.g. image.username)
 - `config.yml`: includes app1 configuration with augmented image data value
 
 ```bash

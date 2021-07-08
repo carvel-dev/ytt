@@ -1,0 +1,7 @@
+#@data/values
+---
+echos:
+- name: first
+- name: second
+  port: 8081
+  text: "Hello #ytt World on 8081!"

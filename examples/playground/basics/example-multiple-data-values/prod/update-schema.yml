@@ -1,0 +1,9 @@
+#@ load("@ytt:overlay", "overlay")
+#@data/values-schema
+---
+keys:
+  #@overlay/remove
+  key1: ""
+  key2: val2-new
+  #@overlay/match missing_ok=True
+  key3: val3

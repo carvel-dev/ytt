@@ -1,4 +1,4 @@
-#@data/values
+#@data/values-schema
 ---
 port: 8080
 #! note how text is quoted automatically in the result file

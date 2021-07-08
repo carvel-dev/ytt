@@ -14,7 +14,7 @@ readme: |
 
   You provide "data values" in a separate YAML file. That
   file contains one YAML document annotated with
-  "#@data/values".
+  "#@data/values-schema".
 
   Updating the ytt flow from "Hello World",
 
@@ -31,7 +31,7 @@ readme: |
   -----------------------------
 
   In our example,
-  1. we add a new file `values.yml` (at the bottom)
+  1. we add a new file `schema.yml` (at the bottom)
   2. our template now `load()`s the data values module into
      the local variable `data`;
   3. and references values through `data.values`

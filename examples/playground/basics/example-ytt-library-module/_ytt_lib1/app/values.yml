@@ -1,7 +1,0 @@
-#@data/values
----
-namespace: default
-name: app
-replicas: 1
-port: 80
-image:

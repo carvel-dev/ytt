@@ -3,15 +3,12 @@
 apps:
 - name: apple
   path: /apple
-  port: 8080
   text: "Hi from #ytt apple"
 
 - name: banana
   path: /banana
-  port: 8080
   text: "Hi from #ytt banana"
 
 - name: orange
   path: /orange
-  port: 8080
   text: "Hi from #ytt orange"

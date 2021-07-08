@@ -1,5 +1,5 @@
 #! variables that need to be externally configurable
-#! are specified in a data values file
+#! are specified in a data values schema file
 
 #@ load("@ytt:data", "data")
 
