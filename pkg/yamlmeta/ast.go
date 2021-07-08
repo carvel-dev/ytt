@@ -30,8 +30,13 @@ type Node interface {
 	sealed() // limit the concrete types of Node to map directly only to types allowed in YAML spec.
 }
 
-// Ensure: all types are — in fact — assignable to Node
-var _ = []Node{&DocumentSet{}, &Document{}, &Map{}, &MapItem{}, &Array{}, &ArrayItem{}}
+type ValueHoldingNode interface {
+	Node
+	Val() interface{}
+}
+
+var _ = []Node{&DocumentSet{}, &Map{}, &Array{}}
+var _ = []ValueHoldingNode{&Document{}, &MapItem{}, &ArrayItem{}}
 
 type DocumentSet struct {
 	Metas    []*Meta
