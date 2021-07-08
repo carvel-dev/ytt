@@ -18,6 +18,7 @@ jobs:
       uses: actions/checkout@v2
       with:
         path: src/github.com/${{ github.repository }}
+        fetch-depth: 0
     - name: Run Tests
       run: |
         set -e -x
