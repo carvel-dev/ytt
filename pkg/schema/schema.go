@@ -70,7 +70,7 @@ func NewNullSchema() *DocumentSchema {
 }
 
 func NewDocumentType(doc *yamlmeta.Document) (*DocumentType, error) {
-	typeOfValue, err := getTypeFromValueHoldingNode(doc)
+	typeOfValue, err := getType(doc)
 	if err != nil {
 		return nil, err
 	}
@@ -93,7 +93,7 @@ func NewMapType(m *yamlmeta.Map) (*MapType, error) {
 }
 
 func NewMapItemType(item *yamlmeta.MapItem) (*MapItemType, error) {
-	typeOfValue, err := getTypeFromValueHoldingNode(item)
+	typeOfValue, err := getType(item)
 	if err != nil {
 		return nil, err
 	}
@@ -120,7 +120,7 @@ func NewArrayType(a *yamlmeta.Array) (*ArrayType, error) {
 }
 
 func NewArrayItemType(item *yamlmeta.ArrayItem) (*ArrayItemType, error) {
-	typeOfValue, err := getTypeFromValueHoldingNode(item)
+	typeOfValue, err := getType(item)
 	if err != nil {
 		return nil, err
 	}
@@ -128,9 +128,7 @@ func NewArrayItemType(item *yamlmeta.ArrayItem) (*ArrayItemType, error) {
 	return &ArrayItemType{ValueType: typeOfValue, defaultValue: typeOfValue.GetDefaultValue(), Position: item.GetPosition()}, nil
 }
 
-// getTypeFromValueHoldingNode derives the yamlmeta.Type from the given `node`.
-//    a "value-holding node" is a node that holds an actual value: Document, ArrayItem, or MapItem
-func getTypeFromValueHoldingNode(node yamlmeta.Node) (yamlmeta.Type, error) {
+func getType(node yamlmeta.ValueHoldingNode) (yamlmeta.Type, error) {
 	var typeOfValue yamlmeta.Type
 
 	anns, err := collectAnnotations(node)
@@ -140,13 +138,13 @@ func getTypeFromValueHoldingNode(node yamlmeta.Node) (yamlmeta.Type, error) {
 	typeOfValue = getTypeFromAnnotations(anns)
 
 	if typeOfValue == nil {
-		typeOfValue, err = inferTypeFromValue(node.GetValues()[0], node.GetPosition())
+		typeOfValue, err = inferTypeFromValue(node.Val(), node.GetPosition())
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	err = valueTypeAllowsItemValue(typeOfValue, node.GetValues()[0], node.GetPosition())
+	err = valueTypeAllowsItemValue(typeOfValue, node.Val(), node.GetPosition())
 	if err != nil {
 		return nil, err
 	}
