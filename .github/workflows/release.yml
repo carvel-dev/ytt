@@ -22,6 +22,11 @@ jobs:
         with:
           go-version: 1.16.0
 
+      - name: generate website/generate.go
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          ./hack/build-binaries.sh "$VERSION"
+
       - name: Run GoReleaser
         # GoReleaser v2.5.0
         uses: goreleaser/goreleaser-action@5e15885530fb01d81d1f24e8a6f54ebbd0fed7eb
@@ -92,7 +97,7 @@ jobs:
           set -e -x
           VERSION=`echo ${{ github.ref }}  | grep -Eo '[0-9].*'`
 
-          ./hack/build-binaries.sh "$VERSION" > ./go-checksums
+          ./hack/build-binaries.sh "$VERSION"
           cat ./go-checksums
           diff ./go-checksums <(cat <<EOF
           ${{steps.get-checksums-from-draft-release.outputs.result}}
