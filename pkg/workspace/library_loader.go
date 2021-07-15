@@ -306,10 +306,17 @@ func (*LibraryLoader) sortedOutputDocSets(outputDocSets map[*FileInLibrary]*yaml
 
 func (LibraryLoader) checkUnusedDVsOrSchemas(libraryValues []*DataValues, librarySchemas []*schema.DocumentSchemaEnvelope) error {
 	var unusedValuesDescs []string
+	var unusedDocTypes []string
+	numDVNotUsed := 0
+
 	for _, dv := range libraryValues {
 		if !dv.IsUsed() {
 			unusedValuesDescs = append(unusedValuesDescs, dv.Desc())
 		}
+	}
+
+	if numDVNotUsed = len(unusedValuesDescs); numDVNotUsed > 0 {
+		unusedDocTypes = append(unusedDocTypes, "data values")
 	}
 
 	for _, s := range librarySchemas {
@@ -317,11 +324,14 @@ func (LibraryLoader) checkUnusedDVsOrSchemas(libraryValues []*DataValues, librar
 			unusedValuesDescs = append(unusedValuesDescs, s.Desc())
 		}
 	}
+	if len(unusedValuesDescs) > numDVNotUsed {
+		unusedDocTypes = append(unusedDocTypes, "schema")
+	}
 
 	if len(unusedValuesDescs) == 0 {
 		return nil
 	}
 
-	return fmt.Errorf("Expected all provided library data values documents "+
-		"to be used but found unused: %s", strings.Join(unusedValuesDescs, ", "))
+	return fmt.Errorf("Expected all provided library %s documents "+
+		"to be used but found unused: %s", strings.Join(unusedDocTypes, ", and "), strings.Join(unusedValuesDescs, ", "))
 }

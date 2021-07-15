@@ -2231,7 +2231,7 @@ fooX: not-used
 			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", schemaBytes)),
 		})
 
-		assertFails(t, filesToProcess, "Expected all provided library data values documents to be used "+
+		assertFails(t, filesToProcess, "Expected all provided library schema documents to be used "+
 			"but found unused: Schema belonging to library '@libby' on line schema.yml:4", opts)
 	})
 
