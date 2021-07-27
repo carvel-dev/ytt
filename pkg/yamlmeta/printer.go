@@ -44,7 +44,7 @@ func (p Printer) print(val interface{}, indent string, writer io.Writer) {
 	switch typedVal := val.(type) {
 	case *DocumentSet:
 		fmt.Fprintf(writer, "%s%s: docset%s\n", indent, p.lineStr(typedVal.Position), p.ptrStr(typedVal))
-		p.printMeta(typedVal.Metas, indent, writer)
+		p.printComments(typedVal.Comments, indent, writer)
 
 		for _, item := range typedVal.Items {
 			p.print(item, indent+indentLvl, writer)
@@ -52,37 +52,37 @@ func (p Printer) print(val interface{}, indent string, writer io.Writer) {
 
 	case *Document:
 		fmt.Fprintf(writer, "%s%s: doc%s\n", indent, p.lineStr(typedVal.Position), p.ptrStr(typedVal))
-		p.printMeta(typedVal.Metas, indent, writer)
+		p.printComments(typedVal.Comments, indent, writer)
 		p.print(typedVal.Value, indent+indentLvl, writer)
 
 	case *Map:
 		fmt.Fprintf(writer, "%s%s: map%s\n", indent, p.lineStr(typedVal.Position), p.ptrStr(typedVal))
-		p.printMeta(typedVal.Metas, indent, writer)
+		p.printComments(typedVal.Comments, indent, writer)
 
 		for _, item := range typedVal.Items {
 			fmt.Fprintf(writer, "%s%s: key=%s%s\n", indent, p.lineStr(item.Position), item.Key, p.ptrStr(item))
-			p.printMeta(item.Metas, indent, writer)
+			p.printComments(item.Comments, indent, writer)
 			p.print(item.Value, indent+indentLvl, writer)
 		}
 
 	case *MapItem:
 		fmt.Fprintf(writer, "%s%s: key=%s%s\n", indent, p.lineStr(typedVal.Position), typedVal.Key, p.ptrStr(typedVal))
-		p.printMeta(typedVal.Metas, indent, writer)
+		p.printComments(typedVal.Comments, indent, writer)
 		p.print(typedVal.Value, indent+indentLvl, writer)
 
 	case *Array:
 		fmt.Fprintf(writer, "%s%s: array%s\n", indent, p.lineStr(typedVal.Position), p.ptrStr(typedVal))
-		p.printMeta(typedVal.Metas, indent, writer)
+		p.printComments(typedVal.Comments, indent, writer)
 
 		for i, item := range typedVal.Items {
 			fmt.Fprintf(writer, "%s%s: idx=%d%s\n", indent, p.lineStr(item.Position), i, p.ptrStr(item))
-			p.printMeta(item.Metas, indent, writer)
+			p.printComments(item.Comments, indent, writer)
 			p.print(item.Value, indent+indentLvl, writer)
 		}
 
 	case *ArrayItem:
 		fmt.Fprintf(writer, "%s%s: idx=top%s\n", indent, p.lineStr(typedVal.Position), p.ptrStr(typedVal))
-		p.printMeta(typedVal.Metas, indent, writer)
+		p.printComments(typedVal.Comments, indent, writer)
 		p.print(typedVal.Value, indent+indentLvl, writer)
 
 	default:
@@ -101,8 +101,8 @@ func (p Printer) ptrStr(node Node) string {
 	return ""
 }
 
-func (p Printer) printMeta(metas []*Meta, indent string, writer io.Writer) {
-	for _, meta := range metas {
-		fmt.Fprintf(writer, "%smeta: %s: '%s'\n", indent, p.lineStr(meta.Position), meta.Data)
+func (p Printer) printComments(comments []*Comment, indent string, writer io.Writer) {
+	for _, comment := range comments {
+		fmt.Fprintf(writer, "%scomment: %s: '%s'\n", indent, p.lineStr(comment.Position), comment.Data)
 	}
 }

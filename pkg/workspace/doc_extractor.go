@@ -6,21 +6,21 @@ package workspace
 import (
 	"fmt"
 
-	"github.com/k14s/ytt/pkg/structmeta"
+	"github.com/k14s/ytt/pkg/template"
 	"github.com/k14s/ytt/pkg/yamlmeta"
 	"github.com/k14s/ytt/pkg/yamltemplate"
 )
 
 const (
-	AnnotationDataValues       structmeta.AnnotationName = "data/values"
-	AnnotationDataValuesSchema structmeta.AnnotationName = "data/values-schema"
+	AnnotationDataValues       template.AnnotationName = "data/values"
+	AnnotationDataValuesSchema template.AnnotationName = "data/values-schema"
 )
 
 type DocExtractor struct {
 	DocSet *yamlmeta.DocumentSet
 }
 
-func (v DocExtractor) Extract(annName structmeta.AnnotationName) ([]*yamlmeta.Document,
+func (v DocExtractor) Extract(annName template.AnnotationName) ([]*yamlmeta.Document,
 	[]*yamlmeta.Document, error) {
 
 	err := v.checkNonDocs(v.DocSet, annName)
@@ -37,7 +37,7 @@ func (v DocExtractor) Extract(annName structmeta.AnnotationName) ([]*yamlmeta.Do
 }
 
 func (v DocExtractor) extract(docSet *yamlmeta.DocumentSet,
-	annName structmeta.AnnotationName) ([]*yamlmeta.Document, []*yamlmeta.Document, error) {
+	annName template.AnnotationName) ([]*yamlmeta.Document, []*yamlmeta.Document, error) {
 
 	var matchedDocs []*yamlmeta.Document
 	var nonMatchedDocs []*yamlmeta.Document
@@ -45,14 +45,14 @@ func (v DocExtractor) extract(docSet *yamlmeta.DocumentSet,
 	for _, doc := range docSet.Items {
 		var hasMatchingAnn bool
 
-		for _, meta := range doc.GetMetas() {
+		for _, comment := range doc.GetComments() {
 			// TODO potentially use template.NewAnnotations(doc).Has(yttoverlay.AnnotationMatch)
 			// however if doc was not processed by the template, it wont have any annotations set
-			structMeta, err := yamltemplate.NewStructMetaFromMeta(meta, yamltemplate.MetasOpts{IgnoreUnknown: true})
+			meta, err := yamltemplate.NewTemplateMetaFromYAMLComment(comment, yamltemplate.MetasOpts{IgnoreUnknown: true})
 			if err != nil {
 				return nil, nil, err
 			}
-			for _, ann := range structMeta.Annotations {
+			for _, ann := range meta.Annotations {
 				if ann.Name == annName {
 					if hasMatchingAnn {
 						return nil, nil, fmt.Errorf("%s annotation may only be used once per YAML doc", annName)
@@ -72,19 +72,19 @@ func (v DocExtractor) extract(docSet *yamlmeta.DocumentSet,
 	return matchedDocs, nonMatchedDocs, nil
 }
 
-func (v DocExtractor) checkNonDocs(val interface{}, annName structmeta.AnnotationName) error {
+func (v DocExtractor) checkNonDocs(val interface{}, annName template.AnnotationName) error {
 	node, ok := val.(yamlmeta.Node)
 	if !ok {
 		return nil
 	}
 
-	for _, meta := range node.GetMetas() {
-		structMeta, err := yamltemplate.NewStructMetaFromMeta(meta, yamltemplate.MetasOpts{IgnoreUnknown: true})
+	for _, comment := range node.GetComments() {
+		meta, err := yamltemplate.NewTemplateMetaFromYAMLComment(comment, yamltemplate.MetasOpts{IgnoreUnknown: true})
 		if err != nil {
 			return err
 		}
 
-		for _, ann := range structMeta.Annotations {
+		for _, ann := range meta.Annotations {
 			if ann.Name == annName {
 				// TODO check for annotation emptiness
 				_, isDoc := node.(*yamlmeta.Document)

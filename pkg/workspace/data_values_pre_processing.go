@@ -88,7 +88,7 @@ func (o DataValuesPreProcessing) collectDataValuesDocs(files []*FileInLibrary) (
 		allDvs = append(allDvs, dv)
 	}
 	for _, fileInLib := range files {
-		docs, err := o.templateFile(fileInLib)
+		docs, err := o.extractDataValueDocs(fileInLib)
 		if err != nil {
 			return nil, fmt.Errorf("Templating file '%s': %s", fileInLib.File.RelativePath(), err)
 		}
@@ -126,7 +126,7 @@ func (o DataValuesPreProcessing) allFileDescs(files []*FileInLibrary) string {
 	return strings.Join(result, ", ")
 }
 
-func (o DataValuesPreProcessing) templateFile(fileInLib *FileInLibrary) ([]*yamlmeta.Document, error) {
+func (o DataValuesPreProcessing) extractDataValueDocs(fileInLib *FileInLibrary) ([]*yamlmeta.Document, error) {
 	libraryCtx := LibraryExecutionContext{Current: fileInLib.Library, Root: NewRootLibrary(nil)}
 
 	_, resultDocSet, err := o.loader.EvalYAML(libraryCtx, fileInLib.File)

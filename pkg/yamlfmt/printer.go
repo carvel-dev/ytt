@@ -182,7 +182,7 @@ func (p *Printer) printMeta(val interface{}, ws whitespace, writer *writer, firs
 	spaced := firstChild // do not add space before first child
 
 	if typedVal, ok := val.(yamlmeta.Node); ok {
-		for _, meta := range typedVal.GetMetas() {
+		for _, meta := range typedVal.GetComments() {
 			if typedVal.GetPosition().IsKnown() && meta.Position.LineNum() == typedVal.GetPosition().LineNum() {
 				suffix = fmt.Sprintf(" #%s", meta.Data)
 			} else {

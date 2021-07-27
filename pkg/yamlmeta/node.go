@@ -182,23 +182,23 @@ func (a *Array) GetValues() []interface{} {
 func (ai *ArrayItem) GetValues() []interface{} { return []interface{}{ai.Value} }
 func (s *Scalar) GetValues() []interface{}     { return []interface{}{s.Value} }
 
-func (ds *DocumentSet) GetMetas() []*Meta { return ds.Metas }
-func (d *Document) GetMetas() []*Meta     { return d.Metas }
-func (m *Map) GetMetas() []*Meta          { return m.Metas }
-func (mi *MapItem) GetMetas() []*Meta     { return mi.Metas }
-func (a *Array) GetMetas() []*Meta        { return a.Metas }
-func (ai *ArrayItem) GetMetas() []*Meta   { return ai.Metas }
+func (ds *DocumentSet) GetComments() []*Comment { return ds.Comments }
+func (d *Document) GetComments() []*Comment     { return d.Comments }
+func (m *Map) GetComments() []*Comment          { return m.Comments }
+func (mi *MapItem) GetComments() []*Comment     { return mi.Comments }
+func (a *Array) GetComments() []*Comment        { return a.Comments }
+func (ai *ArrayItem) GetComments() []*Comment   { return ai.Comments }
 
-func (ds *DocumentSet) addMeta(meta *Meta) { ds.Metas = append(ds.Metas, meta) }
-func (d *Document) addMeta(meta *Meta)     { d.Metas = append(d.Metas, meta) }
-func (m *Map) addMeta(meta *Meta) {
-	panic(fmt.Sprintf("Attempted to attach metadata (%s) to Map (%v); maps cannot carry metadata", meta.Data, m))
+func (ds *DocumentSet) addComments(comment *Comment) { ds.Comments = append(ds.Comments, comment) }
+func (d *Document) addComments(comment *Comment)     { d.Comments = append(d.Comments, comment) }
+func (m *Map) addComments(comment *Comment) {
+	panic(fmt.Sprintf("Attempted to attach comment (%s) to Map (%v); maps cannot carry comments", comment.Data, m))
 }
-func (mi *MapItem) addMeta(meta *Meta) { mi.Metas = append(mi.Metas, meta) }
-func (a *Array) addMeta(meta *Meta) {
-	panic(fmt.Sprintf("Attempted to attach metadata (%s) to Array (%v); arrays cannot carry metadata", meta.Data, a))
+func (mi *MapItem) addComments(comment *Comment) { mi.Comments = append(mi.Comments, comment) }
+func (a *Array) addComments(comment *Comment) {
+	panic(fmt.Sprintf("Attempted to attach comment (%s) to Array (%v); arrays cannot carry comments", comment.Data, a))
 }
-func (ai *ArrayItem) addMeta(meta *Meta) { ai.Metas = append(ai.Metas, meta) }
+func (ai *ArrayItem) addComments(comment *Comment) { ai.Comments = append(ai.Comments, comment) }
 
 func (ds *DocumentSet) GetAnnotations() interface{} { return ds.annotations }
 func (d *Document) GetAnnotations() interface{}     { return d.annotations }

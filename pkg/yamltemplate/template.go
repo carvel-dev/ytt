@@ -8,14 +8,13 @@ import (
 	"fmt"
 
 	"github.com/k14s/ytt/pkg/filepos"
-	"github.com/k14s/ytt/pkg/structmeta"
 	"github.com/k14s/ytt/pkg/template"
 	"github.com/k14s/ytt/pkg/texttemplate"
 	"github.com/k14s/ytt/pkg/yamlmeta"
 )
 
 const (
-	AnnotationTextTemplatedStrings structmeta.AnnotationName = "yaml/text-templated-strings"
+	AnnotationTextTemplatedStrings template.AnnotationName = "yaml/text-templated-strings"
 )
 
 type Template struct {
@@ -45,13 +44,13 @@ func hasTemplating(val interface{}) bool {
 	}
 
 	metaOpts := MetasOpts{IgnoreUnknown: true}
-	for _, meta := range node.GetMetas() {
-		structMeta, err := NewStructMetaFromMeta(meta, metaOpts)
+	for _, comment := range node.GetComments() {
+		meta, err := NewTemplateMetaFromYAMLComment(comment, metaOpts)
 		if err != nil {
 			return false
 		}
-		for _, meta := range structMeta.Annotations {
-			if meta.Name != structmeta.AnnotationNameComment {
+		for _, meta := range meta.Annotations {
+			if meta.Name != template.AnnotationNameComment {
 				return true
 			}
 		}
@@ -134,7 +133,7 @@ func (e *Template) build(val interface{}, parentNode yamlmeta.Node, parentTag te
 	for _, metaAndAnn := range metas.Annotations {
 		code = append(code, template.Line{
 			Instruction: e.instructions.NewStartNodeAnnotation(nodeTag, *metaAndAnn.Annotation).WithDebug(e.debugComment(node)),
-			SourceLine:  e.newSourceLine(metaAndAnn.Meta.Position),
+			SourceLine:  e.newSourceLine(metaAndAnn.Comment.Position),
 		})
 	}
 
