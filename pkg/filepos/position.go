@@ -26,6 +26,11 @@ func NewUnknownPosition() *Position {
 	return &Position{}
 }
 
+func NewUnknownPositionWithKeyVal(k, v interface{}, separator string) *Position {
+	lineString := fmt.Sprintf("%v%v %v", k, separator, v)
+	return &Position{line: lineString}
+}
+
 func (p *Position) SetFile(file string) { p.file = file }
 
 func (p *Position) SetLine(line string) { p.line = line }

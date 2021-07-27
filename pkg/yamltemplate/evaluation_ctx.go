@@ -131,7 +131,7 @@ func (e EvaluationCtx) convertValToDocSetItems(val interface{}) ([]*yamlmeta.Doc
 func (e EvaluationCtx) replaceItemInMap(
 	dstMap *yamlmeta.Map, placeholderItem *yamlmeta.MapItem, val interface{}) error {
 
-	insertItems, carryMeta, err := e.convertValToMapItems(val, placeholderItem.Position.DeepCopy())
+	insertItems, carryMeta, err := e.convertValToMapItems(val, filepos.NewUnknownPosition())
 	if err != nil {
 		return err
 	}
@@ -162,7 +162,9 @@ func (e EvaluationCtx) convertValToMapItems(val interface{}, position *filepos.P
 	switch typedVal := val.(type) {
 	case *orderedmap.Map:
 		result := []*yamlmeta.MapItem{}
+
 		typedVal.Iterate(func(k, v interface{}) {
+
 			item := &yamlmeta.MapItem{Key: k, Value: yamlmeta.NewASTFromInterfaceWithPosition(v, position), Position: position}
 			result = append(result, item)
 		})
@@ -177,7 +179,7 @@ func (e EvaluationCtx) convertValToMapItems(val interface{}, position *filepos.P
 }
 
 func (e EvaluationCtx) replaceItemInArray(dstArray *yamlmeta.Array, placeholderItem *yamlmeta.ArrayItem, val interface{}) error {
-	insertItems, err := e.convertValToArrayItems(val, placeholderItem.Position.DeepCopy())
+	insertItems, err := e.convertValToArrayItems(val, filepos.NewUnknownPosition())
 	if err != nil {
 		return err
 	}
