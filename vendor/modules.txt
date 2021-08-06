@@ -1,4 +1,4 @@
-# github.com/aws/aws-lambda-go v1.25.0
+# github.com/aws/aws-lambda-go v1.26.0
 ## explicit
 github.com/aws/aws-lambda-go/events
 github.com/aws/aws-lambda-go/lambda
