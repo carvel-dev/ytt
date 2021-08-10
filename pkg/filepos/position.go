@@ -28,7 +28,8 @@ func NewUnknownPosition() *Position {
 
 func NewUnknownPositionWithKeyVal(k, v interface{}, separator string) *Position {
 	lineString := fmt.Sprintf("%v%v %v", k, separator, v)
-	return &Position{line: lineString}
+	nonFileSource := "Converted from starlark source to yaml"
+	return &Position{file: nonFileSource, line: lineString}
 }
 
 func (p *Position) SetFile(file string) { p.file = file }

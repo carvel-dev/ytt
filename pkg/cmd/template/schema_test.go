@@ -2234,9 +2234,9 @@ foo: 3`)
      One or more data values were invalid
      ====================================
      
-     :
+     Converted from starlark source to yaml:
          |
-       ? | 
+       ? | foo: 4
          |
      
          = found: string
@@ -2274,9 +2274,9 @@ cat: meow
      One or more data values were invalid
      ====================================
      
-     :
+     Converted from starlark source to yaml:
          |
-       ? | 
+       ? | foo: bar
          |
      
          = found: string
