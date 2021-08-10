@@ -131,7 +131,8 @@ func (e EvaluationCtx) convertValToDocSetItems(val interface{}) ([]*yamlmeta.Doc
 func (e EvaluationCtx) replaceItemInMap(
 	dstMap *yamlmeta.Map, placeholderItem *yamlmeta.MapItem, val interface{}) error {
 
-	insertItems, carryMeta, err := e.convertValToMapItems(val, filepos.NewUnknownPosition())
+	//insertItems, carryMeta, err := e.convertValToMapItems(val, filepos.NewUnknownPosition())
+	insertItems, carryMeta, err := e.convertValToMapItems(val, placeholderItem.Position.DeepCopy())
 	if err != nil {
 		return err
 	}
@@ -179,7 +180,8 @@ func (e EvaluationCtx) convertValToMapItems(val interface{}, position *filepos.P
 }
 
 func (e EvaluationCtx) replaceItemInArray(dstArray *yamlmeta.Array, placeholderItem *yamlmeta.ArrayItem, val interface{}) error {
-	insertItems, err := e.convertValToArrayItems(val, filepos.NewUnknownPosition())
+	//insertItems, err := e.convertValToArrayItems(val, filepos.NewUnknownPosition())
+	insertItems, err := e.convertValToArrayItems(val, placeholderItem.Position.DeepCopy())
 	if err != nil {
 		return err
 	}

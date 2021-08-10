@@ -150,7 +150,8 @@ func convertToAST(val interface{}, defaultPosition *filepos.Position) interface{
 			convertedValue := convertToAST(item, defaultPosition)
 			result.Items = append(result.Items, &ArrayItem{
 				Value:    convertedValue,
-				Position: filepos.NewUnknownPositionWithKeyVal("-", convertedValue, ""),
+				Position: defaultPosition,
+				//Position: filepos.NewUnknownPositionWithKeyVal("-", convertedValue, ""),
 			})
 		}
 		return result
@@ -168,7 +169,8 @@ func convertToAST(val interface{}, defaultPosition *filepos.Position) interface{
 			result.Items = append(result.Items, &MapItem{
 				Key:      k,
 				Value:    convertedValue,
-				Position: filepos.NewUnknownPositionWithKeyVal(k, convertedValue, ":"),
+				Position: defaultPosition,
+				//Position: filepos.NewUnknownPositionWithKeyVal(k, convertedValue, ":"),
 			})
 		})
 		return result

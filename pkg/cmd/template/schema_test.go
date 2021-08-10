@@ -499,22 +499,21 @@ dataValues.yml:
     = found: string
     = expected: integer (by schema.yml:5)
 
-:
+dataValues.yml:
     |
-  ? | otherMap: two
+  8 | _: #@ template.replace({'map': { 'nestedMap': frag_func(), 'otherMap': 'two', 'array': ['three']}})
     |
 
     = found: string
     = expected: integer (by schema.yml:6)
 
-:
+dataValues.yml:
     |
-  ? | - three
+  8 | _: #@ template.replace({'map': { 'nestedMap': frag_func(), 'otherMap': 'two', 'array': ['three']}})
     |
 
     = found: string
     = expected: integer (by schema.yml:8)
-
 `
 
 		filesToProcess := files.NewSortedFiles([]*files.File{
@@ -544,14 +543,13 @@ rendered: #@ data.values
 One or more data values were invalid
 ====================================
 
-:
+dataValues.yml:
     |
-  ? | key: not an integer
+  4 | - #@ template.replace([{'key': 'not an integer'}])
     |
 
     = found: string
     = expected: integer (by schema.yml:3)
-
 `
 
 		filesToProcess := files.NewSortedFiles([]*files.File{
@@ -579,17 +577,17 @@ _: #@ template.replace(service())
 #@   return {'service': {'enabled': 8}}
 #@ end
 `
-		expectedErr := `One or more data values were invalid
+		expectedErr := `
+One or more data values were invalid
 ====================================
 
-:
+dataValues.yml:
     |
-  ? | enabled: 8
+  5 | _: #@ template.replace(service())
     |
 
     = found: integer
     = expected: boolean (by schema.yml:4)
-
 `
 
 		filesToProcess := files.NewSortedFiles([]*files.File{
@@ -2238,7 +2236,7 @@ foo: 3`)
      
      :
          |
-       ? | foo: 4
+       ? | 
          |
      
          = found: string
@@ -2278,7 +2276,7 @@ cat: meow
      
      :
          |
-       ? | foo: bar
+       ? | 
          |
      
          = found: string
