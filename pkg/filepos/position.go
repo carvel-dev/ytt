@@ -12,6 +12,7 @@ type Position struct {
 	file    string
 	line    string
 	known   bool
+	fromMemory bool
 }
 
 func NewPosition(lineNum int) *Position {
@@ -27,9 +28,10 @@ func NewUnknownPosition() *Position {
 }
 
 func NewUnknownPositionWithKeyVal(k, v interface{}, separator string) *Position {
-	lineString := fmt.Sprintf("%v%v %v", k, separator, v)
-	nonFileSource := "Converted from starlark source to yaml"
-	return &Position{file: nonFileSource, line: lineString}
+	lineString := fmt.Sprintf("%v%v %#v", k, separator, v)
+	nonFileSource := "Value calculated"
+	//could include type of value?
+	return &Position{file: nonFileSource, line: lineString, fromMemory: true}
 }
 
 func (p *Position) SetFile(file string) { p.file = file }
@@ -37,6 +39,8 @@ func (p *Position) SetFile(file string) { p.file = file }
 func (p *Position) SetLine(line string) { p.line = line }
 
 func (p *Position) IsKnown() bool { return p != nil && p.known }
+
+func (p *Position) FromMemory() bool { return p.fromMemory }
 
 func (p *Position) LineNum() int {
 	if !p.IsKnown() {

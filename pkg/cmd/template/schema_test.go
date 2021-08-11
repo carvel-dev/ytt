@@ -2234,10 +2234,10 @@ foo: 3`)
      One or more data values were invalid
      ====================================
      
-     Converted from starlark source to yaml:
-         |
-       ? | foo: 4
-         |
+     Value calculated:
+         #
+         # foo: "4"
+         #
      
          = found: string
          = expected: integer (by _ytt_lib/lib/schema.yml:4)
@@ -2274,10 +2274,10 @@ cat: meow
      One or more data values were invalid
      ====================================
      
-     Converted from starlark source to yaml:
-         |
-       ? | foo: bar
-         |
+     Value calculated:
+         #
+         # foo: "bar"
+         #
      
          = found: string
          = expected: integer (by _ytt_lib/libby/schema.yml:3)
