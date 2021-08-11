@@ -8,10 +8,10 @@ import (
 )
 
 type Position struct {
-	lineNum *int // 1 based
-	file    string
-	line    string
-	known   bool
+	lineNum    *int // 1 based
+	file       string
+	line       string
+	known      bool
 	fromMemory bool
 }
 

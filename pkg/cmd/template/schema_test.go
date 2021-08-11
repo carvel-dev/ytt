@@ -514,6 +514,7 @@ dataValues.yml:
 
     = found: string
     = expected: integer (by schema.yml:8)
+
 `
 
 		filesToProcess := files.NewSortedFiles([]*files.File{
@@ -550,50 +551,13 @@ dataValues.yml:
 
     = found: string
     = expected: integer (by schema.yml:3)
+
 `
 
 		filesToProcess := files.NewSortedFiles([]*files.File{
 			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
 			files.MustNewFileFromSource(files.NewBytesSource("dataValues.yml", []byte(dataValuesYAML))),
 			files.MustNewFileFromSource(files.NewBytesSource("template.yml", []byte(templateYAML))),
-		})
-
-		assertFails(t, filesToProcess, expectedErr, opts)
-	})
-	t.Run("when a data value map of the wrong type is passed using template replace with imported starlark function", func(t *testing.T) {
-
-		schemaYAML := `#@data/values-schema
----
-service:
-  enabled: true
-`
-		dataValuesYAML := `#@ load("@ytt:template", "template")
-#@ load("funcs.lib.yml", "service")
-#@data/values
----
-_: #@ template.replace(service())
-`
-		funcslibYAML := `#@ def service():
-#@   return {'service': {'enabled': 8}}
-#@ end
-`
-		expectedErr := `
-One or more data values were invalid
-====================================
-
-dataValues.yml:
-    |
-  5 | _: #@ template.replace(service())
-    |
-
-    = found: integer
-    = expected: boolean (by schema.yml:4)
-`
-
-		filesToProcess := files.NewSortedFiles([]*files.File{
-			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
-			files.MustNewFileFromSource(files.NewBytesSource("dataValues.yml", []byte(dataValuesYAML))),
-			files.MustNewFileFromSource(files.NewBytesSource("funcs.lib.yml", []byte(funcslibYAML))),
 		})
 
 		assertFails(t, filesToProcess, expectedErr, opts)
