@@ -28,10 +28,7 @@ func NewUnknownPosition() *Position {
 }
 
 func NewUnknownPositionWithKeyVal(k, v interface{}, separator string) *Position {
-	lineString := fmt.Sprintf("%v%v %#v", k, separator, v)
-	nonFileSource := "Value calculated"
-	//could include type of value?
-	return &Position{file: nonFileSource, line: lineString, fromMemory: true}
+	return &Position{line: fmt.Sprintf("%v%v %#v", k, separator, v), fromMemory: true}
 }
 
 func (p *Position) SetFile(file string) { p.file = file }

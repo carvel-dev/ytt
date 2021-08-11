@@ -2198,7 +2198,7 @@ foo: 3`)
      One or more data values were invalid
      ====================================
      
-     Value calculated:
+     Data value calculated:
          #
          # foo: "4"
          #
@@ -2238,7 +2238,7 @@ cat: meow
      One or more data values were invalid
      ====================================
      
-     Value calculated:
+     Data value calculated:
          #
          # foo: "bar"
          #

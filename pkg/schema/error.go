@@ -24,12 +24,15 @@ const schemaErrorReportTemplate = `
 {{.Description}}
 {{- end}}
 
-{{.FileName}}:
 {{- if .FromMemory}}
+
+{{.SourceName}}:
 {{pad "#" ""}}
 {{pad "#" ""}} {{.Source}}
 {{pad "#" ""}}
 {{- else}}
+
+{{.FileName}}:
 {{pad "|" ""}}
 {{pad "|" .FilePos}} {{.Source}}
 {{pad "|" ""}}
@@ -54,6 +57,7 @@ func NewSchemaError(summary string, errs ...error) error {
 				FileName:    typeCheckAssertionErr.position.GetFile(),
 				FilePos:     typeCheckAssertionErr.position.AsIntString(),
 				FromMemory:  typeCheckAssertionErr.position.FromMemory(),
+				SourceName:  "Data value calculated",
 				Source:      typeCheckAssertionErr.position.GetLine(),
 				Expected:    typeCheckAssertionErr.expected,
 				Found:       typeCheckAssertionErr.found,
@@ -110,6 +114,7 @@ type assertionFailure struct {
 	Source      string
 	FilePos     string
 	FromMemory  bool
+	SourceName  string
 	Expected    string
 	Found       string
 	Hints       []string
