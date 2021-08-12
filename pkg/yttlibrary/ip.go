@@ -23,9 +23,6 @@ var (
 			},
 		},
 	}
-	IPKWARGS = map[string]struct{}{
-		"return_error": struct{}{},
-	}
 )
 
 type ipModule struct{}
@@ -40,25 +37,17 @@ func (m ipModule) ParseAddr(thread *starlark.Thread, f *starlark.Builtin, args s
 	if args.Len() != 1 {
 		return starlark.None, fmt.Errorf("expected exactly one argument")
 	}
-	if err := core.CheckArgNames(kwargs, IPKWARGS); err != nil {
-		return starlark.None, err
-	}
-
-	returnTuple, err := core.BoolArg(kwargs, "return_error")
-	if err != nil {
-		return valueOrTuple(starlark.None, err, returnTuple)
-	}
 
 	ipStr, err := core.NewStarlarkValue(args.Index(0)).AsString()
 	if err != nil {
-		return valueOrTuple(starlark.None, err, returnTuple)
+		return starlark.None, err
 	}
 
 	parsedIP := net.ParseIP(ipStr)
 	if parsedIP == nil {
-		return valueOrTuple(starlark.None, fmt.Errorf("invalid IP address: %s", ipStr), returnTuple)
+		return starlark.None, fmt.Errorf("invalid IP address: %s", ipStr)
 	}
-	return valueOrTuple((&AddrValue{parsedIP, nil}).AsStarlarkValue(), nil, returnTuple)
+	return (&AddrValue{parsedIP, nil}).AsStarlarkValue(), nil
 }
 
 func (av *AddrValue) Type() string { return "@ytt:ip.addr" }
@@ -104,26 +93,18 @@ func (m ipModule) ParseCIDR(thread *starlark.Thread, f *starlark.Builtin, args s
 	if args.Len() != 1 {
 		return starlark.None, fmt.Errorf("expected exactly one argument")
 	}
-	if err := core.CheckArgNames(kwargs, IPKWARGS); err != nil {
-		return starlark.None, err
-	}
-
-	returnTuple, err := core.BoolArg(kwargs, "return_error")
-	if err != nil {
-		return starlark.None, err
-	}
 
 	cidrStr, err := core.NewStarlarkValue(args.Index(0)).AsString()
 	if err != nil {
-		return valueOrTuple(starlark.None, err, returnTuple)
+		return starlark.None, err
 	}
 
 	parsedIP, parsedNet, err := net.ParseCIDR(cidrStr)
 	if err != nil {
-		return valueOrTuple(starlark.None, err, returnTuple)
+		return starlark.None, err
 	}
 
-	return valueOrTuple((&CIDRValue{parsedIP, parsedNet, nil}).AsStarlarkValue(), nil, returnTuple)
+	return (&CIDRValue{parsedIP, parsedNet, nil}).AsStarlarkValue(), nil
 }
 
 func (cv *CIDRValue) AsStarlarkValue() starlark.Value {
@@ -199,15 +180,4 @@ func (inv *NetValue) IP() starlark.Value {
 
 	ip := &AddrValue{inv.net.IP, nil}
 	return ip.AsStarlarkValue()
-}
-
-func valueOrTuple(value starlark.Value, err error, returnTuple bool) (starlark.Value, error) {
-	if returnTuple {
-		var errValue starlark.Value = starlark.None
-		if err != nil {
-			errValue = starlark.String(err.Error())
-		}
-		return starlark.Tuple{value, errValue}, nil
-	}
-	return value, err
 }
