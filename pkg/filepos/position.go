@@ -8,10 +8,11 @@ import (
 )
 
 type Position struct {
-	lineNum *int // 1 based
-	file    string
-	line    string
-	known   bool
+	lineNum    *int // 1 based
+	file       string
+	line       string
+	known      bool
+	fromMemory bool
 }
 
 func NewPosition(lineNum int) *Position {
@@ -26,11 +27,17 @@ func NewUnknownPosition() *Position {
 	return &Position{}
 }
 
+func NewUnknownPositionWithKeyVal(k, v interface{}, separator string) *Position {
+	return &Position{line: fmt.Sprintf("%v%v %#v", k, separator, v), fromMemory: true}
+}
+
 func (p *Position) SetFile(file string) { p.file = file }
 
 func (p *Position) SetLine(line string) { p.line = line }
 
 func (p *Position) IsKnown() bool { return p != nil && p.known }
+
+func (p *Position) FromMemory() bool { return p.fromMemory }
 
 func (p *Position) LineNum() int {
 	if !p.IsKnown() {

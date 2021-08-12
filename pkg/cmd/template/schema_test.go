@@ -2198,10 +2198,10 @@ foo: 3`)
      One or more data values were invalid
      ====================================
      
-     :
-         |
-       ? | 
-         |
+     Data value calculated:
+         #
+         # foo: "4"
+         #
      
          = found: string
          = expected: integer (by _ytt_lib/lib/schema.yml:4)
@@ -2210,6 +2210,47 @@ foo: 3`)
 		filesToProcess := files.NewSortedFiles([]*files.File{
 			files.MustNewFileFromSource(files.NewBytesSource("config.yml", configYAML)),
 			files.MustNewFileFromSource(files.NewBytesSource("_ytt_lib/lib/schema.yml", libSchemaYAML)),
+		})
+
+		assertFails(t, filesToProcess, expectedErr, opts)
+	})
+	t.Run("when data values are programmatically set on a library with imported starlark function, but schema expects int, type violation is reported", func(t *testing.T) {
+
+		schemaYAML := `#@data/values-schema
+---
+foo: 3
+cat: meow
+`
+		funcslibYAML := `#@ def values():
+#@   return {'foo': 'bar', 'cat': 'cow'}
+#@ end
+`
+		configYAML := `#@ load("@ytt:template", "template")
+#@ load("funcs.lib.yml", "values")
+#@ load("@ytt:library", "library")
+--- #@ template.replace(library.get("libby").with_data_values(values()).eval())
+`
+		expectedErr := `- library.eval: Evaluating library 'libby': Overlaying data values (in following order: additional data values): 
+    in <toplevel>
+      config.yml:4 | --- #@ template.replace(library.get("libby").with_data_values(values()).eval())
+
+    reason:
+     One or more data values were invalid
+     ====================================
+     
+     Data value calculated:
+         #
+         # foo: "bar"
+         #
+     
+         = found: string
+         = expected: integer (by _ytt_lib/libby/schema.yml:3)
+`
+
+		filesToProcess := files.NewSortedFiles([]*files.File{
+			files.MustNewFileFromSource(files.NewBytesSource("_ytt_lib/libby/schema.yml", []byte(schemaYAML))),
+			files.MustNewFileFromSource(files.NewBytesSource("config.yml", []byte(configYAML))),
+			files.MustNewFileFromSource(files.NewBytesSource("funcs.lib.yml", []byte(funcslibYAML))),
 		})
 
 		assertFails(t, filesToProcess, expectedErr, opts)

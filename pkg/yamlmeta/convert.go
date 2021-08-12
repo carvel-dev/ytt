@@ -19,6 +19,10 @@ func NewASTFromInterfaceWithPosition(val interface{}, defaultPosition *filepos.P
 	return convertToAST(val, defaultPosition)
 }
 
+func NewASTFromInterfaceWithNoPosition(val interface{}) interface{} {
+	return convertToASTWithNoPosition(val)
+}
+
 func NewGoFromAST(val interface{}) interface{} {
 	return convertToGo(val)
 }
@@ -167,6 +171,80 @@ func convertToAST(val interface{}, defaultPosition *filepos.Position) interface{
 				Key:      k,
 				Value:    convertToAST(v, defaultPosition),
 				Position: defaultPosition,
+			})
+		})
+		return result
+
+	default:
+		return val
+	}
+}
+
+func convertToASTWithNoPosition(val interface{}) interface{} {
+	switch typedVal := val.(type) {
+	// necessary for overlay processing
+	case []*DocumentSet:
+		for i, item := range typedVal {
+			typedVal[i] = convertToASTWithNoPosition(item).(*DocumentSet)
+		}
+		return typedVal
+
+	case *DocumentSet:
+		for i, item := range typedVal.Items {
+			typedVal.Items[i] = convertToASTWithNoPosition(item).(*Document)
+		}
+		return typedVal
+
+	case *Document:
+		typedVal.Value = convertToASTWithNoPosition(typedVal.Value)
+		return typedVal
+
+	case *Map:
+		for i, item := range typedVal.Items {
+			typedVal.Items[i] = convertToASTWithNoPosition(item).(*MapItem)
+		}
+		return typedVal
+
+	case *MapItem:
+		typedVal.Key = convertToASTWithNoPosition(typedVal.Key)
+		typedVal.Value = convertToASTWithNoPosition(typedVal.Value)
+		return typedVal
+
+	case *Array:
+		for i, item := range typedVal.Items {
+			typedVal.Items[i] = convertToASTWithNoPosition(item).(*ArrayItem)
+		}
+		return typedVal
+
+	case *ArrayItem:
+		typedVal.Value = convertToASTWithNoPosition(typedVal.Value)
+		return typedVal
+
+	case []interface{}:
+		result := &Array{}
+		for _, item := range typedVal {
+			convertedValue := convertToASTWithNoPosition(item)
+			result.Items = append(result.Items, &ArrayItem{
+				Value:    convertedValue,
+				Position: filepos.NewUnknownPositionWithKeyVal("-", convertedValue, ""),
+			})
+		}
+		return result
+
+	case map[interface{}]interface{}:
+		panic("Expected *orderedmap.Map instead of map[interface{}]interface{} in convertToAST")
+
+	case map[string]interface{}:
+		panic("Expected *orderedmap.Map instead of map[string]interface{} in convertToAST")
+
+	case *orderedmap.Map:
+		result := &Map{}
+		typedVal.Iterate(func(k, v interface{}) {
+			convertedValue := convertToASTWithNoPosition(v)
+			result.Items = append(result.Items, &MapItem{
+				Key:      k,
+				Value:    convertedValue,
+				Position: filepos.NewUnknownPositionWithKeyVal(k, convertedValue, ":"),
 			})
 		})
 		return result

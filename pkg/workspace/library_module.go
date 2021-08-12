@@ -166,7 +166,7 @@ func (l *libraryValue) WithDataValues(thread *starlark.Thread, f *starlark.Built
 	}
 
 	valsYAML, err := NewDataValues(&yamlmeta.Document{
-		Value:    yamlmeta.NewASTFromInterface(dataValues),
+		Value:    yamlmeta.NewASTFromInterfaceWithNoPosition(dataValues),
 		Position: filepos.NewUnknownPosition(),
 	})
 	if err != nil {
