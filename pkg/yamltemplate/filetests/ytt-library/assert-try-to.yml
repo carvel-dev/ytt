@@ -1,0 +1,61 @@
+#@ load("@ytt:assert", "assert")
+#@ load("@ytt:json", "json")
+
+#@ def try_to_fail_data_error():
+#@   _, err = assert.try_to(lambda: json.decode("}junk"))
+#@   return err
+#@ end
+
+#@ def bad_ref():
+#@   return (None).foo
+#@ end
+
+#@ def try_to_fail_bad_ref():
+#@   _, err = assert.try_to(bad_ref)
+#@   return err
+#@ end
+
+#@ def try_to_succeed_lambda():
+#@   decoded, err = assert.try_to(lambda: json.decode('{"ytt":"rules"}'))
+#@   if err:
+#@      return err
+#@   end
+#@   return decoded
+#@ end
+
+#@ def try_to_succeed_tuple():
+#@   tupleResult, err = assert.try_to(lambda: (1,2))
+#@   if err:
+#@      return err
+#@   end
+#@   return tupleResult
+#@ end
+
+#@ def foo():
+#@   return "foo"
+#@ end
+
+#@ def try_to_succeed_function():
+#@   functionResult, err = assert.try_to(foo)
+#@   if err:
+#@      return err
+#@   end
+#@   return functionResult
+#@ end
+
+test_try_to_fail_data_error: #@ try_to_fail_data_error()
+test_try_to_fail_bad_ref: #@ try_to_fail_bad_ref()
+test_try_to_succeed_lambda: #@ try_to_succeed_lambda()
+test_try_to_succeed_function: #@ try_to_succeed_function()
+test_try_to_succeed_tuple: #@ try_to_succeed_tuple()
+
++++
+
+test_try_to_fail_data_error: 'json.decode: invalid character ''}'' looking for beginning of value'
+test_try_to_fail_bad_ref: NoneType has no .foo field or method
+test_try_to_succeed_lambda:
+  ytt: rules
+test_try_to_succeed_function: foo
+test_try_to_succeed_tuple:
+- 1
+- 2

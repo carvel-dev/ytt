@@ -16,7 +16,8 @@ var (
 		"assert": &starlarkstruct.Module{
 			Name: "assert",
 			Members: starlark.StringDict{
-				"fail": starlark.NewBuiltin("assert.fail", core.ErrWrapper(assertModule{}.Fail)),
+				"fail":   starlark.NewBuiltin("assert.fail", core.ErrWrapper(assertModule{}.Fail)),
+				"try_to": starlark.NewBuiltin("assert.try_to", core.ErrWrapper(assertModule{}.TryTo)),
 			},
 		},
 	}
@@ -35,4 +36,22 @@ func (b assertModule) Fail(thread *starlark.Thread, f *starlark.Builtin, args st
 	}
 
 	return starlark.None, fmt.Errorf("fail: %s", val)
+}
+
+func (b assertModule) TryTo(thread *starlark.Thread, f *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
+	if args.Len() != 1 {
+		return starlark.None, fmt.Errorf("expected exactly one argument")
+	}
+
+	lambda := args.Index(0)
+	if _, ok := lambda.(starlark.Callable); !ok {
+		return starlark.None, fmt.Errorf("expected argument to be a function, but was %T", lambda)
+	}
+
+	var errVal starlark.Value = starlark.None
+	retVal, err := starlark.Call(thread, lambda, nil, nil)
+	if err != nil {
+		errVal = starlark.String(err.Error())
+	}
+	return starlark.Tuple{retVal, errVal}, nil
 }
