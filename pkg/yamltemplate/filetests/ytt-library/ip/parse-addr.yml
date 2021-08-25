@@ -1,22 +1,24 @@
 #@ load("@ytt:ip", "ip")
 
+#@ addr = ip.parse_addr("192.0.2.1")
 ipv4:
-  ip: #@ ip.parse_addr("192.0.2.1")
-  is_ipv4: #@ ip.parse_addr("192.0.2.1").is_ipv4()
-  is_ipv6: #@ ip.parse_addr("192.0.2.1").is_ipv6()
-ipv6:
-  ip: #@ ip.parse_addr("2001:db8::1")
-  is_ipv4: #@ ip.parse_addr("2001:db8::1").is_ipv4()
-  is_ipv6: #@ ip.parse_addr("2001:db8::1").is_ipv6()
+  addr: #@ addr.string()
+  addr_is_ipv4: #@ addr.is_ipv4()
+  addr_is_ipv6: #@ addr.is_ipv6()
 
+#@ addr = ip.parse_addr("2001:db8::1")
+ipv6:
+  addr: #@ addr.string()
+  addr_is_ipv4: #@ addr.is_ipv4()
+  addr_is_ipv6: #@ addr.is_ipv6()
 
 +++
 
 ipv4:
-  ip: 192.0.2.1
-  is_ipv4: true
-  is_ipv6: false
+  addr: 192.0.2.1
+  addr_is_ipv4: true
+  addr_is_ipv6: false
 ipv6:
-  ip: 2001:db8::1
-  is_ipv4: false
-  is_ipv6: true
+  addr: 2001:db8::1
+  addr_is_ipv4: false
+  addr_is_ipv6: true

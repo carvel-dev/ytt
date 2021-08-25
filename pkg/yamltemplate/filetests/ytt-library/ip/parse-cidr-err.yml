@@ -1,11 +1,10 @@
 #@ load("@ytt:ip", "ip")
 
-ipv4:
-  cidr: #@ ip.parse_cidr("not-a-valid-cidr")
+cidr: #@ ip.parse_cidr("not-a-valid-cidr")
 
 +++
 
 ERR: 
 - ip.parse_cidr: invalid CIDR address: not-a-valid-cidr
     in <toplevel>
-      stdin:4 |   cidr: #@ ip.parse_cidr("not-a-valid-cidr")
+      stdin:3 | cidr: #@ ip.parse_cidr("not-a-valid-cidr")
