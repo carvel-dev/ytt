@@ -1,11 +1,11 @@
 #@ load("@ytt:ip", "ip")
 
 #@ addr, net = ip.parse_cidr("192.168.0.1/24")
-addr: #@ addr
+net: #@ net
 
 +++
 
 ERR: 
-- __ytt_tplXXX_set_node: Unable to convert value: IPAddrValue does not automatically encode (hint: use .string())
+- __ytt_tplXXX_set_node: Unable to convert value: @ytt:ip.net does not automatically encode (hint: use .string())
     in <toplevel>
-      stdin:4 | addr: #@ addr
+      stdin:4 | net: #@ net

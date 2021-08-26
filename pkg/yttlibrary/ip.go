@@ -62,7 +62,7 @@ func (av *IPAddrValue) AsStarlarkValue() starlark.Value {
 }
 
 func (av *IPAddrValue) ConversionHint() string {
-	return "IPAddrValue does not automatically encode (hint: use .string())"
+	return av.Type() + " does not automatically encode (hint: use .string())"
 }
 
 func (av *IPAddrValue) IsIPv4(thread *starlark.Thread, f *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
@@ -122,7 +122,7 @@ func (inv *IPNetValue) AsStarlarkValue() starlark.Value {
 }
 
 func (inv *IPNetValue) ConversionHint() string {
-	return "IPNetValue does not automatically encode (hint: use .string())"
+	return inv.Type() + " does not automatically encode (hint: use .string())"
 }
 
 func (inv *IPNetValue) Addr(thread *starlark.Thread, f *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
