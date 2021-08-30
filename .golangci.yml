@@ -16,7 +16,7 @@ issues:
   max-issues-per-linter: 0
   max-same-issues: 0
   exclude-use-default: false
-  new-from-rev: e0cbac3d0fcb3f4a5ecb55f586a0ffe269212634
+  new-from-rev: bd77aced0a1cd6d6f3ecd3ed04c1832e1c513ab0
 run:
   skip-dirs:
     - pkg/yamlmeta/internal
