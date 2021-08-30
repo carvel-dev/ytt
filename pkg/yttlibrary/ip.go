@@ -14,6 +14,7 @@ import (
 )
 
 var (
+	// IPAPI describes the contents of "@ytt:ip" module of the ytt standard library.
 	IPAPI = starlark.StringDict{
 		"ip": &starlarkstruct.Module{
 			Name: "ip",
@@ -50,8 +51,10 @@ type IPAddrValue struct {
 	*core.StarlarkStruct // TODO: keep authorship of the interface by delegating instead of embedding
 }
 
+// Type reports the name of this type as seen from a Starlark program (i.e. via the `type()` built-in)
 func (av *IPAddrValue) Type() string { return "@ytt:ip.addr" }
 
+// AsStarlarkValue converts this instance into a value suitable for use in a Starlark program.
 func (av *IPAddrValue) AsStarlarkValue() starlark.Value {
 	m := orderedmap.NewMap()
 	m.Set("is_ipv4", starlark.NewBuiltin("ip.addr.is_ipv4", core.ErrWrapper(av.IsIPv4)))
@@ -61,10 +64,12 @@ func (av *IPAddrValue) AsStarlarkValue() starlark.Value {
 	return av
 }
 
+// ConversionHint provides a hint on how the user can explicitly convert this value to a type that can be automatically encoded.
 func (av *IPAddrValue) ConversionHint() string {
 	return av.Type() + " does not automatically encode (hint: use .string())"
 }
 
+// IsIPv4 is a core.StarlarkFunc that reveals whether this value is an IPv4 address.
 func (av *IPAddrValue) IsIPv4(thread *starlark.Thread, f *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
 	if args.Len() != 0 {
 		return starlark.None, fmt.Errorf("expected no argument")
@@ -73,6 +78,7 @@ func (av *IPAddrValue) IsIPv4(thread *starlark.Thread, f *starlark.Builtin, args
 	return starlark.Bool(isV4), nil
 }
 
+// IsIPv4 is a core.StarlarkFunc that reveals whether this value is an IPv6 address.
 func (av *IPAddrValue) IsIPv6(thread *starlark.Thread, f *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
 	if args.Len() != 0 {
 		return starlark.None, fmt.Errorf("expected no argument")
@@ -88,6 +94,7 @@ func (av *IPAddrValue) string(thread *starlark.Thread, f *starlark.Builtin, args
 	return starlark.String(av.addr.String()), nil
 }
 
+// ParseCIDR is a core.StarlarkFunc that extracts the IP address and IP network value from a CIDR expression
 func (m ipModule) ParseCIDR(thread *starlark.Thread, f *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
 	if args.Len() != 1 {
 		return starlark.None, fmt.Errorf("expected exactly one argument")
@@ -106,13 +113,16 @@ func (m ipModule) ParseCIDR(thread *starlark.Thread, f *starlark.Builtin, args s
 	return starlark.Tuple{(&IPAddrValue{parsedIP, nil}).AsStarlarkValue(), (&IPNetValue{parsedNet, nil}).AsStarlarkValue()}, nil
 }
 
+// IPNetValue holds the data for an instance of an IP Network value
 type IPNetValue struct {
 	net                  *net.IPNet
 	*core.StarlarkStruct // TODO: keep authorship of the interface by delegating instead of embedding
 }
 
+// Type reports the name of this type as seen from a Starlark program (i.e. via the `type()` built-in)
 func (inv *IPNetValue) Type() string { return "@ytt:ip.net" }
 
+// AsStarlarkValue converts this instance into a value suitable for use in a Starlark program.
 func (inv *IPNetValue) AsStarlarkValue() starlark.Value {
 	m := orderedmap.NewMap()
 	m.Set("addr", starlark.NewBuiltin("ip.net.addr", core.ErrWrapper(inv.Addr)))
@@ -121,10 +131,12 @@ func (inv *IPNetValue) AsStarlarkValue() starlark.Value {
 	return inv
 }
 
+// ConversionHint provides a hint on how the user can explicitly convert this value to a type that can be automatically encoded.
 func (inv *IPNetValue) ConversionHint() string {
 	return inv.Type() + " does not automatically encode (hint: use .string())"
 }
 
+// Addr is a core.StarlarkFunc that returns the masked address portion of the network value
 func (inv *IPNetValue) Addr(thread *starlark.Thread, f *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
 	if args.Len() != 0 {
 		return starlark.None, fmt.Errorf("expected no argument")
