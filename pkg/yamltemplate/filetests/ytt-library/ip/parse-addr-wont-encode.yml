@@ -1,0 +1,11 @@
+#@ load("@ytt:ip", "ip")
+
+#@ addr = ip.parse_addr("192.168.0.1")
+addr: #@ addr
+
++++
+
+ERR: 
+- __ytt_tplXXX_set_node: Unable to convert value: @ytt:ip.addr does not automatically encode (hint: use .string())
+    in <toplevel>
+      stdin:4 | addr: #@ addr
