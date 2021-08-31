@@ -78,7 +78,7 @@ func (av *IPAddrValue) IsIPv4(thread *starlark.Thread, f *starlark.Builtin, args
 	return starlark.Bool(isV4), nil
 }
 
-// IsIPv4 is a core.StarlarkFunc that reveals whether this value is an IPv6 address.
+// IsIPv6 is a core.StarlarkFunc that reveals whether this value is an IPv6 address.
 func (av *IPAddrValue) IsIPv6(thread *starlark.Thread, f *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
 	if args.Len() != 0 {
 		return starlark.None, fmt.Errorf("expected no argument")
