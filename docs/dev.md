@@ -11,6 +11,13 @@ cd ./src/github.com/vmware-tanzu/carvel-ytt
 ./hack/test-all.sh
 ```
 
+## Source Code Changes
+To keep source code documentation up to date, ytt uses [godoc](https://go.dev/blog/godoc). To document a type, variable, constant, function, or a package, write a regular comment directly preceding its declaration that begins with the name of the element it describes. See the ["@ytt:ip" module](https://github.com/vmware-tanzu/carvel-ytt/blob/develop/pkg/yttlibrary/ip.go) for examples. When contributing new source code via a PR, the [GitHub Action linter](https://github.com/vmware-tanzu/carvel-ytt/blob/develop/.github/workflows/golangci-lint.yml) will ensure that godocs are included in the changes.
+
+To view the docs
+  1. install godoc: `go get -v  golang.org/x/tools/cmd/godoc`
+  1. Start the server: `godoc -http=:6060` and visit [`http://localhost:6060/pkg/github.com/k14s/ytt/`](http://localhost:6060/pkg/github.com/k14s/ytt/).
+  
 ## Source Code Structure
 
 For those interested in extending and improving `ytt`, below is a quick reference on the structure of the source code:
