@@ -5,11 +5,11 @@ package yamlmeta_test
 
 import (
 	"fmt"
-	"github.com/k14s/difflib"
 	"os"
 	"strings"
 	"testing"
 
+	"github.com/k14s/difflib"
 	"github.com/k14s/ytt/pkg/filepos"
 	"github.com/k14s/ytt/pkg/yamlmeta"
 )
@@ -173,6 +173,28 @@ func TestParserRootValue(t *testing.T) {
 				Items: []*yamlmeta.Document{
 					&yamlmeta.Document{
 						Value:    1,
+						Position: filepos.NewPosition(1),
+					},
+				},
+				Position: filepos.NewUnknownPosition(),
+			},
+		},
+		{Description: "float", Data: "2000.1",
+			Expected: &yamlmeta.DocumentSet{
+				Items: []*yamlmeta.Document{
+					&yamlmeta.Document{
+						Value:    2000.1,
+						Position: filepos.NewPosition(1),
+					},
+				},
+				Position: filepos.NewUnknownPosition(),
+			},
+		},
+		{Description: "float (exponent)", Data: "9e3",
+			Expected: &yamlmeta.DocumentSet{
+				Items: []*yamlmeta.Document{
+					&yamlmeta.Document{
+						Value:    9000.0,
 						Position: filepos.NewPosition(1),
 					},
 				},
