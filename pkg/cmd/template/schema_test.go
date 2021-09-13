@@ -1545,6 +1545,69 @@ foo: #@ data.values.foo
 	})
 }
 
+func TestSchema_Allows_override_via_default_annotation(t *testing.T) {
+	opts := cmdtpl.NewOptions()
+
+	t.Run("on a map", func(t *testing.T) {
+
+			schemaYAML := `#@data/values-schema
+---
+#@schema/default 1
+foo: 0
+#@schema/default "newValue"
+bar: ""
+`
+			templateYAML := `#@ load("@ytt:data", "data")
+---
+foo: #@ data.values.foo
+bar: #@ data.values.bar
+`
+			expected := `foo: 1
+bar: newValue
+`
+
+			filesToProcess := files.NewSortedFiles([]*files.File{
+				files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
+				files.MustNewFileFromSource(files.NewBytesSource("template.yml", []byte(templateYAML))),
+			})
+
+			assertSucceeds(t, filesToProcess, expected, opts)
+		})
+	t.Run("on an array", func(t *testing.T) {
+
+		schemaYAML := `#@data/values-schema
+---
+#@schema/default ["new", "array", "strings"]
+foo:
+- the array holds strings
+#@schema/default [1,2,3]
+bar:
+- 7
+`
+		templateYAML := `#@ load("@ytt:data", "data")
+---
+foo: #@ data.values.foo
+bar: #@ data.values.bar
+`
+		expected := `foo: 
+- new
+- array
+- strings
+bar:
+- 1 
+- 2
+- 3
+`
+
+		filesToProcess := files.NewSortedFiles([]*files.File{
+			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
+			files.MustNewFileFromSource(files.NewBytesSource("template.yml", []byte(templateYAML))),
+		})
+
+		assertSucceeds(t, filesToProcess, expected, opts)
+	})
+}
+
 func TestSchema_Is_scoped_to_a_library(t *testing.T) {
 	opts := cmdtpl.NewOptions()
 
