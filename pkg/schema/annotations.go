@@ -143,7 +143,7 @@ func processOptionalAnnotation(node yamlmeta.Node, optionalAnnotation template.A
 	if nodeAnnotations.Has(optionalAnnotation) {
 		ann, _ := nodeAnnotations[optionalAnnotation]
 
-		wrappedValueType, err := inferTypeFromValue(node.GetValues()[0], node.GetValues()[0], node.GetPosition())
+		wrappedValueType, err := inferTypeFromValue(node.GetValues()[0], node.GetPosition())
 		if err != nil {
 			return nil, err
 		}
@@ -162,7 +162,7 @@ func processOptionalAnnotation(node yamlmeta.Node, optionalAnnotation template.A
 			}
 			return typeAnn, nil
 		case AnnotationDefault:
-		    defaultAnn, err := NewDefaultAnnotation(ann)
+			defaultAnn, err := NewDefaultAnnotation(ann)
 			if err != nil {
 				return nil, err
 			}

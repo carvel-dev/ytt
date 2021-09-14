@@ -75,6 +75,7 @@ func (m ScalarType) GetDefaultValue() interface{} {
 
 func (a ArrayItemType) GetDefaultValue() interface{} {
 	panic(fmt.Sprintf("Unexpected call to GetDefaultValue() on %+v", a))
+	//return a.defaultValue
 }
 
 func (a ArrayType) GetDefaultValue() interface{} {
@@ -83,7 +84,7 @@ func (a ArrayType) GetDefaultValue() interface{} {
 }
 
 func (t MapItemType) GetDefaultValue() interface{} {
-	return &yamlmeta.MapItem{Key: t.Key, Value: t.ValueType.GetDefaultValue(), Position: t.Position}
+	return &yamlmeta.MapItem{Key: t.Key, Value: t.defaultValue, Position: t.Position}
 }
 
 func (m MapType) GetDefaultValue() interface{} {

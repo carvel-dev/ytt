@@ -1550,29 +1550,29 @@ func TestSchema_Allows_override_via_default_annotation(t *testing.T) {
 
 	t.Run("on a map", func(t *testing.T) {
 
-			schemaYAML := `#@data/values-schema
+		schemaYAML := `#@data/values-schema
 ---
 #@schema/default 1
 foo: 0
 #@schema/default "newValue"
 bar: ""
 `
-			templateYAML := `#@ load("@ytt:data", "data")
+		templateYAML := `#@ load("@ytt:data", "data")
 ---
 foo: #@ data.values.foo
 bar: #@ data.values.bar
 `
-			expected := `foo: 1
+		expected := `foo: 1
 bar: newValue
 `
 
-			filesToProcess := files.NewSortedFiles([]*files.File{
-				files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
-				files.MustNewFileFromSource(files.NewBytesSource("template.yml", []byte(templateYAML))),
-			})
-
-			assertSucceeds(t, filesToProcess, expected, opts)
+		filesToProcess := files.NewSortedFiles([]*files.File{
+			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
+			files.MustNewFileFromSource(files.NewBytesSource("template.yml", []byte(templateYAML))),
 		})
+
+		assertSucceeds(t, filesToProcess, expected, opts)
+	})
 	t.Run("on an array", func(t *testing.T) {
 
 		schemaYAML := `#@data/values-schema
@@ -1589,12 +1589,12 @@ bar:
 foo: #@ data.values.foo
 bar: #@ data.values.bar
 `
-		expected := `foo: 
+		expected := `foo:
 - new
 - array
 - strings
 bar:
-- 1 
+- 1
 - 2
 - 3
 `

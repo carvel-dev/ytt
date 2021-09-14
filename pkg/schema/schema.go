@@ -28,7 +28,7 @@ type DocumentSchemaEnvelope struct {
 }
 
 func NewDocumentSchema(doc *yamlmeta.Document) (*DocumentSchema, error) {
-	docType, err := inferTypeFromValue(doc, doc, doc.Position)
+	docType, err := inferTypeFromValue(doc, doc.Position)
 	if err != nil {
 		return nil, err
 	}
@@ -97,8 +97,14 @@ func NewMapItemType(item *yamlmeta.MapItem) (*MapItemType, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	return &MapItemType{Key: item.Key, ValueType: typeOfValue, defaultValue: typeOfValue.GetDefaultValue(), Position: item.Position}, nil
+	defaultValue, err := getExplicitDefaultValue(item)
+	if err != nil {
+		return nil, err
+	}
+	if defaultValue == nil {
+		defaultValue = typeOfValue.GetDefaultValue()
+	}
+	return &MapItemType{Key: item.Key, ValueType: typeOfValue, defaultValue: defaultValue, Position: item.Position}, nil
 }
 
 func NewArrayType(a *yamlmeta.Array) (*ArrayType, error) {
@@ -136,19 +142,15 @@ func getType(node yamlmeta.ValueHoldingNode) (yamlmeta.Type, error) {
 		return nil, NewSchemaError("Invalid schema", err)
 	}
 	typeOfValue = getTypeFromAnnotations(anns)
-	defaultValue := getDefaultValue(anns)
-	if defaultValue == nil {
-		defaultValue = node.Val()
-	}
 
 	if typeOfValue == nil {
-		typeOfValue, err = inferTypeFromValue(node.Val(), defaultValue, node.GetPosition())
+		typeOfValue, err = inferTypeFromValue(node.Val(), node.GetPosition())
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	err = valueTypeAllowsItemValue(typeOfValue, defaultValue, node.GetPosition())
+	err = valueTypeAllowsItemValue(typeOfValue, node.Val(), node.GetPosition())
 	if err != nil {
 		return nil, err
 	}
@@ -156,10 +158,14 @@ func getType(node yamlmeta.ValueHoldingNode) (yamlmeta.Type, error) {
 	return typeOfValue, nil
 }
 
-func getDefaultValue(anns []Annotation) interface{} {
+func getExplicitDefaultValue(node yamlmeta.ValueHoldingNode) (interface{}, error) {
+	anns, err := collectAnnotations(node)
+	if err != nil {
+		return nil, NewSchemaError("Invalid schema", err)
+	}
 	annsCopy := append([]Annotation{}, anns...)
 	if len(annsCopy) == 0 {
-		return nil
+		return nil, nil
 	}
 
 	var defaultVal interface{}
@@ -168,10 +174,10 @@ func getDefaultValue(anns []Annotation) interface{} {
 			defaultVal = defaultAnn.val
 		}
 	}
-	return defaultVal
+	return defaultVal, nil
 }
 
-func inferTypeFromValue(value interface{}, defaultValue interface{}, position *filepos.Position) (yamlmeta.Type, error) {
+func inferTypeFromValue(value interface{}, position *filepos.Position) (yamlmeta.Type, error) {
 	switch typedContent := value.(type) {
 	case *yamlmeta.Document:
 		docType, err := NewDocumentType(typedContent)
@@ -192,13 +198,13 @@ func inferTypeFromValue(value interface{}, defaultValue interface{}, position *f
 		}
 		return arrayType, nil
 	case string:
-		return &ScalarType{ValueType: *new(string), defaultValue: defaultValue, Position: position}, nil
+		return &ScalarType{ValueType: *new(string), defaultValue: typedContent, Position: position}, nil
 	case float64:
-		return &ScalarType{ValueType: *new(float64), defaultValue: defaultValue, Position: position}, nil
+		return &ScalarType{ValueType: *new(float64), defaultValue: typedContent, Position: position}, nil
 	case int, int64, uint64:
-		return &ScalarType{ValueType: *new(int), defaultValue: defaultValue, Position: position}, nil
+		return &ScalarType{ValueType: *new(int), defaultValue: typedContent, Position: position}, nil
 	case bool:
-		return &ScalarType{ValueType: *new(bool), defaultValue: defaultValue, Position: position}, nil
+		return &ScalarType{ValueType: *new(bool), defaultValue: typedContent, Position: position}, nil
 	case nil:
 		return nil, nil
 	}
