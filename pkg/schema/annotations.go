@@ -96,11 +96,11 @@ func NewDefaultAnnotation(ann template.NodeAnnotation) (*DefaultAnnotation, erro
 	if len(ann.Args) == 0 {
 		return nil, fmt.Errorf("expected @%v annotation to contain default value", AnnotationDefault)
 	}
-	defaultVal, err := core.NewStarlarkValue(ann.Args[0]).AsGoValue()
+	val, err := core.NewStarlarkValue(ann.Args[0]).AsGoValue()
 	if err != nil {
 		return nil, err
 	}
-	return &DefaultAnnotation{yamlmeta.NewASTFromInterfaceWithNoPosition(defaultVal)}, nil
+	return &DefaultAnnotation{yamlmeta.NewASTFromInterface(val)}, nil
 }
 
 func (t *TypeAnnotation) NewTypeFromAnn() yamlmeta.Type {

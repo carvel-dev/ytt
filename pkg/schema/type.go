@@ -329,6 +329,10 @@ func (m *MapType) AssignTypeTo(typeable yamlmeta.Typeable) (chk yamlmeta.TypeChe
 }
 
 func (m *MapType) applySchemaDefaults(foundKeys []interface{}, chk yamlmeta.TypeCheck, mapNode *yamlmeta.Map) {
+	//if len(mapNode.Items) == 0 {
+	//	return
+	//}
+
 	for _, item := range m.Items {
 		if contains(foundKeys, item.Key) {
 			continue

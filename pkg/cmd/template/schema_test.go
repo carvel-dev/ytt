@@ -1606,6 +1606,75 @@ bar:
 
 		assertSucceeds(t, filesToProcess, expected, opts)
 	})
+	t.Run("on a map of map", func(t *testing.T) {
+
+		schemaYAML := `#@ def uaa_db():
+name: uaa
+host: uaa-db.svc.cluster.local
+user: admin
+#@ end
+
+#@ def capi_db():
+name: capi-embedded
+user: admin
+#@ end
+
+#@data/values-schema
+---
+#@schema/default {'cat': 'meow'}
+bat: 
+  cat: cow
+  hi: hey
+#@schema/default [uaa_db(), capi_db(), {"name": "null_db"}]
+databases:
+- name: ""
+  adapter: postgresql
+  host: ""
+  port: 5432
+  user: admin
+  secretRef:
+    name: ""
+`
+
+		templateYAML := `#@ load("@ytt:data", "data")
+---
+bat: #@ data.values.bat
+databases: #@ data.values.databases
+`
+		expected := `bat:
+  cat: meow
+  hi: hey
+databases:
+- name: uaa
+  host: uaa-db.svc.cluster.local
+  user: admin
+  adapter: postgresql
+  port: 5432
+  secretRef:
+    name: ""
+- name: capi-embedded
+  user: admin
+  adapter: postgresql
+  host: ""
+  port: 5432
+  secretRef:
+    name: ""
+- name: null_db
+  adapter: postgresql
+  host: ""
+  port: 5432
+  user: admin
+  secretRef:
+    name: ""
+`
+
+		filesToProcess := files.NewSortedFiles([]*files.File{
+			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
+			files.MustNewFileFromSource(files.NewBytesSource("template.yml", []byte(templateYAML))),
+		})
+
+		assertSucceeds(t, filesToProcess, expected, opts)
+	})
 }
 
 func TestSchema_Is_scoped_to_a_library(t *testing.T) {
