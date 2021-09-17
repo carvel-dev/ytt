@@ -92,15 +92,25 @@ func NewNullableAnnotation(ann template.NodeAnnotation, valueType yamlmeta.Type,
 	return &NullableAnnotation{valueType, pos}, nil
 }
 
-func NewDefaultAnnotation(ann template.NodeAnnotation) (*DefaultAnnotation, error) {
+func NewDefaultAnnotation(ann template.NodeAnnotation, pos *filepos.Position) (*DefaultAnnotation, error) {
 	if len(ann.Args) == 0 {
-		return nil, fmt.Errorf("expected @%v annotation to contain default value", AnnotationDefault)
+		return nil, schemaAssertionError{
+			position:    pos,
+			description: fmt.Sprintf("expected @%v annotation to contain default value, but found nothing", AnnotationDefault),
+			expected:    "A default value",
+		}
 	}
 	val, err := core.NewStarlarkValue(ann.Args[0]).AsGoValue()
 	if err != nil {
-		return nil, err
+		return nil, schemaAssertionError{
+			error:       err,
+			position:    pos,
+			description: fmt.Sprintf("invalid @schema/default argument"),
+			expected:    "A valid starlark value",
+			found:       fmt.Sprintf("%T", ann.Args[0]),
+		}
 	}
-	return &DefaultAnnotation{yamlmeta.NewASTFromInterface(val)}, nil
+	return &DefaultAnnotation{yamlmeta.NewASTFromInterfaceWithPosition(val, pos)}, nil
 }
 
 func (t *TypeAnnotation) NewTypeFromAnn() yamlmeta.Type {
@@ -162,7 +172,7 @@ func processOptionalAnnotation(node yamlmeta.Node, optionalAnnotation template.A
 			}
 			return typeAnn, nil
 		case AnnotationDefault:
-			defaultAnn, err := NewDefaultAnnotation(ann)
+			defaultAnn, err := NewDefaultAnnotation(ann, node.GetPosition())
 			if err != nil {
 				return nil, err
 			}
