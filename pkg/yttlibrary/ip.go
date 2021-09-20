@@ -51,15 +51,17 @@ type IPAddrValue struct {
 	*core.StarlarkStruct // TODO: keep authorship of the interface by delegating instead of embedding
 }
 
+const ipAddrTypeName = "ip.addr"
+
 // Type reports the name of this type as seen from a Starlark program (i.e. via the `type()` built-in)
-func (av *IPAddrValue) Type() string { return "@ytt:ip.addr" }
+func (av *IPAddrValue) Type() string { return "@ytt:" + ipAddrTypeName }
 
 // AsStarlarkValue converts this instance into a value suitable for use in a Starlark program.
 func (av *IPAddrValue) AsStarlarkValue() starlark.Value {
 	m := orderedmap.NewMap()
-	m.Set("is_ipv4", starlark.NewBuiltin("ip.addr.is_ipv4", core.ErrWrapper(av.IsIPv4)))
-	m.Set("is_ipv6", starlark.NewBuiltin("ip.addr.is_ipv6", core.ErrWrapper(av.IsIPv6)))
-	m.Set("string", starlark.NewBuiltin("ip.addr.string", core.ErrWrapper(av.string)))
+	m.Set("is_ipv4", starlark.NewBuiltin(ipAddrTypeName+".is_ipv4", core.ErrWrapper(av.IsIPv4)))
+	m.Set("is_ipv6", starlark.NewBuiltin(ipAddrTypeName+".is_ipv6", core.ErrWrapper(av.IsIPv6)))
+	m.Set("string", starlark.NewBuiltin(ipAddrTypeName+".string", core.ErrWrapper(av.string)))
 	av.StarlarkStruct = core.NewStarlarkStruct(m)
 	return av
 }
@@ -119,14 +121,16 @@ type IPNetValue struct {
 	*core.StarlarkStruct // TODO: keep authorship of the interface by delegating instead of embedding
 }
 
+const ipNetTypeName = "ip.net"
+
 // Type reports the name of this type as seen from a Starlark program (i.e. via the `type()` built-in)
-func (inv *IPNetValue) Type() string { return "@ytt:ip.net" }
+func (inv *IPNetValue) Type() string { return "@ytt:" + ipNetTypeName }
 
 // AsStarlarkValue converts this instance into a value suitable for use in a Starlark program.
 func (inv *IPNetValue) AsStarlarkValue() starlark.Value {
 	m := orderedmap.NewMap()
-	m.Set("addr", starlark.NewBuiltin("ip.net.addr", core.ErrWrapper(inv.Addr)))
-	m.Set("string", starlark.NewBuiltin("ip.net.string", core.ErrWrapper(inv.string)))
+	m.Set("addr", starlark.NewBuiltin(ipNetTypeName+".addr", core.ErrWrapper(inv.Addr)))
+	m.Set("string", starlark.NewBuiltin(ipNetTypeName+".string", core.ErrWrapper(inv.string)))
 	inv.StarlarkStruct = core.NewStarlarkStruct(m)
 	return inv
 }

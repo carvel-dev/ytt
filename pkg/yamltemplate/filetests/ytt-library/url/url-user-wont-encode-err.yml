@@ -6,6 +6,6 @@ url_value:
 +++
 
 ERR: 
-- __ytt_tplXXX_set_node: Unable to convert value: URLUser does not automatically encode (hint: use .string())
+- __ytt_tplXXX_set_node: Unable to convert value: @ytt:url.user does not automatically encode (hint: use .string())
     in <toplevel>
       stdin:4 |   user: #@ url.parse("http://alice:secret@example.com").user
