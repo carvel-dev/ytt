@@ -75,7 +75,6 @@ func (m ScalarType) GetDefaultValue() interface{} {
 
 func (a ArrayItemType) GetDefaultValue() interface{} {
 	panic(fmt.Sprintf("Unexpected call to GetDefaultValue() on %+v", a))
-	//return a.defaultValue
 }
 
 func (a ArrayType) GetDefaultValue() interface{} {
@@ -329,10 +328,6 @@ func (m *MapType) AssignTypeTo(typeable yamlmeta.Typeable) (chk yamlmeta.TypeChe
 }
 
 func (m *MapType) applySchemaDefaults(foundKeys []interface{}, chk yamlmeta.TypeCheck, mapNode *yamlmeta.Map) {
-	//if len(mapNode.Items) == 0 {
-	//	return
-	//}
-
 	for _, item := range m.Items {
 		if contains(foundKeys, item.Key) {
 			continue

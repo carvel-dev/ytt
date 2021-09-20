@@ -93,11 +93,22 @@ func NewNullableAnnotation(ann template.NodeAnnotation, valueType yamlmeta.Type,
 }
 
 func NewDefaultAnnotation(ann template.NodeAnnotation, pos *filepos.Position) (*DefaultAnnotation, error) {
+	if len(ann.Kwargs) != 0 {
+		return nil, schemaAssertionError{
+			position:    pos,
+			description: fmt.Sprintf("expected @%v annotation to contain value with type of annotated node", AnnotationDefault),
+			expected:    "valid default value",
+			found:       fmt.Sprintf("%T", ann.Kwargs[0]),
+			hints:       []string{"value must be in starlark dictionary format: {'foo':'bar'}"},
+		}
+	}
 	if len(ann.Args) == 0 {
 		return nil, schemaAssertionError{
 			position:    pos,
-			description: fmt.Sprintf("expected @%v annotation to contain default value, but found nothing", AnnotationDefault),
-			expected:    "A default value",
+			description: fmt.Sprintf("expected @%v annotation to contain default value", AnnotationDefault),
+			expected:    "valid default value",
+			found:       "missing value",
+			hints:       []string{"a default value must be a starlark value that is not a function definition"},
 		}
 	}
 	val, err := core.NewStarlarkValue(ann.Args[0]).AsGoValue()
