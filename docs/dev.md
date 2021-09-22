@@ -76,7 +76,7 @@ When contributing to this library note:
   - the goal is to provide a consistent, goal-aligned feature set.
 - **Design near Python and Go**
   - Starlark is a dialect of Python: to maintain the value of that heritage, be inspired by Python
-  - much of the functionality that can wants to be exposed can come from the Go ecosystem: to keep solutions simple, be inspired by Go.
+  - much of the functionality exposed can come from the Go ecosystem: to keep solutions simple, be inspired by Go.
   - that said, this library is typically operating in a specific context: a hermetic and deterministic calculation of (YAML-formatted) configuration. Bend to adapt to that context.
 - **Offer string() rather than assume string encoding**
   - concrete types whose instances template authors will handle should implement `UnconvertableStarlarkValue` rather than assume to convert to a string. 
@@ -84,11 +84,11 @@ When contributing to this library note:
   - this preserves the ability to choose _other_ encoding strategies, later, if desired.
 - **Names**
   - overall: look for conventions present in existing modules (e.g. `is_..()` for predicates,  `string()` to encode to string, ...)
-  - **module** — consider in combination with function names: be as concrete as possible, reveal intention, and avoid redundancy (e.g. `ip.parse_addr()` > `io.parse_ip_addr()`) 
+  - **module** — consider in combination with function names: be as concrete as possible, reveal intention, and avoid redundancy (e.g. `ip.parse_addr()` > `ip.parse_ip_addr()`) 
   - **functions** — typically verb and verb phrases work best.
-    - **built-in** — use the format "${module}.[${type_name}.]${function_name}" (this value is not yet used)
+    - **built-in** — use the format "${module}.[${type_name}.]${function_name}" (e.g. IPAddrValue.IsIPv4 => "ip.addr.is_ipv4") (this value is not yet used)
     - Go definition of the Starlark function should almost always be the snakeCase format of the same name.
-  - **Type()** — use the format "@ytt:${module}.${type}"
+  - **Type()** — use the format "@ytt:${module}.${type}" (e.g. IPAddrValue => "@ytt:ip.addr" )
 - **Fail fast** — users are usually better served by an error than an attempt to "guess" or "fix"; as soon as something seems ary, error out.
 - **Make Objects Immutable** — return modified copies rather than mutating the receiver: this tends to make template code that much easier to reason.
 
