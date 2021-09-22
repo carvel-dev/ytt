@@ -783,76 +783,9 @@ dvs1.yml:
 		assertFails(t, filesToProcess, expectedErr, cmdOpts)
 	})
 
-	t.Run("when a data value in the @schema/default annotation", func(t *testing.T)  {
-		t.Run("is empty", func(t *testing.T) {
+	t.Run("when a data value of the wrong type used in @schema/default annotation", func(t *testing.T) {
 
-			schemaYAML := `#@data/values-schema
----
-#@schema/default
-foo: 0
-`
-			templateYAML := `#@ load("@ytt:data", "data")
----
-foo: #@ data.values.foo
-`
-			expectedErr := `
-Invalid schema
-==============
-expected @schema/default annotation to contain default value
-
-schema.yml:
-    |
-  4 | foo: 0
-    |
-
-    = found: missing value
-    = expected: valid default value
-    = hint: a default value must be a starlark value that is not a function definition
-`
-
-			filesToProcess := files.NewSortedFiles([]*files.File{
-				files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
-				files.MustNewFileFromSource(files.NewBytesSource("template.yml", []byte(templateYAML))),
-			})
-
-			assertFails(t, filesToProcess, expectedErr, opts)
-		})
-		t.Run("is an invalid starlark value", func(t *testing.T) {
-
-			schemaYAML := `#@data/values-schema
----
-#@schema/default any=True
-foo: 0
-`
-			templateYAML := `#@ load("@ytt:data", "data")
----
-foo: #@ data.values.foo
-`
-			expectedErr := `
-Invalid schema
-==============
-expected @schema/default annotation to contain value with type of annotated node
-
-schema.yml:
-    |
-  4 | foo: 0
-    |
-
-    = found: starlark.Tuple
-    = expected: valid default value
-    = hint: value must be in starlark dictionary format: {'foo':'bar'}
-`
-
-			filesToProcess := files.NewSortedFiles([]*files.File{
-				files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
-				files.MustNewFileFromSource(files.NewBytesSource("template.yml", []byte(templateYAML))),
-			})
-
-			assertFails(t, filesToProcess, expectedErr, opts)
-		})
-		t.Run("is the wrong type", func(t *testing.T) {
-
-			schemaYAML := `#@data/values-schema
+		schemaYAML := `#@data/values-schema
 ---
 #@schema/default True
 int: 1
@@ -861,13 +794,13 @@ str: ""
 #@schema/default "string"
 bool: False
 `
-			templateYAML := `#@ load("@ytt:data", "data")
+		templateYAML := `#@ load("@ytt:data", "data")
 ---
 foo: #@ data.values.int
 foo: #@ data.values.str
 foo: #@ data.values.bool
 `
-			expectedErr := `
+		expectedErr := `
 One or more data values were invalid
 ====================================
 
@@ -896,13 +829,12 @@ schema.yml:
     = expected: boolean (by schema.yml:8)
 `
 
-			filesToProcess := files.NewSortedFiles([]*files.File{
-				files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
-				files.MustNewFileFromSource(files.NewBytesSource("template.yml", []byte(templateYAML))),
-			})
-
-			assertFails(t, filesToProcess, expectedErr, opts)
+		filesToProcess := files.NewSortedFiles([]*files.File{
+			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
+			files.MustNewFileFromSource(files.NewBytesSource("template.yml", []byte(templateYAML))),
 		})
+
+		assertFails(t, filesToProcess, expectedErr, opts)
 	})
 
 	t.Run("checks after every data values document is processed (and stops if there was a violation)", func(t *testing.T) {
@@ -2788,6 +2720,74 @@ foo: 0
 		})
 
 		assertFails(t, filesToProcess, expectedErr, opts)
+	})
+	t.Run("when the @schema/default annotation value", func(t *testing.T) {
+		t.Run("is empty", func(t *testing.T) {
+
+			schemaYAML := `#@data/values-schema
+---
+#@schema/default
+foo: 0
+`
+			templateYAML := `#@ load("@ytt:data", "data")
+---
+foo: #@ data.values.foo
+`
+			expectedErr := `
+Invalid schema
+==============
+expected @schema/default annotation to contain default value
+
+schema.yml:
+    |
+  4 | foo: 0
+    |
+
+    = found: missing value
+    = expected: valid default value
+    = hint: a default value must be a starlark value that is not a function definition
+`
+
+			filesToProcess := files.NewSortedFiles([]*files.File{
+				files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
+				files.MustNewFileFromSource(files.NewBytesSource("template.yml", []byte(templateYAML))),
+			})
+
+			assertFails(t, filesToProcess, expectedErr, opts)
+		})
+		t.Run("is an invalid starlark Tuple", func(t *testing.T) {
+
+			schemaYAML := `#@data/values-schema
+---
+#@schema/default any=True
+foo: 0
+`
+			templateYAML := `#@ load("@ytt:data", "data")
+---
+foo: #@ data.values.foo
+`
+			expectedErr := `
+Invalid schema
+==============
+expected @schema/default annotation to contain value with type of annotated node
+
+schema.yml:
+    |
+  4 | foo: 0
+    |
+
+    = found: starlark.Tuple
+    = expected: valid default value
+    = hint: value must be in starlark dictionary format: {'foo':'bar'}
+`
+
+			filesToProcess := files.NewSortedFiles([]*files.File{
+				files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
+				files.MustNewFileFromSource(files.NewBytesSource("template.yml", []byte(templateYAML))),
+			})
+
+			assertFails(t, filesToProcess, expectedErr, opts)
+		})
 	})
 }
 
