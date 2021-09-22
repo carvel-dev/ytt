@@ -854,12 +854,18 @@ schema.yml:
 
 			schemaYAML := `#@data/values-schema
 ---
+#@schema/default True
+int: 1
+#@schema/default 0
+str: ""
 #@schema/default "string"
-foo: 0
+bool: False
 `
 			templateYAML := `#@ load("@ytt:data", "data")
 ---
-foo: #@ data.values.foo
+foo: #@ data.values.int
+foo: #@ data.values.str
+foo: #@ data.values.bool
 `
 			expectedErr := `
 One or more data values were invalid
@@ -867,11 +873,27 @@ One or more data values were invalid
 
 schema.yml:
     |
-  4 | foo: 0
+  4 | int: 1
+    |
+
+    = found: boolean
+    = expected: integer (by schema.yml:4)
+
+schema.yml:
+    |
+  6 | str: ""
+    |
+
+    = found: integer
+    = expected: string (by schema.yml:6)
+
+schema.yml:
+    |
+  8 | bool: False
     |
 
     = found: string
-    = expected: integer (by schema.yml:4)
+    = expected: boolean (by schema.yml:8)
 `
 
 			filesToProcess := files.NewSortedFiles([]*files.File{
@@ -1188,19 +1210,22 @@ rendered: #@ data.values
 			schemaYAML := `#@data/values-schema
 ---
 #@schema/default 1
-foo: 0
-#@schema/default "newValue"
-bar: ""
+int: 0
+#@schema/default "a string"
+str: ""
+#@schema/default True
+bool: false
 `
 			templateYAML := `#@ load("@ytt:data", "data")
 ---
-foo: #@ data.values.foo
-bar: #@ data.values.bar
+int: #@ data.values.int
+str: #@ data.values.str
+bool: #@ data.values.bool
 `
-			expected := `foo: 1
-bar: newValue
+			expected := `int: 1
+str: a string
+bool: true
 `
-
 			filesToProcess := files.NewSortedFiles([]*files.File{
 				files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
 				files.MustNewFileFromSource(files.NewBytesSource("template.yml", []byte(templateYAML))),
