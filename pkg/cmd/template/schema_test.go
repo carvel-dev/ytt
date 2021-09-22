@@ -2744,8 +2744,9 @@ schema.yml:
     |
 
     = found: missing value
-    = expected: valid default value
-    = hint: a default value must be a starlark value that is not a function definition
+    = expected: integer (by schema.yml:4)
+    = hint: value must be the same type as the annotated node
+    = hint: value must be in Starlark format, e.g.: {'key': 'value'}, True
 `
 
 			filesToProcess := files.NewSortedFiles([]*files.File{
@@ -2777,8 +2778,9 @@ schema.yml:
     |
 
     = found: starlark.Tuple
-    = expected: valid default value
-    = hint: value must be in starlark dictionary format: {'foo':'bar'}
+    = expected: integer (by schema.yml:4)
+    = hint: value must be the same type as the annotated node
+    = hint: value must be in Starlark format, e.g.: {'key': 'value'}, True
 `
 
 			filesToProcess := files.NewSortedFiles([]*files.File{

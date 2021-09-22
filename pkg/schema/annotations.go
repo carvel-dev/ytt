@@ -92,23 +92,27 @@ func NewNullableAnnotation(ann template.NodeAnnotation, valueType yamlmeta.Type,
 	return &NullableAnnotation{valueType, pos}, nil
 }
 
-func NewDefaultAnnotation(ann template.NodeAnnotation, pos *filepos.Position) (*DefaultAnnotation, error) {
+func NewDefaultAnnotation(ann template.NodeAnnotation, inferredType yamlmeta.Type, pos *filepos.Position) (*DefaultAnnotation, error) {
 	if len(ann.Kwargs) != 0 {
 		return nil, schemaAssertionError{
 			position:    pos,
 			description: fmt.Sprintf("expected @%v annotation to contain value with type of annotated node", AnnotationDefault),
-			expected:    "valid default value",
+			expected:    fmt.Sprintf("%s (by %s)", inferredType.String(), inferredType.GetDefinitionPosition().AsCompactString()),
 			found:       fmt.Sprintf("%T", ann.Kwargs[0]),
-			hints:       []string{"value must be in starlark dictionary format: {'foo':'bar'}"},
+			hints:       []string{
+				"value must be the same type as the annotated node",
+				"value must be in Starlark format, e.g.: {'key': 'value'}, True"},
 		}
 	}
 	if len(ann.Args) == 0 {
 		return nil, schemaAssertionError{
 			position:    pos,
 			description: fmt.Sprintf("expected @%v annotation to contain default value", AnnotationDefault),
-			expected:    "valid default value",
+			expected:    fmt.Sprintf("%s (by %s)", inferredType.String(), inferredType.GetDefinitionPosition().AsCompactString()),
 			found:       "missing value",
-			hints:       []string{"a default value must be a starlark value that is not a function definition"},
+			hints:       []string{
+				"value must be the same type as the annotated node",
+				"value must be in Starlark format, e.g.: {'key': 'value'}, True"},
 		}
 	}
 	val, err := core.NewStarlarkValue(ann.Args[0]).AsGoValue()
@@ -183,7 +187,7 @@ func processOptionalAnnotation(node yamlmeta.Node, optionalAnnotation template.A
 			}
 			return typeAnn, nil
 		case AnnotationDefault:
-			defaultAnn, err := NewDefaultAnnotation(ann, node.GetPosition())
+			defaultAnn, err := NewDefaultAnnotation(ann, wrappedValueType, node.GetPosition())
 			if err != nil {
 				return nil, err
 			}
