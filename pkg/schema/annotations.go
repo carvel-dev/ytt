@@ -36,6 +36,7 @@ type NullableAnnotation struct {
 	itemPosition      *filepos.Position
 }
 
+// DefaultAnnotation is a wrapper for a value provided via @schema/default annotation
 type DefaultAnnotation struct {
 	val interface{}
 }
@@ -92,6 +93,7 @@ func NewNullableAnnotation(ann template.NodeAnnotation, valueType yamlmeta.Type,
 	return &NullableAnnotation{valueType, pos}, nil
 }
 
+// NewDefaultAnnotation checks the argument provided via @schema/default annotation, and returns wrapper for that value.
 func NewDefaultAnnotation(ann template.NodeAnnotation, inferredType yamlmeta.Type, pos *filepos.Position) (*DefaultAnnotation, error) {
 	if len(ann.Kwargs) != 0 {
 		return nil, schemaAssertionError{
@@ -99,7 +101,7 @@ func NewDefaultAnnotation(ann template.NodeAnnotation, inferredType yamlmeta.Typ
 			description: fmt.Sprintf("expected @%v annotation to contain value with type of annotated node", AnnotationDefault),
 			expected:    fmt.Sprintf("%s (by %s)", inferredType.String(), inferredType.GetDefinitionPosition().AsCompactString()),
 			found:       fmt.Sprintf("%T", ann.Kwargs[0]),
-			hints:       []string{
+			hints: []string{
 				"value must be the same type as the annotated node",
 				"value must be in Starlark format, e.g.: {'key': 'value'}, True"},
 		}
@@ -110,7 +112,7 @@ func NewDefaultAnnotation(ann template.NodeAnnotation, inferredType yamlmeta.Typ
 			description: fmt.Sprintf("expected @%v annotation to contain default value", AnnotationDefault),
 			expected:    fmt.Sprintf("%s (by %s)", inferredType.String(), inferredType.GetDefinitionPosition().AsCompactString()),
 			found:       "missing value",
-			hints:       []string{
+			hints: []string{
 				"value must be the same type as the annotated node",
 				"value must be in Starlark format, e.g.: {'key': 'value'}, True"},
 		}
@@ -143,6 +145,7 @@ func (n *NullableAnnotation) NewTypeFromAnn() yamlmeta.Type {
 	return &NullType{ValueType: n.providedValueType, Position: n.itemPosition}
 }
 
+// NewTypeFromAnn returns type information given by annotation.
 func (n *DefaultAnnotation) NewTypeFromAnn() yamlmeta.Type {
 	return nil
 }
