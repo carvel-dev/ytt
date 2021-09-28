@@ -96,7 +96,7 @@ func (m MapType) GetDefaultValue() interface{} {
 }
 
 func (t DocumentType) GetDefaultValue() interface{} {
-	return &yamlmeta.Document{Value: t.ValueType.GetDefaultValue(), Position: t.Position}
+	return &yamlmeta.Document{Value: t.defaultValue, Position: t.Position}
 }
 
 func (n NullType) AssignTypeTo(typeable yamlmeta.Typeable) (chk yamlmeta.TypeCheck) {

@@ -1233,6 +1233,32 @@ users:
 
 			assertSucceeds(t, filesToProcess, expected, opts)
 		})
+		t.Run("on a document", func(t *testing.T) {
+
+			schemaYAML := `#@data/values-schema
+#@schema/default {'databases': [{'name': 'default', 'host': 'localhost'}]}
+---
+databases:
+- name: ""
+  host: ""
+`
+
+			templateYAML := `#@ load("@ytt:data", "data")
+---
+databases: #@ data.values.databases
+`
+			expected := `databases:
+- name: default
+  host: localhost
+`
+
+			filesToProcess := files.NewSortedFiles([]*files.File{
+				files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
+				files.MustNewFileFromSource(files.NewBytesSource("template.yml", []byte(templateYAML))),
+			})
+
+			assertSucceeds(t, filesToProcess, expected, opts)
+		})
 		t.Run("in combination with @schema/nullable and @schema/type", func(t *testing.T) {
 
 			schemaYAML := `#@data/values-schema
@@ -2721,8 +2747,8 @@ foo: 0
 
 		assertFails(t, filesToProcess, expectedErr, opts)
 	})
-	t.Run("when the @schema/default annotation value", func(t *testing.T) {
-		t.Run("is empty", func(t *testing.T) {
+	t.Run("when schema/default annotation", func(t *testing.T) {
+		t.Run("value is empty", func(t *testing.T) {
 
 			schemaYAML := `#@data/values-schema
 ---
@@ -2756,7 +2782,7 @@ schema.yml:
 
 			assertFails(t, filesToProcess, expectedErr, opts)
 		})
-		t.Run("is an invalid starlark Tuple", func(t *testing.T) {
+		t.Run("value is an invalid starlark Tuple", func(t *testing.T) {
 
 			schemaYAML := `#@data/values-schema
 ---
@@ -2781,6 +2807,41 @@ schema.yml:
     = expected: integer (by schema.yml:4)
     = hint: value must be the same type as the annotated node
     = hint: value must be in Starlark format, e.g.: {'key': 'value'}, True
+`
+
+			filesToProcess := files.NewSortedFiles([]*files.File{
+				files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
+				files.MustNewFileFromSource(files.NewBytesSource("template.yml", []byte(templateYAML))),
+			})
+
+			assertFails(t, filesToProcess, expectedErr, opts)
+		})
+		t.Run("is on an array item", func(t *testing.T) {
+
+			schemaYAML := `#@data/values-schema
+---
+foo:
+#@schema/default "baz"
+- bar
+
+`
+			templateYAML := `#@ load("@ytt:data", "data")
+---
+foo: #@ data.values.foo
+`
+			expectedErr := `
+Invalid schema - @schema/default not allowed on array item
+==========================================================
+
+schema.yml:
+    |
+  5 | - bar
+    |
+
+    = found: @schema/default annotation on array item
+    = expected: @schema/default annotation to be on map item
+    = hint: place annotation on the map item containing this array item
+    = hint: default value should set the value for the array
 `
 
 			filesToProcess := files.NewSortedFiles([]*files.File{

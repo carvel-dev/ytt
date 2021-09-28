@@ -123,7 +123,7 @@ func NewDefaultAnnotation(ann template.NodeAnnotation, inferredType yamlmeta.Typ
 			error:       err,
 			position:    pos,
 			description: fmt.Sprintf("invalid @schema/default argument"),
-			expected:    "A valid starlark value",
+			expected:    "A valid Starlark value",
 			found:       fmt.Sprintf("%T", ann.Args[0]),
 		}
 	}

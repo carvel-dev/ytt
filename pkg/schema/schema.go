@@ -75,7 +75,15 @@ func NewDocumentType(doc *yamlmeta.Document) (*DocumentType, error) {
 		return nil, err
 	}
 
-	return &DocumentType{Source: doc, Position: doc.Position, ValueType: typeOfValue, defaultValue: typeOfValue.GetDefaultValue()}, nil
+	defaultValue, err := getExplicitDefaultValue(doc)
+	if err != nil {
+		return nil, err
+	}
+	if defaultValue == nil {
+		defaultValue = typeOfValue.GetDefaultValue()
+	}
+
+	return &DocumentType{Source: doc, Position: doc.Position, ValueType: typeOfValue, defaultValue: defaultValue}, nil
 }
 
 func NewMapType(m *yamlmeta.Map) (*MapType, error) {
@@ -129,6 +137,16 @@ func NewArrayItemType(item *yamlmeta.ArrayItem) (*ArrayItemType, error) {
 	typeOfValue, err := getType(item)
 	if err != nil {
 		return nil, err
+	}
+
+	defaultValue, err := getExplicitDefaultValue(item)
+	if defaultValue != nil || err != nil {
+		return nil, NewSchemaError("Invalid schema - @schema/default not allowed on array item", schemaAssertionError{
+			position: item.Position,
+			expected: fmt.Sprintf("@%v annotation to be on map item", AnnotationDefault),
+			found:    fmt.Sprintf("@%v annotation on array item", AnnotationDefault),
+			hints:    []string{"place annotation on the map item containing this array item", "default value should set the value for the array"},
+		})
 	}
 
 	return &ArrayItemType{ValueType: typeOfValue, defaultValue: typeOfValue.GetDefaultValue(), Position: item.GetPosition()}, nil
