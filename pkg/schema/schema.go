@@ -75,11 +75,11 @@ func NewDocumentType(doc *yamlmeta.Document) (*DocumentType, error) {
 		return nil, err
 	}
 
-	defaultValue, err := getExplicitDefaultValue(doc)
+	defaultValue, explicit, err := getExplicitDefaultValue(doc)
 	if err != nil {
 		return nil, err
 	}
-	if defaultValue == nil {
+	if !explicit {
 		defaultValue = typeOfValue.GetDefaultValue()
 	}
 
@@ -105,11 +105,11 @@ func NewMapItemType(item *yamlmeta.MapItem) (*MapItemType, error) {
 	if err != nil {
 		return nil, err
 	}
-	defaultValue, err := getExplicitDefaultValue(item)
+	defaultValue, explicit, err := getExplicitDefaultValue(item)
 	if err != nil {
 		return nil, err
 	}
-	if defaultValue == nil {
+	if !explicit {
 		defaultValue = typeOfValue.GetDefaultValue()
 	}
 	return &MapItemType{Key: item.Key, ValueType: typeOfValue, defaultValue: defaultValue, Position: item.Position}, nil
@@ -139,8 +139,8 @@ func NewArrayItemType(item *yamlmeta.ArrayItem) (*ArrayItemType, error) {
 		return nil, err
 	}
 
-	defaultValue, err := getExplicitDefaultValue(item)
-	if defaultValue != nil || err != nil {
+	_, explicit, err := getExplicitDefaultValue(item)
+	if explicit || err != nil {
 		return nil, NewSchemaError("Invalid schema - @schema/default not allowed on array item", schemaAssertionError{
 			position: item.Position,
 			expected: fmt.Sprintf("@%v annotation to be on map item", AnnotationDefault),
@@ -176,23 +176,20 @@ func getType(node yamlmeta.ValueHoldingNode) (yamlmeta.Type, error) {
 	return typeOfValue, nil
 }
 
-func getExplicitDefaultValue(node yamlmeta.ValueHoldingNode) (interface{}, error) {
+func getExplicitDefaultValue(node yamlmeta.ValueHoldingNode) (interface{}, bool, error) {
 	anns, err := collectAnnotations(node)
 	if err != nil {
-		return nil, NewSchemaError("Invalid schema", err)
-	}
-	annsCopy := append([]Annotation{}, anns...)
-	if len(annsCopy) == 0 {
-		return nil, nil
+		return nil, false, NewSchemaError("Invalid schema", err)
 	}
 
 	var defaultVal interface{}
-	for _, ann := range annsCopy {
+	for _, ann := range anns {
 		if defaultAnn, ok := ann.(*DefaultAnnotation); ok {
-			defaultVal = defaultAnn.val
+			defaultVal = defaultAnn.Val
+			return defaultVal, true, nil
 		}
 	}
-	return defaultVal, nil
+	return defaultVal, false, nil
 }
 
 func inferTypeFromValue(value interface{}, position *filepos.Position) (yamlmeta.Type, error) {

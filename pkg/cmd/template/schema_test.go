@@ -1166,7 +1166,6 @@ bool: true
 			assertSucceeds(t, filesToProcess, expected, opts)
 		})
 		t.Run("on an array", func(t *testing.T) {
-
 			schemaYAML := `#@data/values-schema
 ---
 #@schema/default ["new", "array", "strings"]
@@ -1199,7 +1198,6 @@ bar:
 			assertSucceeds(t, filesToProcess, expected, opts)
 		})
 		t.Run("on nested map", func(t *testing.T) {
-
 			schemaYAML := `#@data/values-schema
 ---
 #@schema/default [{'name': 'null_db'}]
@@ -1234,7 +1232,6 @@ users:
 			assertSucceeds(t, filesToProcess, expected, opts)
 		})
 		t.Run("on a document", func(t *testing.T) {
-
 			schemaYAML := `#@data/values-schema
 #@schema/default {'databases': [{'name': 'default', 'host': 'localhost'}]}
 ---
@@ -1260,7 +1257,6 @@ databases: #@ data.values.databases
 			assertSucceeds(t, filesToProcess, expected, opts)
 		})
 		t.Run("in combination with @schema/nullable and @schema/type", func(t *testing.T) {
-
 			schemaYAML := `#@data/values-schema
 ---
 #@schema/type any=True 
@@ -2749,7 +2745,6 @@ foo: 0
 	})
 	t.Run("when schema/default annotation", func(t *testing.T) {
 		t.Run("value is empty", func(t *testing.T) {
-
 			schemaYAML := `#@data/values-schema
 ---
 #@schema/default
@@ -2771,8 +2766,41 @@ schema.yml:
 
     = found: missing value
     = expected: integer (by schema.yml:4)
-    = hint: value must be the same type as the annotated node
-    = hint: value must be in Starlark format, e.g.: {'key': 'value'}, True
+    = hint: value must be the same type as the annotated node.
+    = hint: value must be in Starlark format, e.g.: {'key': 'value'}, True.
+`
+
+			filesToProcess := files.NewSortedFiles([]*files.File{
+				files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
+				files.MustNewFileFromSource(files.NewBytesSource("template.yml", []byte(templateYAML))),
+			})
+
+			assertFails(t, filesToProcess, expectedErr, opts)
+		})
+		t.Run("has multiple values", func(t *testing.T) {
+			schemaYAML := `#@data/values-schema
+---
+#@schema/default 1, 2
+foo: 0
+`
+			templateYAML := `#@ load("@ytt:data", "data")
+---
+foo: #@ data.values.foo
+`
+			expectedErr := `
+Invalid schema
+==============
+expected @schema/default annotation to contain one argument as default value
+
+schema.yml:
+    |
+  4 | foo: 0
+    |
+
+    = found: 2 values
+    = expected: integer (by schema.yml:4)
+    = hint: value must be the same type as the annotated node.
+    = hint: value must be in Starlark format, e.g.: {'key': 'value'}, True.
 `
 
 			filesToProcess := files.NewSortedFiles([]*files.File{
@@ -2783,7 +2811,6 @@ schema.yml:
 			assertFails(t, filesToProcess, expectedErr, opts)
 		})
 		t.Run("value is an invalid starlark Tuple", func(t *testing.T) {
-
 			schemaYAML := `#@data/values-schema
 ---
 #@schema/default any=True
@@ -2805,8 +2832,8 @@ schema.yml:
 
     = found: starlark.Tuple
     = expected: integer (by schema.yml:4)
-    = hint: value must be the same type as the annotated node
-    = hint: value must be in Starlark format, e.g.: {'key': 'value'}, True
+    = hint: value must be the same type as the annotated node.
+    = hint: value must be in Starlark format, e.g.: {'key': 'value'}, True.
 `
 
 			filesToProcess := files.NewSortedFiles([]*files.File{
@@ -2817,7 +2844,6 @@ schema.yml:
 			assertFails(t, filesToProcess, expectedErr, opts)
 		})
 		t.Run("is on an array item", func(t *testing.T) {
-
 			schemaYAML := `#@data/values-schema
 ---
 foo:

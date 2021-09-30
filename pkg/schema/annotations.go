@@ -38,7 +38,7 @@ type NullableAnnotation struct {
 
 // DefaultAnnotation is a wrapper for a value provided via @schema/default annotation
 type DefaultAnnotation struct {
-	val interface{}
+	Val interface{}
 }
 
 func NewTypeAnnotation(ann template.NodeAnnotation, inferredType yamlmeta.Type, pos *filepos.Position) (*TypeAnnotation, error) {
@@ -102,32 +102,39 @@ func NewDefaultAnnotation(ann template.NodeAnnotation, inferredType yamlmeta.Typ
 			expected:    fmt.Sprintf("%s (by %s)", inferredType.String(), inferredType.GetDefinitionPosition().AsCompactString()),
 			found:       fmt.Sprintf("%T", ann.Kwargs[0]),
 			hints: []string{
-				"value must be the same type as the annotated node",
-				"value must be in Starlark format, e.g.: {'key': 'value'}, True"},
+				"value must be the same type as the annotated node.",
+				"value must be in Starlark format, e.g.: {'key': 'value'}, True."},
 		}
 	}
-	if len(ann.Args) == 0 {
+	switch numArgs := len(ann.Args); {
+	case numArgs == 0:
 		return nil, schemaAssertionError{
 			position:    pos,
 			description: fmt.Sprintf("expected @%v annotation to contain default value", AnnotationDefault),
 			expected:    fmt.Sprintf("%s (by %s)", inferredType.String(), inferredType.GetDefinitionPosition().AsCompactString()),
 			found:       "missing value",
 			hints: []string{
-				"value must be the same type as the annotated node",
-				"value must be in Starlark format, e.g.: {'key': 'value'}, True"},
+				"value must be the same type as the annotated node.",
+				"value must be in Starlark format, e.g.: {'key': 'value'}, True."},
 		}
-	}
-	val, err := core.NewStarlarkValue(ann.Args[0]).AsGoValue()
-	if err != nil {
+	case numArgs > 1:
 		return nil, schemaAssertionError{
-			error:       err,
 			position:    pos,
-			description: fmt.Sprintf("invalid @schema/default argument"),
-			expected:    "A valid Starlark value",
-			found:       fmt.Sprintf("%T", ann.Args[0]),
+			description: fmt.Sprintf("expected @%v annotation to contain one argument as default value", AnnotationDefault),
+			expected:    fmt.Sprintf("%s (by %s)", inferredType.String(), inferredType.GetDefinitionPosition().AsCompactString()),
+			found:       fmt.Sprintf("%v values", numArgs),
+			hints: []string{
+				"value must be the same type as the annotated node.",
+				"value must be in Starlark format, e.g.: {'key': 'value'}, True."},
 		}
+	default:
+		val, err := core.NewStarlarkValue(ann.Args[0]).AsGoValue()
+		if err != nil {
+			//at this point the annotation is processed, and the Starlark evaluated
+			panic(err)
+		}
+		return &DefaultAnnotation{yamlmeta.NewASTFromInterfaceWithPosition(val, pos)}, nil
 	}
-	return &DefaultAnnotation{yamlmeta.NewASTFromInterfaceWithPosition(val, pos)}, nil
 }
 
 func (t *TypeAnnotation) NewTypeFromAnn() yamlmeta.Type {
