@@ -75,12 +75,9 @@ func NewDocumentType(doc *yamlmeta.Document) (*DocumentType, error) {
 		return nil, err
 	}
 
-	defaultValue, explicit, err := getExplicitDefaultValue(doc)
+	defaultValue, err := getValue(doc, typeOfValue)
 	if err != nil {
 		return nil, err
-	}
-	if !explicit {
-		defaultValue = typeOfValue.GetDefaultValue()
 	}
 
 	return &DocumentType{Source: doc, Position: doc.Position, ValueType: typeOfValue, defaultValue: defaultValue}, nil
@@ -105,12 +102,9 @@ func NewMapItemType(item *yamlmeta.MapItem) (*MapItemType, error) {
 	if err != nil {
 		return nil, err
 	}
-	defaultValue, explicit, err := getExplicitDefaultValue(item)
+	defaultValue, err := getValue(item, typeOfValue)
 	if err != nil {
 		return nil, err
-	}
-	if !explicit {
-		defaultValue = typeOfValue.GetDefaultValue()
 	}
 	return &MapItemType{Key: item.Key, ValueType: typeOfValue, defaultValue: defaultValue, Position: item.Position}, nil
 }
@@ -139,8 +133,8 @@ func NewArrayItemType(item *yamlmeta.ArrayItem) (*ArrayItemType, error) {
 		return nil, err
 	}
 
-	_, explicit, err := getExplicitDefaultValue(item)
-	if explicit || err != nil {
+	defaultValue, err := getValue(item, typeOfValue)
+	if err != nil {
 		return nil, NewSchemaError("Invalid schema - @schema/default not allowed on array item", schemaAssertionError{
 			position: item.Position,
 			expected: fmt.Sprintf("@%v annotation to be on map item", AnnotationDefault),
@@ -149,7 +143,7 @@ func NewArrayItemType(item *yamlmeta.ArrayItem) (*ArrayItemType, error) {
 		})
 	}
 
-	return &ArrayItemType{ValueType: typeOfValue, defaultValue: typeOfValue.GetDefaultValue(), Position: item.GetPosition()}, nil
+	return &ArrayItemType{ValueType: typeOfValue, defaultValue: defaultValue, Position: item.GetPosition()}, nil
 }
 
 func getType(node yamlmeta.ValueHoldingNode) (yamlmeta.Type, error) {
@@ -176,20 +170,26 @@ func getType(node yamlmeta.ValueHoldingNode) (yamlmeta.Type, error) {
 	return typeOfValue, nil
 }
 
-func getExplicitDefaultValue(node yamlmeta.ValueHoldingNode) (interface{}, bool, error) {
+func getValue(node yamlmeta.ValueHoldingNode, t yamlmeta.Type) (interface{}, error) {
 	anns, err := collectAnnotations(node)
 	if err != nil {
-		return nil, false, NewSchemaError("Invalid schema", err)
+		return nil, NewSchemaError("Invalid schema", err)
 	}
 
-	var defaultVal interface{}
 	for _, ann := range anns {
 		if defaultAnn, ok := ann.(*DefaultAnnotation); ok {
-			defaultVal = defaultAnn.Val
-			return defaultVal, true, nil
+			if _, ok = node.(*yamlmeta.ArrayItem); ok {
+				return nil, NewSchemaError("Invalid schema - @schema/default not allowed on array item", schemaAssertionError{
+					position: node.GetPosition(),
+					expected: fmt.Sprintf("@%v annotation to be on map item", AnnotationDefault),
+					found:    fmt.Sprintf("@%v annotation on array item", AnnotationDefault),
+					hints:    []string{"place annotation on the map item containing this array item", "default value should set the value for the array"},
+				})
+			}
+			return defaultAnn.Val(), nil
 		}
 	}
-	return defaultVal, false, nil
+	return t.GetDefaultValue(), nil
 }
 
 func inferTypeFromValue(value interface{}, position *filepos.Position) (yamlmeta.Type, error) {

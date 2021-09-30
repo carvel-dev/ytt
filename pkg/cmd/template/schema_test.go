@@ -1260,7 +1260,7 @@ databases: #@ data.values.databases
 			schemaYAML := `#@data/values-schema
 ---
 #@schema/type any=True 
-#@schema/default {}
+#@schema/default None
 databases:
 - name: ""
   host: ""
@@ -1278,7 +1278,7 @@ users:
 databases: #@ data.values.databases
 users: #@ data.values.users
 `
-			expected := `databases: {}
+			expected := `databases: null
 users:
   admin: admin
   user: []

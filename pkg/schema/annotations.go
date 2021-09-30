@@ -38,7 +38,7 @@ type NullableAnnotation struct {
 
 // DefaultAnnotation is a wrapper for a value provided via @schema/default annotation
 type DefaultAnnotation struct {
-	Val interface{}
+	val interface{}
 }
 
 func NewTypeAnnotation(ann template.NodeAnnotation, inferredType yamlmeta.Type, pos *filepos.Position) (*TypeAnnotation, error) {
@@ -127,14 +127,14 @@ func NewDefaultAnnotation(ann template.NodeAnnotation, inferredType yamlmeta.Typ
 				"value must be the same type as the annotated node.",
 				"value must be in Starlark format, e.g.: {'key': 'value'}, True."},
 		}
-	default:
-		val, err := core.NewStarlarkValue(ann.Args[0]).AsGoValue()
-		if err != nil {
-			//at this point the annotation is processed, and the Starlark evaluated
-			panic(err)
-		}
-		return &DefaultAnnotation{yamlmeta.NewASTFromInterfaceWithPosition(val, pos)}, nil
 	}
+
+	val, err := core.NewStarlarkValue(ann.Args[0]).AsGoValue()
+	if err != nil {
+		//at this point the annotation is processed, and the Starlark evaluated
+		panic(err)
+	}
+	return &DefaultAnnotation{yamlmeta.NewASTFromInterfaceWithPosition(val, pos)}, nil
 }
 
 func (t *TypeAnnotation) NewTypeFromAnn() yamlmeta.Type {
@@ -144,10 +144,7 @@ func (t *TypeAnnotation) NewTypeFromAnn() yamlmeta.Type {
 	return nil
 }
 
-func (t *TypeAnnotation) IsAny() bool {
-	return t.any
-}
-
+// NewTypeFromAnn returns type information given by annotation.
 func (n *NullableAnnotation) NewTypeFromAnn() yamlmeta.Type {
 	return &NullType{ValueType: n.providedValueType, Position: n.itemPosition}
 }
@@ -155,6 +152,15 @@ func (n *NullableAnnotation) NewTypeFromAnn() yamlmeta.Type {
 // NewTypeFromAnn returns type information given by annotation.
 func (n *DefaultAnnotation) NewTypeFromAnn() yamlmeta.Type {
 	return nil
+}
+
+func (t *TypeAnnotation) IsAny() bool {
+	return t.any
+}
+
+// Val returns default value specified in annotation.
+func (n *DefaultAnnotation) Val() interface{} {
+	return n.val
 }
 
 func collectAnnotations(item yamlmeta.Node) ([]Annotation, error) {
