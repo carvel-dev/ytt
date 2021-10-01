@@ -2856,8 +2856,8 @@ foo:
 foo: #@ data.values.foo
 `
 			expectedErr := `
-Invalid schema - @schema/default not allowed on array item
-==========================================================
+Invalid schema - @schema/default not supported on array item
+============================================================
 
 schema.yml:
     |
