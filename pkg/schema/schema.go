@@ -181,7 +181,11 @@ func getValue(node yamlmeta.ValueHoldingNode, t yamlmeta.Type) (interface{}, err
 					hints:    []string{"place annotation on the map item containing this array item", "default value should set the value for the array"},
 				})
 			}
-			return defaultAnn.Val(), nil
+			defaultValue := defaultAnn.Val()
+			if node, ok := defaultValue.(yamlmeta.Node); ok {
+				defaultValue = node.DeepCopyAsInterface()
+			}
+			return defaultValue, nil
 		}
 	}
 	return t.GetDefaultValue(), nil
