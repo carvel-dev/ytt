@@ -2757,17 +2757,15 @@ foo: #@ data.values.foo
 			expectedErr := `
 Invalid schema
 ==============
-expected @schema/default annotation to contain default value
+syntax error in @schema/default annotation
 
 schema.yml:
     |
   4 | foo: 0
     |
 
-    = found: missing value
+    = found: missing value (in @schema/default above this item)
     = expected: integer (by schema.yml:4)
-    = hint: value must be the same type as the annotated node.
-    = hint: value must be in Starlark format, e.g.: {'key': 'value'}, True.
 `
 
 			filesToProcess := files.NewSortedFiles([]*files.File{
@@ -2790,17 +2788,15 @@ foo: #@ data.values.foo
 			expectedErr := `
 Invalid schema
 ==============
-expected @schema/default annotation to contain one argument as default value
+syntax error in @schema/default annotation
 
 schema.yml:
     |
   4 | foo: 0
     |
 
-    = found: 2 values
+    = found: 2 values (in @schema/default above this item)
     = expected: integer (by schema.yml:4)
-    = hint: value must be the same type as the annotated node.
-    = hint: value must be in Starlark format, e.g.: {'key': 'value'}, True.
 `
 
 			filesToProcess := files.NewSortedFiles([]*files.File{
@@ -2823,16 +2819,16 @@ foo: #@ data.values.foo
 			expectedErr := `
 Invalid schema
 ==============
-expected @schema/default annotation to contain value with type of annotated node
+syntax error in @schema/default annotation
 
 schema.yml:
     |
   4 | foo: 0
     |
 
-    = found: starlark.Tuple
+    = found: (keyword argument in @schema/default above this item)
     = expected: integer (by schema.yml:4)
-    = hint: value must be the same type as the annotated node.
+    = hint: this annotation only accepts one argument: the default value.
     = hint: value must be in Starlark format, e.g.: {'key': 'value'}, True.
 `
 
@@ -2864,10 +2860,10 @@ schema.yml:
   5 | - bar
     |
 
-    = found: @schema/default annotation on array item
-    = expected: @schema/default annotation to be on map item
-    = hint: place annotation on the map item containing this array item
-    = hint: default value should set the value for the array
+
+
+    = hint: do you mean to set a default value for the array?
+    = hint: set an array's default by annotating its parent.
 `
 
 			filesToProcess := files.NewSortedFiles([]*files.File{

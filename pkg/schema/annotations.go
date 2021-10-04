@@ -98,11 +98,11 @@ func NewDefaultAnnotation(ann template.NodeAnnotation, inferredType yamlmeta.Typ
 	if len(ann.Kwargs) != 0 {
 		return nil, schemaAssertionError{
 			position:    pos,
-			description: fmt.Sprintf("expected @%v annotation to contain value with type of annotated node", AnnotationDefault),
+			description: fmt.Sprintf("syntax error in @%v annotation", AnnotationDefault),
 			expected:    fmt.Sprintf("%s (by %s)", inferredType.String(), inferredType.GetDefinitionPosition().AsCompactString()),
-			found:       fmt.Sprintf("%T", ann.Kwargs[0]),
+			found:       fmt.Sprintf("(keyword argument in @%v above this item)", AnnotationDefault),
 			hints: []string{
-				"value must be the same type as the annotated node.",
+				"this annotation only accepts one argument: the default value.",
 				"value must be in Starlark format, e.g.: {'key': 'value'}, True."},
 		}
 	}
@@ -110,22 +110,16 @@ func NewDefaultAnnotation(ann template.NodeAnnotation, inferredType yamlmeta.Typ
 	case numArgs == 0:
 		return nil, schemaAssertionError{
 			position:    pos,
-			description: fmt.Sprintf("expected @%v annotation to contain default value", AnnotationDefault),
+			description: fmt.Sprintf("syntax error in @%v annotation", AnnotationDefault),
 			expected:    fmt.Sprintf("%s (by %s)", inferredType.String(), inferredType.GetDefinitionPosition().AsCompactString()),
-			found:       "missing value",
-			hints: []string{
-				"value must be the same type as the annotated node.",
-				"value must be in Starlark format, e.g.: {'key': 'value'}, True."},
+			found:       fmt.Sprintf("missing value (in @%v above this item)", AnnotationDefault),
 		}
 	case numArgs > 1:
 		return nil, schemaAssertionError{
 			position:    pos,
-			description: fmt.Sprintf("expected @%v annotation to contain one argument as default value", AnnotationDefault),
+			description: fmt.Sprintf("syntax error in @%v annotation", AnnotationDefault),
 			expected:    fmt.Sprintf("%s (by %s)", inferredType.String(), inferredType.GetDefinitionPosition().AsCompactString()),
-			found:       fmt.Sprintf("%v values", numArgs),
-			hints: []string{
-				"value must be the same type as the annotated node.",
-				"value must be in Starlark format, e.g.: {'key': 'value'}, True."},
+			found:       fmt.Sprintf("%v values (in @%v above this item)", numArgs, AnnotationDefault),
 		}
 	}
 

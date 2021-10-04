@@ -102,10 +102,12 @@ func NewMapItemType(item *yamlmeta.MapItem) (*MapItemType, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	defaultValue, err := getValue(item, typeOfValue)
 	if err != nil {
 		return nil, err
 	}
+
 	return &MapItemType{Key: item.Key, ValueType: typeOfValue, defaultValue: defaultValue, Position: item.Position}, nil
 }
 
@@ -174,11 +176,9 @@ func getValue(node yamlmeta.ValueHoldingNode, t yamlmeta.Type) (interface{}, err
 	for _, ann := range anns {
 		if defaultAnn, ok := ann.(*DefaultAnnotation); ok {
 			if _, ok = node.(*yamlmeta.ArrayItem); ok {
-				return nil, NewSchemaError("Invalid schema - @schema/default not supported on array item", schemaAssertionError{
+				return nil, NewSchemaError(fmt.Sprintf("Invalid schema - @%v not supported on array item", AnnotationDefault), schemaAssertionError{
 					position: node.GetPosition(),
-					expected: fmt.Sprintf("@%v annotation to be on map item", AnnotationDefault),
-					found:    fmt.Sprintf("@%v annotation on array item", AnnotationDefault),
-					hints:    []string{"place annotation on the map item containing this array item", "default value should set the value for the array"},
+					hints:    []string{"do you mean to set a default value for the array?", "set an array's default by annotating its parent."},
 				})
 			}
 			defaultValue := defaultAnn.Val()
