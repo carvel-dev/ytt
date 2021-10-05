@@ -34,6 +34,7 @@ type DataValuesFlags struct {
 	FromFiles []string
 
 	Inspect bool
+	InspectSchema bool
 
 	EnvironFunc  func() []string
 	ReadFileFunc func(string) ([]byte, error)
@@ -50,6 +51,7 @@ func (s *DataValuesFlags) Set(cmd *cobra.Command) {
 	cmd.Flags().StringArrayVar(&s.FromFiles, "data-values-file", nil, "Set multiple data values via a YAML file (format: /file/path.yml) (can be specified multiple times)")
 
 	cmd.Flags().BoolVar(&s.Inspect, "data-values-inspect", false, "Inspect data values")
+	cmd.Flags().BoolVar(&s.InspectSchema, "data-values-schema-inspect", false, "TODO data values")
 }
 
 type dataValuesFlagsSource struct {

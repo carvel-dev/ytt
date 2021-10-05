@@ -2,13 +2,16 @@ package template_test
 
 import (
 	cmdtpl "github.com/k14s/ytt/pkg/cmd/template"
+	"github.com/k14s/ytt/pkg/cmd/ui"
 	"github.com/k14s/ytt/pkg/files"
+	"github.com/stretchr/testify/require"
 	"testing"
 )
 
 func TestOpenapi_map(t *testing.T) {
 	opts := cmdtpl.NewOptions()
-	// TODO pass in the --data-value-schema-inspect flag
+	opts.DataValuesFlags.InspectSchema = true
+	opts.RegularFilesSourceOpts.OutputType = "openapi-v3"
 
 	schemaYAML := `#@data/values-schema
 ---
@@ -33,5 +36,17 @@ components:
 		files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
 		})
 
-	assertSucceeds(t, filesToProcess, expected, opts)
+	assertSucceedsDocSet(t, filesToProcess, expected, opts)
+}
+
+//Returning a DocSet
+func assertSucceedsDocSet(t *testing.T, filesToProcess []*files.File, expectedOut string, opts *cmdtpl.Options) {
+	t.Helper()
+	out := opts.RunWithFiles(cmdtpl.Input{Files: filesToProcess}, ui.NewTTY(false))
+	require.NoError(t, out.Err)
+
+	outBytes, err := out.DocSet.AsBytes()
+	require.NoError(t, err)
+
+	require.Equal(t, expectedOut, string(outBytes))
 }
