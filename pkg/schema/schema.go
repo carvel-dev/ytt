@@ -264,6 +264,10 @@ func (s *DocumentSchema) DefaultDataValues() *yamlmeta.Document {
 	return s.defaultDVs
 }
 
+func (s *DocumentSchema) GetType() yamlmeta.Type {
+	return s.DocType
+}
+
 func (s *DocumentSchema) deepCopy() *DocumentSchema {
 	return &DocumentSchema{
 		Source:     s.Source.DeepCopy(),

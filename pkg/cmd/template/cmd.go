@@ -127,10 +127,11 @@ func (o *Options) RunWithFiles(in Input, ui ui.UI) Output {
 	if err != nil {
 		return Output{Err: err}
 	}
+
 	if o.DataValuesFlags.InspectSchema {
 		return Output{
 			DocSet: &yamlmeta.DocumentSet{
-				Items: []*yamlmeta.Document{createOpenapiDoc(schema)},
+				Items: []*yamlmeta.Document{NewOpenAPISchema(schema)},
 			},
 		}
 	}
@@ -156,10 +157,6 @@ func (o *Options) RunWithFiles(in Input, ui ui.UI) Output {
 	}
 
 	return Output{Files: result.Files, DocSet: result.DocSet}
-}
-
-func createOpenapiDoc(schema workspace.Schema) *yamlmeta.Document {
-	return &yamlmeta.Document{Value: "this is the doc"}
 }
 
 func (o *Options) pickSource(srcs []FileSource, pickFunc func(FileSource) bool) FileSource {
