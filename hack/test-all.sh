@@ -9,5 +9,6 @@ if [ -z "$GITHUB_ACTION" ]; then
 fi
 
 go test ./... "$@"
+( cd examples/integrating-with-ytt/internal-templating && go test ./... )
 
 echo ALL SUCCESS

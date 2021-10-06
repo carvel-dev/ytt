@@ -34,3 +34,7 @@ Carvel is better because of our contributors and maintainers. It is because of y
 You can chat with us on Kubernetes Slack in the #carvel channel and follow us on Twitter at @carvel_dev.
 
 Check out which organizations are using and contributing to Carvel: [Adopter's list](https://github.com/vmware-tanzu/carvel/blob/master/ADOPTERS.md)
+
+### Integrating with ytt
+
+If you want to integrate `ytt` within your own tooling, review our [APIs](examples/integrating-with-ytt/apis.md).
