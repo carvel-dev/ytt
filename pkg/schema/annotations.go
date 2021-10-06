@@ -17,6 +17,7 @@ import (
 const (
 	AnnotationNullable     template.AnnotationName = "schema/nullable"
 	AnnotationType         template.AnnotationName = "schema/type"
+	AnnotationDefault      template.AnnotationName = "schema/default"
 	TypeAnnotationKwargAny string                  = "any"
 )
 
@@ -33,6 +34,11 @@ type TypeAnnotation struct {
 type NullableAnnotation struct {
 	providedValueType yamlmeta.Type
 	itemPosition      *filepos.Position
+}
+
+// DefaultAnnotation is a wrapper for a value provided via @schema/default annotation
+type DefaultAnnotation struct {
+	val interface{}
 }
 
 func NewTypeAnnotation(ann template.NodeAnnotation, inferredType yamlmeta.Type, pos *filepos.Position) (*TypeAnnotation, error) {
@@ -87,6 +93,44 @@ func NewNullableAnnotation(ann template.NodeAnnotation, valueType yamlmeta.Type,
 	return &NullableAnnotation{valueType, pos}, nil
 }
 
+// NewDefaultAnnotation checks the argument provided via @schema/default annotation, and returns wrapper for that value.
+func NewDefaultAnnotation(ann template.NodeAnnotation, inferredType yamlmeta.Type, pos *filepos.Position) (*DefaultAnnotation, error) {
+	if len(ann.Kwargs) != 0 {
+		return nil, schemaAssertionError{
+			position:    pos,
+			description: fmt.Sprintf("syntax error in @%v annotation", AnnotationDefault),
+			expected:    fmt.Sprintf("%s (by %s)", inferredType.String(), inferredType.GetDefinitionPosition().AsCompactString()),
+			found:       fmt.Sprintf("(keyword argument in @%v above this item)", AnnotationDefault),
+			hints: []string{
+				"this annotation only accepts one argument: the default value.",
+				"value must be in Starlark format, e.g.: {'key': 'value'}, True."},
+		}
+	}
+	switch numArgs := len(ann.Args); {
+	case numArgs == 0:
+		return nil, schemaAssertionError{
+			position:    pos,
+			description: fmt.Sprintf("syntax error in @%v annotation", AnnotationDefault),
+			expected:    fmt.Sprintf("%s (by %s)", inferredType.String(), inferredType.GetDefinitionPosition().AsCompactString()),
+			found:       fmt.Sprintf("missing value (in @%v above this item)", AnnotationDefault),
+		}
+	case numArgs > 1:
+		return nil, schemaAssertionError{
+			position:    pos,
+			description: fmt.Sprintf("syntax error in @%v annotation", AnnotationDefault),
+			expected:    fmt.Sprintf("%s (by %s)", inferredType.String(), inferredType.GetDefinitionPosition().AsCompactString()),
+			found:       fmt.Sprintf("%v values (in @%v above this item)", numArgs, AnnotationDefault),
+		}
+	}
+
+	val, err := core.NewStarlarkValue(ann.Args[0]).AsGoValue()
+	if err != nil {
+		//at this point the annotation is processed, and the Starlark evaluated
+		panic(err)
+	}
+	return &DefaultAnnotation{yamlmeta.NewASTFromInterfaceWithPosition(val, pos)}, nil
+}
+
 func (t *TypeAnnotation) NewTypeFromAnn() yamlmeta.Type {
 	if t.any {
 		return &AnyType{ValueType: t.inferredType, Position: t.itemPosition}
@@ -94,18 +138,29 @@ func (t *TypeAnnotation) NewTypeFromAnn() yamlmeta.Type {
 	return nil
 }
 
+// NewTypeFromAnn returns type information given by annotation.
+func (n *NullableAnnotation) NewTypeFromAnn() yamlmeta.Type {
+	return &NullType{ValueType: n.providedValueType, Position: n.itemPosition}
+}
+
+// NewTypeFromAnn returns type information given by annotation.
+func (n *DefaultAnnotation) NewTypeFromAnn() yamlmeta.Type {
+	return nil
+}
+
 func (t *TypeAnnotation) IsAny() bool {
 	return t.any
 }
 
-func (n *NullableAnnotation) NewTypeFromAnn() yamlmeta.Type {
-	return &NullType{ValueType: n.providedValueType, Position: n.itemPosition}
+// Val returns default value specified in annotation.
+func (n *DefaultAnnotation) Val() interface{} {
+	return n.val
 }
 
 func collectAnnotations(item yamlmeta.Node) ([]Annotation, error) {
 	var anns []Annotation
 
-	for _, annotation := range []template.AnnotationName{AnnotationType, AnnotationNullable} {
+	for _, annotation := range []template.AnnotationName{AnnotationType, AnnotationNullable, AnnotationDefault} {
 		ann, err := processOptionalAnnotation(item, annotation)
 		if err != nil {
 			return nil, err
@@ -141,6 +196,12 @@ func processOptionalAnnotation(node yamlmeta.Node, optionalAnnotation template.A
 				return nil, err
 			}
 			return typeAnn, nil
+		case AnnotationDefault:
+			defaultAnn, err := NewDefaultAnnotation(ann, wrappedValueType, node.GetPosition())
+			if err != nil {
+				return nil, err
+			}
+			return defaultAnn, nil
 		}
 	}
 

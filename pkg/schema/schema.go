@@ -75,7 +75,12 @@ func NewDocumentType(doc *yamlmeta.Document) (*DocumentType, error) {
 		return nil, err
 	}
 
-	return &DocumentType{Source: doc, Position: doc.Position, ValueType: typeOfValue, defaultValue: typeOfValue.GetDefaultValue()}, nil
+	defaultValue, err := getValue(doc, typeOfValue)
+	if err != nil {
+		return nil, err
+	}
+
+	return &DocumentType{Source: doc, Position: doc.Position, ValueType: typeOfValue, defaultValue: defaultValue}, nil
 }
 
 func NewMapType(m *yamlmeta.Map) (*MapType, error) {
@@ -98,7 +103,12 @@ func NewMapItemType(item *yamlmeta.MapItem) (*MapItemType, error) {
 		return nil, err
 	}
 
-	return &MapItemType{Key: item.Key, ValueType: typeOfValue, defaultValue: typeOfValue.GetDefaultValue(), Position: item.Position}, nil
+	defaultValue, err := getValue(item, typeOfValue)
+	if err != nil {
+		return nil, err
+	}
+
+	return &MapItemType{Key: item.Key, ValueType: typeOfValue, defaultValue: defaultValue, Position: item.Position}, nil
 }
 
 func NewArrayType(a *yamlmeta.Array) (*ArrayType, error) {
@@ -125,7 +135,12 @@ func NewArrayItemType(item *yamlmeta.ArrayItem) (*ArrayItemType, error) {
 		return nil, err
 	}
 
-	return &ArrayItemType{ValueType: typeOfValue, defaultValue: typeOfValue.GetDefaultValue(), Position: item.GetPosition()}, nil
+	defaultValue, err := getValue(item, typeOfValue)
+	if err != nil {
+		return nil, err
+	}
+
+	return &ArrayItemType{ValueType: typeOfValue, defaultValue: defaultValue, Position: item.GetPosition()}, nil
 }
 
 func getType(node yamlmeta.ValueHoldingNode) (yamlmeta.Type, error) {
@@ -150,6 +165,30 @@ func getType(node yamlmeta.ValueHoldingNode) (yamlmeta.Type, error) {
 	}
 
 	return typeOfValue, nil
+}
+
+func getValue(node yamlmeta.ValueHoldingNode, t yamlmeta.Type) (interface{}, error) {
+	anns, err := collectAnnotations(node)
+	if err != nil {
+		return nil, NewSchemaError("Invalid schema", err)
+	}
+
+	for _, ann := range anns {
+		if defaultAnn, ok := ann.(*DefaultAnnotation); ok {
+			if _, ok = node.(*yamlmeta.ArrayItem); ok {
+				return nil, NewSchemaError(fmt.Sprintf("Invalid schema - @%v not supported on array item", AnnotationDefault), schemaAssertionError{
+					position: node.GetPosition(),
+					hints:    []string{"do you mean to set a default value for the array?", "set an array's default by annotating its parent."},
+				})
+			}
+			defaultValue := defaultAnn.Val()
+			if node, ok := defaultValue.(yamlmeta.Node); ok {
+				defaultValue = node.DeepCopyAsInterface()
+			}
+			return defaultValue, nil
+		}
+	}
+	return t.GetDefaultValue(), nil
 }
 
 func inferTypeFromValue(value interface{}, position *filepos.Position) (yamlmeta.Type, error) {

@@ -90,6 +90,8 @@ func NewMismatchedTypeAssertionError(foundType yamlmeta.TypeWithValues, expected
 		position: foundType.GetPosition(),
 		expected: fmt.Sprintf("%s (by %s)", expectedTypeString, expectedType.GetDefinitionPosition().AsCompactString()),
 		found:    foundType.ValueTypeAsString(),
+		// TODO: remove this hint once we can report if mistyped value came from annotation
+		hints: []string{fmt.Sprintf("is the default value set using @%v?", AnnotationDefault)},
 	}
 }
 
