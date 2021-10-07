@@ -11,7 +11,7 @@ LDFLAGS="-X github.com/k14s/ytt/pkg/version.Version=$VERSION -buildid="
 
 rm -f website/generated.go
 
-go fmt ./cmd/... ./pkg/... ./test/...
+go fmt $(go list ./... | grep -v yaml.v2)
 go mod vendor
 go mod tidy
 
