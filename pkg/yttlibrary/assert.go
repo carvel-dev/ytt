@@ -48,10 +48,9 @@ func (b assertModule) TryTo(thread *starlark.Thread, f *starlark.Builtin, args s
 		return starlark.None, fmt.Errorf("expected argument to be a function, but was %T", lambda)
 	}
 
-	var errVal starlark.Value = starlark.None
 	retVal, err := starlark.Call(thread, lambda, nil, nil)
 	if err != nil {
-		errVal = starlark.String(err.Error())
+		return starlark.Tuple{starlark.None, starlark.String(err.Error())}, nil
 	}
-	return starlark.Tuple{retVal, errVal}, nil
+	return starlark.Tuple{retVal, starlark.None}, nil
 }

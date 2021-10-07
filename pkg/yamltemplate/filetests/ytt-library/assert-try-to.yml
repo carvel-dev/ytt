@@ -2,16 +2,12 @@
 #@ load("@ytt:json", "json")
 
 #@ def try_to_fail_data_error():
-#@   _, err = assert.try_to(lambda: json.decode("}junk"))
-#@   return err
-#@ end
-
-#@ def bad_ref():
-#@   return (None).foo
+#@   result, err = assert.try_to(lambda: json.decode("}junk"))
+#@   return (result, err)    # ensure `try_to` returns None (and not `nil`) for result; `nil` undefines the variable
 #@ end
 
 #@ def try_to_fail_bad_ref():
-#@   _, err = assert.try_to(bad_ref)
+#@   _, err = assert.try_to(lambda : (None).foo)
 #@   return err
 #@ end
 
@@ -31,12 +27,8 @@
 #@   return tupleResult
 #@ end
 
-#@ def foo():
-#@   return "foo"
-#@ end
-
 #@ def try_to_succeed_function():
-#@   functionResult, err = assert.try_to(foo)
+#@   functionResult, err = assert.try_to(lambda : "foo")
 #@   if err:
 #@      return err
 #@   end
@@ -51,7 +43,9 @@ test_try_to_succeed_tuple: #@ try_to_succeed_tuple()
 
 +++
 
-test_try_to_fail_data_error: 'json.decode: invalid character ''}'' looking for beginning of value'
+test_try_to_fail_data_error:
+- null
+- 'json.decode: invalid character ''}'' looking for beginning of value'
 test_try_to_fail_bad_ref: NoneType has no .foo field or method
 test_try_to_succeed_lambda:
   ytt: rules
