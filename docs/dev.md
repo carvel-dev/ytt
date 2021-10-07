@@ -91,6 +91,8 @@ When contributing to this library note:
   - **Type()** — use the format "@ytt:${module}.${type}" (e.g. IPAddrValue => "@ytt:ip.addr" )
 - **Fail fast** — users are usually better served by an error than an attempt to "guess" or "fix"; as soon as something seems ary, error out.
 - **Make Objects Immutable** — return modified copies rather than mutating the receiver: this tends to make template code that much easier to reason.
+- **built-in functions must return a valid `starlark.Value`**
+  - Note: `nil` is _not_ a valid `starlark.Value`; use `starlark.None` instead.
 
 ### Prior Efforts
 
