@@ -129,7 +129,7 @@ func (n NullType) String() string {
 }
 
 func (t *DocumentType) GetValueType() yamlmeta.Type {
-	panic("Not implemented because it is unreachable")
+	return t.ValueType
 }
 func (m MapType) GetValueType() yamlmeta.Type {
 	panic("Not implemented because it is unreachable")

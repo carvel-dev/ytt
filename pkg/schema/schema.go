@@ -16,7 +16,7 @@ import (
 type DocumentSchema struct {
 	Source     *yamlmeta.Document
 	defaultDVs *yamlmeta.Document
-	DocType    yamlmeta.Type
+	DocType    *DocumentType
 }
 
 type DocumentSchemaEnvelope struct {
@@ -38,7 +38,7 @@ func NewDocumentSchema(doc *yamlmeta.Document) (*DocumentSchema, error) {
 	return &DocumentSchema{
 		Source:     doc,
 		defaultDVs: schemaDVs.(*yamlmeta.Document),
-		DocType:    docType,
+		DocType:    docType.(*DocumentType),
 	}, nil
 }
 
@@ -264,7 +264,7 @@ func (s *DocumentSchema) DefaultDataValues() *yamlmeta.Document {
 	return s.defaultDVs
 }
 
-func (s *DocumentSchema) GetType() yamlmeta.Type {
+func (s *DocumentSchema) GetDocumentType() *DocumentType {
 	return s.DocType
 }
 

@@ -10,7 +10,7 @@ import (
 )
 
 func NewOpenAPISchema(schema workspace.Schema) *yamlmeta.Document {
-	typedSchemaDefaults := schema.GetType()
+	typedSchemaDefaults := schema.GetDocumentType()
 	openAPIProperties := calculateProperties(typedSchemaDefaults)
 
 	headerDoc := yamlmeta.Document{Value: &yamlmeta.Map{Items: []*yamlmeta.MapItem{
@@ -32,19 +32,12 @@ func NewOpenAPISchema(schema workspace.Schema) *yamlmeta.Document {
 func calculateProperties(schemaVal interface{}) yamlmeta.Node {
 	switch typedValue := schemaVal.(type) {
 	case *schema.DocumentType:
-		//inconsistent .ValueType vs .GetValueType()
-		return calculateProperties(typedValue.ValueType)
+		return calculateProperties(typedValue.GetValueType())
 	case *schema.MapType:
-		//type: object
-		//additionalProperties: false
-		//properties:
-		//  key1:
-		//  key2:
 		typeString := convertTypeToString(typedValue.String())
 
 		var properties []*yamlmeta.MapItem
 		for _, i := range typedValue.Items {
-			//inconsistent .ValueType vs .GetValueType()
 			mi := yamlmeta.MapItem{Key: i.Key, Value: calculateProperties(i.GetValueType())}
 			properties = append(properties, &mi)
 		}
@@ -62,14 +55,13 @@ func calculateProperties(schemaVal interface{}) yamlmeta.Node {
 			{Key: "default", Value: defaultVal},
 		}}
 		if typeString == "number" {
-			newMap.Items = append(newMap.Items, &yamlmeta.MapItem{Key:"format", Value: "float"})
+			newMap.Items = append(newMap.Items, &yamlmeta.MapItem{Key: "format", Value: "float"})
 		}
 		return &newMap
 
 	}
 	return nil
 }
-
 
 func convertTypeToString(typeString string) string {
 	switch typeString {
@@ -81,7 +73,7 @@ func convertTypeToString(typeString string) string {
 		return "integer"
 	case "float":
 		return "number"
-    case "map":
+	case "map":
 		return "object"
 	case "array":
 		return "array"

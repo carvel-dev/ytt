@@ -4,6 +4,7 @@
 package template
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/k14s/ytt/pkg/cmd/ui"
@@ -37,10 +38,12 @@ type Output struct {
 	Err    error
 }
 
+// FileSource provides both a means of loading from sources (i.e. Input) and rendering into sinks (i.e. Output)
 type FileSource interface {
 	HasInput() bool
 	HasOutput() bool
 	Input() (Input, error)
+	// Output renders the results (i.e. an instance of Output) to the configured output/sink of this FileSource
 	Output(Output) error
 }
 
@@ -129,10 +132,19 @@ func (o *Options) RunWithFiles(in Input, ui ui.UI) Output {
 	}
 
 	if o.DataValuesFlags.InspectSchema {
-		return Output{
-			DocSet: &yamlmeta.DocumentSet{
-				Items: []*yamlmeta.Document{NewOpenAPISchema(schema)},
-			},
+		format, err := o.RegularFilesSourceOpts.OutputType.Schema()
+		if err != nil {
+			return Output{Err: err}
+		}
+		if format == regularFilesOutputTypeOpenapi {
+			return Output{
+				DocSet: &yamlmeta.DocumentSet{
+					Items: []*yamlmeta.Document{NewOpenAPISchema(schema)},
+				},
+			}
+		} else {
+			return Output{Err: fmt.Errorf("Data Values Schema export only supported in OpenAPI v3 format; specify format with --output=%s flag",
+				regularFilesOutputTypeOpenapi)}
 		}
 	}
 

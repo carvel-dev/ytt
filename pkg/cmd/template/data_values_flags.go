@@ -33,7 +33,7 @@ type DataValuesFlags struct {
 
 	FromFiles []string
 
-	Inspect bool
+	Inspect       bool
 	InspectSchema bool
 
 	EnvironFunc  func() []string

@@ -1,44 +1,20 @@
 package template_test
 
 import (
+	"testing"
+
 	cmdtpl "github.com/k14s/ytt/pkg/cmd/template"
 	"github.com/k14s/ytt/pkg/cmd/ui"
 	"github.com/k14s/ytt/pkg/files"
 	"github.com/stretchr/testify/require"
-	"testing"
 )
 
-func TestOpenapi_map(t *testing.T) {
+func TestOpenapi_is_successful(t *testing.T) {
 	opts := cmdtpl.NewOptions()
 	opts.DataValuesFlags.InspectSchema = true
-	opts.RegularFilesSourceOpts.OutputType = "openapi-v3"
-	t.Run("with a single map item", func(t *testing.T) {
-		schemaYAML := `#@data/values-schema
----
-foo: some value
-`
-	expected := `openapi: 3.0.0
-info:
-  version: 0.1.0
-  title: Openapi schema generated from ytt Data Values Schema
-paths: {}
-components:
-  schemas:
-    type: object
-    additionalProperties: false
-    properties:
-      foo:
-        type: string
-        default: some value
-`
+	opts.RegularFilesSourceOpts.OutputType.Types = &[]string{"openapi-v3"}
 
-	filesToProcess := files.NewSortedFiles([]*files.File{
-		files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
-		})
-
-	assertSucceedsDocSet(t, filesToProcess, expected, opts)
-	})
-	t.Run("on nested maps", func(t *testing.T) {
+	t.Run("on maps", func(t *testing.T) {
 		schemaYAML := `#@data/values-schema
 ---
 foo:
@@ -80,13 +56,34 @@ components:
             properties:
               float_key:
                 type: number
+                default: 9.1
                 format: float
-                default: 9.1`
+`
+
 		filesToProcess := files.NewSortedFiles([]*files.File{
 			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
 		})
 
 		assertSucceedsDocSet(t, filesToProcess, expected, opts)
+	})
+}
+
+func TestOpenapi_fails(t *testing.T) {
+	opts := cmdtpl.NewOptions()
+	opts.DataValuesFlags.InspectSchema = true
+
+	t.Run("when `--output` is anything other than 'openapi-v3'", func(t *testing.T) {
+		schemaYAML := `#@data/values-schema
+---
+foo: doesn't matter
+`
+		expectedErr := "Data Values Schema export only supported in OpenAPI v3 format; specify format with --output=openapi-v3 flag"
+
+		filesToProcess := files.NewSortedFiles([]*files.File{
+			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
+		})
+
+		assertFails(t, filesToProcess, expectedErr, opts)
 	})
 }
 
