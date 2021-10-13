@@ -1,0 +1,57 @@
+#@ load("@ytt:toml", "toml")
+
+#@ def yaml_fragment():
+fragment:
+- piece1
+- piece2
+#@ end
+
+encode:
+  test1: #@ toml.encode({})
+  test2: #@ toml.encode({"a": [1,2,3,456], "b": "str"})
+  test3: #@ toml.encode(yaml_fragment())
+  test4: #@ toml.encode({"inside_map": yaml_fragment(), "inside_array": [yaml_fragment()]})
+  indent:
+    test1: #@ toml.encode({"inside_map": yaml_fragment(), "inside_array": [yaml_fragment()]}, indent=4)
+    test2: #@ toml.encode({"inside_map": yaml_fragment(), "inside_array": [yaml_fragment()]}, indent=0)
+decode:
+  test1: #@ toml.decode("")
+  test2: #@ toml.decode('a = [ 1, 2, 3, 456 ]\nb = "str"')
+
++++
+
+encode:
+  test1: ""
+  test2: |
+    a = [1, 2, 3, 456]
+    b = "str"
+  test3: |
+    fragment = ["piece1", "piece2"]
+  test4: |
+    [[inside_array]]
+      fragment = ["piece1", "piece2"]
+
+    [inside_map]
+      fragment = ["piece1", "piece2"]
+  indent:
+    test1: |
+      [[inside_array]]
+          fragment = ["piece1", "piece2"]
+
+      [inside_map]
+          fragment = ["piece1", "piece2"]
+    test2: |
+      [[inside_array]]
+        fragment = ["piece1", "piece2"]
+
+      [inside_map]
+        fragment = ["piece1", "piece2"]
+decode:
+  test1: {}
+  test2:
+    a:
+    - 1
+    - 2
+    - 3
+    - 456
+    b: str
