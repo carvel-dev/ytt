@@ -17,6 +17,7 @@ import (
 )
 
 var (
+	// TOMLAPI contains the definition of the @ytt:toml module
 	TOMLAPI = starlark.StringDict{
 		"toml": &starlarkstruct.Module{
 			Name: "toml",
@@ -26,6 +27,7 @@ var (
 			},
 		},
 	}
+	// TOMLKWARGS names the expected keyword arguments for both toml.encode
 	TOMLKWARGS = map[string]struct{}{
 		"indent": struct{}{},
 	}
@@ -66,6 +68,7 @@ func (b tmùModule) Encode(thread *starlark.Thread, f *starlark.Builtin, args st
 	return starlark.String(buffer.String()), nil
 }
 
+// Encode is a core.StarlarkFunc that parses the provided input from TOML format into dicts, lists, and scalars
 func (b tmùModule) Decode(thread *starlark.Thread, f *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
 	if args.Len() != 1 {
 		return starlark.None, fmt.Errorf("expected exactly one argument")
