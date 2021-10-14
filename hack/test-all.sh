@@ -8,6 +8,6 @@ if [ -z "$GITHUB_ACTION" ]; then
   go clean -testcache
 fi
 
-go test -v `go list ./...|grep -v yaml.v2` "$@"
+go test ./... "$@"
 
 echo ALL SUCCESS
