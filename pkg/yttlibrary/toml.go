@@ -35,6 +35,7 @@ var (
 
 type tmùModule struct{}
 
+// Encode is a core.StarlarkFunc that renders the provided input into a TOML formatted string
 func (b tmùModule) Encode(thread *starlark.Thread, f *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
 	if args.Len() != 1 {
 		return starlark.None, fmt.Errorf("expected exactly one argument")
@@ -68,7 +69,7 @@ func (b tmùModule) Encode(thread *starlark.Thread, f *starlark.Builtin, args st
 	return starlark.String(buffer.String()), nil
 }
 
-// Encode is a core.StarlarkFunc that parses the provided input from TOML format into dicts, lists, and scalars
+// Decode is a core.StarlarkFunc that parses the provided input from TOML format into dicts, lists, and scalars
 func (b tmùModule) Decode(thread *starlark.Thread, f *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
 	if args.Len() != 1 {
 		return starlark.None, fmt.Errorf("expected exactly one argument")
