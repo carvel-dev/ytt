@@ -4,6 +4,7 @@
 package template
 
 import (
+	"errors"
 	"fmt"
 	"time"
 
@@ -133,6 +134,13 @@ func (o *Options) RunWithFiles(in Input, ui ui.UI) Output {
 
 	if o.DataValuesFlags.InspectSchema {
 		return o.inspectSchema(schema)
+	}
+	schemaType, err := o.RegularFilesSourceOpts.OutputType.Schema()
+	if err != nil {
+		return Output{Err: err}
+	}
+	if schemaType == regularFilesOutputTypeOpenAPI {
+		return Output{Err: errors.New("Output type currently only supported for Data Values Schema (i.e. include --data-values-schema-inspect)")}
 	}
 
 	values, libraryValues, err := rootLibraryExecution.Values(valuesOverlays, schema)

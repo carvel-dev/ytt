@@ -69,15 +69,32 @@ components:
 }
 
 func TestOpenapi_fails(t *testing.T) {
-	opts := cmdtpl.NewOptions()
-	opts.DataValuesFlags.InspectSchema = true
-
 	t.Run("when `--output` is anything other than 'openapi-v3'", func(t *testing.T) {
+		opts := cmdtpl.NewOptions()
+		opts.DataValuesFlags.InspectSchema = true
+
 		schemaYAML := `#@data/values-schema
 ---
 foo: doesn't matter
 `
 		expectedErr := "Data Values Schema export only supported in OpenAPI v3 format; specify format with --output=openapi-v3 flag"
+
+		filesToProcess := files.NewSortedFiles([]*files.File{
+			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
+		})
+
+		assertFails(t, filesToProcess, expectedErr, opts)
+	})
+
+	t.Run("when --output is set to `openapi-v3` but not inspecting schema", func(t *testing.T) {
+		opts := cmdtpl.NewOptions()
+		opts.RegularFilesSourceOpts.OutputType.Types = &[]string{"openapi-v3"}
+
+		schemaYAML := `#@data/values-schema
+---
+foo: doesn't matter
+`
+		expectedErr := "Output type currently only supported for Data Values Schema (i.e. include --data-values-schema-inspect)"
 
 		filesToProcess := files.NewSortedFiles([]*files.File{
 			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),

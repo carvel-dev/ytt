@@ -6,6 +6,7 @@ package template
 import (
 	"fmt"
 	"io"
+	"strings"
 
 	"github.com/k14s/ytt/pkg/cmd/ui"
 	"github.com/k14s/ytt/pkg/files"
@@ -42,7 +43,10 @@ func (s *RegularFilesSourceOpts) Set(cmd *cobra.Command) {
 	cmd.Flags().StringVar(&s.OutputFiles, "output-files", "", "Add output files to given directory")
 
 	s.OutputType.Types =
-		cmd.Flags().StringSliceP("output", "o", []string{regularFilesOutputTypeYAML}, "Output type (yaml, json, pos)")
+		cmd.Flags().StringSliceP("output", "o", []string{regularFilesOutputTypeYAML},
+			fmt.Sprintf("Configure output format. Can specify file format (%s) and/or schema type (%s) (can be specified multiple times)",
+				strings.Join(regularFilesOutputFormatTypes, ", "),
+				strings.Join(regularFilesOutputSchemaTypes, ", ")))
 
 	cmd.Flags().BoolVar(&s.SymlinkAllowOpts.AllowAll, "dangerous-allow-all-symlink-destinations", false,
 		"Symlinks to all destinations are allowed")
@@ -128,7 +132,7 @@ const (
 	regularFilesOutputTypeJSON    = "json"
 	regularFilesOutputTypePos     = "pos"
 	regularFilesOutputTypeOpenAPI = "openapi-v3"
-	regularFilesOutputTypeYtt     = "ytt"
+	regularFilesOutputTypeNone    = ""
 )
 
 var regularFilesOutputFormatTypes = []string{regularFilesOutputTypeYAML, regularFilesOutputTypeJSON, regularFilesOutputTypePos}
@@ -142,7 +146,7 @@ func (o *OutputType) Format() (string, error) {
 
 // Schema returns which of the schema types is in effect
 func (o *OutputType) Schema() (string, error) {
-	return o.typeFrom(regularFilesOutputSchemaTypes, regularFilesOutputTypeYtt)
+	return o.typeFrom(regularFilesOutputSchemaTypes, regularFilesOutputTypeNone)
 }
 
 func (o *OutputType) typeFrom(types []string, defaultValue string) (string, error) {
