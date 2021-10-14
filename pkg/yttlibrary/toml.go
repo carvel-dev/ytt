@@ -22,25 +22,24 @@ var (
 		"toml": &starlarkstruct.Module{
 			Name: "toml",
 			Members: starlark.StringDict{
-				"encode": starlark.NewBuiltin("toml.encode", core.ErrWrapper(tmùModule{}.Encode)),
-				"decode": starlark.NewBuiltin("toml.decode", core.ErrWrapper(tmùModule{}.Decode)),
+				"encode": starlark.NewBuiltin("toml.encode", core.ErrWrapper(tomlModule{}.Encode)),
+				"decode": starlark.NewBuiltin("toml.decode", core.ErrWrapper(tomlModule{}.Decode)),
 			},
 		},
 	}
-	// TOMLKWARGS names the expected keyword arguments for both toml.encode
-	TOMLKWARGS = map[string]struct{}{
-		"indent": struct{}{},
-	}
 )
 
-type tmùModule struct{}
+type tomlModule struct{}
 
 // Encode is a core.StarlarkFunc that renders the provided input into a TOML formatted string
-func (b tmùModule) Encode(thread *starlark.Thread, f *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
+func (b tomlModule) Encode(thread *starlark.Thread, f *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
 	if args.Len() != 1 {
 		return starlark.None, fmt.Errorf("expected exactly one argument")
 	}
-	if err := core.CheckArgNames(kwargs, TOMLKWARGS); err != nil {
+	allowedKWArgs := map[string]struct{}{
+		"indent": {},
+	}
+	if err := core.CheckArgNames(kwargs, allowedKWArgs); err != nil {
 		return starlark.None, err
 	}
 
@@ -48,6 +47,7 @@ func (b tmùModule) Encode(thread *starlark.Thread, f *starlark.Builtin, args st
 	if err != nil {
 		return starlark.None, err
 	}
+
 	val = orderedmap.Conversion{yamlmeta.NewGoFromAST(val)}.AsUnorderedStringMaps()
 
 	indent, err := core.Int64Arg(kwargs, "indent")
@@ -55,13 +55,18 @@ func (b tmùModule) Encode(thread *starlark.Thread, f *starlark.Builtin, args st
 		return starlark.None, err
 	}
 
+	if indent < 0 || indent > 8 {
+		// mitigate https://cwe.mitre.org/data/definitions/409.html
+		return starlark.None, fmt.Errorf("indent value must be between 0 and 8")
+	}
+
 	var buffer bytes.Buffer
 	encoder := toml.NewEncoder(&buffer)
 	if indent > 0 {
 		encoder.Indent = strings.Repeat(" ", int(indent))
 	}
-	err = encoder.Encode(val)
 
+	err = encoder.Encode(val)
 	if err != nil {
 		return starlark.None, err
 	}
@@ -70,7 +75,7 @@ func (b tmùModule) Encode(thread *starlark.Thread, f *starlark.Builtin, args st
 }
 
 // Decode is a core.StarlarkFunc that parses the provided input from TOML format into dicts, lists, and scalars
-func (b tmùModule) Decode(thread *starlark.Thread, f *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
+func (b tomlModule) Decode(thread *starlark.Thread, f *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
 	if args.Len() != 1 {
 		return starlark.None, fmt.Errorf("expected exactly one argument")
 	}

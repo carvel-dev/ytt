@@ -16,6 +16,7 @@ import (
 )
 
 var (
+	// JSONAPI contains the definition of the @ytt:json module
 	JSONAPI = starlark.StringDict{
 		"json": &starlarkstruct.Module{
 			Name: "json",
@@ -25,18 +26,19 @@ var (
 			},
 		},
 	}
-	JSONKWARGS = map[string]struct{}{
-		"indent": struct{}{},
-	}
 )
 
 type jsonModule struct{}
 
+// Encode is a core.StarlarkFunc that renders the provided input into a JSON formatted string
 func (b jsonModule) Encode(thread *starlark.Thread, f *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
 	if args.Len() != 1 {
 		return starlark.None, fmt.Errorf("expected exactly one argument")
 	}
-	if err := core.CheckArgNames(kwargs, JSONKWARGS); err != nil {
+	allowedKWArgs := map[string]struct{}{
+		"indent": {},
+	}
+	if err := core.CheckArgNames(kwargs, allowedKWArgs); err != nil {
 		return starlark.None, err
 	}
 
@@ -51,15 +53,17 @@ func (b jsonModule) Encode(thread *starlark.Thread, f *starlark.Builtin, args st
 	if err != nil {
 		return starlark.None, err
 	}
-	if indent > 4 || indent < 0 {
-		return starlark.None, fmt.Errorf("indent value must be between 0 and 4")
+
+	if indent < 0 || indent > 8 {
+		// mitigate https://cwe.mitre.org/data/definitions/409.html
+		return starlark.None, fmt.Errorf("indent value must be between 0 and 8")
 	}
+
 	if indent > 0 {
 		valBs, err = json.MarshalIndent(val, "", strings.Repeat(" ", int(indent)))
 	} else {
 		valBs, err = json.Marshal(val)
 	}
-
 	if err != nil {
 		return starlark.None, err
 	}
@@ -67,6 +71,7 @@ func (b jsonModule) Encode(thread *starlark.Thread, f *starlark.Builtin, args st
 	return starlark.String(string(valBs)), nil
 }
 
+// Decode is a core.StarlarkFunc that parses the provided input from JSON format into dicts, lists, and scalars
 func (b jsonModule) Decode(thread *starlark.Thread, f *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
 	if args.Len() != 1 {
 		return starlark.None, fmt.Errorf("expected exactly one argument")

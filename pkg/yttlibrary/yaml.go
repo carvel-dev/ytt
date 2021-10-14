@@ -13,6 +13,7 @@ import (
 )
 
 var (
+	// YAMLAPI contains the definition of the @ytt:yaml module
 	YAMLAPI = starlark.StringDict{
 		"yaml": &starlarkstruct.Module{
 			Name: "yaml",
@@ -26,6 +27,7 @@ var (
 
 type yamlModule struct{}
 
+// Encode is a core.StarlarkFunc that renders the provided input into an YAML formatted string
 func (b yamlModule) Encode(thread *starlark.Thread, f *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
 	if args.Len() != 1 {
 		return starlark.None, fmt.Errorf("expected exactly one argument")
@@ -56,6 +58,7 @@ func (b yamlModule) Encode(thread *starlark.Thread, f *starlark.Builtin, args st
 	return starlark.String(string(valBs)), nil
 }
 
+// Decode is a core.StarlarkFunc that parses the provided input from YAML format into dicts, lists, and scalars
 func (b yamlModule) Decode(thread *starlark.Thread, f *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
 	if args.Len() != 1 {
 		return starlark.None, fmt.Errorf("expected exactly one argument")
