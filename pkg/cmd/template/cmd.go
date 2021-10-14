@@ -132,20 +132,7 @@ func (o *Options) RunWithFiles(in Input, ui ui.UI) Output {
 	}
 
 	if o.DataValuesFlags.InspectSchema {
-		format, err := o.RegularFilesSourceOpts.OutputType.Schema()
-		if err != nil {
-			return Output{Err: err}
-		}
-		if format == regularFilesOutputTypeOpenapi {
-			return Output{
-				DocSet: &yamlmeta.DocumentSet{
-					Items: []*yamlmeta.Document{NewOpenAPISchema(schema)},
-				},
-			}
-		} else {
-			return Output{Err: fmt.Errorf("Data Values Schema export only supported in OpenAPI v3 format; specify format with --output=%s flag",
-				regularFilesOutputTypeOpenapi)}
-		}
+		return o.inspectSchema(schema)
 	}
 
 	values, libraryValues, err := rootLibraryExecution.Values(valuesOverlays, schema)
@@ -156,11 +143,7 @@ func (o *Options) RunWithFiles(in Input, ui ui.UI) Output {
 	libraryValues = append(libraryValues, libraryValuesOverlays...)
 
 	if o.DataValuesFlags.Inspect {
-		return Output{
-			DocSet: &yamlmeta.DocumentSet{
-				Items: []*yamlmeta.Document{values.Doc},
-			},
-		}
+		return o.inspectDataValues(values)
 	}
 
 	result, err := rootLibraryExecution.Eval(values, libraryValues, librarySchemas)
@@ -169,6 +152,31 @@ func (o *Options) RunWithFiles(in Input, ui ui.UI) Output {
 	}
 
 	return Output{Files: result.Files, DocSet: result.DocSet}
+}
+
+func (o *Options) inspectDataValues(values *workspace.DataValues) Output {
+	return Output{
+		DocSet: &yamlmeta.DocumentSet{
+			Items: []*yamlmeta.Document{values.Doc},
+		},
+	}
+}
+
+func (o *Options) inspectSchema(schema workspace.Schema) Output {
+	format, err := o.RegularFilesSourceOpts.OutputType.Schema()
+	if err != nil {
+		return Output{Err: err}
+	}
+	if format == regularFilesOutputTypeOpenAPI {
+		openAPIDoc := NewOpenAPIDocument(schema)
+		return Output{
+			DocSet: &yamlmeta.DocumentSet{
+				Items: []*yamlmeta.Document{openAPIDoc},
+			},
+		}
+	}
+	return Output{Err: fmt.Errorf("Data Values Schema export only supported in OpenAPI v3 format; specify format with --output=%s flag",
+		regularFilesOutputTypeOpenAPI)}
 }
 
 func (o *Options) pickSource(srcs []FileSource, pickFunc func(FileSource) bool) FileSource {

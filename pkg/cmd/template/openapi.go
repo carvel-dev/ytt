@@ -9,7 +9,7 @@ import (
 	"github.com/k14s/ytt/pkg/yamlmeta"
 )
 
-func NewOpenAPISchema(schema workspace.Schema) *yamlmeta.Document {
+func NewOpenAPIDocument(schema workspace.Schema) *yamlmeta.Document {
 	typedSchemaDefaults := schema.GetDocumentType()
 	openAPIProperties := calculateProperties(typedSchemaDefaults)
 

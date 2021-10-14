@@ -127,12 +127,12 @@ const (
 	regularFilesOutputTypeYAML    = "yaml"
 	regularFilesOutputTypeJSON    = "json"
 	regularFilesOutputTypePos     = "pos"
-	regularFilesOutputTypeOpenapi = "openapi-v3"
+	regularFilesOutputTypeOpenAPI = "openapi-v3"
 	regularFilesOutputTypeYtt     = "ytt"
 )
 
 var regularFilesOutputFormatTypes = []string{regularFilesOutputTypeYAML, regularFilesOutputTypeJSON, regularFilesOutputTypePos}
-var regularFilesOutputSchemaTypes = []string{regularFilesOutputTypeOpenapi}
+var regularFilesOutputSchemaTypes = []string{regularFilesOutputTypeOpenAPI}
 var regularFilesOutputTypes = append(regularFilesOutputFormatTypes, regularFilesOutputSchemaTypes...)
 
 // Format returns which of the file format types is in effect

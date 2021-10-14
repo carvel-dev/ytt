@@ -87,7 +87,6 @@ foo: doesn't matter
 	})
 }
 
-//Returning a DocSet
 func assertSucceedsDocSet(t *testing.T, filesToProcess []*files.File, expectedOut string, opts *cmdtpl.Options) {
 	t.Helper()
 	out := opts.RunWithFiles(cmdtpl.Input{Files: filesToProcess}, ui.NewTTY(false))
