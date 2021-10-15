@@ -9,13 +9,12 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestOpenapi_is_successful(t *testing.T) {
+func TestSchemaInspect_exports_an_OpenAPI_doc(t *testing.T) {
 	opts := cmdtpl.NewOptions()
 	opts.DataValuesFlags.InspectSchema = true
 	opts.RegularFilesSourceOpts.OutputType.Types = &[]string{"openapi-v3"}
 
-	t.Run("on maps", func(t *testing.T) {
-		schemaYAML := `#@data/values-schema
+	schemaYAML := `#@data/values-schema
 ---
 foo:
   int_key: 10
@@ -24,7 +23,7 @@ foo:
   string_key: some text
   inner_map:
     float_key: 9.1`
-		expected := `openapi: 3.0.0
+	expected := `openapi: 3.0.0
 info:
   version: 0.1.0
   title: Openapi schema generated from ytt Data Values Schema
@@ -60,16 +59,15 @@ components:
                 format: float
 `
 
-		filesToProcess := files.NewSortedFiles([]*files.File{
-			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
-		})
-
-		assertSucceedsDocSet(t, filesToProcess, expected, opts)
+	filesToProcess := files.NewSortedFiles([]*files.File{
+		files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
 	})
+
+	assertSucceedsDocSet(t, filesToProcess, expected, opts)
 }
 
-func TestOpenapi_fails(t *testing.T) {
-	t.Run("when `--output` is anything other than 'openapi-v3'", func(t *testing.T) {
+func TestSchemaInspect_errors(t *testing.T) {
+	t.Run("when --output is anything other than 'openapi-v3'", func(t *testing.T) {
 		opts := cmdtpl.NewOptions()
 		opts.DataValuesFlags.InspectSchema = true
 
@@ -86,8 +84,9 @@ foo: doesn't matter
 		assertFails(t, filesToProcess, expectedErr, opts)
 	})
 
-	t.Run("when --output is set to `openapi-v3` but not inspecting schema", func(t *testing.T) {
+	t.Run("when --output is set to 'openapi-v3' but not inspecting schema", func(t *testing.T) {
 		opts := cmdtpl.NewOptions()
+		opts.DataValuesFlags.InspectSchema = false
 		opts.RegularFilesSourceOpts.OutputType.Types = &[]string{"openapi-v3"}
 
 		schemaYAML := `#@data/values-schema

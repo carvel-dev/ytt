@@ -10,6 +10,7 @@ import (
 
 	"github.com/k14s/ytt/pkg/cmd/ui"
 	"github.com/k14s/ytt/pkg/files"
+	"github.com/k14s/ytt/pkg/schema"
 	"github.com/k14s/ytt/pkg/workspace"
 	"github.com/k14s/ytt/pkg/yamlmeta"
 	"github.com/spf13/cobra"
@@ -170,13 +171,13 @@ func (o *Options) inspectDataValues(values *workspace.DataValues) Output {
 	}
 }
 
-func (o *Options) inspectSchema(schema workspace.Schema) Output {
+func (o *Options) inspectSchema(dataValuesSchema workspace.Schema) Output {
 	format, err := o.RegularFilesSourceOpts.OutputType.Schema()
 	if err != nil {
 		return Output{Err: err}
 	}
 	if format == regularFilesOutputTypeOpenAPI {
-		openAPIDoc := NewOpenAPIDocument(schema)
+		openAPIDoc := schema.NewOpenAPIDocument(dataValuesSchema.GetDocumentType())
 		return Output{
 			DocSet: &yamlmeta.DocumentSet{
 				Items: []*yamlmeta.Document{openAPIDoc},

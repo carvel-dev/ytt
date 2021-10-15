@@ -1,17 +1,14 @@
 // Copyright 2021 VMware, Inc.
 // SPDX-License-Identifier: Apache-2.0
 
-package template
+package schema
 
 import (
-	"github.com/k14s/ytt/pkg/schema"
-	"github.com/k14s/ytt/pkg/workspace"
 	"github.com/k14s/ytt/pkg/yamlmeta"
 )
 
-func NewOpenAPIDocument(schema workspace.Schema) *yamlmeta.Document {
-	typedSchemaDefaults := schema.GetDocumentType()
-	openAPIProperties := calculateProperties(typedSchemaDefaults)
+func NewOpenAPIDocument(docType *DocumentType) *yamlmeta.Document {
+	openAPIProperties := calculateProperties(docType)
 
 	headerDoc := yamlmeta.Document{Value: &yamlmeta.Map{Items: []*yamlmeta.MapItem{
 		{Key: "openapi", Value: "3.0.0"},
@@ -31,9 +28,9 @@ func NewOpenAPIDocument(schema workspace.Schema) *yamlmeta.Document {
 
 func calculateProperties(schemaVal interface{}) yamlmeta.Node {
 	switch typedValue := schemaVal.(type) {
-	case *schema.DocumentType:
+	case *DocumentType:
 		return calculateProperties(typedValue.GetValueType())
-	case *schema.MapType:
+	case *MapType:
 		typeString := convertTypeToString(typedValue.String())
 
 		var properties []*yamlmeta.MapItem
@@ -47,14 +44,14 @@ func calculateProperties(schemaVal interface{}) yamlmeta.Node {
 			{Key: "properties", Value: &yamlmeta.Map{Items: properties}},
 		}}
 		return &newMap
-	case *schema.ScalarType:
+	case *ScalarType:
 		typeString := convertTypeToString(typedValue.String())
 		defaultVal := typedValue.GetDefaultValue()
 		newMap := yamlmeta.Map{Items: []*yamlmeta.MapItem{
 			{Key: "type", Value: typeString},
 			{Key: "default", Value: defaultVal},
 		}}
-		if typeString == "number" {
+		if typedValue.String() == "float" {
 			newMap.Items = append(newMap.Items, &yamlmeta.MapItem{Key: "format", Value: "float"})
 		}
 		return &newMap
