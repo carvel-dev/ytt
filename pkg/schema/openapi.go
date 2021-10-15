@@ -21,7 +21,9 @@ func NewOpenAPIDocument(docType *DocumentType) *yamlmeta.Document {
 		},
 		{Key: "paths", Value: &yamlmeta.Map{}},
 		{Key: "components", Value: &yamlmeta.Map{Items: []*yamlmeta.MapItem{
-			{Key: "schemas", Value: openAPIProperties},
+			{Key: "schemas", Value: &yamlmeta.Map{Items: []*yamlmeta.MapItem{
+				{Key: "dataValues", Value: openAPIProperties},
+			}}},
 		}},
 		},
 	}}}

@@ -33,33 +33,34 @@ info:
 paths: {}
 components:
   schemas:
-    type: object
-    additionalProperties: false
-    properties:
-      foo:
-        type: object
-        additionalProperties: false
-        properties:
-          int_key:
-            type: integer
-            default: 10
-          bool_key:
-            type: boolean
-            default: true
-          false_key:
-            type: boolean
-            default: false
-          string_key:
-            type: string
-            default: some text
-          inner_map:
-            type: object
-            additionalProperties: false
-            properties:
-              float_key:
-                type: number
-                default: 9.1
-                format: float
+    dataValues:
+      type: object
+      additionalProperties: false
+      properties:
+        foo:
+          type: object
+          additionalProperties: false
+          properties:
+            int_key:
+              type: integer
+              default: 10
+            bool_key:
+              type: boolean
+              default: true
+            false_key:
+              type: boolean
+              default: false
+            string_key:
+              type: string
+              default: some text
+            inner_map:
+              type: object
+              additionalProperties: false
+              properties:
+                float_key:
+                  type: number
+                  default: 9.1
+                  format: float
 `
 
 	filesToProcess := files.NewSortedFiles([]*files.File{
