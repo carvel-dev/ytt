@@ -7,6 +7,8 @@ import (
 	"github.com/k14s/ytt/pkg/yamlmeta"
 )
 
+// NewOpenAPIDocument generates an AST of an OpenAPI v3.0.x document, populating the `schemas:` section with the
+//   type information contained in `docType`.
 func NewOpenAPIDocument(docType *DocumentType) *yamlmeta.Document {
 	openAPIProperties := calculateProperties(docType)
 

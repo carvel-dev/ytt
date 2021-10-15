@@ -264,6 +264,7 @@ func (s *DocumentSchema) DefaultDataValues() *yamlmeta.Document {
 	return s.defaultDVs
 }
 
+// GetDocumentType returns a reference to the DocumentType that is the root of this Schema.
 func (s *DocumentSchema) GetDocumentType() *DocumentType {
 	return s.DocType
 }
