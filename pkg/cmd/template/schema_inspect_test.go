@@ -15,7 +15,7 @@ import (
 func TestSchemaInspect_exports_an_OpenAPI_doc(t *testing.T) {
 	opts := cmdtpl.NewOptions()
 	opts.DataValuesFlags.InspectSchema = true
-	opts.RegularFilesSourceOpts.OutputType.Types = &[]string{"openapi-v3"}
+	opts.RegularFilesSourceOpts.OutputType.Types = []string{"openapi-v3"}
 
 	schemaYAML := `#@data/values-schema
 ---
@@ -91,7 +91,7 @@ foo: doesn't matter
 	t.Run("when --output is set to 'openapi-v3' but not inspecting schema", func(t *testing.T) {
 		opts := cmdtpl.NewOptions()
 		opts.DataValuesFlags.InspectSchema = false
-		opts.RegularFilesSourceOpts.OutputType.Types = &[]string{"openapi-v3"}
+		opts.RegularFilesSourceOpts.OutputType.Types = []string{"openapi-v3"}
 
 		schemaYAML := `#@data/values-schema
 ---

@@ -30,7 +30,7 @@ type RegularFilesSourceOpts struct {
 // - file format type :: yaml, json, pos
 // - schema type :: OpenAPI V3, ytt Schema
 type OutputType struct {
-	Types *[]string
+	Types []string
 }
 
 // Set registers flags related to sourcing ordinary files/directories and wires-up those flags up to this
@@ -42,11 +42,10 @@ func (s *RegularFilesSourceOpts) Set(cmd *cobra.Command) {
 		"Delete given directory, and then create it with output files")
 	cmd.Flags().StringVar(&s.OutputFiles, "output-files", "", "Add output files to given directory")
 
-	s.OutputType.Types =
-		cmd.Flags().StringSliceP("output", "o", []string{regularFilesOutputTypeYAML},
-			fmt.Sprintf("Configure output format. Can specify file format (%s) and/or schema type (%s) (can be specified multiple times)",
-				strings.Join(regularFilesOutputFormatTypes, ", "),
-				strings.Join(regularFilesOutputSchemaTypes, ", ")))
+	cmd.Flags().StringSliceVarP(&s.OutputType.Types, "output", "o", []string{RegularFilesOutputTypeYAML},
+		fmt.Sprintf("Configure output format. Can specify file format (%s) and/or schema type (%s) (can be specified multiple times)",
+			strings.Join(RegularFilesOutputFormatTypes, ", "),
+			strings.Join(RegularFilesOutputSchemaTypes, ", ")))
 
 	cmd.Flags().BoolVar(&s.SymlinkAllowOpts.AllowAll, "dangerous-allow-all-symlink-destinations", false,
 		"Symlinks to all destinations are allowed")
@@ -102,11 +101,11 @@ func (s *RegularFilesSource) Output(out Output) error {
 	}
 
 	switch outputType {
-	case regularFilesOutputTypeYAML:
+	case RegularFilesOutputTypeYAML:
 		printerFunc = nil
-	case regularFilesOutputTypeJSON:
+	case RegularFilesOutputTypeJSON:
 		printerFunc = func(w io.Writer) yamlmeta.DocumentPrinter { return yamlmeta.NewJSONPrinter(w) }
-	case regularFilesOutputTypePos:
+	case RegularFilesOutputTypePos:
 		printerFunc = func(w io.Writer) yamlmeta.DocumentPrinter {
 			return yamlmeta.WrappedFilePositionPrinter{yamlmeta.NewFilePositionPrinter(w)}
 		}
@@ -127,33 +126,41 @@ If you want to include those results, use the --output-files or --dangerous-empt
 	return nil
 }
 
+// When the FileSource are RegularFilesSource, indicates which file format to use when rendering the output.
 const (
-	regularFilesOutputTypeYAML    = "yaml"
-	regularFilesOutputTypeJSON    = "json"
-	regularFilesOutputTypePos     = "pos"
-	regularFilesOutputTypeOpenAPI = "openapi-v3"
-	regularFilesOutputTypeNone    = ""
+	RegularFilesOutputTypeYAML = "yaml"
+	RegularFilesOutputTypeJSON = "json"
+	RegularFilesOutputTypePos  = "pos"
 )
 
-var regularFilesOutputFormatTypes = []string{regularFilesOutputTypeYAML, regularFilesOutputTypeJSON, regularFilesOutputTypePos}
-var regularFilesOutputSchemaTypes = []string{regularFilesOutputTypeOpenAPI}
-var regularFilesOutputTypes = append(regularFilesOutputFormatTypes, regularFilesOutputSchemaTypes...)
+// When the FileSource are RegularFilesSource, indicates which schema type to use when rendering the output.
+const (
+	RegularFilesOutputTypeOpenAPI = "openapi-v3"
+	RegularFilesOutputTypeNone    = ""
+)
+
+// Collections of each category of output type
+var (
+	RegularFilesOutputFormatTypes = []string{RegularFilesOutputTypeYAML, RegularFilesOutputTypeJSON, RegularFilesOutputTypePos}
+	RegularFilesOutputSchemaTypes = []string{RegularFilesOutputTypeOpenAPI}
+	RegularFilesOutputTypes       = append(RegularFilesOutputFormatTypes, RegularFilesOutputSchemaTypes...)
+)
 
 // Format returns which of the file format types is in effect
 func (o *OutputType) Format() (string, error) {
-	return o.typeFrom(regularFilesOutputFormatTypes, regularFilesOutputTypeYAML)
+	return o.typeFrom(RegularFilesOutputFormatTypes, RegularFilesOutputTypeYAML)
 }
 
 // Schema returns which of the schema types is in effect
 func (o *OutputType) Schema() (string, error) {
-	return o.typeFrom(regularFilesOutputSchemaTypes, regularFilesOutputTypeNone)
+	return o.typeFrom(RegularFilesOutputSchemaTypes, RegularFilesOutputTypeNone)
 }
 
 func (o *OutputType) typeFrom(types []string, defaultValue string) (string, error) {
 	if err := o.validateTypes(); err != nil {
 		return "", err
 	}
-	for _, t := range o.types() {
+	for _, t := range o.Types {
 		if o.stringInSlice(t, types) {
 			return t, nil
 		}
@@ -161,17 +168,9 @@ func (o *OutputType) typeFrom(types []string, defaultValue string) (string, erro
 	return defaultValue, nil
 }
 
-// types provides nil-safe access to OutputType.Types
-func (o *OutputType) types() []string {
-	if o.Types == nil {
-		return []string{}
-	}
-	return *o.Types
-}
-
 func (o *OutputType) validateTypes() error {
-	for _, t := range o.types() {
-		if !o.stringInSlice(t, regularFilesOutputTypes) {
+	for _, t := range o.Types {
+		if !o.stringInSlice(t, RegularFilesOutputTypes) {
 			return fmt.Errorf("Unknown output type '%v'", t)
 		}
 	}

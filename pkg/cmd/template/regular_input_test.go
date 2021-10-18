@@ -39,7 +39,7 @@ If you want to include those results, use the --output-files or --dangerous-empt
 	stderr := bytes.NewBufferString("")
 	ui := ui.NewCustomWriterTTY(false, stdout, stderr)
 	opts := cmdtpl.NewOptions()
-	rfsOpts := template.RegularFilesSourceOpts{OutputType: cmdtpl.OutputType{Types: &[]string{"yaml"}}}
+	rfsOpts := template.RegularFilesSourceOpts{OutputType: cmdtpl.OutputType{Types: []string{"yaml"}}}
 	rfs := template.NewRegularFilesSource(rfsOpts, ui)
 
 	out := opts.RunWithFiles(cmdtpl.Input{Files: filesToProcess}, ui)
@@ -75,7 +75,7 @@ organization=Acme Widgets Inc.`)
 	stderr := bytes.NewBufferString("")
 	ui := ui.NewCustomWriterTTY(false, stdout, stderr)
 	opts := cmdtpl.NewOptions()
-	rfsOpts := template.RegularFilesSourceOpts{OutputType: cmdtpl.OutputType{Types: &[]string{"yaml"}}, OutputFiles: outputDir}
+	rfsOpts := template.RegularFilesSourceOpts{OutputType: cmdtpl.OutputType{Types: []string{"yaml"}}, OutputFiles: outputDir}
 	rfs := template.NewRegularFilesSource(rfsOpts, ui)
 
 	out := opts.RunWithFiles(cmdtpl.Input{Files: filesToProcess}, ui)
@@ -102,7 +102,7 @@ func Test_FileMark_YAML_Shows_No_Warning(t *testing.T) {
 	ui := ui.NewCustomWriterTTY(false, stdout, stderr)
 	opts := cmdtpl.NewOptions()
 	opts.FileMarksOpts.FileMarks = []string{"yaml.txt:type=yaml-plain"}
-	rfsOpts := template.RegularFilesSourceOpts{OutputType: cmdtpl.OutputType{Types: &[]string{"yaml"}}}
+	rfsOpts := template.RegularFilesSourceOpts{OutputType: cmdtpl.OutputType{Types: []string{"yaml"}}}
 	rfs := template.NewRegularFilesSource(rfsOpts, ui)
 
 	out := opts.RunWithFiles(cmdtpl.Input{Files: filesToProcess}, ui)
@@ -168,7 +168,7 @@ func Test_OutputType_Flag(t *testing.T) {
 	for _, eg := range successExamples {
 		t.Run(eg.desc, func(t *testing.T) {
 			opts := cmdtpl.NewOptions()
-			opts.RegularFilesSourceOpts.OutputType.Types = &eg.input
+			opts.RegularFilesSourceOpts.OutputType.Types = eg.input
 
 			format, formatErr := opts.RegularFilesSourceOpts.OutputType.Format()
 			schema, schemaErr := opts.RegularFilesSourceOpts.OutputType.Schema()
@@ -201,7 +201,7 @@ func Test_OutputType_Flag(t *testing.T) {
 	for _, eg := range errorExamples {
 		t.Run(eg.desc, func(t *testing.T) {
 			opts := cmdtpl.NewOptions()
-			opts.RegularFilesSourceOpts.OutputType.Types = &eg.input
+			opts.RegularFilesSourceOpts.OutputType.Types = eg.input
 
 			_, formatErr := opts.RegularFilesSourceOpts.OutputType.Format()
 			_, schemaErr := opts.RegularFilesSourceOpts.OutputType.Schema()
