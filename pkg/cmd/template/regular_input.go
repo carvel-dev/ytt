@@ -15,7 +15,7 @@ import (
 )
 
 // RegularFilesSourceOpts holds configuration for when regular files are the input/output
-//   of the execution (via the --files and --output... flags).
+// of the execution (via the --files and --output... flags).
 type RegularFilesSourceOpts struct {
 	files []string
 
@@ -34,7 +34,7 @@ type OutputType struct {
 }
 
 // Set registers flags related to sourcing ordinary files/directories and wires-up those flags up to this
-//   RegularFilesSourceOpts to be set when the corresponding cobra.Command is executed.
+// RegularFilesSourceOpts to be set when the corresponding cobra.Command is executed.
 func (s *RegularFilesSourceOpts) Set(cmd *cobra.Command) {
 	cmd.Flags().StringArrayVarP(&s.files, "file", "f", nil, "File (ie local path, HTTP URL, -) (can be specified multiple times)")
 

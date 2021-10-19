@@ -180,7 +180,7 @@ func (o *Options) inspectSchema(dataValuesSchema workspace.Schema) Output {
 		openAPIDoc := schema.NewOpenAPIDocument(dataValuesSchema.GetDocumentType())
 		return Output{
 			DocSet: &yamlmeta.DocumentSet{
-				Items: []*yamlmeta.Document{openAPIDoc},
+				Items: []*yamlmeta.Document{openAPIDoc.AsDocument()},
 			},
 		}
 	}
