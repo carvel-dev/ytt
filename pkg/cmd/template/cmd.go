@@ -141,7 +141,7 @@ func (o *Options) RunWithFiles(in Input, ui ui.UI) Output {
 		return Output{Err: err}
 	}
 	if schemaType == RegularFilesOutputTypeOpenAPI {
-		return Output{Err: fmt.Errorf("Output type currently only supported for Data Values Schema (i.e. include --data-values-schema-inspect)")}
+		return Output{Err: fmt.Errorf("Output type currently only supported for data values schema (i.e. include --data-values-schema-inspect)")}
 	}
 
 	values, libraryValues, err := rootLibraryExecution.Values(valuesOverlays, schema)
@@ -184,7 +184,7 @@ func (o *Options) inspectSchema(dataValuesSchema workspace.Schema) Output {
 			},
 		}
 	}
-	return Output{Err: fmt.Errorf("Data Values Schema export only supported in OpenAPI v3 format; specify format with --output=%s flag",
+	return Output{Err: fmt.Errorf("Data values schema export only supported in OpenAPI v3 format; specify format with --output=%s flag",
 		RegularFilesOutputTypeOpenAPI)}
 }
 
