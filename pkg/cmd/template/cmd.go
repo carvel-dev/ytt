@@ -4,10 +4,12 @@
 package template
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/k14s/ytt/pkg/cmd/ui"
 	"github.com/k14s/ytt/pkg/files"
+	"github.com/k14s/ytt/pkg/schema"
 	"github.com/k14s/ytt/pkg/workspace"
 	"github.com/k14s/ytt/pkg/yamlmeta"
 	"github.com/spf13/cobra"
@@ -37,10 +39,12 @@ type Output struct {
 	Err    error
 }
 
+// FileSource provides both a means of loading from sources (i.e. Input) and rendering into sinks (i.e. Output)
 type FileSource interface {
 	HasInput() bool
 	HasOutput() bool
 	Input() (Input, error)
+	// Output renders the results (i.e. an instance of Output) to the configured output/sink of this FileSource
 	Output(Output) error
 }
 
@@ -128,6 +132,18 @@ func (o *Options) RunWithFiles(in Input, ui ui.UI) Output {
 		return Output{Err: err}
 	}
 
+	if o.DataValuesFlags.InspectSchema {
+		return o.inspectSchema(schema)
+	}
+
+	schemaType, err := o.RegularFilesSourceOpts.OutputType.Schema()
+	if err != nil {
+		return Output{Err: err}
+	}
+	if schemaType == RegularFilesOutputTypeOpenAPI {
+		return Output{Err: fmt.Errorf("Output type currently only supported for data values schema (i.e. include --data-values-schema-inspect)")}
+	}
+
 	values, libraryValues, err := rootLibraryExecution.Values(valuesOverlays, schema)
 	if err != nil {
 		return Output{Err: err}
@@ -136,11 +152,7 @@ func (o *Options) RunWithFiles(in Input, ui ui.UI) Output {
 	libraryValues = append(libraryValues, libraryValuesOverlays...)
 
 	if o.DataValuesFlags.Inspect {
-		return Output{
-			DocSet: &yamlmeta.DocumentSet{
-				Items: []*yamlmeta.Document{values.Doc},
-			},
-		}
+		return o.inspectDataValues(values)
 	}
 
 	result, err := rootLibraryExecution.Eval(values, libraryValues, librarySchemas)
@@ -149,6 +161,31 @@ func (o *Options) RunWithFiles(in Input, ui ui.UI) Output {
 	}
 
 	return Output{Files: result.Files, DocSet: result.DocSet}
+}
+
+func (o *Options) inspectDataValues(values *workspace.DataValues) Output {
+	return Output{
+		DocSet: &yamlmeta.DocumentSet{
+			Items: []*yamlmeta.Document{values.Doc},
+		},
+	}
+}
+
+func (o *Options) inspectSchema(dataValuesSchema workspace.Schema) Output {
+	format, err := o.RegularFilesSourceOpts.OutputType.Schema()
+	if err != nil {
+		return Output{Err: err}
+	}
+	if format == RegularFilesOutputTypeOpenAPI {
+		openAPIDoc := schema.NewOpenAPIDocument(dataValuesSchema.GetDocumentType())
+		return Output{
+			DocSet: &yamlmeta.DocumentSet{
+				Items: []*yamlmeta.Document{openAPIDoc.AsDocument()},
+			},
+		}
+	}
+	return Output{Err: fmt.Errorf("Data values schema export only supported in OpenAPI v3 format; specify format with --output=%s flag",
+		RegularFilesOutputTypeOpenAPI)}
 }
 
 func (o *Options) pickSource(srcs []FileSource, pickFunc func(FileSource) bool) FileSource {

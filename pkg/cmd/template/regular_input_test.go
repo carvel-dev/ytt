@@ -5,6 +5,7 @@ package template_test
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -38,7 +39,7 @@ If you want to include those results, use the --output-files or --dangerous-empt
 	stderr := bytes.NewBufferString("")
 	ui := ui.NewCustomWriterTTY(false, stdout, stderr)
 	opts := cmdtpl.NewOptions()
-	rfsOpts := template.RegularFilesSourceOpts{OutputType: "yaml"}
+	rfsOpts := template.RegularFilesSourceOpts{OutputType: cmdtpl.OutputType{Types: []string{"yaml"}}}
 	rfs := template.NewRegularFilesSource(rfsOpts, ui)
 
 	out := opts.RunWithFiles(cmdtpl.Input{Files: filesToProcess}, ui)
@@ -74,7 +75,7 @@ organization=Acme Widgets Inc.`)
 	stderr := bytes.NewBufferString("")
 	ui := ui.NewCustomWriterTTY(false, stdout, stderr)
 	opts := cmdtpl.NewOptions()
-	rfsOpts := template.RegularFilesSourceOpts{OutputType: "yaml", OutputFiles: outputDir}
+	rfsOpts := template.RegularFilesSourceOpts{OutputType: cmdtpl.OutputType{Types: []string{"yaml"}}, OutputFiles: outputDir}
 	rfs := template.NewRegularFilesSource(rfsOpts, ui)
 
 	out := opts.RunWithFiles(cmdtpl.Input{Files: filesToProcess}, ui)
@@ -101,7 +102,7 @@ func Test_FileMark_YAML_Shows_No_Warning(t *testing.T) {
 	ui := ui.NewCustomWriterTTY(false, stdout, stderr)
 	opts := cmdtpl.NewOptions()
 	opts.FileMarksOpts.FileMarks = []string{"yaml.txt:type=yaml-plain"}
-	rfsOpts := template.RegularFilesSourceOpts{OutputType: "yaml"}
+	rfsOpts := template.RegularFilesSourceOpts{OutputType: cmdtpl.OutputType{Types: []string{"yaml"}}}
 	rfs := template.NewRegularFilesSource(rfsOpts, ui)
 
 	out := opts.RunWithFiles(cmdtpl.Input{Files: filesToProcess}, ui)
@@ -111,6 +112,110 @@ func Test_FileMark_YAML_Shows_No_Warning(t *testing.T) {
 	require.NoError(t, err)
 
 	assertStdoutAndStderr(t, stdout, stderr, expectedStdOut, expectedStdErr)
+}
+
+func Test_OutputType_Flag(t *testing.T) {
+	type example struct {
+		desc   string
+		input  []string
+		format interface{}
+		schema interface{}
+	}
+	successExamples := []example{
+		{
+			desc:   "no_input",
+			input:  []string{},
+			format: "yaml",
+			schema: "",
+		},
+		{
+			desc:   "explicitly_YAML",
+			input:  []string{"yaml"},
+			format: "yaml",
+			schema: "",
+		},
+		{
+			desc:   "explicitly_JSON",
+			input:  []string{"json"},
+			format: "json",
+			schema: "",
+		},
+		{
+			desc:   "explicitly_POS",
+			input:  []string{"pos"},
+			format: "pos",
+			schema: "",
+		},
+		{
+			desc:   "explicitly_YAML,_OpenAPI v3",
+			input:  []string{"yaml", "openapi-v3"},
+			format: "yaml",
+			schema: "openapi-v3",
+		},
+		{
+			desc:   "explicitly_JSON,_OpenAPI_v3",
+			input:  []string{"json", "openapi-v3"},
+			format: "json",
+			schema: "openapi-v3",
+		},
+		{
+			desc:   "explicitly_POS,_OpenAPI_v3",
+			input:  []string{"pos", "openapi-v3"},
+			format: "pos",
+			schema: "openapi-v3",
+		},
+	}
+	for _, eg := range successExamples {
+		t.Run(eg.desc, func(t *testing.T) {
+			opts := cmdtpl.NewOptions()
+			opts.RegularFilesSourceOpts.OutputType.Types = eg.input
+
+			format, formatErr := opts.RegularFilesSourceOpts.OutputType.Format()
+			schema, schemaErr := opts.RegularFilesSourceOpts.OutputType.Schema()
+
+			t.Run("format", func(t *testing.T) {
+				require.NoError(t, formatErr)
+				require.Equal(t, eg.format, format)
+			})
+			t.Run("schema", func(t *testing.T) {
+				require.NoError(t, schemaErr)
+				require.Equal(t, eg.schema, schema)
+			})
+		})
+	}
+
+	errorExamples := []example{
+		{
+			desc:   "invalid_input",
+			input:  []string{"ymal"},
+			format: errors.New("Unknown output type 'ymal'"),
+			schema: errors.New("Unknown output type 'ymal'"),
+		},
+		{
+			desc:   "empty_input",
+			input:  []string{""},
+			format: errors.New("Unknown output type ''"),
+			schema: errors.New("Unknown output type ''"),
+		},
+	}
+	for _, eg := range errorExamples {
+		t.Run(eg.desc, func(t *testing.T) {
+			opts := cmdtpl.NewOptions()
+			opts.RegularFilesSourceOpts.OutputType.Types = eg.input
+
+			_, formatErr := opts.RegularFilesSourceOpts.OutputType.Format()
+			_, schemaErr := opts.RegularFilesSourceOpts.OutputType.Schema()
+
+			t.Run("format", func(t *testing.T) {
+				require.Error(t, formatErr)
+				require.Equal(t, eg.format, formatErr)
+			})
+			t.Run("schema", func(t *testing.T) {
+				require.Error(t, schemaErr)
+				require.Equal(t, eg.schema, schemaErr)
+			})
+		})
+	}
 }
 
 func TestFileMarkMultipleExcludes(t *testing.T) {
