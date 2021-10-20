@@ -71,7 +71,6 @@ func (o *OpenAPIDocument) calculateProperties(schemaVal interface{}) yamlmeta.No
 	default:
 		panic(fmt.Sprintf("Unrecognized type %T", schemaVal))
 	}
-	return nil
 }
 
 func (o *OpenAPIDocument) openAPITypeFor(astType *ScalarType) string {
