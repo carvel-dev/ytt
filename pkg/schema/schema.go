@@ -150,7 +150,10 @@ func getType(node yamlmeta.ValueHoldingNode) (yamlmeta.Type, error) {
 	if err != nil {
 		return nil, NewSchemaError("Invalid schema", err)
 	}
-	typeOfValue = getTypeFromAnnotations(anns)
+	typeOfValue, err = getTypeFromAnnotations(anns, node.GetPosition())
+	if err != nil {
+		return nil, NewSchemaError("Invalid schema", err)
+	}
 
 	if typeOfValue == nil {
 		typeOfValue, err = inferTypeFromValue(node.Val(), node.GetPosition())
