@@ -149,7 +149,7 @@ func convertToAST(val interface{}, defaultPosition *filepos.Position) interface{
 		return typedVal
 
 	case []interface{}:
-		result := &Array{}
+		result := &Array{Position: defaultPosition}
 		for _, item := range typedVal {
 			result.Items = append(result.Items, &ArrayItem{
 				Value:    convertToAST(item, defaultPosition),

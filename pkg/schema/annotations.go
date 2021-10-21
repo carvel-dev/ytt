@@ -5,6 +5,7 @@ package schema
 
 import (
 	"fmt"
+
 	"github.com/k14s/ytt/pkg/filepos"
 	"github.com/k14s/ytt/pkg/template"
 	"github.com/k14s/ytt/pkg/template/core"
@@ -194,6 +195,17 @@ func processOptionalAnnotation(node yamlmeta.Node, optionalAnnotation template.A
 			}
 			return typeAnn, nil
 		case AnnotationDefault:
+			switch node.(type) {
+			case *yamlmeta.DocumentSet, *yamlmeta.Array, *yamlmeta.Map:
+				return nil, NewSchemaError(fmt.Sprintf("Invalid schema - @%v not supported on %s", AnnotationDefault, node.DisplayName()),
+					schemaAssertionError{position: node.GetPosition()})
+			case *yamlmeta.ArrayItem:
+				return nil, NewSchemaError(fmt.Sprintf("Invalid schema - @%v not supported on array item", AnnotationDefault),
+					schemaAssertionError{
+						position: node.GetPosition(),
+						hints:    []string{"do you mean to set a default value for the array?", "set an array's default by annotating its parent."},
+					})
+			}
 			defaultAnn, err := NewDefaultAnnotation(ann, wrappedValueType, node.GetPosition())
 			if err != nil {
 				return nil, err
