@@ -792,6 +792,46 @@ dvs1.yml:
 		assertFails(t, filesToProcess, expectedErr, cmdOpts)
 	})
 
+	t.Run("when a data value of the wrong type used in @schema/default annotation", func(t *testing.T) {
+
+		schemaYAML := `#@data/values-schema
+---
+#@schema/default True
+int: 1
+#@schema/default 0
+str: ""
+#@schema/default "string"
+bool: False
+`
+		templateYAML := `#@ load("@ytt:data", "data")
+---
+foo: #@ data.values.int
+foo: #@ data.values.str
+foo: #@ data.values.bool
+`
+		expectedErr := `
+Invalid schema - @schema/default is wrong type
+==============================================
+
+schema.yml:
+    |
+  4 | int: 1
+    |
+
+    = found: boolean
+    = expected: integer (by schema.yml:4)
+    = hint: is the default value set using @schema/default?
+
+`
+
+		filesToProcess := files.NewSortedFiles([]*files.File{
+			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
+			files.MustNewFileFromSource(files.NewBytesSource("template.yml", []byte(templateYAML))),
+		})
+
+		assertFails(t, filesToProcess, expectedErr, opts)
+	})
+
 	t.Run("checks after every data values document is processed (and stops if there was a violation)", func(t *testing.T) {
 		schemaYAML := `#@data/values-schema
 ---
@@ -2805,6 +2845,33 @@ schema.yml:
 
     = hint: do you mean to set a default value for the array?
     = hint: set an array's default by annotating its parent.
+`
+
+			filesToProcess := files.NewSortedFiles([]*files.File{
+				files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
+			})
+
+			assertFails(t, filesToProcess, expectedErr, opts)
+		})
+		t.Run("is incorrect type", func(t *testing.T) {
+			schemaYAML := `#@data/values-schema
+---
+#@schema/default 1
+foo: a string
+
+`
+			expectedErr := `
+Invalid schema - @schema/default is wrong type
+==============================================
+
+schema.yml:
+    |
+  4 | foo: a string
+    |
+
+    = found: integer
+    = expected: string (by schema.yml:4)
+    = hint: is the default value set using @schema/default?
 `
 
 			filesToProcess := files.NewSortedFiles([]*files.File{
