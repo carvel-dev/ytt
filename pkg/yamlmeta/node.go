@@ -27,6 +27,13 @@ func (mi *MapItem) SetPosition(position *filepos.Position)     { mi.Position = p
 func (a *Array) SetPosition(position *filepos.Position)        { a.Position = position }
 func (ai *ArrayItem) SetPosition(position *filepos.Position)   { ai.Position = position }
 
+func (ds *DocumentSet) UserFriendlyName() string { return "Document Set" }
+func (d *Document) UserFriendlyName() string     { return "Document" }
+func (m *Map) UserFriendlyName() string          { return "Map" }
+func (mi *MapItem) UserFriendlyName() string     { return "Map Item" }
+func (a *Array) UserFriendlyName() string        { return "Array" }
+func (ai *ArrayItem) UserFriendlyName() string   { return "Array Item" }
+
 func (ds *DocumentSet) ValueTypeAsString() string { return "documentSet" }
 func (d *Document) ValueTypeAsString() string     { return typeToString(d.Value) }
 func (m *Map) ValueTypeAsString() string          { return "map" }
