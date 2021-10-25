@@ -215,24 +215,28 @@ func getTypeFromAnnotations(anns []Annotation, pos *filepos.Position) (yamlmeta.
 		return annsCopy[0].NewTypeFromAnn(), nil
 	}
 
-	var typeAttributingAnns []Annotation
+	var conflictingTypeAnns []Annotation
 	for _, ann := range annsCopy {
-		switch ann.(type) {
-		case *NullableAnnotation, *TypeAnnotation:
-			typeAttributingAnns = append(typeAttributingAnns, ann)
+		switch typedAnn := ann.(type) {
+		case *NullableAnnotation:
+			conflictingTypeAnns = append(conflictingTypeAnns, ann)
+		case *TypeAnnotation:
+			if typedAnn.IsAny() {
+				conflictingTypeAnns = append(conflictingTypeAnns, ann)
+			}
 		default:
 			continue
 		}
 	}
 
-	if len(typeAttributingAnns) > 1 {
+	if len(conflictingTypeAnns) > 1 {
 		return nil, schemaAssertionError{
 			position:    pos,
-			description: fmt.Sprintf("@%v, and @%v are mutually exclusive", AnnotationType, AnnotationNullable),
-			expected:    fmt.Sprintf("one of %v, or %v", AnnotationType, AnnotationNullable),
-			found:       fmt.Sprintf("both @%v, and @%v annotations", AnnotationType, AnnotationNullable),
+			description: fmt.Sprintf("@%v, and @%v any=True are mutually exclusive", AnnotationNullable, AnnotationType),
+			expected:    fmt.Sprintf("one of %v, or %v any=True", AnnotationNullable, AnnotationType),
+			found:       fmt.Sprintf("both @%v, and @%v any=True annotations", AnnotationNullable, AnnotationType),
 		}
 	}
 
-	return typeAttributingAnns[0].NewTypeFromAnn(), nil
+	return conflictingTypeAnns[0].NewTypeFromAnn(), nil
 }

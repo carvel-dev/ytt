@@ -2739,15 +2739,15 @@ foo: #@ data.values.foo`
 		expectedErr := `
 Invalid schema
 ==============
-@schema/type, and @schema/nullable are mutually exclusive
+@schema/nullable, and @schema/type any=True are mutually exclusive
 
 schema.yml:
     |
   5 | foo: 0
     |
 
-    = found: both @schema/type, and @schema/nullable annotations
-    = expected: one of schema/type, or schema/nullable
+    = found: both @schema/nullable, and @schema/type any=True annotations
+    = expected: one of schema/nullable, or schema/type any=True
 `
 
 		filesToProcess := files.NewSortedFiles([]*files.File{
