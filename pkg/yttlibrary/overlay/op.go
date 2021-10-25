@@ -78,7 +78,7 @@ func (o Op) apply(left, right interface{}, parentMatchChildDefaults MatchChildDe
 				case AnnotationAssert:
 					err = o.assertMapItem(typedLeft, item, parentMatchChildDefaults)
 				default:
-					err = fmt.Errorf("Found @%s on Map Item (%s:%d); only Array items can be annotated with @%s", op, item.GetPosition().GetFile(), item.GetPosition().LineNum(), op)
+					err = fmt.Errorf("Found @%s on Map Item (%s); only Array items can be annotated with @%s", op, item.GetPosition().AsCompactString(), op)
 				}
 			}
 			if err != nil {

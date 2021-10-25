@@ -27,12 +27,23 @@ func (mi *MapItem) SetPosition(position *filepos.Position)     { mi.Position = p
 func (a *Array) SetPosition(position *filepos.Position)        { a.Position = position }
 func (ai *ArrayItem) SetPosition(position *filepos.Position)   { ai.Position = position }
 
+// UserFriendlyName is used to return a user-friendly name for a Document Set
 func (ds *DocumentSet) UserFriendlyName() string { return "Document Set" }
-func (d *Document) UserFriendlyName() string     { return "Document" }
-func (m *Map) UserFriendlyName() string          { return "Map" }
-func (mi *MapItem) UserFriendlyName() string     { return "Map Item" }
-func (a *Array) UserFriendlyName() string        { return "Array" }
-func (ai *ArrayItem) UserFriendlyName() string   { return "Array Item" }
+
+// UserFriendlyName is used to return a user-friendly name for a Document
+func (d *Document) UserFriendlyName() string { return "Document" }
+
+// UserFriendlyName is used to return a user-friendly name for a Map
+func (m *Map) UserFriendlyName() string { return "Map" }
+
+// UserFriendlyName is used to return a user-friendly name for a Map Item
+func (mi *MapItem) UserFriendlyName() string { return "Map Item" }
+
+// UserFriendlyName is used to return a user-friendly name for an Array
+func (a *Array) UserFriendlyName() string { return "Array" }
+
+// UserFriendlyName is used to return a user-friendly name for an Array Item
+func (ai *ArrayItem) UserFriendlyName() string { return "Array Item" }
 
 func (ds *DocumentSet) ValueTypeAsString() string { return "documentSet" }
 func (d *Document) ValueTypeAsString() string     { return typeToString(d.Value) }
