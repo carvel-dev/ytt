@@ -1708,7 +1708,6 @@ baz:
 
 		assertSucceeds(t, filesToProcess, expected, opts)
 	})
-
 	t.Run("when any is set on nested maps", func(t *testing.T) {
 		schemaYAML := `#@data/values-schema
 ---
@@ -1730,32 +1729,6 @@ baz: #@ data.values.baz
   a: foobar
 `
 
-		filesToProcess := files.NewSortedFiles([]*files.File{
-			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
-			files.MustNewFileFromSource(files.NewBytesSource("dataValues.yml", []byte(dataValuesYAML))),
-			files.MustNewFileFromSource(files.NewBytesSource("template.yml", []byte(templateYAML))),
-		})
-
-		assertSucceeds(t, filesToProcess, expected, opts)
-	})
-
-	t.Run("when schema/type and schema/nullable annotate a map", func(t *testing.T) {
-		schemaYAML := `#@data/values-schema
----
-#@schema/type any=True
-#@schema/nullable
-foo: 0
-`
-		dataValuesYAML := `#@data/values
----
-foo: "bar" 
-`
-		templateYAML := `#@ load("@ytt:data", "data")
----
-foo: #@ data.values.foo
-`
-		expected := `foo: bar
-`
 		filesToProcess := files.NewSortedFiles([]*files.File{
 			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
 			files.MustNewFileFromSource(files.NewBytesSource("dataValues.yml", []byte(dataValuesYAML))),
@@ -2753,6 +2726,39 @@ foo: 0
 
 		assertFails(t, filesToProcess, expectedErr, opts)
 	})
+	t.Run("when schema/type and schema/nullable annotate a map", func(t *testing.T) {
+		schemaYAML := `#@data/values-schema
+---
+#@schema/type any=True
+#@schema/nullable
+foo: 0
+`
+		templateYAML := `#@ load("@ytt:data", "data")
+---
+foo: #@ data.values.foo`
+		expectedErr := `
+Invalid schema
+==============
+@schema/nullable, and @schema/type any=True are mutually exclusive
+
+schema.yml:
+    |
+  5 | foo: 0
+    |
+
+    = found: both @schema/nullable, and @schema/type any=True annotations
+    = expected: one of schema/nullable, or schema/type any=True
+`
+
+		filesToProcess := files.NewSortedFiles([]*files.File{
+			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
+			files.MustNewFileFromSource(files.NewBytesSource("template.yml", []byte(templateYAML))),
+		})
+
+		assertFails(t, filesToProcess, expectedErr, opts)
+
+	})
+
 	t.Run("when schema/default annotation", func(t *testing.T) {
 		t.Run("value is empty", func(t *testing.T) {
 			schemaYAML := `#@data/values-schema

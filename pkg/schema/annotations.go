@@ -5,10 +5,7 @@ package schema
 
 import (
 	"fmt"
-	"sort"
-
 	"github.com/k14s/ytt/pkg/filepos"
-
 	"github.com/k14s/ytt/pkg/template"
 	"github.com/k14s/ytt/pkg/template/core"
 	"github.com/k14s/ytt/pkg/yamlmeta"
@@ -208,21 +205,38 @@ func processOptionalAnnotation(node yamlmeta.Node, optionalAnnotation template.A
 	return nil, nil
 }
 
-func getTypeFromAnnotations(anns []Annotation) yamlmeta.Type {
+func getTypeFromAnnotations(anns []Annotation, pos *filepos.Position) (yamlmeta.Type, error) {
 	annsCopy := append([]Annotation{}, anns...)
 
 	if len(annsCopy) == 0 {
-		return nil
+		return nil, nil
+	}
+	if len(annsCopy) == 1 {
+		return annsCopy[0].NewTypeFromAnn(), nil
 	}
 
-	// allow Configuration Author to annotate "nullable" as a fallback if "any" is false.
-	preferAnyTypeOverNullableType := func(i, j int) bool {
-		if typeAnn, ok := annsCopy[i].(*TypeAnnotation); ok && typeAnn.IsAny() {
-			return true
+	var conflictingTypeAnns []Annotation
+	for _, ann := range annsCopy {
+		switch typedAnn := ann.(type) {
+		case *NullableAnnotation:
+			conflictingTypeAnns = append(conflictingTypeAnns, ann)
+		case *TypeAnnotation:
+			if typedAnn.IsAny() {
+				conflictingTypeAnns = append(conflictingTypeAnns, ann)
+			}
+		default:
+			continue
 		}
-		return false
 	}
 
-	sort.Slice(annsCopy, preferAnyTypeOverNullableType)
-	return annsCopy[0].NewTypeFromAnn()
+	if len(conflictingTypeAnns) > 1 {
+		return nil, schemaAssertionError{
+			position:    pos,
+			description: fmt.Sprintf("@%v, and @%v any=True are mutually exclusive", AnnotationNullable, AnnotationType),
+			expected:    fmt.Sprintf("one of %v, or %v any=True", AnnotationNullable, AnnotationType),
+			found:       fmt.Sprintf("both @%v, and @%v any=True annotations", AnnotationNullable, AnnotationType),
+		}
+	}
+
+	return conflictingTypeAnns[0].NewTypeFromAnn(), nil
 }
