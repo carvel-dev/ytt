@@ -22,6 +22,6 @@ value:
 +++
 
 ERR: 
-- overlay.apply: Document on line stdin:13: Map item (key 'value') on line stdin:14: Map item (key 'b') on line stdin:16: Found @overlay/insert on Map Item (stdin:16); only Array items can be annotated with @overlay/insert
+- overlay.apply: Document on line stdin:13: Map item (key 'value') on line stdin:14: Map item (key 'b') on line stdin:16: Found @overlay/insert on map item (stdin:16); only array items can be annotated with @overlay/insert
     in <toplevel>
       stdin:20 | --- #@ template.replace(overlay.apply(theDoc(), theOverlay()))

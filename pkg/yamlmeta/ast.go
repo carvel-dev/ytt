@@ -27,7 +27,7 @@ type Node interface {
 
 	Check() TypeCheck
 
-	UserFriendlyName() string
+	DisplayName() string
 
 	sealed() // limit the concrete types of Node to map directly only to types allowed in YAML spec.
 

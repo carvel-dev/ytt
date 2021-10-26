@@ -27,23 +27,23 @@ func (mi *MapItem) SetPosition(position *filepos.Position)     { mi.Position = p
 func (a *Array) SetPosition(position *filepos.Position)        { a.Position = position }
 func (ai *ArrayItem) SetPosition(position *filepos.Position)   { ai.Position = position }
 
-// UserFriendlyName is used to return a user-friendly name for a Document Set
-func (ds *DocumentSet) UserFriendlyName() string { return "Document Set" }
+// DisplayName is used to return a display name for a DocumentSet
+func (ds *DocumentSet) DisplayName() string { return "document set" }
 
-// UserFriendlyName is used to return a user-friendly name for a Document
-func (d *Document) UserFriendlyName() string { return "Document" }
+// DisplayName is used to return a display name for a Document
+func (d *Document) DisplayName() string { return "document" }
 
-// UserFriendlyName is used to return a user-friendly name for a Map
-func (m *Map) UserFriendlyName() string { return "Map" }
+// DisplayName is used to return a display name for a Map
+func (m *Map) DisplayName() string { return "map" }
 
-// UserFriendlyName is used to return a user-friendly name for a Map Item
-func (mi *MapItem) UserFriendlyName() string { return "Map Item" }
+// DisplayName is used to return a display name for a MapItem
+func (mi *MapItem) DisplayName() string { return "map item" }
 
-// UserFriendlyName is used to return a user-friendly name for an Array
-func (a *Array) UserFriendlyName() string { return "Array" }
+// DisplayName is used to return a display name for an Array
+func (a *Array) DisplayName() string { return "array" }
 
-// UserFriendlyName is used to return a user-friendly name for an Array Item
-func (ai *ArrayItem) UserFriendlyName() string { return "Array Item" }
+// DisplayName is used to return a display name for an ArrayItem
+func (ai *ArrayItem) DisplayName() string { return "array item" }
 
 func (ds *DocumentSet) ValueTypeAsString() string { return "documentSet" }
 func (d *Document) ValueTypeAsString() string     { return typeToString(d.Value) }

@@ -442,7 +442,7 @@ str: str`)
 
 	out := opts.RunWithFiles(cmdtpl.Input{Files: filesToProcess}, ui)
 
-	expectedErrorMessage := "Found @data/values on Map Item (data.yml:4); only Documents (---) can be annotated with @data/values"
+	expectedErrorMessage := "Found @data/values on map item (data.yml:4); only documents (---) can be annotated with @data/values"
 
 	require.EqualError(t, out.Err, expectedErrorMessage)
 }

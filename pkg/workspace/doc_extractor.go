@@ -89,8 +89,8 @@ func (v DocExtractor) checkNonDocs(val interface{}, annName template.AnnotationN
 				// TODO check for annotation emptiness
 				_, isDoc := node.(*yamlmeta.Document)
 				if !isDoc {
-					errMsg := "Found @%s on %s (%s); only Documents (---) can be annotated with @%s"
-					return fmt.Errorf(errMsg, annName, node.UserFriendlyName(), node.GetPosition().AsCompactString(), annName)
+					errMsg := "Found @%s on %s (%s); only documents (---) can be annotated with @%s"
+					return fmt.Errorf(errMsg, annName, node.DisplayName(), node.GetPosition().AsCompactString(), annName)
 				}
 			}
 		}
