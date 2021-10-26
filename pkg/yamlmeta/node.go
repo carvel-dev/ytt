@@ -27,6 +27,24 @@ func (mi *MapItem) SetPosition(position *filepos.Position)     { mi.Position = p
 func (a *Array) SetPosition(position *filepos.Position)        { a.Position = position }
 func (ai *ArrayItem) SetPosition(position *filepos.Position)   { ai.Position = position }
 
+// DisplayName is used to return a display name for a DocumentSet
+func (ds *DocumentSet) DisplayName() string { return "document set" }
+
+// DisplayName is used to return a display name for a Document
+func (d *Document) DisplayName() string { return "document" }
+
+// DisplayName is used to return a display name for a Map
+func (m *Map) DisplayName() string { return "map" }
+
+// DisplayName is used to return a display name for a MapItem
+func (mi *MapItem) DisplayName() string { return "map item" }
+
+// DisplayName is used to return a display name for an Array
+func (a *Array) DisplayName() string { return "array" }
+
+// DisplayName is used to return a display name for an ArrayItem
+func (ai *ArrayItem) DisplayName() string { return "array item" }
+
 func (ds *DocumentSet) ValueTypeAsString() string { return "documentSet" }
 func (d *Document) ValueTypeAsString() string     { return typeToString(d.Value) }
 func (m *Map) ValueTypeAsString() string          { return "map" }

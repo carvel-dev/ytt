@@ -1,0 +1,27 @@
+#@ load("@ytt:template", "template")
+#@ load("@ytt:overlay", "overlay")
+
+#@ def theDoc():
+---
+value:
+  a: I win
+  b: 4
+#@ end
+
+#@ def theOverlay():
+#@overlay/match by=overlay.all
+---
+value:
+  #@overlay/insert
+  b: 10
+#@ end
+---
+
+--- #@ template.replace(overlay.apply(theDoc(), theOverlay()))
+
++++
+
+ERR: 
+- overlay.apply: Document on line stdin:13: Map item (key 'value') on line stdin:14: Map item (key 'b') on line stdin:16: Found @overlay/insert on map item (stdin:16); only array items can be annotated with @overlay/insert
+    in <toplevel>
+      stdin:20 | --- #@ template.replace(overlay.apply(theDoc(), theOverlay()))
