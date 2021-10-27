@@ -2854,33 +2854,6 @@ schema.yml:
 			assertFails(t, filesToProcess, expectedErr, opts)
 		})
 		t.Run("is incorrect type", func(t *testing.T) {
-			schemaYAML := `#@data/values-schema
----
-#@schema/default 1
-foo: a string
-
-`
-			expectedErr := `
-Invalid schema - @schema/default is wrong type
-==============================================
-
-schema.yml:
-    |
-  4 | foo: a string
-    |
-
-    = found: integer
-    = expected: string (by schema.yml:4)
-    = hint: is the default value set using @schema/default?
-`
-
-			filesToProcess := files.NewSortedFiles([]*files.File{
-				files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
-			})
-
-			assertFails(t, filesToProcess, expectedErr, opts)
-		})
-		t.Run("is incorrect type", func(t *testing.T) {
 			t.Run("as a scalar", func(t *testing.T) {
 				schemaYAML := `#@data/values-schema
 ---
