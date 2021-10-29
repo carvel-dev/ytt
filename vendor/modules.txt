@@ -1,6 +1,7 @@
-# github.com/BurntSushi/toml v0.3.1
+# github.com/BurntSushi/toml v0.4.1
 ## explicit
 github.com/BurntSushi/toml
+github.com/BurntSushi/toml/internal
 # github.com/aws/aws-lambda-go v1.27.0
 ## explicit
 github.com/aws/aws-lambda-go/events
