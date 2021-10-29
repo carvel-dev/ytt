@@ -93,6 +93,10 @@ When contributing to this library note:
 - **Make Objects Immutable** — return modified copies rather than mutating the receiver: this tends to make template code that much easier to reason.
 - **built-in functions must return a valid `starlark.Value`**
   - Note: `nil` is _not_ a valid `starlark.Value`; use `starlark.None` instead.
+- **Include Automated Tests** — include the ability to verify that your contribution (still) works, now and in the future
+  - at least demonstrate that the intended functionality works (i.e. cover the happy path case)
+  - should catch when a bump to underlying dependencies (if any) would cause a breaking change to your module
+  - such tests typically live in `pkg/yamltemplate/filetests/ytt-library`
 
 ### Prior Efforts
 
