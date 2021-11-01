@@ -80,7 +80,7 @@ func NewDocumentType(doc *yamlmeta.Document) (*DocumentType, error) {
 		return nil, err
 	}
 
-	setArrayTypeDefaultValue(typeOfValue, defaultValue)
+	updateTypesDefaultValue(typeOfValue, defaultValue)
 
 	return &DocumentType{Source: doc, Position: doc.Position, ValueType: typeOfValue, defaultValue: defaultValue}, nil
 }
@@ -110,7 +110,7 @@ func NewMapItemType(item *yamlmeta.MapItem) (*MapItemType, error) {
 		return nil, err
 	}
 
-	setArrayTypeDefaultValue(typeOfValue, defaultValue)
+	updateTypesDefaultValue(typeOfValue, defaultValue)
 
 	return &MapItemType{Key: item.Key, ValueType: typeOfValue, defaultValue: defaultValue, Position: item.Position}, nil
 }
@@ -144,16 +144,32 @@ func NewArrayItemType(item *yamlmeta.ArrayItem) (*ArrayItemType, error) {
 		return nil, err
 	}
 
-	setArrayTypeDefaultValue(typeOfValue, defaultValue)
+	updateTypesDefaultValue(typeOfValue, defaultValue)
 
 	return &ArrayItemType{ValueType: typeOfValue, defaultValue: defaultValue, Position: item.GetPosition()}, nil
 }
 
-func setArrayTypeDefaultValue(typeOfValue yamlmeta.Type, defaultValue interface{}) {
-	if defaultArray, isArrayType := defaultValue.(*yamlmeta.Array); isArrayType {
-		arrayType := typeOfValue.(*ArrayType)
-		// store a reference to the default so that both this ArrayType and the container (i.e. `node`) have the same value
-		arrayType.defaultValue = defaultArray
+func updateTypesDefaultValue(typeOfValue yamlmeta.Type, defaultValue interface{}) {
+	// TODO: introduce yamlmeta.Type#SetDefaultValue()
+	switch theTypeOfValue := typeOfValue.(type) {
+	case *DocumentType:
+		theTypeOfValue.defaultValue = defaultValue
+	case *MapType:
+		break
+	case *MapItemType:
+		theTypeOfValue.defaultValue = defaultValue
+	case *ArrayItemType:
+		theTypeOfValue.defaultValue = defaultValue
+	case *ArrayType:
+		theTypeOfValue.defaultValue = defaultValue
+	case *ScalarType:
+		theTypeOfValue.defaultValue = defaultValue
+	case *NullType:
+		break
+	case *AnyType:
+		break
+	default:
+		panic(fmt.Sprintf("Unknown type: %+v", typeOfValue))
 	}
 }
 
