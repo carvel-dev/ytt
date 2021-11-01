@@ -165,7 +165,7 @@ func updateTypesDefaultValue(typeOfValue yamlmeta.Type, defaultValue interface{}
 	case *ScalarType:
 		theTypeOfValue.defaultValue = defaultValue
 	case *NullType:
-		break
+		updateTypesDefaultValue(theTypeOfValue.GetValueType(), nil)
 	case *AnyType:
 		break
 	default:
