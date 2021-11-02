@@ -294,10 +294,6 @@ func (s *DocumentSchema) deepCopy() *DocumentSchema {
 	}
 }
 
-func (s *DocumentSchema) ValidateWithValues(valuesFilesCount int) error {
-	return nil
-}
-
 func (e *DocumentSchemaEnvelope) Source() *yamlmeta.Document {
 	return e.Doc.Source
 }
