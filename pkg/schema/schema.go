@@ -80,6 +80,8 @@ func NewDocumentType(doc *yamlmeta.Document) (*DocumentType, error) {
 		return nil, err
 	}
 
+	setArrayTypeDefaultValue(typeOfValue, defaultValue)
+
 	return &DocumentType{Source: doc, Position: doc.Position, ValueType: typeOfValue, defaultValue: defaultValue}, nil
 }
 
@@ -107,6 +109,8 @@ func NewMapItemType(item *yamlmeta.MapItem) (*MapItemType, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	setArrayTypeDefaultValue(typeOfValue, defaultValue)
 
 	return &MapItemType{Key: item.Key, ValueType: typeOfValue, defaultValue: defaultValue, Position: item.Position}, nil
 }
@@ -140,7 +144,17 @@ func NewArrayItemType(item *yamlmeta.ArrayItem) (*ArrayItemType, error) {
 		return nil, err
 	}
 
+	setArrayTypeDefaultValue(typeOfValue, defaultValue)
+
 	return &ArrayItemType{ValueType: typeOfValue, defaultValue: defaultValue, Position: item.GetPosition()}, nil
+}
+
+func setArrayTypeDefaultValue(typeOfValue yamlmeta.Type, defaultValue interface{}) {
+	if defaultArray, isArrayType := defaultValue.(*yamlmeta.Array); isArrayType {
+		arrayType := typeOfValue.(*ArrayType)
+		// store a reference to the default so that both this ArrayType and the container (i.e. `node`) have the same value
+		arrayType.defaultValue = defaultArray
+	}
 }
 
 func getType(node yamlmeta.ValueHoldingNode) (yamlmeta.Type, error) {
@@ -178,20 +192,28 @@ func getValue(node yamlmeta.ValueHoldingNode, t yamlmeta.Type) (interface{}, err
 
 	for _, ann := range anns {
 		if defaultAnn, ok := ann.(*DefaultAnnotation); ok {
-			if _, ok = node.(*yamlmeta.ArrayItem); ok {
-				return nil, NewSchemaError(fmt.Sprintf("Invalid schema - @%v not supported on array item", AnnotationDefault), schemaAssertionError{
-					position: node.GetPosition(),
-					hints:    []string{"do you mean to set a default value for the array?", "set an array's default by annotating its parent."},
-				})
-			}
-			defaultValue := defaultAnn.Val()
-			if node, ok := defaultValue.(yamlmeta.Node); ok {
-				defaultValue = node.DeepCopyAsInterface()
-			}
-			return defaultValue, nil
+			return getValueFromAnn(defaultAnn, t)
 		}
 	}
 	return t.GetDefaultValue(), nil
+}
+
+// getValueFromAnn extracts the value from the annotation and validates its type
+func getValueFromAnn(defaultAnn *DefaultAnnotation, t yamlmeta.Type) (interface{}, error) {
+	var typeCheck yamlmeta.TypeCheck
+
+	defaultValue := defaultAnn.Val()
+	if node, ok := defaultValue.(yamlmeta.Node); ok {
+		defaultValue = node.DeepCopyAsInterface()
+		typeCheck = t.AssignTypeTo(defaultValue.(yamlmeta.Typeable))
+	} else {
+		typeCheck = t.CheckType(&yamlmeta.Scalar{Value: defaultValue, Position: t.GetDefinitionPosition()})
+	}
+	if typeCheck.HasViolations() {
+		return nil, NewSchemaError(fmt.Sprintf("Invalid schema - @%v is wrong type", AnnotationDefault), typeCheck.Violations...)
+	}
+
+	return defaultValue, nil
 }
 
 func inferTypeFromValue(value interface{}, position *filepos.Position) (yamlmeta.Type, error) {

@@ -792,63 +792,6 @@ dvs1.yml:
 		assertFails(t, filesToProcess, expectedErr, cmdOpts)
 	})
 
-	t.Run("when a data value of the wrong type used in @schema/default annotation", func(t *testing.T) {
-
-		schemaYAML := `#@data/values-schema
----
-#@schema/default True
-int: 1
-#@schema/default 0
-str: ""
-#@schema/default "string"
-bool: False
-`
-		templateYAML := `#@ load("@ytt:data", "data")
----
-foo: #@ data.values.int
-foo: #@ data.values.str
-foo: #@ data.values.bool
-`
-		expectedErr := `
-One or more data values were invalid
-====================================
-
-schema.yml:
-    |
-  4 | int: 1
-    |
-
-    = found: boolean
-    = expected: integer (by schema.yml:4)
-    = hint: is the default value set using @schema/default?
-
-schema.yml:
-    |
-  6 | str: ""
-    |
-
-    = found: integer
-    = expected: string (by schema.yml:6)
-    = hint: is the default value set using @schema/default?
-
-schema.yml:
-    |
-  8 | bool: False
-    |
-
-    = found: string
-    = expected: boolean (by schema.yml:8)
-    = hint: is the default value set using @schema/default?
-`
-
-		filesToProcess := files.NewSortedFiles([]*files.File{
-			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
-			files.MustNewFileFromSource(files.NewBytesSource("template.yml", []byte(templateYAML))),
-		})
-
-		assertFails(t, filesToProcess, expectedErr, opts)
-	})
-
 	t.Run("checks after every data values document is processed (and stops if there was a violation)", func(t *testing.T) {
 		schemaYAML := `#@data/values-schema
 ---
@@ -2759,16 +2702,12 @@ schema.yml:
 
 	})
 
-	t.Run("when schema/default annotation", func(t *testing.T) {
-		t.Run("value is empty", func(t *testing.T) {
+	t.Run("when schema/default annotation value", func(t *testing.T) {
+		t.Run("is empty", func(t *testing.T) {
 			schemaYAML := `#@data/values-schema
 ---
 #@schema/default
 foo: 0
-`
-			templateYAML := `#@ load("@ytt:data", "data")
----
-foo: #@ data.values.foo
 `
 			expectedErr := `
 Invalid schema
@@ -2786,7 +2725,6 @@ schema.yml:
 
 			filesToProcess := files.NewSortedFiles([]*files.File{
 				files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
-				files.MustNewFileFromSource(files.NewBytesSource("template.yml", []byte(templateYAML))),
 			})
 
 			assertFails(t, filesToProcess, expectedErr, opts)
@@ -2796,10 +2734,6 @@ schema.yml:
 ---
 #@schema/default 1, 2
 foo: 0
-`
-			templateYAML := `#@ load("@ytt:data", "data")
----
-foo: #@ data.values.foo
 `
 			expectedErr := `
 Invalid schema
@@ -2817,20 +2751,15 @@ schema.yml:
 
 			filesToProcess := files.NewSortedFiles([]*files.File{
 				files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
-				files.MustNewFileFromSource(files.NewBytesSource("template.yml", []byte(templateYAML))),
 			})
 
 			assertFails(t, filesToProcess, expectedErr, opts)
 		})
-		t.Run("value is an invalid starlark Tuple", func(t *testing.T) {
+		t.Run("is an invalid starlark Tuple", func(t *testing.T) {
 			schemaYAML := `#@data/values-schema
 ---
 #@schema/default any=True
 foo: 0
-`
-			templateYAML := `#@ load("@ytt:data", "data")
----
-foo: #@ data.values.foo
 `
 			expectedErr := `
 Invalid schema
@@ -2850,7 +2779,6 @@ schema.yml:
 
 			filesToProcess := files.NewSortedFiles([]*files.File{
 				files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
-				files.MustNewFileFromSource(files.NewBytesSource("template.yml", []byte(templateYAML))),
 			})
 
 			assertFails(t, filesToProcess, expectedErr, opts)
@@ -2863,10 +2791,7 @@ foo:
 - bar
 
 `
-			templateYAML := `#@ load("@ytt:data", "data")
----
-foo: #@ data.values.foo
-`
+
 			expectedErr := `
 Invalid schema - @schema/default not supported on array item
 ============================================================
@@ -2884,10 +2809,67 @@ schema.yml:
 
 			filesToProcess := files.NewSortedFiles([]*files.File{
 				files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
-				files.MustNewFileFromSource(files.NewBytesSource("template.yml", []byte(templateYAML))),
 			})
 
 			assertFails(t, filesToProcess, expectedErr, opts)
+		})
+		t.Run("is incorrect type", func(t *testing.T) {
+			t.Run("as a scalar", func(t *testing.T) {
+				schemaYAML := `#@data/values-schema
+---
+#@schema/default 1
+foo: a string
+
+`
+
+				expectedErr := `
+Invalid schema - @schema/default is wrong type
+==============================================
+
+schema.yml:
+    |
+  4 | foo: a string
+    |
+
+    = found: integer
+    = expected: string (by schema.yml:4)
+    = hint: is the default value set using @schema/default?
+`
+
+				filesToProcess := files.NewSortedFiles([]*files.File{
+					files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
+				})
+
+				assertFails(t, filesToProcess, expectedErr, opts)
+			})
+			t.Run("as an array (a node)", func(t *testing.T) {
+
+				schemaYAML := `#@data/values-schema
+---
+#@schema/default [{"item": 1}]
+map: thing
+`
+
+				expectedErr := `
+Invalid schema - @schema/default is wrong type
+==============================================
+
+schema.yml:
+    |
+  4 | map: thing
+    |
+
+    = found: array
+    = expected: string (by schema.yml:4)
+    = hint: is the default value set using @schema/default?
+`
+
+				filesToProcess := files.NewSortedFiles([]*files.File{
+					files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
+				})
+
+				assertFails(t, filesToProcess, expectedErr, opts)
+			})
 		})
 	})
 }

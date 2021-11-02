@@ -78,8 +78,7 @@ func (a ArrayItemType) GetDefaultValue() interface{} {
 }
 
 func (a ArrayType) GetDefaultValue() interface{} {
-	defaultValues := &yamlmeta.Array{Position: a.Position}
-	return defaultValues
+	return a.defaultValue
 }
 
 func (t MapItemType) GetDefaultValue() interface{} {
@@ -138,7 +137,7 @@ func (t MapItemType) GetValueType() yamlmeta.Type {
 	return t.ValueType
 }
 func (a ArrayType) GetValueType() yamlmeta.Type {
-	panic("Not implemented because it is unreachable")
+	return a.ItemsType
 }
 func (a ArrayItemType) GetValueType() yamlmeta.Type {
 	return a.ValueType
