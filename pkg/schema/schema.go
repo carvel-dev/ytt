@@ -80,7 +80,7 @@ func NewDocumentType(doc *yamlmeta.Document) (*DocumentType, error) {
 		return nil, err
 	}
 
-	updateTypesDefaultValue(typeOfValue, defaultValue)
+	typeOfValue.SetDefaultValue(defaultValue)
 
 	return &DocumentType{Source: doc, Position: doc.Position, ValueType: typeOfValue, defaultValue: defaultValue}, nil
 }
@@ -110,7 +110,7 @@ func NewMapItemType(item *yamlmeta.MapItem) (*MapItemType, error) {
 		return nil, err
 	}
 
-	updateTypesDefaultValue(typeOfValue, defaultValue)
+	typeOfValue.SetDefaultValue(defaultValue)
 
 	return &MapItemType{Key: item.Key, ValueType: typeOfValue, defaultValue: defaultValue, Position: item.Position}, nil
 }
@@ -144,33 +144,9 @@ func NewArrayItemType(item *yamlmeta.ArrayItem) (*ArrayItemType, error) {
 		return nil, err
 	}
 
-	updateTypesDefaultValue(typeOfValue, defaultValue)
+	typeOfValue.SetDefaultValue(defaultValue)
 
 	return &ArrayItemType{ValueType: typeOfValue, defaultValue: defaultValue, Position: item.GetPosition()}, nil
-}
-
-func updateTypesDefaultValue(typeOfValue yamlmeta.Type, defaultValue interface{}) {
-	// TODO: introduce yamlmeta.Type#SetDefaultValue()
-	switch theTypeOfValue := typeOfValue.(type) {
-	case *DocumentType:
-		theTypeOfValue.defaultValue = defaultValue
-	case *MapType:
-		break
-	case *MapItemType:
-		theTypeOfValue.defaultValue = defaultValue
-	case *ArrayItemType:
-		theTypeOfValue.defaultValue = defaultValue
-	case *ArrayType:
-		theTypeOfValue.defaultValue = defaultValue
-	case *ScalarType:
-		theTypeOfValue.defaultValue = defaultValue
-	case *NullType:
-		updateTypesDefaultValue(theTypeOfValue.GetValueType(), nil)
-	case *AnyType:
-		break
-	default:
-		panic(fmt.Sprintf("Unknown type: %+v", typeOfValue))
-	}
 }
 
 func getType(node yamlmeta.ValueHoldingNode) (yamlmeta.Type, error) {

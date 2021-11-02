@@ -58,6 +58,48 @@ type NullType struct {
 	Position  *filepos.Position
 }
 
+// SetDefaultValue sets the default value of the wrapped type to `val`
+func (n *NullType) SetDefaultValue(val interface{}) {
+	n.GetValueType().SetDefaultValue(val)
+}
+
+// SetDefaultValue does nothing
+func (a *AnyType) SetDefaultValue(val interface{}) {
+	// TODO: perhaps "Any Type" _should_ have a default value...? 🤔
+	return
+}
+
+// SetDefaultValue sets the default value of the entire document to `val`
+func (t *DocumentType) SetDefaultValue(val interface{}) {
+	t.defaultValue = val
+}
+
+// SetDefaultValue is ignored as default values should be set on each MapItemType, individually.
+func (m *MapType) SetDefaultValue(val interface{}) {
+	// TODO: determine if we should set the contents of a MapType by setting the given Map...?
+	return
+}
+
+// SetDefaultValue sets the default value to `val`
+func (i *MapItemType) SetDefaultValue(val interface{}) {
+	i.defaultValue = val
+}
+
+// SetDefaultValue sets the default value to `val`
+func (a *ArrayType) SetDefaultValue(val interface{}) {
+	a.defaultValue = val
+}
+
+// SetDefaultValue sets the default value to `val`
+func (a *ArrayItemType) SetDefaultValue(val interface{}) {
+	a.defaultValue = val
+}
+
+// SetDefaultValue sets the default value to `val`
+func (a *ScalarType) SetDefaultValue(val interface{}) {
+	a.defaultValue = val
+}
+
 func (n NullType) GetDefaultValue() interface{} {
 	return nil
 }
@@ -146,7 +188,7 @@ func (m ScalarType) GetValueType() yamlmeta.Type {
 	panic("Not implemented because it is unreachable")
 }
 func (a AnyType) GetValueType() yamlmeta.Type {
-	return a
+	return &a
 }
 
 func (t *DocumentType) GetDefinitionPosition() *filepos.Position {
