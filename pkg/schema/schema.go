@@ -80,7 +80,7 @@ func NewDocumentType(doc *yamlmeta.Document) (*DocumentType, error) {
 		return nil, err
 	}
 
-	setArrayTypeDefaultValue(typeOfValue, defaultValue)
+	typeOfValue.SetDefaultValue(defaultValue)
 
 	return &DocumentType{Source: doc, Position: doc.Position, ValueType: typeOfValue, defaultValue: defaultValue}, nil
 }
@@ -110,7 +110,7 @@ func NewMapItemType(item *yamlmeta.MapItem) (*MapItemType, error) {
 		return nil, err
 	}
 
-	setArrayTypeDefaultValue(typeOfValue, defaultValue)
+	typeOfValue.SetDefaultValue(defaultValue)
 
 	return &MapItemType{Key: item.Key, ValueType: typeOfValue, defaultValue: defaultValue, Position: item.Position}, nil
 }
@@ -144,17 +144,9 @@ func NewArrayItemType(item *yamlmeta.ArrayItem) (*ArrayItemType, error) {
 		return nil, err
 	}
 
-	setArrayTypeDefaultValue(typeOfValue, defaultValue)
+	typeOfValue.SetDefaultValue(defaultValue)
 
 	return &ArrayItemType{ValueType: typeOfValue, defaultValue: defaultValue, Position: item.GetPosition()}, nil
-}
-
-func setArrayTypeDefaultValue(typeOfValue yamlmeta.Type, defaultValue interface{}) {
-	if defaultArray, isArrayType := defaultValue.(*yamlmeta.Array); isArrayType {
-		arrayType := typeOfValue.(*ArrayType)
-		// store a reference to the default so that both this ArrayType and the container (i.e. `node`) have the same value
-		arrayType.defaultValue = defaultArray
-	}
 }
 
 func getType(node yamlmeta.ValueHoldingNode) (yamlmeta.Type, error) {
@@ -300,10 +292,6 @@ func (s *DocumentSchema) deepCopy() *DocumentSchema {
 		defaultDVs: s.defaultDVs.DeepCopy(),
 		DocType:    s.DocType,
 	}
-}
-
-func (s *DocumentSchema) ValidateWithValues(valuesFilesCount int) error {
-	return nil
 }
 
 func (e *DocumentSchemaEnvelope) Source() *yamlmeta.Document {

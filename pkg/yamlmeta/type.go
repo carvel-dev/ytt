@@ -11,6 +11,7 @@ type Type interface {
 	AssignTypeTo(typeable Typeable) TypeCheck
 	GetValueType() Type
 	GetDefaultValue() interface{}
+	SetDefaultValue(interface{})
 	CheckType(node TypeWithValues) TypeCheck
 	GetDefinitionPosition() *filepos.Position
 	String() string

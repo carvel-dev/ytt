@@ -39,7 +39,7 @@ func (o *OpenAPIDocument) AsDocument() *yamlmeta.Document {
 	}}}
 }
 
-func (o *OpenAPIDocument) calculateProperties(schemaVal interface{}) yamlmeta.Node {
+func (o *OpenAPIDocument) calculateProperties(schemaVal interface{}) *yamlmeta.Map {
 	switch typedValue := schemaVal.(type) {
 	case *DocumentType:
 		return o.calculateProperties(typedValue.GetValueType())
@@ -49,32 +49,36 @@ func (o *OpenAPIDocument) calculateProperties(schemaVal interface{}) yamlmeta.No
 			mi := yamlmeta.MapItem{Key: i.Key, Value: o.calculateProperties(i.GetValueType())}
 			properties = append(properties, &mi)
 		}
-		newMap := yamlmeta.Map{Items: []*yamlmeta.MapItem{
+		property := yamlmeta.Map{Items: []*yamlmeta.MapItem{
 			{Key: "type", Value: "object"},
 			{Key: "additionalProperties", Value: false},
 			{Key: "properties", Value: &yamlmeta.Map{Items: properties}},
 		}}
-		return &newMap
+		return &property
 	case *ArrayType:
 		valueType := typedValue.GetValueType().(*ArrayItemType)
 		properties := o.calculateProperties(valueType.GetValueType())
-		newMap := yamlmeta.Map{Items: []*yamlmeta.MapItem{
+		property := yamlmeta.Map{Items: []*yamlmeta.MapItem{
 			{Key: "type", Value: "array"},
 			{Key: "items", Value: properties},
 			{Key: "default", Value: typedValue.GetDefaultValue()},
 		}}
-		return &newMap
+		return &property
 	case *ScalarType:
 		typeString := o.openAPITypeFor(typedValue)
 		defaultVal := typedValue.GetDefaultValue()
-		newMap := yamlmeta.Map{Items: []*yamlmeta.MapItem{
+		property := yamlmeta.Map{Items: []*yamlmeta.MapItem{
 			{Key: "type", Value: typeString},
 			{Key: "default", Value: defaultVal},
 		}}
 		if typedValue.String() == "float" {
-			newMap.Items = append(newMap.Items, &yamlmeta.MapItem{Key: "format", Value: "float"})
+			property.Items = append(property.Items, &yamlmeta.MapItem{Key: "format", Value: "float"})
 		}
-		return &newMap
+		return &property
+	case *NullType:
+		properties := o.calculateProperties(typedValue.GetValueType())
+		properties.Items = append(properties.Items, &yamlmeta.MapItem{Key: "nullable", Value: true})
+		return properties
 	default:
 		panic(fmt.Sprintf("Unrecognized type %T", schemaVal))
 	}
