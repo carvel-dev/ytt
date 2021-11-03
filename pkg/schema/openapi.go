@@ -79,6 +79,10 @@ func (o *OpenAPIDocument) calculateProperties(schemaVal interface{}) *yamlmeta.M
 		properties := o.calculateProperties(typedValue.GetValueType())
 		properties.Items = append(properties.Items, &yamlmeta.MapItem{Key: "nullable", Value: true})
 		return properties
+	case *AnyType:
+		return &yamlmeta.Map{Items: []*yamlmeta.MapItem{
+			{Key: "default", Value: typedValue.GetDefaultValue()},
+		}}
 	default:
 		panic(fmt.Sprintf("Unrecognized type %T", schemaVal))
 	}
