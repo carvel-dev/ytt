@@ -304,6 +304,7 @@ paths: {}
 components:
   schemas:
     dataValues:
+      nullable: true
       default:
         foo:
           int_key: 0
@@ -344,6 +345,7 @@ components:
       additionalProperties: false
       properties:
         foo:
+          nullable: true
           default:
             int_key: 0
             array_of_scalars: []
@@ -392,6 +394,7 @@ components:
             array_of_scalars:
               type: array
               items:
+                nullable: true
                 default: ""
               default: []
             array_of_maps:

@@ -81,6 +81,7 @@ func (o *OpenAPIDocument) calculateProperties(schemaVal interface{}) *yamlmeta.M
 		return properties
 	case *AnyType:
 		return &yamlmeta.Map{Items: []*yamlmeta.MapItem{
+			{Key: "nullable", Value: true},
 			{Key: "default", Value: typedValue.GetDefaultValue()},
 		}}
 	default:
