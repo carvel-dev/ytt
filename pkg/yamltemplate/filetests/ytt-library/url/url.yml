@@ -15,6 +15,7 @@ query_param_value:
 query_params:
   #! keys are sorted
   test1: #@ url.query_params_encode({"y":["2","3"],"x":["1"],"z":[""],"w":[]})
+  #! semicolons in query strings were deprecated in v0.38.0; see impl for details.
   test2: #@ url.query_params_decode("y=2&x=1&y=3;z")
   test3: #@ url.query_params_encode({"w":[]})
   test4: #@ url.query_params_decode("")
