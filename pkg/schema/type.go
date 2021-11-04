@@ -50,8 +50,8 @@ type ScalarType struct {
 	defaultValue interface{}
 }
 type AnyType struct {
-	ValueType yamlmeta.Type
-	Position  *filepos.Position
+	defaultValue interface{}
+	Position     *filepos.Position
 }
 type NullType struct {
 	ValueType yamlmeta.Type
@@ -65,8 +65,7 @@ func (n *NullType) SetDefaultValue(val interface{}) {
 
 // SetDefaultValue does nothing
 func (a *AnyType) SetDefaultValue(val interface{}) {
-	// TODO: perhaps "Any Type" _should_ have a default value...? 🤔
-	return
+	a.defaultValue = val
 }
 
 // SetDefaultValue sets the default value of the entire document to `val`
@@ -105,10 +104,7 @@ func (n NullType) GetDefaultValue() interface{} {
 }
 
 func (a AnyType) GetDefaultValue() interface{} {
-	if a.ValueType == nil {
-		return nil
-	}
-	return a.ValueType.GetDefaultValue() // delegate GetDefaultValue() functions will make defensive copy 👍
+	return a.defaultValue
 }
 
 func (m ScalarType) GetDefaultValue() interface{} {

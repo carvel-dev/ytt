@@ -152,7 +152,7 @@ func NewArrayItemType(item *yamlmeta.ArrayItem) (*ArrayItemType, error) {
 func getType(node yamlmeta.ValueHoldingNode) (yamlmeta.Type, error) {
 	var typeOfValue yamlmeta.Type
 
-	anns, err := collectAnnotations(node)
+	anns, err := collectTypeAnnotations(node)
 	if err != nil {
 		return nil, NewSchemaError("Invalid schema", err)
 	}
@@ -177,7 +177,7 @@ func getType(node yamlmeta.ValueHoldingNode) (yamlmeta.Type, error) {
 }
 
 func getValue(node yamlmeta.ValueHoldingNode, t yamlmeta.Type) (interface{}, error) {
-	anns, err := collectAnnotations(node)
+	anns, err := collectValueAnnotations(node, t)
 	if err != nil {
 		return nil, NewSchemaError("Invalid schema", err)
 	}
@@ -187,6 +187,11 @@ func getValue(node yamlmeta.ValueHoldingNode, t yamlmeta.Type) (interface{}, err
 			return getValueFromAnn(defaultAnn, t)
 		}
 	}
+
+	if _, ok := t.(*AnyType); ok {
+		return node.Val(), nil
+	}
+
 	return t.GetDefaultValue(), nil
 }
 
