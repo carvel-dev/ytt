@@ -199,10 +199,7 @@ func (b urlModule) QueryParamsDecode(thread *starlark.Thread, f *starlark.Builti
 //   - particularly https://github.com/golang/go/issues/25192#issuecomment-789799446 which spells-out the vulnerability
 //     specifically.
 func (b urlModule) allowQuerySemicolons(encodedVal string) string {
-	if strings.Contains(encodedVal, ";") {
-		return strings.ReplaceAll(encodedVal, ";", "&")
-	}
-	return encodedVal
+	return strings.ReplaceAll(encodedVal, ";", "&")
 }
 
 func (b urlModule) sortedKeys(vals url.Values) []string {
