@@ -1,9 +1,9 @@
 # github.com/BurntSushi/toml v0.4.1
-## explicit
+## explicit; go 1.16
 github.com/BurntSushi/toml
 github.com/BurntSushi/toml/internal
 # github.com/aws/aws-lambda-go v1.27.0
-## explicit
+## explicit; go 1.12
 github.com/aws/aws-lambda-go/events
 github.com/aws/aws-lambda-go/lambda
 github.com/aws/aws-lambda-go/lambda/handlertrace
@@ -13,24 +13,26 @@ github.com/aws/aws-lambda-go/lambdacontext
 ## explicit
 github.com/cppforlife/cobrautil
 # github.com/cppforlife/go-cli-ui v0.0.0-20200505234325-512793797f05
-## explicit
+## explicit; go 1.13
 github.com/cppforlife/go-cli-ui/errors
 # github.com/davecgh/go-spew v1.1.1
+## explicit
 github.com/davecgh/go-spew/spew
 # github.com/google/gofuzz v1.2.0
-## explicit
+## explicit; go 1.12
 github.com/google/gofuzz
 github.com/google/gofuzz/bytesource
 # github.com/hashicorp/go-version v1.3.0
 ## explicit
 github.com/hashicorp/go-version
 # github.com/inconshreveable/mousetrap v1.0.0
+## explicit
 github.com/inconshreveable/mousetrap
 # github.com/k14s/difflib v0.0.0-20201117154628-0c031775bf57
 ## explicit
 github.com/k14s/difflib
 # github.com/k14s/starlark-go v0.0.0-20200720175618-3a5c849cc368
-## explicit
+## explicit; go 1.13
 github.com/k14s/starlark-go/internal/compile
 github.com/k14s/starlark-go/internal/spell
 github.com/k14s/starlark-go/resolve
@@ -38,22 +40,27 @@ github.com/k14s/starlark-go/starlark
 github.com/k14s/starlark-go/starlarkstruct
 github.com/k14s/starlark-go/syntax
 # github.com/kr/pretty v0.1.0
+## explicit
 github.com/kr/pretty
 # github.com/kr/text v0.1.0
+## explicit
 github.com/kr/text
 # github.com/pmezard/go-difflib v1.0.0
+## explicit
 github.com/pmezard/go-difflib/difflib
 # github.com/spf13/cobra v1.2.1
-## explicit
+## explicit; go 1.14
 github.com/spf13/cobra
 # github.com/spf13/pflag v1.0.5
+## explicit; go 1.12
 github.com/spf13/pflag
 # github.com/stretchr/testify v1.7.0
-## explicit
+## explicit; go 1.13
 github.com/stretchr/testify/assert
 github.com/stretchr/testify/require
 # gopkg.in/check.v1 v1.0.0-20190902080502-41f04d3bba15
 ## explicit
 gopkg.in/check.v1
 # gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
+## explicit
 gopkg.in/yaml.v3
