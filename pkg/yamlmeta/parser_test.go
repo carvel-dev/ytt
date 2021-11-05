@@ -23,14 +23,14 @@ func TestParserDocSetEmpty(t *testing.T) {
 		t.Fatalf("error: %s", err)
 	}
 
-	expectedVal := &yamlmeta.DocumentSet{
-		Items: []*yamlmeta.Document{
-			&yamlmeta.Document{
+	expectedVal := yamlmeta.NewDocumentSet(&yamlmeta.DocumentSetProto{
+		Items: []*yamlmeta.DocumentProto{
+			&yamlmeta.DocumentProto{
 				Position: filepos.NewPosition(1),
 			},
 		},
 		Position: filepos.NewUnknownPosition(),
-	}
+	})
 
 	printer := yamlmeta.NewPrinterWithOpts(nil, yamlmeta.PrinterOpts{ExcludeRefs: true})
 
@@ -48,14 +48,14 @@ func TestParserDocSetNewline(t *testing.T) {
 		t.Fatalf("error: %s", err)
 	}
 
-	expectedVal := &yamlmeta.DocumentSet{
-		Items: []*yamlmeta.Document{
-			&yamlmeta.Document{
+	expectedVal := yamlmeta.NewDocumentSet(&yamlmeta.DocumentSetProto{
+		Items: []*yamlmeta.DocumentProto{
+			&yamlmeta.DocumentProto{
 				Position: filepos.NewPosition(1),
 			},
 		},
 		Position: filepos.NewUnknownPosition(),
-	}
+	})
 
 	printer := yamlmeta.NewPrinterWithOpts(nil, yamlmeta.PrinterOpts{ExcludeRefs: true})
 
@@ -73,20 +73,20 @@ func TestParserOnlyComment(t *testing.T) {
 		t.Fatalf("error: %s", err)
 	}
 
-	expectedVal := &yamlmeta.DocumentSet{
-		Items: []*yamlmeta.Document{
-			&yamlmeta.Document{
+	expectedVal := yamlmeta.NewDocumentSet(&yamlmeta.DocumentSetProto{
+		Items: []*yamlmeta.DocumentProto{
+			&yamlmeta.DocumentProto{
 				Position: filepos.NewPosition(1),
 			},
-			&yamlmeta.Document{
-				Comments: []*yamlmeta.Comment{
-					&yamlmeta.Comment{Data: "", Position: filepos.NewPosition(1)},
+			&yamlmeta.DocumentProto{
+				Comments: []*yamlmeta.CommentProto{
+					&yamlmeta.CommentProto{Data: "", Position: filepos.NewPosition(1)},
 				},
 				Position: filepos.NewUnknownPosition(),
 			},
 		},
 		Position: filepos.NewUnknownPosition(),
-	}
+	})
 
 	printer := yamlmeta.NewPrinterWithOpts(nil, yamlmeta.PrinterOpts{ExcludeRefs: true})
 
@@ -106,14 +106,14 @@ func TestParserDoc(t *testing.T) {
 		t.Fatalf("error: %s", err)
 	}
 
-	expectedVal := &yamlmeta.DocumentSet{
-		Items: []*yamlmeta.Document{
-			&yamlmeta.Document{
+	expectedVal := yamlmeta.NewDocumentSet(&yamlmeta.DocumentSetProto{
+		Items: []*yamlmeta.DocumentProto{
+			&yamlmeta.DocumentProto{
 				Position: filepos.NewPosition(1),
 			},
 		},
 		Position: filepos.NewUnknownPosition(),
-	}
+	})
 
 	printer := yamlmeta.NewPrinterWithOpts(nil, yamlmeta.PrinterOpts{ExcludeRefs: true})
 
@@ -131,12 +131,12 @@ func TestParserDocWithoutDashes(t *testing.T) {
 		t.Fatalf("error: %s", err)
 	}
 
-	expectedVal := &yamlmeta.DocumentSet{
-		Items: []*yamlmeta.Document{
-			&yamlmeta.Document{
-				Value: &yamlmeta.Map{
-					Items: []*yamlmeta.MapItem{
-						&yamlmeta.MapItem{Key: "key", Value: 1, Position: filepos.NewPosition(1)},
+	expectedVal := yamlmeta.NewDocumentSet(&yamlmeta.DocumentSetProto{
+		Items: []*yamlmeta.DocumentProto{
+			&yamlmeta.DocumentProto{
+				Value: &yamlmeta.MapProto{
+					Items: []*yamlmeta.MapItemProto{
+						&yamlmeta.MapItemProto{Key: "key", Value: 1, Position: filepos.NewPosition(1)},
 					},
 					Position: filepos.NewPosition(1),
 				},
@@ -144,7 +144,7 @@ func TestParserDocWithoutDashes(t *testing.T) {
 			},
 		},
 		Position: filepos.NewUnknownPosition(),
-	}
+	})
 
 	printer := yamlmeta.NewPrinterWithOpts(nil, yamlmeta.PrinterOpts{ExcludeRefs: true})
 
@@ -157,56 +157,56 @@ func TestParserDocWithoutDashes(t *testing.T) {
 func TestParserRootValue(t *testing.T) {
 	parserExamples{
 		{Description: "string", Data: "abc",
-			Expected: &yamlmeta.DocumentSet{
-				Items: []*yamlmeta.Document{
-					&yamlmeta.Document{
+			Expected: yamlmeta.NewDocumentSet(&yamlmeta.DocumentSetProto{
+				Items: []*yamlmeta.DocumentProto{
+					&yamlmeta.DocumentProto{
 						Value:    "abc",
 						Position: filepos.NewPosition(1),
 					},
 				},
 				Position: filepos.NewUnknownPosition(),
-			},
+			}),
 		},
 		{Description: "integer", Data: "1",
-			Expected: &yamlmeta.DocumentSet{
-				Items: []*yamlmeta.Document{
-					&yamlmeta.Document{
+			Expected: yamlmeta.NewDocumentSet(&yamlmeta.DocumentSetProto{
+				Items: []*yamlmeta.DocumentProto{
+					&yamlmeta.DocumentProto{
 						Value:    1,
 						Position: filepos.NewPosition(1),
 					},
 				},
 				Position: filepos.NewUnknownPosition(),
-			},
+			}),
 		},
 		{Description: "float", Data: "2000.1",
-			Expected: &yamlmeta.DocumentSet{
-				Items: []*yamlmeta.Document{
-					&yamlmeta.Document{
+			Expected: yamlmeta.NewDocumentSet(&yamlmeta.DocumentSetProto{
+				Items: []*yamlmeta.DocumentProto{
+					&yamlmeta.DocumentProto{
 						Value:    2000.1,
 						Position: filepos.NewPosition(1),
 					},
 				},
 				Position: filepos.NewUnknownPosition(),
-			},
+			}),
 		},
 		{Description: "float (exponent)", Data: "9e3",
-			Expected: &yamlmeta.DocumentSet{
-				Items: []*yamlmeta.Document{
-					&yamlmeta.Document{
+			Expected: yamlmeta.NewDocumentSet(&yamlmeta.DocumentSetProto{
+				Items: []*yamlmeta.DocumentProto{
+					&yamlmeta.DocumentProto{
 						Value:    9000.0,
 						Position: filepos.NewPosition(1),
 					},
 				},
 				Position: filepos.NewUnknownPosition(),
-			},
+			}),
 		},
 		{Description: "array", Data: "- 1",
-			Expected: &yamlmeta.DocumentSet{
-				Items: []*yamlmeta.Document{
-					&yamlmeta.Document{
-						Value: &yamlmeta.Array{
-							Items: []*yamlmeta.ArrayItem{
-								&yamlmeta.ArrayItem{Value: 1, Position: filepos.NewPosition(1)},
+			Expected: yamlmeta.NewDocumentSet(&yamlmeta.DocumentSetProto{
+				Items: []*yamlmeta.DocumentProto{
+					&yamlmeta.DocumentProto{
+						Value: &yamlmeta.ArrayProto{
+							Items: []*yamlmeta.ArrayItemProto{
+								&yamlmeta.ArrayItemProto{Value: 1, Position: filepos.NewPosition(1)},
 							},
 							Position: filepos.NewPosition(1),
 						},
@@ -214,15 +214,15 @@ func TestParserRootValue(t *testing.T) {
 					},
 				},
 				Position: filepos.NewUnknownPosition(),
-			},
+			}),
 		},
 		{Description: "map", Data: "key: val",
-			Expected: &yamlmeta.DocumentSet{
-				Items: []*yamlmeta.Document{
-					&yamlmeta.Document{
-						Value: &yamlmeta.Map{
-							Items: []*yamlmeta.MapItem{
-								&yamlmeta.MapItem{Key: "key", Value: "val", Position: filepos.NewPosition(1)},
+			Expected: yamlmeta.NewDocumentSet(&yamlmeta.DocumentSetProto{
+				Items: []*yamlmeta.DocumentProto{
+					&yamlmeta.DocumentProto{
+						Value: &yamlmeta.MapProto{
+							Items: []*yamlmeta.MapItemProto{
+								&yamlmeta.MapItemProto{Key: "key", Value: "val", Position: filepos.NewPosition(1)},
 							},
 							Position: filepos.NewPosition(1),
 						},
@@ -230,24 +230,24 @@ func TestParserRootValue(t *testing.T) {
 					},
 				},
 				Position: filepos.NewUnknownPosition(),
-			},
+			}),
 		},
 	}.Check(t)
 }
 
 func TestParserRootString(t *testing.T) {
-	expectedVal := &yamlmeta.DocumentSet{
-		Items: []*yamlmeta.Document{
-			&yamlmeta.Document{
-				Comments: []*yamlmeta.Comment{
-					&yamlmeta.Comment{Data: " comment", Position: filepos.NewPosition(1)},
+	expectedVal := yamlmeta.NewDocumentSet(&yamlmeta.DocumentSetProto{
+		Items: []*yamlmeta.DocumentProto{
+			&yamlmeta.DocumentProto{
+				Comments: []*yamlmeta.CommentProto{
+					&yamlmeta.CommentProto{Data: " comment", Position: filepos.NewPosition(1)},
 				},
 				Value:    "abc",
 				Position: filepos.NewPosition(1),
 			},
 		},
 		Position: filepos.NewUnknownPosition(),
-	}
+	})
 
 	parserExamples{
 		// TODO should really be owned by abc
@@ -271,21 +271,21 @@ array:
 		t.Fatalf("error: %s", err)
 	}
 
-	expectedVal := &yamlmeta.DocumentSet{
-		Items: []*yamlmeta.Document{
-			&yamlmeta.Document{
-				Value: &yamlmeta.Map{
-					Items: []*yamlmeta.MapItem{
-						&yamlmeta.MapItem{
+	expectedVal := yamlmeta.NewDocumentSet(&yamlmeta.DocumentSetProto{
+		Items: []*yamlmeta.DocumentProto{
+			&yamlmeta.DocumentProto{
+				Value: &yamlmeta.MapProto{
+					Items: []*yamlmeta.MapItemProto{
+						&yamlmeta.MapItemProto{
 							Key: "array",
-							Value: &yamlmeta.Array{
-								Items: []*yamlmeta.ArrayItem{
-									&yamlmeta.ArrayItem{Value: 1, Position: filepos.NewPosition(3)},
-									&yamlmeta.ArrayItem{Value: 2, Position: filepos.NewPosition(4)},
-									&yamlmeta.ArrayItem{
-										Value: &yamlmeta.Map{
-											Items: []*yamlmeta.MapItem{
-												&yamlmeta.MapItem{
+							Value: &yamlmeta.ArrayProto{
+								Items: []*yamlmeta.ArrayItemProto{
+									&yamlmeta.ArrayItemProto{Value: 1, Position: filepos.NewPosition(3)},
+									&yamlmeta.ArrayItemProto{Value: 2, Position: filepos.NewPosition(4)},
+									&yamlmeta.ArrayItemProto{
+										Value: &yamlmeta.MapProto{
+											Items: []*yamlmeta.MapItemProto{
+												&yamlmeta.MapItemProto{
 													Key:      "key",
 													Value:    "value",
 													Position: filepos.NewPosition(5),
@@ -307,7 +307,7 @@ array:
 			},
 		},
 		Position: filepos.NewUnknownPosition(),
-	}
+	})
 
 	printer := yamlmeta.NewPrinterWithOpts(nil, yamlmeta.PrinterOpts{ExcludeRefs: true})
 
@@ -333,31 +333,31 @@ map:
 		t.Fatalf("error: %s", err)
 	}
 
-	expectedVal := &yamlmeta.DocumentSet{
-		Items: []*yamlmeta.Document{
-			&yamlmeta.Document{
-				Value: &yamlmeta.Map{
-					Items: []*yamlmeta.MapItem{
-						&yamlmeta.MapItem{
-							Comments: []*yamlmeta.Comment{
-								&yamlmeta.Comment{Data: " before-map", Position: filepos.NewPosition(2)},
+	expectedVal := yamlmeta.NewDocumentSet(&yamlmeta.DocumentSetProto{
+		Items: []*yamlmeta.DocumentProto{
+			&yamlmeta.DocumentProto{
+				Value: &yamlmeta.MapProto{
+					Items: []*yamlmeta.MapItemProto{
+						&yamlmeta.MapItemProto{
+							Comments: []*yamlmeta.CommentProto{
+								&yamlmeta.CommentProto{Data: " before-map", Position: filepos.NewPosition(2)},
 							},
 							Key: "map",
-							Value: &yamlmeta.Map{
-								Items: []*yamlmeta.MapItem{
-									&yamlmeta.MapItem{
-										Comments: []*yamlmeta.Comment{
-											&yamlmeta.Comment{Data: " before-key1", Position: filepos.NewPosition(4)},
-											&yamlmeta.Comment{Data: " inline-key1", Position: filepos.NewPosition(5)},
+							Value: &yamlmeta.MapProto{
+								Items: []*yamlmeta.MapItemProto{
+									&yamlmeta.MapItemProto{
+										Comments: []*yamlmeta.CommentProto{
+											&yamlmeta.CommentProto{Data: " before-key1", Position: filepos.NewPosition(4)},
+											&yamlmeta.CommentProto{Data: " inline-key1", Position: filepos.NewPosition(5)},
 										},
 										Key:      "key1",
 										Value:    "val1",
 										Position: filepos.NewPosition(5),
 									},
-									&yamlmeta.MapItem{
-										Comments: []*yamlmeta.Comment{
-											&yamlmeta.Comment{Data: " after-key1", Position: filepos.NewPosition(6)},
-											&yamlmeta.Comment{Data: " before-key2", Position: filepos.NewPosition(7)},
+									&yamlmeta.MapItemProto{
+										Comments: []*yamlmeta.CommentProto{
+											&yamlmeta.CommentProto{Data: " after-key1", Position: filepos.NewPosition(6)},
+											&yamlmeta.CommentProto{Data: " before-key2", Position: filepos.NewPosition(7)},
 										},
 										Key:      "key2",
 										Value:    "val2",
@@ -375,7 +375,7 @@ map:
 			},
 		},
 		Position: filepos.NewUnknownPosition(),
-	}
+	})
 
 	printer := yamlmeta.NewPrinterWithOpts(nil, yamlmeta.PrinterOpts{ExcludeRefs: true})
 
@@ -409,45 +409,45 @@ array:
 		t.Fatalf("error: %s", err)
 	}
 
-	expectedVal := &yamlmeta.DocumentSet{
-		Items: []*yamlmeta.Document{
-			&yamlmeta.Document{
-				Value: &yamlmeta.Map{
-					Items: []*yamlmeta.MapItem{
-						&yamlmeta.MapItem{
+	expectedVal := yamlmeta.NewDocumentSet(&yamlmeta.DocumentSetProto{
+		Items: []*yamlmeta.DocumentProto{
+			&yamlmeta.DocumentProto{
+				Value: &yamlmeta.MapProto{
+					Items: []*yamlmeta.MapItemProto{
+						&yamlmeta.MapItemProto{
 							Key: "array",
-							Value: &yamlmeta.Array{
-								Items: []*yamlmeta.ArrayItem{
-									&yamlmeta.ArrayItem{
-										Comments: []*yamlmeta.Comment{
-											&yamlmeta.Comment{Data: " before-1", Position: filepos.NewPosition(3)},
-											&yamlmeta.Comment{Data: " inline-1", Position: filepos.NewPosition(4)},
+							Value: &yamlmeta.ArrayProto{
+								Items: []*yamlmeta.ArrayItemProto{
+									&yamlmeta.ArrayItemProto{
+										Comments: []*yamlmeta.CommentProto{
+											&yamlmeta.CommentProto{Data: " before-1", Position: filepos.NewPosition(3)},
+											&yamlmeta.CommentProto{Data: " inline-1", Position: filepos.NewPosition(4)},
 										},
 										Value:    1,
 										Position: filepos.NewPosition(4),
 									},
-									&yamlmeta.ArrayItem{
-										Comments: []*yamlmeta.Comment{
-											&yamlmeta.Comment{Data: " after-1", Position: filepos.NewPosition(5)},
-											&yamlmeta.Comment{Data: " before-2", Position: filepos.NewPosition(6)},
+									&yamlmeta.ArrayItemProto{
+										Comments: []*yamlmeta.CommentProto{
+											&yamlmeta.CommentProto{Data: " after-1", Position: filepos.NewPosition(5)},
+											&yamlmeta.CommentProto{Data: " before-2", Position: filepos.NewPosition(6)},
 										},
 										Value:    2,
 										Position: filepos.NewPosition(7),
 									},
-									&yamlmeta.ArrayItem{Value: 3, Position: filepos.NewPosition(8)},
-									&yamlmeta.ArrayItem{
-										Comments: []*yamlmeta.Comment{
-											&yamlmeta.Comment{Data: " empty", Position: filepos.NewPosition(9)},
+									&yamlmeta.ArrayItemProto{Value: 3, Position: filepos.NewPosition(8)},
+									&yamlmeta.ArrayItemProto{
+										Comments: []*yamlmeta.CommentProto{
+											&yamlmeta.CommentProto{Data: " empty", Position: filepos.NewPosition(9)},
 										},
 										Value:    nil,
 										Position: filepos.NewPosition(9),
 									},
-									&yamlmeta.ArrayItem{
-										Value: &yamlmeta.Map{
-											Items: []*yamlmeta.MapItem{
-												&yamlmeta.MapItem{
-													Comments: []*yamlmeta.Comment{
-														&yamlmeta.Comment{Data: " on-map", Position: filepos.NewPosition(11)},
+									&yamlmeta.ArrayItemProto{
+										Value: &yamlmeta.MapProto{
+											Items: []*yamlmeta.MapItemProto{
+												&yamlmeta.MapItemProto{
+													Comments: []*yamlmeta.CommentProto{
+														&yamlmeta.CommentProto{Data: " on-map", Position: filepos.NewPosition(11)},
 													},
 													Key:      "key",
 													Value:    "value",
@@ -458,13 +458,13 @@ array:
 										},
 										Position: filepos.NewPosition(10),
 									},
-									&yamlmeta.ArrayItem{
-										Comments: []*yamlmeta.Comment{
-											&yamlmeta.Comment{Data: " on-array-item-with-map", Position: filepos.NewPosition(13)},
+									&yamlmeta.ArrayItemProto{
+										Comments: []*yamlmeta.CommentProto{
+											&yamlmeta.CommentProto{Data: " on-array-item-with-map", Position: filepos.NewPosition(13)},
 										},
-										Value: &yamlmeta.Map{
-											Items: []*yamlmeta.MapItem{
-												&yamlmeta.MapItem{
+										Value: &yamlmeta.MapProto{
+											Items: []*yamlmeta.MapItemProto{
+												&yamlmeta.MapItemProto{
 													Key:      "key",
 													Value:    "value",
 													Position: filepos.NewPosition(14),
@@ -486,7 +486,7 @@ array:
 			},
 		},
 		Position: filepos.NewUnknownPosition(),
-	}
+	})
 
 	printer := yamlmeta.NewPrinterWithOpts(nil, yamlmeta.PrinterOpts{ExcludeRefs: true})
 
@@ -509,29 +509,29 @@ func TestParserDocSetComments(t *testing.T) {
 		t.Fatalf("error: %s", err)
 	}
 
-	expectedVal := &yamlmeta.DocumentSet{
-		Items: []*yamlmeta.Document{
-			&yamlmeta.Document{
+	expectedVal := yamlmeta.NewDocumentSet(&yamlmeta.DocumentSetProto{
+		Items: []*yamlmeta.DocumentProto{
+			&yamlmeta.DocumentProto{
 				Position: filepos.NewPosition(1),
 			},
-			&yamlmeta.Document{
-				Comments: []*yamlmeta.Comment{
-					&yamlmeta.Comment{Data: " comment-first", Position: filepos.NewPosition(2)},
+			&yamlmeta.DocumentProto{
+				Comments: []*yamlmeta.CommentProto{
+					&yamlmeta.CommentProto{Data: " comment-first", Position: filepos.NewPosition(2)},
 				},
 				Position: filepos.NewPosition(3),
 			},
-			&yamlmeta.Document{
+			&yamlmeta.DocumentProto{
 				Position: filepos.NewPosition(4),
 			},
-			&yamlmeta.Document{
-				Comments: []*yamlmeta.Comment{
-					&yamlmeta.Comment{Data: " comment-second", Position: filepos.NewPosition(5)},
+			&yamlmeta.DocumentProto{
+				Comments: []*yamlmeta.CommentProto{
+					&yamlmeta.CommentProto{Data: " comment-second", Position: filepos.NewPosition(5)},
 				},
 				Position: filepos.NewUnknownPosition(),
 			},
 		},
 		Position: filepos.NewUnknownPosition(),
-	}
+	})
 
 	printer := yamlmeta.NewPrinterWithOpts(nil, yamlmeta.PrinterOpts{ExcludeRefs: true})
 
@@ -549,20 +549,20 @@ func TestParserDocSetOnlyComments2(t *testing.T) {
 		t.Fatalf("error: %s", err)
 	}
 
-	expectedVal := &yamlmeta.DocumentSet{
-		Items: []*yamlmeta.Document{
-			&yamlmeta.Document{
+	expectedVal := yamlmeta.NewDocumentSet(&yamlmeta.DocumentSetProto{
+		Items: []*yamlmeta.DocumentProto{
+			&yamlmeta.DocumentProto{
 				Position: filepos.NewPosition(1),
 			},
-			&yamlmeta.Document{
-				Comments: []*yamlmeta.Comment{
-					&yamlmeta.Comment{Data: " comment-first", Position: filepos.NewPosition(2)},
+			&yamlmeta.DocumentProto{
+				Comments: []*yamlmeta.CommentProto{
+					&yamlmeta.CommentProto{Data: " comment-first", Position: filepos.NewPosition(2)},
 				},
 				Position: filepos.NewUnknownPosition(),
 			},
 		},
 		Position: filepos.NewUnknownPosition(),
-	}
+	})
 
 	printer := yamlmeta.NewPrinterWithOpts(nil, yamlmeta.PrinterOpts{ExcludeRefs: true})
 
@@ -580,17 +580,17 @@ func TestParserDocSetOnlyComments3(t *testing.T) {
 		t.Fatalf("error: %s", err)
 	}
 
-	expectedVal := &yamlmeta.DocumentSet{
-		Items: []*yamlmeta.Document{
-			&yamlmeta.Document{
-				Comments: []*yamlmeta.Comment{
-					&yamlmeta.Comment{Data: " comment", Position: filepos.NewPosition(1)},
+	expectedVal := yamlmeta.NewDocumentSet(&yamlmeta.DocumentSetProto{
+		Items: []*yamlmeta.DocumentProto{
+			&yamlmeta.DocumentProto{
+				Comments: []*yamlmeta.CommentProto{
+					&yamlmeta.CommentProto{Data: " comment", Position: filepos.NewPosition(1)},
 				},
 				Position: filepos.NewPosition(1),
 			},
 		},
 		Position: filepos.NewUnknownPosition(),
-	}
+	})
 
 	printer := yamlmeta.NewPrinterWithOpts(nil, yamlmeta.PrinterOpts{ExcludeRefs: true})
 
@@ -608,20 +608,20 @@ func TestParserDocSetOnlyComments(t *testing.T) {
 		t.Fatalf("error: %s", err)
 	}
 
-	expectedVal := &yamlmeta.DocumentSet{
-		Items: []*yamlmeta.Document{
-			&yamlmeta.Document{
+	expectedVal := yamlmeta.NewDocumentSet(&yamlmeta.DocumentSetProto{
+		Items: []*yamlmeta.DocumentProto{
+			&yamlmeta.DocumentProto{
 				Position: filepos.NewPosition(1),
 			},
-			&yamlmeta.Document{
-				Comments: []*yamlmeta.Comment{
-					&yamlmeta.Comment{Data: " comment-first", Position: filepos.NewPosition(1)},
+			&yamlmeta.DocumentProto{
+				Comments: []*yamlmeta.CommentProto{
+					&yamlmeta.CommentProto{Data: " comment-first", Position: filepos.NewPosition(1)},
 				},
 				Position: filepos.NewUnknownPosition(),
 			},
 		},
 		Position: filepos.NewUnknownPosition(),
-	}
+	})
 
 	printer := yamlmeta.NewPrinterWithOpts(nil, yamlmeta.PrinterOpts{ExcludeRefs: true})
 
@@ -643,29 +643,29 @@ func TestParserDocSetCommentsNoFirstDashes(t *testing.T) {
 		t.Fatalf("error: %s", err)
 	}
 
-	expectedVal := &yamlmeta.DocumentSet{
-		Items: []*yamlmeta.Document{
-			&yamlmeta.Document{
+	expectedVal := yamlmeta.NewDocumentSet(&yamlmeta.DocumentSetProto{
+		Items: []*yamlmeta.DocumentProto{
+			&yamlmeta.DocumentProto{
 				Position: filepos.NewPosition(1),
 			},
-			&yamlmeta.Document{
-				Comments: []*yamlmeta.Comment{
-					&yamlmeta.Comment{Data: " comment-first", Position: filepos.NewPosition(1)},
+			&yamlmeta.DocumentProto{
+				Comments: []*yamlmeta.CommentProto{
+					&yamlmeta.CommentProto{Data: " comment-first", Position: filepos.NewPosition(1)},
 				},
 				Position: filepos.NewPosition(2),
 			},
-			&yamlmeta.Document{
+			&yamlmeta.DocumentProto{
 				Position: filepos.NewPosition(3),
 			},
-			&yamlmeta.Document{
-				Comments: []*yamlmeta.Comment{
-					&yamlmeta.Comment{Data: " comment-second", Position: filepos.NewPosition(4)},
+			&yamlmeta.DocumentProto{
+				Comments: []*yamlmeta.CommentProto{
+					&yamlmeta.CommentProto{Data: " comment-second", Position: filepos.NewPosition(4)},
 				},
 				Position: filepos.NewUnknownPosition(),
 			},
 		},
 		Position: filepos.NewUnknownPosition(),
-	}
+	})
 
 	printer := yamlmeta.NewPrinterWithOpts(nil, yamlmeta.PrinterOpts{ExcludeRefs: true})
 
@@ -688,23 +688,23 @@ key:
 		t.Fatalf("error: %s", err)
 	}
 
-	expectedVal := &yamlmeta.DocumentSet{
-		Items: []*yamlmeta.Document{
-			&yamlmeta.Document{
-				Value: &yamlmeta.Map{
-					Items: []*yamlmeta.MapItem{
-						&yamlmeta.MapItem{
+	expectedVal := yamlmeta.NewDocumentSet(&yamlmeta.DocumentSetProto{
+		Items: []*yamlmeta.DocumentProto{
+			&yamlmeta.DocumentProto{
+				Value: &yamlmeta.MapProto{
+					Items: []*yamlmeta.MapItemProto{
+						&yamlmeta.MapItemProto{
 							Key: "key",
-							Value: &yamlmeta.Map{
-								Items: []*yamlmeta.MapItem{
-									&yamlmeta.MapItem{
+							Value: &yamlmeta.MapProto{
+								Items: []*yamlmeta.MapItemProto{
+									&yamlmeta.MapItemProto{
 										Key:      "nested",
 										Value:    true,
 										Position: filepos.NewPosition(3),
 									},
-									&yamlmeta.MapItem{
-										Comments: []*yamlmeta.Comment{
-											&yamlmeta.Comment{Data: " comment", Position: filepos.NewPosition(4)},
+									&yamlmeta.MapItemProto{
+										Comments: []*yamlmeta.CommentProto{
+											&yamlmeta.CommentProto{Data: " comment", Position: filepos.NewPosition(4)},
 										},
 										Key:      "nested",
 										Value:    true,
@@ -722,7 +722,7 @@ key:
 			},
 		},
 		Position: filepos.NewUnknownPosition(),
-	}
+	})
 
 	printer := yamlmeta.NewPrinterWithOpts(nil, yamlmeta.PrinterOpts{ExcludeRefs: true})
 
@@ -765,39 +765,39 @@ value: &value
 anchored_value: *value
 `
 
-	expectedVal := &yamlmeta.DocumentSet{
-		Items: []*yamlmeta.Document{
-			&yamlmeta.Document{
-				Value: &yamlmeta.Map{
-					Items: []*yamlmeta.MapItem{
-						&yamlmeta.MapItem{
+	expectedVal := yamlmeta.NewDocumentSet(&yamlmeta.DocumentSetProto{
+		Items: []*yamlmeta.DocumentProto{
+			&yamlmeta.DocumentProto{
+				Value: &yamlmeta.MapProto{
+					Items: []*yamlmeta.MapItemProto{
+						&yamlmeta.MapItemProto{
 							Key: "value",
-							Comments: []*yamlmeta.Comment{
-								&yamlmeta.Comment{Data: "@ variable = 123", Position: filepos.NewPosition(2)},
+							Comments: []*yamlmeta.CommentProto{
+								&yamlmeta.CommentProto{Data: "@ variable = 123", Position: filepos.NewPosition(2)},
 							},
-							Value: &yamlmeta.Map{
-								Items: []*yamlmeta.MapItem{
-									&yamlmeta.MapItem{
+							Value: &yamlmeta.MapProto{
+								Items: []*yamlmeta.MapItemProto{
+									&yamlmeta.MapItemProto{
 										// TODO should be here as well
-										// Comments: []*yamlmeta.Comment{
-										// 	&yamlmeta.Comment{Data: "@ variable", Position: filepos.NewPosition(4)},
+										// Comments: []*yamlmeta.CommentProto{
+										// 	&yamlmeta.CommentProto{Data: "@ variable", Position: filepos.NewPosition(4)},
 										// },
 										Key:      "path",
 										Value:    nil,
 										Position: filepos.NewPosition(4),
 									},
-									&yamlmeta.MapItem{
-										Comments: []*yamlmeta.Comment{
-											&yamlmeta.Comment{Data: "@annotation", Position: filepos.NewPosition(5)},
+									&yamlmeta.MapItemProto{
+										Comments: []*yamlmeta.CommentProto{
+											&yamlmeta.CommentProto{Data: "@annotation", Position: filepos.NewPosition(5)},
 										},
 										Key: "args",
-										Value: &yamlmeta.Array{
-											Items: []*yamlmeta.ArrayItem{
-												&yamlmeta.ArrayItem{
+										Value: &yamlmeta.ArrayProto{
+											Items: []*yamlmeta.ArrayItemProto{
+												&yamlmeta.ArrayItemProto{
 													Value:    1,
 													Position: filepos.NewPosition(7),
 												},
-												&yamlmeta.ArrayItem{
+												&yamlmeta.ArrayItemProto{
 													Value:    2,
 													Position: filepos.NewPosition(8),
 												},
@@ -811,31 +811,31 @@ anchored_value: *value
 							},
 							Position: filepos.NewPosition(3),
 						},
-						&yamlmeta.MapItem{
+						&yamlmeta.MapItemProto{
 							Key: "anchored_value",
-							Value: &yamlmeta.Map{
-								Items: []*yamlmeta.MapItem{
-									&yamlmeta.MapItem{
-										Comments: []*yamlmeta.Comment{
-											&yamlmeta.Comment{Data: "@ variable", Position: filepos.NewPosition(4)},
+							Value: &yamlmeta.MapProto{
+								Items: []*yamlmeta.MapItemProto{
+									&yamlmeta.MapItemProto{
+										Comments: []*yamlmeta.CommentProto{
+											&yamlmeta.CommentProto{Data: "@ variable", Position: filepos.NewPosition(4)},
 										},
 										Key:      "path",
 										Value:    nil,
 										Position: filepos.NewPosition(4),
 									},
-									&yamlmeta.MapItem{
+									&yamlmeta.MapItemProto{
 										// TODO should be here as well
-										// Comments: []*yamlmeta.Comment{
-										// 	&yamlmeta.Comment{Data: "@annotation", Position: filepos.NewPosition(5)},
+										// Comments: []*yamlmeta.CommentProto{
+										// 	&yamlmeta.CommentProto{Data: "@annotation", Position: filepos.NewPosition(5)},
 										// },
 										Key: "args",
-										Value: &yamlmeta.Array{
-											Items: []*yamlmeta.ArrayItem{
-												&yamlmeta.ArrayItem{
+										Value: &yamlmeta.ArrayProto{
+											Items: []*yamlmeta.ArrayItemProto{
+												&yamlmeta.ArrayItemProto{
 													Value:    1,
 													Position: filepos.NewPosition(7),
 												},
-												&yamlmeta.ArrayItem{
+												&yamlmeta.ArrayItemProto{
 													Value:    2,
 													Position: filepos.NewPosition(8),
 												},
@@ -856,7 +856,7 @@ anchored_value: *value
 			},
 		},
 		Position: filepos.NewUnknownPosition(),
-	}
+	})
 
 	// TODO annotations are not properly assigned
 	parserExamples{{Description: "with seq inside anchored data", Data: data, Expected: expectedVal}}.Check(t)
@@ -876,39 +876,39 @@ merged_value:
   other: true
 `
 
-	expectedVal := &yamlmeta.DocumentSet{
-		Items: []*yamlmeta.Document{
-			&yamlmeta.Document{
-				Value: &yamlmeta.Map{
-					Items: []*yamlmeta.MapItem{
-						&yamlmeta.MapItem{
+	expectedVal := yamlmeta.NewDocumentSet(&yamlmeta.DocumentSetProto{
+		Items: []*yamlmeta.DocumentProto{
+			&yamlmeta.DocumentProto{
+				Value: &yamlmeta.MapProto{
+					Items: []*yamlmeta.MapItemProto{
+						&yamlmeta.MapItemProto{
 							Key: "value",
-							Comments: []*yamlmeta.Comment{
-								&yamlmeta.Comment{Data: "@ variable = 123", Position: filepos.NewPosition(2)},
+							Comments: []*yamlmeta.CommentProto{
+								&yamlmeta.CommentProto{Data: "@ variable = 123", Position: filepos.NewPosition(2)},
 							},
-							Value: &yamlmeta.Map{
-								Items: []*yamlmeta.MapItem{
-									&yamlmeta.MapItem{
+							Value: &yamlmeta.MapProto{
+								Items: []*yamlmeta.MapItemProto{
+									&yamlmeta.MapItemProto{
 										// TODO should be here as well
-										// Comments: []*yamlmeta.Comment{
-										// 	&yamlmeta.Comment{Data: "@ variable", Position: filepos.NewPosition(4)},
+										// Comments: []*yamlmeta.CommentProto{
+										// 	&yamlmeta.CommentProto{Data: "@ variable", Position: filepos.NewPosition(4)},
 										// },
 										Key:      "path",
 										Value:    nil,
 										Position: filepos.NewPosition(4),
 									},
-									&yamlmeta.MapItem{
-										Comments: []*yamlmeta.Comment{
-											&yamlmeta.Comment{Data: "@annotation", Position: filepos.NewPosition(5)},
+									&yamlmeta.MapItemProto{
+										Comments: []*yamlmeta.CommentProto{
+											&yamlmeta.CommentProto{Data: "@annotation", Position: filepos.NewPosition(5)},
 										},
 										Key: "args",
-										Value: &yamlmeta.Array{
-											Items: []*yamlmeta.ArrayItem{
-												&yamlmeta.ArrayItem{
+										Value: &yamlmeta.ArrayProto{
+											Items: []*yamlmeta.ArrayItemProto{
+												&yamlmeta.ArrayItemProto{
 													Value:    1,
 													Position: filepos.NewPosition(7),
 												},
-												&yamlmeta.ArrayItem{
+												&yamlmeta.ArrayItemProto{
 													Value:    2,
 													Position: filepos.NewPosition(8),
 												},
@@ -922,31 +922,31 @@ merged_value:
 							},
 							Position: filepos.NewPosition(3),
 						},
-						&yamlmeta.MapItem{
+						&yamlmeta.MapItemProto{
 							Key: "merged_value",
-							Value: &yamlmeta.Map{
-								Items: []*yamlmeta.MapItem{
-									&yamlmeta.MapItem{
-										Comments: []*yamlmeta.Comment{
-											&yamlmeta.Comment{Data: "@ variable", Position: filepos.NewPosition(4)},
+							Value: &yamlmeta.MapProto{
+								Items: []*yamlmeta.MapItemProto{
+									&yamlmeta.MapItemProto{
+										Comments: []*yamlmeta.CommentProto{
+											&yamlmeta.CommentProto{Data: "@ variable", Position: filepos.NewPosition(4)},
 										},
 										Key:      "path",
 										Value:    nil,
 										Position: filepos.NewPosition(4),
 									},
-									&yamlmeta.MapItem{
+									&yamlmeta.MapItemProto{
 										// TODO should be here as well
-										// Comments: []*yamlmeta.Comment{
-										// 	&yamlmeta.Comment{Data: "@annotation", Position: filepos.NewPosition(5)},
+										// Comments: []*yamlmeta.CommentProto{
+										// 	&yamlmeta.CommentProto{Data: "@annotation", Position: filepos.NewPosition(5)},
 										// },
 										Key: "args",
-										Value: &yamlmeta.Array{
-											Items: []*yamlmeta.ArrayItem{
-												&yamlmeta.ArrayItem{
+										Value: &yamlmeta.ArrayProto{
+											Items: []*yamlmeta.ArrayItemProto{
+												&yamlmeta.ArrayItemProto{
 													Value:    1,
 													Position: filepos.NewPosition(7),
 												},
-												&yamlmeta.ArrayItem{
+												&yamlmeta.ArrayItemProto{
 													Value:    2,
 													Position: filepos.NewPosition(8),
 												},
@@ -955,7 +955,7 @@ merged_value:
 										},
 										Position: filepos.NewPosition(6),
 									},
-									&yamlmeta.MapItem{
+									&yamlmeta.MapItemProto{
 										Key:      "other",
 										Value:    true,
 										Position: filepos.NewPosition(11),
@@ -972,7 +972,7 @@ merged_value:
 			},
 		},
 		Position: filepos.NewUnknownPosition(),
-	}
+	})
 
 	// TODO annotations are not properly assigned
 	parserExamples{{Description: "merge", Data: data, Expected: expectedVal}}.Check(t)
