@@ -19,6 +19,8 @@ type Node interface {
 	GetComments() []*Comment
 	addComments(*Comment)
 
+	GetMeta(name string) interface{}
+	SetMeta(name string, data interface{})
 	GetAnnotations() interface{}
 	SetAnnotations(interface{})
 
@@ -42,60 +44,62 @@ type DocumentSet struct {
 	Items    []*Document
 	Position *filepos.Position
 
+	meta          map[string]interface{}
 	annotations   interface{}
 	originalBytes *[]byte
 }
 
 type Document struct {
-	Type     Type
 	Comments []*Comment
 	Value    interface{}
 	Position *filepos.Position
 
+	meta        map[string]interface{}
 	annotations interface{}
 	injected    bool // indicates that Document was not present in the parsed content
 }
 
 type Map struct {
-	Type     Type
 	Comments []*Comment
 	Items    []*MapItem
 	Position *filepos.Position
 
+	meta        map[string]interface{}
 	annotations interface{}
 }
 
 type MapItem struct {
-	Type     Type
 	Comments []*Comment
 	Key      interface{}
 	Value    interface{}
 	Position *filepos.Position
 
+	meta        map[string]interface{}
 	annotations interface{}
 }
 
 type Array struct {
-	Type     Type
 	Comments []*Comment
 	Items    []*ArrayItem
 	Position *filepos.Position
 
+	meta        map[string]interface{}
 	annotations interface{}
 }
 
 type ArrayItem struct {
-	Type     Type
 	Comments []*Comment
 	Value    interface{}
 	Position *filepos.Position
 
+	meta        map[string]interface{}
 	annotations interface{}
 }
 
 type Scalar struct {
 	Position *filepos.Position
 	Value    interface{}
+	meta     map[string]interface{}
 }
 
 type Comment struct {

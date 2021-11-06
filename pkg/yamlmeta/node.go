@@ -262,10 +262,10 @@ func (d *Document) Check() (chk TypeCheck) {
 	return chk
 }
 func (m *Map) Check() (chk TypeCheck) {
-	if m.Type == nil {
+	if GetType(m) == nil {
 		return
 	}
-	check := m.Type.CheckType(m)
+	check := GetType(m).CheckType(m)
 	if check.HasViolations() {
 		chk.Violations = append(chk.Violations, check.Violations...)
 		return
@@ -280,13 +280,13 @@ func (m *Map) Check() (chk TypeCheck) {
 	return
 }
 func (mi *MapItem) Check() (chk TypeCheck) {
-	check := mi.Type.CheckType(mi)
+	check := GetType(mi).CheckType(mi)
 	if check.HasViolations() {
 		chk.Violations = check.Violations
 		return
 	}
 
-	check = checkCollectionItem(mi.Value, mi.Type.GetValueType(), mi.Position)
+	check = checkCollectionItem(mi.Value, GetType(mi).GetValueType(), mi.Position)
 	if check.HasViolations() {
 		chk.Violations = append(chk.Violations, check.Violations...)
 	}
@@ -302,7 +302,7 @@ func (a *Array) Check() (chk TypeCheck) {
 	return
 }
 func (ai *ArrayItem) Check() (chk TypeCheck) {
-	if ai.Type == nil {
+	if GetType(ai) == nil {
 		return
 	}
 	// TODO: This check only ensures that the ai is of ArrayItem type
@@ -311,12 +311,12 @@ func (ai *ArrayItem) Check() (chk TypeCheck) {
 	//       Given this maybe we can completely remove this check
 	//       Lets not forget that the check of the type of the item
 	//       is done by checkCollectionItem
-	chk = ai.Type.CheckType(ai)
+	chk = GetType(ai).CheckType(ai)
 	if chk.HasViolations() {
 		return
 	}
 
-	check := checkCollectionItem(ai.Value, ai.Type.GetValueType(), ai.Position)
+	check := checkCollectionItem(ai.Value, GetType(ai).GetValueType(), ai.Position)
 	if check.HasViolations() {
 		chk.Violations = append(chk.Violations, check.Violations...)
 	}
@@ -364,3 +364,87 @@ func (m *Map) sealed()          {}
 func (mi *MapItem) sealed()     {}
 func (a *Array) sealed()        {}
 func (ai *ArrayItem) sealed()   {}
+
+func (n *DocumentSet) GetMeta(name string) interface{} {
+	if n.meta == nil {
+		n.meta = make(map[string]interface{})
+	}
+	return n.meta[name]
+}
+func (n *DocumentSet) SetMeta(name string, data interface{}) {
+	if n.meta == nil {
+		n.meta = make(map[string]interface{})
+	}
+	n.meta[name] = data
+}
+func (n *Document) GetMeta(name string) interface{} {
+	if n.meta == nil {
+		n.meta = make(map[string]interface{})
+	}
+	return n.meta[name]
+}
+func (n *Document) SetMeta(name string, data interface{}) {
+	if n.meta == nil {
+		n.meta = make(map[string]interface{})
+	}
+	n.meta[name] = data
+}
+func (n *Map) GetMeta(name string) interface{} {
+	if n.meta == nil {
+		n.meta = make(map[string]interface{})
+	}
+	return n.meta[name]
+}
+func (n *Map) SetMeta(name string, data interface{}) {
+	if n.meta == nil {
+		n.meta = make(map[string]interface{})
+	}
+	n.meta[name] = data
+}
+func (n *MapItem) GetMeta(name string) interface{} {
+	if n.meta == nil {
+		n.meta = make(map[string]interface{})
+	}
+	return n.meta[name]
+}
+func (n *MapItem) SetMeta(name string, data interface{}) {
+	if n.meta == nil {
+		n.meta = make(map[string]interface{})
+	}
+	n.meta[name] = data
+}
+func (n *Array) GetMeta(name string) interface{} {
+	if n.meta == nil {
+		n.meta = make(map[string]interface{})
+	}
+	return n.meta[name]
+}
+func (n *Array) SetMeta(name string, data interface{}) {
+	if n.meta == nil {
+		n.meta = make(map[string]interface{})
+	}
+	n.meta[name] = data
+}
+func (n *ArrayItem) GetMeta(name string) interface{} {
+	if n.meta == nil {
+		n.meta = make(map[string]interface{})
+	}
+	return n.meta[name]
+}
+func (n *ArrayItem) SetMeta(name string, data interface{}) {
+	if n.meta == nil {
+		n.meta = make(map[string]interface{})
+	}
+	n.meta[name] = data
+}
+
+func GetType(n Node) Type {
+	t := n.GetMeta("schema/type")
+	if t == nil {
+		return nil
+	}
+	return t.(Type)
+}
+func SetType(n Node, t Type) {
+	n.SetMeta("schema/type", t)
+}

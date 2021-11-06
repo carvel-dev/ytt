@@ -37,8 +37,8 @@ var _ Typeable = (*MapItem)(nil)
 var _ Typeable = (*Array)(nil)
 var _ Typeable = (*ArrayItem)(nil)
 
-func (d *Document) SetType(t Type)   { d.Type = t }
-func (m *Map) SetType(t Type)        { m.Type = t }
-func (mi *MapItem) SetType(t Type)   { mi.Type = t }
-func (a *Array) SetType(t Type)      { a.Type = t }
-func (ai *ArrayItem) SetType(t Type) { ai.Type = t }
+func (d *Document) SetType(t Type)   { SetType(d, t) }
+func (m *Map) SetType(t Type)        { SetType(m, t) }
+func (mi *MapItem) SetType(t Type)   { SetType(mi, t) }
+func (a *Array) SetType(t Type)      { SetType(a, t) }
+func (ai *ArrayItem) SetType(t Type) { SetType(ai, t) }
