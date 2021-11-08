@@ -24,11 +24,11 @@ type Annotation interface {
 
 type TypeAnnotation struct {
 	any  bool
-	item yamlmeta.ValueHoldingNode
+	item yamlmeta.Node
 }
 
 type NullableAnnotation struct {
-	item yamlmeta.ValueHoldingNode
+	item yamlmeta.Node
 }
 
 // DefaultAnnotation is a wrapper for a value provided via @schema/default annotation
@@ -37,7 +37,7 @@ type DefaultAnnotation struct {
 }
 
 // NewTypeAnnotation checks the key-word argument provided via @schema/type annotation, and returns wrapper for the annotated node.
-func NewTypeAnnotation(ann template.NodeAnnotation, node yamlmeta.ValueHoldingNode) (*TypeAnnotation, error) {
+func NewTypeAnnotation(ann template.NodeAnnotation, node yamlmeta.Node) (*TypeAnnotation, error) {
 	if len(ann.Kwargs) == 0 {
 		return nil, schemaAssertionError{
 			position:    node.GetPosition(),
@@ -82,7 +82,7 @@ func NewTypeAnnotation(ann template.NodeAnnotation, node yamlmeta.ValueHoldingNo
 }
 
 // NewNullableAnnotation checks that there are no arguments, and returns wrapper for the annotated node.
-func NewNullableAnnotation(ann template.NodeAnnotation, node yamlmeta.ValueHoldingNode) (*NullableAnnotation, error) {
+func NewNullableAnnotation(ann template.NodeAnnotation, node yamlmeta.Node) (*NullableAnnotation, error) {
 	if len(ann.Kwargs) != 0 {
 		return nil, fmt.Errorf("expected @%v annotation to not contain any keyword arguments", AnnotationNullable)
 	}
@@ -131,14 +131,14 @@ func NewDefaultAnnotation(ann template.NodeAnnotation, inferredType yamlmeta.Typ
 // NewTypeFromAnn returns type information given by annotation.
 func (t *TypeAnnotation) NewTypeFromAnn() (yamlmeta.Type, error) {
 	if t.any {
-		return &AnyType{defaultValue: t.item.Val(), Position: t.item.GetPosition()}, nil
+		return &AnyType{defaultValue: t.item.GetValues()[0], Position: t.item.GetPosition()}, nil
 	}
 	return nil, nil
 }
 
 // NewTypeFromAnn returns type information given by annotation.
 func (n *NullableAnnotation) NewTypeFromAnn() (yamlmeta.Type, error) {
-	inferredType, err := inferTypeFromValue(n.item.Val(), n.item.GetPosition())
+	inferredType, err := inferTypeFromValue(n.item.GetValues()[0], n.item.GetPosition())
 	if err != nil {
 		return nil, err
 	}
@@ -159,7 +159,7 @@ func (n *DefaultAnnotation) Val() interface{} {
 	return n.val
 }
 
-func collectTypeAnnotations(item yamlmeta.ValueHoldingNode) ([]Annotation, error) {
+func collectTypeAnnotations(item yamlmeta.Node) ([]Annotation, error) {
 	var anns []Annotation
 
 	for _, annotation := range []template.AnnotationName{AnnotationType, AnnotationNullable} {
@@ -174,7 +174,7 @@ func collectTypeAnnotations(item yamlmeta.ValueHoldingNode) ([]Annotation, error
 	return anns, nil
 }
 
-func collectValueAnnotations(item yamlmeta.ValueHoldingNode, t yamlmeta.Type) ([]Annotation, error) {
+func collectValueAnnotations(item yamlmeta.Node, t yamlmeta.Type) ([]Annotation, error) {
 	var anns []Annotation
 
 	for _, annotation := range []template.AnnotationName{AnnotationNullable, AnnotationDefault} {
@@ -189,7 +189,7 @@ func collectValueAnnotations(item yamlmeta.ValueHoldingNode, t yamlmeta.Type) ([
 	return anns, nil
 }
 
-func processOptionalAnnotation(node yamlmeta.ValueHoldingNode, optionalAnnotation template.AnnotationName, t yamlmeta.Type) (Annotation, error) {
+func processOptionalAnnotation(node yamlmeta.Node, optionalAnnotation template.AnnotationName, t yamlmeta.Type) (Annotation, error) {
 	nodeAnnotations := template.NewAnnotations(node)
 
 	if nodeAnnotations.Has(optionalAnnotation) {
@@ -210,9 +210,9 @@ func processOptionalAnnotation(node yamlmeta.ValueHoldingNode, optionalAnnotatio
 			return typeAnn, nil
 		case AnnotationDefault:
 			switch node.(type) {
-			//case *yamlmeta.DocumentSet, *yamlmeta.Array, *yamlmeta.Map:
-			//	return nil, NewSchemaError(fmt.Sprintf("Invalid schema - @%v not supported on %s", AnnotationDefault, node.DisplayName()),
-			//		schemaAssertionError{position: node.GetPosition()})
+			case *yamlmeta.DocumentSet, *yamlmeta.Array, *yamlmeta.Map:
+				return nil, NewSchemaError(fmt.Sprintf("Invalid schema - @%v not supported on %s", AnnotationDefault, node.DisplayName()),
+					schemaAssertionError{position: node.GetPosition()})
 			case *yamlmeta.ArrayItem:
 				return nil, NewSchemaError(fmt.Sprintf("Invalid schema - @%v not supported on array item", AnnotationDefault),
 					schemaAssertionError{

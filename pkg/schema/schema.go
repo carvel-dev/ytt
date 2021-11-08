@@ -149,7 +149,7 @@ func NewArrayItemType(item *yamlmeta.ArrayItem) (*ArrayItemType, error) {
 	return &ArrayItemType{ValueType: typeOfValue, defaultValue: defaultValue, Position: item.GetPosition()}, nil
 }
 
-func getType(node yamlmeta.ValueHoldingNode) (yamlmeta.Type, error) {
+func getType(node yamlmeta.Node) (yamlmeta.Type, error) {
 	var typeOfValue yamlmeta.Type
 
 	anns, err := collectTypeAnnotations(node)
@@ -162,13 +162,13 @@ func getType(node yamlmeta.ValueHoldingNode) (yamlmeta.Type, error) {
 	}
 
 	if typeOfValue == nil {
-		typeOfValue, err = inferTypeFromValue(node.Val(), node.GetPosition())
+		typeOfValue, err = inferTypeFromValue(node.GetValues()[0], node.GetPosition())
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	err = valueTypeAllowsItemValue(typeOfValue, node.Val(), node.GetPosition())
+	err = valueTypeAllowsItemValue(typeOfValue, node.GetValues()[0], node.GetPosition())
 	if err != nil {
 		return nil, err
 	}
@@ -176,7 +176,7 @@ func getType(node yamlmeta.ValueHoldingNode) (yamlmeta.Type, error) {
 	return typeOfValue, nil
 }
 
-func getValue(node yamlmeta.ValueHoldingNode, t yamlmeta.Type) (interface{}, error) {
+func getValue(node yamlmeta.Node, t yamlmeta.Type) (interface{}, error) {
 	anns, err := collectValueAnnotations(node, t)
 	if err != nil {
 		return nil, NewSchemaError("Invalid schema", err)
@@ -189,7 +189,7 @@ func getValue(node yamlmeta.ValueHoldingNode, t yamlmeta.Type) (interface{}, err
 	}
 
 	if _, ok := t.(*AnyType); ok {
-		return node.Val(), nil
+		return node.GetValues()[0], nil
 	}
 
 	return t.GetDefaultValue(), nil
