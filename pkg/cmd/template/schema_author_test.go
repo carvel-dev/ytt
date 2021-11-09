@@ -282,9 +282,7 @@ foo: 0
 #@schema/nullable
 foo: 0
 `
-		templateYAML := `#@ load("@ytt:data", "data")
----
-foo: #@ data.values.foo`
+
 		expectedErr := `
 Invalid schema
 ==============
@@ -301,7 +299,6 @@ schema.yml:
 
 		filesToProcess := files.NewSortedFiles([]*files.File{
 			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
-			files.MustNewFileFromSource(files.NewBytesSource("template.yml", []byte(templateYAML))),
 		})
 
 		assertFails(t, filesToProcess, expectedErr, opts)
