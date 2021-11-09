@@ -40,15 +40,9 @@ func TestSchema_When_invalid_reports_error(t *testing.T) {
 vpc:
   subnet_ids: []
 `
-		dataValuesYAML := `#@data/values
----
-vpc:
-  subnet_ids:
-  - 0
-`
+
 		filesToProcess := files.NewSortedFiles([]*files.File{
 			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
-			files.MustNewFileFromSource(files.NewBytesSource("dataValues.yml", []byte(dataValuesYAML))),
 		})
 
 		expectedErr := `
@@ -77,14 +71,9 @@ vpc:
   - 0
   - 1
 `
-		dataValuesYAML := `#@data/values
----
-vpc:
-  subnet_ids: []
-`
+
 		filesToProcess := files.NewSortedFiles([]*files.File{
 			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
-			files.MustNewFileFromSource(files.NewBytesSource("dataValues.yml", []byte(dataValuesYAML))),
 		})
 
 		expectedErr := `
