@@ -904,27 +904,9 @@ values.yml:
 	})
 }
 
-func TestSchema_Provides_default_values(t *testing.T) {
+func TestSchema_Defaults_partially_supplied_data_values(t *testing.T) {
 	opts := cmdtpl.NewOptions()
 
-	t.Run("initializes data values to the values set in the schema", func(t *testing.T) {
-		schemaYAML := `#@data/values-schema
----
-system_domain: "foo.domain"
-`
-		templateYAML := `#@ load("@ytt:data", "data")
----
-system_domain: #@ data.values.system_domain
-`
-		expected := `system_domain: foo.domain
-`
-
-		filesToProcess := files.NewSortedFiles([]*files.File{
-			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
-			files.MustNewFileFromSource(files.NewBytesSource("template.yml", []byte(templateYAML))),
-		})
-		assertSucceeds(t, filesToProcess, expected, opts)
-	})
 	t.Run("defaults arrays to an empty list", func(t *testing.T) {
 		schemaYAML := `#@data/values-schema
 ---
@@ -1085,162 +1067,6 @@ rendered: #@ data.values
 			filesToProcess := files.NewSortedFiles([]*files.File{
 				files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
 				files.MustNewFileFromSource(files.NewBytesSource("dataValues.yml", []byte(dataValuesYAML))),
-				files.MustNewFileFromSource(files.NewBytesSource("template.yml", []byte(templateYAML))),
-			})
-
-			assertSucceeds(t, filesToProcess, expected, opts)
-		})
-	})
-	t.Run("when the the @schema/default annotation used", func(t *testing.T) {
-		t.Run("on a map item with scalar values", func(t *testing.T) {
-
-			schemaYAML := `#@data/values-schema
----
-#@schema/default 1
-int: 0
-#@schema/default "a string"
-str: ""
-#@schema/default True
-bool: false
-`
-			templateYAML := `#@ load("@ytt:data", "data")
----
-int: #@ data.values.int
-str: #@ data.values.str
-bool: #@ data.values.bool
-`
-			expected := `int: 1
-str: a string
-bool: true
-`
-			filesToProcess := files.NewSortedFiles([]*files.File{
-				files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
-				files.MustNewFileFromSource(files.NewBytesSource("template.yml", []byte(templateYAML))),
-			})
-
-			assertSucceeds(t, filesToProcess, expected, opts)
-		})
-		t.Run("on an array", func(t *testing.T) {
-			schemaYAML := `#@data/values-schema
----
-#@schema/default ["new", "array", "strings"]
-foo:
-- the array holds strings
-#@schema/default [1,2,3]
-bar:
-- 7
-`
-			templateYAML := `#@ load("@ytt:data", "data")
----
-foo: #@ data.values.foo
-bar: #@ data.values.bar
-`
-			expected := `foo:
-- new
-- array
-- strings
-bar:
-- 1
-- 2
-- 3
-`
-
-			filesToProcess := files.NewSortedFiles([]*files.File{
-				files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
-				files.MustNewFileFromSource(files.NewBytesSource("template.yml", []byte(templateYAML))),
-			})
-
-			assertSucceeds(t, filesToProcess, expected, opts)
-		})
-		t.Run("on nested map", func(t *testing.T) {
-			schemaYAML := `#@data/values-schema
----
-#@schema/default [{'name': 'null_db'}]
-databases:
-- name: ""
-  host: ""
-#@schema/default {'admin': 'admin'}
-users:
-  admin: ""
-  user: 
-  - ""
-`
-
-			templateYAML := `#@ load("@ytt:data", "data")
----
-databases: #@ data.values.databases
-users: #@ data.values.users
-`
-			expected := `databases:
-- name: null_db
-  host: ""
-users:
-  admin: admin
-  user: []
-`
-
-			filesToProcess := files.NewSortedFiles([]*files.File{
-				files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
-				files.MustNewFileFromSource(files.NewBytesSource("template.yml", []byte(templateYAML))),
-			})
-
-			assertSucceeds(t, filesToProcess, expected, opts)
-		})
-		t.Run("on a document", func(t *testing.T) {
-			schemaYAML := `#@data/values-schema
-#@schema/default {'databases': [{'name': 'default', 'host': 'localhost'}]}
----
-databases:
-- name: ""
-  host: ""
-`
-
-			templateYAML := `#@ load("@ytt:data", "data")
----
-databases: #@ data.values.databases
-`
-			expected := `databases:
-- name: default
-  host: localhost
-`
-
-			filesToProcess := files.NewSortedFiles([]*files.File{
-				files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
-				files.MustNewFileFromSource(files.NewBytesSource("template.yml", []byte(templateYAML))),
-			})
-
-			assertSucceeds(t, filesToProcess, expected, opts)
-		})
-		t.Run("in combination with @schema/nullable and @schema/type", func(t *testing.T) {
-			schemaYAML := `#@data/values-schema
----
-#@schema/type any=True 
-#@schema/default None
-databases:
-- name: ""
-  host: ""
-
-#@schema/nullable
-#@schema/default {'admin':'admin'}
-users:
-  admin: ""
-  user: 
-  - ""
-`
-
-			templateYAML := `#@ load("@ytt:data", "data")
----
-databases: #@ data.values.databases
-users: #@ data.values.users
-`
-			expected := `databases: null
-users:
-  admin: admin
-  user: []
-`
-
-			filesToProcess := files.NewSortedFiles([]*files.File{
-				files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
 				files.MustNewFileFromSource(files.NewBytesSource("template.yml", []byte(templateYAML))),
 			})
 
@@ -2392,7 +2218,6 @@ cat: meow
 		assertFails(t, filesToProcess, expectedErr, opts)
 	})
 }
-
 
 func TestSchema_With_fuzzed_inputs(t *testing.T) {
 	opts := cmdtpl.NewOptions()
