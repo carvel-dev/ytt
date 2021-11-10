@@ -24,11 +24,11 @@ type Annotation interface {
 
 type TypeAnnotation struct {
 	any  bool
-	item yamlmeta.Node
+	node yamlmeta.Node
 }
 
 type NullableAnnotation struct {
-	item yamlmeta.Node
+	node yamlmeta.Node
 }
 
 // DefaultAnnotation is a wrapper for a value provided via @schema/default annotation
@@ -36,7 +36,7 @@ type DefaultAnnotation struct {
 	val interface{}
 }
 
-// NewTypeAnnotation checks the key-word argument provided via @schema/type annotation, and returns wrapper for the annotated node.
+// NewTypeAnnotation checks the keyword argument provided via @schema/type annotation, and returns wrapper for the annotated node.
 func NewTypeAnnotation(ann template.NodeAnnotation, node yamlmeta.Node) (*TypeAnnotation, error) {
 	if len(ann.Kwargs) == 0 {
 		return nil, schemaAssertionError{
@@ -47,7 +47,7 @@ func NewTypeAnnotation(ann template.NodeAnnotation, node yamlmeta.Node) (*TypeAn
 			hints:       []string{fmt.Sprintf("Supported key-value pairs are '%v=True', '%v=False'", TypeAnnotationKwargAny, TypeAnnotationKwargAny)},
 		}
 	}
-	typeAnn := &TypeAnnotation{item: node}
+	typeAnn := &TypeAnnotation{node: node}
 	for _, kwarg := range ann.Kwargs {
 		argName, err := core.NewStarlarkValue(kwarg[0]).AsString()
 		if err != nil {
@@ -87,7 +87,7 @@ func NewNullableAnnotation(ann template.NodeAnnotation, node yamlmeta.Node) (*Nu
 		return nil, fmt.Errorf("expected @%v annotation to not contain any keyword arguments", AnnotationNullable)
 	}
 
-	return &NullableAnnotation{item: node}, nil
+	return &NullableAnnotation{node: node}, nil
 }
 
 // NewDefaultAnnotation checks the argument provided via @schema/default annotation, and returns wrapper for that value.
@@ -131,18 +131,18 @@ func NewDefaultAnnotation(ann template.NodeAnnotation, inferredType yamlmeta.Typ
 // NewTypeFromAnn returns type information given by annotation.
 func (t *TypeAnnotation) NewTypeFromAnn() (yamlmeta.Type, error) {
 	if t.any {
-		return &AnyType{defaultValue: t.item.GetValues()[0], Position: t.item.GetPosition()}, nil
+		return &AnyType{defaultValue: t.node.GetValues()[0], Position: t.node.GetPosition()}, nil
 	}
 	return nil, nil
 }
 
 // NewTypeFromAnn returns type information given by annotation.
 func (n *NullableAnnotation) NewTypeFromAnn() (yamlmeta.Type, error) {
-	inferredType, err := inferTypeFromValue(n.item.GetValues()[0], n.item.GetPosition())
+	inferredType, err := inferTypeFromValue(n.node.GetValues()[0], n.node.GetPosition())
 	if err != nil {
 		return nil, err
 	}
-	return &NullType{ValueType: inferredType, Position: n.item.GetPosition()}, nil
+	return &NullType{ValueType: inferredType, Position: n.node.GetPosition()}, nil
 }
 
 // NewTypeFromAnn returns type information given by annotation.
@@ -159,11 +159,11 @@ func (n *DefaultAnnotation) Val() interface{} {
 	return n.val
 }
 
-func collectTypeAnnotations(item yamlmeta.Node) ([]Annotation, error) {
+func collectTypeAnnotations(node yamlmeta.Node) ([]Annotation, error) {
 	var anns []Annotation
 
 	for _, annotation := range []template.AnnotationName{AnnotationType, AnnotationNullable} {
-		ann, err := processOptionalAnnotation(item, annotation, nil)
+		ann, err := processOptionalAnnotation(node, annotation, nil)
 		if err != nil {
 			return nil, err
 		}
@@ -174,11 +174,11 @@ func collectTypeAnnotations(item yamlmeta.Node) ([]Annotation, error) {
 	return anns, nil
 }
 
-func collectValueAnnotations(item yamlmeta.Node, t yamlmeta.Type) ([]Annotation, error) {
+func collectValueAnnotations(node yamlmeta.Node, t yamlmeta.Type) ([]Annotation, error) {
 	var anns []Annotation
 
 	for _, annotation := range []template.AnnotationName{AnnotationNullable, AnnotationDefault} {
-		ann, err := processOptionalAnnotation(item, annotation, t)
+		ann, err := processOptionalAnnotation(node, annotation, t)
 		if err != nil {
 			return nil, err
 		}
@@ -189,11 +189,11 @@ func collectValueAnnotations(item yamlmeta.Node, t yamlmeta.Type) ([]Annotation,
 	return anns, nil
 }
 
-func processOptionalAnnotation(node yamlmeta.Node, optionalAnnotation template.AnnotationName, t yamlmeta.Type) (Annotation, error) {
+func processOptionalAnnotation(node yamlmeta.Node, optionalAnnotation template.AnnotationName, effectiveType yamlmeta.Type) (Annotation, error) {
 	nodeAnnotations := template.NewAnnotations(node)
 
 	if nodeAnnotations.Has(optionalAnnotation) {
-		ann, _ := nodeAnnotations[optionalAnnotation]
+		ann := nodeAnnotations[optionalAnnotation]
 
 		switch optionalAnnotation {
 		case AnnotationNullable:
@@ -220,7 +220,7 @@ func processOptionalAnnotation(node yamlmeta.Node, optionalAnnotation template.A
 						hints:    []string{"do you mean to set a default value for the array?", "set an array's default by annotating its parent."},
 					})
 			}
-			defaultAnn, err := NewDefaultAnnotation(ann, t, node.GetPosition())
+			defaultAnn, err := NewDefaultAnnotation(ann, effectiveType, node.GetPosition())
 			if err != nil {
 				return nil, err
 			}
