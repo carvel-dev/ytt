@@ -104,6 +104,9 @@ func (n NullType) GetDefaultValue() interface{} {
 }
 
 func (a AnyType) GetDefaultValue() interface{} {
+	if node, ok := a.defaultValue.(yamlmeta.Node); ok {
+		return node.DeepCopyAsInterface()
+	}
 	return a.defaultValue
 }
 
