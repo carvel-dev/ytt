@@ -72,7 +72,7 @@ func typeToString(value interface{}) string {
 }
 
 func (ds *DocumentSet) SetValue(val interface{}) error {
-	return fmt.Errorf("cannot set value on a documentset")
+	return fmt.Errorf("cannot set value on a %s", ds.DisplayName())
 }
 
 func (d *Document) SetValue(val interface{}) error {
@@ -81,7 +81,7 @@ func (d *Document) SetValue(val interface{}) error {
 }
 
 func (m *Map) SetValue(val interface{}) error {
-	return fmt.Errorf("cannot set value on a map")
+	return fmt.Errorf("cannot set value on a %s", m.DisplayName())
 }
 
 func (mi *MapItem) SetValue(val interface{}) error {
@@ -90,7 +90,7 @@ func (mi *MapItem) SetValue(val interface{}) error {
 }
 
 func (a *Array) SetValue(val interface{}) error {
-	return fmt.Errorf("cannot set value on an array")
+	return fmt.Errorf("cannot set value on an %s", a.DisplayName())
 }
 
 func (ai *ArrayItem) SetValue(val interface{}) error {

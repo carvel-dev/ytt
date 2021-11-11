@@ -238,7 +238,7 @@ func (e *Template) debugComment(node yamlmeta.Node) string {
 		details = " idx=?"
 	}
 
-	return fmt.Sprintf("%T%s", node, details) // TODO, node.GetRef())
+	return fmt.Sprintf("%s%s", node.DisplayName(), details) // TODO, node.GetRef())
 }
 
 func (e *Template) newSourceLine(pos *filepos.Position) *template.SourceLine {
