@@ -91,12 +91,12 @@ func NewNullableAnnotation(ann template.NodeAnnotation, node yamlmeta.Node) (*Nu
 }
 
 // NewDefaultAnnotation checks the argument provided via @schema/default annotation, and returns wrapper for that value.
-func NewDefaultAnnotation(ann template.NodeAnnotation, inferredType yamlmeta.Type, pos *filepos.Position) (*DefaultAnnotation, error) {
+func NewDefaultAnnotation(ann template.NodeAnnotation, effectiveType yamlmeta.Type, pos *filepos.Position) (*DefaultAnnotation, error) {
 	if len(ann.Kwargs) != 0 {
 		return nil, schemaAssertionError{
 			position:    pos,
 			description: fmt.Sprintf("syntax error in @%v annotation", AnnotationDefault),
-			expected:    fmt.Sprintf("%s (by %s)", inferredType.String(), inferredType.GetDefinitionPosition().AsCompactString()),
+			expected:    fmt.Sprintf("%s (by %s)", effectiveType.String(), effectiveType.GetDefinitionPosition().AsCompactString()),
 			found:       fmt.Sprintf("(keyword argument in @%v above this item)", AnnotationDefault),
 			hints: []string{
 				"this annotation only accepts one argument: the default value.",
@@ -108,14 +108,14 @@ func NewDefaultAnnotation(ann template.NodeAnnotation, inferredType yamlmeta.Typ
 		return nil, schemaAssertionError{
 			position:    pos,
 			description: fmt.Sprintf("syntax error in @%v annotation", AnnotationDefault),
-			expected:    fmt.Sprintf("%s (by %s)", inferredType.String(), inferredType.GetDefinitionPosition().AsCompactString()),
+			expected:    fmt.Sprintf("%s (by %s)", effectiveType.String(), effectiveType.GetDefinitionPosition().AsCompactString()),
 			found:       fmt.Sprintf("missing value (in @%v above this item)", AnnotationDefault),
 		}
 	case numArgs > 1:
 		return nil, schemaAssertionError{
 			position:    pos,
 			description: fmt.Sprintf("syntax error in @%v annotation", AnnotationDefault),
-			expected:    fmt.Sprintf("%s (by %s)", inferredType.String(), inferredType.GetDefinitionPosition().AsCompactString()),
+			expected:    fmt.Sprintf("%s (by %s)", effectiveType.String(), effectiveType.GetDefinitionPosition().AsCompactString()),
 			found:       fmt.Sprintf("%v values (in @%v above this item)", numArgs, AnnotationDefault),
 		}
 	}
@@ -174,11 +174,11 @@ func collectTypeAnnotations(node yamlmeta.Node) ([]Annotation, error) {
 	return anns, nil
 }
 
-func collectValueAnnotations(node yamlmeta.Node, t yamlmeta.Type) ([]Annotation, error) {
+func collectValueAnnotations(node yamlmeta.Node, effectiveType yamlmeta.Type) ([]Annotation, error) {
 	var anns []Annotation
 
 	for _, annotation := range []template.AnnotationName{AnnotationNullable, AnnotationDefault} {
-		ann, err := processOptionalAnnotation(node, annotation, t)
+		ann, err := processOptionalAnnotation(node, annotation, effectiveType)
 		if err != nil {
 			return nil, err
 		}
