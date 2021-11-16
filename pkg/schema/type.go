@@ -17,6 +17,7 @@ var _ yamlmeta.Type = (*ArrayType)(nil)
 var _ yamlmeta.Type = (*ArrayItemType)(nil)
 var _ yamlmeta.Type = (*AnyType)(nil)
 var _ yamlmeta.Type = (*NullType)(nil)
+var _ yamlmeta.Type = (*ScalarType)(nil)
 
 type DocumentType struct {
 	Source       *yamlmeta.Document
@@ -25,8 +26,9 @@ type DocumentType struct {
 	defaultValue interface{}
 }
 type MapType struct {
-	Items    []*MapItemType
-	Position *filepos.Position
+	Items       []*MapItemType
+	Position    *filepos.Position
+	description string
 }
 type MapItemType struct {
 	Key          interface{} // usually a string
@@ -38,6 +40,7 @@ type ArrayType struct {
 	ItemsType    yamlmeta.Type
 	Position     *filepos.Position
 	defaultValue interface{}
+	description  string
 }
 type ArrayItemType struct {
 	ValueType    yamlmeta.Type
@@ -48,14 +51,17 @@ type ScalarType struct {
 	ValueType    interface{}
 	Position     *filepos.Position
 	defaultValue interface{}
+	description  string
 }
 type AnyType struct {
 	defaultValue interface{}
 	Position     *filepos.Position
+	description  string
 }
 type NullType struct {
-	ValueType yamlmeta.Type
-	Position  *filepos.Position
+	ValueType   yamlmeta.Type
+	Position    *filepos.Position
+	description string
 }
 
 // SetDefaultValue sets the default value of the wrapped type to `val`
@@ -440,6 +446,80 @@ func (m *ScalarType) AssignTypeTo(typeable yamlmeta.Typeable) yamlmeta.TypeCheck
 
 func (a AnyType) AssignTypeTo(yamlmeta.Typeable) (chk yamlmeta.TypeCheck) {
 	return
+}
+
+// GetDescription provides descriptive information
+func (t *DocumentType) GetDescription() string {
+	return ""
+}
+
+// GetDescription provides descriptive information
+func (m *MapType) GetDescription() string {
+	return m.description
+}
+
+// GetDescription provides descriptive information
+func (t *MapItemType) GetDescription() string {
+	return ""
+}
+
+// GetDescription provides descriptive information
+func (a *ArrayType) GetDescription() string {
+	return a.description
+}
+
+// GetDescription provides descriptive information
+func (a *ArrayItemType) GetDescription() string {
+	return ""
+}
+
+// GetDescription provides descriptive information
+func (m *ScalarType) GetDescription() string {
+	return m.description
+}
+
+// GetDescription provides descriptive information
+func (a *AnyType) GetDescription() string {
+	return a.description
+}
+
+// GetDescription provides descriptive information
+func (n *NullType) GetDescription() string {
+	return n.description
+}
+
+// SetDescription sets the description of the type
+func (t *DocumentType) SetDescription(desc string) {}
+
+// SetDescription sets the description of the type
+func (m *MapType) SetDescription(desc string) {
+	m.description = desc
+}
+
+// SetDescription sets the description of the type
+func (t *MapItemType) SetDescription(desc string) {}
+
+// SetDescription sets the description of the type
+func (a *ArrayType) SetDescription(desc string) {
+	a.description = desc
+}
+
+// SetDescription sets the description of the type
+func (a *ArrayItemType) SetDescription(desc string) {}
+
+// SetDescription sets the description of the type
+func (m *ScalarType) SetDescription(desc string) {
+	m.description = desc
+}
+
+// SetDescription sets the description of the type
+func (a *AnyType) SetDescription(desc string) {
+	a.description = desc
+}
+
+// SetDescription sets the description of the type
+func (n *NullType) SetDescription(desc string) {
+	n.description = desc
 }
 
 func (m *MapType) AllowsKey(key interface{}) bool {

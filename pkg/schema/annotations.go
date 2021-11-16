@@ -15,6 +15,7 @@ const (
 	AnnotationNullable     template.AnnotationName = "schema/nullable"
 	AnnotationType         template.AnnotationName = "schema/type"
 	AnnotationDefault      template.AnnotationName = "schema/default"
+	AnnotationDescription  template.AnnotationName = "schema/desc"
 	TypeAnnotationKwargAny string                  = "any"
 )
 
@@ -34,6 +35,10 @@ type NullableAnnotation struct {
 // DefaultAnnotation is a wrapper for a value provided via @schema/default annotation
 type DefaultAnnotation struct {
 	val interface{}
+}
+// DescriptionAnnotation documents the purpose of a node
+type DescriptionAnnotation struct {
+	description string
 }
 
 // NewTypeAnnotation checks the keyword argument provided via @schema/type annotation, and returns wrapper for the annotated node.
@@ -128,6 +133,45 @@ func NewDefaultAnnotation(ann template.NodeAnnotation, effectiveType yamlmeta.Ty
 	return &DefaultAnnotation{yamlmeta.NewASTFromInterfaceWithPosition(val, pos)}, nil
 }
 
+func NewDescriptionAnnotation(ann template.NodeAnnotation, pos *filepos.Position) (*DescriptionAnnotation, error) {
+	if len(ann.Kwargs) != 0 {
+		return nil, schemaAssertionError{
+			position:    pos,
+			description: fmt.Sprintf("syntax error in @%v annotation", AnnotationDescription),
+			expected:    fmt.Sprintf("string"),
+			found:       fmt.Sprintf("keyword argument (in @%v above this item)", AnnotationDescription),
+			hints:       []string{"this annotation only accepts one argument: a string."},
+		}
+	}
+	switch numArgs := len(ann.Args); {
+	case numArgs == 0:
+		return nil, schemaAssertionError{
+			position:    pos,
+			description: fmt.Sprintf("syntax error in @%v annotation", AnnotationDescription),
+			expected:    fmt.Sprintf("string"),
+			found:       fmt.Sprintf("missing value (in @%v above this item)", AnnotationDescription),
+		}
+	case numArgs > 1:
+		return nil, schemaAssertionError{
+			position:    pos,
+			description: fmt.Sprintf("syntax error in @%v annotation", AnnotationDescription),
+			expected:    fmt.Sprintf("string"),
+			found:       fmt.Sprintf("%v values (in @%v above this item)", numArgs, AnnotationDescription),
+		}
+	}
+
+	strVal, err := core.NewStarlarkValue(ann.Args[0]).AsString()
+	if err != nil {
+		return nil, schemaAssertionError{
+			position:    pos,
+			description: fmt.Sprintf("syntax error in @%v annotation", AnnotationDescription),
+			expected:    fmt.Sprintf("string"),
+			found:       fmt.Sprintf("Non-string value (in @%v above this item)", AnnotationDescription),
+		}
+	}
+	return &DescriptionAnnotation{strVal}, nil
+}
+
 // NewTypeFromAnn returns type information given by annotation.
 func (t *TypeAnnotation) NewTypeFromAnn() (yamlmeta.Type, error) {
 	if t.any {
@@ -148,6 +192,11 @@ func (n *NullableAnnotation) NewTypeFromAnn() (yamlmeta.Type, error) {
 // NewTypeFromAnn returns type information given by annotation.
 func (n *DefaultAnnotation) NewTypeFromAnn() (yamlmeta.Type, error) {
 	return nil, nil
+}
+
+// NewTypeFromAnn returns type information given by annotation. DescriptionAnnotation has no type information.
+func (n *DescriptionAnnotation) NewTypeFromAnn() yamlmeta.Type {
+	return nil
 }
 
 func (t *TypeAnnotation) IsAny() bool {
@@ -225,6 +274,12 @@ func processOptionalAnnotation(node yamlmeta.Node, optionalAnnotation template.A
 				return nil, err
 			}
 			return defaultAnn, nil
+		case AnnotationDescription:
+			descAnn, err := NewDescriptionAnnotation(ann, node.GetPosition())
+			if err != nil {
+				return nil, err
+			}
+			return descAnn, nil
 		}
 	}
 

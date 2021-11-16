@@ -52,17 +52,29 @@ func (o *OpenAPIDocument) calculateProperties(schemaVal interface{}) *yamlmeta.M
 		property := yamlmeta.Map{Items: []*yamlmeta.MapItem{
 			{Key: "type", Value: "object"},
 			{Key: "additionalProperties", Value: false},
-			{Key: "properties", Value: &yamlmeta.Map{Items: properties}},
 		}}
+
+		if typedValue.GetDescription() != "" {
+			property.Items = append(property.Items, &yamlmeta.MapItem{Key: "description", Value: typedValue.GetDescription()})
+		}
+		property.Items = append(property.Items, &yamlmeta.MapItem{Key: "properties", Value: &yamlmeta.Map{Items: properties}})
 		return &property
 	case *ArrayType:
 		valueType := typedValue.GetValueType().(*ArrayItemType)
 		properties := o.calculateProperties(valueType.GetValueType())
 		property := yamlmeta.Map{Items: []*yamlmeta.MapItem{
 			{Key: "type", Value: "array"},
+		}}
+
+		if typedValue.GetDescription() != "" {
+			property.Items = append(property.Items, &yamlmeta.MapItem{Key: "description", Value: typedValue.GetDescription()})
+		}
+		items := []*yamlmeta.MapItem{
 			{Key: "items", Value: properties},
 			{Key: "default", Value: typedValue.GetDefaultValue()},
-		}}
+		}
+
+		property.Items = append(property.Items, items...)
 		return &property
 	case *ScalarType:
 		typeString := o.openAPITypeFor(typedValue)
@@ -74,16 +86,26 @@ func (o *OpenAPIDocument) calculateProperties(schemaVal interface{}) *yamlmeta.M
 		if typedValue.String() == "float" {
 			property.Items = append(property.Items, &yamlmeta.MapItem{Key: "format", Value: "float"})
 		}
+		if typedValue.GetDescription() != "" {
+			property.Items = append(property.Items, &yamlmeta.MapItem{Key: "description", Value: typedValue.GetDescription()})
+		}
 		return &property
 	case *NullType:
 		properties := o.calculateProperties(typedValue.GetValueType())
 		properties.Items = append(properties.Items, &yamlmeta.MapItem{Key: "nullable", Value: true})
+		if typedValue.GetDescription() != "" {
+			properties.Items = append(properties.Items, &yamlmeta.MapItem{Key: "description", Value: typedValue.GetDescription()})
+		}
 		return properties
 	case *AnyType:
-		return &yamlmeta.Map{Items: []*yamlmeta.MapItem{
+		m := &yamlmeta.Map{Items: []*yamlmeta.MapItem{
 			{Key: "nullable", Value: true},
 			{Key: "default", Value: typedValue.GetDefaultValue()},
 		}}
+		if typedValue.GetDescription() != "" {
+			m.Items = append(m.Items, &yamlmeta.MapItem{Key: "description", Value: typedValue.GetDescription()})
+		}
+		return m
 	default:
 		panic(fmt.Sprintf("Unrecognized type %T", schemaVal))
 	}
