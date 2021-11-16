@@ -147,7 +147,7 @@ func (m *Map) AddValue(val interface{}) error {
 
 func (mi *MapItem) AddValue(val interface{}) error {
 	if !isValidValue(val) {
-		return fmt.Errorf("mapitems can only contain arrays, maps, or scalars; this is a %T", val)
+		return fmt.Errorf("map items can only contain arrays, maps, or scalars; this is a %T", val)
 	}
 	mi.Value = val
 	return nil
@@ -163,7 +163,7 @@ func (a *Array) AddValue(val interface{}) error {
 
 func (ai *ArrayItem) AddValue(val interface{}) error {
 	if !isValidValue(val) {
-		return fmt.Errorf("arrayitems can only contain maps, arrays, or scalars; this is a %T", val)
+		return fmt.Errorf("array items can only contain maps, arrays, or scalars; this is a %T", val)
 	}
 	ai.Value = val
 	return nil

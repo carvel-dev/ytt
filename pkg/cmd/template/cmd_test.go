@@ -775,7 +775,7 @@ bar: #@ docset()
 		out := opts.RunWithFiles(cmdtpl.Input{Files: filesToProcess}, ui)
 
 		require.Error(t, out.Err)
-		require.Contains(t, out.Err.Error(), "mapitems can only contain arrays, maps, or scalars")
+		require.Contains(t, out.Err.Error(), "map items can only contain arrays, maps, or scalars")
 	})
 	t.Run("setting array item to DocumentSet", func(t *testing.T) {
 		tpl := []byte(`
@@ -797,6 +797,6 @@ bar:
 
 		out := opts.RunWithFiles(cmdtpl.Input{Files: filesToProcess}, ui)
 		require.Error(t, out.Err)
-		require.Contains(t, out.Err.Error(), "arrayitems can only contain maps, arrays, or scalars")
+		require.Contains(t, out.Err.Error(), "array items can only contain maps, arrays, or scalars")
 	})
 }
