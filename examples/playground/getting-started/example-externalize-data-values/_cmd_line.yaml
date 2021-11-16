@@ -1,4 +1,4 @@
 cmd: |
  This is what you would type on the command-line.
 
- $ ytt -f config.yml -f values.yml
+ $ ytt -f config.yml -f schema.yml

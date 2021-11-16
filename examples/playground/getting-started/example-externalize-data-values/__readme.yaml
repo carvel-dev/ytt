@@ -35,9 +35,9 @@ readme: |
   2. our template now `load()`s the data values module into
      the local variable `data`;
   3. and references values through `data.values`
-  4. on the command-line we include `-f values.yml`
+  4. on the command-line we include `-f schema.yml`
 
-  Prove to yourself that modifying a value in `values.yml`
+  Prove to yourself that modifying a value in `schema.yml`
   changes the deployment.
 
   ---------------------------------
