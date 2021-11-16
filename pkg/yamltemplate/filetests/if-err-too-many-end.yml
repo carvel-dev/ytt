@@ -12,4 +12,4 @@ metadata:
 ERR: 
 - unexpected end
     stdin:8 |     #@ end
-    stdin:? | __ytt_tplXXX_start_node(11) # document (generated)
+    stdin:? | __ytt_tplXXX_start_node(11) # *yamlmeta.Document (generated)
