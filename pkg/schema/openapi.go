@@ -8,6 +8,13 @@ import (
 
 	"github.com/k14s/ytt/pkg/yamlmeta"
 )
+// keys used when generating an OpenAPI Document
+const (
+	Type = "type"
+	Default = "default"
+	Nullable = "nullable"
+	Description = "description"
+)
 
 // OpenAPIDocument holds the document type used for creating an OpenAPI document
 type OpenAPIDocument struct {
@@ -50,12 +57,12 @@ func (o *OpenAPIDocument) calculateProperties(schemaVal interface{}) *yamlmeta.M
 			properties = append(properties, &mi)
 		}
 		property := yamlmeta.Map{Items: []*yamlmeta.MapItem{
-			{Key: "type", Value: "object"},
+			{Key: Type, Value: "object"},
 			{Key: "additionalProperties", Value: false},
 		}}
 
 		if typedValue.GetDescription() != "" {
-			property.Items = append(property.Items, &yamlmeta.MapItem{Key: "description", Value: typedValue.GetDescription()})
+			property.Items = append(property.Items, &yamlmeta.MapItem{Key: Description, Value: typedValue.GetDescription()})
 		}
 		property.Items = append(property.Items, &yamlmeta.MapItem{Key: "properties", Value: &yamlmeta.Map{Items: properties}})
 		return &property
@@ -63,15 +70,15 @@ func (o *OpenAPIDocument) calculateProperties(schemaVal interface{}) *yamlmeta.M
 		valueType := typedValue.GetValueType().(*ArrayItemType)
 		properties := o.calculateProperties(valueType.GetValueType())
 		property := yamlmeta.Map{Items: []*yamlmeta.MapItem{
-			{Key: "type", Value: "array"},
+			{Key: Type, Value: "array"},
 		}}
 
 		if typedValue.GetDescription() != "" {
-			property.Items = append(property.Items, &yamlmeta.MapItem{Key: "description", Value: typedValue.GetDescription()})
+			property.Items = append(property.Items, &yamlmeta.MapItem{Key: Description, Value: typedValue.GetDescription()})
 		}
 		items := []*yamlmeta.MapItem{
 			{Key: "items", Value: properties},
-			{Key: "default", Value: typedValue.GetDefaultValue()},
+			{Key: Default, Value: typedValue.GetDefaultValue()},
 		}
 
 		property.Items = append(property.Items, items...)
@@ -80,32 +87,32 @@ func (o *OpenAPIDocument) calculateProperties(schemaVal interface{}) *yamlmeta.M
 		typeString := o.openAPITypeFor(typedValue)
 		defaultVal := typedValue.GetDefaultValue()
 		property := yamlmeta.Map{Items: []*yamlmeta.MapItem{
-			{Key: "type", Value: typeString},
-			{Key: "default", Value: defaultVal},
+			{Key: Type, Value: typeString},
+			{Key: Default, Value: defaultVal},
 		}}
 		if typedValue.String() == "float" {
 			property.Items = append(property.Items, &yamlmeta.MapItem{Key: "format", Value: "float"})
 		}
 		if typedValue.GetDescription() != "" {
-			property.Items = append(property.Items, &yamlmeta.MapItem{Key: "description", Value: typedValue.GetDescription()})
+			property.Items = append(property.Items, &yamlmeta.MapItem{Key: Description, Value: typedValue.GetDescription()})
 		}
 		return &property
 	case *NullType:
 		properties := o.calculateProperties(typedValue.GetValueType())
-		properties.Items = append(properties.Items, &yamlmeta.MapItem{Key: "nullable", Value: true})
+		properties.Items = append(properties.Items, &yamlmeta.MapItem{Key: Nullable, Value: true})
 		if typedValue.GetDescription() != "" {
-			properties.Items = append(properties.Items, &yamlmeta.MapItem{Key: "description", Value: typedValue.GetDescription()})
+			properties.Items = append(properties.Items, &yamlmeta.MapItem{Key: Description, Value: typedValue.GetDescription()})
 		}
 		return properties
 	case *AnyType:
-		m := &yamlmeta.Map{Items: []*yamlmeta.MapItem{
-			{Key: "nullable", Value: true},
-			{Key: "default", Value: typedValue.GetDefaultValue()},
+		properties := &yamlmeta.Map{Items: []*yamlmeta.MapItem{
+			{Key: Nullable, Value: true},
+			{Key: Default, Value: typedValue.GetDefaultValue()},
 		}}
 		if typedValue.GetDescription() != "" {
-			m.Items = append(m.Items, &yamlmeta.MapItem{Key: "description", Value: typedValue.GetDescription()})
+			properties.Items = append(properties.Items, &yamlmeta.MapItem{Key: Description, Value: typedValue.GetDescription()})
 		}
-		return m
+		return properties
 	default:
 		panic(fmt.Sprintf("Unrecognized type %T", schemaVal))
 	}

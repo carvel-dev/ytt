@@ -101,8 +101,8 @@ func (a *ArrayItemType) SetDefaultValue(val interface{}) {
 }
 
 // SetDefaultValue sets the default value to `val`
-func (m *ScalarType) SetDefaultValue(val interface{}) {
-	m.defaultValue = val
+func (s *ScalarType) SetDefaultValue(val interface{}) {
+	s.defaultValue = val
 }
 
 func (n NullType) GetDefaultValue() interface{} {
@@ -115,9 +115,9 @@ func (a AnyType) GetDefaultValue() interface{} {
 	}
 	return a.defaultValue
 }
-
-func (m ScalarType) GetDefaultValue() interface{} {
-	return m.defaultValue // scalar values are copied (even through an interface{} reference)
+// GetDefaultValue provides the default value
+func (s ScalarType) GetDefaultValue() interface{} {
+	return s.defaultValue // scalar values are copied (even through an interface{} reference)
 }
 
 func (a ArrayItemType) GetDefaultValue() interface{} {
@@ -189,7 +189,8 @@ func (a ArrayType) GetValueType() yamlmeta.Type {
 func (a ArrayItemType) GetValueType() yamlmeta.Type {
 	return a.ValueType
 }
-func (m ScalarType) GetValueType() yamlmeta.Type {
+// GetValueType provides the type of the value
+func (s ScalarType) GetValueType() yamlmeta.Type {
 	panic("Not implemented because it is unreachable")
 }
 func (a AnyType) GetValueType() yamlmeta.Type {
@@ -211,8 +212,9 @@ func (a ArrayType) GetDefinitionPosition() *filepos.Position {
 func (a ArrayItemType) GetDefinitionPosition() *filepos.Position {
 	return a.Position
 }
-func (m ScalarType) GetDefinitionPosition() *filepos.Position {
-	return m.Position
+// GetDefinitionPosition provides the file position
+func (s ScalarType) GetDefinitionPosition() *filepos.Position {
+	return s.Position
 }
 func (a AnyType) GetDefinitionPosition() *filepos.Position {
 	return a.Position
@@ -233,8 +235,8 @@ func (a ArrayType) String() string {
 func (a ArrayItemType) String() string {
 	return fmt.Sprintf("- %s", a.ValueType.String())
 }
-func (m ScalarType) String() string {
-	switch m.ValueType.(type) {
+func (s ScalarType) String() string {
+	switch s.ValueType.(type) {
 	case float64:
 		return "float"
 	case int:
@@ -242,7 +244,7 @@ func (m ScalarType) String() string {
 	case bool:
 		return "boolean"
 	default:
-		return fmt.Sprintf("%T", m.ValueType)
+		return fmt.Sprintf("%T", s.ValueType)
 	}
 }
 func (a AnyType) String() string {
@@ -297,35 +299,35 @@ func (a *ArrayItemType) CheckType(node yamlmeta.TypeWithValues) (chk yamlmeta.Ty
 	}
 	return
 }
-
-func (m *ScalarType) CheckType(node yamlmeta.TypeWithValues) (chk yamlmeta.TypeCheck) {
+// CheckType validates the type of the node and the type of the value
+func (s *ScalarType) CheckType(node yamlmeta.TypeWithValues) (chk yamlmeta.TypeCheck) {
 	value := node.GetValues()[0]
 	switch value.(type) {
 	case string:
-		if _, ok := m.ValueType.(string); !ok {
+		if _, ok := s.ValueType.(string); !ok {
 			chk.Violations = append(chk.Violations,
-				NewMismatchedTypeAssertionError(node, m))
+				NewMismatchedTypeAssertionError(node, s))
 		}
 	case float64:
-		if _, ok := m.ValueType.(float64); !ok {
+		if _, ok := s.ValueType.(float64); !ok {
 			chk.Violations = append(chk.Violations,
-				NewMismatchedTypeAssertionError(node, m))
+				NewMismatchedTypeAssertionError(node, s))
 		}
 	case int, int64, uint64:
-		if _, ok := m.ValueType.(int); !ok {
-			if _, ok = m.ValueType.(float64); !ok {
+		if _, ok := s.ValueType.(int); !ok {
+			if _, ok = s.ValueType.(float64); !ok {
 				chk.Violations = append(chk.Violations,
-					NewMismatchedTypeAssertionError(node, m))
+					NewMismatchedTypeAssertionError(node, s))
 			}
 		}
 	case bool:
-		if _, ok := m.ValueType.(bool); !ok {
+		if _, ok := s.ValueType.(bool); !ok {
 			chk.Violations = append(chk.Violations,
-				NewMismatchedTypeAssertionError(node, m))
+				NewMismatchedTypeAssertionError(node, s))
 		}
 	default:
 		chk.Violations = append(chk.Violations,
-			NewMismatchedTypeAssertionError(node, m))
+			NewMismatchedTypeAssertionError(node, s))
 	}
 	return
 }
@@ -439,9 +441,9 @@ func (a *ArrayItemType) AssignTypeTo(typeable yamlmeta.Typeable) (chk yamlmeta.T
 	} // else, is scalar
 	return
 }
-
-func (m *ScalarType) AssignTypeTo(typeable yamlmeta.Typeable) yamlmeta.TypeCheck {
-	return yamlmeta.TypeCheck{[]error{NewMismatchedTypeAssertionError(typeable, m)}}
+// AssignTypeTo validates that the type is compatible and assigns it to the type
+func (s *ScalarType) AssignTypeTo(typeable yamlmeta.Typeable) yamlmeta.TypeCheck {
+	return yamlmeta.TypeCheck{[]error{NewMismatchedTypeAssertionError(typeable, s)}}
 }
 
 func (a AnyType) AssignTypeTo(yamlmeta.Typeable) (chk yamlmeta.TypeCheck) {
@@ -474,8 +476,8 @@ func (a *ArrayItemType) GetDescription() string {
 }
 
 // GetDescription provides descriptive information
-func (m *ScalarType) GetDescription() string {
-	return m.description
+func (s *ScalarType) GetDescription() string {
+	return s.description
 }
 
 // GetDescription provides descriptive information
@@ -508,8 +510,8 @@ func (a *ArrayType) SetDescription(desc string) {
 func (a *ArrayItemType) SetDescription(desc string) {}
 
 // SetDescription sets the description of the type
-func (m *ScalarType) SetDescription(desc string) {
-	m.description = desc
+func (s *ScalarType) SetDescription(desc string) {
+	s.description = desc
 }
 
 // SetDescription sets the description of the type
