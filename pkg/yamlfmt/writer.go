@@ -52,7 +52,7 @@ func (w *writer) AddContent(chunk writerChunk) {
 		fmt.Fprintf(w.writer, chunk.Indent)
 	}
 
-	fmt.Fprintf(w.writer, w.indentMultiline(chunk))
+	fmt.Fprintf(w.writer, "%s", w.indentMultiline(chunk))
 
 	if !chunk.AllowsInlining {
 		fmt.Fprintf(w.writer, "\n")
