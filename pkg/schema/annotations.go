@@ -133,6 +133,7 @@ func NewDefaultAnnotation(ann template.NodeAnnotation, effectiveType yamlmeta.Ty
 	return &DefaultAnnotation{yamlmeta.NewASTFromInterfaceWithPosition(val, pos)}, nil
 }
 
+// NewDescriptionAnnotation validates the value from the AnnotationDescription, and returns the value
 func NewDescriptionAnnotation(ann template.NodeAnnotation, pos *filepos.Position) (*DescriptionAnnotation, error) {
 	if len(ann.Kwargs) != 0 {
 		return nil, schemaAssertionError{

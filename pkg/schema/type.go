@@ -86,8 +86,8 @@ func (m *MapType) SetDefaultValue(val interface{}) {
 }
 
 // SetDefaultValue sets the default value to `val`
-func (i *MapItemType) SetDefaultValue(val interface{}) {
-	i.defaultValue = val
+func (t *MapItemType) SetDefaultValue(val interface{}) {
+	t.defaultValue = val
 }
 
 // SetDefaultValue sets the default value to `val`
@@ -101,8 +101,8 @@ func (a *ArrayItemType) SetDefaultValue(val interface{}) {
 }
 
 // SetDefaultValue sets the default value to `val`
-func (a *ScalarType) SetDefaultValue(val interface{}) {
-	a.defaultValue = val
+func (m *ScalarType) SetDefaultValue(val interface{}) {
+	m.defaultValue = val
 }
 
 func (n NullType) GetDefaultValue() interface{} {
