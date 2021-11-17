@@ -11,10 +11,10 @@ import (
 
 // keys used when generating an OpenAPI Document
 const (
-	Type        = "type"
-	Default     = "default"
-	Nullable    = "nullable"
-	Description = "description"
+	typeProp        = "type"
+	defaultProp     = "default"
+	nullableProp    = "nullable"
+	descriptionProp = "description"
 )
 
 // OpenAPIDocument holds the document type used for creating an OpenAPI document
