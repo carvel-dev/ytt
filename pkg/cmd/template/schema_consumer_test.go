@@ -268,6 +268,7 @@ foo:
 		expectedErrMsg := `Overlaying data values (in following order: additional data values): 
 One or more data values were invalid
 ====================================
+Given data value is not declared in schema
 
 dvs1.yml:
     |
@@ -275,8 +276,7 @@ dvs1.yml:
     |
 
     = found: wrong_key
-    = expected: (a key defined in map) (by schema.yml:3)
-    = hint: declare data values in schema and override them in a data values document
+    = expected: a map item with the key named "bar" (from schema.yml:3)
 `
 		assertFails(t, filesToProcess, expectedErrMsg, opts)
 	})
@@ -828,6 +828,7 @@ rendered: true`
 		expectedErrMsg := `Overlaying data values (in following order: additional data values): 
 One or more data values were invalid
 ====================================
+Given data value is not declared in schema
 
 dvs1.yml:
     |
@@ -835,8 +836,7 @@ dvs1.yml:
     |
 
     = found: not_in_schema
-    = expected: (a key defined in map) (by schema.yml:2)
-    = hint: declare data values in schema and override them in a data values document
+    = expected: a map item with the key named "hostname" (from schema.yml:2)
 `
 		assertFails(t, filesToProcess, expectedErrMsg, opts)
 	})
