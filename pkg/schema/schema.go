@@ -167,6 +167,15 @@ func getType(node yamlmeta.Node) (yamlmeta.Type, error) {
 			return nil, err
 		}
 	}
+	docAnns, err := collectDocumentationAnnotations(node)
+	if err != nil {
+		return nil, NewSchemaError("Invalid schema", err)
+	}
+	for _, ann := range docAnns {
+		if desc, ok := ann.(*DescriptionAnnotation); ok {
+			typeOfValue.SetDescription(desc.description)
+		}
+	}
 
 	err = valueTypeAllowsItemValue(typeOfValue, node.GetValues()[0], node.GetPosition())
 	if err != nil {

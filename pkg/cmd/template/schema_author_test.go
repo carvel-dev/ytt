@@ -475,6 +475,113 @@ schema.yml:
 			})
 		})
 	})
+	t.Run("when schema/desc annotation value", func(t *testing.T) {
+		t.Run("is empty", func(t *testing.T) {
+			schemaYAML := `#@data/values-schema
+---
+#@schema/desc
+key: val
+`
+			expectedErr := `
+Invalid schema
+==============
+syntax error in @schema/desc annotation
+
+schema.yml:
+    |
+  4 | key: val
+    |
+
+    = found: missing value (in @schema/desc above this item)
+    = expected: string
+`
+
+			filesToProcess := files.NewSortedFiles([]*files.File{
+				files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
+			})
+
+			assertFails(t, filesToProcess, expectedErr, opts)
+		})
+		t.Run("has more than one arg", func(t *testing.T) {
+			schemaYAML := `#@data/values-schema
+---
+#@schema/desc "two", "strings"
+key: val
+`
+			expectedErr := `
+Invalid schema
+==============
+syntax error in @schema/desc annotation
+
+schema.yml:
+    |
+  4 | key: val
+    |
+
+    = found: 2 values (in @schema/desc above this item)
+    = expected: string
+`
+
+			filesToProcess := files.NewSortedFiles([]*files.File{
+				files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
+			})
+
+			assertFails(t, filesToProcess, expectedErr, opts)
+		})
+		t.Run("is not a string", func(t *testing.T) {
+			schemaYAML := `#@data/values-schema
+---
+#@schema/desc 1
+key: val
+`
+			expectedErr := `
+Invalid schema
+==============
+syntax error in @schema/desc annotation
+
+schema.yml:
+    |
+  4 | key: val
+    |
+
+    = found: Non-string value (in @schema/desc above this item)
+    = expected: string
+`
+
+			filesToProcess := files.NewSortedFiles([]*files.File{
+				files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
+			})
+
+			assertFails(t, filesToProcess, expectedErr, opts)
+		})
+		t.Run("is key=value pair", func(t *testing.T) {
+			schemaYAML := `#@data/values-schema
+---
+#@schema/desc key=True
+key: val
+`
+			expectedErr := `
+Invalid schema
+==============
+syntax error in @schema/desc annotation
+
+schema.yml:
+    |
+  4 | key: val
+    |
+
+    = found: keyword argument (in @schema/desc above this item)
+    = expected: string
+    = hint: this annotation only accepts one argument: a string.
+`
+
+			filesToProcess := files.NewSortedFiles([]*files.File{
+				files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
+			})
+
+			assertFails(t, filesToProcess, expectedErr, opts)
+		})
+	})
 }
 
 func TestSchema_Provides_default_values(t *testing.T) {

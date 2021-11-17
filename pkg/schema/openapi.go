@@ -9,6 +9,14 @@ import (
 	"github.com/k14s/ytt/pkg/yamlmeta"
 )
 
+// keys used when generating an OpenAPI Document
+const (
+	typeProp        = "type"
+	defaultProp     = "default"
+	nullableProp    = "nullable"
+	descriptionProp = "description"
+)
+
 // OpenAPIDocument holds the document type used for creating an OpenAPI document
 type OpenAPIDocument struct {
 	docType *DocumentType
@@ -50,40 +58,62 @@ func (o *OpenAPIDocument) calculateProperties(schemaVal interface{}) *yamlmeta.M
 			properties = append(properties, &mi)
 		}
 		property := yamlmeta.Map{Items: []*yamlmeta.MapItem{
-			{Key: "type", Value: "object"},
+			{Key: typeProp, Value: "object"},
 			{Key: "additionalProperties", Value: false},
-			{Key: "properties", Value: &yamlmeta.Map{Items: properties}},
 		}}
+
+		if typedValue.GetDescription() != "" {
+			property.Items = append(property.Items, &yamlmeta.MapItem{Key: descriptionProp, Value: typedValue.GetDescription()})
+		}
+		property.Items = append(property.Items, &yamlmeta.MapItem{Key: "properties", Value: &yamlmeta.Map{Items: properties}})
 		return &property
 	case *ArrayType:
 		valueType := typedValue.GetValueType().(*ArrayItemType)
 		properties := o.calculateProperties(valueType.GetValueType())
 		property := yamlmeta.Map{Items: []*yamlmeta.MapItem{
-			{Key: "type", Value: "array"},
-			{Key: "items", Value: properties},
-			{Key: "default", Value: typedValue.GetDefaultValue()},
+			{Key: typeProp, Value: "array"},
 		}}
+
+		if typedValue.GetDescription() != "" {
+			property.Items = append(property.Items, &yamlmeta.MapItem{Key: descriptionProp, Value: typedValue.GetDescription()})
+		}
+		items := []*yamlmeta.MapItem{
+			{Key: "items", Value: properties},
+			{Key: defaultProp, Value: typedValue.GetDefaultValue()},
+		}
+
+		property.Items = append(property.Items, items...)
 		return &property
 	case *ScalarType:
 		typeString := o.openAPITypeFor(typedValue)
 		defaultVal := typedValue.GetDefaultValue()
 		property := yamlmeta.Map{Items: []*yamlmeta.MapItem{
-			{Key: "type", Value: typeString},
-			{Key: "default", Value: defaultVal},
+			{Key: typeProp, Value: typeString},
+			{Key: defaultProp, Value: defaultVal},
 		}}
 		if typedValue.String() == "float" {
 			property.Items = append(property.Items, &yamlmeta.MapItem{Key: "format", Value: "float"})
 		}
+		if typedValue.GetDescription() != "" {
+			property.Items = append(property.Items, &yamlmeta.MapItem{Key: descriptionProp, Value: typedValue.GetDescription()})
+		}
 		return &property
 	case *NullType:
 		properties := o.calculateProperties(typedValue.GetValueType())
-		properties.Items = append(properties.Items, &yamlmeta.MapItem{Key: "nullable", Value: true})
+		properties.Items = append(properties.Items, &yamlmeta.MapItem{Key: nullableProp, Value: true})
+		if typedValue.GetDescription() != "" {
+			properties.Items = append(properties.Items, &yamlmeta.MapItem{Key: descriptionProp, Value: typedValue.GetDescription()})
+		}
 		return properties
 	case *AnyType:
-		return &yamlmeta.Map{Items: []*yamlmeta.MapItem{
-			{Key: "nullable", Value: true},
-			{Key: "default", Value: typedValue.GetDefaultValue()},
+		properties := &yamlmeta.Map{Items: []*yamlmeta.MapItem{
+			{Key: nullableProp, Value: true},
+			{Key: defaultProp, Value: typedValue.GetDefaultValue()},
 		}}
+		if typedValue.GetDescription() != "" {
+			properties.Items = append(properties.Items, &yamlmeta.MapItem{Key: descriptionProp, Value: typedValue.GetDescription()})
+		}
+		return properties
 	default:
 		panic(fmt.Sprintf("Unrecognized type %T", schemaVal))
 	}

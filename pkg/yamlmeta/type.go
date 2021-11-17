@@ -15,6 +15,8 @@ type Type interface {
 	CheckType(node TypeWithValues) TypeCheck
 	GetDefinitionPosition() *filepos.Position
 	String() string
+	GetDescription() string
+	SetDescription(string)
 }
 
 type TypeWithValues interface {
