@@ -36,6 +36,7 @@ type NullableAnnotation struct {
 type DefaultAnnotation struct {
 	val interface{}
 }
+
 // DescriptionAnnotation documents the purpose of a node
 type DescriptionAnnotation struct {
 	description string
@@ -196,8 +197,8 @@ func (n *DefaultAnnotation) NewTypeFromAnn() (yamlmeta.Type, error) {
 }
 
 // NewTypeFromAnn returns type information given by annotation. DescriptionAnnotation has no type information.
-func (n *DescriptionAnnotation) NewTypeFromAnn() yamlmeta.Type {
-	return nil
+func (n *DescriptionAnnotation) NewTypeFromAnn() (yamlmeta.Type, error) {
+	return nil, nil
 }
 
 func (t *TypeAnnotation) IsAny() bool {
@@ -229,6 +230,22 @@ func collectValueAnnotations(node yamlmeta.Node, effectiveType yamlmeta.Type) ([
 
 	for _, annotation := range []template.AnnotationName{AnnotationNullable, AnnotationDefault} {
 		ann, err := processOptionalAnnotation(node, annotation, effectiveType)
+		if err != nil {
+			return nil, err
+		}
+		if ann != nil {
+			anns = append(anns, ann)
+		}
+	}
+	return anns, nil
+}
+
+// collectDocumentationAnnotations provides annotations that are used for documentation purposes
+func collectDocumentationAnnotations(node yamlmeta.Node) ([]Annotation, error) {
+	var anns []Annotation
+
+	for _, annotation := range []template.AnnotationName{AnnotationDescription} {
+		ann, err := processOptionalAnnotation(node, annotation, nil)
 		if err != nil {
 			return nil, err
 		}

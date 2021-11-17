@@ -115,6 +115,7 @@ func (a AnyType) GetDefaultValue() interface{} {
 	}
 	return a.defaultValue
 }
+
 // GetDefaultValue provides the default value
 func (s ScalarType) GetDefaultValue() interface{} {
 	return s.defaultValue // scalar values are copied (even through an interface{} reference)
@@ -189,6 +190,7 @@ func (a ArrayType) GetValueType() yamlmeta.Type {
 func (a ArrayItemType) GetValueType() yamlmeta.Type {
 	return a.ValueType
 }
+
 // GetValueType provides the type of the value
 func (s ScalarType) GetValueType() yamlmeta.Type {
 	panic("Not implemented because it is unreachable")
@@ -212,6 +214,7 @@ func (a ArrayType) GetDefinitionPosition() *filepos.Position {
 func (a ArrayItemType) GetDefinitionPosition() *filepos.Position {
 	return a.Position
 }
+
 // GetDefinitionPosition provides the file position
 func (s ScalarType) GetDefinitionPosition() *filepos.Position {
 	return s.Position
@@ -299,6 +302,7 @@ func (a *ArrayItemType) CheckType(node yamlmeta.TypeWithValues) (chk yamlmeta.Ty
 	}
 	return
 }
+
 // CheckType validates the type of the node and the type of the value
 func (s *ScalarType) CheckType(node yamlmeta.TypeWithValues) (chk yamlmeta.TypeCheck) {
 	value := node.GetValues()[0]
@@ -441,6 +445,7 @@ func (a *ArrayItemType) AssignTypeTo(typeable yamlmeta.Typeable) (chk yamlmeta.T
 	} // else, is scalar
 	return
 }
+
 // AssignTypeTo validates that the type is compatible and assigns it to the type
 func (s *ScalarType) AssignTypeTo(typeable yamlmeta.Typeable) yamlmeta.TypeCheck {
 	return yamlmeta.TypeCheck{[]error{NewMismatchedTypeAssertionError(typeable, s)}}

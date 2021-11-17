@@ -8,11 +8,12 @@ import (
 
 	"github.com/k14s/ytt/pkg/yamlmeta"
 )
+
 // keys used when generating an OpenAPI Document
 const (
-	Type = "type"
-	Default = "default"
-	Nullable = "nullable"
+	Type        = "type"
+	Default     = "default"
+	Nullable    = "nullable"
 	Description = "description"
 )
 
