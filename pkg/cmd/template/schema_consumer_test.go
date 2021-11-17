@@ -1018,32 +1018,6 @@ rendered: #@ data.values
 
 			assertSucceeds(t, filesToProcess, expected, opts)
 		})
-		t.Run("even when a data value is marked schema/type any=True", func(t *testing.T) {
-			schemaYAML := `#@data/values-schema
----
-#@schema/type any=True
-foo:
-  bar:
-  - 7
-  #@schema/nullable
-  bat: I should not be there
-`
-			templateYAML := `#@ load("@ytt:data", "data")
----
-foo: #@ data.values.foo
-`
-			expected := `foo:
-  bar: []
-  bat: null
-`
-
-			filesToProcess := files.NewSortedFiles([]*files.File{
-				files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
-				files.MustNewFileFromSource(files.NewBytesSource("template.yml", []byte(templateYAML))),
-			})
-
-			assertSucceeds(t, filesToProcess, expected, opts)
-		})
 		t.Run("when a document is nullable, and then a data value makes it non-null", func(t *testing.T) {
 			schemaYAML := `#@data/values-schema
 #@schema/nullable
@@ -1398,12 +1372,40 @@ foo: #@ data.values.foo
 
 		assertSucceeds(t, filesToProcess, expected, opts)
 	})
+	t.Run("on map containing array", func(t *testing.T) {
+		schemaYAML := `#@data/values-schema
+---
+#@schema/type any=True
+foo:
+- bar:
+  - 1
+  - baz
+`
+		templateYAML := `#@ load("@ytt:data", "data")
+---
+foo: #@ data.values.foo
+`
+		expected := `foo:
+- bar:
+  - 1
+  - baz
+`
+
+		filesToProcess := files.NewSortedFiles([]*files.File{
+			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
+			files.MustNewFileFromSource(files.NewBytesSource("template.yml", []byte(templateYAML))),
+		})
+
+		assertSucceeds(t, filesToProcess, expected, opts)
+	})
 	t.Run("on a document", func(t *testing.T) {
 		schemaYAML := `#@data/values-schema
 #@schema/type any=True
 ---
 foo: 13
-  
+bar:
+- bat
+- baz
 `
 		dataValuesYAML := `#@data/values
 #@overlay/match-child-defaults missing_ok=True

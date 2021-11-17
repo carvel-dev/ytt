@@ -33,13 +33,7 @@ type Node interface {
 
 }
 
-type ValueHoldingNode interface {
-	Node
-	Val() interface{}
-}
-
 var _ = []Node{&DocumentSet{}, &Map{}, &Array{}}
-var _ = []ValueHoldingNode{&Document{}, &MapItem{}, &ArrayItem{}}
 
 type DocumentSet struct {
 	Comments    []*Comment

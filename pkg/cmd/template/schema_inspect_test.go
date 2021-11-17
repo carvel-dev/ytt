@@ -308,8 +308,11 @@ components:
       default:
         foo:
           int_key: 0
-          array_of_scalars: []
-          array_of_maps: []
+          array_of_scalars:
+          - ""
+          array_of_maps:
+          - foo: ""
+            bar: ""
 `
 			filesToProcess := files.NewSortedFiles([]*files.File{
 				files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
@@ -348,8 +351,11 @@ components:
           nullable: true
           default:
             int_key: 0
-            array_of_scalars: []
-            array_of_maps: []
+            array_of_scalars:
+            - ""
+            array_of_maps:
+            - foo: ""
+              bar: ""
 `
 			filesToProcess := files.NewSortedFiles([]*files.File{
 				files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
