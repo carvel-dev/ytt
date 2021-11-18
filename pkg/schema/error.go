@@ -20,20 +20,17 @@ const schemaErrorReportTemplate = `
 {{- if .Summary}}
 {{.Summary}}
 {{addBreak .Summary}}
-{{- end}}
+{{ end}}
 {{- range .AssertionFailures}}
 {{- if .Description}}
 {{.Description}}
 {{- end}}
-
 {{- if .FromMemory}}
-
 {{.SourceName}}:
 {{pad "#" ""}}
 {{pad "#" ""}} {{.Source}}
 {{pad "#" ""}}
 {{- else}}
-
 {{.FileName}}:
 {{pad "|" ""}}
 {{pad "|" .FilePos}} {{.Source}}
@@ -45,8 +42,8 @@ const schemaErrorReportTemplate = `
 {{- range .Hints}}
 {{pad "=" ""}} hint: {{.}}
 {{- end}}
-{{- end}}
-{{.MiscErrorMessage}}
+{{end}}
+{{- .MiscErrorMessage}}
 `
 
 func NewSchemaError(summary string, errs ...error) error {

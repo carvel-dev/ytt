@@ -268,8 +268,8 @@ foo:
 		expectedErrMsg := `Overlaying data values (in following order: additional data values): 
 One or more data values were invalid
 ====================================
-Given data value is not declared in schema
 
+Given data value is not declared in schema
 dvs1.yml:
     |
   3 |   wrong_key: not right key
@@ -828,8 +828,8 @@ rendered: true`
 		expectedErrMsg := `Overlaying data values (in following order: additional data values): 
 One or more data values were invalid
 ====================================
-Given data value is not declared in schema
 
+Given data value is not declared in schema
 dvs1.yml:
     |
   2 | not_in_schema: this should be the only violation reported
