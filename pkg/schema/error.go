@@ -7,10 +7,12 @@ import (
 	"bytes"
 	"fmt"
 	"log"
+	"sort"
 	"strings"
 	"text/template"
 
 	"github.com/k14s/ytt/pkg/filepos"
+	"github.com/k14s/ytt/pkg/spell"
 	"github.com/k14s/ytt/pkg/yamlmeta"
 )
 
@@ -18,20 +20,17 @@ const schemaErrorReportTemplate = `
 {{- if .Summary}}
 {{.Summary}}
 {{addBreak .Summary}}
-{{- end}}
+{{ end}}
 {{- range .AssertionFailures}}
 {{- if .Description}}
 {{.Description}}
 {{- end}}
-
 {{- if .FromMemory}}
-
 {{.SourceName}}:
 {{pad "#" ""}}
 {{pad "#" ""}} {{.Source}}
 {{pad "#" ""}}
 {{- else}}
-
 {{.FileName}}:
 {{pad "|" ""}}
 {{pad "|" .FilePos}} {{.Source}}
@@ -43,8 +42,8 @@ const schemaErrorReportTemplate = `
 {{- range .Hints}}
 {{pad "=" ""}} hint: {{.}}
 {{- end}}
-{{- end}}
-{{.MiscErrorMessage}}
+{{end}}
+{{- .MiscErrorMessage}}
 `
 
 func NewSchemaError(summary string, errs ...error) error {
@@ -95,13 +94,28 @@ func NewMismatchedTypeAssertionError(foundType yamlmeta.TypeWithValues, expected
 	}
 }
 
-func NewUnexpectedKeyAssertionError(found *yamlmeta.MapItem, definition *filepos.Position) error {
-	return schemaAssertionError{
-		position: found.GetPosition(),
-		expected: fmt.Sprintf("(a key defined in map) (by %s)", definition.AsCompactString()),
-		found:    fmt.Sprintf("%v", found.Key),
-		hints:    []string{"declare data values in schema and override them in a data values document"},
+// NewUnexpectedKeyAssertionError generates a schema assertion error including the context (and hints) needed to report it to the user
+func NewUnexpectedKeyAssertionError(found *yamlmeta.MapItem, definition *filepos.Position, allowedKeys []string) error {
+	key := fmt.Sprintf("%v", found.Key)
+	err := schemaAssertionError{
+		description: "Given data value is not declared in schema",
+		position:    found.GetPosition(),
+		found:       key,
 	}
+	sort.Strings(allowedKeys)
+	switch numKeys := len(allowedKeys); {
+	case numKeys == 1:
+		err.expected = fmt.Sprintf(`a %s with the key named "%s" (from %s)`, found.DisplayName(), allowedKeys[0], definition.AsCompactString())
+	case numKeys > 1 && numKeys <= 9: // Miller's Law
+		err.expected = fmt.Sprintf("one of { %s } (from %s)", strings.Join(allowedKeys, ", "), definition.AsCompactString())
+	default:
+		err.expected = fmt.Sprintf("a key declared in map (from %s)", definition.AsCompactString())
+	}
+	mostSimilarKey := spell.Nearest(key, allowedKeys)
+	if mostSimilarKey != "" {
+		err.hints = append(err.hints, fmt.Sprintf(`did you mean "%s"?`, mostSimilarKey))
+	}
+	return err
 }
 
 type schemaError struct {

@@ -269,7 +269,7 @@ func (m *MapType) CheckType(node yamlmeta.TypeWithValues) (chk yamlmeta.TypeChec
 	for _, item := range nodeMap.Items {
 		if !m.AllowsKey(item.Key) {
 			chk.Violations = append(chk.Violations,
-				NewUnexpectedKeyAssertionError(item, m.Position))
+				NewUnexpectedKeyAssertionError(item, m.Position, m.AllowedKeys()))
 		}
 	}
 	return
@@ -536,4 +536,15 @@ func (m *MapType) AllowsKey(key interface{}) bool {
 		}
 	}
 	return false
+}
+
+// AllowedKeys returns the set of keys (in string format) permitted in this map.
+func (m *MapType) AllowedKeys() []string {
+	var keysAsString []string
+
+	for _, item := range m.Items {
+		keysAsString = append(keysAsString, fmt.Sprintf("%s", item.Key))
+	}
+
+	return keysAsString
 }

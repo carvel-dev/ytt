@@ -190,8 +190,8 @@ foo: 0
 		expectedErr := `
 Invalid schema
 ==============
-unknown @schema/type annotation keyword argument
 
+unknown @schema/type annotation keyword argument
 schema.yml:
     |
   4 | foo: 0
@@ -218,8 +218,8 @@ foo: 0
 		expectedErr := `
 Invalid schema
 ==============
-unknown @schema/type annotation keyword argument
 
+unknown @schema/type annotation keyword argument
 schema.yml:
     |
   4 | foo: 0
@@ -246,8 +246,8 @@ foo: 0
 		expectedErr := `
 Invalid schema
 ==============
-expected @schema/type annotation to have keyword argument and value
 
+expected @schema/type annotation to have keyword argument and value
 schema.yml:
     |
   4 | foo: 0
@@ -286,8 +286,8 @@ foo: 0
 		expectedErr := `
 Invalid schema
 ==============
-@schema/nullable, and @schema/type any=True are mutually exclusive
 
+@schema/nullable, and @schema/type any=True are mutually exclusive
 schema.yml:
     |
   5 | foo: 0
@@ -315,8 +315,8 @@ foo: 0
 			expectedErr := `
 Invalid schema
 ==============
-syntax error in @schema/default annotation
 
+syntax error in @schema/default annotation
 schema.yml:
     |
   4 | foo: 0
@@ -341,8 +341,8 @@ foo: 0
 			expectedErr := `
 Invalid schema
 ==============
-syntax error in @schema/default annotation
 
+syntax error in @schema/default annotation
 schema.yml:
     |
   4 | foo: 0
@@ -367,8 +367,8 @@ foo: 0
 			expectedErr := `
 Invalid schema
 ==============
-syntax error in @schema/default annotation
 
+syntax error in @schema/default annotation
 schema.yml:
     |
   4 | foo: 0
@@ -485,8 +485,8 @@ key: val
 			expectedErr := `
 Invalid schema
 ==============
-syntax error in @schema/desc annotation
 
+syntax error in @schema/desc annotation
 schema.yml:
     |
   4 | key: val
@@ -511,8 +511,8 @@ key: val
 			expectedErr := `
 Invalid schema
 ==============
-syntax error in @schema/desc annotation
 
+syntax error in @schema/desc annotation
 schema.yml:
     |
   4 | key: val
@@ -537,8 +537,8 @@ key: val
 			expectedErr := `
 Invalid schema
 ==============
-syntax error in @schema/desc annotation
 
+syntax error in @schema/desc annotation
 schema.yml:
     |
   4 | key: val
@@ -563,8 +563,8 @@ key: val
 			expectedErr := `
 Invalid schema
 ==============
-syntax error in @schema/desc annotation
 
+syntax error in @schema/desc annotation
 schema.yml:
     |
   4 | key: val
