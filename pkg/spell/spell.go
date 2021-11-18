@@ -3,6 +3,7 @@
 
 // Package spell file defines a simple spelling checker for use in attribute errors
 // such as "no such field .foo; did you mean .food?".
+// (this source was copied from https://github.com/google/starlark-go/blob/b0039bd2cfe369fe8f2bdba0614bafd1f9402dbb/internal/spell/spell.go)
 package spell
 
 import (
