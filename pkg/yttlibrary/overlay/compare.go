@@ -20,7 +20,8 @@ func (b Comparison) Compare(left, right interface{}) (bool, string) {
 	case *yamlmeta.Document:
 		typedLeft, isDoc := left.(*yamlmeta.Document)
 		if !isDoc {
-			return false, fmt.Sprintf("Expected doc, but was %T", left)
+			node := left.(yamlmeta.Node)
+			return false, fmt.Sprintf("Expected doc, but was %s", node.DisplayName())
 		}
 
 		return b.Compare(typedLeft.Value, typedRight.Value)
@@ -52,7 +53,8 @@ func (b Comparison) Compare(left, right interface{}) (bool, string) {
 	case *yamlmeta.MapItem:
 		typedLeft, isMapItem := left.(*yamlmeta.MapItem)
 		if !isMapItem {
-			return false, fmt.Sprintf("Expected mapitem, but was %T", left)
+			node := left.(yamlmeta.Node)
+			return false, fmt.Sprintf("Expected map item, but was %s", node.DisplayName())
 		}
 
 		return b.Compare(typedLeft.Value, typedRight.Value)
@@ -78,7 +80,8 @@ func (b Comparison) Compare(left, right interface{}) (bool, string) {
 	case *yamlmeta.ArrayItem:
 		typedLeft, isArrayItem := left.(*yamlmeta.ArrayItem)
 		if !isArrayItem {
-			return false, fmt.Sprintf("Expected arrayitem, but was %T", left)
+			node := left.(yamlmeta.Node)
+			return false, fmt.Sprintf("Expected array item, but was %s", node.DisplayName())
 		}
 
 		return b.Compare(typedLeft.Value, typedRight.Value)

@@ -253,8 +253,8 @@ func inferTypeFromValue(value interface{}, position *filepos.Position) (yamlmeta
 	case nil:
 		return nil, nil
 	}
-
-	return nil, fmt.Errorf("Expected value '%s' to be a map, array, or scalar, but was %T", value, value)
+	node := value.(yamlmeta.Node)
+	return nil, fmt.Errorf("Expected value '%s' to be a map, array, or scalar, but was %s", value, node.DisplayName())
 }
 
 func valueTypeAllowsItemValue(explicitType yamlmeta.Type, itemValue interface{}, position *filepos.Position) error {
