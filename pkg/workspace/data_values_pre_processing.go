@@ -104,13 +104,13 @@ func (o DataValuesPreProcessing) collectDataValuesDocs(files []*FileInLibrary) (
 	return allDvs, nil
 }
 
-func (o DataValuesPreProcessing) typeAndCheck(dataValuesDoc *yamlmeta.Document) yamlmeta.TypeCheck {
+func (o DataValuesPreProcessing) typeAndCheck(dataValuesDoc *yamlmeta.Document) schema.TypeCheck {
 	chk := o.schema.AssignType(dataValuesDoc)
 	if _, checkable := o.schema.(*schema.DocumentSchema); checkable {
 		if len(chk.Violations) > 0 {
 			return chk
 		}
-		chk = dataValuesDoc.Check()
+		chk = schema.Check_Document(dataValuesDoc)
 	}
 	return chk
 }

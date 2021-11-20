@@ -18,7 +18,6 @@ func (m *Map) GetPosition() *filepos.Position          { return m.Position }
 func (mi *MapItem) GetPosition() *filepos.Position     { return mi.Position }
 func (a *Array) GetPosition() *filepos.Position        { return a.Position }
 func (ai *ArrayItem) GetPosition() *filepos.Position   { return ai.Position }
-func (s *Scalar) GetPosition() *filepos.Position       { return s.Position }
 
 func (ds *DocumentSet) SetPosition(position *filepos.Position) { ds.Position = position }
 func (d *Document) SetPosition(position *filepos.Position)     { d.Position = position }
@@ -44,32 +43,6 @@ func (a *Array) DisplayName() string { return "array" }
 
 // DisplayName is used to return a display name for an ArrayItem
 func (ai *ArrayItem) DisplayName() string { return "array item" }
-
-func (ds *DocumentSet) ValueTypeAsString() string { return "documentSet" }
-func (d *Document) ValueTypeAsString() string     { return typeToString(d.Value) }
-func (m *Map) ValueTypeAsString() string          { return "map" }
-func (mi *MapItem) ValueTypeAsString() string     { return typeToString(mi.Value) }
-func (a *Array) ValueTypeAsString() string        { return "array" }
-func (ai *ArrayItem) ValueTypeAsString() string   { return typeToString(ai.Value) }
-func (s *Scalar) ValueTypeAsString() string       { return typeToString(s.Value) }
-
-func typeToString(value interface{}) string {
-	switch value.(type) {
-	case float64:
-		return "float"
-	case int, int64, uint64:
-		return "integer"
-	case bool:
-		return "boolean"
-	case nil:
-		return "null"
-	default:
-		if t, ok := value.(TypeWithValues); ok {
-			return t.ValueTypeAsString()
-		}
-		return fmt.Sprintf("%T", value)
-	}
-}
 
 func (ds *DocumentSet) SetValue(val interface{}) error {
 	return fmt.Errorf("cannot set value on a %s", ds.DisplayName())
@@ -198,7 +171,6 @@ func (a *Array) GetValues() []interface{} {
 }
 
 func (ai *ArrayItem) GetValues() []interface{} { return []interface{}{ai.Value} }
-func (s *Scalar) GetValues() []interface{}     { return []interface{}{s.Value} }
 
 func (ds *DocumentSet) GetComments() []*Comment { return ds.Comments }
 func (d *Document) GetComments() []*Comment     { return d.Comments }
@@ -231,112 +203,6 @@ func (m *Map) SetAnnotations(anns interface{})          { m.annotations = anns }
 func (mi *MapItem) SetAnnotations(anns interface{})     { mi.annotations = anns }
 func (a *Array) SetAnnotations(anns interface{})        { a.annotations = anns }
 func (ai *ArrayItem) SetAnnotations(anns interface{})   { ai.annotations = anns }
-
-type TypeCheck struct {
-	Violations []error
-}
-
-func (tc TypeCheck) Error() string {
-	if !tc.HasViolations() {
-		return ""
-	}
-
-	msg := ""
-	for _, err := range tc.Violations {
-		msg += err.Error() + "\n"
-	}
-	return msg
-}
-
-func (tc *TypeCheck) HasViolations() bool {
-	return len(tc.Violations) > 0
-}
-
-func (ds *DocumentSet) Check() TypeCheck { return TypeCheck{} }
-func (d *Document) Check() (chk TypeCheck) {
-	switch typedContents := d.Value.(type) {
-	case Node:
-		chk = typedContents.Check()
-	}
-
-	return chk
-}
-func (m *Map) Check() (chk TypeCheck) {
-	if GetType(m) == nil {
-		return
-	}
-	check := GetType(m).CheckType(m)
-	if check.HasViolations() {
-		chk.Violations = append(chk.Violations, check.Violations...)
-		return
-	}
-
-	for _, item := range m.Items {
-		check = item.Check()
-		if check.HasViolations() {
-			chk.Violations = append(chk.Violations, check.Violations...)
-		}
-	}
-	return
-}
-func (mi *MapItem) Check() (chk TypeCheck) {
-	check := GetType(mi).CheckType(mi)
-	if check.HasViolations() {
-		chk.Violations = check.Violations
-		return
-	}
-
-	check = checkCollectionItem(mi.Value, GetType(mi).GetValueType(), mi.Position)
-	if check.HasViolations() {
-		chk.Violations = append(chk.Violations, check.Violations...)
-	}
-	return
-}
-func (a *Array) Check() (chk TypeCheck) {
-	for _, item := range a.Items {
-		check := item.Check()
-		if check.HasViolations() {
-			chk.Violations = append(chk.Violations, check.Violations...)
-		}
-	}
-	return
-}
-func (ai *ArrayItem) Check() (chk TypeCheck) {
-	if GetType(ai) == nil {
-		return
-	}
-	// TODO: This check only ensures that the ai is of ArrayItem type
-	//       which we know because if it was not we would not assign
-	//       the type to it.
-	//       Given this maybe we can completely remove this check
-	//       Lets not forget that the check of the type of the item
-	//       is done by checkCollectionItem
-	chk = GetType(ai).CheckType(ai)
-	if chk.HasViolations() {
-		return
-	}
-
-	check := checkCollectionItem(ai.Value, GetType(ai).GetValueType(), ai.Position)
-	if check.HasViolations() {
-		chk.Violations = append(chk.Violations, check.Violations...)
-	}
-	return chk
-}
-
-// is it possible to enter this function with valueType=NullType or AnyType?
-func checkCollectionItem(value interface{}, valueType Type, position *filepos.Position) (chk TypeCheck) {
-	switch typedValue := value.(type) {
-	case *Map:
-		check := typedValue.Check()
-		chk.Violations = append(chk.Violations, check.Violations...)
-	case *Array:
-		check := typedValue.Check()
-		chk.Violations = append(chk.Violations, check.Violations...)
-	default:
-		chk = valueType.CheckType(&Scalar{Value: value, Position: position})
-	}
-	return chk
-}
 
 // Below methods disallow marshaling of nodes directly
 var _ []yaml.Marshaler = []yaml.Marshaler{&DocumentSet{}, &Document{}, &Map{}, &MapItem{}, &Array{}, &ArrayItem{}}
@@ -436,15 +302,4 @@ func (n *ArrayItem) SetMeta(name string, data interface{}) {
 		n.meta = make(map[string]interface{})
 	}
 	n.meta[name] = data
-}
-
-func GetType(n Node) Type {
-	t := n.GetMeta("schema/type")
-	if t == nil {
-		return nil
-	}
-	return t.(Type)
-}
-func SetType(n Node, t Type) {
-	n.SetMeta("schema/type", t)
 }

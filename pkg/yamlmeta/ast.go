@@ -27,8 +27,6 @@ type Node interface {
 	DeepCopyAsInterface() interface{}
 	DeepCopyAsNode() Node
 
-	Check() TypeCheck
-
 	DisplayName() string
 
 	sealed() // limit the concrete types of Node to map directly only to types allowed in YAML spec.

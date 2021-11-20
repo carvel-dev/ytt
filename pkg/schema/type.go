@@ -10,18 +10,30 @@ import (
 	"github.com/k14s/ytt/pkg/yamlmeta"
 )
 
-var _ yamlmeta.Type = (*DocumentType)(nil)
-var _ yamlmeta.Type = (*MapType)(nil)
-var _ yamlmeta.Type = (*MapItemType)(nil)
-var _ yamlmeta.Type = (*ArrayType)(nil)
-var _ yamlmeta.Type = (*ArrayItemType)(nil)
-var _ yamlmeta.Type = (*AnyType)(nil)
-var _ yamlmeta.Type = (*NullType)(nil)
-var _ yamlmeta.Type = (*ScalarType)(nil)
+type Type interface {
+	AssignTypeTo(TypeWithValues TypeWithValues) TypeCheck
+	GetValueType() Type
+	GetDefaultValue() interface{}
+	SetDefaultValue(interface{})
+	CheckType(node TypeWithValues) TypeCheck
+	GetDefinitionPosition() *filepos.Position
+	String() string
+	SetDescription(string)
+	GetDescription() string
+}
+
+var _ Type = (*DocumentType)(nil)
+var _ Type = (*MapType)(nil)
+var _ Type = (*MapItemType)(nil)
+var _ Type = (*ArrayType)(nil)
+var _ Type = (*ArrayItemType)(nil)
+var _ Type = (*AnyType)(nil)
+var _ Type = (*NullType)(nil)
+var _ Type = (*ScalarType)(nil)
 
 type DocumentType struct {
 	Source       *yamlmeta.Document
-	ValueType    yamlmeta.Type // typically one of: MapType, ArrayType, ScalarType
+	ValueType    Type // typically one of: MapType, ArrayType, ScalarType
 	Position     *filepos.Position
 	defaultValue interface{}
 }
@@ -32,18 +44,18 @@ type MapType struct {
 }
 type MapItemType struct {
 	Key          interface{} // usually a string
-	ValueType    yamlmeta.Type
+	ValueType    Type
 	Position     *filepos.Position
 	defaultValue interface{}
 }
 type ArrayType struct {
-	ItemsType    yamlmeta.Type
+	ItemsType    Type
 	Position     *filepos.Position
 	defaultValue interface{}
 	description  string
 }
 type ArrayItemType struct {
-	ValueType    yamlmeta.Type
+	ValueType    Type
 	Position     *filepos.Position
 	defaultValue interface{}
 }
@@ -59,7 +71,7 @@ type AnyType struct {
 	description  string
 }
 type NullType struct {
-	ValueType   yamlmeta.Type
+	ValueType   Type
 	Position    *filepos.Position
 	description string
 }
@@ -146,17 +158,17 @@ func (t DocumentType) GetDefaultValue() interface{} {
 	return &yamlmeta.Document{Value: t.defaultValue, Position: t.Position}
 }
 
-func (n NullType) AssignTypeTo(typeable yamlmeta.Typeable) (chk yamlmeta.TypeCheck) {
-	childCheck := n.ValueType.AssignTypeTo(typeable)
+func (n NullType) AssignTypeTo(TypeWithValues TypeWithValues) (chk TypeCheck) {
+	childCheck := n.ValueType.AssignTypeTo(TypeWithValues)
 	chk.Violations = append(chk.Violations, childCheck.Violations...)
 	return
 }
 
-func (n NullType) GetValueType() yamlmeta.Type {
+func (n NullType) GetValueType() Type {
 	return n.ValueType
 }
 
-func (n NullType) CheckType(node yamlmeta.TypeWithValues) (chk yamlmeta.TypeCheck) {
+func (n NullType) CheckType(node TypeWithValues) (chk TypeCheck) {
 	if len(node.GetValues()) == 1 && node.GetValues()[0] == nil {
 		return
 	}
@@ -175,27 +187,27 @@ func (n NullType) String() string {
 	return "null"
 }
 
-func (t *DocumentType) GetValueType() yamlmeta.Type {
+func (t *DocumentType) GetValueType() Type {
 	return t.ValueType
 }
-func (m MapType) GetValueType() yamlmeta.Type {
+func (m MapType) GetValueType() Type {
 	panic("Not implemented because it is unreachable")
 }
-func (t MapItemType) GetValueType() yamlmeta.Type {
+func (t MapItemType) GetValueType() Type {
 	return t.ValueType
 }
-func (a ArrayType) GetValueType() yamlmeta.Type {
+func (a ArrayType) GetValueType() Type {
 	return a.ItemsType
 }
-func (a ArrayItemType) GetValueType() yamlmeta.Type {
+func (a ArrayItemType) GetValueType() Type {
 	return a.ValueType
 }
 
 // GetValueType provides the type of the value
-func (s ScalarType) GetValueType() yamlmeta.Type {
+func (s ScalarType) GetValueType() Type {
 	panic("Not implemented because it is unreachable")
 }
-func (a AnyType) GetValueType() yamlmeta.Type {
+func (a AnyType) GetValueType() Type {
 	return &a
 }
 
@@ -254,11 +266,11 @@ func (a AnyType) String() string {
 	return "any"
 }
 
-func (t *DocumentType) CheckType(_ yamlmeta.TypeWithValues) (chk yamlmeta.TypeCheck) {
+func (t *DocumentType) CheckType(_ TypeWithValues) (chk TypeCheck) {
 	return
 }
 
-func (m *MapType) CheckType(node yamlmeta.TypeWithValues) (chk yamlmeta.TypeCheck) {
+func (m *MapType) CheckType(node TypeWithValues) (chk TypeCheck) {
 	nodeMap, ok := node.(*yamlmeta.Map)
 	if !ok {
 		chk.Violations = append(chk.Violations,
@@ -275,7 +287,7 @@ func (m *MapType) CheckType(node yamlmeta.TypeWithValues) (chk yamlmeta.TypeChec
 	return
 }
 
-func (t *MapItemType) CheckType(node yamlmeta.TypeWithValues) (chk yamlmeta.TypeCheck) {
+func (t *MapItemType) CheckType(node TypeWithValues) (chk TypeCheck) {
 	_, ok := node.(*yamlmeta.MapItem)
 	if !ok {
 		// A Map must've yielded a non-MapItem which is not valid YAML
@@ -285,7 +297,7 @@ func (t *MapItemType) CheckType(node yamlmeta.TypeWithValues) (chk yamlmeta.Type
 	return
 }
 
-func (a *ArrayType) CheckType(node yamlmeta.TypeWithValues) (chk yamlmeta.TypeCheck) {
+func (a *ArrayType) CheckType(node TypeWithValues) (chk TypeCheck) {
 	_, ok := node.(*yamlmeta.Array)
 	if !ok {
 		chk.Violations = append(chk.Violations,
@@ -294,7 +306,7 @@ func (a *ArrayType) CheckType(node yamlmeta.TypeWithValues) (chk yamlmeta.TypeCh
 	return
 }
 
-func (a *ArrayItemType) CheckType(node yamlmeta.TypeWithValues) (chk yamlmeta.TypeCheck) {
+func (a *ArrayItemType) CheckType(node TypeWithValues) (chk TypeCheck) {
 	_, ok := node.(*yamlmeta.ArrayItem)
 	if !ok {
 		// An Array must've yielded a non-ArrayItem which is not valid YAML
@@ -304,7 +316,7 @@ func (a *ArrayItemType) CheckType(node yamlmeta.TypeWithValues) (chk yamlmeta.Ty
 }
 
 // CheckType validates the type of the node and the type of the value
-func (s *ScalarType) CheckType(node yamlmeta.TypeWithValues) (chk yamlmeta.TypeCheck) {
+func (s *ScalarType) CheckType(node TypeWithValues) (chk TypeCheck) {
 	value := node.GetValues()[0]
 	switch value.(type) {
 	case string:
@@ -336,34 +348,43 @@ func (s *ScalarType) CheckType(node yamlmeta.TypeWithValues) (chk yamlmeta.TypeC
 	return
 }
 
-func (a AnyType) CheckType(_ yamlmeta.TypeWithValues) (chk yamlmeta.TypeCheck) {
+func (a AnyType) CheckType(_ TypeWithValues) (chk TypeCheck) {
 	return
 }
 
-func (t *DocumentType) AssignTypeTo(typeable yamlmeta.Typeable) (chk yamlmeta.TypeCheck) {
-	doc, ok := typeable.(*yamlmeta.Document)
+func (t *DocumentType) AssignTypeTo(typeWithValues TypeWithValues) (chk TypeCheck) {
+	doc, ok := typeWithValues.(*yamlmeta.Document)
 	if !ok {
 		chk.Violations = append(chk.Violations,
-			NewMismatchedTypeAssertionError(typeable, t))
+			NewMismatchedTypeAssertionError(typeWithValues, t))
 		return
 	}
-	doc.SetType(t)
-	typeableValue, isNode := doc.Value.(yamlmeta.Typeable)
+	SetType(doc, t)
+	TypeWithValuesValue, isNode := doc.Value.(TypeWithValues)
 	if isNode {
-		childCheck := t.ValueType.AssignTypeTo(typeableValue)
+		childCheck := t.ValueType.AssignTypeTo(TypeWithValuesValue)
 		chk.Violations = append(chk.Violations, childCheck.Violations...)
 	} // else, is a scalar
 	return chk
 }
 
-func (m *MapType) AssignTypeTo(typeable yamlmeta.Typeable) (chk yamlmeta.TypeCheck) {
-	mapNode, ok := typeable.(*yamlmeta.Map)
+func Assign(nodeType Type, node yamlmeta.Node) (yamlmeta.Node, *TypeCheck) {
+	node.DeepCopyAsNode()
+	chk := nodeType.AssignTypeTo(Hack_AsTypeWithValues(node))
+	if chk.HasViolations() {
+		return nil, &chk
+	}
+	return node, nil
+}
+
+func (m *MapType) AssignTypeTo(TypeWithValues TypeWithValues) (chk TypeCheck) {
+	mapNode, ok := TypeWithValues.(*yamlmeta.Map)
 	if !ok {
-		chk.Violations = append(chk.Violations, NewMismatchedTypeAssertionError(typeable, m))
+		chk.Violations = append(chk.Violations, NewMismatchedTypeAssertionError(TypeWithValues, m))
 		return
 	}
 	var foundKeys []interface{}
-	typeable.SetType(m)
+	SetType(TypeWithValues.(yamlmeta.Node), m)
 	for _, mapItem := range mapNode.Items {
 		for _, itemType := range m.Items {
 			if mapItem.Key == itemType.Key {
@@ -379,7 +400,7 @@ func (m *MapType) AssignTypeTo(typeable yamlmeta.Typeable) (chk yamlmeta.TypeChe
 	return
 }
 
-func (m *MapType) applySchemaDefaults(foundKeys []interface{}, chk yamlmeta.TypeCheck, mapNode *yamlmeta.Map) {
+func (m *MapType) applySchemaDefaults(foundKeys []interface{}, chk TypeCheck, mapNode *yamlmeta.Map) {
 	for _, item := range m.Items {
 		if contains(foundKeys, item.Key) {
 			continue
@@ -404,27 +425,27 @@ func contains(haystack []interface{}, needle interface{}) bool {
 	return false
 }
 
-func (t *MapItemType) AssignTypeTo(typeable yamlmeta.Typeable) (chk yamlmeta.TypeCheck) {
-	mapItem, ok := typeable.(*yamlmeta.MapItem)
+func (t *MapItemType) AssignTypeTo(typeWithValues TypeWithValues) (chk TypeCheck) {
+	mapItem, ok := typeWithValues.(*yamlmeta.MapItem)
 	if !ok {
-		panic(fmt.Sprintf("Attempt to assign type to a non-map-item (children of Maps can only be MapItems). type=%#v; typeable=%#v", t, typeable))
+		panic(fmt.Sprintf("Attempt to assign type to a non-map-item (children of Maps can only be MapItems). type=%#v; typeWithValues=%#v", t, typeWithValues))
 	}
-	typeable.SetType(t)
-	typeableValue, isNode := mapItem.Value.(yamlmeta.Typeable)
+	SetType(typeWithValues.(yamlmeta.Node), t)
+	TypeWithValuesValue, isNode := mapItem.Value.(TypeWithValues)
 	if isNode {
-		childCheck := t.ValueType.AssignTypeTo(typeableValue)
+		childCheck := t.ValueType.AssignTypeTo(TypeWithValuesValue)
 		chk.Violations = append(chk.Violations, childCheck.Violations...)
 	} // else, is scalar
 	return
 }
 
-func (a *ArrayType) AssignTypeTo(typeable yamlmeta.Typeable) (chk yamlmeta.TypeCheck) {
-	arrayNode, ok := typeable.(*yamlmeta.Array)
+func (a *ArrayType) AssignTypeTo(TypeWithValues TypeWithValues) (chk TypeCheck) {
+	arrayNode, ok := TypeWithValues.(*yamlmeta.Array)
 	if !ok {
-		chk.Violations = append(chk.Violations, NewMismatchedTypeAssertionError(typeable, a))
+		chk.Violations = append(chk.Violations, NewMismatchedTypeAssertionError(TypeWithValues, a))
 		return
 	}
-	typeable.SetType(a)
+	SetType(TypeWithValues.(yamlmeta.Node), a)
 	for _, arrayItem := range arrayNode.Items {
 		childCheck := a.ItemsType.AssignTypeTo(arrayItem)
 		chk.Violations = append(chk.Violations, childCheck.Violations...)
@@ -432,26 +453,26 @@ func (a *ArrayType) AssignTypeTo(typeable yamlmeta.Typeable) (chk yamlmeta.TypeC
 	return
 }
 
-func (a *ArrayItemType) AssignTypeTo(typeable yamlmeta.Typeable) (chk yamlmeta.TypeCheck) {
-	arrayItem, ok := typeable.(*yamlmeta.ArrayItem)
+func (a *ArrayItemType) AssignTypeTo(typeWithValues TypeWithValues) (chk TypeCheck) {
+	arrayItem, ok := typeWithValues.(*yamlmeta.ArrayItem)
 	if !ok {
-		panic(fmt.Sprintf("Attempt to assign type to a non-array-item (children of Arrays can only be ArrayItems). type=%#v; typeable=%#v", a, typeable))
+		panic(fmt.Sprintf("Attempt to assign type to a non-array-item (children of Arrays can only be ArrayItems). type=%#v; typeWithValues=%#v", a, typeWithValues))
 	}
-	typeable.SetType(a)
-	typeableValue, isNode := arrayItem.Value.(yamlmeta.Typeable)
+	SetType(typeWithValues.(yamlmeta.Node), a)
+	typeWithValuesValue, isNode := arrayItem.Value.(TypeWithValues)
 	if isNode {
-		childCheck := a.ValueType.AssignTypeTo(typeableValue)
+		childCheck := a.ValueType.AssignTypeTo(typeWithValuesValue)
 		chk.Violations = append(chk.Violations, childCheck.Violations...)
 	} // else, is scalar
 	return
 }
 
 // AssignTypeTo validates that the type is compatible and assigns it to the type
-func (s *ScalarType) AssignTypeTo(typeable yamlmeta.Typeable) yamlmeta.TypeCheck {
-	return yamlmeta.TypeCheck{[]error{NewMismatchedTypeAssertionError(typeable, s)}}
+func (s *ScalarType) AssignTypeTo(TypeWithValues TypeWithValues) TypeCheck {
+	return TypeCheck{[]error{NewMismatchedTypeAssertionError(TypeWithValues, s)}}
 }
 
-func (a AnyType) AssignTypeTo(yamlmeta.Typeable) (chk yamlmeta.TypeCheck) {
+func (a AnyType) AssignTypeTo(TypeWithValues) (chk TypeCheck) {
 	return
 }
 
@@ -547,4 +568,74 @@ func (m *MapType) AllowedKeys() []string {
 	}
 
 	return keysAsString
+}
+
+func GetType(n yamlmeta.Node) Type {
+	t := n.GetMeta("schema/type")
+	if t == nil {
+		return nil
+	}
+	return t.(Type)
+}
+
+func SetType(n yamlmeta.Node, t Type) {
+	n.SetMeta("schema/type", t)
+}
+
+type TypeWithValues interface {
+	yamlmeta.Node
+}
+
+func Node_ValueTypeAsString(n yamlmeta.Node) string {
+	switch typed := n.(type) {
+	case *yamlmeta.DocumentSet:
+		return DocumentSet_ValueTypeAsString(typed)
+	case *yamlmeta.Document:
+		return Document_ValueTypeAsString(typed)
+	case *yamlmeta.Map:
+		return Map_ValueTypeAsString(typed)
+	case *yamlmeta.MapItem:
+		return MapItem_ValueTypeAsString(typed)
+	case *yamlmeta.Array:
+		return Array_ValueTypeAsString(typed)
+	case *yamlmeta.ArrayItem:
+		return ArrayItem_ValueTypeAsString(typed)
+	case *yamlmeta.Scalar:
+		return Scalar_ValueTypeAsString(typed)
+	default:
+		panic(fmt.Sprintf("unexpected node type: %T", n))
+	}
+}
+
+func DocumentSet_ValueTypeAsString(_ *yamlmeta.DocumentSet) string { return "documentSet" }
+func Document_ValueTypeAsString(d *yamlmeta.Document) string       { return typeToString(d.Value) }
+func Map_ValueTypeAsString(_ *yamlmeta.Map) string                 { return "map" }
+func MapItem_ValueTypeAsString(mi *yamlmeta.MapItem) string        { return typeToString(mi.Value) }
+func Array_ValueTypeAsString(_ *yamlmeta.Array) string             { return "array" }
+func ArrayItem_ValueTypeAsString(ai *yamlmeta.ArrayItem) string    { return typeToString(ai.Value) }
+func Scalar_ValueTypeAsString(s *yamlmeta.Scalar) string           { return typeToString(s.Value) }
+
+func typeToString(value interface{}) string {
+	switch value.(type) {
+	case float64:
+		return "float"
+	case int, int64, uint64:
+		return "integer"
+	case bool:
+		return "boolean"
+	case nil:
+		return "null"
+	default:
+		if t, ok := value.(TypeWithValues); ok {
+			return Node_ValueTypeAsString(t)
+		}
+		return fmt.Sprintf("%T", value)
+	}
+}
+
+// Hack_AsTypeWithValues converts the Node into a TypeWithValues.
+// TypeWithValues in its current form is ill-conceived and will either get radically changed or removed.
+// In the meantime, we capture this cast through a function call to make it easier to remove later.
+func Hack_AsTypeWithValues(n yamlmeta.Node) TypeWithValues {
+	return n.(TypeWithValues)
 }

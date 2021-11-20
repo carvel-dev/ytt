@@ -81,7 +81,7 @@ func NewSchemaError(summary string, errs ...error) error {
 	}
 }
 
-func NewMismatchedTypeAssertionError(foundType yamlmeta.TypeWithValues, expectedType yamlmeta.Type) error {
+func NewMismatchedTypeAssertionError(foundType TypeWithValues, expectedType Type) error {
 	var expectedTypeString string
 	if expectedType.GetDefinitionPosition().IsKnown() {
 		switch expectedType.(type) {
@@ -95,7 +95,7 @@ func NewMismatchedTypeAssertionError(foundType yamlmeta.TypeWithValues, expected
 	return schemaAssertionError{
 		position: foundType.GetPosition(),
 		expected: fmt.Sprintf("%s (by %s)", expectedTypeString, expectedType.GetDefinitionPosition().AsCompactString()),
-		found:    foundType.ValueTypeAsString(),
+		found:    Node_ValueTypeAsString(foundType),
 		// TODO: remove this hint once we can report if mistyped value came from annotation
 		hints: []string{fmt.Sprintf("is the default value set using @%v?", AnnotationDefault)},
 	}

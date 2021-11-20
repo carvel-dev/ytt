@@ -149,8 +149,8 @@ func NewArrayItemType(item *yamlmeta.ArrayItem) (*ArrayItemType, error) {
 	return &ArrayItemType{ValueType: typeOfValue, defaultValue: defaultValue, Position: item.GetPosition()}, nil
 }
 
-func getType(node yamlmeta.Node) (yamlmeta.Type, error) {
-	var typeOfValue yamlmeta.Type
+func getType(node yamlmeta.Node) (Type, error) {
+	var typeOfValue Type
 
 	anns, err := collectTypeAnnotations(node)
 	if err != nil {
@@ -185,7 +185,7 @@ func getType(node yamlmeta.Node) (yamlmeta.Type, error) {
 	return typeOfValue, nil
 }
 
-func getValue(node yamlmeta.Node, t yamlmeta.Type) (interface{}, error) {
+func getValue(node yamlmeta.Node, t Type) (interface{}, error) {
 	anns, err := collectValueAnnotations(node, t)
 	if err != nil {
 		return nil, NewSchemaError("Invalid schema", err)
@@ -205,13 +205,13 @@ func getValue(node yamlmeta.Node, t yamlmeta.Type) (interface{}, error) {
 }
 
 // getValueFromAnn extracts the value from the annotation and validates its type
-func getValueFromAnn(defaultAnn *DefaultAnnotation, t yamlmeta.Type) (interface{}, error) {
-	var typeCheck yamlmeta.TypeCheck
+func getValueFromAnn(defaultAnn *DefaultAnnotation, t Type) (interface{}, error) {
+	var typeCheck TypeCheck
 
 	defaultValue := defaultAnn.Val()
 	if node, ok := defaultValue.(yamlmeta.Node); ok {
 		defaultValue = node.DeepCopyAsInterface()
-		typeCheck = t.AssignTypeTo(defaultValue.(yamlmeta.Typeable))
+		typeCheck = t.AssignTypeTo(defaultValue.(TypeWithValues))
 	} else {
 		typeCheck = t.CheckType(&yamlmeta.Scalar{Value: defaultValue, Position: t.GetDefinitionPosition()})
 	}
@@ -222,7 +222,7 @@ func getValueFromAnn(defaultAnn *DefaultAnnotation, t yamlmeta.Type) (interface{
 	return defaultValue, nil
 }
 
-func inferTypeFromValue(value interface{}, position *filepos.Position) (yamlmeta.Type, error) {
+func inferTypeFromValue(value interface{}, position *filepos.Position) (Type, error) {
 	switch typedContent := value.(type) {
 	case *yamlmeta.Document:
 		docType, err := NewDocumentType(typedContent)
@@ -259,7 +259,7 @@ func inferTypeFromValue(value interface{}, position *filepos.Position) (yamlmeta
 	}
 }
 
-func valueTypeAllowsItemValue(explicitType yamlmeta.Type, itemValue interface{}, position *filepos.Position) error {
+func valueTypeAllowsItemValue(explicitType Type, itemValue interface{}, position *filepos.Position) error {
 	switch explicitType.(type) {
 	case *AnyType:
 		if node, ok := itemValue.(yamlmeta.Node); ok {
@@ -296,8 +296,8 @@ func getSchemaLibRef(libRefs ExtractLibRefs, doc *yamlmeta.Document) ([]ref.Libr
 	return libRef, nil
 }
 
-func (s *DocumentSchema) AssignType(typeable yamlmeta.Typeable) yamlmeta.TypeCheck {
-	return s.DocType.AssignTypeTo(typeable)
+func (s *DocumentSchema) AssignType(TypeWithValues TypeWithValues) TypeCheck {
+	return s.DocType.AssignTypeTo(TypeWithValues)
 }
 
 func (s *DocumentSchema) DefaultDataValues() *yamlmeta.Document {
