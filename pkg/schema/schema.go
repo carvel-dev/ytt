@@ -211,7 +211,7 @@ func getValueFromAnn(defaultAnn *DefaultAnnotation, t Type) (interface{}, error)
 	defaultValue := defaultAnn.Val()
 	if node, ok := defaultValue.(yamlmeta.Node); ok {
 		defaultValue = node.DeepCopyAsInterface()
-		typeCheck = t.AssignTypeTo(defaultValue.(TypeWithValues))
+		typeCheck = t.AssignTypeTo(defaultValue.(yamlmeta.Node))
 	} else {
 		typeCheck = t.CheckType(&yamlmeta.Scalar{Value: defaultValue, Position: t.GetDefinitionPosition()})
 	}
@@ -296,8 +296,11 @@ func getSchemaLibRef(libRefs ExtractLibRefs, doc *yamlmeta.Document) ([]ref.Libr
 	return libRef, nil
 }
 
-func (s *DocumentSchema) AssignType(TypeWithValues TypeWithValues) TypeCheck {
-	return s.DocType.AssignTypeTo(TypeWithValues)
+// AssignType decorates `doc` with type metadata sourced from this DocumentSchema.
+// If `doc` does not conform to the AST structure of this DocumentSchema, the returned TypeCheck contains the violations.
+// No other type check is performed.
+func (s *DocumentSchema) AssignType(doc *yamlmeta.Document) TypeCheck {
+	return s.DocType.AssignTypeTo(doc)
 }
 
 func (s *DocumentSchema) DefaultDataValues() *yamlmeta.Document {

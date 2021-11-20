@@ -110,7 +110,7 @@ func (o DataValuesPreProcessing) typeAndCheck(dataValuesDoc *yamlmeta.Document) 
 		if len(chk.Violations) > 0 {
 			return chk
 		}
-		chk = schema.Check_Document(dataValuesDoc)
+		chk = schema.CheckDocument(dataValuesDoc)
 	}
 	return chk
 }

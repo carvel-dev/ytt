@@ -97,7 +97,6 @@ type ArrayItem struct {
 type Scalar struct {
 	Position *filepos.Position
 	Value    interface{}
-	meta     map[string]interface{}
 }
 
 type Comment struct {

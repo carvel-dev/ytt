@@ -10,39 +10,36 @@ import (
 	"github.com/k14s/ytt/pkg/yamlmeta"
 )
 
-func Check_Node(n yamlmeta.Node) TypeCheck {
+func checkNode(n yamlmeta.Node) TypeCheck {
 	switch typed := n.(type) {
-	case *yamlmeta.DocumentSet:
-		return Check_DocumentSet(typed)
 	case *yamlmeta.Document:
-		return Check_Document(typed)
+		return CheckDocument(typed)
 	case *yamlmeta.Map:
-		return Check_Map(typed)
+		return checkMap(typed)
 	case *yamlmeta.MapItem:
-		return Check_MapItem(typed)
+		return checkMapItem(typed)
 	case *yamlmeta.Array:
-		return Check_Array(typed)
+		return checkArray(typed)
 	case *yamlmeta.ArrayItem:
-		return Check_ArrayItem(typed)
+		return checkArrayItem(typed)
 	default:
 		panic(fmt.Sprintf("unknown Node type: %T", n))
 	}
 }
 
-func Check_DocumentSet(ds *yamlmeta.DocumentSet) TypeCheck {
-	return TypeCheck{}
-}
-
-func Check_Document(d *yamlmeta.Document) (chk TypeCheck) {
+// CheckDocument attempts type check of `d`.
+// If `d` has "schema/type" metadata (typically attached using SetType()), `d` is checked against that schema, recursively.
+// `chk` contains all the type violations found in the check.
+func CheckDocument(d *yamlmeta.Document) (chk TypeCheck) {
 	switch typedContents := d.Value.(type) {
 	case yamlmeta.Node:
-		chk = Check_Node(typedContents)
+		chk = checkNode(typedContents)
 	}
 
 	return chk
 }
 
-func Check_Map(m *yamlmeta.Map) (chk TypeCheck) {
+func checkMap(m *yamlmeta.Map) (chk TypeCheck) {
 	if GetType(m) == nil {
 		return
 	}
@@ -53,7 +50,7 @@ func Check_Map(m *yamlmeta.Map) (chk TypeCheck) {
 	}
 
 	for _, item := range m.Items {
-		check = Check_MapItem(item)
+		check = checkMapItem(item)
 		if check.HasViolations() {
 			chk.Violations = append(chk.Violations, check.Violations...)
 		}
@@ -61,7 +58,7 @@ func Check_Map(m *yamlmeta.Map) (chk TypeCheck) {
 	return
 }
 
-func Check_MapItem(mi *yamlmeta.MapItem) (chk TypeCheck) {
+func checkMapItem(mi *yamlmeta.MapItem) (chk TypeCheck) {
 	check := GetType(mi).CheckType(mi)
 	if check.HasViolations() {
 		chk.Violations = check.Violations
@@ -79,10 +76,10 @@ func Check_MapItem(mi *yamlmeta.MapItem) (chk TypeCheck) {
 func checkCollectionItem(value interface{}, valueType Type, position *filepos.Position) (chk TypeCheck) {
 	switch typedValue := value.(type) {
 	case *yamlmeta.Map:
-		check := Check_Map(typedValue)
+		check := checkMap(typedValue)
 		chk.Violations = append(chk.Violations, check.Violations...)
 	case *yamlmeta.Array:
-		check := Check_Array(typedValue)
+		check := checkArray(typedValue)
 		chk.Violations = append(chk.Violations, check.Violations...)
 	default:
 		chk = valueType.CheckType(&yamlmeta.Scalar{Value: value, Position: position})
@@ -90,9 +87,9 @@ func checkCollectionItem(value interface{}, valueType Type, position *filepos.Po
 	return chk
 }
 
-func Check_Array(a *yamlmeta.Array) (chk TypeCheck) {
+func checkArray(a *yamlmeta.Array) (chk TypeCheck) {
 	for _, item := range a.Items {
-		check := Check_ArrayItem(item)
+		check := checkArrayItem(item)
 		if check.HasViolations() {
 			chk.Violations = append(chk.Violations, check.Violations...)
 		}
@@ -100,7 +97,7 @@ func Check_Array(a *yamlmeta.Array) (chk TypeCheck) {
 	return
 }
 
-func Check_ArrayItem(ai *yamlmeta.ArrayItem) (chk TypeCheck) {
+func checkArrayItem(ai *yamlmeta.ArrayItem) (chk TypeCheck) {
 	if GetType(ai) == nil {
 		return
 	}
@@ -122,10 +119,12 @@ func Check_ArrayItem(ai *yamlmeta.ArrayItem) (chk TypeCheck) {
 	return chk
 }
 
+// TypeCheck is the result of checking a yamlmeta.Node structure against a given Type, recursively.
 type TypeCheck struct {
 	Violations []error
 }
 
+// Error generates the error message composed of the total set of TypeCheck.Violations.
 func (tc TypeCheck) Error() string {
 	if !tc.HasViolations() {
 		return ""
@@ -138,6 +137,7 @@ func (tc TypeCheck) Error() string {
 	return msg
 }
 
+// HasViolations indicates whether this TypeCheck contains any violations.
 func (tc *TypeCheck) HasViolations() bool {
 	return len(tc.Violations) > 0
 }

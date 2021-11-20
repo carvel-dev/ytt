@@ -8,7 +8,7 @@ import (
 )
 
 type Schema interface {
-	AssignType(TypeWithValues schema.TypeWithValues) schema.TypeCheck
+	AssignType(doc *yamlmeta.Document) schema.TypeCheck
 
 	// DefaultDataValues should yield the default values for Data Values...
 	//   if schema was built by schema.NewNullSchema (i.e. no schema was provided), returns nil

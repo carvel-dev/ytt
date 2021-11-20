@@ -207,22 +207,44 @@ func (ai *ArrayItem) SetAnnotations(anns interface{})   { ai.annotations = anns 
 // Below methods disallow marshaling of nodes directly
 var _ []yaml.Marshaler = []yaml.Marshaler{&DocumentSet{}, &Document{}, &Map{}, &MapItem{}, &Array{}, &ArrayItem{}}
 
+// MarshalYAML panics because Nodes cannot be marshalled directly.
 func (ds *DocumentSet) MarshalYAML() (interface{}, error) { panic("Unexpected marshaling of docset") }
-func (d *Document) MarshalYAML() (interface{}, error)     { panic("Unexpected marshaling of doc") }
-func (m *Map) MarshalYAML() (interface{}, error)          { panic("Unexpected marshaling of map") }
-func (mi *MapItem) MarshalYAML() (interface{}, error)     { panic("Unexpected marshaling of mapitem") }
-func (a *Array) MarshalYAML() (interface{}, error)        { panic("Unexpected marshaling of array") }
-func (ai *ArrayItem) MarshalYAML() (interface{}, error)   { panic("Unexpected marshaling of arrayitem") }
+
+// MarshalYAML panics because Nodes cannot be marshalled directly.
+func (d *Document) MarshalYAML() (interface{}, error) { panic("Unexpected marshaling of doc") }
+
+// MarshalYAML panics because Nodes cannot be marshalled directly.
+func (m *Map) MarshalYAML() (interface{}, error) { panic("Unexpected marshaling of map") }
+
+// MarshalYAML panics because Nodes cannot be marshalled directly.
+func (mi *MapItem) MarshalYAML() (interface{}, error) { panic("Unexpected marshaling of mapitem") }
+
+// MarshalYAML panics because Nodes cannot be marshalled directly.
+func (a *Array) MarshalYAML() (interface{}, error) { panic("Unexpected marshaling of array") }
+
+// MarshalYAML panics because Nodes cannot be marshalled directly.
+func (ai *ArrayItem) MarshalYAML() (interface{}, error) { panic("Unexpected marshaling of arrayitem") }
 
 // Below methods disallow marshaling of nodes directly
 var _ []json.Marshaler = []json.Marshaler{&DocumentSet{}, &Document{}, &Map{}, &MapItem{}, &Array{}, &ArrayItem{}}
 
+// MarshalJSON panics because Nodes cannot be marshalled directly.
 func (ds *DocumentSet) MarshalJSON() ([]byte, error) { panic("Unexpected marshaling of docset") }
-func (d *Document) MarshalJSON() ([]byte, error)     { panic("Unexpected marshaling of doc") }
-func (m *Map) MarshalJSON() ([]byte, error)          { panic("Unexpected marshaling of map") }
-func (mi *MapItem) MarshalJSON() ([]byte, error)     { panic("Unexpected marshaling of mapitem") }
-func (a *Array) MarshalJSON() ([]byte, error)        { panic("Unexpected marshaling of array") }
-func (ai *ArrayItem) MarshalJSON() ([]byte, error)   { panic("Unexpected marshaling of arrayitem") }
+
+// MarshalJSON panics because Nodes cannot be marshalled directly.
+func (d *Document) MarshalJSON() ([]byte, error) { panic("Unexpected marshaling of doc") }
+
+// MarshalJSON panics because Nodes cannot be marshalled directly.
+func (m *Map) MarshalJSON() ([]byte, error) { panic("Unexpected marshaling of map") }
+
+// MarshalJSON panics because Nodes cannot be marshalled directly.
+func (mi *MapItem) MarshalJSON() ([]byte, error) { panic("Unexpected marshaling of mapitem") }
+
+// MarshalJSON panics because Nodes cannot be marshalled directly.
+func (a *Array) MarshalJSON() ([]byte, error) { panic("Unexpected marshaling of array") }
+
+// MarshalJSON panics because Nodes cannot be marshalled directly.
+func (ai *ArrayItem) MarshalJSON() ([]byte, error) { panic("Unexpected marshaling of arrayitem") }
 
 func (ds *DocumentSet) sealed() {}
 func (d *Document) sealed()     {}
@@ -231,75 +253,98 @@ func (mi *MapItem) sealed()     {}
 func (a *Array) sealed()        {}
 func (ai *ArrayItem) sealed()   {}
 
-func (n *DocumentSet) GetMeta(name string) interface{} {
-	if n.meta == nil {
-		n.meta = make(map[string]interface{})
+// GetMeta returns the metadata named `name` that was previously attached via SetMeta()
+func (ds *DocumentSet) GetMeta(name string) interface{} {
+	if ds.meta == nil {
+		ds.meta = make(map[string]interface{})
 	}
-	return n.meta[name]
+	return ds.meta[name]
 }
-func (n *DocumentSet) SetMeta(name string, data interface{}) {
-	if n.meta == nil {
-		n.meta = make(map[string]interface{})
+
+// SetMeta attaches metadata identified by `name` than can later be retrieved via GetMeta()
+func (ds *DocumentSet) SetMeta(name string, data interface{}) {
+	if ds.meta == nil {
+		ds.meta = make(map[string]interface{})
 	}
-	n.meta[name] = data
+	ds.meta[name] = data
 }
-func (n *Document) GetMeta(name string) interface{} {
-	if n.meta == nil {
-		n.meta = make(map[string]interface{})
+
+// GetMeta returns the metadata named `name` that was previously attached via SetMeta()
+func (d *Document) GetMeta(name string) interface{} {
+	if d.meta == nil {
+		d.meta = make(map[string]interface{})
 	}
-	return n.meta[name]
+	return d.meta[name]
 }
-func (n *Document) SetMeta(name string, data interface{}) {
-	if n.meta == nil {
-		n.meta = make(map[string]interface{})
+
+// SetMeta attaches metadata identified by `name` than can later be retrieved via GetMeta()
+func (d *Document) SetMeta(name string, data interface{}) {
+	if d.meta == nil {
+		d.meta = make(map[string]interface{})
 	}
-	n.meta[name] = data
+	d.meta[name] = data
 }
-func (n *Map) GetMeta(name string) interface{} {
-	if n.meta == nil {
-		n.meta = make(map[string]interface{})
+
+// GetMeta returns the metadata named `name` that was previously attached via SetMeta()
+func (m *Map) GetMeta(name string) interface{} {
+	if m.meta == nil {
+		m.meta = make(map[string]interface{})
 	}
-	return n.meta[name]
+	return m.meta[name]
 }
-func (n *Map) SetMeta(name string, data interface{}) {
-	if n.meta == nil {
-		n.meta = make(map[string]interface{})
+
+// SetMeta attaches metadata identified by `name` than can later be retrieved via GetMeta()
+func (m *Map) SetMeta(name string, data interface{}) {
+	if m.meta == nil {
+		m.meta = make(map[string]interface{})
 	}
-	n.meta[name] = data
+	m.meta[name] = data
 }
-func (n *MapItem) GetMeta(name string) interface{} {
-	if n.meta == nil {
-		n.meta = make(map[string]interface{})
+
+// GetMeta returns the metadata named `name` that was previously attached via SetMeta()
+func (mi *MapItem) GetMeta(name string) interface{} {
+	if mi.meta == nil {
+		mi.meta = make(map[string]interface{})
 	}
-	return n.meta[name]
+	return mi.meta[name]
 }
-func (n *MapItem) SetMeta(name string, data interface{}) {
-	if n.meta == nil {
-		n.meta = make(map[string]interface{})
+
+// SetMeta attaches metadata identified by `name` than can later be retrieved via GetMeta()
+func (mi *MapItem) SetMeta(name string, data interface{}) {
+	if mi.meta == nil {
+		mi.meta = make(map[string]interface{})
 	}
-	n.meta[name] = data
+	mi.meta[name] = data
 }
-func (n *Array) GetMeta(name string) interface{} {
-	if n.meta == nil {
-		n.meta = make(map[string]interface{})
+
+// GetMeta returns the metadata named `name` that was previously attached via SetMeta()
+func (a *Array) GetMeta(name string) interface{} {
+	if a.meta == nil {
+		a.meta = make(map[string]interface{})
 	}
-	return n.meta[name]
+	return a.meta[name]
 }
-func (n *Array) SetMeta(name string, data interface{}) {
-	if n.meta == nil {
-		n.meta = make(map[string]interface{})
+
+// SetMeta attaches metadata identified by `name` than can later be retrieved via GetMeta()
+func (a *Array) SetMeta(name string, data interface{}) {
+	if a.meta == nil {
+		a.meta = make(map[string]interface{})
 	}
-	n.meta[name] = data
+	a.meta[name] = data
 }
-func (n *ArrayItem) GetMeta(name string) interface{} {
-	if n.meta == nil {
-		n.meta = make(map[string]interface{})
+
+// GetMeta returns the metadata named `name` that was previously attached via SetMeta()
+func (ai *ArrayItem) GetMeta(name string) interface{} {
+	if ai.meta == nil {
+		ai.meta = make(map[string]interface{})
 	}
-	return n.meta[name]
+	return ai.meta[name]
 }
-func (n *ArrayItem) SetMeta(name string, data interface{}) {
-	if n.meta == nil {
-		n.meta = make(map[string]interface{})
+
+// SetMeta attaches metadata identified by `name` than can later be retrieved via GetMeta()
+func (ai *ArrayItem) SetMeta(name string, data interface{}) {
+	if ai.meta == nil {
+		ai.meta = make(map[string]interface{})
 	}
-	n.meta[name] = data
+	ai.meta[name] = data
 }
