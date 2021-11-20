@@ -45,7 +45,8 @@ func (o Op) apply(left, right interface{}, parentMatchChildDefaults MatchChildDe
 			// (see matching for overlay post processing)
 			typedLeft, isDocSetArray := left.([]*yamlmeta.DocumentSet)
 			if !isDocSetArray {
-				return false, fmt.Errorf("Expected docset, but was %T", left)
+				node := left.(yamlmeta.Node)
+				return false, fmt.Errorf("Expected docset, but was %s", node.DisplayName())
 			}
 			docSetArray = typedLeft
 		} else {
@@ -60,7 +61,8 @@ func (o Op) apply(left, right interface{}, parentMatchChildDefaults MatchChildDe
 	case *yamlmeta.Map:
 		typedLeft, isMap := left.(*yamlmeta.Map)
 		if !isMap {
-			return false, fmt.Errorf("Expected map, but was %T", left)
+			node := left.(yamlmeta.Node)
+			return false, fmt.Errorf("Expected map, but was %s", node.DisplayName())
 		}
 
 		for _, item := range typedRight.Items {
@@ -93,7 +95,8 @@ func (o Op) apply(left, right interface{}, parentMatchChildDefaults MatchChildDe
 	case *yamlmeta.Array:
 		typedLeft, isArray := left.(*yamlmeta.Array)
 		if !isArray {
-			return false, fmt.Errorf("Expected array, but was %T", left)
+			node := left.(yamlmeta.Node)
+			return false, fmt.Errorf("Expected array, but was %s", node.DisplayName())
 		}
 
 		for _, item := range typedRight.Items {
