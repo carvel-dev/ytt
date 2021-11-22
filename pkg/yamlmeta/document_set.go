@@ -60,3 +60,8 @@ func (ds *DocumentSet) AsBytesWithPrinter(printerFunc func(io.Writer) DocumentPr
 
 	return buf.Bytes(), nil
 }
+
+// OverrideMapKeys within any contained Map, where there is more than one MapItem with the same key, delete all but the last.
+func (ds *DocumentSet) OverrideMapKeys() {
+	_ = Walk(ds, &overrideMapKeys{})
+}

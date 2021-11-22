@@ -528,10 +528,31 @@ func TestPlainYAMLNoTemplateProcessing(t *testing.T) {
 		yamlTplData := []byte(`
 #@ load("funcs/funcs.lib.yml", "yamlfunc")
 annotation: 5 #@ 1 + 2
-text_template: (@= "string" @)`)
+text_template: (@= "string" @)
+versions:
+- &version
+  name: v1alpha1
+  served: true
+- << : *version
+  name: v1beta1
+- << : *version
+  name: v1
+  storage: true
+- << : *version
+`)
 
 		expectedYAMLTplData := `annotation: 5
 text_template: (@= "string" @)
+versions:
+- name: v1alpha1
+  served: true
+- name: v1beta1
+  served: true
+- name: v1
+  served: true
+  storage: true
+- name: v1alpha1
+  served: true
 `
 
 		filesToProcess := []*files.File{

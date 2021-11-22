@@ -159,12 +159,22 @@ func (l *TemplateLoader) EvalYAML(libraryCtx LibraryExecutionContext, file *file
 		return nil, nil, err
 	}
 
-	l.ui.Debugf("### ast\n")
-	docSet.Print(l.ui.DebugWriter())
+	l.ui.Debugf("### ast ")
 
+	// is this plain YAML?
 	if !file.IsTemplate() && !file.IsLibrary() || !yamltemplate.HasTemplating(docSet) {
+		// YAML spec requires map keys to be unique.
+		// Tools retain just the last instance: each subsequent map item overrides the value of any previous.
+		docSet.OverrideMapKeys()
+
+		l.ui.Debugf("(plain)\n")
+		docSet.Print(l.ui.DebugWriter())
+
 		return nil, docSet, nil
 	}
+
+	l.ui.Debugf("(templated)\n")
+	docSet.Print(l.ui.DebugWriter())
 
 	tplOpts := yamltemplate.TemplateOpts{
 		IgnoreUnknownComments:   l.opts.IgnoreUnknownComments,
