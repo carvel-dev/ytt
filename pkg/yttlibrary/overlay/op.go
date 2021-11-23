@@ -45,8 +45,10 @@ func (o Op) apply(left, right interface{}, parentMatchChildDefaults MatchChildDe
 			// (see matching for overlay post processing)
 			typedLeft, isDocSetArray := left.([]*yamlmeta.DocumentSet)
 			if !isDocSetArray {
-				node := left.(yamlmeta.Node)
-				return false, fmt.Errorf("Expected docset, but was %s", node.DisplayName())
+				if node, isNode := left.(yamlmeta.Node); isNode {
+					return false, fmt.Errorf("Expected docset, but was %s", node.DisplayName())
+				}
+				return false, fmt.Errorf("Expected docset, but was %T", left)
 			}
 			docSetArray = typedLeft
 		} else {
@@ -61,8 +63,10 @@ func (o Op) apply(left, right interface{}, parentMatchChildDefaults MatchChildDe
 	case *yamlmeta.Map:
 		typedLeft, isMap := left.(*yamlmeta.Map)
 		if !isMap {
-			node := left.(yamlmeta.Node)
-			return false, fmt.Errorf("Expected map, but was %s", node.DisplayName())
+			if node, isNode := left.(yamlmeta.Node); isNode {
+				return false, fmt.Errorf("Expected map, but was %s", node.DisplayName())
+			}
+			return false, fmt.Errorf("Expected map, but was %T", left)
 		}
 
 		for _, item := range typedRight.Items {
@@ -95,8 +99,10 @@ func (o Op) apply(left, right interface{}, parentMatchChildDefaults MatchChildDe
 	case *yamlmeta.Array:
 		typedLeft, isArray := left.(*yamlmeta.Array)
 		if !isArray {
-			node := left.(yamlmeta.Node)
-			return false, fmt.Errorf("Expected array, but was %s", node.DisplayName())
+			if node, isNode := left.(yamlmeta.Node); isNode {
+				return false, fmt.Errorf("Expected array, but was %s", node.DisplayName())
+			}
+			return false, fmt.Errorf("Expected array, but was %T", left)
 		}
 
 		for _, item := range typedRight.Items {
