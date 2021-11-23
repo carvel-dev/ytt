@@ -46,10 +46,11 @@ type DescriptionAnnotation struct {
 func NewTypeAnnotation(ann template.NodeAnnotation, node yamlmeta.Node) (*TypeAnnotation, error) {
 	if len(ann.Kwargs) == 0 {
 		return nil, schemaAssertionError{
+			annPosition: ann.Position,
 			position:    node.GetPosition(),
 			description: fmt.Sprintf("expected @%v annotation to have keyword argument and value", AnnotationType),
 			expected:    "valid keyword argument and value",
-			found:       "missing keyword argument and value",
+			found:       fmt.Sprintf("missing keyword argument and value (by %s)", ann.Position.AsCompactString()),
 			hints:       []string{fmt.Sprintf("Supported key-value pairs are '%v=True', '%v=False'", TypeAnnotationKwargAny, TypeAnnotationKwargAny)},
 		}
 	}
@@ -65,22 +66,24 @@ func NewTypeAnnotation(ann template.NodeAnnotation, node yamlmeta.Node) (*TypeAn
 			isAnyType, err := core.NewStarlarkValue(kwarg[1]).AsBool()
 			if err != nil {
 				return nil, schemaAssertionError{
+					annPosition: ann.Position,
 					position:    node.GetPosition(),
 					description: "unknown @schema/type annotation keyword argument",
 					expected:    "starlark.Bool",
-					found:       fmt.Sprintf("%T", kwarg[1]),
-					hints:       []string{fmt.Sprintf("Supported kwargs are '%v'", TypeAnnotationKwargAny)},
+					found:       fmt.Sprintf("%T (by %s)", kwarg[1], ann.Position.AsCompactString()),
+					hints: []string{fmt.Sprintf("Supported kwargs are '%v'", TypeAnnotationKwargAny)},
 				}
 			}
 			typeAnn.any = isAnyType
 
 		default:
 			return nil, schemaAssertionError{
+				annPosition: ann.Position,
 				position:    node.GetPosition(),
 				description: "unknown @schema/type annotation keyword argument",
 				expected:    "A valid kwarg",
-				found:       argName,
-				hints:       []string{fmt.Sprintf("Supported kwargs are '%v'", TypeAnnotationKwargAny)},
+				found:       fmt.Sprintf("%s (by %s)", argName, ann.Position.AsCompactString()),
+				hints: []string{fmt.Sprintf("Supported kwargs are '%v'", TypeAnnotationKwargAny)},
 			}
 		}
 	}
@@ -90,7 +93,14 @@ func NewTypeAnnotation(ann template.NodeAnnotation, node yamlmeta.Node) (*TypeAn
 // NewNullableAnnotation checks that there are no arguments, and returns wrapper for the annotated node.
 func NewNullableAnnotation(ann template.NodeAnnotation, node yamlmeta.Node) (*NullableAnnotation, error) {
 	if len(ann.Kwargs) != 0 {
-		return nil, fmt.Errorf("expected @%v annotation to not contain any keyword arguments", AnnotationNullable)
+		return nil, schemaAssertionError{
+			annPosition: ann.Position,
+			position:    node.GetPosition(),
+			description: fmt.Sprintf("expected @%v annotation to not contain any keyword arguments", AnnotationNullable),
+			expected:    "starlark.Bool",
+			found:       fmt.Sprintf("keyword argument in @%v (by %v)", AnnotationNullable, ann.Position.AsCompactString()),
+			hints: []string{fmt.Sprintf("Supported kwargs are '%v'", TypeAnnotationKwargAny)},
+		}
 	}
 
 	return &NullableAnnotation{node: node}, nil
@@ -100,10 +110,11 @@ func NewNullableAnnotation(ann template.NodeAnnotation, node yamlmeta.Node) (*Nu
 func NewDefaultAnnotation(ann template.NodeAnnotation, effectiveType yamlmeta.Type, pos *filepos.Position) (*DefaultAnnotation, error) {
 	if len(ann.Kwargs) != 0 {
 		return nil, schemaAssertionError{
+			annPosition: ann.Position,
 			position:    pos,
 			description: fmt.Sprintf("syntax error in @%v annotation", AnnotationDefault),
 			expected:    fmt.Sprintf("%s (by %s)", effectiveType.String(), effectiveType.GetDefinitionPosition().AsCompactString()),
-			found:       fmt.Sprintf("(keyword argument in @%v above this item)", AnnotationDefault),
+			found:       fmt.Sprintf("keyword argument in @%v (by %v)", AnnotationDefault, ann.Position.AsCompactString()),
 			hints: []string{
 				"this annotation only accepts one argument: the default value.",
 				"value must be in Starlark format, e.g.: {'key': 'value'}, True."},
@@ -112,17 +123,19 @@ func NewDefaultAnnotation(ann template.NodeAnnotation, effectiveType yamlmeta.Ty
 	switch numArgs := len(ann.Args); {
 	case numArgs == 0:
 		return nil, schemaAssertionError{
+			annPosition: ann.Position,
 			position:    pos,
 			description: fmt.Sprintf("syntax error in @%v annotation", AnnotationDefault),
 			expected:    fmt.Sprintf("%s (by %s)", effectiveType.String(), effectiveType.GetDefinitionPosition().AsCompactString()),
-			found:       fmt.Sprintf("missing value (in @%v above this item)", AnnotationDefault),
+			found:       fmt.Sprintf("missing value in @%v (by %v)", AnnotationDefault, ann.Position.AsCompactString()),
 		}
 	case numArgs > 1:
 		return nil, schemaAssertionError{
+			annPosition: ann.Position,
 			position:    pos,
 			description: fmt.Sprintf("syntax error in @%v annotation", AnnotationDefault),
 			expected:    fmt.Sprintf("%s (by %s)", effectiveType.String(), effectiveType.GetDefinitionPosition().AsCompactString()),
-			found:       fmt.Sprintf("%v values (in @%v above this item)", numArgs, AnnotationDefault),
+			found:       fmt.Sprintf("%v values in @%v (by %v)", numArgs, AnnotationDefault, ann.Position.AsCompactString()),
 		}
 	}
 
@@ -261,6 +274,8 @@ func processOptionalAnnotation(node yamlmeta.Node, optionalAnnotation template.A
 
 	if nodeAnnotations.Has(optionalAnnotation) {
 		ann := nodeAnnotations[optionalAnnotation]
+		ann.Position.SetFile(node.GetPosition().GetFile())
+		ann.Position.SetLine(annotationSourceLine(node.GetComments(), ann.Position.LineNum()))
 
 		switch optionalAnnotation {
 		case AnnotationNullable:
@@ -346,4 +361,14 @@ func getTypeFromAnnotations(anns []Annotation, pos *filepos.Position) (yamlmeta.
 		return nil, err
 	}
 	return typeFromAnn, nil
+}
+
+//
+func annotationSourceLine(nodeComments []*yamlmeta.Comment, lineNum int) string {
+	for _, c := range nodeComments {
+		if c.Position.IsKnown() && c.Position.AsIntString() == fmt.Sprintf("%d",lineNum) {
+			return fmt.Sprintf("#%s",c.Data)
+		}
+	}
+	return ""
 }

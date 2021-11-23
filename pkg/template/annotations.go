@@ -4,6 +4,7 @@
 package template
 
 import (
+	"github.com/k14s/ytt/pkg/filepos"
 	"strings"
 
 	"github.com/k14s/starlark-go/starlark"
@@ -18,8 +19,9 @@ const (
 type NodeAnnotations map[AnnotationName]NodeAnnotation
 
 type NodeAnnotation struct {
-	Args   starlark.Tuple
-	Kwargs []starlark.Tuple
+	Args          starlark.Tuple
+	Kwargs   []starlark.Tuple
+	Position *filepos.Position
 }
 
 func NewAnnotations(node EvaluationNode) NodeAnnotations {

@@ -194,10 +194,11 @@ Invalid schema
 unknown @schema/type annotation keyword argument
 schema.yml:
     |
+  3 | #@schema/type unknown_kwarg=False
   4 | foo: 0
     |
 
-    = found: unknown_kwarg
+    = found: unknown_kwarg (by schema.yml:3)
     = expected: A valid kwarg
     = hint: Supported kwargs are 'any'
 `
@@ -222,10 +223,11 @@ Invalid schema
 unknown @schema/type annotation keyword argument
 schema.yml:
     |
+  3 | #@schema/type any=1
   4 | foo: 0
     |
 
-    = found: starlark.Int
+    = found: starlark.Int (by schema.yml:3)
     = expected: starlark.Bool
     = hint: Supported kwargs are 'any'
 `
@@ -250,10 +252,11 @@ Invalid schema
 expected @schema/type annotation to have keyword argument and value
 schema.yml:
     |
+  3 | #@schema/type
   4 | foo: 0
     |
 
-    = found: missing keyword argument and value
+    = found: missing keyword argument and value (by schema.yml:3)
     = expected: valid keyword argument and value
     = hint: Supported key-value pairs are 'any=True', 'any=False'
 `
@@ -269,11 +272,27 @@ schema.yml:
 #@schema/type any
 foo: 0
 `
+		expectedErr2 := `
+Invalid schema
+==============
+expected @schema/type annotation to have keyword argument and value
+
+schema.yml:
+    |
+  3 | #@schema/type any
+  4 | foo: 0
+    |
+
+    = found: missing keyword argument and value (by schema.yml:3)
+    = expected: valid keyword argument and value
+    = hint: Supported key-value pairs are 'any=True', 'any=False'
+`
+
 		filesToProcess = files.NewSortedFiles([]*files.File{
 			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML2))),
 		})
 
-		assertFails(t, filesToProcess, expectedErr, opts)
+		assertFails(t, filesToProcess, expectedErr2, opts)
 	})
 	t.Run("when schema/type and schema/nullable annotate a map", func(t *testing.T) {
 		schemaYAML := `#@data/values-schema
@@ -319,10 +338,11 @@ Invalid schema
 syntax error in @schema/default annotation
 schema.yml:
     |
+  3 | #@schema/default
   4 | foo: 0
     |
 
-    = found: missing value (in @schema/default above this item)
+    = found: missing value in @schema/default (by schema.yml:3)
     = expected: integer (by schema.yml:4)
 `
 
@@ -345,10 +365,11 @@ Invalid schema
 syntax error in @schema/default annotation
 schema.yml:
     |
+  3 | #@schema/default 1, 2
   4 | foo: 0
     |
 
-    = found: 2 values (in @schema/default above this item)
+    = found: 2 values in @schema/default (by schema.yml:3)
     = expected: integer (by schema.yml:4)
 `
 
@@ -371,10 +392,11 @@ Invalid schema
 syntax error in @schema/default annotation
 schema.yml:
     |
+  3 | #@schema/default any=True
   4 | foo: 0
     |
 
-    = found: (keyword argument in @schema/default above this item)
+    = found: keyword argument in @schema/default (by schema.yml:3)
     = expected: integer (by schema.yml:4)
     = hint: this annotation only accepts one argument: the default value.
     = hint: value must be in Starlark format, e.g.: {'key': 'value'}, True.

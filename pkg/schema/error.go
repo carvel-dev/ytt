@@ -33,6 +33,12 @@ const schemaErrorReportTemplate = `
 {{- else}}
 {{.FileName}}:
 {{pad "|" ""}}
+{{- if .AnnSource}}
+{{pad "|" .AnnPos}} {{.AnnSource}}
+{{- end}}
+{{- if .PositionDifference}}
+{{pad "|" "..."}}
+{{- end}}
 {{pad "|" .FilePos}} {{.Source}}
 {{pad "|" ""}}
 {{- end}}
@@ -51,17 +57,36 @@ func NewSchemaError(summary string, errs ...error) error {
 	var miscErrorMessage string
 	for _, err := range errs {
 		if typeCheckAssertionErr, ok := err.(schemaAssertionError); ok {
-			failures = append(failures, assertionFailure{
-				Description: typeCheckAssertionErr.description,
-				FileName:    typeCheckAssertionErr.position.GetFile(),
-				FilePos:     typeCheckAssertionErr.position.AsIntString(),
-				FromMemory:  typeCheckAssertionErr.position.FromMemory(),
-				SourceName:  "Data value calculated",
-				Source:      typeCheckAssertionErr.position.GetLine(),
-				Expected:    typeCheckAssertionErr.expected,
-				Found:       typeCheckAssertionErr.found,
-				Hints:       typeCheckAssertionErr.hints,
-			})
+			if typeCheckAssertionErr.annPosition == nil {
+				failures = append(failures, assertionFailure{
+					Description: typeCheckAssertionErr.description,
+					FileName:    typeCheckAssertionErr.position.GetFile(),
+					FilePos:     typeCheckAssertionErr.position.AsIntString(),
+					FromMemory:  typeCheckAssertionErr.position.FromMemory(),
+					SourceName:  "Data value calculated",
+					Source:      typeCheckAssertionErr.position.GetLine(),
+					Expected:    typeCheckAssertionErr.expected,
+					Found:       typeCheckAssertionErr.found,
+					Hints:       typeCheckAssertionErr.hints,
+				})
+			} else {
+				adjacentPositions := typeCheckAssertionErr.position.IsNextTo(typeCheckAssertionErr.annPosition)
+				failures = append(failures, assertionFailure{
+					Description:        typeCheckAssertionErr.description,
+					FileName:           typeCheckAssertionErr.position.GetFile(),
+					AnnPos:             typeCheckAssertionErr.annPosition.AsIntString(),
+					AnnSource:          typeCheckAssertionErr.annPosition.GetLine(),
+					PositionDifference: !adjacentPositions,
+					FilePos:            typeCheckAssertionErr.position.AsIntString(),
+					FromMemory:         typeCheckAssertionErr.position.FromMemory(),
+					SourceName:         "Data value calculated",
+					Source:             typeCheckAssertionErr.position.GetLine(),
+					Expected:           typeCheckAssertionErr.expected,
+					Found:              typeCheckAssertionErr.found,
+					Hints:              typeCheckAssertionErr.hints,
+				})
+			}
+
 		} else {
 			miscErrorMessage += fmt.Sprintf("%s \n", err.Error())
 		}
@@ -125,19 +150,23 @@ type schemaError struct {
 }
 
 type assertionFailure struct {
-	Description string
-	FileName    string
-	Source      string
-	FilePos     string
-	FromMemory  bool
-	SourceName  string
-	Expected    string
-	Found       string
-	Hints       []string
+	Description        string
+	FileName           string
+	AnnPos             string
+	AnnSource          string
+	PositionDifference bool
+	Source             string
+	FilePos            string
+	FromMemory         bool
+	SourceName         string
+	Expected           string
+	Found              string
+	Hints              []string
 }
 
 type schemaAssertionError struct {
 	error
+	annPosition *filepos.Position
 	position    *filepos.Position
 	description string
 	expected    string
