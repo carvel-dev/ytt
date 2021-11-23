@@ -169,8 +169,10 @@ func (b overlayModule) compareByMapKey(keyName string, oldVal, newVal interface{
 func (b overlayModule) pullOutMapValue(keyName string, val interface{}) (interface{}, error) {
 	typedMap, ok := val.(*yamlmeta.Map)
 	if !ok {
-		node := val.(yamlmeta.Node)
-		return starlark.None, fmt.Errorf("Expected value to be map, but was"+" %s", node.DisplayName())
+		if node, isNode := val.(yamlmeta.Node); isNode {
+			return starlark.None, fmt.Errorf("Expected value to be map, but was %s", node.DisplayName())
+		}
+		return starlark.None, fmt.Errorf("Expected value to be map, but was %T", val)
 	}
 
 	for _, item := range typedMap.Items {
