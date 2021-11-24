@@ -275,8 +275,8 @@ foo: 0
 		expectedErr2 := `
 Invalid schema
 ==============
-expected @schema/type annotation to have keyword argument and value
 
+expected @schema/type annotation to have keyword argument and value
 schema.yml:
     |
   3 | #@schema/type any
@@ -309,6 +309,8 @@ Invalid schema
 @schema/nullable, and @schema/type any=True are mutually exclusive
 schema.yml:
     |
+  3 | #@schema/type any=True
+  4 | #@schema/nullable
   5 | foo: 0
     |
 
@@ -423,6 +425,7 @@ Invalid schema - @schema/default not supported on array item
 
 schema.yml:
     |
+  4 | #@schema/default "baz"
   5 | - bar
     |
 
@@ -511,10 +514,11 @@ Invalid schema
 syntax error in @schema/desc annotation
 schema.yml:
     |
+  3 | #@schema/desc
   4 | key: val
     |
 
-    = found: missing value (in @schema/desc above this item)
+    = found: missing value in @schema/desc (by schema.yml:3)
     = expected: string
 `
 
@@ -537,10 +541,11 @@ Invalid schema
 syntax error in @schema/desc annotation
 schema.yml:
     |
+  3 | #@schema/desc "two", "strings"
   4 | key: val
     |
 
-    = found: 2 values (in @schema/desc above this item)
+    = found: 2 values in @schema/desc (by schema.yml:3)
     = expected: string
 `
 
@@ -563,10 +568,11 @@ Invalid schema
 syntax error in @schema/desc annotation
 schema.yml:
     |
+  3 | #@schema/desc 1
   4 | key: val
     |
 
-    = found: Non-string value (in @schema/desc above this item)
+    = found: Non-string value in @schema/desc (by schema.yml:3)
     = expected: string
 `
 
@@ -589,10 +595,11 @@ Invalid schema
 syntax error in @schema/desc annotation
 schema.yml:
     |
+  3 | #@schema/desc key=True
   4 | key: val
     |
 
-    = found: keyword argument (in @schema/desc above this item)
+    = found: keyword argument in @schema/desc (by schema.yml:3)
     = expected: string
     = hint: this annotation only accepts one argument: a string.
 `

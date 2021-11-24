@@ -9,7 +9,6 @@ import (
 	"github.com/k14s/ytt/pkg/filepos"
 	"github.com/k14s/ytt/pkg/template/core"
 	"strconv"
-
 	// Should not import template specific packages here (like yamlmeta)
 )
 

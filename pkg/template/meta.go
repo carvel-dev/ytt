@@ -21,9 +21,9 @@ type Meta struct {
 }
 
 type Annotation struct {
-	Name    AnnotationName // eg template/code
-	Content string         // eg if True:
-	Position  *filepos.Position
+	Name     AnnotationName // eg template/code
+	Content  string         // eg if True:
+	Position *filepos.Position
 }
 
 // Supported formats:

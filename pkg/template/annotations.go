@@ -19,7 +19,7 @@ const (
 type NodeAnnotations map[AnnotationName]NodeAnnotation
 
 type NodeAnnotation struct {
-	Args          starlark.Tuple
+	Args     starlark.Tuple
 	Kwargs   []starlark.Tuple
 	Position *filepos.Position
 }
