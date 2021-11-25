@@ -34,13 +34,12 @@ const schemaErrorReportTemplate = `
 {{- else}}
 {{.FileName}}:
 {{pad "|" ""}}
-{{- range .AnnPositions}}
+{{- range .Positions}}
 {{pad "|" .Pos}} {{.Source}}
 {{- if .SkipLines}}
 {{pad "|" ""}} {{"..."}}
 {{- end}}
 {{- end}}
-{{pad "|" .FilePos}} {{.Source}}
 {{pad "|" ""}}
 {{- end}}
 
@@ -59,16 +58,16 @@ func NewSchemaError(summary string, errs ...error) error {
 	for _, err := range errs {
 		if typeCheckAssertionErr, ok := err.(schemaAssertionError); ok {
 			failures = append(failures, assertionFailure{
-				Description:  typeCheckAssertionErr.description,
-				FileName:     typeCheckAssertionErr.position.GetFile(),
-				AnnPositions: createAnnInfo(typeCheckAssertionErr.annPositions, typeCheckAssertionErr.position),
-				FilePos:      typeCheckAssertionErr.position.AsIntString(),
-				FromMemory:   typeCheckAssertionErr.position.FromMemory(),
-				SourceName:   "Data value calculated",
-				Source:       typeCheckAssertionErr.position.GetLine(),
-				Expected:     typeCheckAssertionErr.expected,
-				Found:        typeCheckAssertionErr.found,
-				Hints:        typeCheckAssertionErr.hints,
+				Description: typeCheckAssertionErr.description,
+				FileName:    typeCheckAssertionErr.position.GetFile(),
+				Positions:   createPosInfo(typeCheckAssertionErr.annPositions, typeCheckAssertionErr.position),
+				FilePos:     typeCheckAssertionErr.position.AsIntString(),
+				FromMemory:  typeCheckAssertionErr.position.FromMemory(),
+				SourceName:  "Data value calculated",
+				Source:      typeCheckAssertionErr.position.GetLine(),
+				Expected:    typeCheckAssertionErr.expected,
+				Found:       typeCheckAssertionErr.found,
+				Hints:       typeCheckAssertionErr.hints,
 			})
 		} else {
 			miscErrorMessage += fmt.Sprintf("%s \n", err.Error())
@@ -133,16 +132,16 @@ type schemaError struct {
 }
 
 type assertionFailure struct {
-	Description  string
-	FileName     string
-	AnnPositions []annErr
-	Source       string
-	FilePos      string
-	FromMemory   bool
-	SourceName   string
-	Expected     string
-	Found        string
-	Hints        []string
+	Description string
+	FileName    string
+	Positions   []posInfo
+	Source      string
+	FilePos     string
+	FromMemory  bool
+	SourceName  string
+	Expected    string
+	Found       string
+	Hints       []string
 }
 
 type schemaAssertionError struct {
@@ -155,29 +154,34 @@ type schemaAssertionError struct {
 	hints        []string
 }
 
-type annErr struct {
+type posInfo struct {
 	Pos       string
 	Source    string
 	SkipLines bool
 }
 
-func createAnnInfo(annPosList []*filepos.Position, nodePos *filepos.Position) []annErr {
+func createPosInfo(annPosList []*filepos.Position, nodePos *filepos.Position) []posInfo {
 	sort.SliceStable(annPosList, func(i, j int) bool {
+		if !annPosList[i].IsKnown() {
+			return true
+		}
+		if !annPosList[j].IsKnown() {
+			return false
+		}
 		return annPosList[i].LineNum() < annPosList[j].LineNum()
 	})
 
-	var AnnPositions []annErr
-	for i, p := range annPosList {
-		//if last position in list, compare with node position
-		if i+1 == len(annPosList) {
-			skipLines := !p.IsNextTo(nodePos)
-			AnnPositions = append(AnnPositions, annErr{Pos: p.AsIntString(), Source: p.GetLine(), SkipLines: skipLines})
-		} else {
-			skipLines := !p.IsNextTo(annPosList[i+1])
-			AnnPositions = append(AnnPositions, annErr{Pos: p.AsIntString(), Source: p.GetLine(), SkipLines: skipLines})
+	allPositions := append(annPosList, nodePos)
+	var positionsInfo []posInfo
+	for i, p := range allPositions {
+		//last position in list
+		skipLines := false
+		if i < len(allPositions)-1 {
+			skipLines = !p.IsNextTo(allPositions[i+1])
 		}
+		positionsInfo = append(positionsInfo, posInfo{Pos: p.AsIntString(), Source: p.GetLine(), SkipLines: skipLines})
 	}
-	return AnnPositions
+	return positionsInfo
 }
 
 func (e schemaError) Error() string {

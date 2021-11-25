@@ -159,10 +159,15 @@ func (e *EvaluationCtx) TplStartNodeAnnotation(
 	}
 	annName := AnnotationName(annNameStr)
 
-	lineNum, err := strconv.Atoi(args.Index(2).String())
-	if err != nil {
-		//what error would this be? string should be line number... when would it not
-		return starlark.None, err
+	var position *filepos.Position
+	if _, ok := args.Index(2).(starlark.NoneType); ok {
+		position = filepos.NewUnknownPosition()
+	} else {
+		lineNum, err := strconv.Atoi(args.Index(2).String())
+		if err != nil {
+			panic(fmt.Sprintf("expected line num to be int or None, but was %v", args.Index(2).String()))
+		}
+		position = filepos.NewPosition(lineNum)
 	}
 
 	annVals := args.Index(3).(starlark.Tuple)
@@ -180,7 +185,7 @@ func (e *EvaluationCtx) TplStartNodeAnnotation(
 	e.pendingAnnotations[nodeTag][annName] = NodeAnnotation{
 		Args:     annVals[0].(starlark.Tuple),
 		Kwargs:   kwargs,
-		Position: filepos.NewPosition(lineNum),
+		Position: position,
 	}
 
 	return starlark.None, nil

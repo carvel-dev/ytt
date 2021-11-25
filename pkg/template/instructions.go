@@ -58,7 +58,11 @@ func (is *InstructionSet) NewEndCtxNone() Instruction {
 
 func (is *InstructionSet) NewStartNodeAnnotation(nodeTag NodeTag, ann Annotation) Instruction {
 	collectedArgs := is.CollectNodeAnnotation.WithArgs(ann.Content).AsString()
-	return is.StartNodeAnnotation.WithArgs(nodeTag.AsString(), `"`+string(ann.Name)+`"`, ann.Position.AsIntString(), collectedArgs)
+	annLineNum := "None"
+	if ann.Position.IsKnown() {
+		annLineNum = ann.Position.AsIntString()
+	}
+	return is.StartNodeAnnotation.WithArgs(nodeTag.AsString(), `"`+string(ann.Name)+`"`, annLineNum, collectedArgs)
 }
 
 func (is *InstructionSet) NewStartNode(nodeTag NodeTag) Instruction {
