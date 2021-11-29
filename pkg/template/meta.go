@@ -5,8 +5,9 @@ package template
 
 import (
 	"fmt"
-	"github.com/k14s/ytt/pkg/filepos"
 	"strings"
+
+	"github.com/k14s/ytt/pkg/filepos"
 )
 
 type AnnotationName string

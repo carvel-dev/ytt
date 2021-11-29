@@ -4,10 +4,10 @@
 package template
 
 import (
-	"github.com/k14s/ytt/pkg/filepos"
 	"strings"
 
 	"github.com/k14s/starlark-go/starlark"
+	"github.com/k14s/ytt/pkg/filepos"
 )
 
 const (
