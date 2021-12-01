@@ -72,7 +72,7 @@ func typeToString(value interface{}) string {
 }
 
 func (ds *DocumentSet) SetValue(val interface{}) error {
-	return fmt.Errorf("cannot set value on a documentset")
+	return fmt.Errorf("cannot set value on a %s", ds.DisplayName())
 }
 
 func (d *Document) SetValue(val interface{}) error {
@@ -81,7 +81,7 @@ func (d *Document) SetValue(val interface{}) error {
 }
 
 func (m *Map) SetValue(val interface{}) error {
-	return fmt.Errorf("cannot set value on a map")
+	return fmt.Errorf("cannot set value on a %s", m.DisplayName())
 }
 
 func (mi *MapItem) SetValue(val interface{}) error {
@@ -90,7 +90,7 @@ func (mi *MapItem) SetValue(val interface{}) error {
 }
 
 func (a *Array) SetValue(val interface{}) error {
-	return fmt.Errorf("cannot set value on an array")
+	return fmt.Errorf("cannot set value on an %s", a.DisplayName())
 }
 
 func (ai *ArrayItem) SetValue(val interface{}) error {
@@ -147,7 +147,7 @@ func (m *Map) AddValue(val interface{}) error {
 
 func (mi *MapItem) AddValue(val interface{}) error {
 	if !isValidValue(val) {
-		return fmt.Errorf("mapitems can only contain arrays, maps, or scalars; this is a %T", val)
+		return fmt.Errorf("map items can only contain arrays, maps, or scalars; this is a %T", val)
 	}
 	mi.Value = val
 	return nil
@@ -163,7 +163,7 @@ func (a *Array) AddValue(val interface{}) error {
 
 func (ai *ArrayItem) AddValue(val interface{}) error {
 	if !isValidValue(val) {
-		return fmt.Errorf("arrayitems can only contain maps, arrays, or scalars; this is a %T", val)
+		return fmt.Errorf("array items can only contain maps, arrays, or scalars; this is a %T", val)
 	}
 	ai.Value = val
 	return nil

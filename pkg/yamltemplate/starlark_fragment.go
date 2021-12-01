@@ -17,6 +17,7 @@ const (
 	starlarkFragmentType = "yamlfragment"
 )
 
+// StarlarkFragment is an adapter for yamlmeta.Node values in Starlark code
 type StarlarkFragment struct {
 	data interface{}
 }

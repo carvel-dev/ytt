@@ -54,7 +54,7 @@ func (e EvaluationCtx) Replace(
 		parentNode := parentNodes[len(parentNodes)-2]
 		typedParentNode, ok := parentNode.(*yamlmeta.DocumentSet)
 		if !ok {
-			return fmt.Errorf("expected to find document set, but was %T", parentNode)
+			return fmt.Errorf("expected to find document set, but was %s", parentNode.(yamlmeta.Node).DisplayName())
 		}
 
 		return e.replaceItemInDocSet(typedParentNode, typedCurrNode, val)
@@ -67,7 +67,7 @@ func (e EvaluationCtx) Replace(
 		parentNode := parentNodes[len(parentNodes)-2]
 		typedParentNode, ok := parentNode.(*yamlmeta.Map)
 		if !ok {
-			return fmt.Errorf("expected parent of map item to be map, but was %T", parentNode)
+			return fmt.Errorf("expected parent of map item to be map, but was %s", parentNode.(yamlmeta.Node).DisplayName())
 		}
 
 		return e.replaceItemInMap(typedParentNode, typedCurrNode, val)
@@ -80,7 +80,7 @@ func (e EvaluationCtx) Replace(
 		parentNode := parentNodes[len(parentNodes)-2]
 		typedParentNode, ok := parentNode.(*yamlmeta.Array)
 		if !ok {
-			return fmt.Errorf("expected parent of array item to be array, but was %T", parentNode)
+			return fmt.Errorf("expected parent of array item to be array, but was %s", parentNode.(yamlmeta.Node).DisplayName())
 		}
 
 		return e.replaceItemInArray(typedParentNode, typedCurrNode, val)
@@ -122,6 +122,9 @@ func (e EvaluationCtx) convertValToDocSetItems(val interface{}) ([]*yamlmeta.Doc
 		result = typedVal.Items
 
 	default:
+		if node, isNode := val.(yamlmeta.Node); isNode {
+			return nil, fmt.Errorf("expected value to be docset, but was %s", node.DisplayName())
+		}
 		return nil, fmt.Errorf("expected value to be docset, but was %T", val)
 	}
 
@@ -172,6 +175,9 @@ func (e EvaluationCtx) convertValToMapItems(val interface{}, position *filepos.P
 		return typedVal.Items, true, nil
 
 	default:
+		if node, isNode := val.(yamlmeta.Node); isNode {
+			return nil, false, fmt.Errorf("expected value to be map, but was %s", node.DisplayName())
+		}
 		return nil, false, fmt.Errorf("expected value to be map, but was %T", val)
 	}
 }
@@ -208,6 +214,9 @@ func (e EvaluationCtx) convertValToArrayItems(val interface{}, position *filepos
 		result = typedVal.Items
 
 	default:
+		if node, isNode := val.(yamlmeta.Node); isNode {
+			return nil, fmt.Errorf("expected value to be array, but was %s", node.DisplayName())
+		}
 		return nil, fmt.Errorf("expected value to be array, but was %T", val)
 	}
 
