@@ -109,3 +109,16 @@ func (p *Position) DeepCopyWithLineOffset(offset int) *Position {
 	*newPos.lineNum += offset
 	return newPos
 }
+
+// IsNextTo compares the location of one position with another.
+func (p *Position) IsNextTo(otherPostion *Position) bool {
+	if p.IsKnown() && otherPostion.IsKnown() {
+		if p.GetFile() == otherPostion.GetFile() {
+			diff := p.LineNum() - otherPostion.LineNum()
+			if -1 <= diff && 1 >= diff {
+				return true
+			}
+		}
+	}
+	return false
+}

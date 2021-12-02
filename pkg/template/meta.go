@@ -6,6 +6,8 @@ package template
 import (
 	"fmt"
 	"strings"
+
+	"github.com/k14s/ytt/pkg/filepos"
 )
 
 type AnnotationName string
@@ -20,8 +22,9 @@ type Meta struct {
 }
 
 type Annotation struct {
-	Name    AnnotationName // eg template/code
-	Content string         // eg if True:
+	Name     AnnotationName // eg template/code
+	Content  string         // eg if True:
+	Position *filepos.Position
 }
 
 // Supported formats:

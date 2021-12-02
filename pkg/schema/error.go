@@ -25,6 +25,7 @@ const schemaErrorReportTemplate = `
 {{- if .Description}}
 {{.Description}}
 {{- end}}
+
 {{- if .FromMemory}}
 {{.SourceName}}:
 {{pad "#" ""}}
@@ -33,7 +34,12 @@ const schemaErrorReportTemplate = `
 {{- else}}
 {{.FileName}}:
 {{pad "|" ""}}
-{{pad "|" .FilePos}} {{.Source}}
+{{- range .Positions}}
+{{- if .SkipLines}}
+{{pad "|" ""}} {{"..."}}
+{{- end}}
+{{pad "|" .Pos}} {{.Source}}
+{{- end}}
 {{pad "|" ""}}
 {{- end}}
 
@@ -54,6 +60,7 @@ func NewSchemaError(summary string, errs ...error) error {
 			failures = append(failures, assertionFailure{
 				Description: typeCheckAssertionErr.description,
 				FileName:    typeCheckAssertionErr.position.GetFile(),
+				Positions:   createPosInfo(typeCheckAssertionErr.annPositions, typeCheckAssertionErr.position),
 				FilePos:     typeCheckAssertionErr.position.AsIntString(),
 				FromMemory:  typeCheckAssertionErr.position.FromMemory(),
 				SourceName:  "Data value calculated",
@@ -127,6 +134,7 @@ type schemaError struct {
 type assertionFailure struct {
 	Description string
 	FileName    string
+	Positions   []posInfo
 	Source      string
 	FilePos     string
 	FromMemory  bool
@@ -138,11 +146,41 @@ type assertionFailure struct {
 
 type schemaAssertionError struct {
 	error
-	position    *filepos.Position
-	description string
-	expected    string
-	found       string
-	hints       []string
+	annPositions []*filepos.Position
+	position     *filepos.Position
+	description  string
+	expected     string
+	found        string
+	hints        []string
+}
+
+type posInfo struct {
+	Pos       string
+	Source    string
+	SkipLines bool
+}
+
+func createPosInfo(annPosList []*filepos.Position, nodePos *filepos.Position) []posInfo {
+	sort.SliceStable(annPosList, func(i, j int) bool {
+		if !annPosList[i].IsKnown() {
+			return true
+		}
+		if !annPosList[j].IsKnown() {
+			return false
+		}
+		return annPosList[i].LineNum() < annPosList[j].LineNum()
+	})
+
+	allPositions := append(annPosList, nodePos)
+	var positionsInfo []posInfo
+	for i, p := range allPositions {
+		skipLines := false
+		if i > 0 {
+			skipLines = !p.IsNextTo(allPositions[i-1])
+		}
+		positionsInfo = append(positionsInfo, posInfo{Pos: p.AsIntString(), Source: p.GetLine(), SkipLines: skipLines})
+	}
+	return positionsInfo
 }
 
 func (e schemaError) Error() string {

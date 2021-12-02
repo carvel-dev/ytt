@@ -5,8 +5,10 @@ package template
 
 import (
 	"fmt"
+	"strconv"
 
 	"github.com/k14s/starlark-go/starlark"
+	"github.com/k14s/ytt/pkg/filepos"
 	"github.com/k14s/ytt/pkg/template/core"
 	// Should not import template specific packages here (like yamlmeta)
 )
@@ -143,8 +145,8 @@ func (e *EvaluationCtx) TplStartNodeAnnotation(
 	thread *starlark.Thread, f *starlark.Builtin,
 	args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
 
-	if args.Len() != 3 {
-		return starlark.None, fmt.Errorf("expected exactly 3 arguments")
+	if args.Len() != 4 {
+		return starlark.None, fmt.Errorf("expected exactly 4 arguments")
 	}
 
 	nodeTag, err := NewNodeTagFromStarlarkValue(args.Index(0))
@@ -156,9 +158,20 @@ func (e *EvaluationCtx) TplStartNodeAnnotation(
 	if err != nil {
 		return starlark.None, err
 	}
-
 	annName := AnnotationName(annNameStr)
-	annVals := args.Index(2).(starlark.Tuple)
+
+	var position *filepos.Position
+	if _, ok := args.Index(2).(starlark.NoneType); ok {
+		position = filepos.NewUnknownPosition()
+	} else {
+		lineNum, err := strconv.Atoi(args.Index(2).String())
+		if err != nil {
+			panic(fmt.Sprintf("expected line num to be int, but found error: %v", err.Error()))
+		}
+		position = filepos.NewPosition(lineNum)
+	}
+
+	annVals := args.Index(3).(starlark.Tuple)
 
 	kwargs = []starlark.Tuple{}
 	for _, val := range annVals[1:] {
@@ -171,8 +184,9 @@ func (e *EvaluationCtx) TplStartNodeAnnotation(
 
 	// TODO overrides last set value
 	e.pendingAnnotations[nodeTag][annName] = NodeAnnotation{
-		Args:   annVals[0].(starlark.Tuple),
-		Kwargs: kwargs,
+		Args:     annVals[0].(starlark.Tuple),
+		Kwargs:   kwargs,
+		Position: position,
 	}
 
 	return starlark.None, nil
