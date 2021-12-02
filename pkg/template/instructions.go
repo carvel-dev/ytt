@@ -6,6 +6,8 @@ package template
 import (
 	"fmt"
 	"strings"
+
+	"github.com/k14s/starlark-go/starlark"
 )
 
 type InstructionSet struct {
@@ -58,9 +60,11 @@ func (is *InstructionSet) NewEndCtxNone() Instruction {
 
 func (is *InstructionSet) NewStartNodeAnnotation(nodeTag NodeTag, ann Annotation) Instruction {
 	collectedArgs := is.CollectNodeAnnotation.WithArgs(ann.Content).AsString()
-	annLineNum := "None"
+	var annLineNum string
 	if ann.Position.IsKnown() {
 		annLineNum = ann.Position.AsIntString()
+	} else {
+		annLineNum = starlark.None.String()
 	}
 	return is.StartNodeAnnotation.WithArgs(nodeTag.AsString(), `"`+string(ann.Name)+`"`, annLineNum, collectedArgs)
 }

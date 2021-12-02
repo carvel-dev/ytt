@@ -166,7 +166,7 @@ func (e *EvaluationCtx) TplStartNodeAnnotation(
 	} else {
 		lineNum, err := strconv.Atoi(args.Index(2).String())
 		if err != nil {
-			panic(fmt.Sprintf("expected line num to be int or None, but was %v", args.Index(2).String()))
+			panic(fmt.Sprintf("expected line num to be int, but found error: %v", err.Error()))
 		}
 		position = filepos.NewPosition(lineNum)
 	}

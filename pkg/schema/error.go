@@ -35,10 +35,10 @@ const schemaErrorReportTemplate = `
 {{.FileName}}:
 {{pad "|" ""}}
 {{- range .Positions}}
-{{pad "|" .Pos}} {{.Source}}
 {{- if .SkipLines}}
 {{pad "|" ""}} {{"..."}}
 {{- end}}
+{{pad "|" .Pos}} {{.Source}}
 {{- end}}
 {{pad "|" ""}}
 {{- end}}
@@ -174,10 +174,9 @@ func createPosInfo(annPosList []*filepos.Position, nodePos *filepos.Position) []
 	allPositions := append(annPosList, nodePos)
 	var positionsInfo []posInfo
 	for i, p := range allPositions {
-		//last position in list
 		skipLines := false
-		if i < len(allPositions)-1 {
-			skipLines = !p.IsNextTo(allPositions[i+1])
+		if i > 0 {
+			skipLines = !p.IsNextTo(allPositions[i-1])
 		}
 		positionsInfo = append(positionsInfo, posInfo{Pos: p.AsIntString(), Source: p.GetLine(), SkipLines: skipLines})
 	}
