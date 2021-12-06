@@ -302,6 +302,7 @@ schema.yml:
 foo:
   #@schema/nullable
   #@schema/type any=False
+  #@schema/default 1
   bar: 7
 `
 
@@ -309,16 +310,18 @@ foo:
 Invalid schema
 ==============
 
-@schema/... are not allowed within a fragment annotated '@schema/type any=True'
+Schema was specified within an "any type" fragment
 schema.yml:
     |
-  5 | #@schema/nullable
-  6 | #@schema/type any=False
-  7 |   bar: 7
+  5 |   #@schema/nullable
+  6 |   #@schema/type any=False
+  7 |   #@schema/default 1
+  8 |   bar: 7
     |
 
-    = found: schema/nullable, schema/type annotation(s)
-    = expected: no @schema/... annotations within "any type" fragment
+    = found: @schema/nullable, @schema/type, @schema/default annotation(s)
+    = expected: no '@schema/...' on nodes within a node annotated '@schema/type any=True'
+    = hint: an "any type" fragment has no constraints; nested schema annotations conflict and are disallowed
 `
 
 			filesToProcess := files.NewSortedFiles([]*files.File{
