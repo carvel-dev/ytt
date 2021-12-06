@@ -262,6 +262,13 @@ func inferTypeFromValue(value interface{}, position *filepos.Position) (yamlmeta
 func valueTypeAllowsItemValue(explicitType yamlmeta.Type, itemValue interface{}, position *filepos.Position) error {
 	switch explicitType.(type) {
 	case *AnyType:
+		if node, ok := itemValue.(yamlmeta.Node); ok {
+			// search children for annotations
+			err := yamlmeta.Walk(node, checkForAnnotations{})
+			if err != nil {
+				return err
+			}
+		}
 		return nil
 	default:
 		if itemValue == nil {

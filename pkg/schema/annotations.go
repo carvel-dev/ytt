@@ -5,6 +5,8 @@ package schema
 
 import (
 	"fmt"
+	"strings"
+
 	"github.com/k14s/ytt/pkg/filepos"
 	"github.com/k14s/ytt/pkg/template"
 	"github.com/k14s/ytt/pkg/template/core"
@@ -399,6 +401,35 @@ func getTypeFromAnnotations(anns []Annotation, pos *filepos.Position) (yamlmeta.
 		return nil, err
 	}
 	return typeFromAnn, nil
+}
+
+type checkForAnnotations struct {}
+
+func (c checkForAnnotations) Visit(n yamlmeta.Node) error {
+	var foundAnns []string
+	var foundAnnsPos []*filepos.Position
+	nodeAnnotations := template.NewAnnotations(n)
+	for _, annotation := range []template.AnnotationName{AnnotationNullable, AnnotationType, AnnotationDefault} {
+		if nodeAnnotations.Has(annotation) {
+			foundAnns = append(foundAnns, string(annotation))
+			annPos := nodeAnnotations[annotation].Position
+			annPos.SetFile(n.GetPosition().GetFile())
+			annPos.SetLine(annotationSourceLine(n.GetComments(), annPos.LineNum()))
+			foundAnnsPos = append(foundAnnsPos, annPos)
+		}
+	}
+	if len(foundAnnsPos) > 0 {
+		foundText := strings.Join(foundAnns, ", ")
+		return NewSchemaError("Invalid schema", schemaAssertionError{
+			annPositions: foundAnnsPos,
+			position:     n.GetPosition(),
+			description:  "@schema/... are not allowed within a fragment annotated '@schema/type any=True'",
+			expected:     "no @schema/... annotations within \"any type\" fragment",
+			found:        fmt.Sprintf("%v annotation(s)",foundText),
+		})
+	}
+
+	return nil
 }
 
 func annotationSourceLine(nodeComments []*yamlmeta.Comment, lineNum int) string {

@@ -181,13 +181,14 @@ schema.yml:
 `
 		assertFails(t, filesToProcess, expectedErr, opts)
 	})
-	t.Run("when schema/type has keyword other than any", func(t *testing.T) {
-		schemaYAML := `#@data/values-schema
+	t.Run("when schema/type annotation", func(t *testing.T) {
+		t.Run("has keyword other than any", func(t *testing.T) {
+			schemaYAML := `#@data/values-schema
 ---
 #@schema/type unknown_kwarg=False
 foo: 0
 `
-		expectedErr := `
+			expectedErr := `
 Invalid schema
 ==============
 
@@ -203,20 +204,20 @@ schema.yml:
     = hint: Supported kwargs are 'any'
 `
 
-		filesToProcess := files.NewSortedFiles([]*files.File{
-			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
-		})
+			filesToProcess := files.NewSortedFiles([]*files.File{
+				files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
+			})
 
-		assertFails(t, filesToProcess, expectedErr, opts)
-	})
-	t.Run("when schema/type has value for any other than a bool", func(t *testing.T) {
-		schemaYAML := `#@data/values-schema
+			assertFails(t, filesToProcess, expectedErr, opts)
+		})
+		t.Run("has value for any other than a bool", func(t *testing.T) {
+			schemaYAML := `#@data/values-schema
 ---
 #@schema/type any=1
 foo: 0
 `
 
-		expectedErr := `
+			expectedErr := `
 Invalid schema
 ==============
 
@@ -232,20 +233,20 @@ schema.yml:
     = hint: Supported kwargs are 'any'
 `
 
-		filesToProcess := files.NewSortedFiles([]*files.File{
-			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
-		})
+			filesToProcess := files.NewSortedFiles([]*files.File{
+				files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
+			})
 
-		assertFails(t, filesToProcess, expectedErr, opts)
-	})
-	t.Run("when schema/type has incomplete key word args", func(t *testing.T) {
-		schemaYAML := `#@data/values-schema
+			assertFails(t, filesToProcess, expectedErr, opts)
+		})
+		t.Run("has incomplete key word args", func(t *testing.T) {
+			schemaYAML := `#@data/values-schema
 ---
 #@schema/type
 foo: 0
 `
 
-		expectedErr := `
+			expectedErr := `
 Invalid schema
 ==============
 
@@ -261,18 +262,18 @@ schema.yml:
     = hint: Supported key-value pairs are 'any=True', 'any=False'
 `
 
-		filesToProcess := files.NewSortedFiles([]*files.File{
-			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
-		})
+			filesToProcess := files.NewSortedFiles([]*files.File{
+				files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
+			})
 
-		assertFails(t, filesToProcess, expectedErr, opts)
+			assertFails(t, filesToProcess, expectedErr, opts)
 
-		schemaYAML2 := `#@data/values-schema
+			schemaYAML2 := `#@data/values-schema
 ---
 #@schema/type any
 foo: 0
 `
-		expectedErr2 := `
+			expectedErr2 := `
 Invalid schema
 ==============
 
@@ -288,11 +289,44 @@ schema.yml:
     = hint: Supported key-value pairs are 'any=True', 'any=False'
 `
 
-		filesToProcess = files.NewSortedFiles([]*files.File{
-			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML2))),
-		})
+			filesToProcess = files.NewSortedFiles([]*files.File{
+				files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML2))),
+			})
 
-		assertFails(t, filesToProcess, expectedErr2, opts)
+			assertFails(t, filesToProcess, expectedErr2, opts)
+		})
+		t.Run("has nested schema/... annotations", func(t *testing.T) {
+			schemaYAML := `#@data/values-schema
+---
+#@schema/type any=True
+foo:
+  #@schema/nullable
+  #@schema/type any=False
+  bar: 7
+`
+
+			expectedErr := `
+Invalid schema
+==============
+
+@schema/... are not allowed within a fragment annotated '@schema/type any=True'
+schema.yml:
+    |
+  5 | #@schema/nullable
+  6 | #@schema/type any=False
+  7 |   bar: 7
+    |
+
+    = found: schema/nullable, schema/type annotation(s)
+    = expected: no @schema/... annotations within "any type" fragment
+`
+
+			filesToProcess := files.NewSortedFiles([]*files.File{
+				files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
+			})
+
+			assertFails(t, filesToProcess, expectedErr, opts)
+		})
 	})
 	t.Run("when schema/type and schema/nullable annotate a map", func(t *testing.T) {
 		schemaYAML := `#@data/values-schema
