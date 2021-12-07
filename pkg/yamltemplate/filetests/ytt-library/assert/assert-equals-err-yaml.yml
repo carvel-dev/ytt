@@ -21,6 +21,6 @@ ERR:
     reason:
      Expected:
      foo: bar
-     ---
+     -----
      Actual:
      bar: foo

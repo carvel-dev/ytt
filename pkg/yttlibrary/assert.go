@@ -42,13 +42,7 @@ func (b assertModule) Equals(thread *starlark.Thread, f *starlark.Builtin, args 
 		return starlark.None, fmt.Errorf("expected argument not to be a function, but was %T", actual)
 	}
 
-	expectedType := expected.Type()
-	actualType := actual.Type()
-	if expectedType != actualType {
-		return starlark.None, fmt.Errorf("arguments are of different types. expected %s, but got %s", expectedType, actualType)
-	}
-
-	if expectedType == "yamlfragment" {
+	if expected.Type() == "yamlfragment" {
 		expectedStarlarkValue, err := core.NewStarlarkValue(expected).AsGoValue()
 		if err != nil {
 			return starlark.None, err
@@ -68,9 +62,8 @@ func (b assertModule) Equals(thread *starlark.Thread, f *starlark.Builtin, args 
 			return starlark.None, err
 		}
 		if string(expectedYaml) != string(actualYaml) {
-			//errorMessage := string(actualYaml) + "\nis not equal to the expected yaml value\n" + string(expectedYaml)
 			return starlark.None, fmt.Errorf("yamlfragments are not equal:\n"+
-				"Expected:\n%s---\nActual:\n%s", string(expectedYaml), string(actualYaml))
+				"Expected:\n%s-----\nActual:\n%s", string(expectedYaml), string(actualYaml))
 		}
 	} else {
 		if !reflect.DeepEqual(expected, actual) {
