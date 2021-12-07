@@ -10,6 +10,7 @@ import (
 	"github.com/k14s/starlark-go/starlark"
 	"github.com/k14s/starlark-go/starlarkstruct"
 	"github.com/k14s/ytt/pkg/template/core"
+	"github.com/k14s/ytt/pkg/yamlmeta"
 )
 
 var (
@@ -47,8 +48,33 @@ func (b assertModule) Equals(thread *starlark.Thread, f *starlark.Builtin, args 
 		return starlark.None, fmt.Errorf("arguments are of different types. expected %s, but got %s", expectedType, actualType)
 	}
 
-	if !reflect.DeepEqual(expected, actual) {
-		return starlark.None, fmt.Errorf("%s is not equal to the expected value %s", actual.String(), expected.String())
+	if expectedType == "yamlfragment" {
+		expectedStarlarkValue, err := core.NewStarlarkValue(expected).AsGoValue()
+		if err != nil {
+			return starlark.None, err
+		}
+		actualStarlarkValue, err := core.NewStarlarkValue(actual).AsGoValue()
+		if err != nil {
+			return starlark.None, err
+		}
+		document := yamlmeta.Document{Value: expectedStarlarkValue}
+		expectedYaml, err := document.AsYAMLBytes()
+		if err != nil {
+			return starlark.None, err
+		}
+		document = yamlmeta.Document{Value: actualStarlarkValue}
+		actualYaml, err := document.AsYAMLBytes()
+		if err != nil {
+			return starlark.None, err
+		}
+		if string(expectedYaml) != string(actualYaml) {
+			//errorMessage := string(actualYaml) + "\nis not equal to the expected yaml value\n" + string(expectedYaml)
+			return starlark.None, fmt.Errorf("yamlfragments are not equal")
+		}
+	} else {
+		if !reflect.DeepEqual(expected, actual) {
+			return starlark.None, fmt.Errorf("%s is not equal to the expected value %s", actual.String(), expected.String())
+		}
 	}
 
 	return starlark.None, nil
