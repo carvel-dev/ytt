@@ -6,6 +6,6 @@ test_equals: #@ assert.equals(lambda: json.decode("}junk"), lambda: json.decode(
 +++
 
 ERR: 
-- assert.equals: lambdas are not allowed
+- assert.equals: expected argument not to be a function, but was *starlark.Function
     in <toplevel>
       stdin:4 | test_equals: #@ assert.equals(lambda: json.decode("}junk"), lambda: json.decode("}junk"))

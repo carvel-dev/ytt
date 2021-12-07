@@ -35,7 +35,10 @@ func (b assertModule) Equals(thread *starlark.Thread, f *starlark.Builtin, args 
 	expected := args.Index(0)
 	actual := args.Index(1)
 	if _, notOk := expected.(starlark.Callable); notOk {
-		return starlark.None, fmt.Errorf("lambdas are not allowed")
+		return starlark.None, fmt.Errorf("expected argument not to be a function, but was %T", expected)
+	}
+	if _, notOk := actual.(starlark.Callable); notOk {
+		return starlark.None, fmt.Errorf("expected argument not to be a function, but was %T", actual)
 	}
 
 	expectedType := expected.Type()
