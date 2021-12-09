@@ -42,12 +42,11 @@ func (b assertModule) Equals(thread *starlark.Thread, f *starlark.Builtin, args 
 		return starlark.None, fmt.Errorf("expected argument not to be a function, but was %T", actual)
 	}
 
+	var expectedYamlString string
+	var actualYamlString string
+
 	if expected.Type() == "yamlfragment" {
 		expectedStarlarkValue, err := core.NewStarlarkValue(expected).AsGoValue()
-		if err != nil {
-			return starlark.None, err
-		}
-		actualStarlarkValue, err := core.NewStarlarkValue(actual).AsGoValue()
 		if err != nil {
 			return starlark.None, err
 		}
@@ -56,14 +55,32 @@ func (b assertModule) Equals(thread *starlark.Thread, f *starlark.Builtin, args 
 		if err != nil {
 			return starlark.None, err
 		}
-		document = yamlmeta.Document{Value: actualStarlarkValue}
+		expectedYamlString = string(expectedYaml)
+	}
+
+	if actual.Type() == "yamlfragment" {
+		actualStarlarkValue, err := core.NewStarlarkValue(actual).AsGoValue()
+		if err != nil {
+			return starlark.None, err
+		}
+		document := yamlmeta.Document{Value: actualStarlarkValue}
 		actualYaml, err := document.AsYAMLBytes()
 		if err != nil {
 			return starlark.None, err
 		}
-		if string(expectedYaml) != string(actualYaml) {
+		actualYamlString = string(actualYaml)
+	}
+
+	if expected.Type() == "yamlfragment" && actual.Type() != "yamlfragment" {
+		return starlark.None, fmt.Errorf("Not equal:\n"+
+			"expected:\n%s\nactual:\n%s", expectedYamlString, actual.String())
+	} else if expected.Type() != "yamlfragment" && actual.Type() == "yamlfragment" {
+		return starlark.None, fmt.Errorf("Not equal:\n"+
+			"expected:\n%s\n\nactual:\n%s", expected.String(), actualYamlString)
+	} else if expected.Type() == "yamlfragment" && actual.Type() == "yamlfragment" {
+		if expectedYamlString != actualYamlString {
 			return starlark.None, fmt.Errorf("Not equal:\n"+
-				"expected:\n%s\nactual:\n%s", expectedYaml, actualYaml)
+				"expected:\n%s\nactual:\n%s", expectedYamlString, actualYamlString)
 		}
 	} else {
 		if !reflect.DeepEqual(expected, actual) {
