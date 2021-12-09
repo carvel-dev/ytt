@@ -5,7 +5,6 @@ package yamlmeta_test
 
 import (
 	"fmt"
-	"os"
 	"strings"
 	"testing"
 
@@ -33,7 +32,7 @@ func TestParserDocSetEmpty(t *testing.T) {
 		Position: filepos.NewUnknownPosition(),
 	}
 
-	printer := yamlmeta.NewPrinterWithOpts(os.Stdout, yamlmeta.PrinterOpts{ExcludeRefs: true})
+	printer := yamlmeta.NewPrinterWithOpts(nil, yamlmeta.PrinterOpts{ExcludeRefs: true})
 
 	parsedValStr := printer.PrintStr(parsedVal)
 	expectedValStr := printer.PrintStr(expectedVal)
@@ -58,7 +57,7 @@ func TestParserDocSetNewline(t *testing.T) {
 		Position: filepos.NewUnknownPosition(),
 	}
 
-	printer := yamlmeta.NewPrinterWithOpts(os.Stdout, yamlmeta.PrinterOpts{ExcludeRefs: true})
+	printer := yamlmeta.NewPrinterWithOpts(nil, yamlmeta.PrinterOpts{ExcludeRefs: true})
 
 	parsedValStr := printer.PrintStr(parsedVal)
 	expectedValStr := printer.PrintStr(expectedVal)
@@ -89,7 +88,7 @@ func TestParserOnlyComment(t *testing.T) {
 		Position: filepos.NewUnknownPosition(),
 	}
 
-	printer := yamlmeta.NewPrinterWithOpts(os.Stdout, yamlmeta.PrinterOpts{ExcludeRefs: true})
+	printer := yamlmeta.NewPrinterWithOpts(nil, yamlmeta.PrinterOpts{ExcludeRefs: true})
 
 	parsedValStr := printer.PrintStr(parsedVal)
 	expectedValStr := printer.PrintStr(expectedVal)
@@ -116,7 +115,7 @@ func TestParserDoc(t *testing.T) {
 		Position: filepos.NewUnknownPosition(),
 	}
 
-	printer := yamlmeta.NewPrinterWithOpts(os.Stdout, yamlmeta.PrinterOpts{ExcludeRefs: true})
+	printer := yamlmeta.NewPrinterWithOpts(nil, yamlmeta.PrinterOpts{ExcludeRefs: true})
 
 	parsedValStr := printer.PrintStr(parsedVal)
 	expectedValStr := printer.PrintStr(expectedVal)
@@ -147,7 +146,7 @@ func TestParserDocWithoutDashes(t *testing.T) {
 		Position: filepos.NewUnknownPosition(),
 	}
 
-	printer := yamlmeta.NewPrinterWithOpts(os.Stdout, yamlmeta.PrinterOpts{ExcludeRefs: true})
+	printer := yamlmeta.NewPrinterWithOpts(nil, yamlmeta.PrinterOpts{ExcludeRefs: true})
 
 	parsedValStr := printer.PrintStr(parsedVal)
 	expectedValStr := printer.PrintStr(expectedVal)
@@ -310,7 +309,7 @@ array:
 		Position: filepos.NewUnknownPosition(),
 	}
 
-	printer := yamlmeta.NewPrinterWithOpts(os.Stdout, yamlmeta.PrinterOpts{ExcludeRefs: true})
+	printer := yamlmeta.NewPrinterWithOpts(nil, yamlmeta.PrinterOpts{ExcludeRefs: true})
 
 	parsedValStr := printer.PrintStr(parsedVal)
 	expectedValStr := printer.PrintStr(expectedVal)
@@ -378,7 +377,7 @@ map:
 		Position: filepos.NewUnknownPosition(),
 	}
 
-	printer := yamlmeta.NewPrinterWithOpts(os.Stdout, yamlmeta.PrinterOpts{ExcludeRefs: true})
+	printer := yamlmeta.NewPrinterWithOpts(nil, yamlmeta.PrinterOpts{ExcludeRefs: true})
 
 	parsedValStr := printer.PrintStr(parsedVal)
 	expectedValStr := printer.PrintStr(expectedVal)
@@ -489,7 +488,7 @@ array:
 		Position: filepos.NewUnknownPosition(),
 	}
 
-	printer := yamlmeta.NewPrinterWithOpts(os.Stdout, yamlmeta.PrinterOpts{ExcludeRefs: true})
+	printer := yamlmeta.NewPrinterWithOpts(nil, yamlmeta.PrinterOpts{ExcludeRefs: true})
 
 	parsedValStr := printer.PrintStr(parsedVal)
 	expectedValStr := printer.PrintStr(expectedVal)
@@ -534,7 +533,7 @@ func TestParserDocSetComments(t *testing.T) {
 		Position: filepos.NewUnknownPosition(),
 	}
 
-	printer := yamlmeta.NewPrinterWithOpts(os.Stdout, yamlmeta.PrinterOpts{ExcludeRefs: true})
+	printer := yamlmeta.NewPrinterWithOpts(nil, yamlmeta.PrinterOpts{ExcludeRefs: true})
 
 	parsedValStr := printer.PrintStr(parsedVal)
 	expectedValStr := printer.PrintStr(expectedVal)
@@ -565,7 +564,7 @@ func TestParserDocSetOnlyComments2(t *testing.T) {
 		Position: filepos.NewUnknownPosition(),
 	}
 
-	printer := yamlmeta.NewPrinterWithOpts(os.Stdout, yamlmeta.PrinterOpts{ExcludeRefs: true})
+	printer := yamlmeta.NewPrinterWithOpts(nil, yamlmeta.PrinterOpts{ExcludeRefs: true})
 
 	parsedValStr := printer.PrintStr(parsedVal)
 	expectedValStr := printer.PrintStr(expectedVal)
@@ -593,7 +592,7 @@ func TestParserDocSetOnlyComments3(t *testing.T) {
 		Position: filepos.NewUnknownPosition(),
 	}
 
-	printer := yamlmeta.NewPrinterWithOpts(os.Stdout, yamlmeta.PrinterOpts{ExcludeRefs: true})
+	printer := yamlmeta.NewPrinterWithOpts(nil, yamlmeta.PrinterOpts{ExcludeRefs: true})
 
 	parsedValStr := printer.PrintStr(parsedVal)
 	expectedValStr := printer.PrintStr(expectedVal)
@@ -624,7 +623,7 @@ func TestParserDocSetOnlyComments(t *testing.T) {
 		Position: filepos.NewUnknownPosition(),
 	}
 
-	printer := yamlmeta.NewPrinterWithOpts(os.Stdout, yamlmeta.PrinterOpts{ExcludeRefs: true})
+	printer := yamlmeta.NewPrinterWithOpts(nil, yamlmeta.PrinterOpts{ExcludeRefs: true})
 
 	parsedValStr := printer.PrintStr(parsedVal)
 	expectedValStr := printer.PrintStr(expectedVal)
@@ -668,7 +667,7 @@ func TestParserDocSetCommentsNoFirstDashes(t *testing.T) {
 		Position: filepos.NewUnknownPosition(),
 	}
 
-	printer := yamlmeta.NewPrinterWithOpts(os.Stdout, yamlmeta.PrinterOpts{ExcludeRefs: true})
+	printer := yamlmeta.NewPrinterWithOpts(nil, yamlmeta.PrinterOpts{ExcludeRefs: true})
 
 	parsedValStr := printer.PrintStr(parsedVal)
 	expectedValStr := printer.PrintStr(expectedVal)
@@ -725,7 +724,7 @@ key:
 		Position: filepos.NewUnknownPosition(),
 	}
 
-	printer := yamlmeta.NewPrinterWithOpts(os.Stdout, yamlmeta.PrinterOpts{ExcludeRefs: true})
+	printer := yamlmeta.NewPrinterWithOpts(nil, yamlmeta.PrinterOpts{ExcludeRefs: true})
 
 	parsedValStr := printer.PrintStr(parsedVal)
 	expectedValStr := printer.PrintStr(expectedVal)
@@ -1024,7 +1023,7 @@ func (ex parserExample) checkDocSet(t *testing.T, parsedVal *yamlmeta.DocumentSe
 		t.Fatalf("error: %s", err)
 	}
 
-	printer := yamlmeta.NewPrinterWithOpts(os.Stdout, yamlmeta.PrinterOpts{ExcludeRefs: true})
+	printer := yamlmeta.NewPrinterWithOpts(nil, yamlmeta.PrinterOpts{ExcludeRefs: true})
 
 	parsedValStr := printer.PrintStr(parsedVal)
 	expectedValStr := printer.PrintStr(ex.Expected)

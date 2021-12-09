@@ -4,7 +4,6 @@
 package yamlmeta_test
 
 import (
-	"os"
 	"testing"
 
 	"github.com/k14s/ytt/pkg/yamlmeta"
@@ -25,7 +24,7 @@ func TestMapKeyOverridePlainYAML(t *testing.T) {
 		expectedDocSet := docSet.DeepCopyAsNode()
 		docSet.OverrideMapKeys()
 
-		printer := yamlmeta.NewPrinterWithOpts(os.Stdout, yamlmeta.PrinterOpts{ExcludeRefs: true})
+		printer := yamlmeta.NewPrinterWithOpts(nil, yamlmeta.PrinterOpts{ExcludeRefs: true})
 
 		result := printer.PrintStr(docSet)
 		expected := printer.PrintStr(expectedDocSet)
@@ -55,7 +54,7 @@ func TestMapKeyOverridePlainYAML(t *testing.T) {
 		}
 		docSet.OverrideMapKeys()
 
-		printer := yamlmeta.NewPrinterWithOpts(os.Stdout, yamlmeta.PrinterOpts{ExcludeRefs: true})
+		printer := yamlmeta.NewPrinterWithOpts(nil, yamlmeta.PrinterOpts{ExcludeRefs: true})
 
 		result := printer.PrintStr(docSet)
 		expected := printer.PrintStr(expectedDocSet)
@@ -89,7 +88,7 @@ func TestMapKeyOverridePlainYAML(t *testing.T) {
 		}
 		docSet.OverrideMapKeys()
 
-		printer := yamlmeta.NewPrinterWithOpts(os.Stdout, yamlmeta.PrinterOpts{ExcludeRefs: true})
+		printer := yamlmeta.NewPrinterWithOpts(nil, yamlmeta.PrinterOpts{ExcludeRefs: true})
 
 		result := printer.PrintStr(docSet)
 		expected := printer.PrintStr(expectedDocSet)
