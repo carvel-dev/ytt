@@ -62,8 +62,8 @@ func (b assertModule) Equals(thread *starlark.Thread, f *starlark.Builtin, args 
 			return starlark.None, err
 		}
 		if string(expectedYaml) != string(actualYaml) {
-			return starlark.None, fmt.Errorf("yamlfragments are not equal:\n"+
-				"Expected:\n%s-----\nActual:\n%s", string(expectedYaml), string(actualYaml))
+			return starlark.None, fmt.Errorf("Not equal:\n"+
+				"expected:\n%s\nactual:\n%s", expectedYaml, actualYaml)
 		}
 	} else {
 		if !reflect.DeepEqual(expected, actual) {

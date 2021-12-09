@@ -14,13 +14,13 @@ test_equals: #@ assert.equals(yamlFunc(), moreYamlFunc())
 +++
 
 ERR: 
-- assert.equals: yamlfragments are not equal:
+- assert.equals: Not equal:
     in <toplevel>
       stdin:12 | test_equals: #@ assert.equals(yamlFunc(), moreYamlFunc())
 
     reason:
-     Expected:
+     expected:
      foo: bar
-     -----
-     Actual:
+     
+     actual:
      bar: foo
