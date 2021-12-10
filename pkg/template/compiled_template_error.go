@@ -205,9 +205,9 @@ func (CompiledTemplateMultiError) hintMsg(errMsg string, err CompiledTemplateErr
 	case "unhandled index operation struct[string]":
 		hintMsg = "use getattr(...) to access struct field programmatically"
 	case "unknown binary op: bool | bool":
-		hintMsg = "use 'or' instead of '||' to combine boolean expressions"
+		hintMsg = "use 'or' instead of '|' to combine boolean expressions"
 	case "unknown binary op: bool & bool":
-		hintMsg = "use 'and' instead of '&&' to combine boolean expressions"
+		hintMsg = "use 'and' instead of '&' to combine boolean expressions"
 	case "got '&', want primary expression":
 		for _, pos := range err.Positions {
 			codeLine := pos.TemplateLine.Instruction.code
