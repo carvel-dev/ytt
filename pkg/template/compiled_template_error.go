@@ -81,7 +81,7 @@ func (e CompiledTemplateMultiError) Error() string {
 			}
 		}
 
-		result = append(result, fmt.Sprintf("- %s%s", topicLine, e.hintMsg(topicLine)))
+		result = append(result, fmt.Sprintf("- %s%s", topicLine, e.hintMsg(topicLine, err)))
 
 		for _, pos := range err.Positions {
 			// TODO do better
@@ -187,7 +187,7 @@ func (CompiledTemplateMultiError) findClosestLine(ct *CompiledTemplate, posLine 
 	}
 }
 
-func (CompiledTemplateMultiError) hintMsg(errMsg string) string {
+func (CompiledTemplateMultiError) hintMsg(errMsg string, err CompiledTemplateError) string {
 	hintMsg := ""
 	switch errMsg {
 	case "undefined: true":
@@ -204,6 +204,26 @@ func (CompiledTemplateMultiError) hintMsg(errMsg string) string {
 		hintMsg = "use 'None' instead of 'none' to indicate no value"
 	case "unhandled index operation struct[string]":
 		hintMsg = "use getattr(...) to access struct field programmatically"
+	case "unknown binary op: bool | bool":
+		hintMsg = "use 'or' instead of '||' to combine boolean expressions"
+	case "unknown binary op: bool & bool":
+		hintMsg = "use 'and' instead of '&&' to combine boolean expressions"
+	case "got '&', want primary expression":
+		for _, pos := range err.Positions {
+			codeLine := pos.TemplateLine.Instruction.code
+			if strings.Contains(codeLine, "&&") {
+				hintMsg = "use 'and' instead of '&&' to combine boolean expressions"
+				break
+			}
+		}
+	case "got '|', want primary expression":
+		for _, pos := range err.Positions {
+			codeLine := pos.TemplateLine.Instruction.code
+			if strings.Contains(codeLine, "||") {
+				hintMsg = "use 'or' instead of '||' to combine boolean expressions"
+				break
+			}
+		}
 	}
 
 	if len(hintMsg) > 0 {
