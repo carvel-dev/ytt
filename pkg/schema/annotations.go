@@ -208,7 +208,7 @@ func (t *TypeAnnotation) NewTypeFromAnn() (Type, error) {
 
 // NewTypeFromAnn returns type information given by annotation.
 func (n *NullableAnnotation) NewTypeFromAnn() (Type, error) {
-	inferredType, err := inferTypeFromValue(n.node.GetValues()[0], n.node.GetPosition())
+	inferredType, err := InferTypeFromValue(n.node.GetValues()[0], n.node.GetPosition())
 	if err != nil {
 		return nil, err
 	}

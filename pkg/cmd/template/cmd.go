@@ -11,6 +11,7 @@ import (
 	"github.com/k14s/ytt/pkg/files"
 	"github.com/k14s/ytt/pkg/schema"
 	"github.com/k14s/ytt/pkg/workspace"
+	"github.com/k14s/ytt/pkg/workspace/datavalues"
 	"github.com/k14s/ytt/pkg/yamlmeta"
 	"github.com/spf13/cobra"
 )
@@ -163,7 +164,7 @@ func (o *Options) RunWithFiles(in Input, ui ui.UI) Output {
 	return Output{Files: result.Files, DocSet: result.DocSet}
 }
 
-func (o *Options) inspectDataValues(values *workspace.DataValues) Output {
+func (o *Options) inspectDataValues(values *datavalues.Envelope) Output {
 	return Output{
 		DocSet: &yamlmeta.DocumentSet{
 			Items: []*yamlmeta.Document{values.Doc},
@@ -171,7 +172,7 @@ func (o *Options) inspectDataValues(values *workspace.DataValues) Output {
 	}
 }
 
-func (o *Options) inspectSchema(dataValuesSchema workspace.Schema) Output {
+func (o *Options) inspectSchema(dataValuesSchema *datavalues.Schema) Output {
 	format, err := o.RegularFilesSourceOpts.OutputType.Schema()
 	if err != nil {
 		return Output{Err: err}

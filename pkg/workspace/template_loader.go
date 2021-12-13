@@ -10,9 +10,9 @@ import (
 	"github.com/k14s/starlark-go/starlark"
 	"github.com/k14s/ytt/pkg/cmd/ui"
 	"github.com/k14s/ytt/pkg/files"
-	"github.com/k14s/ytt/pkg/schema"
 	"github.com/k14s/ytt/pkg/template"
 	"github.com/k14s/ytt/pkg/texttemplate"
+	"github.com/k14s/ytt/pkg/workspace/datavalues"
 	"github.com/k14s/ytt/pkg/yamlmeta"
 	"github.com/k14s/ytt/pkg/yamltemplate"
 	"github.com/k14s/ytt/pkg/yttlibrary"
@@ -20,9 +20,9 @@ import (
 
 type TemplateLoader struct {
 	ui                 ui.UI
-	values             *DataValues
-	libraryValuess     []*DataValues
-	librarySchemas     []*schema.DocumentSchemaEnvelope
+	values             *datavalues.Envelope
+	libraryValuess     []*datavalues.Envelope
+	librarySchemas     []*datavalues.SchemaEnvelope
 	opts               TemplateLoaderOpts
 	compiledTemplates  map[string]*template.CompiledTemplate
 	libraryExecFactory *LibraryExecutionFactory
@@ -41,7 +41,8 @@ type TemplateLoaderOptsOverrides struct {
 	StrictYAML              *bool
 }
 
-func NewTemplateLoader(values *DataValues, libraryValuess []*DataValues, librarySchemas []*schema.DocumentSchemaEnvelope, opts TemplateLoaderOpts, libraryExecFactory *LibraryExecutionFactory, ui ui.UI) *TemplateLoader {
+// NewTemplateLoader instantiates a new TemplateLoader.
+func NewTemplateLoader(values *datavalues.Envelope, libraryValuess []*datavalues.Envelope, librarySchemas []*datavalues.SchemaEnvelope, opts TemplateLoaderOpts, libraryExecFactory *LibraryExecutionFactory, ui ui.UI) *TemplateLoader {
 
 	if values == nil {
 		panic("Expected values to be non-nil")

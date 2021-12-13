@@ -14,7 +14,7 @@ import (
 const (
 	AnnotationLibraryRef = "library/ref"
 
-	librarySep            = "@"
+	LibrarySep            = "@"
 	libraryAliasIndicator = "~"
 )
 
@@ -74,12 +74,12 @@ func (n LibraryRefExtractor) FromStr(libRefStr string) ([]LibraryRef, error) {
 		return nil, fmt.Errorf("Expected library ref to not be empty")
 	}
 
-	if !strings.HasPrefix(libRefStr, librarySep) {
-		return nil, fmt.Errorf("Expected library ref to start with '%s'", librarySep)
+	if !strings.HasPrefix(libRefStr, LibrarySep) {
+		return nil, fmt.Errorf("Expected library ref to start with '%s'", LibrarySep)
 	}
 
 	var result []LibraryRef
-	for _, refPiece := range strings.Split(libRefStr, librarySep)[1:] {
+	for _, refPiece := range strings.Split(libRefStr, LibrarySep)[1:] {
 		pathAndAlias := strings.Split(refPiece, libraryAliasIndicator)
 		switch l := len(pathAndAlias); {
 		case l == 1:
