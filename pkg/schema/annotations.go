@@ -5,6 +5,8 @@ package schema
 
 import (
 	"fmt"
+	"strings"
+
 	"github.com/k14s/ytt/pkg/filepos"
 	"github.com/k14s/ytt/pkg/template"
 	"github.com/k14s/ytt/pkg/template/core"
@@ -303,8 +305,7 @@ func processOptionalAnnotation(node yamlmeta.Node, optionalAnnotation template.A
 
 	if nodeAnnotations.Has(optionalAnnotation) {
 		ann := nodeAnnotations[optionalAnnotation]
-		ann.Position.SetFile(node.GetPosition().GetFile())
-		ann.Position.SetLine(annotationSourceLine(node.GetComments(), ann.Position.LineNum()))
+		ann.Position = populateAnnotationPosition(ann.Position, node)
 
 		switch optionalAnnotation {
 		case AnnotationNullable:
@@ -401,11 +402,52 @@ func getTypeFromAnnotations(anns []Annotation, pos *filepos.Position) (yamlmeta.
 	return typeFromAnn, nil
 }
 
-func annotationSourceLine(nodeComments []*yamlmeta.Comment, lineNum int) string {
-	for _, c := range nodeComments {
-		if c.Position.IsKnown() && c.Position.AsIntString() == fmt.Sprintf("%d", lineNum) {
-			return fmt.Sprintf("#%s", c.Data)
+type checkForAnnotations struct{}
+
+func (c checkForAnnotations) Visit(n yamlmeta.Node) error {
+	var foundAnns []string
+	var foundAnnsPos []*filepos.Position
+	nodeAnnotations := template.NewAnnotations(n)
+	for _, annotation := range []template.AnnotationName{AnnotationNullable, AnnotationType, AnnotationDefault} {
+		if nodeAnnotations.Has(annotation) {
+			foundAnns = append(foundAnns, string(annotation))
+			annPos := populateAnnotationPosition(nodeAnnotations[annotation].Position, n)
+			foundAnnsPos = append(foundAnnsPos, annPos)
 		}
 	}
-	return ""
+	if len(foundAnnsPos) > 0 {
+		foundText := strings.Join(foundAnns, ", @")
+		return NewSchemaError("Invalid schema", schemaAssertionError{
+			annPositions: foundAnnsPos,
+			position:     n.GetPosition(),
+			description:  "Schema was specified within an \"any type\" fragment",
+			expected:     "no '@schema/...' on nodes within a node annotated '@schema/type any=True'",
+			found:        fmt.Sprintf("@%v annotation(s)", foundText),
+			hints:        []string{"an \"any type\" fragment has no constraints; nested schema annotations conflict and are disallowed"},
+		})
+	}
+
+	return nil
+}
+
+func populateAnnotationPosition(annPos *filepos.Position, node yamlmeta.Node) *filepos.Position {
+	leftPadding := 0
+	nodePos := node.GetPosition()
+	if nodePos.IsKnown() {
+		nodeLine := nodePos.GetLine()
+		leftPadding = len(nodeLine) - len(strings.TrimLeft(nodeLine, " "))
+	}
+
+	lineString := ""
+	nodeComments := node.GetComments()
+	for _, c := range nodeComments {
+		if c.Position.IsKnown() && c.Position.AsIntString() == fmt.Sprintf("%d", annPos.LineNum()) {
+			lineString = fmt.Sprintf("%v#%s", strings.Repeat(" ", leftPadding), c.Data)
+		}
+	}
+
+	annPos.SetFile(nodePos.GetFile())
+	annPos.SetLine(lineString)
+
+	return annPos
 }
