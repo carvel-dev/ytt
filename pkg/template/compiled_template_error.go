@@ -81,7 +81,7 @@ func (e CompiledTemplateMultiError) Error() string {
 			}
 		}
 
-		result = append(result, fmt.Sprintf("- %s%s", topicLine, e.hintMsg(topicLine, err)))
+		result = append(result, fmt.Sprintf("- %s%s", topicLine, e.hintMsg(err)))
 
 		for _, pos := range err.Positions {
 			// TODO do better
@@ -187,9 +187,20 @@ func (CompiledTemplateMultiError) findClosestLine(ct *CompiledTemplate, posLine 
 	}
 }
 
-func (CompiledTemplateMultiError) hintMsg(errMsg string, err CompiledTemplateError) string {
+// hintMsgHelper checks if the operator is present in the code line to set the hint message appropriately
+func (CompiledTemplateMultiError) hintMsgHelper(err CompiledTemplateError, op string) bool {
+	for _, pos := range err.Positions {
+		codeLine := pos.TemplateLine.Instruction.code
+		if strings.Contains(codeLine, op) {
+			return true
+		}
+	}
+	return false
+}
+
+func (e CompiledTemplateMultiError) hintMsg(err CompiledTemplateError) string {
 	hintMsg := ""
-	switch errMsg {
+	switch err.Msg {
 	case "undefined: true":
 		hintMsg = "use 'True' instead of 'true' for boolean assignment"
 	case "undefined: false":
@@ -209,20 +220,16 @@ func (CompiledTemplateMultiError) hintMsg(errMsg string, err CompiledTemplateErr
 	case "unknown binary op: bool & bool":
 		hintMsg = "use 'and' instead of '&' to combine boolean expressions"
 	case "got '&', want primary expression":
-		for _, pos := range err.Positions {
-			codeLine := pos.TemplateLine.Instruction.code
-			if strings.Contains(codeLine, "&&") {
-				hintMsg = "use 'and' instead of '&&' to combine boolean expressions"
-				break
-			}
+		isOpPresent := e.hintMsgHelper(err, "&&")
+		if isOpPresent {
+			hintMsg = "use 'and' instead of '&&' to combine boolean expressions"
+			break
 		}
 	case "got '|', want primary expression":
-		for _, pos := range err.Positions {
-			codeLine := pos.TemplateLine.Instruction.code
-			if strings.Contains(codeLine, "||") {
-				hintMsg = "use 'or' instead of '||' to combine boolean expressions"
-				break
-			}
+		isOpPresent := e.hintMsgHelper(err, "||")
+		if isOpPresent {
+			hintMsg = "use 'or' instead of '||' to combine boolean expressions"
+			break
 		}
 	}
 
