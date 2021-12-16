@@ -15,8 +15,9 @@ ERR:
       stdin:8 | test_equals: #@ assert.equals(yamlFunc(), {"map":"value"})
 
     reason:
-     expected:
+     (expected type: yamlfragment)
      foo: bar
      
-     actual:
-     {"map": "value"}
+     
+     (was type: dict)
+     map: value

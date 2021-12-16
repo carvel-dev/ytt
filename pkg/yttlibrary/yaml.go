@@ -18,7 +18,7 @@ var (
 		"yaml": &starlarkstruct.Module{
 			Name: "yaml",
 			Members: starlark.StringDict{
-				"encode": starlark.NewBuiltin("yaml.encode", core.ErrWrapper(yamlModule{}.Encode)),
+				"encode": starlark.NewBuiltin("yaml.encode", core.ErrWrapper(yamlModule{}.starlarkEncode)),
 				"decode": starlark.NewBuiltin("yaml.decode", core.ErrWrapper(yamlModule{}.Decode)),
 			},
 		},
@@ -27,8 +27,8 @@ var (
 
 type yamlModule struct{}
 
-// Encode is a core.StarlarkFunc that renders the provided input into an YAML formatted string
-func (b yamlModule) Encode(thread *starlark.Thread, f *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
+// starlarkEncode adapts a call from Starlark to yamlModule.Encode()
+func (b yamlModule) starlarkEncode(thread *starlark.Thread, f *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
 	if args.Len() != 1 {
 		return starlark.None, fmt.Errorf("expected exactly one argument")
 	}
@@ -38,9 +38,19 @@ func (b yamlModule) Encode(thread *starlark.Thread, f *starlark.Builtin, args st
 		return starlark.None, err
 	}
 
+	encoded, err := b.Encode(val)
+	if err != nil {
+		return starlark.None, nil
+	}
+
+	return starlark.String(encoded), nil
+}
+
+// Encode renders the provided input as a YAML-formatted string
+func (b yamlModule) Encode(goValue interface{}) (string, error) {
 	var docSet *yamlmeta.DocumentSet
 
-	switch typedVal := val.(type) {
+	switch typedVal := goValue.(type) {
 	case *yamlmeta.DocumentSet:
 		docSet = typedVal
 	case *yamlmeta.Document:
@@ -52,10 +62,10 @@ func (b yamlModule) Encode(thread *starlark.Thread, f *starlark.Builtin, args st
 
 	valBs, err := docSet.AsBytes()
 	if err != nil {
-		return starlark.None, err
+		return "", err
 	}
 
-	return starlark.String(string(valBs)), nil
+	return string(valBs), nil
 }
 
 // Decode is a core.StarlarkFunc that parses the provided input from YAML format into dicts, lists, and scalars

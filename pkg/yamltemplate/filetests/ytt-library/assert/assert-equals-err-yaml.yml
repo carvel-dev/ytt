@@ -19,8 +19,9 @@ ERR:
       stdin:12 | test_equals: #@ assert.equals(yamlFunc(), moreYamlFunc())
 
     reason:
-     expected:
+     (expected type: yamlfragment)
      foo: bar
      
-     actual:
+     
+     (was type: yamlfragment)
      bar: foo

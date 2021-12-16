@@ -10,6 +10,18 @@ some: yaml
 more: yaml
 #@ end
 
+#@ def deploymentA():
+---
+kind: Deployment
+#@ end
+
+#@ def deploymentB():
+---
+kind: Deployment
+#@ end
+
+---
+
 equals_works_strings: #@ assert.equals("foo", "foo")
 equals_works_numbers: #@ assert.equals(1, 1)
 equals_works_deciaml: #@ assert.equals(3.14159, 3.14159)
@@ -18,6 +30,7 @@ equals_works_none: #@ assert.equals(None, None)
 equals_works_array: #@ assert.equals([1, 2], [1, 2])
 equals_works_map: #@ assert.equals({"foo": "bar"}, {"foo": "bar"})
 equals_works_yaml: #@ assert.equals(yamlFunc(), yamlFunc())
+equals_works_docset: #@ assert.equals(deploymentA(), deploymentB())
 
 +++
 
@@ -29,3 +42,4 @@ equals_works_none: null
 equals_works_array: null
 equals_works_map: null
 equals_works_yaml: null
+equals_works_docset: null

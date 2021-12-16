@@ -6,6 +6,14 @@ test_equals: #@ assert.equals(1, 2)
 +++
 
 ERR: 
-- assert.equals: 2 is not equal to the expected value 1
+- assert.equals: Not equal:
     in <toplevel>
       stdin:4 | test_equals: #@ assert.equals(1, 2)
+
+    reason:
+     (expected type: int)
+     1
+     
+     
+     (was type: int)
+     2

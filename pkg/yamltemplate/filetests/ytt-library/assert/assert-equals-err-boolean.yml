@@ -6,6 +6,14 @@ test_equals: #@ assert.equals(True, False)
 +++
 
 ERR: 
-- assert.equals: False is not equal to the expected value True
+- assert.equals: Not equal:
     in <toplevel>
       stdin:4 | test_equals: #@ assert.equals(True, False)
+
+    reason:
+     (expected type: bool)
+     true
+     
+     
+     (was type: bool)
+     false

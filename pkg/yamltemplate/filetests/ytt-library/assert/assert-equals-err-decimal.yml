@@ -6,6 +6,14 @@ test_equals: #@ assert.equals(3.14159, 2.71828)
 +++
 
 ERR: 
-- assert.equals: 2.71828 is not equal to the expected value 3.14159
+- assert.equals: Not equal:
     in <toplevel>
       stdin:4 | test_equals: #@ assert.equals(3.14159, 2.71828)
+
+    reason:
+     (expected type: float)
+     3.14159
+     
+     
+     (was type: float)
+     2.71828
