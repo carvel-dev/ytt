@@ -22,7 +22,7 @@ const (
 )
 
 type Annotation interface {
-	NewTypeFromAnn() (yamlmeta.Type, error)
+	NewTypeFromAnn() (Type, error)
 	GetPosition() *filepos.Position
 }
 
@@ -114,7 +114,7 @@ func NewNullableAnnotation(ann template.NodeAnnotation, node yamlmeta.Node) (*Nu
 }
 
 // NewDefaultAnnotation checks the argument provided via @schema/default annotation, and returns wrapper for that value.
-func NewDefaultAnnotation(ann template.NodeAnnotation, effectiveType yamlmeta.Type, pos *filepos.Position) (*DefaultAnnotation, error) {
+func NewDefaultAnnotation(ann template.NodeAnnotation, effectiveType Type, pos *filepos.Position) (*DefaultAnnotation, error) {
 	if len(ann.Kwargs) != 0 {
 		return nil, schemaAssertionError{
 			annPositions: []*filepos.Position{ann.Position},
@@ -199,7 +199,7 @@ func NewDescriptionAnnotation(ann template.NodeAnnotation, pos *filepos.Position
 }
 
 // NewTypeFromAnn returns type information given by annotation.
-func (t *TypeAnnotation) NewTypeFromAnn() (yamlmeta.Type, error) {
+func (t *TypeAnnotation) NewTypeFromAnn() (Type, error) {
 	if t.any {
 		return &AnyType{defaultValue: t.node.GetValues()[0], Position: t.node.GetPosition()}, nil
 	}
@@ -207,8 +207,8 @@ func (t *TypeAnnotation) NewTypeFromAnn() (yamlmeta.Type, error) {
 }
 
 // NewTypeFromAnn returns type information given by annotation.
-func (n *NullableAnnotation) NewTypeFromAnn() (yamlmeta.Type, error) {
-	inferredType, err := inferTypeFromValue(n.node.GetValues()[0], n.node.GetPosition())
+func (n *NullableAnnotation) NewTypeFromAnn() (Type, error) {
+	inferredType, err := InferTypeFromValue(n.node.GetValues()[0], n.node.GetPosition())
 	if err != nil {
 		return nil, err
 	}
@@ -216,12 +216,12 @@ func (n *NullableAnnotation) NewTypeFromAnn() (yamlmeta.Type, error) {
 }
 
 // NewTypeFromAnn returns type information given by annotation.
-func (d *DefaultAnnotation) NewTypeFromAnn() (yamlmeta.Type, error) {
+func (d *DefaultAnnotation) NewTypeFromAnn() (Type, error) {
 	return nil, nil
 }
 
 // NewTypeFromAnn returns type information given by annotation. DescriptionAnnotation has no type information.
-func (d *DescriptionAnnotation) NewTypeFromAnn() (yamlmeta.Type, error) {
+func (d *DescriptionAnnotation) NewTypeFromAnn() (Type, error) {
 	return nil, nil
 }
 
@@ -269,7 +269,7 @@ func collectTypeAnnotations(node yamlmeta.Node) ([]Annotation, error) {
 	return anns, nil
 }
 
-func collectValueAnnotations(node yamlmeta.Node, effectiveType yamlmeta.Type) ([]Annotation, error) {
+func collectValueAnnotations(node yamlmeta.Node, effectiveType Type) ([]Annotation, error) {
 	var anns []Annotation
 
 	for _, annotation := range []template.AnnotationName{AnnotationNullable, AnnotationDefault} {
@@ -300,7 +300,7 @@ func collectDocumentationAnnotations(node yamlmeta.Node) ([]Annotation, error) {
 	return anns, nil
 }
 
-func processOptionalAnnotation(node yamlmeta.Node, optionalAnnotation template.AnnotationName, effectiveType yamlmeta.Type) (Annotation, error) {
+func processOptionalAnnotation(node yamlmeta.Node, optionalAnnotation template.AnnotationName, effectiveType Type) (Annotation, error) {
 	nodeAnnotations := template.NewAnnotations(node)
 
 	if nodeAnnotations.Has(optionalAnnotation) {
@@ -353,7 +353,7 @@ func processOptionalAnnotation(node yamlmeta.Node, optionalAnnotation template.A
 	return nil, nil
 }
 
-func getTypeFromAnnotations(anns []Annotation, pos *filepos.Position) (yamlmeta.Type, error) {
+func getTypeFromAnnotations(anns []Annotation, pos *filepos.Position) (Type, error) {
 	annsCopy := append([]Annotation{}, anns...)
 
 	if len(annsCopy) == 0 {

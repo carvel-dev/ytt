@@ -11,11 +11,6 @@ import (
 	"github.com/k14s/ytt/pkg/yamltemplate"
 )
 
-const (
-	AnnotationDataValues       template.AnnotationName = "data/values"
-	AnnotationDataValuesSchema template.AnnotationName = "data/values-schema"
-)
-
 type DocExtractor struct {
 	DocSet *yamlmeta.DocumentSet
 }

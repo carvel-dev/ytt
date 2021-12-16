@@ -10,8 +10,8 @@ import (
 	"github.com/k14s/starlark-go/starlark"
 	"github.com/k14s/starlark-go/starlarkstruct"
 	"github.com/k14s/ytt/pkg/filepos"
-	"github.com/k14s/ytt/pkg/schema"
 	"github.com/k14s/ytt/pkg/template/core"
+	"github.com/k14s/ytt/pkg/workspace/datavalues"
 	"github.com/k14s/ytt/pkg/workspace/ref"
 	"github.com/k14s/ytt/pkg/yamlmeta"
 	"github.com/k14s/ytt/pkg/yamltemplate"
@@ -20,13 +20,13 @@ import (
 type LibraryModule struct {
 	libraryCtx              LibraryExecutionContext
 	libraryExecutionFactory *LibraryExecutionFactory
-	libraryValues           []*DataValues
-	librarySchemas          []*schema.DocumentSchemaEnvelope
+	libraryValues           []*datavalues.Envelope
+	librarySchemas          []*datavalues.SchemaEnvelope
 }
 
 func NewLibraryModule(libraryCtx LibraryExecutionContext,
 	libraryExecutionFactory *LibraryExecutionFactory,
-	libraryValues []*DataValues, librarySchemas []*schema.DocumentSchemaEnvelope) LibraryModule {
+	libraryValues []*datavalues.Envelope, librarySchemas []*datavalues.SchemaEnvelope) LibraryModule {
 
 	return LibraryModule{libraryCtx, libraryExecutionFactory, libraryValues, librarySchemas}
 }
@@ -70,7 +70,7 @@ func (b LibraryModule) Get(thread *starlark.Thread, f *starlark.Builtin,
 	}
 
 	// copy over library values
-	dataValuess := append([]*DataValues{}, b.libraryValues...)
+	dataValuess := append([]*datavalues.Envelope{}, b.libraryValues...)
 	libraryCtx := LibraryExecutionContext{Current: foundLib, Root: foundLib}
 
 	return (&libraryValue{libPath, libAlias, dataValuess, b.librarySchemas, libraryCtx,
@@ -128,8 +128,8 @@ func (b LibraryModule) getOpts(kwargs []starlark.Tuple) (string, TemplateLoaderO
 type libraryValue struct {
 	path        string
 	alias       string
-	dataValuess []*DataValues
-	schemas     []*schema.DocumentSchemaEnvelope
+	dataValuess []*datavalues.Envelope
+	schemas     []*datavalues.SchemaEnvelope
 
 	libraryCtx              LibraryExecutionContext
 	libraryExecutionFactory *LibraryExecutionFactory
@@ -165,7 +165,7 @@ func (l *libraryValue) WithDataValues(thread *starlark.Thread, f *starlark.Built
 		return starlark.None, err
 	}
 
-	valsYAML, err := NewDataValues(&yamlmeta.Document{
+	valsYAML, err := datavalues.NewEnvelope(&yamlmeta.Document{
 		Value:    yamlmeta.NewASTFromInterfaceWithNoPosition(dataValues),
 		Position: filepos.NewUnknownPosition(),
 	})
@@ -174,7 +174,7 @@ func (l *libraryValue) WithDataValues(thread *starlark.Thread, f *starlark.Built
 	}
 
 	// copy over library values
-	newDataValuess := append([]*DataValues{}, l.dataValuess...)
+	newDataValuess := append([]*datavalues.Envelope{}, l.dataValuess...)
 	newDataValuess = append(newDataValuess, valsYAML)
 
 	libVal := &libraryValue{l.path, l.alias, newDataValuess, l.schemas, l.libraryCtx, l.libraryExecutionFactory}
@@ -194,7 +194,7 @@ func (l *libraryValue) WithDataValuesSchema(thread *starlark.Thread, f *starlark
 		return starlark.None, err
 	}
 
-	newDocSchema, err := schema.NewDocumentSchemaEnvelope(&yamlmeta.Document{
+	newDocSchema, err := datavalues.NewSchemaEnvelope(&yamlmeta.Document{
 		Value:    yamlmeta.NewASTFromInterface(libSchema),
 		Position: filepos.NewUnknownPosition(),
 	})
@@ -202,7 +202,7 @@ func (l *libraryValue) WithDataValuesSchema(thread *starlark.Thread, f *starlark
 		return starlark.None, err
 	}
 
-	newLibSchemas := append([]*schema.DocumentSchemaEnvelope{}, l.schemas...)
+	newLibSchemas := append([]*datavalues.SchemaEnvelope{}, l.schemas...)
 	newLibSchemas = append(newLibSchemas, newDocSchema)
 
 	libVal := &libraryValue{l.path, l.alias, l.dataValuess, newLibSchemas, l.libraryCtx, l.libraryExecutionFactory}
@@ -348,8 +348,8 @@ func (l *libraryValue) exportArgs(args starlark.Tuple, kwargs []starlark.Tuple) 
 	return symbolName, locationPath, nil
 }
 
-func (l *libraryValue) librarySchemas(ll *LibraryExecution) (Schema, []*schema.DocumentSchemaEnvelope, error) {
-	var schemasForCurrentLib, schemasForChildLib []*schema.DocumentSchemaEnvelope
+func (l *libraryValue) librarySchemas(ll *LibraryExecution) (*datavalues.Schema, []*datavalues.SchemaEnvelope, error) {
+	var schemasForCurrentLib, schemasForChildLib []*datavalues.SchemaEnvelope
 
 	for _, docSchema := range l.schemas {
 		matchingSchema, usedInCurrLibrary := docSchema.UsedInLibrary(ref.LibraryRef{Path: l.path, Alias: l.alias})
@@ -369,8 +369,8 @@ func (l *libraryValue) librarySchemas(ll *LibraryExecution) (Schema, []*schema.D
 	return schema, foundChildSchemas, nil
 }
 
-func (l *libraryValue) libraryValues(ll *LibraryExecution, schema Schema) (*DataValues, []*DataValues, error) {
-	var dvss, afterLibModDVss, childDVss []*DataValues
+func (l *libraryValue) libraryValues(ll *LibraryExecution, schema *datavalues.Schema) (*datavalues.Envelope, []*datavalues.Envelope, error) {
+	var dvss, afterLibModDVss, childDVss []*datavalues.Envelope
 	for _, dv := range l.dataValuess {
 		matchingDVs := dv.UsedInLibrary(ref.LibraryRef{Path: l.path, Alias: l.alias})
 		if matchingDVs != nil {

@@ -5,70 +5,12 @@ package schema
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/k14s/ytt/pkg/filepos"
-	"github.com/k14s/ytt/pkg/template"
-	"github.com/k14s/ytt/pkg/workspace/ref"
 	"github.com/k14s/ytt/pkg/yamlmeta"
 )
 
-type DocumentSchema struct {
-	Source     *yamlmeta.Document
-	defaultDVs *yamlmeta.Document
-	DocType    *DocumentType
-}
-
-type DocumentSchemaEnvelope struct {
-	Doc *DocumentSchema
-
-	used           bool
-	originalLibRef []ref.LibraryRef
-	libRef         []ref.LibraryRef
-}
-
-func NewDocumentSchema(doc *yamlmeta.Document) (*DocumentSchema, error) {
-	docType, err := inferTypeFromValue(doc, doc.Position)
-	if err != nil {
-		return nil, err
-	}
-
-	schemaDVs := docType.GetDefaultValue()
-
-	return &DocumentSchema{
-		Source:     doc,
-		defaultDVs: schemaDVs.(*yamlmeta.Document),
-		DocType:    docType.(*DocumentType),
-	}, nil
-}
-
-func NewDocumentSchemaEnvelope(doc *yamlmeta.Document) (*DocumentSchemaEnvelope, error) {
-	libRef, err := getSchemaLibRef(ref.LibraryRefExtractor{}, doc)
-	if err != nil {
-		return nil, err
-	}
-
-	schema, err := NewDocumentSchema(doc)
-	if err != nil {
-		return nil, err
-	}
-
-	return &DocumentSchemaEnvelope{
-		Doc:            schema,
-		originalLibRef: libRef,
-		libRef:         libRef,
-	}, nil
-}
-
-// NewNullSchema provides the "Null Object" value of Schema. This is used in the case where no schema was provided.
-func NewNullSchema() *DocumentSchema {
-	return &DocumentSchema{
-		Source: &yamlmeta.Document{},
-		DocType: &DocumentType{
-			ValueType: &AnyType{}},
-	}
-}
-
+// NewDocumentType constructs a complete DocumentType based on the contents of a schema YAML document.
 func NewDocumentType(doc *yamlmeta.Document) (*DocumentType, error) {
 	typeOfValue, err := getType(doc)
 	if err != nil {
@@ -149,8 +91,8 @@ func NewArrayItemType(item *yamlmeta.ArrayItem) (*ArrayItemType, error) {
 	return &ArrayItemType{ValueType: typeOfValue, defaultValue: defaultValue, Position: item.GetPosition()}, nil
 }
 
-func getType(node yamlmeta.Node) (yamlmeta.Type, error) {
-	var typeOfValue yamlmeta.Type
+func getType(node yamlmeta.Node) (Type, error) {
+	var typeOfValue Type
 
 	anns, err := collectTypeAnnotations(node)
 	if err != nil {
@@ -162,7 +104,7 @@ func getType(node yamlmeta.Node) (yamlmeta.Type, error) {
 	}
 
 	if typeOfValue == nil {
-		typeOfValue, err = inferTypeFromValue(node.GetValues()[0], node.GetPosition())
+		typeOfValue, err = InferTypeFromValue(node.GetValues()[0], node.GetPosition())
 		if err != nil {
 			return nil, err
 		}
@@ -185,7 +127,7 @@ func getType(node yamlmeta.Node) (yamlmeta.Type, error) {
 	return typeOfValue, nil
 }
 
-func getValue(node yamlmeta.Node, t yamlmeta.Type) (interface{}, error) {
+func getValue(node yamlmeta.Node, t Type) (interface{}, error) {
 	anns, err := collectValueAnnotations(node, t)
 	if err != nil {
 		return nil, NewSchemaError("Invalid schema", err)
@@ -205,13 +147,13 @@ func getValue(node yamlmeta.Node, t yamlmeta.Type) (interface{}, error) {
 }
 
 // getValueFromAnn extracts the value from the annotation and validates its type
-func getValueFromAnn(defaultAnn *DefaultAnnotation, t yamlmeta.Type) (interface{}, error) {
-	var typeCheck yamlmeta.TypeCheck
+func getValueFromAnn(defaultAnn *DefaultAnnotation, t Type) (interface{}, error) {
+	var typeCheck TypeCheck
 
 	defaultValue := defaultAnn.Val()
 	if node, ok := defaultValue.(yamlmeta.Node); ok {
 		defaultValue = node.DeepCopyAsInterface()
-		typeCheck = t.AssignTypeTo(defaultValue.(yamlmeta.Typeable))
+		typeCheck = t.AssignTypeTo(defaultValue.(yamlmeta.Node))
 	} else {
 		typeCheck = t.CheckType(&yamlmeta.Scalar{Value: defaultValue, Position: t.GetDefinitionPosition()})
 	}
@@ -222,7 +164,8 @@ func getValueFromAnn(defaultAnn *DefaultAnnotation, t yamlmeta.Type) (interface{
 	return defaultValue, nil
 }
 
-func inferTypeFromValue(value interface{}, position *filepos.Position) (yamlmeta.Type, error) {
+// InferTypeFromValue detects and constructs an instance of the Type of `value`.
+func InferTypeFromValue(value interface{}, position *filepos.Position) (Type, error) {
 	switch typedContent := value.(type) {
 	case *yamlmeta.Document:
 		docType, err := NewDocumentType(typedContent)
@@ -259,7 +202,7 @@ func inferTypeFromValue(value interface{}, position *filepos.Position) (yamlmeta
 	}
 }
 
-func valueTypeAllowsItemValue(explicitType yamlmeta.Type, itemValue interface{}, position *filepos.Position) error {
+func valueTypeAllowsItemValue(explicitType Type, itemValue interface{}, position *filepos.Position) error {
 	switch explicitType.(type) {
 	case *AnyType:
 		if node, ok := itemValue.(yamlmeta.Node); ok {
@@ -281,85 +224,4 @@ func valueTypeAllowsItemValue(explicitType yamlmeta.Type, itemValue interface{},
 		}
 	}
 	return nil
-}
-
-type ExtractLibRefs interface {
-	FromAnnotation(template.NodeAnnotations) ([]ref.LibraryRef, error)
-}
-
-func getSchemaLibRef(libRefs ExtractLibRefs, doc *yamlmeta.Document) ([]ref.LibraryRef, error) {
-	anns := template.NewAnnotations(doc)
-	libRef, err := libRefs.FromAnnotation(anns)
-	if err != nil {
-		return nil, err
-	}
-	return libRef, nil
-}
-
-func (s *DocumentSchema) AssignType(typeable yamlmeta.Typeable) yamlmeta.TypeCheck {
-	return s.DocType.AssignTypeTo(typeable)
-}
-
-func (s *DocumentSchema) DefaultDataValues() *yamlmeta.Document {
-	return s.defaultDVs
-}
-
-// GetDocumentType returns a reference to the DocumentType that is the root of this Schema.
-func (s *DocumentSchema) GetDocumentType() *DocumentType {
-	return s.DocType
-}
-
-func (s *DocumentSchema) deepCopy() *DocumentSchema {
-	return &DocumentSchema{
-		Source:     s.Source.DeepCopy(),
-		defaultDVs: s.defaultDVs.DeepCopy(),
-		DocType:    s.DocType,
-	}
-}
-
-func (e *DocumentSchemaEnvelope) Source() *yamlmeta.Document {
-	return e.Doc.Source
-}
-
-func (e *DocumentSchemaEnvelope) Desc() string {
-	var desc []string
-	for _, refPiece := range e.originalLibRef {
-		desc = append(desc, refPiece.AsString())
-	}
-	return fmt.Sprintf("Schema belonging to library '%s%s' on %s", "@",
-		strings.Join(desc, "@"), e.Source().Position.AsString())
-}
-
-func (e *DocumentSchemaEnvelope) IsUsed() bool { return e.used }
-
-func (e *DocumentSchemaEnvelope) IntendedForAnotherLibrary() bool {
-	return len(e.libRef) > 0
-}
-
-func (e *DocumentSchemaEnvelope) UsedInLibrary(expectedRefPiece ref.LibraryRef) (*DocumentSchemaEnvelope, bool) {
-	if !e.IntendedForAnotherLibrary() {
-		e.markUsed()
-
-		return e.deepCopy(), true
-	}
-
-	if !e.libRef[0].Matches(expectedRefPiece) {
-		return nil, false
-	}
-	e.markUsed()
-	childSchemaProcessing := e.deepCopy()
-	childSchemaProcessing.libRef = childSchemaProcessing.libRef[1:]
-	return childSchemaProcessing, !childSchemaProcessing.IntendedForAnotherLibrary()
-}
-
-func (e *DocumentSchemaEnvelope) markUsed() { e.used = true }
-
-func (e *DocumentSchemaEnvelope) deepCopy() *DocumentSchemaEnvelope {
-	var copiedPieces []ref.LibraryRef
-	copiedPieces = append(copiedPieces, e.libRef...)
-	return &DocumentSchemaEnvelope{
-		Doc:            e.Doc.deepCopy(),
-		originalLibRef: e.originalLibRef,
-		libRef:         copiedPieces,
-	}
 }

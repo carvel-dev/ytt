@@ -12,7 +12,7 @@ import (
 	"github.com/k14s/starlark-go/starlark"
 	"github.com/k14s/ytt/pkg/filepos"
 	"github.com/k14s/ytt/pkg/template"
-	"github.com/k14s/ytt/pkg/workspace"
+	"github.com/k14s/ytt/pkg/workspace/datavalues"
 	"github.com/k14s/ytt/pkg/yamlmeta"
 	yttoverlay "github.com/k14s/ytt/pkg/yttlibrary/overlay"
 	"github.com/spf13/cobra"
@@ -62,7 +62,11 @@ type dataValuesFlagsSource struct {
 
 type valueTransformFunc func(string) (interface{}, error)
 
-func (s *DataValuesFlags) AsOverlays(strict bool) ([]*workspace.DataValues, []*workspace.DataValues, error) {
+// AsOverlays generates Data Values overlays, one for each setting in this DataValuesFlags.
+//
+// Returns a collection of overlays targeted for the root library and a separate collection of overlays "addressed" to
+// children libraries.
+func (s *DataValuesFlags) AsOverlays(strict bool) ([]*datavalues.Envelope, []*datavalues.Envelope, error) {
 	plainValFunc := func(rawVal string) (interface{}, error) { return rawVal, nil }
 
 	yamlValFunc := func(rawVal string) (interface{}, error) {
@@ -73,7 +77,7 @@ func (s *DataValuesFlags) AsOverlays(strict bool) ([]*workspace.DataValues, []*w
 		return val, nil
 	}
 
-	var result []*workspace.DataValues
+	var result []*datavalues.Envelope
 
 	// Files go first
 	for _, file := range s.FromFiles {
@@ -117,8 +121,8 @@ func (s *DataValuesFlags) AsOverlays(strict bool) ([]*workspace.DataValues, []*w
 		result = append(result, val)
 	}
 
-	var overlayValues []*workspace.DataValues
-	var libraryOverlays []*workspace.DataValues
+	var overlayValues []*datavalues.Envelope
+	var libraryOverlays []*datavalues.Envelope
 	for _, doc := range result {
 		if doc.IntendedForAnotherLibrary() {
 			libraryOverlays = append(libraryOverlays, doc)
@@ -130,7 +134,7 @@ func (s *DataValuesFlags) AsOverlays(strict bool) ([]*workspace.DataValues, []*w
 	return overlayValues, libraryOverlays, nil
 }
 
-func (s *DataValuesFlags) file(path string, strict bool) ([]*workspace.DataValues, error) {
+func (s *DataValuesFlags) file(path string, strict bool) ([]*datavalues.Envelope, error) {
 	libRef, path, err := s.libraryRefAndKey(path)
 	if err != nil {
 		return nil, err
@@ -151,7 +155,7 @@ func (s *DataValuesFlags) file(path string, strict bool) ([]*workspace.DataValue
 		return nil, fmt.Errorf("Unmarshaling YAML data values file '%s': %s", path, err)
 	}
 
-	var result []*workspace.DataValues
+	var result []*datavalues.Envelope
 
 	for _, doc := range docSet.Items {
 		if doc.Value != nil {
@@ -159,7 +163,7 @@ func (s *DataValuesFlags) file(path string, strict bool) ([]*workspace.DataValue
 			if err != nil {
 				return nil, fmt.Errorf("Checking data values file '%s': %s", path, err)
 			}
-			dvs, err := workspace.NewDataValuesWithOptionalLib(dvsOverlay, libRef)
+			dvs, err := datavalues.NewEnvelopeWithLibRef(dvsOverlay, libRef)
 			if err != nil {
 				return nil, err
 			}
@@ -170,13 +174,13 @@ func (s *DataValuesFlags) file(path string, strict bool) ([]*workspace.DataValue
 	return result, nil
 }
 
-func (s *DataValuesFlags) env(prefix string, src dataValuesFlagsSource) ([]*workspace.DataValues, error) {
+func (s *DataValuesFlags) env(prefix string, src dataValuesFlagsSource) ([]*datavalues.Envelope, error) {
 	const (
 		envKeyPrefix = "_"
 		envMapKeySep = "__"
 	)
 
-	result := []*workspace.DataValues{}
+	result := []*datavalues.Envelope{}
 	envVars := os.Environ()
 
 	if s.EnvironFunc != nil {
@@ -208,7 +212,7 @@ func (s *DataValuesFlags) env(prefix string, src dataValuesFlagsSource) ([]*work
 		desc := fmt.Sprintf("(%s arg) %s", src.Name, keyPrefix)
 		overlay := s.buildOverlay(keyPieces, val, desc, envVar)
 
-		dvs, err := workspace.NewDataValuesWithOptionalLib(overlay, libRef)
+		dvs, err := datavalues.NewEnvelopeWithLibRef(overlay, libRef)
 		if err != nil {
 			return nil, err
 		}
@@ -219,7 +223,7 @@ func (s *DataValuesFlags) env(prefix string, src dataValuesFlagsSource) ([]*work
 	return result, nil
 }
 
-func (s *DataValuesFlags) kv(kv string, src dataValuesFlagsSource) (*workspace.DataValues, error) {
+func (s *DataValuesFlags) kv(kv string, src dataValuesFlagsSource) (*datavalues.Envelope, error) {
 	pieces := strings.SplitN(kv, dvsKVSep, 2)
 	if len(pieces) != 2 {
 		return nil, fmt.Errorf("Expected format key=value")
@@ -237,7 +241,7 @@ func (s *DataValuesFlags) kv(kv string, src dataValuesFlagsSource) (*workspace.D
 	desc := fmt.Sprintf("(%s arg)", src.Name)
 	overlay := s.buildOverlay(strings.Split(key, dvsMapKeySep), val, desc, kv)
 
-	return workspace.NewDataValuesWithOptionalLib(overlay, libRef)
+	return datavalues.NewEnvelopeWithLibRef(overlay, libRef)
 }
 
 func (s *DataValuesFlags) parseYAML(data string, strict bool) (interface{}, error) {
@@ -248,7 +252,7 @@ func (s *DataValuesFlags) parseYAML(data string, strict bool) (interface{}, erro
 	return docSet.Items[0].Value, nil
 }
 
-func (s *DataValuesFlags) kvFile(kv string) (*workspace.DataValues, error) {
+func (s *DataValuesFlags) kvFile(kv string) (*datavalues.Envelope, error) {
 	pieces := strings.SplitN(kv, dvsKVSep, 2)
 	if len(pieces) != 2 {
 		return nil, fmt.Errorf("Expected format key=/file/path")
@@ -266,7 +270,7 @@ func (s *DataValuesFlags) kvFile(kv string) (*workspace.DataValues, error) {
 	desc := fmt.Sprintf("(data-value-file arg) %s=%s", key, pieces[1])
 	overlay := s.buildOverlay(strings.Split(key, dvsMapKeySep), string(contents), desc, string(contents))
 
-	return workspace.NewDataValuesWithOptionalLib(overlay, libRef)
+	return datavalues.NewEnvelopeWithLibRef(overlay, libRef)
 }
 
 func (DataValuesFlags) libraryRefAndKey(key string) (string, string, error) {
