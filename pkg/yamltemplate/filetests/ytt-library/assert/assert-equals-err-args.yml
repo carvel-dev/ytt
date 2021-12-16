@@ -1,0 +1,10 @@
+#@ load("@ytt:assert", "assert")
+
+test_equals: #@ assert.equals("foo")
+
++++
+
+ERR: 
+- assert.equals: expected two arguments
+    in <toplevel>
+      stdin:3 | test_equals: #@ assert.equals("foo")

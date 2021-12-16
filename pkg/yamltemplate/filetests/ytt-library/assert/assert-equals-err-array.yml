@@ -1,0 +1,21 @@
+#@ load("@ytt:assert", "assert")
+#@ load("@ytt:json", "json")
+
+test_equals: #@ assert.equals([1, 2], [2, 3])
+
++++
+
+ERR: 
+- assert.equals: Not equal:
+    in <toplevel>
+      stdin:4 | test_equals: #@ assert.equals([1, 2], [2, 3])
+
+    reason:
+     (expected type: list)
+     - 1
+     - 2
+     
+     
+     (was type: list)
+     - 2
+     - 3

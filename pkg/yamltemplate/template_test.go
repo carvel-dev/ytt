@@ -78,8 +78,8 @@ func TestYAMLTemplate(t *testing.T) {
 				err = fmt.Errorf("expected eval error, but did not receive it")
 			} else {
 				resultStr := testErr.UserErr().Error()
-				resultStr = regexp.MustCompile("__ytt_tpl\\d+_").ReplaceAllString(resultStr, "__ytt_tplXXX_")
-				err = expectEquals(t, resultStr, strings.ReplaceAll(strings.TrimPrefix(expectedStr, "ERR: "), "__YTT_VERSION__", version.Version))
+				resultStr = strings.TrimRight(regexp.MustCompile("__ytt_tpl\\d+_").ReplaceAllString(resultStr, "__ytt_tplXXX_"), "\t \n")
+				err = expectEquals(t, resultStr, strings.ReplaceAll(strings.TrimRight(strings.TrimPrefix(expectedStr, "ERR: "), "\t \n"), "__YTT_VERSION__", version.Version))
 			}
 		} else if strings.HasPrefix(expectedStr, "OUTPUT POSITION:") {
 			if testErr == nil {

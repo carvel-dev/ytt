@@ -1,0 +1,19 @@
+#@ load("@ytt:assert", "assert")
+#@ load("@ytt:json", "json")
+
+test_equals: #@ assert.equals({"foo": "bar"}, {"foo": "baz"})
+
++++
+
+ERR: 
+- assert.equals: Not equal:
+    in <toplevel>
+      stdin:4 | test_equals: #@ assert.equals({"foo": "bar"}, {"foo": "baz"})
+
+    reason:
+     (expected type: dict)
+     foo: bar
+     
+     
+     (was type: dict)
+     foo: baz

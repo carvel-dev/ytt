@@ -1,0 +1,27 @@
+#@ load("@ytt:assert", "assert")
+#@ load("@ytt:json", "json")
+
+#@ def yamlFunc():
+foo: bar
+#@ end
+
+#@ def moreYamlFunc():
+bar: foo
+#@ end
+
+test_equals: #@ assert.equals(yamlFunc(), moreYamlFunc())
+
++++
+
+ERR: 
+- assert.equals: Not equal:
+    in <toplevel>
+      stdin:12 | test_equals: #@ assert.equals(yamlFunc(), moreYamlFunc())
+
+    reason:
+     (expected type: yamlfragment)
+     foo: bar
+     
+     
+     (was type: yamlfragment)
+     bar: foo
