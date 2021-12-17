@@ -81,7 +81,7 @@ func (e CompiledTemplateMultiError) Error() string {
 			}
 		}
 
-		result = append(result, fmt.Sprintf("- %s%s", topicLine, e.hintMsg(topicLine)))
+		result = append(result, fmt.Sprintf("- %s%s", topicLine, e.hintMsg(err)))
 
 		for _, pos := range err.Positions {
 			// TODO do better
@@ -187,9 +187,19 @@ func (CompiledTemplateMultiError) findClosestLine(ct *CompiledTemplate, posLine 
 	}
 }
 
-func (CompiledTemplateMultiError) hintMsg(errMsg string) string {
+func (CompiledTemplateMultiError) isOperatorPresent(err CompiledTemplateError, op string) bool {
+	for _, pos := range err.Positions {
+		codeLine := pos.TemplateLine.Instruction.code
+		if strings.Contains(codeLine, op) {
+			return true
+		}
+	}
+	return false
+}
+
+func (e CompiledTemplateMultiError) hintMsg(err CompiledTemplateError) string {
 	hintMsg := ""
-	switch errMsg {
+	switch err.Msg {
 	case "undefined: true":
 		hintMsg = "use 'True' instead of 'true' for boolean assignment"
 	case "undefined: false":
@@ -204,6 +214,22 @@ func (CompiledTemplateMultiError) hintMsg(errMsg string) string {
 		hintMsg = "use 'None' instead of 'none' to indicate no value"
 	case "unhandled index operation struct[string]":
 		hintMsg = "use getattr(...) to access struct field programmatically"
+	case "unknown binary op: bool | bool":
+		hintMsg = "use 'or' instead of '|' to combine boolean expressions"
+	case "unknown binary op: bool & bool":
+		hintMsg = "use 'and' instead of '&' to combine boolean expressions"
+	case "got '&', want primary expression":
+		isOpPresent := e.isOperatorPresent(err, "&&")
+		if isOpPresent {
+			hintMsg = "use 'and' instead of '&&' to combine boolean expressions"
+			break
+		}
+	case "got '|', want primary expression":
+		isOpPresent := e.isOperatorPresent(err, "||")
+		if isOpPresent {
+			hintMsg = "use 'or' instead of '||' to combine boolean expressions"
+			break
+		}
 	}
 
 	if len(hintMsg) > 0 {

@@ -63,8 +63,72 @@ end`,
 - got newline, want ':' (hint: missing colon at the end of 'if/for/def' statement?)
     3 |   return 123`,
 		},
+		{
+			Input: `if True & True:
+  v = 123
+end`,
+			ErrMsg: `
+- unknown binary op: bool & bool (hint: use 'and' instead of '&' to combine boolean expressions)
+    in <toplevel>
+      2 | if True & True:`,
+		},
+		{
+			Input: `if True | True:
+  v = 123
+end`,
+			ErrMsg: `
+- unknown binary op: bool | bool (hint: use 'or' instead of '|' to combine boolean expressions)
+    in <toplevel>
+      2 | if True | True:`,
+		},
+		{
+			Input: `if True && True:
+  v = 123
+end`,
+			ErrMsg: `
+- got '&', want primary expression (hint: use 'and' instead of '&&' to combine boolean expressions)
+    2 | if True && True:`,
+		},
+		{
+			Input: `if True || True:
+  v = 123
+end`,
+			ErrMsg: `
+- got '|', want primary expression (hint: use 'or' instead of '||' to combine boolean expressions)
+    2 | if True || True:`,
+		},
 	}
 
+	for _, cs := range cases {
+		instructions := template.NewInstructionSet()
+		compiledTemplate := template.NewCompiledTemplate(
+			"stdin", template.NewCodeFromBytes([]byte("\n"+cs.Input), instructions),
+			instructions, template.NewNodes(), template.EvaluationCtxDialects{})
+
+		loader := template.NewNoopCompiledTemplateLoader(compiledTemplate)
+		thread := &starlark.Thread{Name: "test", Load: loader.Load}
+
+		_, _, err := compiledTemplate.Eval(thread, loader)
+		if err == nil {
+			t.Fatalf("Expected starlark template error, but was nil")
+		}
+
+		if err.Error() != cs.ErrMsg {
+			t.Fatalf("Expected error to match but did not; expected >>>%s<<< vs actual >>>%s<<<", cs.ErrMsg, err)
+		}
+	}
+
+}
+
+func TestNoHints(t *testing.T) {
+	cases := []ErrorHintTest{
+		{
+			Input: `v = &123`,
+			ErrMsg: `
+- got '&', want primary expression
+    2 | v = &123`,
+		},
+	}
 	for _, cs := range cases {
 		instructions := template.NewInstructionSet()
 		compiledTemplate := template.NewCompiledTemplate(
