@@ -187,8 +187,7 @@ func (CompiledTemplateMultiError) findClosestLine(ct *CompiledTemplate, posLine 
 	}
 }
 
-// hintMsgHelper checks if the operator is present in the code line to set the hint message appropriately
-func (CompiledTemplateMultiError) hintMsgHelper(err CompiledTemplateError, op string) bool {
+func (CompiledTemplateMultiError) isOperatorPresent(err CompiledTemplateError, op string) bool {
 	for _, pos := range err.Positions {
 		codeLine := pos.TemplateLine.Instruction.code
 		if strings.Contains(codeLine, op) {
@@ -220,13 +219,13 @@ func (e CompiledTemplateMultiError) hintMsg(err CompiledTemplateError) string {
 	case "unknown binary op: bool & bool":
 		hintMsg = "use 'and' instead of '&' to combine boolean expressions"
 	case "got '&', want primary expression":
-		isOpPresent := e.hintMsgHelper(err, "&&")
+		isOpPresent := e.isOperatorPresent(err, "&&")
 		if isOpPresent {
 			hintMsg = "use 'and' instead of '&&' to combine boolean expressions"
 			break
 		}
 	case "got '|', want primary expression":
-		isOpPresent := e.hintMsgHelper(err, "||")
+		isOpPresent := e.isOperatorPresent(err, "||")
 		if isOpPresent {
 			hintMsg = "use 'or' instead of '||' to combine boolean expressions"
 			break
