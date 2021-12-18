@@ -24,12 +24,22 @@ import (
 
 var (
 	// Example usage:
-	//   ./hack/test.sh -run TestYAMLTemplate TestYAMLTemplate.filetest=yield-def.yml
-	selectedFileTestPath = kvArg("TestYAMLTemplate.filetest")
-	showTemplateCode     = kvArg("TestYAMLTemplate.code") // eg t|...
-	showErrs             = kvArg("TestYAMLTemplate.errs") // eg t|...
+	//   ./hack/test-all.sh -v -run TestYAMLTemplate/filetest/if.tpltest
+	//   ./hack/test-all.sh -v -run TestYAMLTemplate/filetest/if.tpltest TestYAMLTemplate.code=true
+	showTemplateCodeFlag = kvArg("TestYAMLTemplate.code")
 )
 
+// TestYAMLTemplate runs suite of test cases, each described in a separate file, verifying the behavior of templates.
+//
+// Test cases:
+// - are located within ./filetests/
+// - conventionally have a .tpltest extension
+// - top-half is the template; bottom-half is the expected output; divided by `+++`
+//
+// Types of template tests:
+// - expected output starting with `ERR:` indicate that expected output is an error message
+// - expected output starting with `OUTPUT POSITION:` indicate that expected output is "pos" format
+// - otherwise expected output is the literal output from template
 func TestYAMLTemplate(t *testing.T) {
 	var files []string
 	version.Version = "0.0.0"
@@ -42,87 +52,61 @@ func TestYAMLTemplate(t *testing.T) {
 		return nil
 	})
 	if err != nil {
-		t.Fatalf("Listing files")
+		t.Fatalf("Failed to enumerate filetests: %s", err)
 	}
-
-	if len(selectedFileTestPath) > 0 {
-		fmt.Printf("only running %s test(s)\n", selectedFileTestPath)
-	}
-
-	var errs []error
 
 	for _, filePath := range files {
-		if len(selectedFileTestPath) > 0 && !strings.HasPrefix(filePath, selectedFileTestPath) {
-			continue
-		}
-
-		testDesc := fmt.Sprintf("checking %s ...\n", filePath)
-		fmt.Printf("%s", testDesc)
-
-		contents, err := ioutil.ReadFile(filePath)
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		pieces := strings.SplitN(string(contents), "\n+++\n\n", 2)
-
-		if len(pieces) != 2 {
-			t.Fatalf("expected file %s to include +++ separator", filePath)
-		}
-		expectedStr := pieces[1]
-
-		result, testErr := evalTemplate(t, pieces[0])
-
-		if strings.HasPrefix(expectedStr, "ERR: ") {
-			if testErr == nil {
-				err = fmt.Errorf("expected eval error, but did not receive it")
-			} else {
-				resultStr := testErr.UserErr().Error()
-				resultStr = strings.TrimRight(regexp.MustCompile("__ytt_tpl\\d+_").ReplaceAllString(resultStr, "__ytt_tplXXX_"), "\t \n")
-				err = expectEquals(t, resultStr, strings.ReplaceAll(strings.TrimRight(strings.TrimPrefix(expectedStr, "ERR: "), "\t \n"), "__YTT_VERSION__", version.Version))
+		t.Run(filePath, func(t *testing.T) {
+			contents, err := ioutil.ReadFile(filePath)
+			if err != nil {
+				t.Fatal(err)
 			}
-		} else if strings.HasPrefix(expectedStr, "OUTPUT POSITION:") {
-			if testErr == nil {
-				resultStr, strErr := asFilePositionsStr(result)
-				if strErr != nil {
-					err = strErr
+
+			pieces := strings.SplitN(string(contents), "\n+++\n\n", 2)
+
+			if len(pieces) != 2 {
+				t.Fatalf("expected file %s to include +++ separator", filePath)
+			}
+			expectedStr := pieces[1]
+
+			result, testErr := evalTemplate(t, pieces[0])
+
+			if strings.HasPrefix(expectedStr, "ERR: ") {
+				if testErr == nil {
+					err = fmt.Errorf("expected eval error, but did not receive it")
 				} else {
-					err = expectEquals(t, resultStr, strings.ReplaceAll(strings.TrimPrefix(expectedStr, "OUTPUT POSITION:\n"), "__YTT_VERSION__", version.Version))
+					resultStr := testErr.UserErr().Error()
+					resultStr = strings.TrimRight(regexp.MustCompile("__ytt_tpl\\d+_").ReplaceAllString(resultStr, "__ytt_tplXXX_"), "\t \n")
+					err = expectEquals(resultStr, strings.ReplaceAll(strings.TrimRight(strings.TrimPrefix(expectedStr, "ERR: "), "\t \n"), "__YTT_VERSION__", version.Version))
+				}
+			} else if strings.HasPrefix(expectedStr, "OUTPUT POSITION:") {
+				if testErr == nil {
+					resultStr, strErr := asFilePositionsStr(result)
+					if strErr != nil {
+						err = strErr
+					} else {
+						err = expectEquals(resultStr, strings.ReplaceAll(strings.TrimPrefix(expectedStr, "OUTPUT POSITION:\n"), "__YTT_VERSION__", version.Version))
+					}
+				} else {
+					err = testErr.TestErr()
 				}
 			} else {
-				err = testErr.TestErr()
-			}
-		} else {
-			if testErr == nil {
-				resultStr, strErr := asString(result)
-				if strErr != nil {
-					err = strErr
+				if testErr == nil {
+					resultStr, strErr := asString(result)
+					if strErr != nil {
+						err = strErr
+					} else {
+						err = expectEquals(resultStr, expectedStr)
+					}
 				} else {
-					err = expectEquals(t, resultStr, expectedStr)
+					err = testErr.TestErr()
 				}
-			} else {
-				err = testErr.TestErr()
 			}
-		}
 
-		if err != nil {
-			fmt.Printf("   FAIL\n")
-			if showErrs == "t" {
-				sep := strings.Repeat(".", 80)
-				fmt.Printf("%s\n%s%s\n", sep, err, sep)
+			if err != nil {
+				t.Fatalf("%s", err)
 			}
-			errs = append(errs, fmt.Errorf("%s: %s", testDesc, err))
-		} else {
-			fmt.Printf("   .\n")
-		}
-	}
-
-	if len(errs) > 0 {
-		t.Errorf("%s", errs[0].Error())
-	}
-
-	if len(selectedFileTestPath) > 0 {
-		t.Errorf("skipped tests")
+		})
 	}
 }
 
@@ -166,7 +150,7 @@ func evalTemplate(t *testing.T, data string) (interface{ AsBytes() ([]byte, erro
 		return nil, &testErr{err, fmt.Errorf("build error: %v", err)}
 	}
 
-	if showTemplateCode == "t" {
+	if showTemplateCode(showTemplateCodeFlag) {
 		fmt.Printf("### ast:\n")
 		docSet.Print(os.Stdout)
 
@@ -186,14 +170,18 @@ func evalTemplate(t *testing.T, data string) (interface{ AsBytes() ([]byte, erro
 		return nil, &testErr{err, fmt.Errorf("expected eval result to be marshalable")}
 	}
 
-	if showTemplateCode == "t" {
+	if showTemplateCode(showTemplateCodeFlag) {
 		fmt.Printf("### result ast:\n")
 		typedNewVal.(*yamlmeta.DocumentSet).Print(os.Stdout)
 	}
 	return typedNewVal, nil
 }
 
-func expectEquals(t *testing.T, resultStr, expectedStr string) error {
+func showTemplateCode(showTemplateCodeFlag string) bool {
+	return strings.HasPrefix(strings.ToLower(showTemplateCodeFlag), "t")
+}
+
+func expectEquals(resultStr, expectedStr string) error {
 	if resultStr != expectedStr {
 		return fmt.Errorf("not equal\n\n### result %d chars:\n>>>%s<<<\n###expected %d chars:\n>>>%s<<<", len(resultStr), resultStr, len(expectedStr), expectedStr)
 	}
