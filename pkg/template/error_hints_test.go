@@ -68,7 +68,7 @@ end`,
   v = 123
 end`,
 			ErrMsg: `
-- unknown binary op: bool & bool (hint: use 'and' instead of '&' to combine boolean expressions)
+- unknown binary op: bool & bool (hint: use 'and' instead of '&' for logical conjunction)
     in <toplevel>
       2 | if True & True:`,
 		},
@@ -77,16 +77,34 @@ end`,
   v = 123
 end`,
 			ErrMsg: `
-- unknown binary op: bool | bool (hint: use 'or' instead of '|' to combine boolean expressions)
+- unknown binary op: bool | bool (hint: use 'or' instead of '|' for logical disjunction)
     in <toplevel>
       2 | if True | True:`,
+		},
+		{
+			Input: `if "" & 0:
+  v = 123
+end`,
+			ErrMsg: `
+- unknown binary op: string & int (hint: use 'and' instead of '&' for logical conjunction)
+    in <toplevel>
+      2 | if "" & 0:`,
+		},
+		{
+			Input: `if 0.0 | False:
+  v = 123
+end`,
+			ErrMsg: `
+- unknown binary op: float | bool (hint: use 'or' instead of '|' for logical disjunction)
+    in <toplevel>
+      2 | if 0.0 | False:`,
 		},
 		{
 			Input: `if True && True:
   v = 123
 end`,
 			ErrMsg: `
-- got '&', want primary expression (hint: use 'and' instead of '&&' to combine boolean expressions)
+- got '&', want primary expression (hint: use 'and' instead of '&&' for logical conjunction)
     2 | if True && True:`,
 		},
 		{
@@ -94,7 +112,7 @@ end`,
   v = 123
 end`,
 			ErrMsg: `
-- got '|', want primary expression (hint: use 'or' instead of '||' to combine boolean expressions)
+- got '|', want primary expression (hint: use 'or' instead of '||' for logical disjunction)
     2 | if True || True:`,
 		},
 	}
