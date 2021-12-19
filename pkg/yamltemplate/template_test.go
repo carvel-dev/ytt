@@ -24,8 +24,11 @@ import (
 
 var (
 	// Example usage:
-	//   ./hack/test-all.sh -v -run TestYAMLTemplate/filetest/if.tpltest
-	//   ./hack/test-all.sh -v -run TestYAMLTemplate/filetest/if.tpltest TestYAMLTemplate.code=true
+	//   Run a specific test:
+	//   ./hack/test-all.sh -v -run TestYAMLTemplate/filetests/if.tpltest
+	//
+	//   Include template compilation results in the output:
+	//   ./hack/test-all.sh -v -run TestYAMLTemplate/filetests/if.tpltest TestYAMLTemplate.code=true
 	showTemplateCodeFlag = kvArg("TestYAMLTemplate.code")
 )
 
@@ -34,7 +37,7 @@ var (
 // Test cases:
 // - are located within ./filetests/
 // - conventionally have a .tpltest extension
-// - top-half is the template; bottom-half is the expected output; divided by `+++`
+// - top-half is the template; bottom-half is the expected output; divided by `+++` and a blank line.
 //
 // Types of template tests:
 // - expected output starting with `ERR:` indicate that expected output is an error message
@@ -71,26 +74,35 @@ func TestYAMLTemplate(t *testing.T) {
 
 			result, testErr := evalTemplate(t, pieces[0])
 
-			if strings.HasPrefix(expectedStr, "ERR: ") {
+			switch {
+			case strings.HasPrefix(expectedStr, "ERR:"):
 				if testErr == nil {
 					err = fmt.Errorf("expected eval error, but did not receive it")
 				} else {
 					resultStr := testErr.UserErr().Error()
-					resultStr = strings.TrimRight(regexp.MustCompile("__ytt_tpl\\d+_").ReplaceAllString(resultStr, "__ytt_tplXXX_"), "\t \n")
-					err = expectEquals(resultStr, strings.ReplaceAll(strings.TrimRight(strings.TrimPrefix(expectedStr, "ERR: "), "\t \n"), "__YTT_VERSION__", version.Version))
+					resultStr = regexp.MustCompile("__ytt_tpl\\d+_").ReplaceAllString(resultStr, "__ytt_tplXXX_")
+					resultStr = trimTrailingWhitespace(resultStr)
+
+					expectedStr = strings.TrimPrefix(expectedStr, "ERR:")
+					expectedStr = strings.TrimPrefix(expectedStr, " ")
+					expectedStr = strings.ReplaceAll(expectedStr, "__YTT_VERSION__", version.Version)
+					expectedStr = trimTrailingWhitespace(expectedStr)
+					err = expectEquals(resultStr, expectedStr)
 				}
-			} else if strings.HasPrefix(expectedStr, "OUTPUT POSITION:") {
+			case strings.HasPrefix(expectedStr, "OUTPUT POSITION:"):
 				if testErr == nil {
 					resultStr, strErr := asFilePositionsStr(result)
 					if strErr != nil {
 						err = strErr
 					} else {
-						err = expectEquals(resultStr, strings.ReplaceAll(strings.TrimPrefix(expectedStr, "OUTPUT POSITION:\n"), "__YTT_VERSION__", version.Version))
+						expectedStr = strings.TrimPrefix(expectedStr, "OUTPUT POSITION:\n")
+						expectedStr = strings.ReplaceAll(expectedStr, "__YTT_VERSION__", version.Version)
+						err = expectEquals(resultStr, expectedStr)
 					}
 				} else {
 					err = testErr.TestErr()
 				}
-			} else {
+			default:
 				if testErr == nil {
 					resultStr, strErr := asString(result)
 					if strErr != nil {
@@ -108,6 +120,14 @@ func TestYAMLTemplate(t *testing.T) {
 			}
 		})
 	}
+}
+
+func trimTrailingWhitespace(multiLineString string) string {
+	var newLines []string
+	for _, line := range strings.Split(multiLineString, "\n") {
+		newLines = append(newLines, strings.TrimRight(line, "\t "))
+	}
+	return strings.Join(newLines, "\n")
 }
 
 func asFilePositionsStr(result interface{ AsBytes() ([]byte, error) }) (string, error) {
