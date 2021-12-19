@@ -189,6 +189,24 @@ func (mi *MapItem) GetComments() []*Comment     { return mi.Comments }
 func (a *Array) GetComments() []*Comment        { return a.Comments }
 func (ai *ArrayItem) GetComments() []*Comment   { return ai.Comments }
 
+// SetComments replaces comments with "c"
+func (ds *DocumentSet) SetComments(c []*Comment) { ds.Comments = c }
+
+// SetComments replaces comments with "c"
+func (d *Document) SetComments(c []*Comment) { d.Comments = c }
+
+// SetComments replaces comments with "c"
+func (m *Map) SetComments(c []*Comment) { m.Comments = c }
+
+// SetComments replaces comments with "c"
+func (mi *MapItem) SetComments(c []*Comment) { mi.Comments = c }
+
+// SetComments replaces comments with "c"
+func (a *Array) SetComments(c []*Comment) { a.Comments = c }
+
+// SetComments replaces comments with "c"
+func (ai *ArrayItem) SetComments(c []*Comment) { ai.Comments = c }
+
 func (ds *DocumentSet) addComments(comment *Comment) { ds.Comments = append(ds.Comments, comment) }
 func (d *Document) addComments(comment *Comment)     { d.Comments = append(d.Comments, comment) }
 func (m *Map) addComments(comment *Comment) {

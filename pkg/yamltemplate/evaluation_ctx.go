@@ -22,9 +22,8 @@ type EvaluationCtx struct {
 
 var _ template.EvaluationCtxDialect = EvaluationCtx{}
 
-func (e EvaluationCtx) PrepareNode(
-	parentNode template.EvaluationNode, val template.EvaluationNode) error {
-
+// PrepareNode pre-processes the template.EvaluationNode so that the resulting AST fully reflects having been evaluated.
+func (e EvaluationCtx) PrepareNode(parentNode template.EvaluationNode, val template.EvaluationNode) error {
 	if typedMap, ok := parentNode.(*yamlmeta.Map); ok {
 		if typedMapItem, ok := val.(*yamlmeta.MapItem); ok {
 			return MapItemOverride{e.implicitMapKeyOverrides}.Apply(typedMap, typedMapItem, true)

@@ -43,17 +43,15 @@ func (v DocExtractor) extract(docSet *yamlmeta.DocumentSet,
 		for _, comment := range doc.GetComments() {
 			// TODO potentially use template.NewAnnotations(doc).Has(yttoverlay.AnnotationMatch)
 			// however if doc was not processed by the template, it wont have any annotations set
-			meta, err := yamltemplate.NewTemplateMetaFromYAMLComment(comment, yamltemplate.MetasOpts{IgnoreUnknown: true})
+			ann, err := yamltemplate.NewTemplateAnnotationFromYAMLComment(comment, doc.GetPosition(), yamltemplate.MetasOpts{IgnoreUnknown: true})
 			if err != nil {
 				return nil, nil, err
 			}
-			for _, ann := range meta.Annotations {
-				if ann.Name == annName {
-					if hasMatchingAnn {
-						return nil, nil, fmt.Errorf("%s annotation may only be used once per document", annName)
-					}
-					hasMatchingAnn = true
+			if ann.Name == annName {
+				if hasMatchingAnn {
+					return nil, nil, fmt.Errorf("%s annotation may only be used once per document", annName)
 				}
+				hasMatchingAnn = true
 			}
 		}
 
@@ -74,19 +72,17 @@ func (v DocExtractor) checkNonDocs(val interface{}, annName template.AnnotationN
 	}
 
 	for _, comment := range node.GetComments() {
-		meta, err := yamltemplate.NewTemplateMetaFromYAMLComment(comment, yamltemplate.MetasOpts{IgnoreUnknown: true})
+		ann, err := yamltemplate.NewTemplateAnnotationFromYAMLComment(comment, node.GetPosition(), yamltemplate.MetasOpts{IgnoreUnknown: true})
 		if err != nil {
 			return err
 		}
 
-		for _, ann := range meta.Annotations {
-			if ann.Name == annName {
-				// TODO check for annotation emptiness
-				_, isDoc := node.(*yamlmeta.Document)
-				if !isDoc {
-					errMsg := "Found @%s on %s (%s); only documents (---) can be annotated with @%s"
-					return fmt.Errorf(errMsg, annName, yamlmeta.TypeName(node), node.GetPosition().AsCompactString(), annName)
-				}
+		if ann.Name == annName {
+			// TODO check for annotation emptiness
+			_, isDoc := node.(*yamlmeta.Document)
+			if !isDoc {
+				errMsg := "Found @%s on %s (%s); only documents (---) can be annotated with @%s"
+				return fmt.Errorf(errMsg, annName, yamlmeta.TypeName(node), node.GetPosition().AsCompactString(), annName)
 			}
 		}
 	}

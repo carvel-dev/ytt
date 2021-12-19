@@ -8,6 +8,7 @@ import (
 	"strings"
 	"unicode"
 
+	"github.com/k14s/ytt/pkg/filepos"
 	"github.com/k14s/ytt/pkg/template"
 	"github.com/k14s/ytt/pkg/yamlmeta"
 )
@@ -22,6 +23,7 @@ var (
 	}
 )
 
+// Metas are the collection of ytt YAML templating values parsed from the comments attached to a yamlmeta.Node
 type Metas struct {
 	Block       []*yamlmeta.Comment // meant to execute some code
 	Values      []*yamlmeta.Comment // meant to return interpolated value
@@ -38,83 +40,94 @@ type MetasOpts struct {
 	IgnoreUnknown bool
 }
 
-func NewTemplateMetaFromYAMLComment(comment *yamlmeta.Comment, opts MetasOpts) (template.Meta, error) {
-	meta, err := template.NewMetaFromString(comment.Data, template.MetaOpts{IgnoreUnknown: opts.IgnoreUnknown})
+// NewTemplateAnnotationFromYAMLComment parses "comment" into template.Annotation.
+//
+// nodePos is the position of the node to which "comment" is attached (this is important to differentiate between
+// @template/code and @template/value).
+func NewTemplateAnnotationFromYAMLComment(comment *yamlmeta.Comment, nodePos *filepos.Position, opts MetasOpts) (template.Annotation, error) {
+	ann, err := template.NewAnnotationFromString(comment.Data, template.MetaOpts{IgnoreUnknown: opts.IgnoreUnknown})
 	if err != nil {
-		return template.Meta{}, fmt.Errorf(
+		return template.Annotation{}, fmt.Errorf(
 			"Non-ytt comment at %s: '#%s': %s. (hint: if this is plain YAML — not a template — consider `--file-mark '<filename>:type=yaml-plain'`)",
 			comment.Position.AsString(), comment.Data, err)
 	}
-	return meta, nil
-}
 
-func NewMetas(node yamlmeta.Node, opts MetasOpts) (Metas, error) {
-	metas := Metas{}
+	if len(ann.Name) == 0 {
+		// Default code and value annotations to make templates less verbose
+		ann.Name = template.AnnotationCode
 
-	for _, comment := range node.GetComments() {
-		meta, err := NewTemplateMetaFromYAMLComment(comment, opts)
-		if err != nil {
-			return metas, err
-		}
-
-		for _, ann := range meta.Annotations {
-			if len(ann.Name) == 0 {
-				// Default code and value annotations to make templates less verbose
-				ann.Name = template.AnnotationCode
-
-				if node.GetPosition().IsKnown() {
-					if comment.Position.LineNum() == node.GetPosition().LineNum() {
-						if len(node.GetValues()) > 0 && node.GetValues()[0] != nil {
-							return metas, fmt.Errorf(
-								"Expected YAML node at %s to have either computed or YAML value, but found both",
-								comment.Position.AsString())
-						}
-
-						ann.Name = template.AnnotationValue
-					}
-				}
-			}
-
-			switch ann.Name {
-			case template.AnnotationValue:
-				metas.Values = append(metas.Values, &yamlmeta.Comment{
-					Position: comment.Position,
-					Data:     ann.Content,
-				})
-
-			case template.AnnotationCode:
-				if metas.needsEnds > 0 {
-					return metas, fmt.Errorf(
-						"Unexpected code at %s after use of '*/end', expected YAML node",
-						comment.Position.AsString())
-				}
-
-				code := ann.Content
-				spacePrefix := metas.spacePrefix(code)
-
-				for keyword, replacementKeyword := range nodeSpecificKeywords {
-					if strings.HasPrefix(code, spacePrefix+keyword) {
-						metas.needsEnds++
-						code = strings.Replace(code, spacePrefix+keyword, spacePrefix+replacementKeyword, 1)
-					}
-				}
-
-				metas.Block = append(metas.Block, &yamlmeta.Comment{
-					Position: comment.Position,
-					Data:     code,
-				})
-
-			case template.AnnotationComment:
-				// ignore
-
-			default:
-				ann.Position = comment.Position
-				metas.Annotations = append(metas.Annotations, CommentAndAnnotation{comment, ann})
+		if nodePos.IsKnown() {
+			if comment.Position.LineNum() == nodePos.LineNum() {
+				ann.Name = template.AnnotationValue
 			}
 		}
 	}
 
-	return metas, nil
+	return ann, nil
+}
+
+// extractMetas parses "metas" (i.e. code, values, and/or annotations) from node comments
+//
+// returns the extracted metas and a copy of "node" with code and value type comments removed.
+func extractMetas(node yamlmeta.Node, opts MetasOpts) (Metas, yamlmeta.Node, error) {
+	metas := Metas{}
+
+	nonCodeComments := []*yamlmeta.Comment{}
+	for _, comment := range node.GetComments() {
+		ann, err := NewTemplateAnnotationFromYAMLComment(comment, node.GetPosition(), opts)
+		if err != nil {
+			return metas, nil, err
+		}
+
+		switch ann.Name {
+		case template.AnnotationValue:
+			if len(node.GetValues()) > 0 && node.GetValues()[0] != nil {
+				return metas, nil, fmt.Errorf(
+					"Expected YAML node at %s to have either computed or YAML value, but found both",
+					comment.Position.AsString())
+			}
+
+			metas.Values = append(metas.Values, &yamlmeta.Comment{
+				Position: comment.Position,
+				Data:     ann.Content,
+			})
+
+		case template.AnnotationCode:
+			if metas.needsEnds > 0 {
+				return metas, nil, fmt.Errorf(
+					"Unexpected code at %s after use of '*/end', expected YAML node",
+					comment.Position.AsString())
+			}
+
+			code := ann.Content
+			spacePrefix := metas.spacePrefix(code)
+
+			for keyword, replacementKeyword := range nodeSpecificKeywords {
+				if strings.HasPrefix(code, spacePrefix+keyword) {
+					metas.needsEnds++
+					code = strings.Replace(code, spacePrefix+keyword, spacePrefix+replacementKeyword, 1)
+				}
+			}
+
+			metas.Block = append(metas.Block, &yamlmeta.Comment{
+				Position: comment.Position,
+				Data:     code,
+			})
+
+		case template.AnnotationComment:
+			// ytt comments are not considered "meta": no nothing.
+			// They _are_ considered part of the template's code, so these yamlmeta.Comments are "digested."
+
+		default:
+			ann.Position = comment.Position
+			metas.Annotations = append(metas.Annotations, CommentAndAnnotation{comment, &ann})
+			nonCodeComments = append(nonCodeComments, comment)
+		}
+	}
+	digestedNode := node.DeepCopyAsNode()
+	digestedNode.SetComments(nonCodeComments)
+
+	return metas, digestedNode, nil
 }
 
 func (m Metas) NeedsEnd() bool { return m.needsEnds != 0 }

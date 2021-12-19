@@ -39,38 +39,36 @@ type MetaOpts struct {
 	IgnoreUnknown bool
 }
 
-func NewMetaFromString(data string, opts MetaOpts) (Meta, error) {
-	meta := Meta{}
-
-	// TODO better error messages?
+// NewAnnotationFromString constructs an Annotation from a given string.
+//
+// if opts.IgnoreUnknown is true and the annotation is unknown, it is returned as a comment.
+// if opts.IgnoreUnknown is false and the annotation is unknown, returns an error.
+func NewAnnotationFromString(data string, opts MetaOpts) (Annotation, error) {
 	switch {
 	case len(data) > 0 && data[0] == '!':
-		meta.Annotations = []*Annotation{{
+		return Annotation{
 			Name:    AnnotationNameComment,
 			Content: data[1:],
-		}}
+		}, nil
 
 	case len(data) > 0 && data[0] == '@':
-		pieces := strings.SplitN(data[1:], " ", 2)
-		for _, name := range strings.Split(pieces[0], ",") {
-			meta.Annotations = append(meta.Annotations, &Annotation{
-				Name: AnnotationName(name),
-			})
+		nameAndContent := strings.SplitN(data[1:], " ", 2)
+		ann := Annotation{
+			Name: AnnotationName(nameAndContent[0]),
 		}
-		if len(pieces) == 2 {
-			meta.Annotations[len(meta.Annotations)-1].Content = pieces[1]
+		if len(nameAndContent) == 2 {
+			ann.Content = nameAndContent[1]
 		}
+		return ann, nil
 
 	default:
 		if opts.IgnoreUnknown {
-			meta.Annotations = []*Annotation{{
+			return Annotation{
 				Name:    AnnotationNameComment,
 				Content: data,
-			}}
+			}, nil
 		} else {
-			return Meta{}, fmt.Errorf("Unrecognized comment type (expected '#@' or '#!')")
+			return Annotation{}, fmt.Errorf("Unrecognized comment type (expected '#@' or '#!')")
 		}
 	}
-
-	return meta, nil
 }

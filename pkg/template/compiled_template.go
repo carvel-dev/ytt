@@ -5,13 +5,14 @@ package template
 
 import (
 	"fmt"
+	"strings"
+	"unicode"
+
 	"github.com/k14s/starlark-go/resolve"
 	"github.com/k14s/starlark-go/starlark"
 	"github.com/k14s/starlark-go/syntax"
 	"github.com/k14s/ytt/pkg/filepos"
 	tplcore "github.com/k14s/ytt/pkg/template/core"
-	"strings"
-	"unicode"
 )
 
 type EvaluationCtxDialectName string
