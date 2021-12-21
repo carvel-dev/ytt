@@ -68,7 +68,7 @@ end`,
   v = 123
 end`,
 			ErrMsg: `
-- unknown binary op: bool & bool (hint: use 'and' instead of '&' for logical conjunction)
+- unknown binary op: bool & bool (hint: use 'and' instead of '&' for logical-and)
     in <toplevel>
       2 | if True & True:`,
 		},
@@ -77,7 +77,7 @@ end`,
   v = 123
 end`,
 			ErrMsg: `
-- unknown binary op: bool | bool (hint: use 'or' instead of '|' for logical disjunction)
+- unknown binary op: bool | bool (hint: use 'or' instead of '|' for logical-or)
     in <toplevel>
       2 | if True | True:`,
 		},
@@ -86,7 +86,7 @@ end`,
   v = 123
 end`,
 			ErrMsg: `
-- unknown binary op: string & int (hint: use 'and' instead of '&' for logical conjunction)
+- unknown binary op: string & int (hint: use 'and' instead of '&' for logical-and)
     in <toplevel>
       2 | if "" & 0:`,
 		},
@@ -95,7 +95,7 @@ end`,
   v = 123
 end`,
 			ErrMsg: `
-- unknown binary op: float | bool (hint: use 'or' instead of '|' for logical disjunction)
+- unknown binary op: float | bool (hint: use 'or' instead of '|' for logical-or)
     in <toplevel>
       2 | if 0.0 | False:`,
 		},
@@ -104,7 +104,7 @@ end`,
   v = 123
 end`,
 			ErrMsg: `
-- got '&', want primary expression (hint: use 'and' instead of '&&' for logical conjunction)
+- got '&', want primary expression (hint: use 'and' instead of '&&' for logical-and)
     2 | if True && True:`,
 		},
 		{
@@ -112,7 +112,7 @@ end`,
   v = 123
 end`,
 			ErrMsg: `
-- got '|', want primary expression (hint: use 'or' instead of '||' for logical disjunction)
+- got '|', want primary expression (hint: use 'or' instead of '||' for logical-or)
     2 | if True || True:`,
 		},
 	}

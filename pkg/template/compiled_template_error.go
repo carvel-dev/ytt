@@ -198,11 +198,6 @@ func (CompiledTemplateMultiError) isOperatorPresent(err CompiledTemplateError, o
 	return false
 }
 
-var (
-	unknownBinaryOpOr = regexp.MustCompile(`^unknown binary op: .+ \| .+$`)
-	unknownBinaryOpAnd = regexp.MustCompile(`^unknown binary op: .+ & .+$`)
-)
-
 func (e CompiledTemplateMultiError) hintMsg(err CompiledTemplateError) string {
 	hintMsg := ""
 	switch {
@@ -220,20 +215,20 @@ func (e CompiledTemplateMultiError) hintMsg(err CompiledTemplateError) string {
 		hintMsg = "use 'None' instead of 'none' to indicate no value"
 	case err.Msg == "unhandled index operation struct[string]":
 		hintMsg = "use getattr(...) to access struct field programmatically"
-	case unknownBinaryOpOr.MatchString(err.Msg):
-		hintMsg = "use 'or' instead of '|' for logical disjunction"
-	case unknownBinaryOpAnd.MatchString(err.Msg):
-		hintMsg = "use 'and' instead of '&' for logical conjunction"
+	case regexp.MustCompile(`^unknown binary op: .+ \| .+$`).MatchString(err.Msg):
+		hintMsg = "use 'or' instead of '|' for logical-or"
+	case regexp.MustCompile(`^unknown binary op: .+ & .+$`).MatchString(err.Msg):
+		hintMsg = "use 'and' instead of '&' for logical-and"
 	case err.Msg == "got '&', want primary expression":
 		isOpPresent := e.isOperatorPresent(err, "&&")
 		if isOpPresent {
-			hintMsg = "use 'and' instead of '&&' for logical conjunction"
+			hintMsg = "use 'and' instead of '&&' for logical-and"
 			break
 		}
 	case err.Msg == "got '|', want primary expression":
 		isOpPresent := e.isOperatorPresent(err, "||")
 		if isOpPresent {
-			hintMsg = "use 'or' instead of '||' for logical disjunction"
+			hintMsg = "use 'or' instead of '||' for logical-or"
 			break
 		}
 	}
