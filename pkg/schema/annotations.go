@@ -323,7 +323,7 @@ func processOptionalAnnotation(node yamlmeta.Node, optionalAnnotation template.A
 		case AnnotationDefault:
 			switch node.(type) {
 			case *yamlmeta.DocumentSet, *yamlmeta.Array, *yamlmeta.Map:
-				return nil, NewSchemaError(fmt.Sprintf("Invalid schema - @%v not supported on %s", AnnotationDefault, node.DisplayName()),
+				return nil, NewSchemaError(fmt.Sprintf("Invalid schema - @%v not supported on %s", AnnotationDefault, yamlmeta.TypeName(node)),
 					schemaAssertionError{
 						annPositions: []*filepos.Position{ann.Position},
 						position:     node.GetPosition(),

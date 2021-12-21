@@ -113,7 +113,7 @@ func NewUnexpectedKeyAssertionError(found *yamlmeta.MapItem, definition *filepos
 	sort.Strings(allowedKeys)
 	switch numKeys := len(allowedKeys); {
 	case numKeys == 1:
-		err.expected = fmt.Sprintf(`a %s with the key named "%s" (from %s)`, found.DisplayName(), allowedKeys[0], definition.AsCompactString())
+		err.expected = fmt.Sprintf(`a %s with the key named "%s" (from %s)`, yamlmeta.TypeName(found), allowedKeys[0], definition.AsCompactString())
 	case numKeys > 1 && numKeys <= 9: // Miller's Law
 		err.expected = fmt.Sprintf("one of { %s } (from %s)", strings.Join(allowedKeys, ", "), definition.AsCompactString())
 	default:

@@ -50,7 +50,7 @@ func (v DocExtractor) extract(docSet *yamlmeta.DocumentSet,
 			for _, ann := range meta.Annotations {
 				if ann.Name == annName {
 					if hasMatchingAnn {
-						return nil, nil, fmt.Errorf("%s annotation may only be used once per YAML doc", annName)
+						return nil, nil, fmt.Errorf("%s annotation may only be used once per document", annName)
 					}
 					hasMatchingAnn = true
 				}
@@ -85,7 +85,7 @@ func (v DocExtractor) checkNonDocs(val interface{}, annName template.AnnotationN
 				_, isDoc := node.(*yamlmeta.Document)
 				if !isDoc {
 					errMsg := "Found @%s on %s (%s); only documents (---) can be annotated with @%s"
-					return fmt.Errorf(errMsg, annName, node.DisplayName(), node.GetPosition().AsCompactString(), annName)
+					return fmt.Errorf(errMsg, annName, yamlmeta.TypeName(node), node.GetPosition().AsCompactString(), annName)
 				}
 			}
 		}

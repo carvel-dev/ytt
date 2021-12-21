@@ -45,11 +45,6 @@ func (s *Scalar) DeepCopyAsNode() Node {
 	panic("implement me")
 }
 
-// DisplayName is not implemented.
-func (s *Scalar) DisplayName() string {
-	panic("implement me")
-}
-
 // sealed is not implemented.
 func (s *Scalar) sealed() {
 	panic("implement me")

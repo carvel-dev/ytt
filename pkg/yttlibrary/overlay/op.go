@@ -45,10 +45,7 @@ func (o Op) apply(left, right interface{}, parentMatchChildDefaults MatchChildDe
 			// (see matching for overlay post processing)
 			typedLeft, isDocSetArray := left.([]*yamlmeta.DocumentSet)
 			if !isDocSetArray {
-				if node, isNode := left.(yamlmeta.Node); isNode {
-					return false, fmt.Errorf("Expected docset, but was %s", node.DisplayName())
-				}
-				return false, fmt.Errorf("Expected docset, but was %T", left)
+				return false, fmt.Errorf("Expected document set, but was %s", yamlmeta.TypeName(left))
 			}
 			docSetArray = typedLeft
 		} else {
@@ -57,16 +54,10 @@ func (o Op) apply(left, right interface{}, parentMatchChildDefaults MatchChildDe
 
 		return o.applyDocSet(docSetArray, typedRight, parentMatchChildDefaults)
 
-	case *yamlmeta.Document:
-		panic("Unexpected doc")
-
 	case *yamlmeta.Map:
 		typedLeft, isMap := left.(*yamlmeta.Map)
 		if !isMap {
-			if node, isNode := left.(yamlmeta.Node); isNode {
-				return false, fmt.Errorf("Expected map, but was %s", node.DisplayName())
-			}
-			return false, fmt.Errorf("Expected map, but was %T", left)
+			return false, fmt.Errorf("Expected map, but was %s", yamlmeta.TypeName(left))
 		}
 
 		for _, item := range typedRight.Items {
@@ -93,16 +84,10 @@ func (o Op) apply(left, right interface{}, parentMatchChildDefaults MatchChildDe
 			}
 		}
 
-	case *yamlmeta.MapItem:
-		panic("Unexpected mapitem")
-
 	case *yamlmeta.Array:
 		typedLeft, isArray := left.(*yamlmeta.Array)
 		if !isArray {
-			if node, isNode := left.(yamlmeta.Node); isNode {
-				return false, fmt.Errorf("Expected array, but was %s", node.DisplayName())
-			}
-			return false, fmt.Errorf("Expected array, but was %T", left)
+			return false, fmt.Errorf("Expected array, but was %s", yamlmeta.TypeName(left))
 		}
 
 		for _, item := range typedRight.Items {
@@ -132,8 +117,8 @@ func (o Op) apply(left, right interface{}, parentMatchChildDefaults MatchChildDe
 			}
 		}
 
-	case *yamlmeta.ArrayItem:
-		panic("Unexpected arrayitem")
+	case *yamlmeta.Document, *yamlmeta.MapItem, *yamlmeta.ArrayItem:
+		panic(fmt.Sprintf("Unexpected %T", right))
 
 	default:
 		return true, nil

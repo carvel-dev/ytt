@@ -259,31 +259,22 @@ func (a AnyType) GetDefinitionPosition() *filepos.Position {
 }
 
 func (t *DocumentType) String() string {
-	return "document"
+	return yamlmeta.TypeName(&yamlmeta.Document{})
 }
 func (m MapType) String() string {
-	return "map"
+	return yamlmeta.TypeName(&yamlmeta.Map{})
 }
 func (t MapItemType) String() string {
 	return fmt.Sprintf("%s: %s", t.Key, t.ValueType.String())
 }
 func (a ArrayType) String() string {
-	return "array"
+	return yamlmeta.TypeName(&yamlmeta.Array{})
 }
 func (a ArrayItemType) String() string {
 	return fmt.Sprintf("- %s", a.ValueType.String())
 }
 func (s ScalarType) String() string {
-	switch s.ValueType.(type) {
-	case float64:
-		return "float"
-	case int:
-		return "integer"
-	case bool:
-		return "boolean"
-	default:
-		return fmt.Sprintf("%T", s.ValueType)
-	}
+	return yamlmeta.TypeName(s.ValueType)
 }
 func (a AnyType) String() string {
 	return "any"
@@ -320,7 +311,7 @@ func (t *MapItemType) CheckType(node yamlmeta.Node) (chk TypeCheck) {
 	_, ok := node.(*yamlmeta.MapItem)
 	if !ok {
 		// A Map must've yielded a non-MapItem which is not valid YAML
-		panic(fmt.Sprintf("MapItem type check was called on a non-MapItem: %#v", node))
+		panic(fmt.Sprintf("Map item type check was called on a non-map item: %#v", node))
 	}
 
 	return
@@ -343,7 +334,7 @@ func (a *ArrayItemType) CheckType(node yamlmeta.Node) (chk TypeCheck) {
 	_, ok := node.(*yamlmeta.ArrayItem)
 	if !ok {
 		// An Array must've yielded a non-ArrayItem which is not valid YAML
-		panic(fmt.Sprintf("ArrayItem type check was called on a non-ArrayItem: %#v", node))
+		panic(fmt.Sprintf("Array item type check was called on a non-array item: %#v", node))
 	}
 	return
 }
@@ -466,7 +457,7 @@ func contains(haystack []interface{}, needle interface{}) bool {
 func (t *MapItemType) AssignTypeTo(node yamlmeta.Node) (chk TypeCheck) {
 	mapItem, ok := node.(*yamlmeta.MapItem)
 	if !ok {
-		panic(fmt.Sprintf("Attempt to assign type to a non-map-item (children of Maps can only be MapItems). type=%#v; typeWithValues=%#v", t, node))
+		panic(fmt.Sprintf("Maps can only contain map items; this is a %s (attempting to assign %#v to %#v)", yamlmeta.TypeName(node), t, node))
 	}
 	SetType(node.(yamlmeta.Node), t)
 	valueNode, isNode := mapItem.Value.(yamlmeta.Node)
@@ -500,7 +491,7 @@ func (a *ArrayType) AssignTypeTo(node yamlmeta.Node) (chk TypeCheck) {
 func (a *ArrayItemType) AssignTypeTo(node yamlmeta.Node) (chk TypeCheck) {
 	arrayItem, ok := node.(*yamlmeta.ArrayItem)
 	if !ok {
-		panic(fmt.Sprintf("Attempt to assign type to a non-array-item (children of Arrays can only be ArrayItems). type=%#v; typeWithValues=%#v", a, node))
+		panic(fmt.Sprintf("Arrays can only contain array items; this is a %s (attempting to assign %#v to %#v)", yamlmeta.TypeName(node), a, node))
 	}
 	SetType(node.(yamlmeta.Node), a)
 	valueNode, isNode := arrayItem.Value.(yamlmeta.Node)
@@ -631,47 +622,9 @@ func SetType(n yamlmeta.Node, t Type) {
 
 func nodeValueTypeAsString(n yamlmeta.Node) string {
 	switch typed := n.(type) {
-	case *yamlmeta.DocumentSet:
-		return documentSetValueTypeAsString(typed)
-	case *yamlmeta.Document:
-		return documentValueTypeAsString(typed)
-	case *yamlmeta.Map:
-		return mapValueTypeAsString(typed)
-	case *yamlmeta.MapItem:
-		return mapItemValueTypeAsString(typed)
-	case *yamlmeta.Array:
-		return arrayValueTypeAsString(typed)
-	case *yamlmeta.ArrayItem:
-		return arrayItemValueTypeAsString(typed)
-	case *yamlmeta.Scalar:
-		return scalarValueTypeAsString(typed)
+	case *yamlmeta.DocumentSet, *yamlmeta.Map, *yamlmeta.Array:
+		return yamlmeta.TypeName(typed)
 	default:
-		panic(fmt.Sprintf("unexpected node type: %T", n))
-	}
-}
-
-func documentSetValueTypeAsString(_ *yamlmeta.DocumentSet) string { return "document set" }
-func documentValueTypeAsString(d *yamlmeta.Document) string       { return typeToString(d.Value) }
-func mapValueTypeAsString(_ *yamlmeta.Map) string                 { return "map" }
-func mapItemValueTypeAsString(mi *yamlmeta.MapItem) string        { return typeToString(mi.Value) }
-func arrayValueTypeAsString(_ *yamlmeta.Array) string             { return "array" }
-func arrayItemValueTypeAsString(ai *yamlmeta.ArrayItem) string    { return typeToString(ai.Value) }
-func scalarValueTypeAsString(s *yamlmeta.Scalar) string           { return typeToString(s.Value) }
-
-func typeToString(value interface{}) string {
-	switch value.(type) {
-	case float64:
-		return "float"
-	case int, int64, uint64:
-		return "integer"
-	case bool:
-		return "boolean"
-	case nil:
-		return "null"
-	default:
-		if t, ok := value.(yamlmeta.Node); ok {
-			return nodeValueTypeAsString(t)
-		}
-		return fmt.Sprintf("%T", value)
+		return yamlmeta.TypeName(typed.GetValues()[0])
 	}
 }

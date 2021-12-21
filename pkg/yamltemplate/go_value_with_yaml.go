@@ -17,7 +17,7 @@ func NewGoValueWithYAML(val interface{}) tplcore.GoValue {
 		case *yamlmeta.Map, *yamlmeta.Array, *yamlmeta.DocumentSet:
 			return &StarlarkFragment{valToConvert}, true
 		case *yamlmeta.MapItem, *yamlmeta.ArrayItem, *yamlmeta.Document:
-			panic(fmt.Sprintf("NewComplexGoValue: Unexpected %T in conversion of fragment", valToConvert))
+			panic(fmt.Sprintf("Unexpected %#v in conversion of fragment", valToConvert))
 		default:
 			return starlark.None, false
 		}

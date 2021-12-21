@@ -35,7 +35,7 @@ func (p *YAMLPrinter) Print(item *Document) error {
 
 	bs, err := item.AsYAMLBytes()
 	if err != nil {
-		return fmt.Errorf("marshaling doc: %s", err)
+		return fmt.Errorf("marshaling document: %s", err)
 	}
 	p.buf.Write(bs)
 	return nil
@@ -56,7 +56,7 @@ func (p JSONPrinter) Print(item *Document) error {
 
 	bs, err := json.Marshal(orderedmap.Conversion{val}.AsUnorderedStringMaps())
 	if err != nil {
-		return fmt.Errorf("marshaling doc: %s", err)
+		return fmt.Errorf("marshaling document: %s", err)
 	}
 	p.buf.Write(bs)
 	return nil
