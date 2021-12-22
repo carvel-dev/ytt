@@ -10,14 +10,15 @@ import (
 )
 
 // AssignTypeTo assigns this schema metadata to `node`.
+//
 // If `node` is not a yamlmeta.Document, `chk` contains a violation describing the mismatch
 // If `node`'s value is not of the same structure (i.e. yamlmeta.Node type), `chk` contains a violation describing this mismatch
-func (t *DocumentType) AssignTypeTo(node yamlmeta.Node) (chk TypeCheck) {
+func (t *DocumentType) AssignTypeTo(node yamlmeta.Node) TypeCheck {
+	chk := TypeCheck{}
 	doc, ok := node.(*yamlmeta.Document)
 	if !ok {
-		chk.Violations = append(chk.Violations,
-			NewMismatchedTypeAssertionError(node, t))
-		return
+		chk.Violations = append(chk.Violations, NewMismatchedTypeAssertionError(node, t))
+		return chk
 	}
 	SetType(doc, t)
 	valueNode, isNode := doc.Value.(yamlmeta.Node)
@@ -29,17 +30,19 @@ func (t *DocumentType) AssignTypeTo(node yamlmeta.Node) (chk TypeCheck) {
 }
 
 // AssignTypeTo assigns this schema metadata to `node`.
+//
 // If `node` is not a yamlmeta.Map, `chk` contains a violation describing the mismatch
 // If `node`'s yamlmeta.MapItem's cannot be assigned their corresponding MapItemType, `chk` contains a violation describing the mismatch
 // If `node` is missing any yamlmeta.MapItem's specified in this MapType, they are added to `node`.
-func (m *MapType) AssignTypeTo(node yamlmeta.Node) (chk TypeCheck) {
+func (m *MapType) AssignTypeTo(node yamlmeta.Node) TypeCheck {
+	chk := TypeCheck{}
 	mapNode, ok := node.(*yamlmeta.Map)
 	if !ok {
 		chk.Violations = append(chk.Violations, NewMismatchedTypeAssertionError(node, m))
-		return
+		return chk
 	}
 	var foundKeys []interface{}
-	SetType(node.(yamlmeta.Node), m)
+	SetType(node, m)
 	for _, mapItem := range mapNode.Items {
 		for _, itemType := range m.Items {
 			if mapItem.Key == itemType.Key {
@@ -52,7 +55,7 @@ func (m *MapType) AssignTypeTo(node yamlmeta.Node) (chk TypeCheck) {
 	}
 
 	m.applySchemaDefaults(foundKeys, chk, mapNode)
-	return
+	return chk
 }
 
 func (m *MapType) applySchemaDefaults(foundKeys []interface{}, chk TypeCheck, mapNode *yamlmeta.Map) {
@@ -72,54 +75,62 @@ func (m *MapType) applySchemaDefaults(foundKeys []interface{}, chk TypeCheck, ma
 }
 
 // AssignTypeTo assigns this schema metadata to `node`.
+//
 // If `node` is not a yamlmeta.MapItem, `chk` contains a violation describing the mismatch
 // If `node`'s value is not of the same structure (i.e. yamlmeta.Node type), `chk` contains a violation describing this mismatch
-func (t *MapItemType) AssignTypeTo(node yamlmeta.Node) (chk TypeCheck) {
+func (t *MapItemType) AssignTypeTo(node yamlmeta.Node) TypeCheck {
+	chk := TypeCheck{}
 	mapItem, ok := node.(*yamlmeta.MapItem)
 	if !ok {
-		panic(fmt.Sprintf("Maps can only contain map items; this is a %s (attempting to assign %#v to %#v)", yamlmeta.TypeName(node), t, node))
+		chk.Violations = append(chk.Violations, NewMismatchedTypeAssertionError(node, t))
+		return chk
 	}
-	SetType(node.(yamlmeta.Node), t)
+	SetType(node, t)
 	valueNode, isNode := mapItem.Value.(yamlmeta.Node)
 	if isNode {
 		childCheck := t.ValueType.AssignTypeTo(valueNode)
 		chk.Violations = append(chk.Violations, childCheck.Violations...)
 	} // else, is scalar
-	return
+	return chk
 }
 
 // AssignTypeTo assigns this schema metadata to `node`.
+//
 // If `node` is not a yamlmeta.Array, `chk` contains a violation describing the mismatch
 // For each `node`'s yamlmeta.ArrayItem's that cannot be assigned this ArrayType's ArrayItemType, `chk` contains a violation describing the mismatch
-func (a *ArrayType) AssignTypeTo(node yamlmeta.Node) (chk TypeCheck) {
+func (a *ArrayType) AssignTypeTo(node yamlmeta.Node) TypeCheck {
+	chk := TypeCheck{}
 	arrayNode, ok := node.(*yamlmeta.Array)
 	if !ok {
 		chk.Violations = append(chk.Violations, NewMismatchedTypeAssertionError(node, a))
-		return
+		return chk
 	}
-	SetType(node.(yamlmeta.Node), a)
+	SetType(node, a)
 	for _, arrayItem := range arrayNode.Items {
 		childCheck := a.ItemsType.AssignTypeTo(arrayItem)
 		chk.Violations = append(chk.Violations, childCheck.Violations...)
 	}
-	return
+	return chk
 }
 
 // AssignTypeTo assigns this schema metadata to `node`.
+//
 // If `node` is not a yamlmeta.ArrayItem, `chk` contains a violation describing the mismatch
 // If `node`'s value is not of the same structure (i.e. yamlmeta.Node type), `chk` contains a violation describing this mismatch
-func (a *ArrayItemType) AssignTypeTo(node yamlmeta.Node) (chk TypeCheck) {
+func (a *ArrayItemType) AssignTypeTo(node yamlmeta.Node) TypeCheck {
+	chk := TypeCheck{}
 	arrayItem, ok := node.(*yamlmeta.ArrayItem)
 	if !ok {
-		panic(fmt.Sprintf("Arrays can only contain array items; this is a %s (attempting to assign %#v to %#v)", yamlmeta.TypeName(node), a, node))
+		chk.Violations = append(chk.Violations, NewMismatchedTypeAssertionError(node, a))
+		return chk
 	}
-	SetType(node.(yamlmeta.Node), a)
+	SetType(node, a)
 	valueNode, isNode := arrayItem.Value.(yamlmeta.Node)
 	if isNode {
 		childCheck := a.ValueType.AssignTypeTo(valueNode)
 		chk.Violations = append(chk.Violations, childCheck.Violations...)
 	} // else, is scalar
-	return
+	return chk
 }
 
 // AssignTypeTo returns a violation describing the type mismatch, given that ScalarType will never accept a yamlmeta.Node
@@ -128,13 +139,14 @@ func (s *ScalarType) AssignTypeTo(node yamlmeta.Node) TypeCheck {
 }
 
 // AssignTypeTo is a no-op given that AnyType allows all types.
-func (a AnyType) AssignTypeTo(yamlmeta.Node) (chk TypeCheck) {
-	return
+func (a AnyType) AssignTypeTo(yamlmeta.Node) TypeCheck {
+	return TypeCheck{}
 }
 
 // AssignTypeTo assigns this NullType's wrapped Type to `node`.
-func (n NullType) AssignTypeTo(node yamlmeta.Node) (chk TypeCheck) {
+func (n NullType) AssignTypeTo(node yamlmeta.Node) TypeCheck {
+	chk := TypeCheck{}
 	childCheck := n.ValueType.AssignTypeTo(node)
 	chk.Violations = append(chk.Violations, childCheck.Violations...)
-	return
+	return chk
 }
