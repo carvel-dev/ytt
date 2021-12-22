@@ -120,14 +120,14 @@ func (o *OpenAPIDocument) calculateProperties(schemaVal interface{}) *yamlmeta.M
 }
 
 func (o *OpenAPIDocument) openAPITypeFor(astType *ScalarType) string {
-	switch astType.ValueType.(type) {
-	case string:
+	switch astType.ValueType {
+	case StringType:
 		return "string"
-	case float64:
+	case FloatType:
 		return "number"
-	case int:
+	case IntType:
 		return "integer"
-	case bool:
+	case BoolType:
 		return "boolean"
 	default:
 		panic(fmt.Sprintf("Unrecognized type: %T", astType.ValueType))

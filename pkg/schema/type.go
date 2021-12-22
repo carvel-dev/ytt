@@ -77,6 +77,14 @@ type NullType struct {
 	description string
 }
 
+// The total set of supported scalars.
+const (
+	FloatType  = float64(0)
+	StringType = ""
+	IntType    = int64(0)
+	BoolType   = false
+)
+
 // SetDefaultValue sets the default value of the wrapped type to `val`
 func (n *NullType) SetDefaultValue(val interface{}) {
 	n.GetValueType().SetDefaultValue(val)

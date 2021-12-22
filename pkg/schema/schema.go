@@ -186,13 +186,13 @@ func InferTypeFromValue(value interface{}, position *filepos.Position) (Type, er
 		}
 		return arrayType, nil
 	case string:
-		return &ScalarType{ValueType: *new(string), defaultValue: typedContent, Position: position}, nil
+		return &ScalarType{ValueType: StringType, defaultValue: typedContent, Position: position}, nil
 	case float64:
-		return &ScalarType{ValueType: *new(float64), defaultValue: typedContent, Position: position}, nil
-	case int, int64, uint64:
-		return &ScalarType{ValueType: *new(int), defaultValue: typedContent, Position: position}, nil
+		return &ScalarType{ValueType: FloatType, defaultValue: typedContent, Position: position}, nil
+	case int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64:
+		return &ScalarType{ValueType: IntType, defaultValue: typedContent, Position: position}, nil
 	case bool:
-		return &ScalarType{ValueType: *new(bool), defaultValue: typedContent, Position: position}, nil
+		return &ScalarType{ValueType: BoolType, defaultValue: typedContent, Position: position}, nil
 	case nil:
 		return nil, nil
 	default:

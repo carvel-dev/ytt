@@ -66,7 +66,7 @@ func (t *typeChecker) Visit(node yamlmeta.Node) error {
 	return nil
 }
 
-var _  yamlmeta.Visitor = &typeChecker{}
+var _ yamlmeta.Visitor = &typeChecker{}
 
 // CheckType checks the type of `node` against this DocumentType.
 //
@@ -81,7 +81,7 @@ func (t *DocumentType) CheckType(node yamlmeta.Node) TypeCheck {
 	}
 
 	if _, isNode := doc.Value.(yamlmeta.Node); !isNode {
-		valChk := t.ValueType.CheckType(doc)   // ScalarType checks doc.Value
+		valChk := t.ValueType.CheckType(doc) // ScalarType checks doc.Value
 		if valChk.HasViolations() {
 			chk.Violations = append(chk.Violations, valChk.Violations...)
 		}
@@ -175,21 +175,20 @@ func (s *ScalarType) CheckType(node yamlmeta.Node) TypeCheck {
 	value := node.GetValues()[0]
 	switch value.(type) {
 	case string:
-		if _, ok := s.ValueType.(string); !ok {
+		if s.ValueType != StringType {
 			chk.Violations = append(chk.Violations, NewMismatchedTypeAssertionError(node, s))
 		}
 	case float64:
-		if _, ok := s.ValueType.(float64); !ok {
+		if s.ValueType != FloatType {
 			chk.Violations = append(chk.Violations, NewMismatchedTypeAssertionError(node, s))
 		}
-	case int, int64, uint64:
-		switch s.ValueType.(type) {
-		case int, float64: // do nothing
-		default:
+	case int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64:
+		if s.ValueType != IntType && s.ValueType != FloatType {
+			// integers between -9007199254740992 and 9007199254740992 fits in a float64 with no loss of precision.
 			chk.Violations = append(chk.Violations, NewMismatchedTypeAssertionError(node, s))
 		}
 	case bool:
-		if _, ok := s.ValueType.(bool); !ok {
+		if s.ValueType != BoolType {
 			chk.Violations = append(chk.Violations, NewMismatchedTypeAssertionError(node, s))
 		}
 	default:
@@ -226,4 +225,3 @@ func (n NullType) CheckType(node yamlmeta.Node) TypeCheck {
 
 	return chk
 }
-
