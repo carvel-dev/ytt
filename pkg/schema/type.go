@@ -500,20 +500,6 @@ func (m *MapType) AllowedKeys() []string {
 	return keysAsString
 }
 
-// GetType retrieves schema metadata from `n`, typically set previously via SetType().
-func GetType(n yamlmeta.Node) Type {
-	t := n.GetMeta("schema/type")
-	if t == nil {
-		return nil
-	}
-	return t.(Type)
-}
-
-// SetType attaches schema metadata to `n`, typically later retrieved via GetType().
-func SetType(n yamlmeta.Node, t Type) {
-	n.SetMeta("schema/type", t)
-}
-
 func nodeValueTypeAsString(n yamlmeta.Node) string {
 	switch typed := n.(type) {
 	case *yamlmeta.DocumentSet, *yamlmeta.Map, *yamlmeta.Array:
