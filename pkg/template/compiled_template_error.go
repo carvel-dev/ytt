@@ -5,6 +5,7 @@ package template
 
 import (
 	"fmt"
+	"regexp"
 	"strings"
 
 	"github.com/k14s/starlark-go/resolve"
@@ -199,35 +200,35 @@ func (CompiledTemplateMultiError) isOperatorPresent(err CompiledTemplateError, o
 
 func (e CompiledTemplateMultiError) hintMsg(err CompiledTemplateError) string {
 	hintMsg := ""
-	switch err.Msg {
-	case "undefined: true":
+	switch {
+	case err.Msg == "undefined: true":
 		hintMsg = "use 'True' instead of 'true' for boolean assignment"
-	case "undefined: false":
+	case err.Msg == "undefined: false":
 		hintMsg = "use 'False' instead of 'false' for boolean assignment"
-	case "got newline, want ':'":
+	case err.Msg == "got newline, want ':'":
 		hintMsg = "missing colon at the end of 'if/for/def' statement?"
-	case "undefined: null":
+	case err.Msg == "undefined: null":
 		hintMsg = "use 'None' instead of 'null' to indicate no value"
-	case "undefined: nil":
+	case err.Msg == "undefined: nil":
 		hintMsg = "use 'None' instead of 'nil' to indicate no value"
-	case "undefined: none":
+	case err.Msg == "undefined: none":
 		hintMsg = "use 'None' instead of 'none' to indicate no value"
-	case "unhandled index operation struct[string]":
+	case err.Msg == "unhandled index operation struct[string]":
 		hintMsg = "use getattr(...) to access struct field programmatically"
-	case "unknown binary op: bool | bool":
-		hintMsg = "use 'or' instead of '|' to combine boolean expressions"
-	case "unknown binary op: bool & bool":
-		hintMsg = "use 'and' instead of '&' to combine boolean expressions"
-	case "got '&', want primary expression":
+	case regexp.MustCompile(`^unknown binary op: .+ \| .+$`).MatchString(err.Msg):
+		hintMsg = "use 'or' instead of '|' for logical-or"
+	case regexp.MustCompile(`^unknown binary op: .+ & .+$`).MatchString(err.Msg):
+		hintMsg = "use 'and' instead of '&' for logical-and"
+	case err.Msg == "got '&', want primary expression":
 		isOpPresent := e.isOperatorPresent(err, "&&")
 		if isOpPresent {
-			hintMsg = "use 'and' instead of '&&' to combine boolean expressions"
+			hintMsg = "use 'and' instead of '&&' for logical-and"
 			break
 		}
-	case "got '|', want primary expression":
+	case err.Msg == "got '|', want primary expression":
 		isOpPresent := e.isOperatorPresent(err, "||")
 		if isOpPresent {
-			hintMsg = "use 'or' instead of '||' to combine boolean expressions"
+			hintMsg = "use 'or' instead of '||' for logical-or"
 			break
 		}
 	}
