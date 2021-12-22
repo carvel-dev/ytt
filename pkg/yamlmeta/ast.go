@@ -92,11 +92,6 @@ type ArrayItem struct {
 	annotations interface{}
 }
 
-type Scalar struct {
-	Position *filepos.Position
-	Value    interface{}
-}
-
 type Comment struct {
 	Data     string
 	Position *filepos.Position

@@ -155,7 +155,7 @@ func getValueFromAnn(defaultAnn *DefaultAnnotation, t Type) (interface{}, error)
 		defaultValue = node.DeepCopyAsInterface()
 		typeCheck = t.AssignTypeTo(defaultValue.(yamlmeta.Node))
 	} else {
-		typeCheck = t.CheckType(&yamlmeta.Scalar{Value: defaultValue, Position: t.GetDefinitionPosition()})
+		typeCheck = t.CheckType(&yamlmeta.MapItem{Value: defaultValue, Position: t.GetDefinitionPosition()})
 	}
 	if typeCheck.HasViolations() {
 		return nil, NewSchemaError(fmt.Sprintf("Invalid schema - @%v is wrong type", AnnotationDefault), typeCheck.Violations...)

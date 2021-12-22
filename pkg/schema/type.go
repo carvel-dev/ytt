@@ -177,20 +177,6 @@ func (n NullType) GetValueType() Type {
 	return n.ValueType
 }
 
-// CheckType checks the type of `node` against this NullType
-// If `node`'s value is null, this check passes
-// If `node`'s value is not null, then it is checked against this NullType's wrapped Type.
-func (n NullType) CheckType(node yamlmeta.Node) (chk TypeCheck) {
-	if len(node.GetValues()) == 1 && node.GetValues()[0] == nil {
-		return
-	}
-
-	check := n.GetValueType().CheckType(node)
-	chk.Violations = check.Violations
-
-	return
-}
-
 func (n NullType) GetDefinitionPosition() *filepos.Position {
 	return n.Position
 }
@@ -278,106 +264,6 @@ func (s ScalarType) String() string {
 }
 func (a AnyType) String() string {
 	return "any"
-}
-
-// CheckType checks the type of `node` against this Type.
-func (t *DocumentType) CheckType(node yamlmeta.Node) (chk TypeCheck) {
-	return
-}
-
-// CheckType checks the type of `node` against this MapType.
-// If `node` is not a yamlmeta.Map, `chk` contains a violation describing this mismatch
-// If a contained yamlmeta.MapItem is not allowed by this MapType, `chk` contains a corresponding violation
-func (m *MapType) CheckType(node yamlmeta.Node) (chk TypeCheck) {
-	nodeMap, ok := node.(*yamlmeta.Map)
-	if !ok {
-		chk.Violations = append(chk.Violations,
-			NewMismatchedTypeAssertionError(node, m))
-		return
-	}
-
-	for _, item := range nodeMap.Items {
-		if !m.AllowsKey(item.Key) {
-			chk.Violations = append(chk.Violations,
-				NewUnexpectedKeyAssertionError(item, m.Position, m.AllowedKeys()))
-		}
-	}
-	return
-}
-
-// CheckType checks the type of `node` against this MapItemType
-// If `node` is not a yamlmeta.MapItem, `chk` contains a violation describing the mismatch
-func (t *MapItemType) CheckType(node yamlmeta.Node) (chk TypeCheck) {
-	_, ok := node.(*yamlmeta.MapItem)
-	if !ok {
-		// A Map must've yielded a non-MapItem which is not valid YAML
-		panic(fmt.Sprintf("Map item type check was called on a non-map item: %#v", node))
-	}
-
-	return
-}
-
-// CheckType checks the type of `node` against this ArrayType
-// If `node` is not a yamlmeta.Array, `chk` contains a violation describing the mismatch
-func (a *ArrayType) CheckType(node yamlmeta.Node) (chk TypeCheck) {
-	_, ok := node.(*yamlmeta.Array)
-	if !ok {
-		chk.Violations = append(chk.Violations,
-			NewMismatchedTypeAssertionError(node, a))
-	}
-	return
-}
-
-// CheckType checks the type of `node` against this ArrayItemType
-// If `node` is not a yamlmeta.ArrayItem, `chk` contains a violation describing the mismatch
-func (a *ArrayItemType) CheckType(node yamlmeta.Node) (chk TypeCheck) {
-	_, ok := node.(*yamlmeta.ArrayItem)
-	if !ok {
-		// An Array must've yielded a non-ArrayItem which is not valid YAML
-		panic(fmt.Sprintf("Array item type check was called on a non-array item: %#v", node))
-	}
-	return
-}
-
-// CheckType checks the type of `node`'s `value`, which is expected to be a scalar type.
-// If the value is not a recognized scalar type, `chk` contains a corresponding violation
-// If the value is not of the type specified in this ScalarType, `chk` contains a violation describing the mismatch
-func (s *ScalarType) CheckType(node yamlmeta.Node) (chk TypeCheck) {
-	value := node.GetValues()[0]
-	switch value.(type) {
-	case string:
-		if _, ok := s.ValueType.(string); !ok {
-			chk.Violations = append(chk.Violations,
-				NewMismatchedTypeAssertionError(node, s))
-		}
-	case float64:
-		if _, ok := s.ValueType.(float64); !ok {
-			chk.Violations = append(chk.Violations,
-				NewMismatchedTypeAssertionError(node, s))
-		}
-	case int, int64, uint64:
-		if _, ok := s.ValueType.(int); !ok {
-			if _, ok = s.ValueType.(float64); !ok {
-				chk.Violations = append(chk.Violations,
-					NewMismatchedTypeAssertionError(node, s))
-			}
-		}
-	case bool:
-		if _, ok := s.ValueType.(bool); !ok {
-			chk.Violations = append(chk.Violations,
-				NewMismatchedTypeAssertionError(node, s))
-		}
-	default:
-		chk.Violations = append(chk.Violations,
-			NewMismatchedTypeAssertionError(node, s))
-	}
-	return
-}
-
-// CheckType is a no-op because AnyType allows any value.
-// `chk` will always be an empty TypeCheck.
-func (a AnyType) CheckType(node yamlmeta.Node) (chk TypeCheck) {
-	return
 }
 
 // AssignTypeTo assigns this schema metadata to `node`.
