@@ -1,0 +1,14 @@
+name: Trivy CVE Dependency Scanner
+
+on:
+  schedule:
+    - cron: '0 0 * * *'
+
+jobs:
+  trivy-scan:
+    uses: vmware-tanzu/carvel-release-scripts/.github/workflows/trivy-scan.yml@main
+    with:
+      repo: vmware-tanzu/carvel-ytt
+      tool: ytt
+      goVersion: 1.17.0
+      slackWebhookURL: ${{ secrets.SLACK_WEBHOOK_URL }}
