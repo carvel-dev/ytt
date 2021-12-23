@@ -109,6 +109,27 @@ func (m *MapType) CheckType(node yamlmeta.Node) TypeCheck {
 	return chk
 }
 
+// AllowsKey determines whether this MapType permits a MapItem with the key of `key`
+func (m *MapType) AllowsKey(key interface{}) bool {
+	for _, item := range m.Items {
+		if item.Key == key {
+			return true
+		}
+	}
+	return false
+}
+
+// AllowedKeys returns the set of keys (in string format) permitted in this map.
+func (m *MapType) AllowedKeys() []string {
+	var keysAsString []string
+
+	for _, item := range m.Items {
+		keysAsString = append(keysAsString, fmt.Sprintf("%s", item.Key))
+	}
+
+	return keysAsString
+}
+
 // CheckType checks the type of `node` against this MapItemType.
 //
 // If `node` is not a yamlmeta.MapItem, `chk` contains a violation describing this mismatch

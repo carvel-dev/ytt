@@ -102,6 +102,15 @@ func NewMismatchedTypeAssertionError(foundNode yamlmeta.Node, expectedType Type)
 	}
 }
 
+func nodeValueTypeAsString(n yamlmeta.Node) string {
+	switch typed := n.(type) {
+	case *yamlmeta.DocumentSet, *yamlmeta.Map, *yamlmeta.Array:
+		return yamlmeta.TypeName(typed)
+	default:
+		return yamlmeta.TypeName(typed.GetValues()[0])
+	}
+}
+
 // NewUnexpectedKeyAssertionError generates a schema assertion error including the context (and hints) needed to report it to the user
 func NewUnexpectedKeyAssertionError(found *yamlmeta.MapItem, definition *filepos.Position, allowedKeys []string) error {
 	key := fmt.Sprintf("%v", found.Key)

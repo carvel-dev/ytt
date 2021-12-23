@@ -10,17 +10,19 @@ import (
 	"github.com/k14s/ytt/pkg/yamlmeta"
 )
 
-// Type encapsulates a schema describing a yamlmeta.Node.
+// Type encapsulates a schema that describes a yamlmeta.Node.
 type Type interface {
 	AssignTypeTo(node yamlmeta.Node) TypeCheck
+	CheckType(node yamlmeta.Node) TypeCheck
+
 	GetValueType() Type
 	GetDefaultValue() interface{}
 	SetDefaultValue(interface{})
-	CheckType(node yamlmeta.Node) TypeCheck
 	GetDefinitionPosition() *filepos.Position
-	String() string
-	SetDescription(string)
+
 	GetDescription() string
+	SetDescription(string)
+	String() string
 }
 
 var _ Type = (*DocumentType)(nil)
@@ -28,9 +30,9 @@ var _ Type = (*MapType)(nil)
 var _ Type = (*MapItemType)(nil)
 var _ Type = (*ArrayType)(nil)
 var _ Type = (*ArrayItemType)(nil)
+var _ Type = (*ScalarType)(nil)
 var _ Type = (*AnyType)(nil)
 var _ Type = (*NullType)(nil)
-var _ Type = (*ScalarType)(nil)
 
 type DocumentType struct {
 	Source       *yamlmeta.Document
@@ -85,107 +87,6 @@ const (
 	BoolType   = false
 )
 
-// SetDefaultValue sets the default value of the wrapped type to `val`
-func (n *NullType) SetDefaultValue(val interface{}) {
-	n.GetValueType().SetDefaultValue(val)
-}
-
-// SetDefaultValue does nothing
-func (a *AnyType) SetDefaultValue(val interface{}) {
-	a.defaultValue = val
-}
-
-// SetDefaultValue sets the default value of the entire document to `val`
-func (t *DocumentType) SetDefaultValue(val interface{}) {
-	t.defaultValue = val
-}
-
-// SetDefaultValue is ignored as default values should be set on each MapItemType, individually.
-func (m *MapType) SetDefaultValue(val interface{}) {
-	// TODO: determine if we should set the contents of a MapType by setting the given Map...?
-	return
-}
-
-// SetDefaultValue sets the default value to `val`
-func (t *MapItemType) SetDefaultValue(val interface{}) {
-	t.defaultValue = val
-}
-
-// SetDefaultValue sets the default value to `val`
-func (a *ArrayType) SetDefaultValue(val interface{}) {
-	a.defaultValue = val
-}
-
-// SetDefaultValue sets the default value to `val`
-func (a *ArrayItemType) SetDefaultValue(val interface{}) {
-	a.defaultValue = val
-}
-
-// SetDefaultValue sets the default value to `val`
-func (s *ScalarType) SetDefaultValue(val interface{}) {
-	s.defaultValue = val
-}
-
-// GetDefaultValue provides the default value
-func (n NullType) GetDefaultValue() interface{} {
-	return nil
-}
-
-// GetDefaultValue provides the default value
-func (a AnyType) GetDefaultValue() interface{} {
-	if node, ok := a.defaultValue.(yamlmeta.Node); ok {
-		return node.DeepCopyAsInterface()
-	}
-	return a.defaultValue
-}
-
-// GetDefaultValue provides the default value
-func (s ScalarType) GetDefaultValue() interface{} {
-	return s.defaultValue // scalar values are copied (even through an interface{} reference)
-}
-
-func (a ArrayItemType) GetDefaultValue() interface{} {
-	panic(fmt.Sprintf("Unexpected call to GetDefaultValue() on %+v", a))
-}
-
-// GetDefaultValue provides the default value
-func (a ArrayType) GetDefaultValue() interface{} {
-	return a.defaultValue
-}
-
-// GetDefaultValue provides the default value
-func (t MapItemType) GetDefaultValue() interface{} {
-	return &yamlmeta.MapItem{Key: t.Key, Value: t.defaultValue, Position: t.Position}
-}
-
-// GetDefaultValue provides the default value
-func (m MapType) GetDefaultValue() interface{} {
-	defaultValues := &yamlmeta.Map{Position: m.Position}
-	for _, item := range m.Items {
-		newItem := item.GetDefaultValue()
-		defaultValues.Items = append(defaultValues.Items, newItem.(*yamlmeta.MapItem))
-	}
-	return defaultValues
-}
-
-// GetDefaultValue provides the default value
-func (t DocumentType) GetDefaultValue() interface{} {
-	return &yamlmeta.Document{Value: t.defaultValue, Position: t.Position}
-}
-
-// GetValueType provides the type of the value
-func (n NullType) GetValueType() Type {
-	return n.ValueType
-}
-
-func (n NullType) GetDefinitionPosition() *filepos.Position {
-	return n.Position
-}
-
-func (n NullType) String() string {
-	return "null"
-}
-
 // GetValueType provides the type of the value
 func (t *DocumentType) GetValueType() Type {
 	return t.ValueType
@@ -221,50 +122,138 @@ func (a AnyType) GetValueType() Type {
 	return &a
 }
 
+// GetValueType provides the type of the value
+func (n NullType) GetValueType() Type {
+	return n.ValueType
+}
+
+// GetDefaultValue provides the default value
+func (t DocumentType) GetDefaultValue() interface{} {
+	return &yamlmeta.Document{Value: t.defaultValue, Position: t.Position}
+}
+
+// GetDefaultValue provides the default value
+func (m MapType) GetDefaultValue() interface{} {
+	defaultValues := &yamlmeta.Map{Position: m.Position}
+	for _, item := range m.Items {
+		newItem := item.GetDefaultValue()
+		defaultValues.Items = append(defaultValues.Items, newItem.(*yamlmeta.MapItem))
+	}
+	return defaultValues
+}
+
+// GetDefaultValue provides the default value
+func (t MapItemType) GetDefaultValue() interface{} {
+	return &yamlmeta.MapItem{Key: t.Key, Value: t.defaultValue, Position: t.Position}
+}
+
+// GetDefaultValue provides the default value
+func (a ArrayType) GetDefaultValue() interface{} {
+	return a.defaultValue
+}
+
+// GetDefaultValue provides the default value
+func (a ArrayItemType) GetDefaultValue() interface{} {
+	panic(fmt.Sprintf("Unexpected call to GetDefaultValue() on %+v", a))
+}
+
+// GetDefaultValue provides the default value
+func (s ScalarType) GetDefaultValue() interface{} {
+	return s.defaultValue // scalar values are copied (even through an interface{} reference)
+}
+
+// GetDefaultValue provides the default value
+func (a AnyType) GetDefaultValue() interface{} {
+	if node, ok := a.defaultValue.(yamlmeta.Node); ok {
+		return node.DeepCopyAsInterface()
+	}
+	return a.defaultValue
+}
+
+// GetDefaultValue provides the default value
+func (n NullType) GetDefaultValue() interface{} {
+	return nil
+}
+
+// SetDefaultValue sets the default value of the entire document to `val`
+func (t *DocumentType) SetDefaultValue(val interface{}) {
+	t.defaultValue = val
+}
+
+// SetDefaultValue is ignored as default values should be set on each MapItemType, individually.
+func (m *MapType) SetDefaultValue(val interface{}) {
+	// TODO: determine if we should set the contents of a MapType by setting the given Map...?
+	return
+}
+
+// SetDefaultValue sets the default value to `val`
+func (t *MapItemType) SetDefaultValue(val interface{}) {
+	t.defaultValue = val
+}
+
+// SetDefaultValue sets the default value to `val`
+func (a *ArrayType) SetDefaultValue(val interface{}) {
+	a.defaultValue = val
+}
+
+// SetDefaultValue sets the default value to `val`
+func (a *ArrayItemType) SetDefaultValue(val interface{}) {
+	a.defaultValue = val
+}
+
+// SetDefaultValue sets the default value to `val`
+func (s *ScalarType) SetDefaultValue(val interface{}) {
+	s.defaultValue = val
+}
+
+// SetDefaultValue does nothing
+func (a *AnyType) SetDefaultValue(val interface{}) {
+	a.defaultValue = val
+}
+
+// SetDefaultValue sets the default value of the wrapped type to `val`
+func (n *NullType) SetDefaultValue(val interface{}) {
+	n.GetValueType().SetDefaultValue(val)
+}
+
+// GetDefinitionPosition reports the location in source schema that contains this type definition.
 func (t *DocumentType) GetDefinitionPosition() *filepos.Position {
 	return t.Position
 }
+
+// GetDefinitionPosition reports the location in source schema that contains this type definition.
 func (m MapType) GetDefinitionPosition() *filepos.Position {
 	return m.Position
 }
+
+// GetDefinitionPosition reports the location in source schema that contains this type definition.
 func (t MapItemType) GetDefinitionPosition() *filepos.Position {
 	return t.Position
 }
+
+// GetDefinitionPosition reports the location in source schema that contains this type definition.
 func (a ArrayType) GetDefinitionPosition() *filepos.Position {
 	return a.Position
 }
+
+// GetDefinitionPosition reports the location in source schema that contains this type definition.
 func (a ArrayItemType) GetDefinitionPosition() *filepos.Position {
 	return a.Position
 }
 
-// GetDefinitionPosition provides the file position
+// GetDefinitionPosition reports the location in source schema that contains this type definition.
 func (s ScalarType) GetDefinitionPosition() *filepos.Position {
 	return s.Position
 }
+
+// GetDefinitionPosition reports the location in source schema that contains this type definition.
 func (a AnyType) GetDefinitionPosition() *filepos.Position {
 	return a.Position
 }
 
-func (t *DocumentType) String() string {
-	return yamlmeta.TypeName(&yamlmeta.Document{})
-}
-func (m MapType) String() string {
-	return yamlmeta.TypeName(&yamlmeta.Map{})
-}
-func (t MapItemType) String() string {
-	return fmt.Sprintf("%s: %s", t.Key, t.ValueType.String())
-}
-func (a ArrayType) String() string {
-	return yamlmeta.TypeName(&yamlmeta.Array{})
-}
-func (a ArrayItemType) String() string {
-	return fmt.Sprintf("- %s", a.ValueType.String())
-}
-func (s ScalarType) String() string {
-	return yamlmeta.TypeName(s.ValueType)
-}
-func (a AnyType) String() string {
-	return "any"
+// GetDefinitionPosition reports the location in source schema that contains this type definition.
+func (n NullType) GetDefinitionPosition() *filepos.Position {
+	return n.Position
 }
 
 func contains(haystack []interface{}, needle interface{}) bool {
@@ -350,31 +339,42 @@ func (n *NullType) SetDescription(desc string) {
 	n.description = desc
 }
 
-func (m *MapType) AllowsKey(key interface{}) bool {
-	for _, item := range m.Items {
-		if item.Key == key {
-			return true
-		}
-	}
-	return false
+// String produces a user-friendly name of the expected type.
+func (t *DocumentType) String() string {
+	return yamlmeta.TypeName(&yamlmeta.Document{})
 }
 
-// AllowedKeys returns the set of keys (in string format) permitted in this map.
-func (m *MapType) AllowedKeys() []string {
-	var keysAsString []string
-
-	for _, item := range m.Items {
-		keysAsString = append(keysAsString, fmt.Sprintf("%s", item.Key))
-	}
-
-	return keysAsString
+// String produces a user-friendly name of the expected type.
+func (m MapType) String() string {
+	return yamlmeta.TypeName(&yamlmeta.Map{})
 }
 
-func nodeValueTypeAsString(n yamlmeta.Node) string {
-	switch typed := n.(type) {
-	case *yamlmeta.DocumentSet, *yamlmeta.Map, *yamlmeta.Array:
-		return yamlmeta.TypeName(typed)
-	default:
-		return yamlmeta.TypeName(typed.GetValues()[0])
-	}
+// String produces a user-friendly name of the expected type.
+func (t MapItemType) String() string {
+	return fmt.Sprintf("%s: %s", t.Key, t.ValueType.String())
+}
+
+// String produces a user-friendly name of the expected type.
+func (a ArrayType) String() string {
+	return yamlmeta.TypeName(&yamlmeta.Array{})
+}
+
+// String produces a user-friendly name of the expected type.
+func (a ArrayItemType) String() string {
+	return fmt.Sprintf("- %s", a.ValueType.String())
+}
+
+// String produces a user-friendly name of the expected type.
+func (s ScalarType) String() string {
+	return yamlmeta.TypeName(s.ValueType)
+}
+
+// String produces a user-friendly name of the expected type.
+func (a AnyType) String() string {
+	return "any"
+}
+
+// String produces a user-friendly name of the expected type.
+func (n NullType) String() string {
+	return "null"
 }
