@@ -15,6 +15,7 @@ const (
 	defaultProp     = "default"
 	nullableProp    = "nullable"
 	descriptionProp = "description"
+	titleProp       = "title"
 )
 
 // OpenAPIDocument holds the document type used for creating an OpenAPI document
@@ -57,10 +58,19 @@ func (o *OpenAPIDocument) calculateProperties(schemaVal interface{}) *yamlmeta.M
 			mi := yamlmeta.MapItem{Key: i.Key, Value: o.calculateProperties(i.GetValueType())}
 			properties = append(properties, &mi)
 		}
-		property := yamlmeta.Map{Items: []*yamlmeta.MapItem{
-			{Key: typeProp, Value: "object"},
-			{Key: "additionalProperties", Value: false},
-		}}
+		var property yamlmeta.Map
+		if typedValue.GetTitle() != "" {
+			property = yamlmeta.Map{Items: []*yamlmeta.MapItem{
+				{Key: titleProp, Value: typedValue.GetTitle()},
+				{Key: typeProp, Value: "object"},
+				{Key: "additionalProperties", Value: false},
+			}}
+		} else {
+			property = yamlmeta.Map{Items: []*yamlmeta.MapItem{
+				{Key: typeProp, Value: "object"},
+				{Key: "additionalProperties", Value: false},
+			}}
+		}
 
 		if typedValue.GetDescription() != "" {
 			property.Items = append(property.Items, &yamlmeta.MapItem{Key: descriptionProp, Value: typedValue.GetDescription()})
@@ -73,7 +83,9 @@ func (o *OpenAPIDocument) calculateProperties(schemaVal interface{}) *yamlmeta.M
 		property := yamlmeta.Map{Items: []*yamlmeta.MapItem{
 			{Key: typeProp, Value: "array"},
 		}}
-
+		if typedValue.GetTitle() != "" {
+			property.Items = append(property.Items, &yamlmeta.MapItem{Key: titleProp, Value: typedValue.GetTitle()})
+		}
 		if typedValue.GetDescription() != "" {
 			property.Items = append(property.Items, &yamlmeta.MapItem{Key: descriptionProp, Value: typedValue.GetDescription()})
 		}
@@ -94,6 +106,9 @@ func (o *OpenAPIDocument) calculateProperties(schemaVal interface{}) *yamlmeta.M
 		if typedValue.String() == "float" {
 			property.Items = append(property.Items, &yamlmeta.MapItem{Key: "format", Value: "float"})
 		}
+		if typedValue.GetTitle() != "" {
+			property.Items = append(property.Items, &yamlmeta.MapItem{Key: titleProp, Value: typedValue.GetTitle()})
+		}
 		if typedValue.GetDescription() != "" {
 			property.Items = append(property.Items, &yamlmeta.MapItem{Key: descriptionProp, Value: typedValue.GetDescription()})
 		}
@@ -101,6 +116,9 @@ func (o *OpenAPIDocument) calculateProperties(schemaVal interface{}) *yamlmeta.M
 	case *NullType:
 		properties := o.calculateProperties(typedValue.GetValueType())
 		properties.Items = append(properties.Items, &yamlmeta.MapItem{Key: nullableProp, Value: true})
+		if typedValue.GetTitle() != "" {
+			properties.Items = append(properties.Items, &yamlmeta.MapItem{Key: titleProp, Value: typedValue.GetTitle()})
+		}
 		if typedValue.GetDescription() != "" {
 			properties.Items = append(properties.Items, &yamlmeta.MapItem{Key: descriptionProp, Value: typedValue.GetDescription()})
 		}
@@ -110,6 +128,9 @@ func (o *OpenAPIDocument) calculateProperties(schemaVal interface{}) *yamlmeta.M
 			{Key: nullableProp, Value: true},
 			{Key: defaultProp, Value: typedValue.GetDefaultValue()},
 		}}
+		if typedValue.GetTitle() != "" {
+			properties.Items = append(properties.Items, &yamlmeta.MapItem{Key: titleProp, Value: typedValue.GetTitle()})
+		}
 		if typedValue.GetDescription() != "" {
 			properties.Items = append(properties.Items, &yamlmeta.MapItem{Key: descriptionProp, Value: typedValue.GetDescription()})
 		}

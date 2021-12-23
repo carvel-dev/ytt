@@ -118,6 +118,11 @@ func getType(node yamlmeta.Node) (Type, error) {
 			typeOfValue.SetDescription(desc.description)
 		}
 	}
+	for _, ann := range docAnns {
+		if titleAnn, ok := ann.(*TitleAnnotation); ok {
+			typeOfValue.SetTitle(titleAnn.title)
+		}
+	}
 
 	err = valueTypeAllowsItemValue(typeOfValue, node.GetValues()[0], node.GetPosition())
 	if err != nil {
