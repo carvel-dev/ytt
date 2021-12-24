@@ -80,11 +80,10 @@ func (ll *LibraryExecution) Values(valuesOverlays []*datavalues.Envelope, schema
 	}
 
 	dvpp := DataValuesPreProcessing{
-		valuesFiles:           valuesFiles,
-		valuesOverlays:        valuesOverlays,
-		schema:                schema,
-		loader:                loader,
-		IgnoreUnknownComments: ll.templateLoaderOpts.IgnoreUnknownComments,
+		valuesFiles:    valuesFiles,
+		valuesOverlays: valuesOverlays,
+		schema:         schema,
+		loader:         loader,
 	}
 
 	return dvpp.Apply()

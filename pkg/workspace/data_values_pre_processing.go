@@ -14,97 +14,100 @@ import (
 	yttoverlay "github.com/k14s/ytt/pkg/yttlibrary/overlay"
 )
 
+// DataValuesPreProcessing combines all data values documents (and any overlays) into a result set.
 type DataValuesPreProcessing struct {
-	valuesFiles           []*FileInLibrary
-	valuesOverlays        []*datavalues.Envelope
-	schema                *datavalues.Schema
-	loader                *TemplateLoader
-	IgnoreUnknownComments bool // TODO remove?
+	valuesFiles    []*FileInLibrary
+	valuesOverlays []*datavalues.Envelope
+	schema         *datavalues.Schema
+	loader         *TemplateLoader
 }
 
-// Apply executes the pre-processing of data values.
-func (o DataValuesPreProcessing) Apply() (*datavalues.Envelope, []*datavalues.Envelope, error) {
-	files := append([]*FileInLibrary{}, o.valuesFiles...)
+// Apply executes the pre-processing of data values for all libraries.
+//
+// Returns the data values for the root library and enveloped data values for children libraries.
+func (pp DataValuesPreProcessing) Apply() (*datavalues.Envelope, []*datavalues.Envelope, error) {
+	files := append([]*FileInLibrary{}, pp.valuesFiles...)
 
 	// Respect assigned file order for data values overlaying to succeed
 	SortFilesInLibrary(files)
 
-	dataValues, libraryDataValues, err := o.apply(files)
+	dataValues, libraryDataValues, err := pp.apply(files)
 	if err != nil {
 		errMsg := "Overlaying data values (in following order: %s): %s"
-		return nil, nil, fmt.Errorf(errMsg, o.allFileDescs(files), err)
+		return nil, nil, fmt.Errorf(errMsg, pp.allFileDescs(files), err)
 	}
 
 	return dataValues, libraryDataValues, nil
 }
 
-func (o DataValuesPreProcessing) apply(files []*FileInLibrary) (*datavalues.Envelope, []*datavalues.Envelope, error) {
-	allDvs, err := o.collectDataValuesDocs(files)
+func (pp DataValuesPreProcessing) apply(files []*FileInLibrary) (*datavalues.Envelope, []*datavalues.Envelope, error) {
+	allDvs, err := pp.collectDataValuesDocs(files)
 	if err != nil {
 		return nil, nil, err
 	}
 
 	// merge all Data Values YAML documents into one
-	var otherLibraryDVs []*datavalues.Envelope
-	var resultDVsDoc *yamlmeta.Document
+	var childrenLibDVs []*datavalues.Envelope
+	var dvsDoc *yamlmeta.Document
 	for _, dv := range allDvs {
 		if dv.IntendedForAnotherLibrary() {
-			otherLibraryDVs = append(otherLibraryDVs, dv)
+			childrenLibDVs = append(childrenLibDVs, dv)
 			continue
 		}
 
-		if resultDVsDoc == nil {
-			resultDVsDoc = dv.Doc
+		if dvsDoc == nil {
+			dvsDoc = dv.Doc
 		} else {
-			resultDVsDoc, err = o.overlay(resultDVsDoc, dv.Doc)
+			dvsDoc, err = pp.overlay(dvsDoc, dv.Doc)
 			if err != nil {
 				return nil, nil, err
 			}
 		}
-		typeCheck := o.typeAndCheck(resultDVsDoc)
+		typeCheck := pp.typeAndCheck(dvsDoc)
 		if len(typeCheck.Violations) > 0 {
 			return nil, nil, schema.NewSchemaError("One or more data values were invalid", typeCheck.Violations...)
 		}
 	}
 
-	if resultDVsDoc == nil {
-		resultDVsDoc = datavalues.NewEmptyDataValuesDocument()
+	if dvsDoc == nil {
+		dvsDoc = datavalues.NewEmptyDataValuesDocument()
 	}
-	dataValues, err := datavalues.NewEnvelope(resultDVsDoc)
+	dataValues, err := datavalues.NewEnvelope(dvsDoc)
 	if err != nil {
 		return nil, nil, err
 	}
-	return dataValues, otherLibraryDVs, nil
+
+	return dataValues, childrenLibDVs, nil
 }
 
-func (o DataValuesPreProcessing) collectDataValuesDocs(files []*FileInLibrary) ([]*datavalues.Envelope, error) {
+func (pp DataValuesPreProcessing) collectDataValuesDocs(dvFiles []*FileInLibrary) ([]*datavalues.Envelope, error) {
 	var allDvs []*datavalues.Envelope
-	if defaults := o.schema.DefaultDataValues(); defaults != nil {
+	if defaults := pp.schema.DefaultDataValues(); defaults != nil {
 		dv, err := datavalues.NewEnvelope(defaults)
 		if err != nil {
 			return nil, err
 		}
 		allDvs = append(allDvs, dv)
 	}
-	for _, fileInLib := range files {
-		docs, err := o.extractDataValueDocs(fileInLib)
+	for _, file := range dvFiles {
+		docs, err := pp.extractDataValueDocs(file)
 		if err != nil {
-			return nil, fmt.Errorf("Templating file '%s': %s", fileInLib.File.RelativePath(), err)
+			return nil, fmt.Errorf("Templating file '%s': %s", file.File.RelativePath(), err)
 		}
-		for _, doc := range docs {
-			dv, err := datavalues.NewEnvelope(doc)
+		for _, d := range docs {
+			dv, err := datavalues.NewEnvelope(d)
 			if err != nil {
 				return nil, err
 			}
 			allDvs = append(allDvs, dv)
 		}
 	}
-	allDvs = append(allDvs, o.valuesOverlays...)
+	allDvs = append(allDvs, pp.valuesOverlays...)
 	return allDvs, nil
 }
 
-func (o DataValuesPreProcessing) typeAndCheck(dataValuesDoc *yamlmeta.Document) schema.TypeCheck {
-	chk := o.schema.AssignType(dataValuesDoc)
+func (pp DataValuesPreProcessing) typeAndCheck(dataValuesDoc *yamlmeta.Document) schema.TypeCheck {
+	chk := pp.schema.AssignType(dataValuesDoc)
 	if len(chk.Violations) > 0 {
 		return chk
 	}
@@ -112,37 +115,25 @@ func (o DataValuesPreProcessing) typeAndCheck(dataValuesDoc *yamlmeta.Document) 
 	return chk
 }
 
-func (o DataValuesPreProcessing) allFileDescs(files []*FileInLibrary) string {
-	var result []string
-	for _, fileInLib := range files {
-		result = append(result, fileInLib.File.RelativePath())
-	}
-	if len(o.valuesOverlays) > 0 {
-		result = append(result, "additional data values")
-	}
-	return strings.Join(result, ", ")
-}
+func (pp DataValuesPreProcessing) extractDataValueDocs(dvFile *FileInLibrary) ([]*yamlmeta.Document, error) {
+	libraryCtx := LibraryExecutionContext{Current: dvFile.Library, Root: NewRootLibrary(nil)}
 
-func (o DataValuesPreProcessing) extractDataValueDocs(fileInLib *FileInLibrary) ([]*yamlmeta.Document, error) {
-	libraryCtx := LibraryExecutionContext{Current: fileInLib.Library, Root: NewRootLibrary(nil)}
-
-	_, resultDocSet, err := o.loader.EvalYAML(libraryCtx, fileInLib.File)
+	_, resultDocSet, err := pp.loader.EvalYAML(libraryCtx, dvFile.File)
 	if err != nil {
 		return nil, err
 	}
 
-	// Extract _all_ data values docs from the templated result
 	valuesDocs, nonValuesDocs, err := DocExtractor{resultDocSet}.Extract(datavalues.AnnotationDataValues)
 	if err != nil {
 		return nil, err
 	}
 
-	// Fail if there any non-empty docs that are not data values
+	// For simplicity's sake, prohibit mixing data value documents with other kinds.
 	if len(nonValuesDocs) > 0 {
 		for _, doc := range nonValuesDocs {
 			if !doc.IsEmpty() {
 				errStr := "Expected data values file '%s' to only have data values documents"
-				return nil, fmt.Errorf(errStr, fileInLib.File.RelativePath())
+				return nil, fmt.Errorf(errStr, dvFile.File.RelativePath())
 			}
 		}
 	}
@@ -150,19 +141,30 @@ func (o DataValuesPreProcessing) extractDataValueDocs(fileInLib *FileInLibrary) 
 	return valuesDocs, nil
 }
 
-func (o DataValuesPreProcessing) overlay(dataValues, overlay *yamlmeta.Document) (*yamlmeta.Document, error) {
+func (pp DataValuesPreProcessing) allFileDescs(files []*FileInLibrary) string {
+	var result []string
+	for _, f := range files {
+		result = append(result, f.File.RelativePath())
+	}
+	if len(pp.valuesOverlays) > 0 {
+		result = append(result, "additional data values")
+	}
+	return strings.Join(result, ", ")
+}
+
+func (pp DataValuesPreProcessing) overlay(doc, overlay *yamlmeta.Document) (*yamlmeta.Document, error) {
 	op := yttoverlay.Op{
-		Left:   &yamlmeta.DocumentSet{Items: []*yamlmeta.Document{dataValues}},
+		Left:   &yamlmeta.DocumentSet{Items: []*yamlmeta.Document{doc}},
 		Right:  &yamlmeta.DocumentSet{Items: []*yamlmeta.Document{overlay}},
 		Thread: &starlark.Thread{Name: "data-values-pre-processing"},
 
 		ExactMatch: true,
 	}
 
-	newLeft, err := op.Apply()
+	result, err := op.Apply()
 	if err != nil {
 		return nil, err
 	}
 
-	return newLeft.(*yamlmeta.DocumentSet).Items[0], nil
+	return result.(*yamlmeta.DocumentSet).Items[0], nil
 }
