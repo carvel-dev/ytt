@@ -13,7 +13,6 @@ import (
 	"github.com/k14s/ytt/pkg/template"
 	"github.com/k14s/ytt/pkg/workspace/datavalues"
 	"github.com/k14s/ytt/pkg/yamlmeta"
-	yttoverlay "github.com/k14s/ytt/pkg/yttlibrary/overlay"
 )
 
 type LibraryExecution struct {
@@ -50,87 +49,21 @@ func NewLibraryExecution(libraryCtx LibraryExecutionContext,
 // in the library and the passed-in overlays.
 //
 // Returns this library's Schema and a slice of Schema intended for child libraries.
-func (ll *LibraryExecution) Schemas(schemaOverlays []*datavalues.SchemaEnvelope) (*datavalues.Schema, []*datavalues.SchemaEnvelope, error) {
+func (ll *LibraryExecution) Schemas(overlays []*datavalues.SchemaEnvelope) (*datavalues.Schema, []*datavalues.SchemaEnvelope, error) {
 	loader := NewTemplateLoader(datavalues.NewEmptyEnvelope(), nil, nil, ll.templateLoaderOpts, ll.libraryExecFactory, ll.ui)
 
-	schemaFiles, err := ll.schemaFiles(loader)
+	files, err := ll.schemaFiles(loader)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	documentSchemas, err := collectSchemaDocs(schemaFiles, loader)
-	if err != nil {
-		return nil, nil, err
+	spp := DataValuesSchemaPreProcessing{
+		schemaFiles:    files,
+		schemaOverlays: overlays,
+		loader:         loader,
 	}
 
-	documentSchemas = append(documentSchemas, schemaOverlays...)
-
-	var resultSchemasDoc *yamlmeta.Document
-	var childLibrarySchemas []*datavalues.SchemaEnvelope
-	for _, docSchema := range documentSchemas {
-		if docSchema.IntendedForAnotherLibrary() {
-			childLibrarySchemas = append(childLibrarySchemas, docSchema)
-			continue
-		}
-		if resultSchemasDoc == nil {
-			resultSchemasDoc = docSchema.Source()
-		} else {
-			resultSchemasDoc, err = ll.overlay(resultSchemasDoc, docSchema.Source())
-			if err != nil {
-				return nil, nil, err
-			}
-		}
-	}
-	if resultSchemasDoc != nil {
-		currentLibrarySchema, err := datavalues.NewSchema(resultSchemasDoc)
-		if err != nil {
-			return nil, nil, err
-		}
-		return currentLibrarySchema, childLibrarySchemas, nil
-	}
-	return datavalues.NewNullSchema(), childLibrarySchemas, nil
-}
-
-func collectSchemaDocs(schemaFiles []*FileInLibrary, loader *TemplateLoader) ([]*datavalues.SchemaEnvelope, error) {
-	var documentSchemas []*datavalues.SchemaEnvelope
-	for _, file := range schemaFiles {
-		libraryCtx := LibraryExecutionContext{Current: file.Library, Root: NewRootLibrary(nil)}
-
-		_, resultDocSet, err := loader.EvalYAML(libraryCtx, file.File)
-		if err != nil {
-			return nil, err
-		}
-
-		docs, _, err := DocExtractor{resultDocSet}.Extract(datavalues.AnnotationDataValuesSchema)
-		if err != nil {
-			return nil, err
-		}
-		for _, doc := range docs {
-			newSchema, err := datavalues.NewSchemaEnvelope(doc)
-			if err != nil {
-				return nil, err
-			}
-			documentSchemas = append(documentSchemas, newSchema)
-		}
-	}
-	return documentSchemas, nil
-}
-
-func (ll *LibraryExecution) overlay(schema, overlay *yamlmeta.Document) (*yamlmeta.Document, error) {
-	op := yttoverlay.Op{
-		Left:   &yamlmeta.DocumentSet{Items: []*yamlmeta.Document{schema}},
-		Right:  &yamlmeta.DocumentSet{Items: []*yamlmeta.Document{overlay}},
-		Thread: &starlark.Thread{Name: "schema-pre-processing"},
-
-		ExactMatch: true,
-	}
-
-	newLeft, err := op.Apply()
-	if err != nil {
-		return nil, err
-	}
-
-	return newLeft.(*yamlmeta.DocumentSet).Items[0], nil
+	return spp.Apply()
 }
 
 // Values calculates the final Data Values for this library by combining/overlaying defaults from the schema, the Data
