@@ -3,6 +3,8 @@ This example shows how to use `ytt` overlaying in regards to accomplish the modi
 Specifically the `apiVersion` is bumped to **networking.k8s.io/v1** from **networking.k8s.io/v1beta1**. As a consequence this requires us to
 `ytt overlay` on **backend** and **paths** on the **Kubernetes IngressObject**. In order for these to match the `apiVersion` that we bump to.
 
+Specifically the method is used on Falco Helm chart having issues with the version tag that K3s uses. Resulting in that chart using the **v1beta1** of the **networking** API.
+
 The cmdline used:
 
 ```text
