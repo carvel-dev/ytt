@@ -1,0 +1,44 @@
+#@data/values-schema
+---
+#!
+#! Cluster scope values
+#!
+cluster: ""
+
+clusters:
+  my-cluster:
+    falcosidekick:
+      ingress:
+        host: falcosidekick.my-cluster.local
+      webui:
+        ingress:
+          host: falcosidekick-ui.my-cluster.local
+  
+#!
+#! Global scope values
+#!
+ebpf:
+  enabled: true
+auditLog:
+  enabled: true
+falcosidekick:
+  enabled: true
+  fullfqdn: false
+  config:
+    teams:
+      webhookurl: "....."  
+  ingress:
+    #@schema/type any=True
+    annotations:
+      kubernetes.io/ingress.class: haproxy
+    enabled: true
+    paths: [""]
+  webui:
+    enabled: true
+    darkmode: true
+    ingress:
+      #@schema/type any=True
+      annotations:
+        kubernetes.io/ingress.class: haproxy
+      enabled: true
+      paths: [""]
