@@ -623,7 +623,7 @@ components:
 	})
 }
 
-/*func TestSchemaInspect_annotation_adds_title_key(t *testing.T) {
+func TestSchemaInspect_annotation_adds_title_key(t *testing.T) {
 	t.Run("when description provided by @schema/title", func(t *testing.T) {
 		opts := cmdtpl.NewOptions()
 		opts.DataValuesFlags.InspectSchema = true
@@ -638,9 +638,9 @@ db_conn:
 -
   #@schema/title "The host"
   hostname: ""
-  #@schema/title "Port"
+  #@schema/title "The Port"
   port: 0
-  #@schema/title "Timeout"
+  #@schema/title "The Timeout"
   timeout: 1.0
   #@schema/title "Any type"
   #@schema/type any=True
@@ -662,38 +662,37 @@ components:
       additionalProperties: false
       properties:
         db_conn:
-		  title: List of database connections
+          title: List of database connections
           type: array
           items:
+            title: A network entry
             type: object
             additionalProperties: false
-            description: A network entry
             properties:
               hostname:
+                title: The host
                 type: string
                 default: ""
-                title: The host
               port:
+                title: The Port
                 type: integer
                 default: 0
-                title: Port
               timeout:
+                title: The Timeout
                 type: number
                 default: 1
                 format: float
-                title: Timeout
               any_key:
+                title: Any type
                 nullable: true
                 default: thing
-                title: Any type
               null_key:
                 type: string
                 default: null
-                nullable: true
                 title: When not provided, the default is null
+                nullable: true
           default: []
 `
-
 		filesToProcess := files.NewSortedFiles([]*files.File{
 			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
 		})
@@ -701,7 +700,7 @@ components:
 		assertSucceedsDocSet(t, filesToProcess, expected, opts)
 	})
 }
-*/
+
 func TestSchemaInspect_errors(t *testing.T) {
 	t.Run("when --output is anything other than 'openapi-v3'", func(t *testing.T) {
 		opts := cmdtpl.NewOptions()
