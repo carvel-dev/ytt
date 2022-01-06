@@ -16,7 +16,10 @@ import (
 func CheckDocument(doc *yamlmeta.Document) TypeCheck {
 	checker := newTypeChecker()
 
-	_ = yamlmeta.Walk(doc, checker)
+	err := yamlmeta.Walk(doc, checker)
+	if err != nil {
+		panic(err)
+	}
 
 	return *checker.chk
 }
