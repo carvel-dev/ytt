@@ -75,7 +75,7 @@ func (a DocumentMatchAnnotation) IndexTuples(leftDocSets []*yamlmeta.DocumentSet
 func (a DocumentMatchAnnotation) MatchNodes(leftDocSets []*yamlmeta.DocumentSet) ([][]int, []*filepos.Position, error) {
 	if a.exact {
 		if len(leftDocSets) != 1 && len(leftDocSets[0].Items) != 1 {
-			return nil, nil, fmt.Errorf("Expected to find exactly one left doc when merging exactly two documents")
+			return nil, nil, fmt.Errorf("Expected to find exactly one left document when merging exactly two documents")
 		}
 		return [][]int{{0, 0}}, []*filepos.Position{leftDocSets[0].Items[0].Position}, nil
 	}

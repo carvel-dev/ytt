@@ -10,17 +10,19 @@ import (
 	"github.com/k14s/ytt/pkg/yamlmeta"
 )
 
-// Type encapsulates a schema describing a yamlmeta.Node.
+// Type encapsulates a schema that describes a yamlmeta.Node.
 type Type interface {
 	AssignTypeTo(node yamlmeta.Node) TypeCheck
+	CheckType(node yamlmeta.Node) TypeCheck
+
 	GetValueType() Type
 	GetDefaultValue() interface{}
 	SetDefaultValue(interface{})
-	CheckType(node yamlmeta.Node) TypeCheck
 	GetDefinitionPosition() *filepos.Position
-	String() string
-	SetDescription(string)
+
 	GetDescription() string
+	SetDescription(string)
+	String() string
 }
 
 var _ Type = (*DocumentType)(nil)
@@ -28,9 +30,9 @@ var _ Type = (*MapType)(nil)
 var _ Type = (*MapItemType)(nil)
 var _ Type = (*ArrayType)(nil)
 var _ Type = (*ArrayItemType)(nil)
+var _ Type = (*ScalarType)(nil)
 var _ Type = (*AnyType)(nil)
 var _ Type = (*NullType)(nil)
-var _ Type = (*ScalarType)(nil)
 
 type DocumentType struct {
 	Source       *yamlmeta.Document
@@ -77,127 +79,13 @@ type NullType struct {
 	description string
 }
 
-// SetDefaultValue sets the default value of the wrapped type to `val`
-func (n *NullType) SetDefaultValue(val interface{}) {
-	n.GetValueType().SetDefaultValue(val)
-}
-
-// SetDefaultValue does nothing
-func (a *AnyType) SetDefaultValue(val interface{}) {
-	a.defaultValue = val
-}
-
-// SetDefaultValue sets the default value of the entire document to `val`
-func (t *DocumentType) SetDefaultValue(val interface{}) {
-	t.defaultValue = val
-}
-
-// SetDefaultValue is ignored as default values should be set on each MapItemType, individually.
-func (m *MapType) SetDefaultValue(val interface{}) {
-	// TODO: determine if we should set the contents of a MapType by setting the given Map...?
-	return
-}
-
-// SetDefaultValue sets the default value to `val`
-func (t *MapItemType) SetDefaultValue(val interface{}) {
-	t.defaultValue = val
-}
-
-// SetDefaultValue sets the default value to `val`
-func (a *ArrayType) SetDefaultValue(val interface{}) {
-	a.defaultValue = val
-}
-
-// SetDefaultValue sets the default value to `val`
-func (a *ArrayItemType) SetDefaultValue(val interface{}) {
-	a.defaultValue = val
-}
-
-// SetDefaultValue sets the default value to `val`
-func (s *ScalarType) SetDefaultValue(val interface{}) {
-	s.defaultValue = val
-}
-
-// GetDefaultValue provides the default value
-func (n NullType) GetDefaultValue() interface{} {
-	return nil
-}
-
-// GetDefaultValue provides the default value
-func (a AnyType) GetDefaultValue() interface{} {
-	if node, ok := a.defaultValue.(yamlmeta.Node); ok {
-		return node.DeepCopyAsInterface()
-	}
-	return a.defaultValue
-}
-
-// GetDefaultValue provides the default value
-func (s ScalarType) GetDefaultValue() interface{} {
-	return s.defaultValue // scalar values are copied (even through an interface{} reference)
-}
-
-func (a ArrayItemType) GetDefaultValue() interface{} {
-	panic(fmt.Sprintf("Unexpected call to GetDefaultValue() on %+v", a))
-}
-
-// GetDefaultValue provides the default value
-func (a ArrayType) GetDefaultValue() interface{} {
-	return a.defaultValue
-}
-
-// GetDefaultValue provides the default value
-func (t MapItemType) GetDefaultValue() interface{} {
-	return &yamlmeta.MapItem{Key: t.Key, Value: t.defaultValue, Position: t.Position}
-}
-
-// GetDefaultValue provides the default value
-func (m MapType) GetDefaultValue() interface{} {
-	defaultValues := &yamlmeta.Map{Position: m.Position}
-	for _, item := range m.Items {
-		newItem := item.GetDefaultValue()
-		defaultValues.Items = append(defaultValues.Items, newItem.(*yamlmeta.MapItem))
-	}
-	return defaultValues
-}
-
-// GetDefaultValue provides the default value
-func (t DocumentType) GetDefaultValue() interface{} {
-	return &yamlmeta.Document{Value: t.defaultValue, Position: t.Position}
-}
-
-// AssignTypeTo assigns this NullType's wrapped Type to `node`.
-func (n NullType) AssignTypeTo(node yamlmeta.Node) (chk TypeCheck) {
-	childCheck := n.ValueType.AssignTypeTo(node)
-	chk.Violations = append(chk.Violations, childCheck.Violations...)
-	return
-}
-
-// GetValueType provides the type of the value
-func (n NullType) GetValueType() Type {
-	return n.ValueType
-}
-
-// CheckType checks the type of `node` against this NullType
-// If `node`'s value is null, this check passes
-// If `node`'s value is not null, then it is checked against this NullType's wrapped Type.
-func (n NullType) CheckType(node yamlmeta.Node) (chk TypeCheck) {
-	if len(node.GetValues()) == 1 && node.GetValues()[0] == nil {
-		return
-	}
-
-	check := n.GetValueType().CheckType(node)
-	chk.Violations = check.Violations
-
-	return
-}
-
-func (n NullType) GetDefinitionPosition() *filepos.Position {
-	return n.Position
-}
-
-func (n NullType) String() string {
-	return "null"
-}
+// The total set of supported scalars.
+const (
+	FloatType  = float64(0)
+	StringType = ""
+	IntType    = int64(0)
+	BoolType   = false
+)
 
 // GetValueType provides the type of the value
 func (t *DocumentType) GetValueType() Type {
@@ -234,221 +122,138 @@ func (a AnyType) GetValueType() Type {
 	return &a
 }
 
+// GetValueType provides the type of the value
+func (n NullType) GetValueType() Type {
+	return n.ValueType
+}
+
+// GetDefaultValue provides the default value
+func (t DocumentType) GetDefaultValue() interface{} {
+	return &yamlmeta.Document{Value: t.defaultValue, Position: t.Position}
+}
+
+// GetDefaultValue provides the default value
+func (m MapType) GetDefaultValue() interface{} {
+	defaultValues := &yamlmeta.Map{Position: m.Position}
+	for _, item := range m.Items {
+		newItem := item.GetDefaultValue()
+		defaultValues.Items = append(defaultValues.Items, newItem.(*yamlmeta.MapItem))
+	}
+	return defaultValues
+}
+
+// GetDefaultValue provides the default value
+func (t MapItemType) GetDefaultValue() interface{} {
+	return &yamlmeta.MapItem{Key: t.Key, Value: t.defaultValue, Position: t.Position}
+}
+
+// GetDefaultValue provides the default value
+func (a ArrayType) GetDefaultValue() interface{} {
+	return a.defaultValue
+}
+
+// GetDefaultValue provides the default value
+func (a ArrayItemType) GetDefaultValue() interface{} {
+	panic(fmt.Sprintf("Unexpected call to GetDefaultValue() on %+v", a))
+}
+
+// GetDefaultValue provides the default value
+func (s ScalarType) GetDefaultValue() interface{} {
+	return s.defaultValue // scalar values are copied (even through an interface{} reference)
+}
+
+// GetDefaultValue provides the default value
+func (a AnyType) GetDefaultValue() interface{} {
+	if node, ok := a.defaultValue.(yamlmeta.Node); ok {
+		return node.DeepCopyAsInterface()
+	}
+	return a.defaultValue
+}
+
+// GetDefaultValue provides the default value
+func (n NullType) GetDefaultValue() interface{} {
+	return nil
+}
+
+// SetDefaultValue sets the default value of the entire document to `val`
+func (t *DocumentType) SetDefaultValue(val interface{}) {
+	t.defaultValue = val
+}
+
+// SetDefaultValue is ignored as default values should be set on each MapItemType, individually.
+func (m *MapType) SetDefaultValue(val interface{}) {
+	// TODO: determine if we should set the contents of a MapType by setting the given Map...?
+	return
+}
+
+// SetDefaultValue sets the default value to `val`
+func (t *MapItemType) SetDefaultValue(val interface{}) {
+	t.defaultValue = val
+}
+
+// SetDefaultValue sets the default value to `val`
+func (a *ArrayType) SetDefaultValue(val interface{}) {
+	a.defaultValue = val
+}
+
+// SetDefaultValue sets the default value to `val`
+func (a *ArrayItemType) SetDefaultValue(val interface{}) {
+	a.defaultValue = val
+}
+
+// SetDefaultValue sets the default value to `val`
+func (s *ScalarType) SetDefaultValue(val interface{}) {
+	s.defaultValue = val
+}
+
+// SetDefaultValue does nothing
+func (a *AnyType) SetDefaultValue(val interface{}) {
+	a.defaultValue = val
+}
+
+// SetDefaultValue sets the default value of the wrapped type to `val`
+func (n *NullType) SetDefaultValue(val interface{}) {
+	n.GetValueType().SetDefaultValue(val)
+}
+
+// GetDefinitionPosition reports the location in source schema that contains this type definition.
 func (t *DocumentType) GetDefinitionPosition() *filepos.Position {
 	return t.Position
 }
+
+// GetDefinitionPosition reports the location in source schema that contains this type definition.
 func (m MapType) GetDefinitionPosition() *filepos.Position {
 	return m.Position
 }
+
+// GetDefinitionPosition reports the location in source schema that contains this type definition.
 func (t MapItemType) GetDefinitionPosition() *filepos.Position {
 	return t.Position
 }
+
+// GetDefinitionPosition reports the location in source schema that contains this type definition.
 func (a ArrayType) GetDefinitionPosition() *filepos.Position {
 	return a.Position
 }
+
+// GetDefinitionPosition reports the location in source schema that contains this type definition.
 func (a ArrayItemType) GetDefinitionPosition() *filepos.Position {
 	return a.Position
 }
 
-// GetDefinitionPosition provides the file position
+// GetDefinitionPosition reports the location in source schema that contains this type definition.
 func (s ScalarType) GetDefinitionPosition() *filepos.Position {
 	return s.Position
 }
+
+// GetDefinitionPosition reports the location in source schema that contains this type definition.
 func (a AnyType) GetDefinitionPosition() *filepos.Position {
 	return a.Position
 }
 
-func (t *DocumentType) String() string {
-	return "document"
-}
-func (m MapType) String() string {
-	return "map"
-}
-func (t MapItemType) String() string {
-	return fmt.Sprintf("%s: %s", t.Key, t.ValueType.String())
-}
-func (a ArrayType) String() string {
-	return "array"
-}
-func (a ArrayItemType) String() string {
-	return fmt.Sprintf("- %s", a.ValueType.String())
-}
-func (s ScalarType) String() string {
-	switch s.ValueType.(type) {
-	case float64:
-		return "float"
-	case int:
-		return "integer"
-	case bool:
-		return "boolean"
-	default:
-		return fmt.Sprintf("%T", s.ValueType)
-	}
-}
-func (a AnyType) String() string {
-	return "any"
-}
-
-// CheckType checks the type of `node` against this Type.
-func (t *DocumentType) CheckType(node yamlmeta.Node) (chk TypeCheck) {
-	return
-}
-
-// CheckType checks the type of `node` against this MapType.
-// If `node` is not a yamlmeta.Map, `chk` contains a violation describing this mismatch
-// If a contained yamlmeta.MapItem is not allowed by this MapType, `chk` contains a corresponding violation
-func (m *MapType) CheckType(node yamlmeta.Node) (chk TypeCheck) {
-	nodeMap, ok := node.(*yamlmeta.Map)
-	if !ok {
-		chk.Violations = append(chk.Violations,
-			NewMismatchedTypeAssertionError(node, m))
-		return
-	}
-
-	for _, item := range nodeMap.Items {
-		if !m.AllowsKey(item.Key) {
-			chk.Violations = append(chk.Violations,
-				NewUnexpectedKeyAssertionError(item, m.Position, m.AllowedKeys()))
-		}
-	}
-	return
-}
-
-// CheckType checks the type of `node` against this MapItemType
-// If `node` is not a yamlmeta.MapItem, `chk` contains a violation describing the mismatch
-func (t *MapItemType) CheckType(node yamlmeta.Node) (chk TypeCheck) {
-	_, ok := node.(*yamlmeta.MapItem)
-	if !ok {
-		// A Map must've yielded a non-MapItem which is not valid YAML
-		panic(fmt.Sprintf("MapItem type check was called on a non-MapItem: %#v", node))
-	}
-
-	return
-}
-
-// CheckType checks the type of `node` against this ArrayType
-// If `node` is not a yamlmeta.Array, `chk` contains a violation describing the mismatch
-func (a *ArrayType) CheckType(node yamlmeta.Node) (chk TypeCheck) {
-	_, ok := node.(*yamlmeta.Array)
-	if !ok {
-		chk.Violations = append(chk.Violations,
-			NewMismatchedTypeAssertionError(node, a))
-	}
-	return
-}
-
-// CheckType checks the type of `node` against this ArrayItemType
-// If `node` is not a yamlmeta.ArrayItem, `chk` contains a violation describing the mismatch
-func (a *ArrayItemType) CheckType(node yamlmeta.Node) (chk TypeCheck) {
-	_, ok := node.(*yamlmeta.ArrayItem)
-	if !ok {
-		// An Array must've yielded a non-ArrayItem which is not valid YAML
-		panic(fmt.Sprintf("ArrayItem type check was called on a non-ArrayItem: %#v", node))
-	}
-	return
-}
-
-// CheckType checks the type of `node`'s `value`, which is expected to be a scalar type.
-// If the value is not a recognized scalar type, `chk` contains a corresponding violation
-// If the value is not of the type specified in this ScalarType, `chk` contains a violation describing the mismatch
-func (s *ScalarType) CheckType(node yamlmeta.Node) (chk TypeCheck) {
-	value := node.GetValues()[0]
-	switch value.(type) {
-	case string:
-		if _, ok := s.ValueType.(string); !ok {
-			chk.Violations = append(chk.Violations,
-				NewMismatchedTypeAssertionError(node, s))
-		}
-	case float64:
-		if _, ok := s.ValueType.(float64); !ok {
-			chk.Violations = append(chk.Violations,
-				NewMismatchedTypeAssertionError(node, s))
-		}
-	case int, int64, uint64:
-		if _, ok := s.ValueType.(int); !ok {
-			if _, ok = s.ValueType.(float64); !ok {
-				chk.Violations = append(chk.Violations,
-					NewMismatchedTypeAssertionError(node, s))
-			}
-		}
-	case bool:
-		if _, ok := s.ValueType.(bool); !ok {
-			chk.Violations = append(chk.Violations,
-				NewMismatchedTypeAssertionError(node, s))
-		}
-	default:
-		chk.Violations = append(chk.Violations,
-			NewMismatchedTypeAssertionError(node, s))
-	}
-	return
-}
-
-// CheckType is a no-op because AnyType allows any value.
-// `chk` will always be an empty TypeCheck.
-func (a AnyType) CheckType(node yamlmeta.Node) (chk TypeCheck) {
-	return
-}
-
-// AssignTypeTo assigns this schema metadata to `node`.
-// If `node` is not a yamlmeta.Document, `chk` contains a violation describing the mismatch
-// If `node`'s value is not of the same structure (i.e. yamlmeta.Node type), `chk` contains a violation describing this mismatch
-func (t *DocumentType) AssignTypeTo(node yamlmeta.Node) (chk TypeCheck) {
-	doc, ok := node.(*yamlmeta.Document)
-	if !ok {
-		chk.Violations = append(chk.Violations,
-			NewMismatchedTypeAssertionError(node, t))
-		return
-	}
-	SetType(doc, t)
-	valueNode, isNode := doc.Value.(yamlmeta.Node)
-	if isNode {
-		childCheck := t.ValueType.AssignTypeTo(valueNode)
-		chk.Violations = append(chk.Violations, childCheck.Violations...)
-	} // else, is a scalar
-	return chk
-}
-
-// AssignTypeTo assigns this schema metadata to `node`.
-// If `node` is not a yamlmeta.Map, `chk` contains a violation describing the mismatch
-// If `node`'s yamlmeta.MapItem's cannot be assigned their corresponding MapItemType, `chk` contains a violation describing the mismatch
-// If `node` is missing any yamlmeta.MapItem's specified in this MapType, they are added to `node`.
-func (m *MapType) AssignTypeTo(node yamlmeta.Node) (chk TypeCheck) {
-	mapNode, ok := node.(*yamlmeta.Map)
-	if !ok {
-		chk.Violations = append(chk.Violations, NewMismatchedTypeAssertionError(node, m))
-		return
-	}
-	var foundKeys []interface{}
-	SetType(node.(yamlmeta.Node), m)
-	for _, mapItem := range mapNode.Items {
-		for _, itemType := range m.Items {
-			if mapItem.Key == itemType.Key {
-				foundKeys = append(foundKeys, itemType.Key)
-				childCheck := itemType.AssignTypeTo(mapItem)
-				chk.Violations = append(chk.Violations, childCheck.Violations...)
-				break
-			}
-		}
-	}
-
-	m.applySchemaDefaults(foundKeys, chk, mapNode)
-	return
-}
-
-func (m *MapType) applySchemaDefaults(foundKeys []interface{}, chk TypeCheck, mapNode *yamlmeta.Map) {
-	for _, item := range m.Items {
-		if contains(foundKeys, item.Key) {
-			continue
-		}
-
-		val := item.GetDefaultValue()
-		childCheck := item.AssignTypeTo(val.(*yamlmeta.MapItem))
-		chk.Violations = append(chk.Violations, childCheck.Violations...)
-		err := mapNode.AddValue(val)
-		if err != nil {
-			panic(fmt.Sprintf("Internal inconsistency: adding map item: %s", err))
-		}
-	}
+// GetDefinitionPosition reports the location in source schema that contains this type definition.
+func (n NullType) GetDefinitionPosition() *filepos.Position {
+	return n.Position
 }
 
 func contains(haystack []interface{}, needle interface{}) bool {
@@ -458,67 +263,6 @@ func contains(haystack []interface{}, needle interface{}) bool {
 		}
 	}
 	return false
-}
-
-// AssignTypeTo assigns this schema metadata to `node`.
-// If `node` is not a yamlmeta.MapItem, `chk` contains a violation describing the mismatch
-// If `node`'s value is not of the same structure (i.e. yamlmeta.Node type), `chk` contains a violation describing this mismatch
-func (t *MapItemType) AssignTypeTo(node yamlmeta.Node) (chk TypeCheck) {
-	mapItem, ok := node.(*yamlmeta.MapItem)
-	if !ok {
-		panic(fmt.Sprintf("Attempt to assign type to a non-map-item (children of Maps can only be MapItems). type=%#v; typeWithValues=%#v", t, node))
-	}
-	SetType(node.(yamlmeta.Node), t)
-	valueNode, isNode := mapItem.Value.(yamlmeta.Node)
-	if isNode {
-		childCheck := t.ValueType.AssignTypeTo(valueNode)
-		chk.Violations = append(chk.Violations, childCheck.Violations...)
-	} // else, is scalar
-	return
-}
-
-// AssignTypeTo assigns this schema metadata to `node`.
-// If `node` is not a yamlmeta.Array, `chk` contains a violation describing the mismatch
-// For each `node`'s yamlmeta.ArrayItem's that cannot be assigned this ArrayType's ArrayItemType, `chk` contains a violation describing the mismatch
-func (a *ArrayType) AssignTypeTo(node yamlmeta.Node) (chk TypeCheck) {
-	arrayNode, ok := node.(*yamlmeta.Array)
-	if !ok {
-		chk.Violations = append(chk.Violations, NewMismatchedTypeAssertionError(node, a))
-		return
-	}
-	SetType(node.(yamlmeta.Node), a)
-	for _, arrayItem := range arrayNode.Items {
-		childCheck := a.ItemsType.AssignTypeTo(arrayItem)
-		chk.Violations = append(chk.Violations, childCheck.Violations...)
-	}
-	return
-}
-
-// AssignTypeTo assigns this schema metadata to `node`.
-// If `node` is not a yamlmeta.ArrayItem, `chk` contains a violation describing the mismatch
-// If `node`'s value is not of the same structure (i.e. yamlmeta.Node type), `chk` contains a violation describing this mismatch
-func (a *ArrayItemType) AssignTypeTo(node yamlmeta.Node) (chk TypeCheck) {
-	arrayItem, ok := node.(*yamlmeta.ArrayItem)
-	if !ok {
-		panic(fmt.Sprintf("Attempt to assign type to a non-array-item (children of Arrays can only be ArrayItems). type=%#v; typeWithValues=%#v", a, node))
-	}
-	SetType(node.(yamlmeta.Node), a)
-	valueNode, isNode := arrayItem.Value.(yamlmeta.Node)
-	if isNode {
-		childCheck := a.ValueType.AssignTypeTo(valueNode)
-		chk.Violations = append(chk.Violations, childCheck.Violations...)
-	} // else, is scalar
-	return
-}
-
-// AssignTypeTo returns a violation describing the type mismatch, given that ScalarType will never accept a yamlmeta.Node
-func (s *ScalarType) AssignTypeTo(node yamlmeta.Node) TypeCheck {
-	return TypeCheck{[]error{NewMismatchedTypeAssertionError(node, s)}}
-}
-
-// AssignTypeTo is a no-op given that AnyType allows all types.
-func (a AnyType) AssignTypeTo(yamlmeta.Node) (chk TypeCheck) {
-	return
 }
 
 // GetDescription provides descriptive information
@@ -595,83 +339,42 @@ func (n *NullType) SetDescription(desc string) {
 	n.description = desc
 }
 
-func (m *MapType) AllowsKey(key interface{}) bool {
-	for _, item := range m.Items {
-		if item.Key == key {
-			return true
-		}
-	}
-	return false
+// String produces a user-friendly name of the expected type.
+func (t *DocumentType) String() string {
+	return yamlmeta.TypeName(&yamlmeta.Document{})
 }
 
-// AllowedKeys returns the set of keys (in string format) permitted in this map.
-func (m *MapType) AllowedKeys() []string {
-	var keysAsString []string
-
-	for _, item := range m.Items {
-		keysAsString = append(keysAsString, fmt.Sprintf("%s", item.Key))
-	}
-
-	return keysAsString
+// String produces a user-friendly name of the expected type.
+func (m MapType) String() string {
+	return yamlmeta.TypeName(&yamlmeta.Map{})
 }
 
-// GetType retrieves schema metadata from `n`, typically set previously via SetType().
-func GetType(n yamlmeta.Node) Type {
-	t := n.GetMeta("schema/type")
-	if t == nil {
-		return nil
-	}
-	return t.(Type)
+// String produces a user-friendly name of the expected type.
+func (t MapItemType) String() string {
+	return fmt.Sprintf("%s: %s", t.Key, t.ValueType.String())
 }
 
-// SetType attaches schema metadata to `n`, typically later retrieved via GetType().
-func SetType(n yamlmeta.Node, t Type) {
-	n.SetMeta("schema/type", t)
+// String produces a user-friendly name of the expected type.
+func (a ArrayType) String() string {
+	return yamlmeta.TypeName(&yamlmeta.Array{})
 }
 
-func nodeValueTypeAsString(n yamlmeta.Node) string {
-	switch typed := n.(type) {
-	case *yamlmeta.DocumentSet:
-		return documentSetValueTypeAsString(typed)
-	case *yamlmeta.Document:
-		return documentValueTypeAsString(typed)
-	case *yamlmeta.Map:
-		return mapValueTypeAsString(typed)
-	case *yamlmeta.MapItem:
-		return mapItemValueTypeAsString(typed)
-	case *yamlmeta.Array:
-		return arrayValueTypeAsString(typed)
-	case *yamlmeta.ArrayItem:
-		return arrayItemValueTypeAsString(typed)
-	case *yamlmeta.Scalar:
-		return scalarValueTypeAsString(typed)
-	default:
-		panic(fmt.Sprintf("unexpected node type: %T", n))
-	}
+// String produces a user-friendly name of the expected type.
+func (a ArrayItemType) String() string {
+	return fmt.Sprintf("- %s", a.ValueType.String())
 }
 
-func documentSetValueTypeAsString(_ *yamlmeta.DocumentSet) string { return "document set" }
-func documentValueTypeAsString(d *yamlmeta.Document) string       { return typeToString(d.Value) }
-func mapValueTypeAsString(_ *yamlmeta.Map) string                 { return "map" }
-func mapItemValueTypeAsString(mi *yamlmeta.MapItem) string        { return typeToString(mi.Value) }
-func arrayValueTypeAsString(_ *yamlmeta.Array) string             { return "array" }
-func arrayItemValueTypeAsString(ai *yamlmeta.ArrayItem) string    { return typeToString(ai.Value) }
-func scalarValueTypeAsString(s *yamlmeta.Scalar) string           { return typeToString(s.Value) }
+// String produces a user-friendly name of the expected type.
+func (s ScalarType) String() string {
+	return yamlmeta.TypeName(s.ValueType)
+}
 
-func typeToString(value interface{}) string {
-	switch value.(type) {
-	case float64:
-		return "float"
-	case int, int64, uint64:
-		return "integer"
-	case bool:
-		return "boolean"
-	case nil:
-		return "null"
-	default:
-		if t, ok := value.(yamlmeta.Node); ok {
-			return nodeValueTypeAsString(t)
-		}
-		return fmt.Sprintf("%T", value)
-	}
+// String produces a user-friendly name of the expected type.
+func (a AnyType) String() string {
+	return "any"
+}
+
+// String produces a user-friendly name of the expected type.
+func (n NullType) String() string {
+	return "null"
 }

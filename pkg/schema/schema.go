@@ -155,7 +155,7 @@ func getValueFromAnn(defaultAnn *DefaultAnnotation, t Type) (interface{}, error)
 		defaultValue = node.DeepCopyAsInterface()
 		typeCheck = t.AssignTypeTo(defaultValue.(yamlmeta.Node))
 	} else {
-		typeCheck = t.CheckType(&yamlmeta.Scalar{Value: defaultValue, Position: t.GetDefinitionPosition()})
+		typeCheck = t.CheckType(&yamlmeta.MapItem{Value: defaultValue, Position: t.GetDefinitionPosition()})
 	}
 	if typeCheck.HasViolations() {
 		return nil, NewSchemaError(fmt.Sprintf("Invalid schema - @%v is wrong type", AnnotationDefault), typeCheck.Violations...)
@@ -186,19 +186,17 @@ func InferTypeFromValue(value interface{}, position *filepos.Position) (Type, er
 		}
 		return arrayType, nil
 	case string:
-		return &ScalarType{ValueType: *new(string), defaultValue: typedContent, Position: position}, nil
+		return &ScalarType{ValueType: StringType, defaultValue: typedContent, Position: position}, nil
 	case float64:
-		return &ScalarType{ValueType: *new(float64), defaultValue: typedContent, Position: position}, nil
-	case int, int64, uint64:
-		return &ScalarType{ValueType: *new(int), defaultValue: typedContent, Position: position}, nil
+		return &ScalarType{ValueType: FloatType, defaultValue: typedContent, Position: position}, nil
+	case int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64:
+		return &ScalarType{ValueType: IntType, defaultValue: typedContent, Position: position}, nil
 	case bool:
-		return &ScalarType{ValueType: *new(bool), defaultValue: typedContent, Position: position}, nil
+		return &ScalarType{ValueType: BoolType, defaultValue: typedContent, Position: position}, nil
 	case nil:
 		return nil, nil
-	case yamlmeta.Node:
-		return nil, fmt.Errorf("Expected value '%s' to be a map, array, or scalar, but was %s", value, typedContent.DisplayName())
 	default:
-		return nil, fmt.Errorf("Expected value '%s' to be a map, array, or scalar, but was %T", value, value)
+		return nil, fmt.Errorf("Expected value '%s' to be a map, array, or scalar, but was %s", value, yamlmeta.TypeName(typedContent))
 	}
 }
 

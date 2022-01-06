@@ -12,6 +12,34 @@ import (
 	"github.com/k14s/ytt/pkg/yamlmeta/internal/yaml.v2"
 )
 
+// TypeName returns the user-friendly name of the type of `val`
+func TypeName(val interface{}) string {
+	switch val.(type) {
+	case *DocumentSet:
+		return "document set"
+	case *Document:
+		return "document"
+	case *Map:
+		return "map"
+	case *MapItem:
+		return "map item"
+	case *Array:
+		return "array"
+	case *ArrayItem:
+		return "array item"
+	case int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64:
+		return "integer"
+	case float32, float64:
+		return "float"
+	case bool:
+		return "boolean"
+	case nil:
+		return "null"
+	default:
+		return fmt.Sprintf("%T", val)
+	}
+}
+
 func (ds *DocumentSet) GetPosition() *filepos.Position { return ds.Position }
 func (d *Document) GetPosition() *filepos.Position     { return d.Position }
 func (m *Map) GetPosition() *filepos.Position          { return m.Position }
@@ -26,26 +54,8 @@ func (mi *MapItem) SetPosition(position *filepos.Position)     { mi.Position = p
 func (a *Array) SetPosition(position *filepos.Position)        { a.Position = position }
 func (ai *ArrayItem) SetPosition(position *filepos.Position)   { ai.Position = position }
 
-// DisplayName is used to return a display name for a DocumentSet
-func (ds *DocumentSet) DisplayName() string { return "document set" }
-
-// DisplayName is used to return a display name for a Document
-func (d *Document) DisplayName() string { return "document" }
-
-// DisplayName is used to return a display name for a Map
-func (m *Map) DisplayName() string { return "map" }
-
-// DisplayName is used to return a display name for a MapItem
-func (mi *MapItem) DisplayName() string { return "map item" }
-
-// DisplayName is used to return a display name for an Array
-func (a *Array) DisplayName() string { return "array" }
-
-// DisplayName is used to return a display name for an ArrayItem
-func (ai *ArrayItem) DisplayName() string { return "array item" }
-
 func (ds *DocumentSet) SetValue(val interface{}) error {
-	return fmt.Errorf("cannot set value on a %s", ds.DisplayName())
+	return fmt.Errorf("cannot set value on a %s", TypeName(ds))
 }
 
 func (d *Document) SetValue(val interface{}) error {
@@ -54,7 +64,7 @@ func (d *Document) SetValue(val interface{}) error {
 }
 
 func (m *Map) SetValue(val interface{}) error {
-	return fmt.Errorf("cannot set value on a %s", m.DisplayName())
+	return fmt.Errorf("cannot set value on a %s", TypeName(m))
 }
 
 func (mi *MapItem) SetValue(val interface{}) error {
@@ -63,7 +73,7 @@ func (mi *MapItem) SetValue(val interface{}) error {
 }
 
 func (a *Array) SetValue(val interface{}) error {
-	return fmt.Errorf("cannot set value on an %s", a.DisplayName())
+	return fmt.Errorf("cannot set value on an %s", TypeName(a))
 }
 
 func (ai *ArrayItem) SetValue(val interface{}) error {
@@ -99,12 +109,12 @@ func (ds *DocumentSet) AddValue(val interface{}) error {
 		ds.Items = append(ds.Items, item)
 		return nil
 	}
-	return fmt.Errorf("cannot add non-document value (%T) into documentset", val)
+	return fmt.Errorf("document sets can only contain documents; this is a %s", TypeName(val))
 }
 
 func (d *Document) AddValue(val interface{}) error {
 	if !isValidValue(val) {
-		return fmt.Errorf("documents can only contain arrays, maps, or scalars; this is a %T", val)
+		return fmt.Errorf("documents can only contain arrays, maps, or scalars; this is a %s", TypeName(val))
 	}
 	d.Value = val
 	return nil
@@ -115,12 +125,12 @@ func (m *Map) AddValue(val interface{}) error {
 		m.Items = append(m.Items, item)
 		return nil
 	}
-	return fmt.Errorf("cannot add non-map-item value (%T) into map", val)
+	return fmt.Errorf("maps can only contain map items; this is a %s", TypeName(val))
 }
 
 func (mi *MapItem) AddValue(val interface{}) error {
 	if !isValidValue(val) {
-		return fmt.Errorf("map items can only contain arrays, maps, or scalars; this is a %T", val)
+		return fmt.Errorf("map items can only contain arrays, maps, or scalars; this is a %s", TypeName(val))
 	}
 	mi.Value = val
 	return nil
@@ -131,12 +141,12 @@ func (a *Array) AddValue(val interface{}) error {
 		a.Items = append(a.Items, item)
 		return nil
 	}
-	return fmt.Errorf("cannot add non-array-item value (%T) into array", val)
+	return fmt.Errorf("arrays can only contain array items; this is a %s", TypeName(val))
 }
 
 func (ai *ArrayItem) AddValue(val interface{}) error {
 	if !isValidValue(val) {
-		return fmt.Errorf("array items can only contain maps, arrays, or scalars; this is a %T", val)
+		return fmt.Errorf("array items can only contain maps, arrays, or scalars; this is a %s", TypeName(val))
 	}
 	ai.Value = val
 	return nil
@@ -182,11 +192,11 @@ func (ai *ArrayItem) GetComments() []*Comment   { return ai.Comments }
 func (ds *DocumentSet) addComments(comment *Comment) { ds.Comments = append(ds.Comments, comment) }
 func (d *Document) addComments(comment *Comment)     { d.Comments = append(d.Comments, comment) }
 func (m *Map) addComments(comment *Comment) {
-	panic(fmt.Sprintf("Attempted to attach comment (%s) to Map (%v); maps cannot carry comments", comment.Data, m))
+	panic(fmt.Sprintf("Attempted to attach (%#v) to (%#v)", comment, m))
 }
 func (mi *MapItem) addComments(comment *Comment) { mi.Comments = append(mi.Comments, comment) }
 func (a *Array) addComments(comment *Comment) {
-	panic(fmt.Sprintf("Attempted to attach comment (%s) to Array (%v); arrays cannot carry comments", comment.Data, a))
+	panic(fmt.Sprintf("Attempted to attach (%#v) to (%#v)", comment, a))
 }
 func (ai *ArrayItem) addComments(comment *Comment) { ai.Comments = append(ai.Comments, comment) }
 
@@ -208,43 +218,63 @@ func (ai *ArrayItem) SetAnnotations(anns interface{})   { ai.annotations = anns 
 var _ []yaml.Marshaler = []yaml.Marshaler{&DocumentSet{}, &Document{}, &Map{}, &MapItem{}, &Array{}, &ArrayItem{}}
 
 // MarshalYAML panics because Nodes cannot be marshalled directly.
-func (ds *DocumentSet) MarshalYAML() (interface{}, error) { panic("Unexpected marshaling of docset") }
+func (ds *DocumentSet) MarshalYAML() (interface{}, error) {
+	panic(fmt.Sprintf("Unexpected marshaling of %T", ds))
+}
 
 // MarshalYAML panics because Nodes cannot be marshalled directly.
-func (d *Document) MarshalYAML() (interface{}, error) { panic("Unexpected marshaling of doc") }
+func (d *Document) MarshalYAML() (interface{}, error) {
+	panic(fmt.Sprintf("Unexpected marshaling of %T", d))
+}
 
 // MarshalYAML panics because Nodes cannot be marshalled directly.
-func (m *Map) MarshalYAML() (interface{}, error) { panic("Unexpected marshaling of map") }
+func (m *Map) MarshalYAML() (interface{}, error) {
+	panic(fmt.Sprintf("Unexpected marshaling of %T", m))
+}
 
 // MarshalYAML panics because Nodes cannot be marshalled directly.
-func (mi *MapItem) MarshalYAML() (interface{}, error) { panic("Unexpected marshaling of mapitem") }
+func (mi *MapItem) MarshalYAML() (interface{}, error) {
+	panic(fmt.Sprintf("Unexpected marshaling of %T", mi))
+}
 
 // MarshalYAML panics because Nodes cannot be marshalled directly.
-func (a *Array) MarshalYAML() (interface{}, error) { panic("Unexpected marshaling of array") }
+func (a *Array) MarshalYAML() (interface{}, error) {
+	panic(fmt.Sprintf("Unexpected marshaling of %T", a))
+}
 
 // MarshalYAML panics because Nodes cannot be marshalled directly.
-func (ai *ArrayItem) MarshalYAML() (interface{}, error) { panic("Unexpected marshaling of arrayitem") }
+func (ai *ArrayItem) MarshalYAML() (interface{}, error) {
+	panic(fmt.Sprintf("Unexpected marshaling of %T", ai))
+}
 
 // Below methods disallow marshaling of nodes directly
 var _ []json.Marshaler = []json.Marshaler{&DocumentSet{}, &Document{}, &Map{}, &MapItem{}, &Array{}, &ArrayItem{}}
 
 // MarshalJSON panics because Nodes cannot be marshalled directly.
-func (ds *DocumentSet) MarshalJSON() ([]byte, error) { panic("Unexpected marshaling of docset") }
+func (ds *DocumentSet) MarshalJSON() ([]byte, error) {
+	panic(fmt.Sprintf("Unexpected marshaling of %T", ds))
+}
 
 // MarshalJSON panics because Nodes cannot be marshalled directly.
-func (d *Document) MarshalJSON() ([]byte, error) { panic("Unexpected marshaling of doc") }
+func (d *Document) MarshalJSON() ([]byte, error) {
+	panic(fmt.Sprintf("Unexpected marshaling of %T", d))
+}
 
 // MarshalJSON panics because Nodes cannot be marshalled directly.
-func (m *Map) MarshalJSON() ([]byte, error) { panic("Unexpected marshaling of map") }
+func (m *Map) MarshalJSON() ([]byte, error) { panic(fmt.Sprintf("Unexpected marshaling of %T", m)) }
 
 // MarshalJSON panics because Nodes cannot be marshalled directly.
-func (mi *MapItem) MarshalJSON() ([]byte, error) { panic("Unexpected marshaling of mapitem") }
+func (mi *MapItem) MarshalJSON() ([]byte, error) {
+	panic(fmt.Sprintf("Unexpected marshaling of %T", mi))
+}
 
 // MarshalJSON panics because Nodes cannot be marshalled directly.
-func (a *Array) MarshalJSON() ([]byte, error) { panic("Unexpected marshaling of array") }
+func (a *Array) MarshalJSON() ([]byte, error) { panic(fmt.Sprintf("Unexpected marshaling of %T", a)) }
 
 // MarshalJSON panics because Nodes cannot be marshalled directly.
-func (ai *ArrayItem) MarshalJSON() ([]byte, error) { panic("Unexpected marshaling of arrayitem") }
+func (ai *ArrayItem) MarshalJSON() ([]byte, error) {
+	panic(fmt.Sprintf("Unexpected marshaling of %T", ai))
+}
 
 func (ds *DocumentSet) sealed() {}
 func (d *Document) sealed()     {}

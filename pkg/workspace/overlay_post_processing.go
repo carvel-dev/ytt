@@ -75,7 +75,7 @@ func (o OverlayPostProcessing) Apply() (map[*FileInLibrary]*yamlmeta.DocumentSet
 		if file, ok := docSetToFilesMapping[docSet]; ok {
 			result[file] = docSet
 		} else {
-			return nil, fmt.Errorf("Expected to find file for docset")
+			return nil, fmt.Errorf("Expected to find file for document set")
 		}
 	}
 

@@ -27,8 +27,6 @@ type Node interface {
 	DeepCopyAsInterface() interface{}
 	DeepCopyAsNode() Node
 
-	DisplayName() string
-
 	sealed() // limit the concrete types of Node to map directly only to types allowed in YAML spec.
 
 }
@@ -92,11 +90,6 @@ type ArrayItem struct {
 
 	meta        map[string]interface{}
 	annotations interface{}
-}
-
-type Scalar struct {
-	Position *filepos.Position
-	Value    interface{}
 }
 
 type Comment struct {

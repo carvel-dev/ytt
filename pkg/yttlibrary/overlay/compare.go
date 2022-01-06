@@ -15,25 +15,19 @@ type Comparison struct{}
 func (b Comparison) Compare(left, right interface{}) (bool, string) {
 	switch typedRight := right.(type) {
 	case *yamlmeta.DocumentSet:
-		panic("Unexpected docset")
+		panic(fmt.Sprintf("Unexpected %T", right))
 
 	case *yamlmeta.Document:
 		typedLeft, isDoc := left.(*yamlmeta.Document)
 		if !isDoc {
-			if node, isNode := left.(yamlmeta.Node); isNode {
-				return false, fmt.Sprintf("Expected doc, but was %s", node.DisplayName())
-			}
-			return false, fmt.Sprintf("Expected doc, but was %T", left)
+			return false, fmt.Sprintf("Expected document, but was %s", yamlmeta.TypeName(left))
 		}
 		return b.Compare(typedLeft.Value, typedRight.Value)
 
 	case *yamlmeta.Map:
 		typedLeft, isMap := left.(*yamlmeta.Map)
 		if !isMap {
-			if node, isNode := left.(yamlmeta.Node); isNode {
-				return false, fmt.Sprintf("Expected map, but was %s", node.DisplayName())
-			}
-			return false, fmt.Sprintf("Expected map, but was %T", left)
+			return false, fmt.Sprintf("Expected map, but was %s", yamlmeta.TypeName(left))
 		}
 
 		for _, rightItem := range typedRight.Items {
@@ -57,10 +51,7 @@ func (b Comparison) Compare(left, right interface{}) (bool, string) {
 	case *yamlmeta.MapItem:
 		typedLeft, isMapItem := left.(*yamlmeta.MapItem)
 		if !isMapItem {
-			if node, isNode := left.(yamlmeta.Node); isNode {
-				return false, fmt.Sprintf("Expected map item, but was %s", node.DisplayName())
-			}
-			return false, fmt.Sprintf("Expected map item, but was %T", left)
+			return false, fmt.Sprintf("Expected map item, but was %s", yamlmeta.TypeName(left))
 		}
 
 		return b.Compare(typedLeft.Value, typedRight.Value)
@@ -68,10 +59,7 @@ func (b Comparison) Compare(left, right interface{}) (bool, string) {
 	case *yamlmeta.Array:
 		typedLeft, isArray := left.(*yamlmeta.Array)
 		if !isArray {
-			if node, isNode := left.(yamlmeta.Node); isNode {
-				return false, fmt.Sprintf("Expected array, but was %s", node.DisplayName())
-			}
-			return false, fmt.Sprintf("Expected array, but was %T", left)
+			return false, fmt.Sprintf("Expected array, but was %s", yamlmeta.TypeName(left))
 		}
 
 		for i, item := range typedRight.Items {
@@ -89,10 +77,7 @@ func (b Comparison) Compare(left, right interface{}) (bool, string) {
 	case *yamlmeta.ArrayItem:
 		typedLeft, isArrayItem := left.(*yamlmeta.ArrayItem)
 		if !isArrayItem {
-			if node, isNode := left.(yamlmeta.Node); isNode {
-				return false, fmt.Sprintf("Expected array item, but was %s", node.DisplayName())
-			}
-			return false, fmt.Sprintf("Expected array item, but was %T", left)
+			return false, fmt.Sprintf("Expected array item, but was %s", yamlmeta.TypeName(left))
 		}
 		return b.Compare(typedLeft.Value, typedRight.Value)
 	default:
@@ -109,7 +94,7 @@ func (b Comparison) CompareLeafs(left, right interface{}) (bool, string) {
 		return true, ""
 	}
 
-	return false, fmt.Sprintf("Expected leaf values to match %T %T", left, right)
+	return false, fmt.Sprintf("Expected leaf values to match %s %s", yamlmeta.TypeName(left), yamlmeta.TypeName(right))
 }
 
 func (b Comparison) compareAsInt64s(left, right interface{}) (bool, string) {

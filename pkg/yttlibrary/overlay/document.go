@@ -4,6 +4,8 @@
 package overlay
 
 import (
+	"fmt"
+
 	"github.com/k14s/ytt/pkg/yamlmeta"
 )
 
@@ -119,7 +121,7 @@ func (o Op) replaceDocument(
 
 	if len(leftIdxs) == 0 && replaceAnn.OrAdd() {
 		if len(leftDocSets) == 0 {
-			panic("Internal inconsistency: Expected at least one doc set")
+			panic(fmt.Sprintf("Internal inconsistency: Expected at least one %T", &yamlmeta.DocumentSet{}))
 		}
 
 		newVal, err := replaceAnn.Value(nil)

@@ -61,7 +61,7 @@ func (p *Printer) print(val interface{}, ws whitespace, writer *writer) {
 		}
 
 	case *yamlmeta.Document:
-		panic("Unexpected Document in Printer")
+		panic(fmt.Sprintf("Unexpected %T in Printer", val))
 
 	case *yamlmeta.Map:
 		for i, item := range typedVal.Items {
@@ -93,7 +93,7 @@ func (p *Printer) print(val interface{}, ws whitespace, writer *writer) {
 		}
 
 	case *yamlmeta.MapItem:
-		panic("Unexpected MapItem in Printer")
+		panic(fmt.Sprintf("Unexpected %T in Printer", val))
 
 	case *yamlmeta.Array:
 		for i, item := range typedVal.Items {
@@ -127,7 +127,7 @@ func (p *Printer) print(val interface{}, ws whitespace, writer *writer) {
 		}
 
 	case *yamlmeta.ArrayItem:
-		panic("Unexpected MapItem in Printer")
+		panic(fmt.Sprintf("Unexpected %T in Printer", val))
 
 	default:
 		leafVal := p.leafValue(val)
