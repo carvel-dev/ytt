@@ -11,10 +11,12 @@ import (
 
 // keys used when generating an OpenAPI Document
 const (
-	typeProp        = "type"
-	defaultProp     = "default"
-	nullableProp    = "nullable"
-	descriptionProp = "description"
+	typeProp               = "type"
+	defaultProp            = "default"
+	nullableProp           = "nullable"
+	descriptionProp        = "description"
+	exampleProp            = "example"
+	exampleDescriptionProp = "x-example-description"
 	titleProp       = "title"
 )
 
@@ -67,6 +69,12 @@ func (o *OpenAPIDocument) calculateProperties(schemaVal interface{}) *yamlmeta.M
 		if typedValue.GetDescription() != "" {
 			property.Items = append(property.Items, &yamlmeta.MapItem{Key: descriptionProp, Value: typedValue.GetDescription()})
 		}
+		property = yamlmeta.Map{Items: []*yamlmeta.MapItem{
+			{Key: typeProp, Value: "object"},
+			{Key: "additionalProperties", Value: false},
+		}}
+
+		property.Items = append(property.Items, collectDocumentation(typedValue)...)
 		property.Items = append(property.Items, &yamlmeta.MapItem{Key: "properties", Value: &yamlmeta.Map{Items: properties}})
 		return &property
 	case *ArrayType:
@@ -82,6 +90,18 @@ func (o *OpenAPIDocument) calculateProperties(schemaVal interface{}) *yamlmeta.M
 		}
 		property.Items = append(property.Items, &yamlmeta.MapItem{Key: "items", Value: properties})
 		property.Items = append(property.Items, &yamlmeta.MapItem{Key: defaultProp, Value: typedValue.GetDefaultValue()})
+		property = yamlmeta.Map{Items: []*yamlmeta.MapItem{
+			{Key: typeProp, Value: "array"},
+		}}
+
+		property.Items = append(property.Items, collectDocumentation(typedValue)...)
+
+		items := []*yamlmeta.MapItem{
+			{Key: "items", Value: properties},
+			{Key: defaultProp, Value: typedValue.GetDefaultValue()},
+		}
+
+		property.Items = append(property.Items, items...)
 		return &property
 	case *ScalarType:
 		typeString := o.openAPITypeFor(typedValue)
@@ -95,9 +115,7 @@ func (o *OpenAPIDocument) calculateProperties(schemaVal interface{}) *yamlmeta.M
 		if typedValue.String() == "float" {
 			property.Items = append(property.Items, &yamlmeta.MapItem{Key: "format", Value: "float"})
 		}
-		if typedValue.GetDescription() != "" {
-			property.Items = append(property.Items, &yamlmeta.MapItem{Key: descriptionProp, Value: typedValue.GetDescription()})
-		}
+		property.Items = append(property.Items, collectDocumentation(typedValue)...)
 		return &property
 	case *NullType:
 		properties := o.calculateProperties(typedValue.GetValueType())
@@ -105,9 +123,7 @@ func (o *OpenAPIDocument) calculateProperties(schemaVal interface{}) *yamlmeta.M
 			properties.Items = append(properties.Items, &yamlmeta.MapItem{Key: titleProp, Value: typedValue.GetTitle()})
 		}
 		properties.Items = append(properties.Items, &yamlmeta.MapItem{Key: nullableProp, Value: true})
-		if typedValue.GetDescription() != "" {
-			properties.Items = append(properties.Items, &yamlmeta.MapItem{Key: descriptionProp, Value: typedValue.GetDescription()})
-		}
+		properties.Items = append(properties.Items, collectDocumentation(typedValue)...)
 		return properties
 	case *AnyType:
 		properties := &yamlmeta.Map{Items: []*yamlmeta.MapItem{}}
@@ -119,6 +135,11 @@ func (o *OpenAPIDocument) calculateProperties(schemaVal interface{}) *yamlmeta.M
 		if typedValue.GetDescription() != "" {
 			properties.Items = append(properties.Items, &yamlmeta.MapItem{Key: descriptionProp, Value: typedValue.GetDescription()})
 		}
+		properties = &yamlmeta.Map{Items: []*yamlmeta.MapItem{
+			{Key: nullableProp, Value: true},
+			{Key: defaultProp, Value: typedValue.GetDefaultValue()},
+		}}
+		properties.Items = append(properties.Items, collectDocumentation(typedValue)...)
 		return properties
 	default:
 		panic(fmt.Sprintf("Unrecognized type %T", schemaVal))
@@ -138,4 +159,20 @@ func (o *OpenAPIDocument) openAPITypeFor(astType *ScalarType) string {
 	default:
 		panic(fmt.Sprintf("Unrecognized type: %T", astType.ValueType))
 	}
+}
+
+func collectDocumentation(t Type) []*yamlmeta.MapItem {
+	var annDocumentation []*yamlmeta.MapItem
+	if t.GetDescription() != "" {
+		annDocumentation = append(annDocumentation, &yamlmeta.MapItem{Key: descriptionProp, Value: t.GetDescription()})
+	}
+	if example := t.GetExample(); example != nil {
+		if len(example) > 1 {
+			annDocumentation = append(annDocumentation, &yamlmeta.MapItem{Key: exampleDescriptionProp, Value: example[0]})
+			annDocumentation = append(annDocumentation, &yamlmeta.MapItem{Key: exampleProp, Value: example[1]})
+		} else {
+			annDocumentation = append(annDocumentation, &yamlmeta.MapItem{Key: exampleProp, Value: example[0]})
+		}
+	}
+	return annDocumentation
 }

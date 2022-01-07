@@ -22,6 +22,8 @@ type Type interface {
 
 	GetDescription() string
 	SetDescription(string)
+	SetExample(string, interface{})
+	GetExample() []interface{}
 	String() string
 	SetTitle(string)
 	GetTitle() string
@@ -47,6 +49,7 @@ type MapType struct {
 	Position    *filepos.Position
 	description string
 	title       string
+	example     []interface{}
 }
 type MapItemType struct {
 	Key          interface{} // usually a string
@@ -60,6 +63,7 @@ type ArrayType struct {
 	defaultValue interface{}
 	description  string
 	title        string
+	example      []interface{}
 }
 type ArrayItemType struct {
 	ValueType    Type
@@ -72,17 +76,20 @@ type ScalarType struct {
 	defaultValue interface{}
 	description  string
 	title        string
+	example      []interface{}
 }
 type AnyType struct {
 	defaultValue interface{}
 	Position     *filepos.Position
 	description  string
+	example      []interface{}
 	title        string
 }
 type NullType struct {
 	ValueType   Type
 	Position    *filepos.Position
 	description string
+	example     []interface{}
 	title       string
 }
 
@@ -418,6 +425,84 @@ func (a *AnyType) SetTitle(title string) {
 // SetTitle sets the title of the type
 func (n *NullType) SetTitle(title string) {
 	n.title = title
+}
+
+func (n *NullType) SetExample(description string, val interface{}) {
+	if description == "" {
+		n.example = append(n.example, val)
+	} else {
+		n.example = append(n.example, description, val)
+	}
+}
+
+func (a *AnyType) SetExample(description string, val interface{}) {
+	if description == "" {
+		a.example = append(a.example, val)
+	} else {
+		a.example = append(a.example, description, val)
+	}
+}
+
+func (t *DocumentType) SetExample(description string, val interface{}) {}
+
+func (m *MapType) SetExample(description string, val interface{}) {
+	if description == "" {
+		m.example = append(m.example, val)
+	} else {
+		m.example = append(m.example, description, val)
+	}
+}
+
+func (t *MapItemType) SetExample(description string, val interface{}) {}
+
+func (a *ArrayType) SetExample(description string, val interface{}) {
+	if description == "" {
+		a.example = append(a.example, val)
+	} else {
+		a.example = append(a.example, description, val)
+	}
+}
+
+func (a *ArrayItemType) SetExample(description string, val interface{}) {}
+
+func (s *ScalarType) SetExample(description string, val interface{}) {
+	if description == "" {
+		s.example = append(s.example, val)
+	} else {
+		s.example = append(s.example, description, val)
+	}
+}
+
+func (n NullType) GetExample() []interface{} {
+	return n.example
+}
+
+func (a AnyType) GetExample() []interface{} {
+	return a.example
+}
+
+func (t DocumentType) GetExample() []interface{} {
+	return nil
+}
+
+func (m MapType) GetExample() []interface{} {
+	return m.example
+}
+
+func (t MapItemType) GetExample() []interface{} {
+	return nil
+}
+
+func (a ArrayType) GetExample() []interface{} {
+	return a.example
+}
+
+func (a ArrayItemType) GetExample() []interface{} {
+	return nil
+}
+
+func (s ScalarType) GetExample() []interface{} {
+	return s.example
 }
 
 // String produces a user-friendly name of the expected type.

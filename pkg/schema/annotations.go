@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/k14s/starlark-go/starlark"
 	"github.com/k14s/ytt/pkg/filepos"
 	"github.com/k14s/ytt/pkg/template"
 	"github.com/k14s/ytt/pkg/template/core"
@@ -19,6 +20,7 @@ const (
 	AnnotationDefault      template.AnnotationName = "schema/default"
 	AnnotationDescription  template.AnnotationName = "schema/desc"
 	AnnotationTitle        template.AnnotationName = "schema/title"
+	AnnotationExamples     template.AnnotationName = "schema/examples"
 	TypeAnnotationKwargAny string                  = "any"
 )
 
@@ -54,6 +56,12 @@ type DescriptionAnnotation struct {
 type TitleAnnotation struct {
 	title string
 	pos   *filepos.Position
+}
+
+type ExampleAnnotation struct {
+	description string
+	example     interface{}
+	pos         *filepos.Position
 }
 
 // NewTypeAnnotation checks the keyword argument provided via @schema/type annotation, and returns wrapper for the annotated node.
@@ -249,6 +257,52 @@ func NewTitleAnnotation(ann template.NodeAnnotation, pos *filepos.Position) (*Ti
 	return &TitleAnnotation{strVal, ann.Position}, nil
 }
 
+func NewExampleAnnotation(ann template.NodeAnnotation, pos *filepos.Position) (*ExampleAnnotation, error) {
+	if len(ann.Kwargs) != 0 {
+		return nil, schemaAssertionError{
+			annPositions: []*filepos.Position{ann.Position},
+			position:     pos,
+			description:  fmt.Sprintf("syntax error in @%v annotation", AnnotationExamples),
+			expected:     fmt.Sprintf("tuple with description and example"),
+			found:        fmt.Sprintf("keyword argument in @%v (by %v)", AnnotationExamples, ann.Position.AsCompactString()),
+		}
+	}
+	switch numArgs := len(ann.Args); {
+	case numArgs == 0:
+		return nil, schemaAssertionError{
+			annPositions: []*filepos.Position{ann.Position},
+			position:     pos,
+			description:  fmt.Sprintf("syntax error in @%v annotation", AnnotationExamples),
+			expected:     fmt.Sprintf("optional description with example in tuple"),
+			found:        fmt.Sprintf("missing value in @%v (by %v)", AnnotationExamples, ann.Position.AsCompactString()),
+		}
+	default:
+		firstExample := ann.Args[0]
+		if exampleTuple, ok := firstExample.(starlark.Tuple); ok {
+			exampleDescription, err := core.NewStarlarkValue(exampleTuple[0]).AsString()
+			if err != nil {
+				//at this point the annotation is processed, and the Starlark evaluated
+				panic(err)
+			}
+			exampleYAML, err := core.NewStarlarkValue(exampleTuple[1]).AsGoValue()
+			if err != nil {
+				//at this point the annotation is processed, and the Starlark evaluated
+				panic(err)
+			}
+			return &ExampleAnnotation{exampleDescription, yamlmeta.NewASTFromInterfaceWithPosition(exampleYAML, pos), ann.Position}, nil
+		} else {
+			exampleYAML, err := core.NewStarlarkValue(firstExample).AsGoValue()
+			if err != nil {
+				//at this point the annotation is processed, and the Starlark evaluated
+				panic(err)
+			}
+			return &ExampleAnnotation{"", yamlmeta.NewASTFromInterfaceWithPosition(exampleYAML, pos), ann.Position}, nil
+		}
+	}
+
+	return nil, nil
+}
+
 // NewTypeFromAnn returns type information given by annotation.
 func (t *TypeAnnotation) NewTypeFromAnn() (Type, error) {
 	if t.any {
@@ -268,6 +322,11 @@ func (n *NullableAnnotation) NewTypeFromAnn() (Type, error) {
 
 // NewTypeFromAnn returns type information given by annotation.
 func (d *DefaultAnnotation) NewTypeFromAnn() (Type, error) {
+	return nil, nil
+}
+
+// NewTypeFromAnn returns type information given by annotation.
+func (e *ExampleAnnotation) NewTypeFromAnn() (Type, error) {
 	return nil, nil
 }
 
@@ -299,6 +358,11 @@ func (d *DefaultAnnotation) GetPosition() *filepos.Position {
 // GetPosition returns position of the source comment used to create this annotation.
 func (d *DescriptionAnnotation) GetPosition() *filepos.Position {
 	return d.pos
+}
+
+// GetPosition returns position of the source comment used to create this annotation.
+func (e *ExampleAnnotation) GetPosition() *filepos.Position {
+	return e.pos
 }
 
 // GetPosition returns position of the source comment used to create this annotation.
@@ -349,7 +413,7 @@ func collectValueAnnotations(node yamlmeta.Node, effectiveType Type) ([]Annotati
 func collectDocumentationAnnotations(node yamlmeta.Node) ([]Annotation, error) {
 	var anns []Annotation
 
-	for _, annotation := range []template.AnnotationName{AnnotationDescription, AnnotationTitle} {
+	for _, annotation := range []template.AnnotationName{AnnotationDescription, AnnotationTitle, AnnotationExamples} {
 		ann, err := processOptionalAnnotation(node, annotation, nil)
 		if err != nil {
 			return nil, err
@@ -408,6 +472,12 @@ func processOptionalAnnotation(node yamlmeta.Node, optionalAnnotation template.A
 				return nil, err
 			}
 			return descAnn, nil
+		case AnnotationExamples:
+			exampleAnn, err := NewExampleAnnotation(ann, node.GetPosition())
+			if err != nil {
+				return nil, err
+			}
+			return exampleAnn, nil
 		case AnnotationTitle:
 			titleAnn, err := NewTitleAnnotation(ann, node.GetPosition())
 			if err != nil {

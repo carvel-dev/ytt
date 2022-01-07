@@ -120,6 +120,19 @@ func getType(node yamlmeta.Node) (Type, error) {
 		case *TitleAnnotation:
 			typeOfValue.SetTitle(annType.title)
 		}
+		if example, ok := ann.(*ExampleAnnotation); ok {
+			var typeCheck TypeCheck
+			if node, ok := example.example.(yamlmeta.Node); ok {
+				defaultValue := node.DeepCopyAsInterface()
+				typeCheck = typeOfValue.AssignTypeTo(defaultValue.(yamlmeta.Node))
+			} else {
+				typeCheck = typeOfValue.CheckType(&yamlmeta.MapItem{Value: example.example, Position: typeOfValue.GetDefinitionPosition()})
+			}
+			if typeCheck.HasViolations() {
+				return nil, NewSchemaError(fmt.Sprintf("Invalid schema - @%v has wrong type", AnnotationExamples), typeCheck.Violations...)
+			}
+			typeOfValue.SetExample(example.description, example.example)
+		}
 	}
 	err = valueTypeAllowsItemValue(typeOfValue, node.GetValues()[0], node.GetPosition())
 	if err != nil {
