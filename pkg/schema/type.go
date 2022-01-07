@@ -20,10 +20,8 @@ type Type interface {
 	SetDefaultValue(interface{})
 	GetDefinitionPosition() *filepos.Position
 
-	GetDescription() string
-	SetDescription(string)
-	SetExample(string, interface{})
-	GetExample() []interface{}
+	GetDocumentation() documentation
+	SetDocumentation(documentation)
 	String() string
 	SetTitle(string)
 	GetTitle() string
@@ -47,9 +45,8 @@ type DocumentType struct {
 type MapType struct {
 	Items       []*MapItemType
 	Position    *filepos.Position
-	description string
 	title       string
-	example     []interface{}
+	documentation documentation
 }
 type MapItemType struct {
 	Key          interface{} // usually a string
@@ -61,9 +58,8 @@ type ArrayType struct {
 	ItemsType    Type
 	Position     *filepos.Position
 	defaultValue interface{}
-	description  string
 	title        string
-	example      []interface{}
+	documentation documentation
 }
 type ArrayItemType struct {
 	ValueType    Type
@@ -71,26 +67,24 @@ type ArrayItemType struct {
 	defaultValue interface{}
 }
 type ScalarType struct {
-	ValueType    interface{}
-	Position     *filepos.Position
-	defaultValue interface{}
-	description  string
+	ValueType     interface{}
+	Position      *filepos.Position
+	defaultValue  interface{}
 	title        string
-	example      []interface{}
+	documentation documentation
 }
 type AnyType struct {
 	defaultValue interface{}
 	Position     *filepos.Position
 	description  string
-	example      []interface{}
 	title        string
+	documentation documentation
 }
 type NullType struct {
 	ValueType   Type
 	Position    *filepos.Position
-	description string
-	example     []interface{}
-	title       string
+	title        string
+	documentation documentation
 }
 
 // The total set of supported scalars.
@@ -270,87 +264,29 @@ func (n NullType) GetDefinitionPosition() *filepos.Position {
 	return n.Position
 }
 
-func contains(haystack []interface{}, needle interface{}) bool {
-	for _, key := range haystack {
-		if key == needle {
-			return true
-		}
-	}
-	return false
+// GetDocumentation provides descriptive information
+func (t *DocumentType) GetDocumentation() documentation {
+	return documentation{}
 }
 
-// GetDescription provides descriptive information
-func (t *DocumentType) GetDescription() string {
-	return ""
+// GetDocumentation provides descriptive information
+func (m *MapType) GetDocumentation() documentation {
+	return m.documentation
 }
 
-// GetDescription provides descriptive information
-func (m *MapType) GetDescription() string {
-	return m.description
+// GetDocumentation provides descriptive information
+func (t *MapItemType) GetDocumentation() documentation {
+	return documentation{}
 }
 
-// GetDescription provides descriptive information
-func (t *MapItemType) GetDescription() string {
-	return ""
+// GetDocumentation provides descriptive information
+func (a *ArrayType) GetDocumentation() documentation {
+	return a.documentation
 }
 
-// GetDescription provides descriptive information
-func (a *ArrayType) GetDescription() string {
-	return a.description
-}
-
-// GetDescription provides descriptive information
-func (a *ArrayItemType) GetDescription() string {
-	return ""
-}
-
-// GetDescription provides descriptive information
-func (s *ScalarType) GetDescription() string {
-	return s.description
-}
-
-// GetDescription provides descriptive information
-func (a *AnyType) GetDescription() string {
-	return a.description
-}
-
-// GetDescription provides descriptive information
-func (n *NullType) GetDescription() string {
-	return n.description
-}
-
-// SetDescription sets the description of the type
-func (t *DocumentType) SetDescription(desc string) {}
-
-// SetDescription sets the description of the type
-func (m *MapType) SetDescription(desc string) {
-	m.description = desc
-}
-
-// SetDescription sets the description of the type
-func (t *MapItemType) SetDescription(desc string) {}
-
-// SetDescription sets the description of the type
-func (a *ArrayType) SetDescription(desc string) {
-	a.description = desc
-}
-
-// SetDescription sets the description of the type
-func (a *ArrayItemType) SetDescription(desc string) {}
-
-// SetDescription sets the description of the type
-func (s *ScalarType) SetDescription(desc string) {
-	s.description = desc
-}
-
-// SetDescription sets the description of the type
-func (a *AnyType) SetDescription(desc string) {
-	a.description = desc
-}
-
-// SetDescription sets the description of the type
-func (n *NullType) SetDescription(desc string) {
-	n.description = desc
+// GetDocumentation provides descriptive information
+func (a *ArrayItemType) GetDocumentation() documentation {
+	return documentation{}
 }
 
 // GetTitle provides title information
@@ -427,82 +363,53 @@ func (n *NullType) SetTitle(title string) {
 	n.title = title
 }
 
-func (n *NullType) SetExample(description string, val interface{}) {
-	if description == "" {
-		n.example = append(n.example, val)
-	} else {
-		n.example = append(n.example, description, val)
-	}
+// GetDocumentation provides descriptive information
+func (s *ScalarType) GetDocumentation() documentation {
+	return s.documentation
 }
 
-func (a *AnyType) SetExample(description string, val interface{}) {
-	if description == "" {
-		a.example = append(a.example, val)
-	} else {
-		a.example = append(a.example, description, val)
-	}
+// GetDocumentation provides descriptive information
+func (a *AnyType) GetDocumentation() documentation {
+	return a.documentation
 }
 
-func (t *DocumentType) SetExample(description string, val interface{}) {}
-
-func (m *MapType) SetExample(description string, val interface{}) {
-	if description == "" {
-		m.example = append(m.example, val)
-	} else {
-		m.example = append(m.example, description, val)
-	}
+// GetDocumentation provides descriptive information
+func (n *NullType) GetDocumentation() documentation {
+	return n.documentation
 }
 
-func (t *MapItemType) SetExample(description string, val interface{}) {}
+// SetDocumentation sets the description and example of the type
+func (t *DocumentType) SetDocumentation(data documentation) {}
 
-func (a *ArrayType) SetExample(description string, val interface{}) {
-	if description == "" {
-		a.example = append(a.example, val)
-	} else {
-		a.example = append(a.example, description, val)
-	}
+// SetDocumentation sets the description and example of the type
+func (m *MapType) SetDocumentation(data documentation) {
+	m.documentation = data
 }
 
-func (a *ArrayItemType) SetExample(description string, val interface{}) {}
+// SetDocumentation sets the description and example of the type
+func (t *MapItemType) SetDocumentation(data documentation) {}
 
-func (s *ScalarType) SetExample(description string, val interface{}) {
-	if description == "" {
-		s.example = append(s.example, val)
-	} else {
-		s.example = append(s.example, description, val)
-	}
+// SetDocumentation sets the description and example of the type
+func (a *ArrayType) SetDocumentation(data documentation) {
+	a.documentation = data
 }
 
-func (n NullType) GetExample() []interface{} {
-	return n.example
+// SetDocumentation sets the description and example of the type
+func (a *ArrayItemType) SetDocumentation(data documentation) {}
+
+// SetDocumentation sets the description and example of the type
+func (s *ScalarType) SetDocumentation(data documentation) {
+	s.documentation = data
 }
 
-func (a AnyType) GetExample() []interface{} {
-	return a.example
+// SetDocumentation sets the description and example of the type
+func (a *AnyType) SetDocumentation(data documentation) {
+	a.documentation = data
 }
 
-func (t DocumentType) GetExample() []interface{} {
-	return nil
-}
-
-func (m MapType) GetExample() []interface{} {
-	return m.example
-}
-
-func (t MapItemType) GetExample() []interface{} {
-	return nil
-}
-
-func (a ArrayType) GetExample() []interface{} {
-	return a.example
-}
-
-func (a ArrayItemType) GetExample() []interface{} {
-	return nil
-}
-
-func (s ScalarType) GetExample() []interface{} {
-	return s.example
+// SetDocumentation sets the description and example of the type
+func (n *NullType) SetDocumentation(data documentation) {
+	n.documentation = data
 }
 
 // String produces a user-friendly name of the expected type.

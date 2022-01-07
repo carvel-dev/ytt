@@ -146,6 +146,23 @@ func (o *OpenAPIDocument) calculateProperties(schemaVal interface{}) *yamlmeta.M
 	}
 }
 
+func collectDocumentation(t Type) []*yamlmeta.MapItem {
+	var annDocumentation []*yamlmeta.MapItem
+	documentation := t.GetDocumentation()
+	if documentation.description != "" {
+		annDocumentation = append(annDocumentation, &yamlmeta.MapItem{Key: descriptionProp, Value: documentation.description})
+	}
+	if documentation.exampleYAML != nil {
+		if documentation.exampleDescription != "" {
+			annDocumentation = append(annDocumentation, &yamlmeta.MapItem{Key: exampleDescriptionProp, Value: documentation.exampleDescription})
+			annDocumentation = append(annDocumentation, &yamlmeta.MapItem{Key: exampleProp, Value: documentation.exampleYAML})
+		} else {
+			annDocumentation = append(annDocumentation, &yamlmeta.MapItem{Key: exampleProp, Value: documentation.exampleYAML})
+		}
+	}
+	return annDocumentation
+}
+
 func (o *OpenAPIDocument) openAPITypeFor(astType *ScalarType) string {
 	switch astType.ValueType {
 	case StringType:
@@ -159,20 +176,4 @@ func (o *OpenAPIDocument) openAPITypeFor(astType *ScalarType) string {
 	default:
 		panic(fmt.Sprintf("Unrecognized type: %T", astType.ValueType))
 	}
-}
-
-func collectDocumentation(t Type) []*yamlmeta.MapItem {
-	var annDocumentation []*yamlmeta.MapItem
-	if t.GetDescription() != "" {
-		annDocumentation = append(annDocumentation, &yamlmeta.MapItem{Key: descriptionProp, Value: t.GetDescription()})
-	}
-	if example := t.GetExample(); example != nil {
-		if len(example) > 1 {
-			annDocumentation = append(annDocumentation, &yamlmeta.MapItem{Key: exampleDescriptionProp, Value: example[0]})
-			annDocumentation = append(annDocumentation, &yamlmeta.MapItem{Key: exampleProp, Value: example[1]})
-		} else {
-			annDocumentation = append(annDocumentation, &yamlmeta.MapItem{Key: exampleProp, Value: example[0]})
-		}
-	}
-	return annDocumentation
 }

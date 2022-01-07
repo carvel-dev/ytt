@@ -74,6 +74,15 @@ func (m *MapType) applySchemaDefaults(foundKeys []interface{}, chk TypeCheck, ma
 	}
 }
 
+func contains(haystack []interface{}, needle interface{}) bool {
+	for _, key := range haystack {
+		if key == needle {
+			return true
+		}
+	}
+	return false
+}
+
 // AssignTypeTo assigns this schema metadata to `node`.
 //
 // If `node` is not a yamlmeta.MapItem, `chk` contains a violation describing the mismatch

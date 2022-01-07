@@ -539,6 +539,37 @@ func getTypeFromAnnotations(anns []Annotation, pos *filepos.Position) (Type, err
 	return typeFromAnn, nil
 }
 
+type documentation struct {
+	description        string
+	exampleDescription string
+	exampleYAML        interface{}
+}
+
+func setDocumentationFromAnns(docAnns []Annotation, typeOfValue Type) error {
+	var documentationInfo documentation
+	for _, a := range docAnns {
+		switch ann := a.(type) {
+		case *DescriptionAnnotation:
+			documentationInfo.description = documentationInfo.description + ann.description
+		case *ExampleAnnotation:
+			var typeCheck TypeCheck
+			if node, ok := ann.example.(yamlmeta.Node); ok {
+				defaultValue := node.DeepCopyAsInterface()
+				typeCheck = typeOfValue.AssignTypeTo(defaultValue.(yamlmeta.Node))
+			} else {
+				typeCheck = typeOfValue.CheckType(&yamlmeta.MapItem{Value: ann.example, Position: typeOfValue.GetDefinitionPosition()})
+			}
+			if typeCheck.HasViolations() {
+				return NewSchemaError(fmt.Sprintf("Invalid schema - @%v has wrong type", AnnotationExamples), typeCheck.Violations...)
+			}
+			documentationInfo.exampleDescription = ann.description
+			documentationInfo.exampleYAML = ann.example
+		}
+	}
+	typeOfValue.SetDocumentation(documentationInfo)
+	return nil
+}
+
 type checkForAnnotations struct{}
 
 func (c checkForAnnotations) Visit(n yamlmeta.Node) error {
