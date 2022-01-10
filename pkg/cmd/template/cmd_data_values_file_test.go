@@ -147,5 +147,5 @@ int: 123`)
 	}
 
 	out := opts.RunWithFiles(cmdtpl.Input{Files: filesToProcess}, ui)
-	require.EqualError(t, out.Err, "Extracting data value from file: Checking data values file 'dvs1.yml': Expected to not find annotations inside data values file (hint: remove comments starting with '#@')")
+	require.EqualError(t, out.Err, "Extracting data value from file: Checking data values file 'dvs1.yml': Expected to be plain YAML, having no annotations (hint: remove comments starting with `#@`)")
 }

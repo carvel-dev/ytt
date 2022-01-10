@@ -17,6 +17,7 @@ type Node interface {
 	ResetValue()
 
 	GetComments() []*Comment
+	SetComments([]*Comment)
 	addComments(*Comment)
 
 	GetMeta(name string) interface{}

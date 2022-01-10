@@ -15,6 +15,7 @@ import (
 	"github.com/k14s/ytt/pkg/workspace/ref"
 	"github.com/k14s/ytt/pkg/yamlmeta"
 	"github.com/k14s/ytt/pkg/yamltemplate"
+	"github.com/k14s/ytt/pkg/yttlibrary/overlay"
 )
 
 type LibraryModule struct {
@@ -165,15 +166,34 @@ func (l *libraryValue) WithDataValues(thread *starlark.Thread, f *starlark.Built
 		return starlark.None, err
 	}
 
-	valsYAML, err := datavalues.NewEnvelope(&yamlmeta.Document{
-		Value:    yamlmeta.NewASTFromInterfaceWithNoPosition(dataValues),
-		Position: filepos.NewUnknownPosition(),
-	})
+	allowedKWArgs := map[string]struct{}{
+		"plain": {},
+	}
+	if err := core.CheckArgNames(kwargs, allowedKWArgs); err != nil {
+		return starlark.None, err
+	}
+
+	usePlainMerge, err := core.BoolArg(kwargs, "plain")
 	if err != nil {
 		return starlark.None, err
 	}
 
-	// copy over library values
+	dvDoc := &yamlmeta.Document{
+		Value:    yamlmeta.NewASTFromInterfaceWithNoPosition(dataValues),
+		Position: filepos.NewUnknownPosition(),
+	}
+
+	if usePlainMerge {
+		err = overlay.AnnotateForPlainMerge(dvDoc)
+		if err != nil {
+			return starlark.None, err
+		}
+	}
+	valsYAML, err := datavalues.NewEnvelope(dvDoc)
+	if err != nil {
+		return starlark.None, err
+	}
+
 	newDataValuess := append([]*datavalues.Envelope{}, l.dataValuess...)
 	newDataValuess = append(newDataValuess, valsYAML)
 

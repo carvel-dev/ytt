@@ -189,6 +189,160 @@ vals: #@ data.values`)
 	runAndCompare(t, filesToProcess, expectedYAMLTplData)
 }
 
+func TestLibraryModuleWithDataValuesPlainMerge(t *testing.T) {
+	// see also: ./cmd_data_values_file_test.go for coverage of "plain merge"
+
+	t.Run("from a struct", func(t *testing.T) {
+		libValuesTplData := []byte(`
+#@data/values
+---
+from_lib: lib/values.yml
+overridden: lib/values.yml
+`)
+
+		libConfigTplData := []byte(`
+#@ load("@ytt:data", "data")
+vals: #@ data.values`)
+
+		valuesTplData := []byte(`
+#@data/values
+---
+overridden: values.yml
+from_root: values.yml`)
+
+		configTplData := []byte(`
+#@ load("@ytt:data", "data")
+#@ load("@ytt:template", "template")
+#@ load("@ytt:library", "library")
+
+--- #@ template.replace(library.get("lib").with_data_values(data.values, plain=True).eval())`)
+
+		expectedYAMLTplData := `vals:
+  from_lib: lib/values.yml
+  overridden: values.yml
+  from_root: values.yml
+`
+
+		filesToProcess := files.NewSortedFiles([]*files.File{
+			files.MustNewFileFromSource(files.NewBytesSource("values.yml", valuesTplData)),
+			files.MustNewFileFromSource(files.NewBytesSource("config.yml", configTplData)),
+			files.MustNewFileFromSource(files.NewBytesSource("_ytt_lib/lib/values.yml", libValuesTplData)),
+			files.MustNewFileFromSource(files.NewBytesSource("_ytt_lib/lib/config.yml", libConfigTplData)),
+		})
+
+		runAndCompare(t, filesToProcess, expectedYAMLTplData)
+	})
+	t.Run("from a dictionary", func(t *testing.T) {
+		libValuesTplData := []byte(`
+#@data/values
+---
+from_lib: lib/values.yml
+overridden: lib/values.yml
+`)
+
+		libConfigTplData := []byte(`
+#@ load("@ytt:data", "data")
+vals: #@ data.values`)
+
+		configTplData := []byte(`
+#@ load("@ytt:data", "data")
+#@ load("@ytt:template", "template")
+#@ load("@ytt:library", "library")
+
+#@ dictionary = {
+#@   "overridden": "dictionary",
+#@   "from_dictionary": "dictionary"
+#@ }
+
+--- #@ template.replace(library.get("lib").with_data_values(dictionary, plain=True).eval())`)
+
+		expectedYAMLTplData := `vals:
+  from_lib: lib/values.yml
+  overridden: dictionary
+  from_dictionary: dictionary
+`
+
+		filesToProcess := files.NewSortedFiles([]*files.File{
+			files.MustNewFileFromSource(files.NewBytesSource("config.yml", configTplData)),
+			files.MustNewFileFromSource(files.NewBytesSource("_ytt_lib/lib/values.yml", libValuesTplData)),
+			files.MustNewFileFromSource(files.NewBytesSource("_ytt_lib/lib/config.yml", libConfigTplData)),
+		})
+
+		runAndCompare(t, filesToProcess, expectedYAMLTplData)
+
+	})
+	t.Run("from a YAML Fragment (containing plain YAML)", func(t *testing.T) {
+		libValuesTplData := []byte(`
+#@data/values
+---
+from_lib: lib/values.yml
+overridden: lib/values.yml
+`)
+
+		libConfigTplData := []byte(`
+#@ load("@ytt:data", "data")
+vals: #@ data.values`)
+
+		configTplData := []byte(`
+#@ load("@ytt:data", "data")
+#@ load("@ytt:template", "template")
+#@ load("@ytt:library", "library")
+
+#@ def yamlfragment():
+overridden: yamlfragment
+from_yamlfragment: yamlfragment
+#@ end
+
+--- #@ template.replace(library.get("lib").with_data_values(yamlfragment(), plain=True).eval())`)
+
+		expectedYAMLTplData := `vals:
+  from_lib: lib/values.yml
+  overridden: yamlfragment
+  from_yamlfragment: yamlfragment
+`
+
+		filesToProcess := files.NewSortedFiles([]*files.File{
+			files.MustNewFileFromSource(files.NewBytesSource("config.yml", configTplData)),
+			files.MustNewFileFromSource(files.NewBytesSource("_ytt_lib/lib/values.yml", libValuesTplData)),
+			files.MustNewFileFromSource(files.NewBytesSource("_ytt_lib/lib/config.yml", libConfigTplData)),
+		})
+
+		runAndCompare(t, filesToProcess, expectedYAMLTplData)
+	})
+	t.Run("from a YAML Fragment (errors because annotations are present)", func(t *testing.T) {
+		libValuesTplData := []byte(`
+#@data/values
+---
+from_lib: lib/values.yml
+overridden: lib/values.yml
+`)
+
+		libConfigTplData := []byte(`
+#@ load("@ytt:data", "data")
+vals: #@ data.values`)
+
+		configTplData := []byte(`
+#@ load("@ytt:data", "data")
+#@ load("@ytt:template", "template")
+#@ load("@ytt:library", "library")
+
+#@ def yamlfragment():
+overridden: yamlfragment
+#@overlay/match missing_ok=True
+from_yamlfragment: yamlfragment
+#@ end
+
+--- #@ template.replace(library.get("lib").with_data_values(yamlfragment(), plain=True).eval())`)
+
+		filesToProcess := files.NewSortedFiles([]*files.File{
+			files.MustNewFileFromSource(files.NewBytesSource("config.yml", configTplData)),
+			files.MustNewFileFromSource(files.NewBytesSource("_ytt_lib/lib/values.yml", libValuesTplData)),
+			files.MustNewFileFromSource(files.NewBytesSource("_ytt_lib/lib/config.yml", libConfigTplData)),
+		})
+		assertFails(t, filesToProcess, "Expected to be plain YAML", cmdtpl.NewOptions())
+	})
+}
+
 func TestLibraryModuleWithExports(t *testing.T) {
 	configTplData := []byte(`
 #@ load("@ytt:template", "template")

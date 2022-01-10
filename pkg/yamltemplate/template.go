@@ -45,14 +45,12 @@ func hasTemplating(val interface{}) bool {
 
 	metaOpts := MetasOpts{IgnoreUnknown: true}
 	for _, comment := range node.GetComments() {
-		meta, err := NewTemplateMetaFromYAMLComment(comment, metaOpts)
+		ann, err := NewTemplateAnnotationFromYAMLComment(comment, node.GetPosition(), metaOpts)
 		if err != nil {
 			return false
 		}
-		for _, meta := range meta.Annotations {
-			if meta.Name != template.AnnotationNameComment {
-				return true
-			}
+		if ann.Name != template.AnnotationNameComment {
+			return true
 		}
 	}
 
@@ -98,11 +96,11 @@ type buildOpts struct {
 	TextTemplatedStrings bool
 }
 
-func (e *Template) build(val interface{}, parentNode yamlmeta.Node, parentTag template.NodeTag, opts buildOpts) ([]template.Line, error) {
-	node, ok := val.(yamlmeta.Node)
+func (e *Template) build(nodeOrScalar interface{}, parentNode yamlmeta.Node, parentTag template.NodeTag, opts buildOpts) ([]template.Line, error) {
+	node, ok := nodeOrScalar.(yamlmeta.Node)
 	if !ok {
-		if valStr, ok := val.(string); ok && opts.TextTemplatedStrings {
-			return e.buildString(valStr, parentNode, parentTag, e.instructions.NewSetNodeValue)
+		if s, ok := nodeOrScalar.(string); ok && opts.TextTemplatedStrings {
+			return e.buildString(s, parentNode, parentTag, e.instructions.NewSetNodeValue)
 		}
 
 		return []template.Line{{
@@ -111,17 +109,18 @@ func (e *Template) build(val interface{}, parentNode yamlmeta.Node, parentTag te
 		}}, nil
 	}
 
-	code := []template.Line{}
-	nodeTag := e.nodes.AddNode(node, parentTag)
-
-	metas, err := NewMetas(node, MetasOpts{IgnoreUnknown: e.opts.IgnoreUnknownComments})
+	metas, nodeForEval, err := extractMetas(node, MetasOpts{IgnoreUnknown: e.opts.IgnoreUnknownComments})
 	if err != nil {
 		return nil, err
 	}
 
+	nodeTag := e.nodes.AddNode(nodeForEval, parentTag)
+
 	if e.allowsTextTemplatedStrings(metas) {
 		opts.TextTemplatedStrings = true
 	}
+
+	code := []template.Line{}
 
 	for _, blk := range metas.Block {
 		code = append(code, template.Line{
@@ -130,16 +129,16 @@ func (e *Template) build(val interface{}, parentNode yamlmeta.Node, parentTag te
 		})
 	}
 
-	for _, metaAndAnn := range metas.Annotations {
+	for _, ann := range metas.Annotations {
 		code = append(code, template.Line{
-			Instruction: e.instructions.NewStartNodeAnnotation(nodeTag, *metaAndAnn.Annotation).WithDebug(e.debugComment(node)),
-			SourceLine:  e.newSourceLine(metaAndAnn.Comment.Position),
+			Instruction: e.instructions.NewStartNodeAnnotation(nodeTag, *ann.Annotation).WithDebug(e.debugComment(nodeForEval)),
+			SourceLine:  e.newSourceLine(ann.Comment.Position),
 		})
 	}
 
-	if typedNode, ok := val.(*yamlmeta.MapItem); ok {
-		if keyStr, ok := typedNode.Key.(string); ok && opts.TextTemplatedStrings {
-			templateLines, err := e.buildString(keyStr, node, nodeTag, e.instructions.NewSetMapItemKey)
+	if mapItem, ok := nodeForEval.(*yamlmeta.MapItem); ok {
+		if keyStr, ok := mapItem.Key.(string); ok && opts.TextTemplatedStrings {
+			templateLines, err := e.buildString(keyStr, nodeForEval, nodeTag, e.instructions.NewSetMapItemKey)
 			if err != nil {
 				return nil, err
 			}
@@ -148,20 +147,20 @@ func (e *Template) build(val interface{}, parentNode yamlmeta.Node, parentTag te
 	}
 
 	code = append(code, template.Line{
-		Instruction: e.instructions.NewStartNode(nodeTag).WithDebug(e.debugComment(node)),
-		SourceLine:  e.newSourceLine(node.GetPosition()),
+		Instruction: e.instructions.NewStartNode(nodeTag).WithDebug(e.debugComment(nodeForEval)),
+		SourceLine:  e.newSourceLine(nodeForEval.GetPosition()),
 	})
 
 	if len(metas.Values) > 0 {
 		for _, val := range metas.Values {
 			code = append(code, template.Line{
-				Instruction: e.instructions.NewSetNodeValue(nodeTag, val.Data).WithDebug(e.debugComment(node)),
+				Instruction: e.instructions.NewSetNodeValue(nodeTag, val.Data).WithDebug(e.debugComment(nodeForEval)),
 				SourceLine:  e.newSourceLine(val.Position),
 			})
 		}
 	} else {
-		for _, childVal := range node.GetValues() {
-			childCode, err := e.build(childVal, node, nodeTag, opts)
+		for _, childVal := range nodeForEval.GetValues() {
+			childCode, err := e.build(childVal, nodeForEval, nodeTag, opts)
 			if err != nil {
 				return nil, err
 			}
