@@ -20,7 +20,8 @@ type Type interface {
 	SetDefaultValue(interface{})
 	GetDefinitionPosition() *filepos.Position
 
-	GetDocumentation() documentation
+	GetDescription() string
+	GetExample() (string, interface{})
 	SetDocumentation(documentation)
 	String() string
 	SetTitle(string)
@@ -76,7 +77,6 @@ type ScalarType struct {
 type AnyType struct {
 	defaultValue interface{}
 	Position     *filepos.Position
-	description  string
 	title        string
 	documentation documentation
 }
@@ -324,6 +324,7 @@ func (a *AnyType) GetTitle() string {
 	return a.title
 }
 
+
 // GetTitle provides title information
 func (n *NullType) GetTitle() string {
 	return n.title
@@ -363,19 +364,84 @@ func (n *NullType) SetTitle(title string) {
 	n.title = title
 }
 
-// GetDocumentation provides descriptive information
-func (s *ScalarType) GetDocumentation() documentation {
-	return s.documentation
+// GetDescription provides descriptive information
+func (t *DocumentType) GetDescription() string {
+	return ""
 }
 
-// GetDocumentation provides descriptive information
-func (a *AnyType) GetDocumentation() documentation {
-	return a.documentation
+// GetDescription provides descriptive information
+func (m *MapType) GetDescription() string {
+	return m.documentation.description
 }
 
-// GetDocumentation provides descriptive information
-func (n *NullType) GetDocumentation() documentation {
-	return n.documentation
+// GetDescription provides descriptive information
+func (t *MapItemType) GetDescription() string {
+	return ""
+}
+
+// GetDescription provides descriptive information
+func (a *ArrayType) GetDescription() string {
+	return a.documentation.description
+}
+
+// GetDescription provides descriptive information
+func (a *ArrayItemType) GetDescription() string {
+	return ""
+}
+
+// GetDescription provides descriptive information
+func (s *ScalarType) GetDescription() string {
+	return s.documentation.description
+}
+
+// GetDescription provides descriptive information
+func (a *AnyType) GetDescription() string {
+	return a.documentation.description
+}
+
+// GetDescription provides descriptive information
+func (n *NullType) GetDescription() string {
+	return n.documentation.description
+}
+
+// GetExample provides descriptive example information
+func (t *DocumentType) GetExample() (string, interface{}) {
+	return "", nil
+}
+
+// GetExample provides descriptive example information
+func (m *MapType) GetExample() (string, interface{}) {
+	return m.documentation.exampleDescription, m.documentation.exampleYAML
+}
+
+// GetExample provides descriptive example information
+func (t *MapItemType) GetExample() (string, interface{}) {
+	return "", nil
+}
+
+// GetExample provides descriptive example information
+func (a *ArrayType) GetExample() (string, interface{}) {
+	return a.documentation.exampleDescription, a.documentation.exampleYAML
+}
+
+// GetExample provides descriptive example information
+func (a *ArrayItemType) GetExample() (string, interface{}) {
+	return "", nil
+}
+
+// GetExample provides descriptive example information
+func (s *ScalarType) GetExample() (string, interface{}) {
+	return s.documentation.exampleDescription, s.documentation.exampleYAML
+}
+
+// GetExample provides descriptive example information
+func (a *AnyType) GetExample() (string, interface{}) {
+	return a.documentation.exampleDescription, a.documentation.exampleYAML
+}
+
+// GetExample provides descriptive example information
+func (n *NullType) GetExample() (string, interface{}) {
+	return n.documentation.exampleDescription, n.documentation.exampleYAML
 }
 
 // SetDocumentation sets the description and example of the type
