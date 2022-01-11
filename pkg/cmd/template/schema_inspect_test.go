@@ -704,10 +704,11 @@ components:
 		opts.RegularFilesSourceOpts.OutputType.Types = []string{"openapi-v3"}
 
 		schemaYAML := `#@data/values-schema
+#@schema/examples ("schema example description", {"db_conn": [{"hostname": "localhost", "port": 8080, "timeout": 4.2, "any_key": "anything", "null_key": None}]})
 ---
 #@schema/examples ("db_conn example description", [{"hostname": "localhost", "port": 8080, "timeout": 4.2, "any_key": "anything", "null_key": None}])
 db_conn:
-#@schema/examples ("db_conn array example description", {"hostname": "localhost", "port": 8080, "timeout": 4.2, "any_key": "anything", "null_key": 9})
+#@schema/examples ("db_conn array example description", {"hostname": "localhost", "port": 8080, "timeout": 4.2, "any_key": "anything", "null_key": "not null"})
 - 
   #@schema/examples ("hostname example description", "localhost")
   #@schema/desc "The hostname"
@@ -733,6 +734,14 @@ components:
     dataValues:
       type: object
       additionalProperties: false
+      x-example-description: schema example description
+      example:
+        db_conn:
+        - hostname: localhost
+          port: 8080
+          timeout: 4.2
+          any_key: anything
+          null_key: null
       properties:
         db_conn:
           type: array
@@ -752,7 +761,7 @@ components:
               port: 8080
               timeout: 4.2
               any_key: anything
-              null_key: null
+              null_key: not null
             properties:
               hostname:
                 type: string

@@ -148,16 +148,17 @@ func (o *OpenAPIDocument) calculateProperties(schemaVal interface{}) *yamlmeta.M
 
 func collectDocumentation(t Type) []*yamlmeta.MapItem {
 	var annDocumentation []*yamlmeta.MapItem
-	documentation := t.GetDocumentation()
-	if documentation.description != "" {
-		annDocumentation = append(annDocumentation, &yamlmeta.MapItem{Key: descriptionProp, Value: documentation.description})
+	description := t.GetDescription()
+	if description != "" {
+		annDocumentation = append(annDocumentation, &yamlmeta.MapItem{Key: descriptionProp, Value: description})
 	}
-	if documentation.exampleYAML != nil {
-		if documentation.exampleDescription != "" {
-			annDocumentation = append(annDocumentation, &yamlmeta.MapItem{Key: exampleDescriptionProp, Value: documentation.exampleDescription})
-			annDocumentation = append(annDocumentation, &yamlmeta.MapItem{Key: exampleProp, Value: documentation.exampleYAML})
+	exampleDescription, exampleYAML := t.GetExample()
+	if exampleYAML != nil {
+		if exampleDescription != "" {
+			annDocumentation = append(annDocumentation, &yamlmeta.MapItem{Key: exampleDescriptionProp, Value: exampleDescription})
+			annDocumentation = append(annDocumentation, &yamlmeta.MapItem{Key: exampleProp, Value: exampleYAML})
 		} else {
-			annDocumentation = append(annDocumentation, &yamlmeta.MapItem{Key: exampleProp, Value: documentation.exampleYAML})
+			annDocumentation = append(annDocumentation, &yamlmeta.MapItem{Key: exampleProp, Value: exampleYAML})
 		}
 	}
 	return annDocumentation

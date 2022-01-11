@@ -58,6 +58,7 @@ type TitleAnnotation struct {
 	pos   *filepos.Position
 }
 
+// ExampleAnnotation documents an example of a node
 type ExampleAnnotation struct {
 	description string
 	example     interface{}
@@ -257,6 +258,7 @@ func NewTitleAnnotation(ann template.NodeAnnotation, pos *filepos.Position) (*Ti
 	return &TitleAnnotation{strVal, ann.Position}, nil
 }
 
+// NewExampleAnnotation validates the value(s) from the AnnotationExamples, and returns the value(s)
 func NewExampleAnnotation(ann template.NodeAnnotation, pos *filepos.Position) (*ExampleAnnotation, error) {
 	if len(ann.Kwargs) != 0 {
 		return nil, schemaAssertionError{
@@ -290,14 +292,15 @@ func NewExampleAnnotation(ann template.NodeAnnotation, pos *filepos.Position) (*
 				panic(err)
 			}
 			return &ExampleAnnotation{exampleDescription, yamlmeta.NewASTFromInterfaceWithPosition(exampleYAML, pos), ann.Position}, nil
-		} else {
-			exampleYAML, err := core.NewStarlarkValue(firstExample).AsGoValue()
-			if err != nil {
-				//at this point the annotation is processed, and the Starlark evaluated
-				panic(err)
-			}
-			return &ExampleAnnotation{"", yamlmeta.NewASTFromInterfaceWithPosition(exampleYAML, pos), ann.Position}, nil
 		}
+
+		exampleYAML, err := core.NewStarlarkValue(firstExample).AsGoValue()
+		if err != nil {
+			//at this point the annotation is processed, and the Starlark evaluated
+			panic(err)
+		}
+		return &ExampleAnnotation{"", yamlmeta.NewASTFromInterfaceWithPosition(exampleYAML, pos), ann.Position}, nil
+
 	}
 
 	return nil, nil
@@ -554,8 +557,12 @@ func setDocumentationFromAnns(docAnns []Annotation, typeOfValue Type) error {
 		case *ExampleAnnotation:
 			var typeCheck TypeCheck
 			if node, ok := ann.example.(yamlmeta.Node); ok {
-				defaultValue := node.DeepCopyAsInterface()
-				typeCheck = typeOfValue.AssignTypeTo(defaultValue.(yamlmeta.Node))
+				defaultValue := node.DeepCopyAsNode()
+				typeCheck = typeOfValue.AssignTypeTo(defaultValue)
+				if len(typeCheck.Violations) > 0 {
+					return typeCheck
+				}
+				typeCheck = CheckDocument(defaultValue)
 			} else {
 				typeCheck = typeOfValue.CheckType(&yamlmeta.MapItem{Value: ann.example, Position: typeOfValue.GetDefinitionPosition()})
 			}
