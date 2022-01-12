@@ -116,9 +116,9 @@ func getType(node yamlmeta.Node) (Type, error) {
 	for _, ann := range docAnns {
 		switch annType := ann.(type) {
 		case *DescriptionAnnotation:
-				typeOfValue.SetDescription(annType.description)
+			typeOfValue.SetDescription(annType.description)
 		case *TitleAnnotation:
-				typeOfValue.SetTitle(annType.title)
+			typeOfValue.SetTitle(annType.title)
 		}
 	}
 	err = valueTypeAllowsItemValue(typeOfValue, node.GetValues()[0], node.GetPosition())
