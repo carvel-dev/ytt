@@ -880,6 +880,7 @@ enabled: false
 
 schema.yml:
     |
+  3 | #@schema/examples ("Zero value", 0)
   4 | enabled: false
     |
 

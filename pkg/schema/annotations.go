@@ -296,7 +296,6 @@ func NewExampleAnnotation(ann template.NodeAnnotation, pos *filepos.Position) (*
 					found:        fmt.Sprintf("%v arguments in @%v (by %v)", len(exampleTuple), AnnotationExamples, ann.Position.AsCompactString()),
 				}
 			}
-
 			exampleDescription, err = core.NewStarlarkValue(exampleTuple[0]).AsString()
 			if err != nil {
 				return nil, schemaAssertionError{
@@ -573,21 +572,32 @@ func setDocumentationFromAnns(docAnns []Annotation, typeOfValue Type) error {
 			documentationInfo.description = documentationInfo.description + ann.description
 		case *ExampleAnnotation:
 			// type and check all examples against type
+			var typeCheck TypeCheck
 			for _, ex := range ann.examples {
-				var typeCheck TypeCheck
 				if node, ok := ex.(yamlmeta.Node); ok {
 					defaultValue := node.DeepCopyAsNode()
-					typeCheck = typeOfValue.AssignTypeTo(defaultValue)
-					if len(typeCheck.Violations) > 0 {
-						return typeCheck
+					chk := typeOfValue.AssignTypeTo(defaultValue)
+					if !chk.HasViolations() {
+						chk = CheckDocument(defaultValue)
 					}
-					typeCheck = CheckDocument(defaultValue)
+					typeCheck.Violations = append(typeCheck.Violations, chk.Violations...)
 				} else {
-					typeCheck = typeOfValue.CheckType(&yamlmeta.MapItem{Value: ex, Position: typeOfValue.GetDefinitionPosition()})
+					chk := typeOfValue.CheckType(&yamlmeta.MapItem{Value: ex, Position: typeOfValue.GetDefinitionPosition()})
+					typeCheck.Violations = append(typeCheck.Violations, chk.Violations...)
 				}
-				if typeCheck.HasViolations() {
-					return NewSchemaError(fmt.Sprintf("Invalid schema - @%v has wrong type", AnnotationExamples), typeCheck.Violations...)
+			}
+			if typeCheck.HasViolations() {
+				var violations []error
+				// add violating annotation position to error
+				for _, err := range typeCheck.Violations {
+					if typeCheckAssertionErr, ok := err.(schemaAssertionError); ok {
+						typeCheckAssertionErr.annPositions = []*filepos.Position{ann.GetPosition()}
+						violations = append(violations, typeCheckAssertionErr)
+					} else {
+						violations = append(violations, err)
+					}
 				}
+				return NewSchemaError(fmt.Sprintf("Invalid schema - @%v has wrong type", AnnotationExamples), violations...)
 			}
 			// display only first example
 			if len(ann.examples) != 0 {
