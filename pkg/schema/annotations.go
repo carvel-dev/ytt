@@ -278,7 +278,7 @@ func NewExampleAnnotation(ann template.NodeAnnotation, pos *filepos.Position) (*
 			found:        fmt.Sprintf("missing value in @%v (by %v)", AnnotationExamples, ann.Position.AsCompactString()),
 		}
 	}
-	//TODO: how can we prevent input like: #@schema/examples 8080, 8000, 10
+
 	var descriptions []string
 	var examples []interface{}
 	for _, example := range ann.Args {
@@ -287,7 +287,37 @@ func NewExampleAnnotation(ann template.NodeAnnotation, pos *filepos.Position) (*
 		var err error
 
 		if exampleTuple, ok := example.(starlark.Tuple); ok {
-			if len(exampleTuple) > 2 {
+			switch len(exampleTuple) {
+			case 0:
+				return nil, schemaAssertionError{
+					annPositions: []*filepos.Position{ann.Position},
+					position:     pos,
+					description:  fmt.Sprintf("syntax error in @%v annotation", AnnotationExamples),
+					expected:     fmt.Sprintf("tuple with optional string description and required example value"),
+					found:        fmt.Sprintf("empty tuple in @%v (by %v)", AnnotationExamples, ann.Position.AsCompactString()),
+				}
+			case 1:
+				exampleYAML, err = core.NewStarlarkValue(exampleTuple[0]).AsGoValue()
+				if err != nil {
+					panic(err)
+				}
+			case 2:
+				exampleDescription, err = core.NewStarlarkValue(exampleTuple[0]).AsString()
+				if err != nil {
+					return nil, schemaAssertionError{
+						annPositions: []*filepos.Position{ann.Position},
+						position:     pos,
+						description:  fmt.Sprintf("syntax error in @%v annotation", AnnotationExamples),
+						expected:     fmt.Sprintf("string"),
+						found:        fmt.Sprintf("Non-string value in @%v (by %v)", AnnotationExamples, ann.Position.AsCompactString()),
+						hints:        []string{fmt.Sprintf("@%v optionally accepts a string description as the first argument in a tuple", AnnotationExamples)},
+					}
+				}
+				exampleYAML, err = core.NewStarlarkValue(exampleTuple[1]).AsGoValue()
+				if err != nil {
+					panic(err)
+				}
+			default:
 				return nil, schemaAssertionError{
 					annPositions: []*filepos.Position{ann.Position},
 					position:     pos,
@@ -296,24 +326,15 @@ func NewExampleAnnotation(ann template.NodeAnnotation, pos *filepos.Position) (*
 					found:        fmt.Sprintf("%v arguments in @%v (by %v)", len(exampleTuple), AnnotationExamples, ann.Position.AsCompactString()),
 				}
 			}
-			exampleDescription, err = core.NewStarlarkValue(exampleTuple[0]).AsString()
-			if err != nil {
-				return nil, schemaAssertionError{
-					annPositions: []*filepos.Position{ann.Position},
-					position:     pos,
-					description:  fmt.Sprintf("syntax error in @%v annotation", AnnotationExamples),
-					expected:     fmt.Sprintf("string"),
-					found:        fmt.Sprintf("Non-string value in @%v (by %v)", AnnotationExamples, ann.Position.AsCompactString()),
-					hints:        []string{fmt.Sprintf("@%v optionally accepts a string description as the first argument in a tuple", AnnotationExamples)},
-				}
+		} else {
+			return nil, schemaAssertionError{
+				annPositions: []*filepos.Position{ann.Position},
+				position:     pos,
+				description:  fmt.Sprintf("syntax error in @%v annotation", AnnotationExamples),
+				expected:     fmt.Sprintf("tuple with optional string description and required example value"),
+				found:        fmt.Sprintf("non tuple in @%v (by %v)", AnnotationExamples, ann.Position.AsCompactString()),
+				hints:        []string{"use a trailing comma to construct tuple with a single value. e.g. ('example value',)"},
 			}
-			example = exampleTuple[1]
-		}
-
-		exampleYAML, err = core.NewStarlarkValue(example).AsGoValue()
-		if err != nil {
-			//at this point the annotation is processed, and the Starlark evaluated
-			panic(err)
 		}
 		descriptions = append(descriptions, exampleDescription)
 		examples = append(examples, yamlmeta.NewASTFromInterfaceWithPosition(exampleYAML, pos))

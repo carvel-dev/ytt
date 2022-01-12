@@ -787,6 +787,61 @@ schema.yml:
 
 			assertFails(t, filesToProcess, expectedErr, opts)
 		})
+		t.Run("is not a tuple", func(t *testing.T) {
+			schemaYAML := `#@data/values-schema
+---
+#@schema/examples "example value"
+key: val
+`
+			expectedErr := `
+Invalid schema
+==============
+
+syntax error in @schema/examples annotation
+schema.yml:
+    |
+  3 | #@schema/examples "example value"
+  4 | key: val
+    |
+
+    = found: non tuple in @schema/examples (by schema.yml:3)
+    = expected: tuple with optional string description and required example value
+    = hint: use a trailing comma to construct tuple with a single value. e.g. ('example value',)
+`
+
+			filesToProcess := files.NewSortedFiles([]*files.File{
+				files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
+			})
+
+			assertFails(t, filesToProcess, expectedErr, opts)
+		})
+		t.Run("is an empty tuple", func(t *testing.T) {
+			schemaYAML := `#@data/values-schema
+---
+#@schema/examples ()
+key: val
+`
+			expectedErr := `
+Invalid schema
+==============
+
+syntax error in @schema/examples annotation
+schema.yml:
+    |
+  3 | #@schema/examples ()
+  4 | key: val
+    |
+
+    = found: empty tuple in @schema/examples (by schema.yml:3)
+    = expected: tuple with optional string description and required example value
+`
+
+			filesToProcess := files.NewSortedFiles([]*files.File{
+				files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
+			})
+
+			assertFails(t, filesToProcess, expectedErr, opts)
+		})
 		t.Run("has more than two args in an example", func(t *testing.T) {
 			schemaYAML := `#@data/values-schema
 ---
