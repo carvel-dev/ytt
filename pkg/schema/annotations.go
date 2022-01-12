@@ -571,33 +571,9 @@ func setDocumentationFromAnns(docAnns []Annotation, typeOfValue Type) error {
 		case *DescriptionAnnotation:
 			documentationInfo.description = documentationInfo.description + ann.description
 		case *ExampleAnnotation:
-			// type and check all examples against type
-			var typeCheck TypeCheck
-			for _, ex := range ann.examples {
-				if node, ok := ex.(yamlmeta.Node); ok {
-					defaultValue := node.DeepCopyAsNode()
-					chk := typeOfValue.AssignTypeTo(defaultValue)
-					if !chk.HasViolations() {
-						chk = CheckDocument(defaultValue)
-					}
-					typeCheck.Violations = append(typeCheck.Violations, chk.Violations...)
-				} else {
-					chk := typeOfValue.CheckType(&yamlmeta.MapItem{Value: ex, Position: typeOfValue.GetDefinitionPosition()})
-					typeCheck.Violations = append(typeCheck.Violations, chk.Violations...)
-				}
-			}
-			if typeCheck.HasViolations() {
-				var violations []error
-				// add violating annotation position to error
-				for _, err := range typeCheck.Violations {
-					if typeCheckAssertionErr, ok := err.(schemaAssertionError); ok {
-						typeCheckAssertionErr.annPositions = []*filepos.Position{ann.GetPosition()}
-						violations = append(violations, typeCheckAssertionErr)
-					} else {
-						violations = append(violations, err)
-					}
-				}
-				return NewSchemaError(fmt.Sprintf("Invalid schema - @%v has wrong type", AnnotationExamples), violations...)
+			err := checkExamplesValue(ann, typeOfValue)
+			if err != nil {
+				return err
 			}
 			// display only first example
 			if len(ann.examples) != 0 {
@@ -607,6 +583,38 @@ func setDocumentationFromAnns(docAnns []Annotation, typeOfValue Type) error {
 		}
 	}
 	typeOfValue.SetDocumentation(documentationInfo)
+	return nil
+}
+
+func checkExamplesValue(ann *ExampleAnnotation, typeOfValue Type) error {
+	var typeCheck TypeCheck
+	for _, ex := range ann.examples {
+		if node, ok := ex.(yamlmeta.Node); ok {
+			defaultValue := node.DeepCopyAsNode()
+			chk := typeOfValue.AssignTypeTo(defaultValue)
+			if !chk.HasViolations() {
+				chk = CheckDocument(defaultValue)
+			}
+			typeCheck.Violations = append(typeCheck.Violations, chk.Violations...)
+		} else {
+			chk := typeOfValue.CheckType(&yamlmeta.MapItem{Value: ex, Position: typeOfValue.GetDefinitionPosition()})
+			typeCheck.Violations = append(typeCheck.Violations, chk.Violations...)
+		}
+	}
+	if typeCheck.HasViolations() {
+		var violations []error
+		// add violating annotation position to error
+		for _, err := range typeCheck.Violations {
+			if typeCheckAssertionErr, ok := err.(schemaAssertionError); ok {
+				typeCheckAssertionErr.annPositions = []*filepos.Position{ann.GetPosition()}
+				typeCheckAssertionErr.found = typeCheckAssertionErr.found + fmt.Sprintf(" (by %v)", ann.GetPosition().AsCompactString())
+				violations = append(violations, typeCheckAssertionErr)
+			} else {
+				violations = append(violations, err)
+			}
+		}
+		return NewSchemaError(fmt.Sprintf("Invalid schema - @%v has wrong type", AnnotationExamples), violations...)
+	}
 	return nil
 }
 

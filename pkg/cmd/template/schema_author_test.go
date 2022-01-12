@@ -884,7 +884,7 @@ schema.yml:
   4 | enabled: false
     |
 
-    = found: integer
+    = found: integer (by schema.yml:3)
     = expected: boolean (by schema.yml:4)
     = hint: is the default value set using @schema/default?
 `
