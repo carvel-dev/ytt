@@ -274,10 +274,11 @@ func NewExampleAnnotation(ann template.NodeAnnotation, pos *filepos.Position) (*
 			annPositions: []*filepos.Position{ann.Position},
 			position:     pos,
 			description:  fmt.Sprintf("syntax error in @%v annotation", AnnotationExamples),
-			expected:     fmt.Sprintf("string description with example in a tuple"),
+			expected:     fmt.Sprintf("tuple with description and example"),
 			found:        fmt.Sprintf("missing value in @%v (by %v)", AnnotationExamples, ann.Position.AsCompactString()),
 		}
 	}
+	//TODO: how can we prevent input like: #@schema/examples 8080, 8000, 10
 	var descriptions []string
 	var examples []interface{}
 	for _, example := range ann.Args {
@@ -291,7 +292,7 @@ func NewExampleAnnotation(ann template.NodeAnnotation, pos *filepos.Position) (*
 					annPositions: []*filepos.Position{ann.Position},
 					position:     pos,
 					description:  fmt.Sprintf("syntax error in @%v annotation", AnnotationExamples),
-					expected:     fmt.Sprintf("no more than 2 arguments per tuple"),
+					expected:     fmt.Sprintf("no more than 2 arguments per tuple. e.g. @%v ('description', exampleValue())", AnnotationExamples),
 					found:        fmt.Sprintf("%v arguments in @%v (by %v)", len(exampleTuple), AnnotationExamples, ann.Position.AsCompactString()),
 				}
 			}

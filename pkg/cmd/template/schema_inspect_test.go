@@ -836,37 +836,6 @@ foo: doesn't matter
 
 		assertFails(t, filesToProcess, expectedErr, opts)
 	})
-
-	t.Run("when example in @schema/examples does not match type of annotated node", func(t *testing.T) {
-
-		opts := cmdtpl.NewOptions()
-		opts.DataValuesFlags.InspectSchema = true
-		opts.RegularFilesSourceOpts.OutputType.Types = []string{"openapi-v3"}
-
-		schemaYAML := `#@data/values-schema
----
-#@schema/examples ("Zero value", 0)
-enabled: false
-`
-		expectedErr := `Invalid schema - @schema/examples has wrong type
-================================================
-
-schema.yml:
-    |
-  4 | enabled: false
-    |
-
-    = found: integer
-    = expected: boolean (by schema.yml:4)
-    = hint: is the default value set using @schema/default?
-`
-
-		filesToProcess := files.NewSortedFiles([]*files.File{
-			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
-		})
-
-		assertFails(t, filesToProcess, expectedErr, opts)
-	})
 }
 
 func assertSucceedsDocSet(t *testing.T, filesToProcess []*files.File, expectedOut string, opts *cmdtpl.Options) {
