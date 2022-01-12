@@ -349,16 +349,7 @@ func collectValueAnnotations(node yamlmeta.Node, effectiveType Type) ([]Annotati
 func collectDocumentationAnnotations(node yamlmeta.Node) ([]Annotation, error) {
 	var anns []Annotation
 
-	for _, annotation := range []template.AnnotationName{AnnotationDescription} {
-		ann, err := processOptionalAnnotation(node, annotation, nil)
-		if err != nil {
-			return nil, err
-		}
-		if ann != nil {
-			anns = append(anns, ann)
-		}
-	}
-	for _, annotation := range []template.AnnotationName{AnnotationTitle} {
+	for _, annotation := range []template.AnnotationName{AnnotationDescription, AnnotationTitle} {
 		ann, err := processOptionalAnnotation(node, annotation, nil)
 		if err != nil {
 			return nil, err

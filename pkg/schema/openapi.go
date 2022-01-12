@@ -60,10 +60,7 @@ func (o *OpenAPIDocument) calculateProperties(schemaVal interface{}) *yamlmeta.M
 		}
 		var property yamlmeta.Map
 		if typedValue.GetTitle() != "" {
-			item := []*yamlmeta.MapItem{
-				{Key: titleProp, Value: typedValue.GetTitle()},
-			}
-			property.Items = append(property.Items, item...)
+			property.Items = append(property.Items, &yamlmeta.MapItem{Key: titleProp, Value: typedValue.GetTitle()})
 		}
 		property.Items = append(property.Items, &yamlmeta.MapItem{Key: typeProp, Value: "object"})
 		property.Items = append(property.Items, &yamlmeta.MapItem{Key: "additionalProperties", Value: false})
@@ -77,10 +74,7 @@ func (o *OpenAPIDocument) calculateProperties(schemaVal interface{}) *yamlmeta.M
 		properties := o.calculateProperties(valueType.GetValueType())
 		var property yamlmeta.Map
 		if typedValue.GetTitle() != "" {
-			item := []*yamlmeta.MapItem{
-				{Key: titleProp, Value: typedValue.GetTitle()},
-			}
-			property.Items = append(property.Items, item...)
+			property.Items = append(property.Items, &yamlmeta.MapItem{Key: titleProp, Value: typedValue.GetTitle()})
 		}
 		property.Items = append(property.Items, &yamlmeta.MapItem{Key: typeProp, Value: "array"})
 		if typedValue.GetDescription() != "" {
@@ -94,10 +88,7 @@ func (o *OpenAPIDocument) calculateProperties(schemaVal interface{}) *yamlmeta.M
 		defaultVal := typedValue.GetDefaultValue()
 		var property yamlmeta.Map
 		if typedValue.GetTitle() != "" {
-			item := []*yamlmeta.MapItem{
-				{Key: titleProp, Value: typedValue.GetTitle()},
-			}
-			property.Items = append(property.Items, item...)
+			property.Items = append(property.Items, &yamlmeta.MapItem{Key: titleProp, Value: typedValue.GetTitle()})
 		}
 		property.Items = append(property.Items, &yamlmeta.MapItem{Key: typeProp, Value: typeString})
 		property.Items = append(property.Items, &yamlmeta.MapItem{Key: defaultProp, Value: defaultVal})
@@ -111,10 +102,7 @@ func (o *OpenAPIDocument) calculateProperties(schemaVal interface{}) *yamlmeta.M
 	case *NullType:
 		properties := o.calculateProperties(typedValue.GetValueType())
 		if typedValue.GetTitle() != "" {
-			items := []*yamlmeta.MapItem{
-				{Key: titleProp, Value: typedValue.GetTitle()},
-			}
-			properties.Items = append(properties.Items, items...)
+			properties.Items = append(properties.Items, &yamlmeta.MapItem{Key: titleProp, Value: typedValue.GetTitle()})
 		}
 		properties.Items = append(properties.Items, &yamlmeta.MapItem{Key: nullableProp, Value: true})
 		if typedValue.GetDescription() != "" {
@@ -124,10 +112,7 @@ func (o *OpenAPIDocument) calculateProperties(schemaVal interface{}) *yamlmeta.M
 	case *AnyType:
 		properties := &yamlmeta.Map{Items: []*yamlmeta.MapItem{}}
 		if typedValue.GetTitle() != "" {
-			item := []*yamlmeta.MapItem{
-				{Key: titleProp, Value: typedValue.GetTitle()},
-			}
-			properties.Items = append(properties.Items, item...)
+			properties.Items = append(properties.Items, &yamlmeta.MapItem{Key: titleProp, Value: typedValue.GetTitle()})
 		}
 		properties.Items = append(properties.Items, &yamlmeta.MapItem{Key: nullableProp, Value: true})
 		properties.Items = append(properties.Items, &yamlmeta.MapItem{Key: defaultProp, Value: typedValue.GetDefaultValue()})
