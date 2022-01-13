@@ -345,6 +345,7 @@ func (a *AnyType) SetDescription(desc string) {
 func (n *NullType) SetDescription(desc string) {
 	n.description = desc
 }
+
 // GetTitle provides title information
 func (t *DocumentType) GetTitle() string {
 	return ""

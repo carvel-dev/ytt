@@ -621,10 +621,8 @@ components:
 
 		assertSucceedsDocSet(t, filesToProcess, expected, opts)
 	})
-}
 
-func TestSchemaInspect_annotation_adds_title_key(t *testing.T) {
-	t.Run("when description provided by @schema/title", func(t *testing.T) {
+	t.Run("when title provided by @schema/title", func(t *testing.T) {
 		opts := cmdtpl.NewOptions()
 		opts.DataValuesFlags.InspectSchema = true
 		opts.RegularFilesSourceOpts.OutputType.Types = []string{"openapi-v3"}
