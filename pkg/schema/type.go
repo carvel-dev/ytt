@@ -23,6 +23,8 @@ type Type interface {
 	GetDescription() string
 	SetDescription(string)
 	String() string
+	SetTitle(string)
+	GetTitle() string
 }
 
 var _ Type = (*DocumentType)(nil)
@@ -44,6 +46,7 @@ type MapType struct {
 	Items       []*MapItemType
 	Position    *filepos.Position
 	description string
+	title       string
 }
 type MapItemType struct {
 	Key          interface{} // usually a string
@@ -56,6 +59,7 @@ type ArrayType struct {
 	Position     *filepos.Position
 	defaultValue interface{}
 	description  string
+	title        string
 }
 type ArrayItemType struct {
 	ValueType    Type
@@ -67,16 +71,19 @@ type ScalarType struct {
 	Position     *filepos.Position
 	defaultValue interface{}
 	description  string
+	title        string
 }
 type AnyType struct {
 	defaultValue interface{}
 	Position     *filepos.Position
 	description  string
+	title        string
 }
 type NullType struct {
 	ValueType   Type
 	Position    *filepos.Position
 	description string
+	title       string
 }
 
 // The total set of supported scalars.
@@ -337,6 +344,80 @@ func (a *AnyType) SetDescription(desc string) {
 // SetDescription sets the description of the type
 func (n *NullType) SetDescription(desc string) {
 	n.description = desc
+}
+
+// GetTitle provides title information
+func (t *DocumentType) GetTitle() string {
+	return ""
+}
+
+// GetTitle provides title information
+func (m *MapType) GetTitle() string {
+	return m.title
+}
+
+// GetTitle provides title information
+func (t *MapItemType) GetTitle() string {
+	return ""
+}
+
+// GetTitle provides title information
+func (a *ArrayType) GetTitle() string {
+	return a.title
+}
+
+// GetTitle provides title information
+func (a *ArrayItemType) GetTitle() string {
+	return ""
+}
+
+// GetTitle provides title information
+func (s *ScalarType) GetTitle() string {
+	return s.title
+}
+
+// GetTitle provides title information
+func (a *AnyType) GetTitle() string {
+	return a.title
+}
+
+// GetTitle provides title information
+func (n *NullType) GetTitle() string {
+	return n.title
+}
+
+// SetTitle sets the title of the type
+func (t *DocumentType) SetTitle(title string) {}
+
+// SetTitle sets the title of the type
+func (m *MapType) SetTitle(title string) {
+	m.title = title
+}
+
+// SetTitle sets the title of the type
+func (t *MapItemType) SetTitle(title string) {}
+
+// SetTitle sets the title of the type
+func (a *ArrayType) SetTitle(title string) {
+	a.title = title
+}
+
+// SetTitle sets the title of the type
+func (a *ArrayItemType) SetTitle(title string) {}
+
+// SetTitle sets the title of the type
+func (s *ScalarType) SetTitle(title string) {
+	s.title = title
+}
+
+// SetTitle sets the title of the type
+func (a *AnyType) SetTitle(title string) {
+	a.title = title
+}
+
+// SetTitle sets the title of the type
+func (n *NullType) SetTitle(title string) {
+	n.title = title
 }
 
 // String produces a user-friendly name of the expected type.

@@ -18,6 +18,7 @@ const (
 	AnnotationType         template.AnnotationName = "schema/type"
 	AnnotationDefault      template.AnnotationName = "schema/default"
 	AnnotationDescription  template.AnnotationName = "schema/desc"
+	AnnotationTitle        template.AnnotationName = "schema/title"
 	TypeAnnotationKwargAny string                  = "any"
 )
 
@@ -47,6 +48,12 @@ type DefaultAnnotation struct {
 type DescriptionAnnotation struct {
 	description string
 	pos         *filepos.Position
+}
+
+// TitleAnnotation provides title of a node
+type TitleAnnotation struct {
+	title string
+	pos   *filepos.Position
 }
 
 // NewTypeAnnotation checks the keyword argument provided via @schema/type annotation, and returns wrapper for the annotated node.
@@ -198,6 +205,50 @@ func NewDescriptionAnnotation(ann template.NodeAnnotation, pos *filepos.Position
 	return &DescriptionAnnotation{strVal, ann.Position}, nil
 }
 
+// NewTitleAnnotation validates the value from the AnnotationTitle, and returns the value
+func NewTitleAnnotation(ann template.NodeAnnotation, pos *filepos.Position) (*TitleAnnotation, error) {
+	if len(ann.Kwargs) != 0 {
+		return nil, schemaAssertionError{
+			annPositions: []*filepos.Position{ann.Position},
+			position:     pos,
+			description:  fmt.Sprintf("syntax error in @%v annotation", AnnotationTitle),
+			expected:     fmt.Sprintf("string"),
+			found:        fmt.Sprintf("keyword argument in @%v (by %v)", AnnotationTitle, ann.Position.AsCompactString()),
+			hints:        []string{"this annotation only accepts one argument: a string."},
+		}
+	}
+	switch numArgs := len(ann.Args); {
+	case numArgs == 0:
+		return nil, schemaAssertionError{
+			annPositions: []*filepos.Position{ann.Position},
+			position:     pos,
+			description:  fmt.Sprintf("syntax error in @%v annotation", AnnotationTitle),
+			expected:     fmt.Sprintf("string"),
+			found:        fmt.Sprintf("missing value in @%v (by %v)", AnnotationTitle, ann.Position.AsCompactString()),
+		}
+	case numArgs > 1:
+		return nil, schemaAssertionError{
+			annPositions: []*filepos.Position{ann.Position},
+			position:     pos,
+			description:  fmt.Sprintf("syntax error in @%v annotation", AnnotationTitle),
+			expected:     fmt.Sprintf("string"),
+			found:        fmt.Sprintf("%v values in @%v (by %v)", numArgs, AnnotationTitle, ann.Position.AsCompactString()),
+		}
+	}
+
+	strVal, err := core.NewStarlarkValue(ann.Args[0]).AsString()
+	if err != nil {
+		return nil, schemaAssertionError{
+			annPositions: []*filepos.Position{ann.Position},
+			position:     pos,
+			description:  fmt.Sprintf("syntax error in @%v annotation", AnnotationTitle),
+			expected:     fmt.Sprintf("string"),
+			found:        fmt.Sprintf("Non-string value in @%v (by %v)", AnnotationTitle, ann.Position.AsCompactString()),
+		}
+	}
+	return &TitleAnnotation{strVal, ann.Position}, nil
+}
+
 // NewTypeFromAnn returns type information given by annotation.
 func (t *TypeAnnotation) NewTypeFromAnn() (Type, error) {
 	if t.any {
@@ -225,6 +276,11 @@ func (d *DescriptionAnnotation) NewTypeFromAnn() (Type, error) {
 	return nil, nil
 }
 
+// NewTypeFromAnn returns type information given by annotation. TitleAnnotation has no type information.
+func (t *TitleAnnotation) NewTypeFromAnn() (Type, error) {
+	return nil, nil
+}
+
 // GetPosition returns position of the source comment used to create this annotation.
 func (n *NullableAnnotation) GetPosition() *filepos.Position {
 	return n.pos
@@ -243,6 +299,11 @@ func (d *DefaultAnnotation) GetPosition() *filepos.Position {
 // GetPosition returns position of the source comment used to create this annotation.
 func (d *DescriptionAnnotation) GetPosition() *filepos.Position {
 	return d.pos
+}
+
+// GetPosition returns position of the source comment used to create this annotation.
+func (t *TitleAnnotation) GetPosition() *filepos.Position {
+	return t.pos
 }
 
 func (t *TypeAnnotation) IsAny() bool {
@@ -288,7 +349,7 @@ func collectValueAnnotations(node yamlmeta.Node, effectiveType Type) ([]Annotati
 func collectDocumentationAnnotations(node yamlmeta.Node) ([]Annotation, error) {
 	var anns []Annotation
 
-	for _, annotation := range []template.AnnotationName{AnnotationDescription} {
+	for _, annotation := range []template.AnnotationName{AnnotationDescription, AnnotationTitle} {
 		ann, err := processOptionalAnnotation(node, annotation, nil)
 		if err != nil {
 			return nil, err
@@ -347,6 +408,12 @@ func processOptionalAnnotation(node yamlmeta.Node, optionalAnnotation template.A
 				return nil, err
 			}
 			return descAnn, nil
+		case AnnotationTitle:
+			titleAnn, err := NewTitleAnnotation(ann, node.GetPosition())
+			if err != nil {
+				return nil, err
+			}
+			return titleAnn, nil
 		}
 	}
 

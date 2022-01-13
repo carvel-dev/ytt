@@ -648,6 +648,117 @@ schema.yml:
 			assertFails(t, filesToProcess, expectedErr, opts)
 		})
 	})
+	t.Run("when schema/title annotation value", func(t *testing.T) {
+		t.Run("is empty", func(t *testing.T) {
+			schemaYAML := `#@data/values-schema
+---
+#@schema/title
+key: val
+`
+			expectedErr := `
+Invalid schema
+==============
+
+syntax error in @schema/title annotation
+schema.yml:
+    |
+  3 | #@schema/title
+  4 | key: val
+    |
+
+    = found: missing value in @schema/title (by schema.yml:3)
+    = expected: string
+`
+
+			filesToProcess := files.NewSortedFiles([]*files.File{
+				files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
+			})
+
+			assertFails(t, filesToProcess, expectedErr, opts)
+		})
+		t.Run("has more than one arg", func(t *testing.T) {
+			schemaYAML := `#@data/values-schema
+---
+#@schema/title "two", "strings"
+key: val
+`
+			expectedErr := `
+Invalid schema
+==============
+
+syntax error in @schema/title annotation
+schema.yml:
+    |
+  3 | #@schema/title "two", "strings"
+  4 | key: val
+    |
+
+    = found: 2 values in @schema/title (by schema.yml:3)
+    = expected: string
+`
+
+			filesToProcess := files.NewSortedFiles([]*files.File{
+				files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
+			})
+
+			assertFails(t, filesToProcess, expectedErr, opts)
+		})
+		t.Run("is not a string", func(t *testing.T) {
+			schemaYAML := `#@data/values-schema
+---
+#@schema/title 1
+key: val
+`
+			expectedErr := `
+Invalid schema
+==============
+
+syntax error in @schema/title annotation
+schema.yml:
+    |
+  3 | #@schema/title 1
+  4 | key: val
+    |
+
+    = found: Non-string value in @schema/title (by schema.yml:3)
+    = expected: string
+`
+
+			filesToProcess := files.NewSortedFiles([]*files.File{
+				files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
+			})
+
+			assertFails(t, filesToProcess, expectedErr, opts)
+		})
+		t.Run("is key=value pair", func(t *testing.T) {
+			schemaYAML := `#@data/values-schema
+---
+#@schema/title key=True
+key: val
+`
+			expectedErr := `
+Invalid schema
+==============
+
+syntax error in @schema/title annotation
+schema.yml:
+    |
+  3 | #@schema/title key=True
+  4 | key: val
+    |
+
+    = found: keyword argument in @schema/title (by schema.yml:3)
+    = expected: string
+    = hint: this annotation only accepts one argument: a string.
+`
+
+			filesToProcess := files.NewSortedFiles([]*files.File{
+				files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
+			})
+
+			assertFails(t, filesToProcess, expectedErr, opts)
+		})
+	})
 }
 
 func TestSchema_Provides_default_values(t *testing.T) {
