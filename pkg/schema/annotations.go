@@ -580,6 +580,7 @@ func getTypeFromAnnotations(anns []Annotation, pos *filepos.Position) (Type, err
 }
 
 type documentation struct {
+	title              string
 	description        string
 	exampleDescription string
 	exampleYAML        interface{}
@@ -589,8 +590,10 @@ func setDocumentationFromAnns(docAnns []Annotation, typeOfValue Type) error {
 	var documentationInfo documentation
 	for _, a := range docAnns {
 		switch ann := a.(type) {
+		case *TitleAnnotation:
+			documentationInfo.title = ann.title
 		case *DescriptionAnnotation:
-			documentationInfo.description = documentationInfo.description + ann.description
+			documentationInfo.description = ann.description
 		case *ExampleAnnotation:
 			err := checkExamplesValue(ann, typeOfValue)
 			if err != nil {
