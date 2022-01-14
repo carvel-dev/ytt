@@ -579,40 +579,40 @@ paths: {}
 components:
   schemas:
     dataValues:
+      description: Network configuration values
       type: object
       additionalProperties: false
-      description: Network configuration values
       properties:
         db_conn:
-          type: array
           description: List of database connections
+          type: array
           items:
+            description: A network entry
             type: object
             additionalProperties: false
-            description: A network entry
             properties:
               hostname:
+                description: The hostname
                 type: string
                 default: ""
-                description: The hostname
               port:
+                description: Port should be between 49152 through 65535
                 type: integer
                 default: 0
-                description: Port should be between 49152 through 65535
               timeout:
+                description: Timeout in minutes
                 type: number
                 default: 1
                 format: float
-                description: Timeout in minutes
               any_key:
+                description: Any type is allowed
                 nullable: true
                 default: thing
-                description: Any type is allowed
               null_key:
+                description: When not provided, the default is null
                 type: string
                 default: null
                 nullable: true
-                description: When not provided, the default is null
           default: []
 `
 
@@ -656,40 +656,40 @@ paths: {}
 components:
   schemas:
     dataValues:
+      title: Network configuration values
       type: object
       additionalProperties: false
-      title: Network configuration values
       properties:
         db_conn:
-          type: array
           title: List of database connections
+          type: array
           items:
+            title: A network entry
             type: object
             additionalProperties: false
-            title: A network entry
             properties:
               hostname:
+                title: The host
                 type: string
                 default: ""
-                title: The host
               port:
+                title: The Port
                 type: integer
                 default: 0
-                title: The Port
               timeout:
+                title: The Timeout
                 type: number
                 default: 1
                 format: float
-                title: The Timeout
               any_key:
+                title: Any type
                 nullable: true
                 default: thing
-                title: Any type
               null_key:
+                title: When not provided, the default is null
                 type: string
                 default: null
                 nullable: true
-                title: When not provided, the default is null
           default: []
 `
 		filesToProcess := files.NewSortedFiles([]*files.File{
@@ -732,8 +732,6 @@ paths: {}
 components:
   schemas:
     dataValues:
-      type: object
-      additionalProperties: false
       x-example-description: schema example description
       example:
         db_conn:
@@ -742,9 +740,10 @@ components:
           timeout: 4.2
           any_key: anything
           null_key: null
+      type: object
+      additionalProperties: false
       properties:
         db_conn:
-          type: array
           x-example-description: db_conn example description
           example:
           - hostname: localhost
@@ -752,9 +751,8 @@ components:
             timeout: 4.2
             any_key: anything
             null_key: null
+          type: array
           items:
-            type: object
-            additionalProperties: false
             x-example-description: db_conn array example description
             example:
               hostname: localhost
@@ -762,34 +760,36 @@ components:
               timeout: 4.2
               any_key: anything
               null_key: not null
+            type: object
+            additionalProperties: false
             properties:
               hostname:
-                type: string
-                default: ""
                 description: The hostname
                 x-example-description: hostname example description
                 example: localhost
+                type: string
+                default: ""
               port:
+                example: 8080
                 type: integer
                 default: 0
-                example: 8080
               timeout:
+                x-example-description: timeout example description
+                example: 4.2
                 type: number
                 default: 1
                 format: float
-                x-example-description: timeout example description
-                example: 4.2
               any_key:
-                nullable: true
-                default: thing
                 x-example-description: any_key example description
                 example: anything
+                nullable: true
+                default: thing
               null_key:
+                x-example-description: null_key example description
+                example: anything
                 type: string
                 default: null
                 nullable: true
-                x-example-description: null_key example description
-                example: anything
           default: []
 `
 
