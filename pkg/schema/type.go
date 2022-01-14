@@ -21,11 +21,10 @@ type Type interface {
 	GetDefinitionPosition() *filepos.Position
 
 	GetDescription() string
+	GetTitle() string
 	GetExample() (string, interface{})
 	SetDocumentation(documentation)
 	String() string
-	SetTitle(string)
-	GetTitle() string
 }
 
 var _ Type = (*DocumentType)(nil)
@@ -44,9 +43,8 @@ type DocumentType struct {
 	defaultValue interface{}
 }
 type MapType struct {
-	Items       []*MapItemType
-	Position    *filepos.Position
-	title       string
+	Items         []*MapItemType
+	Position      *filepos.Position
 	documentation documentation
 }
 type MapItemType struct {
@@ -56,10 +54,9 @@ type MapItemType struct {
 	defaultValue interface{}
 }
 type ArrayType struct {
-	ItemsType    Type
-	Position     *filepos.Position
-	defaultValue interface{}
-	title        string
+	ItemsType     Type
+	Position      *filepos.Position
+	defaultValue  interface{}
 	documentation documentation
 }
 type ArrayItemType struct {
@@ -71,19 +68,16 @@ type ScalarType struct {
 	ValueType     interface{}
 	Position      *filepos.Position
 	defaultValue  interface{}
-	title        string
 	documentation documentation
 }
 type AnyType struct {
-	defaultValue interface{}
-	Position     *filepos.Position
-	title        string
+	defaultValue  interface{}
+	Position      *filepos.Position
 	documentation documentation
 }
 type NullType struct {
-	ValueType   Type
-	Position    *filepos.Position
-	title        string
+	ValueType     Type
+	Position      *filepos.Position
 	documentation documentation
 }
 
@@ -264,106 +258,6 @@ func (n NullType) GetDefinitionPosition() *filepos.Position {
 	return n.Position
 }
 
-// GetDocumentation provides descriptive information
-func (t *DocumentType) GetDocumentation() documentation {
-	return documentation{}
-}
-
-// GetDocumentation provides descriptive information
-func (m *MapType) GetDocumentation() documentation {
-	return m.documentation
-}
-
-// GetDocumentation provides descriptive information
-func (t *MapItemType) GetDocumentation() documentation {
-	return documentation{}
-}
-
-// GetDocumentation provides descriptive information
-func (a *ArrayType) GetDocumentation() documentation {
-	return a.documentation
-}
-
-// GetDocumentation provides descriptive information
-func (a *ArrayItemType) GetDocumentation() documentation {
-	return documentation{}
-}
-
-// GetTitle provides title information
-func (t *DocumentType) GetTitle() string {
-	return ""
-}
-
-// GetTitle provides title information
-func (m *MapType) GetTitle() string {
-	return m.title
-}
-
-// GetTitle provides title information
-func (t *MapItemType) GetTitle() string {
-	return ""
-}
-
-// GetTitle provides title information
-func (a *ArrayType) GetTitle() string {
-	return a.title
-}
-
-// GetTitle provides title information
-func (a *ArrayItemType) GetTitle() string {
-	return ""
-}
-
-// GetTitle provides title information
-func (s *ScalarType) GetTitle() string {
-	return s.title
-}
-
-// GetTitle provides title information
-func (a *AnyType) GetTitle() string {
-	return a.title
-}
-
-
-// GetTitle provides title information
-func (n *NullType) GetTitle() string {
-	return n.title
-}
-
-// SetTitle sets the title of the type
-func (t *DocumentType) SetTitle(title string) {}
-
-// SetTitle sets the title of the type
-func (m *MapType) SetTitle(title string) {
-	m.title = title
-}
-
-// SetTitle sets the title of the type
-func (t *MapItemType) SetTitle(title string) {}
-
-// SetTitle sets the title of the type
-func (a *ArrayType) SetTitle(title string) {
-	a.title = title
-}
-
-// SetTitle sets the title of the type
-func (a *ArrayItemType) SetTitle(title string) {}
-
-// SetTitle sets the title of the type
-func (s *ScalarType) SetTitle(title string) {
-	s.title = title
-}
-
-// SetTitle sets the title of the type
-func (a *AnyType) SetTitle(title string) {
-	a.title = title
-}
-
-// SetTitle sets the title of the type
-func (n *NullType) SetTitle(title string) {
-	n.title = title
-}
-
 // GetDescription provides descriptive information
 func (t *DocumentType) GetDescription() string {
 	return ""
@@ -402,6 +296,46 @@ func (a *AnyType) GetDescription() string {
 // GetDescription provides descriptive information
 func (n *NullType) GetDescription() string {
 	return n.documentation.description
+}
+
+// GetTitle provides title information
+func (t *DocumentType) GetTitle() string {
+	return ""
+}
+
+// GetTitle provides title information
+func (m *MapType) GetTitle() string {
+	return m.documentation.title
+}
+
+// GetTitle provides title information
+func (t *MapItemType) GetTitle() string {
+	return ""
+}
+
+// GetTitle provides title information
+func (a *ArrayType) GetTitle() string {
+	return a.documentation.title
+}
+
+// GetTitle provides title information
+func (a *ArrayItemType) GetTitle() string {
+	return ""
+}
+
+// GetTitle provides title information
+func (s *ScalarType) GetTitle() string {
+	return s.documentation.title
+}
+
+// GetTitle provides title information
+func (a *AnyType) GetTitle() string {
+	return a.documentation.title
+}
+
+// GetTitle provides title information
+func (n *NullType) GetTitle() string {
+	return n.documentation.title
 }
 
 // GetExample provides descriptive example information

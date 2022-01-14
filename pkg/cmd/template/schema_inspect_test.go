@@ -656,40 +656,40 @@ paths: {}
 components:
   schemas:
     dataValues:
-      title: Network configuration values
       type: object
       additionalProperties: false
+      title: Network configuration values
       properties:
         db_conn:
-          title: List of database connections
           type: array
+          title: List of database connections
           items:
-            title: A network entry
             type: object
             additionalProperties: false
+            title: A network entry
             properties:
               hostname:
-                title: The host
                 type: string
                 default: ""
+                title: The host
               port:
-                title: The Port
                 type: integer
                 default: 0
+                title: The Port
               timeout:
-                title: The Timeout
                 type: number
                 default: 1
                 format: float
+                title: The Timeout
               any_key:
-                title: Any type
                 nullable: true
                 default: thing
+                title: Any type
               null_key:
                 type: string
                 default: null
-                title: When not provided, the default is null
                 nullable: true
+                title: When not provided, the default is null
           default: []
 `
 		filesToProcess := files.NewSortedFiles([]*files.File{

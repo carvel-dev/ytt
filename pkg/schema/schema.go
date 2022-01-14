@@ -118,12 +118,6 @@ func getType(node yamlmeta.Node) (Type, error) {
 	if err != nil {
 		return nil, NewSchemaError("Invalid schema", err)
 	}
-	for _, ann := range docAnns {
-		switch annType := ann.(type) {
-		case *TitleAnnotation:
-			typeOfValue.SetTitle(annType.title)
-		}
-	}
 	err = setDocumentationFromAnns(docAnns, typeOfValue)
 	if err != nil {
 		return nil, err
