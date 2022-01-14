@@ -1,3 +1,3 @@
 # Proposals
 
-Find proposals and other design documents in https://github.com/k14s/design-docs/tree/develop/ytt
+Find proposals and other design documents in https://github.com/vmware-tanzu/carvel/tree/develop/proposals
