@@ -11,4 +11,5 @@ jobs:
       repo: vmware-tanzu/carvel-ytt
       tool: ytt
       goVersion: 1.17.0
+    secrets:
       slackWebhookURL: ${{ secrets.SLACK_WEBHOOK_URL }}
