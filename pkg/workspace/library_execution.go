@@ -54,6 +54,8 @@ func (ll *LibraryExecution) Schemas(schemaOverlays []*schema.DocumentSchemaEnvel
 		return nil, nil, err
 	}
 
+	SortFilesInLibrary(schemaFiles)
+
 	documentSchemas, err := collectSchemaDocs(schemaFiles, loader)
 	if err != nil {
 		return nil, nil, err
