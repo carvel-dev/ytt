@@ -778,7 +778,7 @@ schema.yml:
     |
 
     = found: missing value in @schema/examples (by schema.yml:3)
-    = expected: tuple with description and example
+    = expected: 2-tuple containing description (string) and example value (of expected type)
 `
 
 			filesToProcess := files.NewSortedFiles([]*files.File{
@@ -804,9 +804,8 @@ schema.yml:
   4 | key: val
     |
 
-    = found: non tuple in @schema/examples (by schema.yml:3)
-    = expected: tuple with optional string description and required example value
-    = hint: use a trailing comma to construct tuple with a single value. e.g. ('example value',)
+    = found: string for @schema/examples (at schema.yml:3)
+    = expected: 2-tuple containing description (string) and example value (of expected type)
 `
 
 			filesToProcess := files.NewSortedFiles([]*files.File{
@@ -833,7 +832,7 @@ schema.yml:
     |
 
     = found: empty tuple in @schema/examples (by schema.yml:3)
-    = expected: tuple with optional string description and required example value
+    = expected: 2-tuple containing description (string) and example value (of expected type)
 `
 
 			filesToProcess := files.NewSortedFiles([]*files.File{
@@ -859,8 +858,8 @@ schema.yml:
   4 | key: val
     |
 
-    = found: 3 arguments in @schema/examples (by schema.yml:3)
-    = expected: no more than 2 arguments per tuple. e.g. @schema/examples ('description', exampleValue())
+    = found: 3-tuple argument in @schema/examples (by schema.yml:3)
+    = expected: 2-tuple containing description (string) and example value (of expected type)
 `
 
 			filesToProcess := files.NewSortedFiles([]*files.File{
@@ -886,9 +885,8 @@ schema.yml:
   4 | key: 7.3
     |
 
-    = found: Non-string value in @schema/examples (by schema.yml:3)
-    = expected: string
-    = hint: @schema/examples optionally accepts a string description as the first argument in a tuple
+    = found: float value for @schema/examples (at schema.yml:3)
+    = expected: 2-tuple containing description (string) and example value (of expected type)
 `
 
 			filesToProcess := files.NewSortedFiles([]*files.File{
@@ -915,7 +913,7 @@ schema.yml:
     |
 
     = found: keyword argument in @schema/examples (by schema.yml:3)
-    = expected: tuple with description and example
+    = expected: 2-tuple containing description (string) and example value (of expected type)
 `
 
 			filesToProcess := files.NewSortedFiles([]*files.File{

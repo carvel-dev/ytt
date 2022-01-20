@@ -58,11 +58,23 @@ type TitleAnnotation struct {
 	pos   *filepos.Position
 }
 
-// ExampleAnnotation documents an example of a node
+// ExampleAnnotation provides the Examples of a node
 type ExampleAnnotation struct {
-	descriptions []string
-	examples     []interface{}
-	pos          *filepos.Position
+	examples []Example
+	pos      *filepos.Position
+}
+
+// Example contains a yaml example and its description
+type Example struct {
+	description string
+	example     interface{}
+}
+
+// Documentation holds metadata about a Type, provided via documentation annotations
+type Documentation struct {
+	title       string
+	description string
+	*Example
 }
 
 // NewTypeAnnotation checks the keyword argument provided via @schema/type annotation, and returns wrapper for the annotated node.
@@ -265,7 +277,7 @@ func NewExampleAnnotation(ann template.NodeAnnotation, pos *filepos.Position) (*
 			annPositions: []*filepos.Position{ann.Position},
 			position:     pos,
 			description:  fmt.Sprintf("syntax error in @%v annotation", AnnotationExamples),
-			expected:     fmt.Sprintf("tuple with description and example"),
+			expected:     fmt.Sprintf("2-tuple containing description (string) and example value (of expected type)"),
 			found:        fmt.Sprintf("keyword argument in @%v (by %v)", AnnotationExamples, ann.Position.AsCompactString()),
 		}
 	}
@@ -274,73 +286,67 @@ func NewExampleAnnotation(ann template.NodeAnnotation, pos *filepos.Position) (*
 			annPositions: []*filepos.Position{ann.Position},
 			position:     pos,
 			description:  fmt.Sprintf("syntax error in @%v annotation", AnnotationExamples),
-			expected:     fmt.Sprintf("tuple with description and example"),
+			expected:     fmt.Sprintf("2-tuple containing description (string) and example value (of expected type)"),
 			found:        fmt.Sprintf("missing value in @%v (by %v)", AnnotationExamples, ann.Position.AsCompactString()),
 		}
 	}
 
-	var descriptions []string
-	var examples []interface{}
-	for _, example := range ann.Args {
-		var exampleDescription string
-		var exampleYAML interface{}
-		var err error
-
-		if exampleTuple, ok := example.(starlark.Tuple); ok {
-			switch len(exampleTuple) {
-			case 0:
-				return nil, schemaAssertionError{
-					annPositions: []*filepos.Position{ann.Position},
-					position:     pos,
-					description:  fmt.Sprintf("syntax error in @%v annotation", AnnotationExamples),
-					expected:     fmt.Sprintf("tuple with optional string description and required example value"),
-					found:        fmt.Sprintf("empty tuple in @%v (by %v)", AnnotationExamples, ann.Position.AsCompactString()),
-				}
-			case 1:
-				exampleYAML, err = core.NewStarlarkValue(exampleTuple[0]).AsGoValue()
-				if err != nil {
-					panic(err)
-				}
-			case 2:
-				exampleDescription, err = core.NewStarlarkValue(exampleTuple[0]).AsString()
-				if err != nil {
-					return nil, schemaAssertionError{
-						annPositions: []*filepos.Position{ann.Position},
-						position:     pos,
-						description:  fmt.Sprintf("syntax error in @%v annotation", AnnotationExamples),
-						expected:     fmt.Sprintf("string"),
-						found:        fmt.Sprintf("Non-string value in @%v (by %v)", AnnotationExamples, ann.Position.AsCompactString()),
-						hints:        []string{fmt.Sprintf("@%v optionally accepts a string description as the first argument in a tuple", AnnotationExamples)},
-					}
-				}
-				exampleYAML, err = core.NewStarlarkValue(exampleTuple[1]).AsGoValue()
-				if err != nil {
-					panic(err)
-				}
-			default:
-				return nil, schemaAssertionError{
-					annPositions: []*filepos.Position{ann.Position},
-					position:     pos,
-					description:  fmt.Sprintf("syntax error in @%v annotation", AnnotationExamples),
-					expected:     fmt.Sprintf("no more than 2 arguments per tuple. e.g. @%v ('description', exampleValue())", AnnotationExamples),
-					found:        fmt.Sprintf("%v arguments in @%v (by %v)", len(exampleTuple), AnnotationExamples, ann.Position.AsCompactString()),
-				}
-			}
-		} else {
+	var examples []Example
+	for _, ex := range ann.Args {
+		exampleTuple, ok := ex.(starlark.Tuple)
+		if !ok {
 			return nil, schemaAssertionError{
 				annPositions: []*filepos.Position{ann.Position},
 				position:     pos,
 				description:  fmt.Sprintf("syntax error in @%v annotation", AnnotationExamples),
-				expected:     fmt.Sprintf("tuple with optional string description and required example value"),
-				found:        fmt.Sprintf("non tuple in @%v (by %v)", AnnotationExamples, ann.Position.AsCompactString()),
-				hints:        []string{"use a trailing comma to construct tuple with a single value. e.g. ('example value',)"},
+				expected:     fmt.Sprintf("2-tuple containing description (string) and example value (of expected type)"),
+				found:        fmt.Sprintf("%v for @%v (at %v)", ex.Type(), AnnotationExamples, ann.Position.AsCompactString()),
 			}
 		}
-		descriptions = append(descriptions, exampleDescription)
-		examples = append(examples, yamlmeta.NewASTFromInterfaceWithPosition(exampleYAML, pos))
-
+		switch {
+		case len(exampleTuple) == 0:
+			return nil, schemaAssertionError{
+				annPositions: []*filepos.Position{ann.Position},
+				position:     pos,
+				description:  fmt.Sprintf("syntax error in @%v annotation", AnnotationExamples),
+				expected:     fmt.Sprintf("2-tuple containing description (string) and example value (of expected type)"),
+				found:        fmt.Sprintf("empty tuple in @%v (by %v)", AnnotationExamples, ann.Position.AsCompactString()),
+			}
+		case len(exampleTuple) == 1:
+			return nil, schemaAssertionError{
+				annPositions: []*filepos.Position{ann.Position},
+				position:     pos,
+				description:  fmt.Sprintf("syntax error in @%v annotation", AnnotationExamples),
+				expected:     fmt.Sprintf("2-tuple containing description (string) and example value (of expected type)"),
+				found:        fmt.Sprintf("empty tuple in @%v (by %v)", AnnotationExamples, ann.Position.AsCompactString()),
+			}
+		case len(exampleTuple) > 2:
+			return nil, schemaAssertionError{
+				annPositions: []*filepos.Position{ann.Position},
+				position:     pos,
+				description:  fmt.Sprintf("syntax error in @%v annotation", AnnotationExamples),
+				expected:     fmt.Sprintf("2-tuple containing description (string) and example value (of expected type)"),
+				found:        fmt.Sprintf("%v-tuple argument in @%v (by %v)", len(exampleTuple), AnnotationExamples, ann.Position.AsCompactString()),
+			}
+		default:
+			description, err := core.NewStarlarkValue(exampleTuple[0]).AsString()
+			if err != nil {
+				return nil, schemaAssertionError{
+					annPositions: []*filepos.Position{ann.Position},
+					position:     pos,
+					description:  fmt.Sprintf("syntax error in @%v annotation", AnnotationExamples),
+					expected:     fmt.Sprintf("2-tuple containing description (string) and example value (of expected type)"),
+					found:        fmt.Sprintf("%v value for @%v (at %v)", exampleTuple[0].Type(), AnnotationExamples, ann.Position.AsCompactString()),
+				}
+			}
+			exampleVal, err := core.NewStarlarkValue(exampleTuple[1]).AsGoValue()
+			if err != nil {
+				panic(err)
+			}
+			examples = append(examples, Example{description, yamlmeta.NewASTFromInterfaceWithPosition(exampleVal, pos)})
+		}
 	}
-	return &ExampleAnnotation{descriptions, examples, ann.Position}, nil
+	return &ExampleAnnotation{examples, ann.Position}, nil
 }
 
 // NewTypeFromAnn returns type information given by annotation.
@@ -579,15 +585,8 @@ func getTypeFromAnnotations(anns []Annotation, pos *filepos.Position) (Type, err
 	return typeFromAnn, nil
 }
 
-type documentation struct {
-	title              string
-	description        string
-	exampleDescription string
-	exampleYAML        interface{}
-}
-
 func setDocumentationFromAnns(docAnns []Annotation, typeOfValue Type) error {
-	var documentationInfo documentation
+	var documentationInfo Documentation
 	for _, a := range docAnns {
 		switch ann := a.(type) {
 		case *TitleAnnotation:
@@ -601,8 +600,7 @@ func setDocumentationFromAnns(docAnns []Annotation, typeOfValue Type) error {
 			}
 			// display only first example
 			if len(ann.examples) != 0 {
-				documentationInfo.exampleDescription = ann.descriptions[0]
-				documentationInfo.exampleYAML = ann.examples[0]
+				documentationInfo.Example = &ann.examples[0]
 			}
 		}
 	}
@@ -613,7 +611,7 @@ func setDocumentationFromAnns(docAnns []Annotation, typeOfValue Type) error {
 func checkExamplesValue(ann *ExampleAnnotation, typeOfValue Type) error {
 	var typeCheck TypeCheck
 	for _, ex := range ann.examples {
-		if node, ok := ex.(yamlmeta.Node); ok {
+		if node, ok := ex.example.(yamlmeta.Node); ok {
 			defaultValue := node.DeepCopyAsNode()
 			chk := typeOfValue.AssignTypeTo(defaultValue)
 			if !chk.HasViolations() {
@@ -621,7 +619,7 @@ func checkExamplesValue(ann *ExampleAnnotation, typeOfValue Type) error {
 			}
 			typeCheck.Violations = append(typeCheck.Violations, chk.Violations...)
 		} else {
-			chk := typeOfValue.CheckType(&yamlmeta.MapItem{Value: ex, Position: typeOfValue.GetDefinitionPosition()})
+			chk := typeOfValue.CheckType(&yamlmeta.MapItem{Value: ex.example, Position: typeOfValue.GetDefinitionPosition()})
 			typeCheck.Violations = append(typeCheck.Violations, chk.Violations...)
 		}
 	}

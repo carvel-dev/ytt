@@ -713,14 +713,14 @@ db_conn:
   #@schema/examples ("hostname example description", "localhost")
   #@schema/desc "The hostname"
   hostname: ""
-  #@schema/examples (8080,)
+  #@schema/examples ("",8080)
   port: 0
   #@schema/examples ("timeout example description", 4.2), ("another timeout ex desc", 5)
   timeout: 1.0
   #@schema/examples ("any_key example description", "anything")
   #@schema/type any=True
   any_key: thing
-  #@schema/examples ("null_key example description", "anything")
+  #@schema/examples ("null_key example description", None)
   #@schema/nullable
   null_key: ""
 `
@@ -770,6 +770,7 @@ components:
                 type: string
                 default: ""
               port:
+                x-example-description: ""
                 example: 8080
                 type: integer
                 default: 0
@@ -786,7 +787,7 @@ components:
                 default: thing
               null_key:
                 x-example-description: null_key example description
-                example: anything
+                example: null
                 type: string
                 default: null
                 nullable: true
