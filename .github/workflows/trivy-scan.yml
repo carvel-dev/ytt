@@ -12,4 +12,5 @@ jobs:
       tool: ytt
       goVersion: 1.17.0
     secrets:
+      githubToken: ${{ secrets.GITHUB_TOKEN }}
       slackWebhookURL: ${{ secrets.SLACK_WEBHOOK_URL }}
