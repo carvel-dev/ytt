@@ -74,7 +74,7 @@ type Example struct {
 type Documentation struct {
 	title       string
 	description string
-	*Example
+	examples    []Example
 }
 
 // NewTypeAnnotation checks the keyword argument provided via @schema/type annotation, and returns wrapper for the annotated node.
@@ -598,10 +598,7 @@ func setDocumentationFromAnns(docAnns []Annotation, typeOfValue Type) error {
 			if err != nil {
 				return err
 			}
-			// display only first example
-			if len(ann.examples) != 0 {
-				documentationInfo.Example = &ann.examples[0]
-			}
+			documentationInfo.examples = ann.examples
 		}
 	}
 	typeOfValue.SetDocumentation(documentationInfo)

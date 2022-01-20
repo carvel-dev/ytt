@@ -22,7 +22,7 @@ type Type interface {
 
 	GetDescription() string
 	GetTitle() string
-	GetExample() *Example
+	GetExamples() []Example
 	SetDocumentation(Documentation)
 	String() string
 }
@@ -338,44 +338,44 @@ func (n *NullType) GetTitle() string {
 	return n.documentation.title
 }
 
-// GetExample provides descriptive example information
-func (t *DocumentType) GetExample() *Example {
+// GetExamples provides descriptive example information
+func (t *DocumentType) GetExamples() []Example {
 	return nil
 }
 
-// GetExample provides descriptive example information
-func (m *MapType) GetExample() *Example {
-	return m.documentation.Example
+// GetExamples provides descriptive example information
+func (m *MapType) GetExamples() []Example {
+	return m.documentation.examples
 }
 
-// GetExample provides descriptive example information
-func (t *MapItemType) GetExample() *Example {
+// GetExamples provides descriptive example information
+func (t *MapItemType) GetExamples() []Example {
 	return nil
 }
 
-// GetExample provides descriptive example information
-func (a *ArrayType) GetExample() *Example {
-	return a.documentation.Example
+// GetExamples provides descriptive example information
+func (a *ArrayType) GetExamples() []Example {
+	return a.documentation.examples
 }
 
-// GetExample provides descriptive example information
-func (a *ArrayItemType) GetExample() *Example {
+// GetExamples provides descriptive example information
+func (a *ArrayItemType) GetExamples() []Example {
 	return nil
 }
 
-// GetExample provides descriptive example information
-func (s *ScalarType) GetExample() *Example {
-	return s.documentation.Example
+// GetExamples provides descriptive example information
+func (s *ScalarType) GetExamples() []Example {
+	return s.documentation.examples
 }
 
-// GetExample provides descriptive example information
-func (a *AnyType) GetExample() *Example {
-	return a.documentation.Example
+// GetExamples provides descriptive example information
+func (a *AnyType) GetExamples() []Example {
+	return a.documentation.examples
 }
 
-// GetExample provides descriptive example information
-func (n *NullType) GetExample() *Example {
-	return n.documentation.Example
+// GetExamples provides descriptive example information
+func (n *NullType) GetExamples() []Example {
+	return n.documentation.examples
 }
 
 // SetDocumentation sets the description and example of the type

@@ -107,10 +107,10 @@ func collectDocumentation(t Type) []*yamlmeta.MapItem {
 	if t.GetDescription() != "" {
 		annDocumentation = append(annDocumentation, &yamlmeta.MapItem{Key: descriptionProp, Value: t.GetDescription()})
 	}
-	ex := t.GetExample()
-	if ex != nil {
-		annDocumentation = append(annDocumentation, &yamlmeta.MapItem{Key: exampleDescriptionProp, Value: ex.description})
-		annDocumentation = append(annDocumentation, &yamlmeta.MapItem{Key: exampleProp, Value: ex.example})
+	examples := t.GetExamples()
+	if len(examples) != 0 {
+		annDocumentation = append(annDocumentation, &yamlmeta.MapItem{Key: exampleDescriptionProp, Value: examples[0].description})
+		annDocumentation = append(annDocumentation, &yamlmeta.MapItem{Key: exampleProp, Value: examples[0].example})
 	}
 	return annDocumentation
 }
