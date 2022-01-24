@@ -13,7 +13,7 @@ import (
 //
 // If `d` has "schema/type" metadata (typically attached using SetType()), `d` is checked against that schema, recursively.
 // `chk` contains all the type violations found in the check.
-func CheckDocument(doc *yamlmeta.Document) TypeCheck {
+func CheckDocument(doc yamlmeta.Node) TypeCheck {
 	checker := newTypeChecker()
 
 	err := yamlmeta.Walk(doc, checker)

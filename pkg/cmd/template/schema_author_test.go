@@ -759,6 +759,196 @@ schema.yml:
 			assertFails(t, filesToProcess, expectedErr, opts)
 		})
 	})
+	t.Run("when schema/examples annotation value", func(t *testing.T) {
+		t.Run("is empty", func(t *testing.T) {
+			schemaYAML := `#@data/values-schema
+---
+#@schema/examples
+key: val
+`
+			expectedErr := `
+Invalid schema
+==============
+
+syntax error in @schema/examples annotation
+schema.yml:
+    |
+  3 | #@schema/examples
+  4 | key: val
+    |
+
+    = found: missing value in @schema/examples (by schema.yml:3)
+    = expected: 2-tuple containing description (string) and example value (of expected type)
+`
+
+			filesToProcess := files.NewSortedFiles([]*files.File{
+				files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
+			})
+
+			assertFails(t, filesToProcess, expectedErr, opts)
+		})
+		t.Run("is not a tuple", func(t *testing.T) {
+			schemaYAML := `#@data/values-schema
+---
+#@schema/examples "example value"
+key: val
+`
+			expectedErr := `
+Invalid schema
+==============
+
+syntax error in @schema/examples annotation
+schema.yml:
+    |
+  3 | #@schema/examples "example value"
+  4 | key: val
+    |
+
+    = found: string for @schema/examples (at schema.yml:3)
+    = expected: 2-tuple containing description (string) and example value (of expected type)
+`
+
+			filesToProcess := files.NewSortedFiles([]*files.File{
+				files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
+			})
+
+			assertFails(t, filesToProcess, expectedErr, opts)
+		})
+		t.Run("is an empty tuple", func(t *testing.T) {
+			schemaYAML := `#@data/values-schema
+---
+#@schema/examples ()
+key: val
+`
+			expectedErr := `
+Invalid schema
+==============
+
+syntax error in @schema/examples annotation
+schema.yml:
+    |
+  3 | #@schema/examples ()
+  4 | key: val
+    |
+
+    = found: empty tuple in @schema/examples (by schema.yml:3)
+    = expected: 2-tuple containing description (string) and example value (of expected type)
+`
+
+			filesToProcess := files.NewSortedFiles([]*files.File{
+				files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
+			})
+
+			assertFails(t, filesToProcess, expectedErr, opts)
+		})
+		t.Run("has more than two args in an example", func(t *testing.T) {
+			schemaYAML := `#@data/values-schema
+---
+#@schema/examples ("key example", "val", "value")
+key: val
+`
+			expectedErr := `
+Invalid schema
+==============
+
+syntax error in @schema/examples annotation
+schema.yml:
+    |
+  3 | #@schema/examples ("key example", "val", "value")
+  4 | key: val
+    |
+
+    = found: 3-tuple argument in @schema/examples (by schema.yml:3)
+    = expected: 2-tuple containing description (string) and example value (of expected type)
+`
+
+			filesToProcess := files.NewSortedFiles([]*files.File{
+				files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
+			})
+
+			assertFails(t, filesToProcess, expectedErr, opts)
+		})
+		t.Run("example description is not a string", func(t *testing.T) {
+			schemaYAML := `#@data/values-schema
+---
+#@schema/examples (3.14, 5)
+key: 7.3
+`
+			expectedErr := `
+Invalid schema
+==============
+
+syntax error in @schema/examples annotation
+schema.yml:
+    |
+  3 | #@schema/examples (3.14, 5)
+  4 | key: 7.3
+    |
+
+    = found: float value for @schema/examples (at schema.yml:3)
+    = expected: 2-tuple containing description (string) and example value (of expected type)
+`
+
+			filesToProcess := files.NewSortedFiles([]*files.File{
+				files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
+			})
+
+			assertFails(t, filesToProcess, expectedErr, opts)
+		})
+		t.Run("is key=value pair", func(t *testing.T) {
+			schemaYAML := `#@data/values-schema
+---
+#@schema/examples key=True
+key: val
+`
+			expectedErr := `
+Invalid schema
+==============
+
+syntax error in @schema/examples annotation
+schema.yml:
+    |
+  3 | #@schema/examples key=True
+  4 | key: val
+    |
+
+    = found: keyword argument in @schema/examples (by schema.yml:3)
+    = expected: 2-tuple containing description (string) and example value (of expected type)
+`
+
+			filesToProcess := files.NewSortedFiles([]*files.File{
+				files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
+			})
+
+			assertFails(t, filesToProcess, expectedErr, opts)
+		})
+		t.Run("does not match type of annotated node", func(t *testing.T) {
+			schemaYAML := `#@data/values-schema
+---
+#@schema/examples ("Zero value", 0)
+enabled: false
+`
+			expectedErr := `Invalid schema - @schema/examples has wrong type
+================================================
+
+schema.yml:
+    |
+  3 | #@schema/examples ("Zero value", 0)
+  4 | enabled: false
+    |
+
+    = found: integer (by schema.yml:3)
+    = expected: boolean (by schema.yml:4)
+    = hint: is the default value set using @schema/default?
+`
+
+			filesToProcess := files.NewSortedFiles([]*files.File{
+				files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
+			})
+
+			assertFails(t, filesToProcess, expectedErr, opts)
+		})
+	})
 }
 
 func TestSchema_Provides_default_values(t *testing.T) {

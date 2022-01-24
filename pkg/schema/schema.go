@@ -109,19 +109,16 @@ func getType(node yamlmeta.Node) (Type, error) {
 			return nil, err
 		}
 	}
+	err = valueTypeAllowsItemValue(typeOfValue, node.GetValues()[0], node.GetPosition())
+	if err != nil {
+		return nil, err
+	}
+
 	docAnns, err := collectDocumentationAnnotations(node)
 	if err != nil {
 		return nil, NewSchemaError("Invalid schema", err)
 	}
-	for _, ann := range docAnns {
-		switch annType := ann.(type) {
-		case *DescriptionAnnotation:
-			typeOfValue.SetDescription(annType.description)
-		case *TitleAnnotation:
-			typeOfValue.SetTitle(annType.title)
-		}
-	}
-	err = valueTypeAllowsItemValue(typeOfValue, node.GetValues()[0], node.GetPosition())
+	err = setDocumentationFromAnns(docAnns, typeOfValue)
 	if err != nil {
 		return nil, err
 	}
