@@ -21,6 +21,7 @@ const (
 	AnnotationDescription  template.AnnotationName = "schema/desc"
 	AnnotationTitle        template.AnnotationName = "schema/title"
 	AnnotationExamples     template.AnnotationName = "schema/examples"
+	AnnotationDeprecated   template.AnnotationName = "schema/deprecated"
 	TypeAnnotationKwargAny string                  = "any"
 )
 
@@ -56,6 +57,12 @@ type DescriptionAnnotation struct {
 type TitleAnnotation struct {
 	title string
 	pos   *filepos.Position
+}
+
+//DeprecatedAnnotation is a wrapper for a value provided via @schema/deprecated annotation
+type DeprecatedAnnotation struct {
+	deprecatedDesc string
+	pos            *filepos.Position
 }
 
 // ExampleAnnotation provides the Examples of a node
@@ -139,6 +146,22 @@ func NewNullableAnnotation(ann template.NodeAnnotation, node yamlmeta.Node) (*Nu
 	}
 
 	return &NullableAnnotation{node, ann.Position}, nil
+}
+
+// NewDeprecatedAnnotation checks that there are no arguments, and returns wrapper for the annotated node.
+func NewDeprecatedAnnotation(ann template.NodeAnnotation, pos *filepos.Position) (*DeprecatedAnnotation, error) {
+	if len(ann.Kwargs) != 0 {
+		return nil, schemaAssertionError{
+			annPositions: []*filepos.Position{ann.Position},
+			position:     ann.Position,
+			description:  fmt.Sprintf("expected @%v annotation to not contain any keyword arguments", AnnotationNullable),
+			expected:     "starlark.Bool",
+			found:        fmt.Sprintf("keyword argument in @%v (by %v)", AnnotationNullable, ann.Position.AsCompactString()),
+			hints:        []string{fmt.Sprintf("Supported kwargs are '%v'", TypeAnnotationKwargAny)},
+		}
+	}
+	return &DeprecatedAnnotation{"", ann.Position}, nil
+
 }
 
 // NewDefaultAnnotation checks the argument provided via @schema/default annotation, and returns wrapper for that value.
@@ -376,6 +399,11 @@ func (e *ExampleAnnotation) NewTypeFromAnn() (Type, error) {
 	return nil, nil
 }
 
+// NewTypeFromAnn returns type information given by annotation. DeprecatedAnnotation has no type information.
+func (d *DeprecatedAnnotation) NewTypeFromAnn() (Type, error) {
+	return nil, nil
+}
+
 // NewTypeFromAnn returns type information given by annotation. DescriptionAnnotation has no type information.
 func (d *DescriptionAnnotation) NewTypeFromAnn() (Type, error) {
 	return nil, nil
@@ -398,6 +426,11 @@ func (t *TypeAnnotation) GetPosition() *filepos.Position {
 
 // GetPosition returns position of the source comment used to create this annotation.
 func (d *DefaultAnnotation) GetPosition() *filepos.Position {
+	return d.pos
+}
+
+// GetPosition returns position of the source comment used to create this annotation.
+func (d *DeprecatedAnnotation) GetPosition() *filepos.Position {
 	return d.pos
 }
 
@@ -512,6 +545,12 @@ func processOptionalAnnotation(node yamlmeta.Node, optionalAnnotation template.A
 				return nil, err
 			}
 			return defaultAnn, nil
+		case AnnotationDeprecated:
+			deprAnn, err := NewDeprecatedAnnotation(ann, node.GetPosition())
+			if err != nil {
+				return nil, err
+			}
+			return deprAnn, nil
 		case AnnotationDescription:
 			descAnn, err := NewDescriptionAnnotation(ann, node.GetPosition())
 			if err != nil {
