@@ -70,8 +70,8 @@ type Example struct {
 	example     interface{}
 }
 
-// Documentation holds metadata about a Type, provided via documentation annotations
-type Documentation struct {
+// documentation holds metadata about a Type, provided via documentation annotations
+type documentation struct {
 	title       string
 	description string
 	examples    []Example
@@ -586,22 +586,20 @@ func getTypeFromAnnotations(anns []Annotation, pos *filepos.Position) (Type, err
 }
 
 func setDocumentationFromAnns(docAnns []Annotation, typeOfValue Type) error {
-	var documentationInfo Documentation
 	for _, a := range docAnns {
 		switch ann := a.(type) {
 		case *TitleAnnotation:
-			documentationInfo.title = ann.title
+			typeOfValue.SetTitle(ann.title)
 		case *DescriptionAnnotation:
-			documentationInfo.description = ann.description
+			typeOfValue.SetDescription(ann.description)
 		case *ExampleAnnotation:
 			err := checkExamplesValue(ann, typeOfValue)
 			if err != nil {
 				return err
 			}
-			documentationInfo.examples = ann.examples
+			typeOfValue.SetExamples(ann.examples)
 		}
 	}
-	typeOfValue.SetDocumentation(documentationInfo)
 	return nil
 }
 

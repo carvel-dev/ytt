@@ -21,9 +21,11 @@ type Type interface {
 	GetDefinitionPosition() *filepos.Position
 
 	GetDescription() string
+	SetDescription(string)
 	GetTitle() string
+	SetTitle(string)
 	GetExamples() []Example
-	SetDocumentation(Documentation)
+	SetExamples([]Example)
 	String() string
 }
 
@@ -45,7 +47,7 @@ type DocumentType struct {
 type MapType struct {
 	Items         []*MapItemType
 	Position      *filepos.Position
-	documentation Documentation
+	documentation documentation
 }
 type MapItemType struct {
 	Key          interface{} // usually a string
@@ -57,7 +59,7 @@ type ArrayType struct {
 	ItemsType     Type
 	Position      *filepos.Position
 	defaultValue  interface{}
-	documentation Documentation
+	documentation documentation
 }
 type ArrayItemType struct {
 	ValueType    Type
@@ -68,17 +70,17 @@ type ScalarType struct {
 	ValueType     interface{}
 	Position      *filepos.Position
 	defaultValue  interface{}
-	documentation Documentation
+	documentation documentation
 }
 type AnyType struct {
 	defaultValue  interface{}
 	Position      *filepos.Position
-	documentation Documentation
+	documentation documentation
 }
 type NullType struct {
 	ValueType     Type
 	Position      *filepos.Position
-	documentation Documentation
+	documentation documentation
 }
 
 // The total set of supported scalars.
@@ -298,6 +300,40 @@ func (n *NullType) GetDescription() string {
 	return n.documentation.description
 }
 
+// SetDescription sets the description of the type
+func (t *DocumentType) SetDescription(desc string) {}
+
+// SetDescription sets the description of the type
+func (m *MapType) SetDescription(desc string) {
+	m.documentation.description = desc
+}
+
+// SetDescription sets the description of the type
+func (t *MapItemType) SetDescription(desc string) {}
+
+// SetDescription sets the description of the type
+func (a *ArrayType) SetDescription(desc string) {
+	a.documentation.description = desc
+}
+
+// SetDescription sets the description of the type
+func (a *ArrayItemType) SetDescription(desc string) {}
+
+// SetDescription sets the description of the type
+func (s *ScalarType) SetDescription(desc string) {
+	s.documentation.description = desc
+}
+
+// SetDescription sets the description of the type
+func (a *AnyType) SetDescription(desc string) {
+	a.documentation.description = desc
+}
+
+// SetDescription sets the description of the type
+func (n *NullType) SetDescription(desc string) {
+	n.documentation.description = desc
+}
+
 // GetTitle provides title information
 func (t *DocumentType) GetTitle() string {
 	return ""
@@ -336,6 +372,40 @@ func (a *AnyType) GetTitle() string {
 // GetTitle provides title information
 func (n *NullType) GetTitle() string {
 	return n.documentation.title
+}
+
+// SetTitle sets the title of the type
+func (t *DocumentType) SetTitle(title string) {}
+
+// SetTitle sets the title of the type
+func (m *MapType) SetTitle(title string) {
+	m.documentation.title = title
+}
+
+// SetTitle sets the title of the type
+func (t *MapItemType) SetTitle(title string) {}
+
+// SetTitle sets the title of the type
+func (a *ArrayType) SetTitle(title string) {
+	a.documentation.title = title
+}
+
+// SetTitle sets the title of the type
+func (a *ArrayItemType) SetTitle(title string) {}
+
+// SetTitle sets the title of the type
+func (s *ScalarType) SetTitle(title string) {
+	s.documentation.title = title
+}
+
+// SetTitle sets the title of the type
+func (a *AnyType) SetTitle(title string) {
+	a.documentation.title = title
+}
+
+// SetTitle sets the title of the type
+func (n *NullType) SetTitle(title string) {
+	n.documentation.title = title
 }
 
 // GetExamples provides descriptive example information
@@ -378,38 +448,38 @@ func (n *NullType) GetExamples() []Example {
 	return n.documentation.examples
 }
 
-// SetDocumentation sets the description and example of the type
-func (t *DocumentType) SetDocumentation(data Documentation) {}
+// SetExamples sets the description and example of the type
+func (t *DocumentType) SetExamples(data []Example) {}
 
-// SetDocumentation sets the description and example of the type
-func (m *MapType) SetDocumentation(data Documentation) {
-	m.documentation = data
+// SetExamples sets the description and example of the type
+func (m *MapType) SetExamples(exs []Example) {
+	m.documentation.examples = exs
 }
 
-// SetDocumentation sets the description and example of the type
-func (t *MapItemType) SetDocumentation(data Documentation) {}
+// SetExamples sets the description and example of the type
+func (t *MapItemType) SetExamples(exs []Example) {}
 
-// SetDocumentation sets the description and example of the type
-func (a *ArrayType) SetDocumentation(data Documentation) {
-	a.documentation = data
+// SetExamples sets the description and example of the type
+func (a *ArrayType) SetExamples(exs []Example) {
+	a.documentation.examples = exs
 }
 
-// SetDocumentation sets the description and example of the type
-func (a *ArrayItemType) SetDocumentation(data Documentation) {}
+// SetExamples sets the description and example of the type
+func (a *ArrayItemType) SetExamples(exs []Example) {}
 
-// SetDocumentation sets the description and example of the type
-func (s *ScalarType) SetDocumentation(data Documentation) {
-	s.documentation = data
+// SetExamples sets the description and example of the type
+func (s *ScalarType) SetExamples(exs []Example) {
+	s.documentation.examples = exs
 }
 
-// SetDocumentation sets the description and example of the type
-func (a *AnyType) SetDocumentation(data Documentation) {
-	a.documentation = data
+// SetExamples sets the description and example of the type
+func (a *AnyType) SetExamples(exs []Example) {
+	a.documentation.examples = exs
 }
 
-// SetDocumentation sets the description and example of the type
-func (n *NullType) SetDocumentation(data Documentation) {
-	n.documentation = data
+// SetExamples sets the description and example of the type
+func (n *NullType) SetExamples(exs []Example) {
+	n.documentation.examples = exs
 }
 
 // String produces a user-friendly name of the expected type.
