@@ -9,14 +9,14 @@ import (
 	"github.com/k14s/ytt/pkg/yamlmeta"
 )
 
-// CheckDocument attempts type check of `doc`.
+// CheckNode attempts type check of root node and its children.
 //
-// If `d` has "schema/type" metadata (typically attached using SetType()), `d` is checked against that schema, recursively.
+// If `n` has "schema/type" metadata (typically attached using SetType()), `n` is checked against that schema, recursively.
 // `chk` contains all the type violations found in the check.
-func CheckDocument(doc yamlmeta.Node) TypeCheck {
+func CheckNode(n yamlmeta.Node) TypeCheck {
 	checker := newTypeChecker()
 
-	err := yamlmeta.Walk(doc, checker)
+	err := yamlmeta.Walk(n, checker)
 	if err != nil {
 		panic(err)
 	}

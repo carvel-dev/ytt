@@ -111,7 +111,7 @@ func (pp DataValuesPreProcessing) typeAndCheck(dataValuesDoc *yamlmeta.Document)
 	if len(chk.Violations) > 0 {
 		return chk
 	}
-	chk = schema.CheckDocument(dataValuesDoc)
+	chk = schema.CheckNode(dataValuesDoc)
 	return chk
 }
 

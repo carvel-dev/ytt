@@ -151,13 +151,28 @@ func getValueFromAnn(defaultAnn *DefaultAnnotation, t Type) (interface{}, error)
 
 	defaultValue := defaultAnn.Val()
 	if node, ok := defaultValue.(yamlmeta.Node); ok {
-		defaultValue = node.DeepCopyAsInterface()
-		typeCheck = t.AssignTypeTo(defaultValue.(yamlmeta.Node))
+		defaultNode := node.DeepCopyAsNode()
+		typeCheck = t.AssignTypeTo(defaultNode)
+		if !typeCheck.HasViolations() {
+			typeCheck = CheckNode(defaultNode)
+		}
+		defaultValue = defaultNode
 	} else {
 		typeCheck = t.CheckType(&yamlmeta.MapItem{Value: defaultValue, Position: t.GetDefinitionPosition()})
 	}
 	if typeCheck.HasViolations() {
-		return nil, NewSchemaError(fmt.Sprintf("Invalid schema - @%v is wrong type", AnnotationDefault), typeCheck.Violations...)
+		var violations []error
+		// add violating annotation position to error
+		for _, err := range typeCheck.Violations {
+			if typeCheckAssertionErr, ok := err.(schemaAssertionError); ok {
+				typeCheckAssertionErr.annPositions = []*filepos.Position{defaultAnn.GetPosition()}
+				typeCheckAssertionErr.found = typeCheckAssertionErr.found + fmt.Sprintf(" (at %v)", defaultAnn.GetPosition().AsCompactString())
+				violations = append(violations, typeCheckAssertionErr)
+			} else {
+				violations = append(violations, err)
+			}
+		}
+		return nil, NewSchemaError(fmt.Sprintf("Invalid schema - @%v is wrong type", AnnotationDefault), violations...)
 	}
 
 	return defaultValue, nil
