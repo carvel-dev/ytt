@@ -314,7 +314,6 @@ data_values.yml:
 
     = found: string
     = expected: integer (by schema.yml:4)
-    = hint: is the default value set using @schema/default?
 
 data_values.yml:
     |
@@ -323,7 +322,6 @@ data_values.yml:
 
     = found: integer
     = expected: string (by schema.yml:6)
-    = hint: is the default value set using @schema/default?
 
 data_values.yml:
     |
@@ -332,7 +330,6 @@ data_values.yml:
 
     = found: string
     = expected: float (by schema.yml:7)
-    = hint: is the default value set using @schema/default?
 `
 
 		assertFails(t, filesToProcess, expectedErr, opts)
@@ -438,7 +435,6 @@ data_values.yml:
 
      = found: string
      = expected: array (by schema.yml:4)
-     = hint: is the default value set using @schema/default?
 
 data_values.yml:
      |
@@ -447,7 +443,6 @@ data_values.yml:
 
      = found: string
      = expected: map (by schema.yml:5)
-     = hint: is the default value set using @schema/default?
 
 data_values.yml:
      |
@@ -456,7 +451,6 @@ data_values.yml:
 
      = found: string
      = expected: float (by schema.yml:6)
-     = hint: is the default value set using @schema/default?
 
 data_values.yml:
      |
@@ -465,7 +459,6 @@ data_values.yml:
 
      = found: boolean
      = expected: float (by schema.yml:6)
-     = hint: is the default value set using @schema/default?
 `
 		assertFails(t, filesToProcess, expectedErr, opts)
 	})
@@ -505,7 +498,6 @@ dataValues.yml:
 
     = found: string
     = expected: integer (by schema.yml:5)
-    = hint: is the default value set using @schema/default?
 
 dataValues.yml:
     |
@@ -514,7 +506,6 @@ dataValues.yml:
 
     = found: string
     = expected: integer (by schema.yml:6)
-    = hint: is the default value set using @schema/default?
 
 dataValues.yml:
     |
@@ -523,7 +514,6 @@ dataValues.yml:
 
     = found: string
     = expected: integer (by schema.yml:8)
-    = hint: is the default value set using @schema/default?
 
 `
 

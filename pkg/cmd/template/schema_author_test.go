@@ -493,12 +493,12 @@ Invalid schema - @schema/default is wrong type
 
 schema.yml:
     |
+  3 | #@schema/default 1
   4 | foo: a string
     |
 
-    = found: integer
+    = found: integer (at schema.yml:3)
     = expected: string (by schema.yml:4)
-    = hint: is the default value set using @schema/default?
 `
 
 				filesToProcess := files.NewSortedFiles([]*files.File{
@@ -521,12 +521,12 @@ Invalid schema - @schema/default is wrong type
 
 schema.yml:
     |
+  3 | #@schema/default [{"item": 1}]
   4 | map: thing
     |
 
-    = found: array
+    = found: array (at schema.yml:3)
     = expected: string (by schema.yml:4)
-    = hint: is the default value set using @schema/default?
 `
 
 				filesToProcess := files.NewSortedFiles([]*files.File{
@@ -939,7 +939,6 @@ schema.yml:
 
     = found: integer (by schema.yml:3)
     = expected: boolean (by schema.yml:4)
-    = hint: is the default value set using @schema/default?
 `
 
 			filesToProcess := files.NewSortedFiles([]*files.File{

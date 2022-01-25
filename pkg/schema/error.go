@@ -97,8 +97,6 @@ func NewMismatchedTypeAssertionError(foundNode yamlmeta.Node, expectedType Type)
 		position: foundNode.GetPosition(),
 		expected: fmt.Sprintf("%s (by %s)", expectedTypeString, expectedType.GetDefinitionPosition().AsCompactString()),
 		found:    nodeValueTypeAsString(foundNode),
-		// TODO: remove this hint once we can report if mistyped value came from annotation
-		hints: []string{fmt.Sprintf("is the default value set using @%v?", AnnotationDefault)},
 	}
 }
 

@@ -610,7 +610,7 @@ func checkExamplesValue(ann *ExampleAnnotation, typeOfValue Type) error {
 			defaultValue := node.DeepCopyAsNode()
 			chk := typeOfValue.AssignTypeTo(defaultValue)
 			if !chk.HasViolations() {
-				chk = CheckDocument(defaultValue)
+				chk = CheckNode(defaultValue)
 			}
 			typeCheck.Violations = append(typeCheck.Violations, chk.Violations...)
 		} else {
