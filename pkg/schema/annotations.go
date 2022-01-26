@@ -61,8 +61,8 @@ type TitleAnnotation struct {
 
 //DeprecatedAnnotation is a wrapper for a value provided via @schema/deprecated annotation
 type DeprecatedAnnotation struct {
-	deprecatedDesc string
-	pos            *filepos.Position
+	description string
+	pos         *filepos.Position
 }
 
 // ExampleAnnotation provides the Examples of a node
@@ -148,20 +148,48 @@ func NewNullableAnnotation(ann template.NodeAnnotation, node yamlmeta.Node) (*Nu
 	return &NullableAnnotation{node, ann.Position}, nil
 }
 
-// NewDeprecatedAnnotation checks that there are no arguments, and returns wrapper for the annotated node.
+// NewDeprecatedAnnotation validates the value from the AnnotationDeprecated, and returns the value
 func NewDeprecatedAnnotation(ann template.NodeAnnotation, pos *filepos.Position) (*DeprecatedAnnotation, error) {
 	if len(ann.Kwargs) != 0 {
 		return nil, schemaAssertionError{
 			annPositions: []*filepos.Position{ann.Position},
 			position:     ann.Position,
-			description:  fmt.Sprintf("expected @%v annotation to not contain any keyword arguments", AnnotationNullable),
+			description:  fmt.Sprintf("expected @%v annotation to not contain any keyword arguments", AnnotationDeprecated),
 			expected:     "starlark.Bool",
-			found:        fmt.Sprintf("keyword argument in @%v (by %v)", AnnotationNullable, ann.Position.AsCompactString()),
+			found:        fmt.Sprintf("keyword argument in @%v (by %v)", AnnotationDeprecated, ann.Position.AsCompactString()),
 			hints:        []string{fmt.Sprintf("Supported kwargs are '%v'", TypeAnnotationKwargAny)},
 		}
 	}
-	return &DeprecatedAnnotation{"", ann.Position}, nil
+	switch numArgs := len(ann.Args); {
+	case numArgs == 0:
+		return nil, schemaAssertionError{
+			annPositions: []*filepos.Position{ann.Position},
+			position:     pos,
+			description:  fmt.Sprintf("syntax error in @%v annotation", AnnotationDeprecated),
+			expected:     fmt.Sprintf("string"),
+			found:        fmt.Sprintf("missing value in @%v (by %v)", AnnotationDeprecated, ann.Position.AsCompactString()),
+		}
+	case numArgs > 1:
+		return nil, schemaAssertionError{
+			annPositions: []*filepos.Position{ann.Position},
+			position:     pos,
+			description:  fmt.Sprintf("syntax error in @%v annotation", AnnotationDeprecated),
+			expected:     fmt.Sprintf("string"),
+			found:        fmt.Sprintf("%v values in @%v (by %v)", numArgs, AnnotationDeprecated, ann.Position.AsCompactString()),
+		}
+	}
 
+	strVal, err := core.NewStarlarkValue(ann.Args[0]).AsString()
+	if err != nil {
+		return nil, schemaAssertionError{
+			annPositions: []*filepos.Position{ann.Position},
+			position:     pos,
+			description:  fmt.Sprintf("syntax error in @%v annotation", AnnotationDeprecated),
+			expected:     fmt.Sprintf("string"),
+			found:        fmt.Sprintf("Non-string value in @%v (by %v)", AnnotationDeprecated, ann.Position.AsCompactString()),
+		}
+	}
+	return &DeprecatedAnnotation{strVal, ann.Position}, nil
 }
 
 // NewDefaultAnnotation checks the argument provided via @schema/default annotation, and returns wrapper for that value.
@@ -492,7 +520,7 @@ func collectValueAnnotations(node yamlmeta.Node, effectiveType Type) ([]Annotati
 func collectDocumentationAnnotations(node yamlmeta.Node) ([]Annotation, error) {
 	var anns []Annotation
 
-	for _, annotation := range []template.AnnotationName{AnnotationDescription, AnnotationTitle, AnnotationExamples} {
+	for _, annotation := range []template.AnnotationName{AnnotationDescription, AnnotationTitle, AnnotationExamples, AnnotationDeprecated} {
 		ann, err := processOptionalAnnotation(node, annotation, nil)
 		if err != nil {
 			return nil, err

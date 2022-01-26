@@ -26,6 +26,8 @@ type Type interface {
 	SetTitle(string)
 	GetExamples() []Example
 	SetExamples([]Example)
+	GetDeprecated() bool
+	SetDeprecated(bool)
 	String() string
 }
 
@@ -55,7 +57,6 @@ type MapItemType struct {
 	ValueType    Type
 	Position     *filepos.Position
 	defaultValue interface{}
-	deprecated   bool
 }
 type ArrayType struct {
 	ItemsType     Type
@@ -68,7 +69,6 @@ type ArrayItemType struct {
 	ValueType    Type
 	Position     *filepos.Position
 	defaultValue interface{}
-	deprecated   bool
 }
 type ScalarType struct {
 	ValueType     interface{}
@@ -501,7 +501,7 @@ func (m *MapType) GetDeprecated() bool {
 
 // GetDeprecated provides deprecated field information
 func (t *MapItemType) GetDeprecated() bool {
-	return t.deprecated
+	return false
 }
 
 // GetDeprecated provides deprecated field information
@@ -511,7 +511,7 @@ func (a *ArrayType) GetDeprecated() bool {
 
 // GetDeprecated provides deprecated field information
 func (a *ArrayItemType) GetDeprecated() bool {
-	return a.deprecated
+	return false
 }
 
 // GetDeprecated provides deprecated field information
@@ -529,43 +529,37 @@ func (n *NullType) GetDeprecated() bool {
 	return n.deprecated
 }
 
-// SetDprecated sets the deprecated field value
-func (t *DocumentType) SetDprecated(deprecated bool) {
-	t.deprecated = deprecated
-}
+// SetDeprecated sets the deprecated field value
+func (t *DocumentType) SetDeprecated(deprecated bool) {}
 
-// SetDprecated sets the deprecated field value
-func (m *MapType) SetDprecated(deprecated bool) {
+// SetDeprecated sets the deprecated field value
+func (m *MapType) SetDeprecated(deprecated bool) {
 	m.deprecated = deprecated
 }
 
-// SetDprecated sets the deprecated field value
-func (t *MapItemType) SetDprecated(deprecated bool) {
-	t.deprecated = deprecated
-}
+// SetDeprecated sets the deprecated field value
+func (t *MapItemType) SetDeprecated(deprecated bool) {}
 
-// SetDprecated sets the deprecated field value
-func (a *ArrayType) SetDprecated(deprecated bool) {
+// SetDeprecated sets the deprecated field value
+func (a *ArrayType) SetDeprecated(deprecated bool) {
 	a.deprecated = deprecated
 }
 
-// SetDprecated sets the deprecated field value
-func (a *ArrayItemType) SetDeprecated(deprecated bool) {
-	a.deprecated = deprecated
-}
+// SetDeprecated sets the deprecated field value
+func (a *ArrayItemType) SetDeprecated(deprecated bool) {}
 
-// SetDprecated sets the deprecated field value
-func (s *ScalarType) SetDprecated(deprecated bool) {
+// SetDeprecated sets the deprecated field value
+func (s *ScalarType) SetDeprecated(deprecated bool) {
 	s.deprecated = deprecated
 }
 
-// SetDprecated sets the deprecated field value
-func (a *AnyType) SetDprecated(deprecated bool) {
+// SetDeprecated sets the deprecated field value
+func (a *AnyType) SetDeprecated(deprecated bool) {
 	a.deprecated = deprecated
 }
 
-// SetDprecated sets the deprecated field value
-func (n *NullType) SetDprecated(deprecated bool) {
+// SetDeprecated sets the deprecated field value
+func (n *NullType) SetDeprecated(deprecated bool) {
 	n.deprecated = deprecated
 }
 
