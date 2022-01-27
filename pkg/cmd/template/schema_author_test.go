@@ -759,6 +759,117 @@ schema.yml:
 			assertFails(t, filesToProcess, expectedErr, opts)
 		})
 	})
+	t.Run("when schema/deprecated annotation value", func(t *testing.T) {
+		t.Run("is empty", func(t *testing.T) {
+			schemaYAML := `#@data/values-schema
+---
+#@schema/deprecated
+key: val
+`
+			expectedErr := `
+Invalid schema
+==============
+
+syntax error in @schema/deprecated annotation
+schema.yml:
+    |
+  3 | #@schema/deprecated
+  4 | key: val
+    |
+
+    = found: missing value in @schema/deprecated (by schema.yml:3)
+    = expected: string
+`
+
+			filesToProcess := files.NewSortedFiles([]*files.File{
+				files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
+			})
+
+			assertFails(t, filesToProcess, expectedErr, opts)
+		})
+		t.Run("has more than one arg", func(t *testing.T) {
+			schemaYAML := `#@data/values-schema
+---
+#@schema/deprecated "two", "strings"
+key: val
+`
+			expectedErr := `
+Invalid schema
+==============
+
+syntax error in @schema/deprecated annotation
+schema.yml:
+    |
+  3 | #@schema/deprecated "two", "strings"
+  4 | key: val
+    |
+
+    = found: 2 values in @schema/deprecated (by schema.yml:3)
+    = expected: string
+`
+
+			filesToProcess := files.NewSortedFiles([]*files.File{
+				files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
+			})
+
+			assertFails(t, filesToProcess, expectedErr, opts)
+		})
+		t.Run("is not a string", func(t *testing.T) {
+			schemaYAML := `#@data/values-schema
+---
+#@schema/deprecated 1
+key: val
+`
+			expectedErr := `
+Invalid schema
+==============
+
+syntax error in @schema/deprecated annotation
+schema.yml:
+    |
+  3 | #@schema/deprecated 1
+  4 | key: val
+    |
+
+    = found: Non-string value in @schema/deprecated (by schema.yml:3)
+    = expected: string
+`
+
+			filesToProcess := files.NewSortedFiles([]*files.File{
+				files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
+			})
+
+			assertFails(t, filesToProcess, expectedErr, opts)
+		})
+		t.Run("is key=value pair", func(t *testing.T) {
+			schemaYAML := `#@data/values-schema
+---
+#@schema/deprecated key=True
+key: val
+`
+			expectedErr := `
+Invalid schema
+==============
+
+syntax error in @schema/deprecated annotation
+schema.yml:
+    |
+  3 | #@schema/deprecated key=True
+  4 | key: val
+    |
+
+    = found: keyword argument in @schema/deprecated (by schema.yml:3)
+    = expected: string
+    = hint: this annotation only accepts one argument: a string.
+`
+
+			filesToProcess := files.NewSortedFiles([]*files.File{
+				files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
+			})
+
+			assertFails(t, filesToProcess, expectedErr, opts)
+		})
+	})
 	t.Run("when schema/examples annotation value", func(t *testing.T) {
 		t.Run("is empty", func(t *testing.T) {
 			schemaYAML := `#@data/values-schema

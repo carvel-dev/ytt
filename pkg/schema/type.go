@@ -50,7 +50,6 @@ type MapType struct {
 	Items         []*MapItemType
 	Position      *filepos.Position
 	documentation documentation
-	deprecated   bool
 }
 type MapItemType struct {
 	Key          interface{} // usually a string
@@ -63,7 +62,6 @@ type ArrayType struct {
 	Position      *filepos.Position
 	defaultValue  interface{}
 	documentation documentation
-	deprecated   bool
 }
 type ArrayItemType struct {
 	ValueType    Type
@@ -75,19 +73,16 @@ type ScalarType struct {
 	Position      *filepos.Position
 	defaultValue  interface{}
 	documentation documentation
-	deprecated   bool
 }
 type AnyType struct {
 	defaultValue  interface{}
 	Position      *filepos.Position
 	documentation documentation
-	deprecated   bool
 }
 type NullType struct {
 	ValueType     Type
 	Position      *filepos.Position
 	documentation documentation
-	deprecated   bool
 }
 
 // The total set of supported scalars.
@@ -496,7 +491,7 @@ func (t *DocumentType) GetDeprecated() bool {
 
 // GetDeprecated provides deprecated field information
 func (m *MapType) GetDeprecated() bool {
-	return m.deprecated
+	return m.documentation.deprecated
 }
 
 // GetDeprecated provides deprecated field information
@@ -506,7 +501,7 @@ func (t *MapItemType) GetDeprecated() bool {
 
 // GetDeprecated provides deprecated field information
 func (a *ArrayType) GetDeprecated() bool {
-	return a.deprecated
+	return a.documentation.deprecated
 }
 
 // GetDeprecated provides deprecated field information
@@ -516,17 +511,17 @@ func (a *ArrayItemType) GetDeprecated() bool {
 
 // GetDeprecated provides deprecated field information
 func (s *ScalarType) GetDeprecated() bool {
-	return s.deprecated
+	return s.documentation.deprecated
 }
 
 // GetDeprecated provides deprecated field information
 func (a *AnyType) GetDeprecated() bool {
-	return a.deprecated
+	return a.documentation.deprecated
 }
 
 // GetDeprecated provides deprecated field information
 func (n *NullType) GetDeprecated() bool {
-	return n.deprecated
+	return n.documentation.deprecated
 }
 
 // SetDeprecated sets the deprecated field value
@@ -534,7 +529,7 @@ func (t *DocumentType) SetDeprecated(deprecated bool) {}
 
 // SetDeprecated sets the deprecated field value
 func (m *MapType) SetDeprecated(deprecated bool) {
-	m.deprecated = deprecated
+	m.documentation.deprecated = deprecated
 }
 
 // SetDeprecated sets the deprecated field value
@@ -542,7 +537,7 @@ func (t *MapItemType) SetDeprecated(deprecated bool) {}
 
 // SetDeprecated sets the deprecated field value
 func (a *ArrayType) SetDeprecated(deprecated bool) {
-	a.deprecated = deprecated
+	a.documentation.deprecated = deprecated
 }
 
 // SetDeprecated sets the deprecated field value
@@ -550,17 +545,17 @@ func (a *ArrayItemType) SetDeprecated(deprecated bool) {}
 
 // SetDeprecated sets the deprecated field value
 func (s *ScalarType) SetDeprecated(deprecated bool) {
-	s.deprecated = deprecated
+	s.documentation.deprecated = deprecated
 }
 
 // SetDeprecated sets the deprecated field value
 func (a *AnyType) SetDeprecated(deprecated bool) {
-	a.deprecated = deprecated
+	a.documentation.deprecated = deprecated
 }
 
 // SetDeprecated sets the deprecated field value
 func (n *NullType) SetDeprecated(deprecated bool) {
-	n.deprecated = deprecated
+	n.documentation.deprecated = deprecated
 }
 
 // String produces a user-friendly name of the expected type.

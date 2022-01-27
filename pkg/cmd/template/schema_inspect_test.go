@@ -557,12 +557,14 @@ db_conn:
   #@schema/type any=True
   #@schema/examples ("hostname example", 1.5)
   #@schema/default "host"
+  #@schema/deprecated ""
   hostname: ""
   #@schema/title "Port Title" 
   #@schema/desc "Port should be float between 0.152 through 16.35"  
   #@schema/nullable
   #@schema/examples ("", 1.5)
   #@schema/default 9.9
+  #@schema/deprecated ""
   port: 0.2
 `
 		expected := `openapi: 3.0.0
@@ -583,6 +585,7 @@ components:
             hostname:
               title: Host Title
               nullable: true
+              deprecated: true
               description: The hostname
               x-example-description: hostname example
               example: 1.5
@@ -592,6 +595,7 @@ components:
               type: number
               format: float
               nullable: true
+              deprecated: true
               description: Port should be float between 0.152 through 16.35
               x-example-description: ""
               example: 1.5
@@ -856,29 +860,27 @@ components:
 
 		assertSucceedsDocSet(t, filesToProcess, expected, opts)
 	})
-
 	t.Run("when deprecated property is provided by @schema/deprecated", func(t *testing.T) {
 		opts := cmdtpl.NewOptions()
 		opts.DataValuesFlags.InspectSchema = true
 		opts.RegularFilesSourceOpts.OutputType.Types = []string{"openapi-v3"}
 
 		schemaYAML := `#@data/values-schema
-#@schema/deprecated "Network configuration values"
 ---
-#@schema/deprecated "List of database connections"
+#@schema/deprecated ""
 db_conn:
-#@schema/deprecated "A network entry"
+#@schema/deprecated ""
 -
-  #@schema/deprecated "The host"
+  #@schema/deprecated ""
   hostname: ""
-  #@schema/deprecated "The Port"
+  #@schema/deprecated ""
   port: 0
-  #@schema/deprecated "The Timeout"
+  #@schema/deprecated ""
   timeout: 1.0
-  #@schema/deprecated "Any type"
+  #@schema/deprecated ""
   #@schema/type any=True
   any_key: thing
-  #@schema/deprecated "When not provided, the default is null"
+  #@schema/deprecated ""
   #@schema/nullable
   null_key: ""
 `
@@ -892,7 +894,6 @@ components:
     dataValues:
       type: object
       additionalProperties: false
-      deprecated: true
       properties:
         db_conn:
           type: array
@@ -904,26 +905,26 @@ components:
             properties:
               hostname:
                 type: string
-                default: ""
                 deprecated: true
+                default: ""
               port:
                 type: integer
-                default: 0
                 deprecated: true
+                default: 0
               timeout:
                 type: number
-                default: 1
                 format: float
                 deprecated: true
+                default: 1
               any_key:
                 nullable: true
-                default: thing
                 deprecated: true
+                default: thing
               null_key:
                 type: string
-                default: null
                 nullable: true
                 deprecated: true
+                default: null
           default: []
 `
 		filesToProcess := files.NewSortedFiles([]*files.File{

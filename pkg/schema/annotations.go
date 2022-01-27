@@ -81,6 +81,7 @@ type Example struct {
 type documentation struct {
 	title       string
 	description string
+	deprecated  bool
 	examples    []Example
 }
 
@@ -153,11 +154,11 @@ func NewDeprecatedAnnotation(ann template.NodeAnnotation, pos *filepos.Position)
 	if len(ann.Kwargs) != 0 {
 		return nil, schemaAssertionError{
 			annPositions: []*filepos.Position{ann.Position},
-			position:     ann.Position,
-			description:  fmt.Sprintf("expected @%v annotation to not contain any keyword arguments", AnnotationDeprecated),
-			expected:     "starlark.Bool",
+			position:     pos,
+			description:  fmt.Sprintf("syntax error in @%v annotation", AnnotationDeprecated),
+			expected:     fmt.Sprintf("string"),
 			found:        fmt.Sprintf("keyword argument in @%v (by %v)", AnnotationDeprecated, ann.Position.AsCompactString()),
-			hints:        []string{fmt.Sprintf("Supported kwargs are '%v'", TypeAnnotationKwargAny)},
+			hints:        []string{"this annotation only accepts one argument: a string."},
 		}
 	}
 	switch numArgs := len(ann.Args); {
@@ -659,6 +660,8 @@ func setDocumentationFromAnns(docAnns []Annotation, typeOfValue Type) error {
 			typeOfValue.SetTitle(ann.title)
 		case *DescriptionAnnotation:
 			typeOfValue.SetDescription(ann.description)
+		case *DeprecatedAnnotation:
+			typeOfValue.SetDeprecated(true)
 		case *ExampleAnnotation:
 			err := checkExamplesValue(ann, typeOfValue)
 			if err != nil {
