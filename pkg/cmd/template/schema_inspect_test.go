@@ -61,8 +61,8 @@ components:
               default: some text
             float_key:
               type: number
-              default: 9.1
               format: float
+              default: 9.1
             array_of_scalars:
               type: array
               items:
@@ -83,7 +83,6 @@ components:
                     default: ""
               default: []
 `
-
 		filesToProcess := files.NewSortedFiles([]*files.File{
 			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
 		})
@@ -145,8 +144,8 @@ components:
               default: some text
             float_key:
               type: number
-              default: 9.1
               format: float
+              default: 9.1
             array_of_scalars:
               type: array
               items:
@@ -229,48 +228,48 @@ components:
           properties:
             int_key:
               type: integer
-              default: null
               nullable: true
+              default: null
             bool_key:
               type: boolean
-              default: null
               nullable: true
+              default: null
             false_key:
               type: boolean
-              default: null
               nullable: true
+              default: null
             string_key:
               type: string
-              default: null
               nullable: true
+              default: null
             float_key:
               type: number
-              default: null
               format: float
               nullable: true
+              default: null
             array_of_scalars:
               type: array
+              nullable: true
               items:
                 type: integer
                 default: 0
               default: null
-              nullable: true
             array_of_maps:
               type: array
+              nullable: true
               items:
                 type: object
                 additionalProperties: false
                 properties:
                   bar:
                     type: string
-                    default: null
                     nullable: true
+                    default: null
                   ree:
                     type: string
-                    default: null
                     nullable: true
+                    default: null
               default: null
-              nullable: true
 `
 
 		filesToProcess := files.NewSortedFiles([]*files.File{
@@ -483,27 +482,28 @@ components:
           properties:
             int_key:
               type: integer
-              default: 10
               nullable: true
+              default: 10
             bool_key:
               type: boolean
-              default: true
               nullable: true
+              default: true
             false_key:
               type: boolean
-              default: false
               nullable: true
+              default: false
             string_key:
               type: string
-              default: some text
               nullable: true
+              default: some text
             float_key:
               type: number
-              default: 9.1
               format: float
               nullable: true
+              default: 9.1
             array_of_scalars:
               type: array
+              nullable: true
               items:
                 type: integer
                 default: 0
@@ -511,21 +511,21 @@ components:
               - 1
               - 2
               - 3
-              nullable: true
             array_of_maps:
               type: array
+              nullable: true
               items:
                 type: object
                 additionalProperties: false
                 properties:
                   bar:
                     type: string
-                    default: null
                     nullable: true
+                    default: null
                   ree:
                     type: string
-                    default: null
                     nullable: true
+                    default: null
               default:
               - bar: thing 1
                 ree: null
@@ -533,7 +533,6 @@ components:
                 ree: null
               - bar: thing 3
                 ree: null
-              nullable: true
 `
 
 		filesToProcess := files.NewSortedFiles([]*files.File{
@@ -544,8 +543,67 @@ components:
 	})
 
 }
-
 func TestSchemaInspect_annotation_adds_key(t *testing.T) {
+	t.Run("in the correct relative order", func(t *testing.T) {
+		opts := cmdtpl.NewOptions()
+		opts.DataValuesFlags.InspectSchema = true
+		opts.RegularFilesSourceOpts.OutputType.Types = []string{"openapi-v3"}
+
+		schemaYAML := `#@data/values-schema
+---
+db_conn:
+  #@schema/title "Host Title"
+  #@schema/desc "The hostname"
+  #@schema/type any=True
+  #@schema/examples ("hostname example", 1.5)
+  #@schema/default "host"
+  hostname: ""
+  #@schema/title "Port Title" 
+  #@schema/desc "Port should be float between 0.152 through 16.35"  
+  #@schema/nullable
+  #@schema/examples ("", 1.5)
+  #@schema/default 9.9
+  port: 0.2
+`
+		expected := `openapi: 3.0.0
+info:
+  version: 0.1.0
+  title: Schema for data values, generated by ytt
+paths: {}
+components:
+  schemas:
+    dataValues:
+      type: object
+      additionalProperties: false
+      properties:
+        db_conn:
+          type: object
+          additionalProperties: false
+          properties:
+            hostname:
+              title: Host Title
+              nullable: true
+              description: The hostname
+              x-example-description: hostname example
+              example: 1.5
+              default: host
+            port:
+              title: Port Title
+              type: number
+              format: float
+              nullable: true
+              description: Port should be float between 0.152 through 16.35
+              x-example-description: ""
+              example: 1.5
+              default: 9.9
+`
+
+		filesToProcess := files.NewSortedFiles([]*files.File{
+			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
+		})
+
+		assertSucceedsDocSet(t, filesToProcess, expected, opts)
+	})
 	t.Run("when description provided by @schema/desc", func(t *testing.T) {
 		opts := cmdtpl.NewOptions()
 		opts.DataValuesFlags.InspectSchema = true
@@ -579,40 +637,40 @@ paths: {}
 components:
   schemas:
     dataValues:
-      description: Network configuration values
       type: object
       additionalProperties: false
+      description: Network configuration values
       properties:
         db_conn:
-          description: List of database connections
           type: array
+          description: List of database connections
           items:
-            description: A network entry
             type: object
             additionalProperties: false
+            description: A network entry
             properties:
               hostname:
-                description: The hostname
                 type: string
+                description: The hostname
                 default: ""
               port:
-                description: Port should be between 49152 through 65535
                 type: integer
+                description: Port should be between 49152 through 65535
                 default: 0
               timeout:
-                description: Timeout in minutes
                 type: number
-                default: 1
                 format: float
+                description: Timeout in minutes
+                default: 1
               any_key:
-                description: Any type is allowed
                 nullable: true
+                description: Any type is allowed
                 default: thing
               null_key:
-                description: When not provided, the default is null
                 type: string
-                default: null
                 nullable: true
+                description: When not provided, the default is null
+                default: null
           default: []
 `
 
@@ -622,7 +680,6 @@ components:
 
 		assertSucceedsDocSet(t, filesToProcess, expected, opts)
 	})
-
 	t.Run("when title provided by @schema/title", func(t *testing.T) {
 		opts := cmdtpl.NewOptions()
 		opts.DataValuesFlags.InspectSchema = true
@@ -679,8 +736,8 @@ components:
               timeout:
                 title: The Timeout
                 type: number
-                default: 1
                 format: float
+                default: 1
               any_key:
                 title: Any type
                 nullable: true
@@ -688,8 +745,8 @@ components:
               null_key:
                 title: When not provided, the default is null
                 type: string
-                default: null
                 nullable: true
+                default: null
           default: []
 `
 		filesToProcess := files.NewSortedFiles([]*files.File{
@@ -732,6 +789,8 @@ paths: {}
 components:
   schemas:
     dataValues:
+      type: object
+      additionalProperties: false
       x-example-description: schema example description
       example:
         db_conn:
@@ -740,10 +799,9 @@ components:
           timeout: 4.2
           any_key: anything
           null_key: null
-      type: object
-      additionalProperties: false
       properties:
         db_conn:
+          type: array
           x-example-description: db_conn example description
           example:
           - hostname: localhost
@@ -751,8 +809,9 @@ components:
             timeout: 4.2
             any_key: anything
             null_key: null
-          type: array
           items:
+            type: object
+            additionalProperties: false
             x-example-description: db_conn array example description
             example:
               hostname: localhost
@@ -760,40 +819,37 @@ components:
               timeout: 4.2
               any_key: anything
               null_key: not null
-            type: object
-            additionalProperties: false
             properties:
               hostname:
+                type: string
                 description: The hostname
                 x-example-description: hostname example description
                 example: localhost
-                type: string
                 default: ""
               port:
+                type: integer
                 x-example-description: ""
                 example: 8080
-                type: integer
                 default: 0
               timeout:
+                type: number
+                format: float
                 x-example-description: timeout example description
                 example: 4.2
-                type: number
                 default: 1
-                format: float
               any_key:
+                nullable: true
                 x-example-description: any_key example description
                 example: anything
-                nullable: true
                 default: thing
               null_key:
+                type: string
+                nullable: true
                 x-example-description: null_key example description
                 example: null
-                type: string
                 default: null
-                nullable: true
           default: []
 `
-
 		filesToProcess := files.NewSortedFiles([]*files.File{
 			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
 		})
