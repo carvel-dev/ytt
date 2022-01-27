@@ -17,7 +17,6 @@ const (
 	additionalPropsProp    = "additionalProperties"
 	formatProp             = "format"
 	nullableProp           = "nullable"
-	deprecatedProp         = "deprecated"
 	descriptionProp        = "description"
 	exampleDescriptionProp = "x-example-description"
 	exampleProp            = "example"
@@ -32,13 +31,12 @@ var propOrder = map[string]int{
 	additionalPropsProp:    2,
 	formatProp:             3,
 	nullableProp:           4,
-	deprecatedProp:         5,
-	descriptionProp:        6,
-	exampleDescriptionProp: 7,
-	exampleProp:            8,
-	itemsProp:              9,
-	propertiesProp:         10,
-	defaultProp:            11,
+	descriptionProp:        5,
+	exampleDescriptionProp: 6,
+	exampleProp:            7,
+	itemsProp:              8,
+	propertiesProp:         9,
+	defaultProp:            10,
 }
 
 type openAPIKeys []*yamlmeta.MapItem
