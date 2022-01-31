@@ -10,7 +10,7 @@ linters-settings:
   goheader:
     values:
       regexp:
-        copyright-year: 202[0-1]
+        copyright-year: 20[0-9][0-9]
     template-path: code-header-template.txt
 issues:
   max-issues-per-linter: 0
