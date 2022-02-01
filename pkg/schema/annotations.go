@@ -575,6 +575,14 @@ func processOptionalAnnotation(node yamlmeta.Node, optionalAnnotation template.A
 			}
 			return defaultAnn, nil
 		case AnnotationDeprecated:
+			if _, ok := node.(*yamlmeta.Document); ok {
+				return nil, schemaAssertionError{
+					description:  fmt.Sprintf("@%v not supported on a document", AnnotationDeprecated),
+					annPositions: []*filepos.Position{ann.Position},
+					position:     node.GetPosition(),
+					hints:        []string{"do you mean to deprecate the entire schema document?", "use schema/deprecated on individual keys."},
+				}
+			}
 			deprAnn, err := NewDeprecatedAnnotation(ann, node.GetPosition())
 			if err != nil {
 				return nil, err

@@ -869,6 +869,36 @@ schema.yml:
 
 			assertFails(t, filesToProcess, expectedErr, opts)
 		})
+		t.Run("is on an a document", func(t *testing.T) {
+			schemaYAML := `#@data/values-schema
+#@schema/deprecated ""
+---
+foo:
+- bar
+`
+
+			expectedErr := `
+Invalid schema
+==============
+
+@schema/deprecated not supported on a document
+schema.yml:
+    |
+  2 | #@schema/deprecated ""
+  3 | ---
+    |
+
+
+
+    = hint: do you mean to deprecate the entire schema document?
+    = hint: use schema/deprecated on individual keys.
+`
+			filesToProcess := files.NewSortedFiles([]*files.File{
+				files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
+			})
+
+			assertFails(t, filesToProcess, expectedErr, opts)
+		})
 	})
 	t.Run("when schema/examples annotation value", func(t *testing.T) {
 		t.Run("is empty", func(t *testing.T) {
