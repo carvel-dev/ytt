@@ -17,7 +17,7 @@ const (
 	additionalPropsProp    = "additionalProperties"
 	formatProp             = "format"
 	nullableProp           = "nullable"
-	deprecatedProp 		   = "deprecated"
+	deprecatedProp         = "deprecated"
 	descriptionProp        = "description"
 	exampleDescriptionProp = "x-example-description"
 	exampleProp            = "example"
@@ -32,7 +32,7 @@ var propOrder = map[string]int{
 	additionalPropsProp:    2,
 	formatProp:             3,
 	nullableProp:           4,
-	deprecatedProp:			5,
+	deprecatedProp:         5,
 	descriptionProp:        6,
 	exampleDescriptionProp: 7,
 	exampleProp:            8,
