@@ -27,7 +27,7 @@ type Type interface {
 	GetExamples() []Example
 	SetExamples([]Example)
 	IsDeprecated() (bool, string)
-	SetDeprecated(deprecated bool, notice string)
+	SetDeprecated(bool, string)
 	String() string
 }
 
@@ -491,7 +491,8 @@ func (t *DocumentType) IsDeprecated() (bool, string) {
 
 // IsDeprecated provides deprecated field information
 func (m *MapType) IsDeprecated() (bool, string) {
-	return m.documentation.deprecated, ""
+	return m.documentation.deprecated, m.documentation.deprecationNotice
+
 }
 
 // IsDeprecated provides deprecated field information
@@ -501,7 +502,7 @@ func (t *MapItemType) IsDeprecated() (bool, string) {
 
 // IsDeprecated provides deprecated field information
 func (a *ArrayType) IsDeprecated() (bool, string) {
-	return a.documentation.deprecated, ""
+	return a.documentation.deprecated, a.documentation.deprecationNotice
 }
 
 // IsDeprecated provides deprecated field information
@@ -511,17 +512,17 @@ func (a *ArrayItemType) IsDeprecated() (bool, string) {
 
 // IsDeprecated provides deprecated field information
 func (s *ScalarType) IsDeprecated() (bool, string) {
-	return s.documentation.deprecated, ""
+	return s.documentation.deprecated, s.documentation.deprecationNotice
 }
 
 // IsDeprecated provides deprecated field information
 func (a *AnyType) IsDeprecated() (bool, string) {
-	return a.documentation.deprecated, ""
+	return a.documentation.deprecated, a.documentation.deprecationNotice
 }
 
 // IsDeprecated provides deprecated field information
 func (n *NullType) IsDeprecated() (bool, string) {
-	return n.documentation.deprecated, ""
+	return n.documentation.deprecated, n.documentation.deprecationNotice
 }
 
 // SetDeprecated sets the deprecated field value
