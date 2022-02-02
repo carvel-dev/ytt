@@ -61,8 +61,8 @@ type TitleAnnotation struct {
 
 //DeprecatedAnnotation is a wrapper for a value provided via @schema/deprecated annotation
 type DeprecatedAnnotation struct {
-	description string
-	pos         *filepos.Position
+	notice string
+	pos    *filepos.Position
 }
 
 // ExampleAnnotation provides the Examples of a node
@@ -79,10 +79,11 @@ type Example struct {
 
 // documentation holds metadata about a Type, provided via documentation annotations
 type documentation struct {
-	title       string
-	description string
-	deprecated  bool
-	examples    []Example
+	title             string
+	description       string
+	deprecated        bool
+	deprecationNotice string
+	examples          []Example
 }
 
 // NewTypeAnnotation checks the keyword argument provided via @schema/type annotation, and returns wrapper for the annotated node.
@@ -577,7 +578,7 @@ func processOptionalAnnotation(node yamlmeta.Node, optionalAnnotation template.A
 		case AnnotationDeprecated:
 			if _, ok := node.(*yamlmeta.Document); ok {
 				return nil, schemaAssertionError{
-					description:  fmt.Sprintf("@%v not supported on a document", AnnotationDeprecated),
+					description:  fmt.Sprintf("@%v not supported on a %s", AnnotationDeprecated, yamlmeta.TypeName(node)),
 					annPositions: []*filepos.Position{ann.Position},
 					position:     node.GetPosition(),
 					hints:        []string{"do you mean to deprecate the entire schema document?", "use schema/deprecated on individual keys."},
@@ -669,7 +670,7 @@ func setDocumentationFromAnns(docAnns []Annotation, typeOfValue Type) error {
 		case *DescriptionAnnotation:
 			typeOfValue.SetDescription(ann.description)
 		case *DeprecatedAnnotation:
-			typeOfValue.SetDeprecated(true)
+			typeOfValue.SetDeprecated(true, ann.notice)
 		case *ExampleAnnotation:
 			err := checkExamplesValue(ann, typeOfValue)
 			if err != nil {

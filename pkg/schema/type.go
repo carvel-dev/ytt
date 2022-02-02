@@ -26,8 +26,8 @@ type Type interface {
 	SetTitle(string)
 	GetExamples() []Example
 	SetExamples([]Example)
-	GetDeprecated() bool
-	SetDeprecated(bool)
+	IsDeprecated() (bool, string)
+	SetDeprecated(deprecated bool, notice string)
 	String() string
 }
 
@@ -484,77 +484,82 @@ func (n *NullType) SetExamples(exs []Example) {
 	n.documentation.examples = exs
 }
 
-// GetDeprecated provides deprecated field information
-func (t *DocumentType) GetDeprecated() bool {
-	return false
+// IsDeprecated provides deprecated field information
+func (t *DocumentType) IsDeprecated() (bool, string) {
+	return false, ""
 }
 
-// GetDeprecated provides deprecated field information
-func (m *MapType) GetDeprecated() bool {
-	return m.documentation.deprecated
+// IsDeprecated provides deprecated field information
+func (m *MapType) IsDeprecated() (bool, string) {
+	return m.documentation.deprecated, ""
 }
 
-// GetDeprecated provides deprecated field information
-func (t *MapItemType) GetDeprecated() bool {
-	return false
+// IsDeprecated provides deprecated field information
+func (t *MapItemType) IsDeprecated() (bool, string) {
+	return false, ""
 }
 
-// GetDeprecated provides deprecated field information
-func (a *ArrayType) GetDeprecated() bool {
-	return a.documentation.deprecated
+// IsDeprecated provides deprecated field information
+func (a *ArrayType) IsDeprecated() (bool, string) {
+	return a.documentation.deprecated, ""
 }
 
-// GetDeprecated provides deprecated field information
-func (a *ArrayItemType) GetDeprecated() bool {
-	return false
+// IsDeprecated provides deprecated field information
+func (a *ArrayItemType) IsDeprecated() (bool, string) {
+	return false, ""
 }
 
-// GetDeprecated provides deprecated field information
-func (s *ScalarType) GetDeprecated() bool {
-	return s.documentation.deprecated
+// IsDeprecated provides deprecated field information
+func (s *ScalarType) IsDeprecated() (bool, string) {
+	return s.documentation.deprecated, ""
 }
 
-// GetDeprecated provides deprecated field information
-func (a *AnyType) GetDeprecated() bool {
-	return a.documentation.deprecated
+// IsDeprecated provides deprecated field information
+func (a *AnyType) IsDeprecated() (bool, string) {
+	return a.documentation.deprecated, ""
 }
 
-// GetDeprecated provides deprecated field information
-func (n *NullType) GetDeprecated() bool {
-	return n.documentation.deprecated
+// IsDeprecated provides deprecated field information
+func (n *NullType) IsDeprecated() (bool, string) {
+	return n.documentation.deprecated, ""
 }
 
 // SetDeprecated sets the deprecated field value
-func (t *DocumentType) SetDeprecated(deprecated bool) {}
+func (t *DocumentType) SetDeprecated(deprecated bool, notice string) {}
 
 // SetDeprecated sets the deprecated field value
-func (m *MapType) SetDeprecated(deprecated bool) {
+func (m *MapType) SetDeprecated(deprecated bool, notice string) {
+	m.documentation.deprecationNotice = notice
 	m.documentation.deprecated = deprecated
 }
 
 // SetDeprecated sets the deprecated field value
-func (t *MapItemType) SetDeprecated(deprecated bool) {}
+func (t *MapItemType) SetDeprecated(deprecated bool, notice string) {}
 
 // SetDeprecated sets the deprecated field value
-func (a *ArrayType) SetDeprecated(deprecated bool) {
+func (a *ArrayType) SetDeprecated(deprecated bool, notice string) {
+	a.documentation.deprecationNotice = notice
 	a.documentation.deprecated = deprecated
 }
 
 // SetDeprecated sets the deprecated field value
-func (a *ArrayItemType) SetDeprecated(deprecated bool) {}
+func (a *ArrayItemType) SetDeprecated(deprecated bool, notice string) {}
 
 // SetDeprecated sets the deprecated field value
-func (s *ScalarType) SetDeprecated(deprecated bool) {
+func (s *ScalarType) SetDeprecated(deprecated bool, notice string) {
+	s.documentation.deprecationNotice = notice
 	s.documentation.deprecated = deprecated
 }
 
 // SetDeprecated sets the deprecated field value
-func (a *AnyType) SetDeprecated(deprecated bool) {
+func (a *AnyType) SetDeprecated(deprecated bool, notice string) {
+	a.documentation.deprecationNotice = notice
 	a.documentation.deprecated = deprecated
 }
 
 // SetDeprecated sets the deprecated field value
-func (n *NullType) SetDeprecated(deprecated bool) {
+func (n *NullType) SetDeprecated(deprecated bool, notice string) {
+	n.documentation.deprecationNotice = notice
 	n.documentation.deprecated = deprecated
 }
 

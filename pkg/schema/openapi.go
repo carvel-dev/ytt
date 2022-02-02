@@ -160,8 +160,8 @@ func collectDocumentation(typedValue Type) []*yamlmeta.MapItem {
 	if typedValue.GetDescription() != "" {
 		items = append(items, &yamlmeta.MapItem{Key: descriptionProp, Value: typedValue.GetDescription()})
 	}
-	if typedValue.GetDeprecated() {
-		items = append(items, &yamlmeta.MapItem{Key: deprecatedProp, Value: typedValue.GetDeprecated()})
+	if isDeprecated, _ := typedValue.IsDeprecated(); isDeprecated {
+		items = append(items, &yamlmeta.MapItem{Key: deprecatedProp, Value: isDeprecated})
 	}
 	examples := typedValue.GetExamples()
 	if len(examples) != 0 {
