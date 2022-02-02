@@ -24,3 +24,8 @@ jobs:
             echo "Versions do not match v$tool_version != $tag"
             exit 1
           fi
+      - run: |
+          curl -X POST https://api.github.com/repos/vmware-tanzu/carvel-release-scripts/dispatches \
+          -H 'Accept: application/vnd.github.everest-preview+json' \
+          -u ${{ secrets.carvel_bot_access_token }} \
+          --data '{"event_type": "ytt_released", "client_payload": { "tagName": "${{ github.event.release.tag_name }}", "repo": "${{ github.repository }}", "toolName": "ytt" }}'
