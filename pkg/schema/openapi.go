@@ -17,6 +17,7 @@ const (
 	additionalPropsProp    = "additionalProperties"
 	formatProp             = "format"
 	nullableProp           = "nullable"
+	deprecatedProp         = "deprecated"
 	descriptionProp        = "description"
 	exampleDescriptionProp = "x-example-description"
 	exampleProp            = "example"
@@ -31,12 +32,13 @@ var propOrder = map[string]int{
 	additionalPropsProp:    2,
 	formatProp:             3,
 	nullableProp:           4,
-	descriptionProp:        5,
-	exampleDescriptionProp: 6,
-	exampleProp:            7,
-	itemsProp:              8,
-	propertiesProp:         9,
-	defaultProp:            10,
+	deprecatedProp:         5,
+	descriptionProp:        6,
+	exampleDescriptionProp: 7,
+	exampleProp:            8,
+	itemsProp:              9,
+	propertiesProp:         10,
+	defaultProp:            11,
 }
 
 type openAPIKeys []*yamlmeta.MapItem
@@ -157,6 +159,9 @@ func collectDocumentation(typedValue Type) []*yamlmeta.MapItem {
 	}
 	if typedValue.GetDescription() != "" {
 		items = append(items, &yamlmeta.MapItem{Key: descriptionProp, Value: typedValue.GetDescription()})
+	}
+	if isDeprecated, _ := typedValue.IsDeprecated(); isDeprecated {
+		items = append(items, &yamlmeta.MapItem{Key: deprecatedProp, Value: isDeprecated})
 	}
 	examples := typedValue.GetExamples()
 	if len(examples) != 0 {

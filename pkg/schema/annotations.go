@@ -21,6 +21,7 @@ const (
 	AnnotationDescription  template.AnnotationName = "schema/desc"
 	AnnotationTitle        template.AnnotationName = "schema/title"
 	AnnotationExamples     template.AnnotationName = "schema/examples"
+	AnnotationDeprecated   template.AnnotationName = "schema/deprecated"
 	TypeAnnotationKwargAny string                  = "any"
 )
 
@@ -58,6 +59,12 @@ type TitleAnnotation struct {
 	pos   *filepos.Position
 }
 
+//DeprecatedAnnotation is a wrapper for a value provided via @schema/deprecated annotation
+type DeprecatedAnnotation struct {
+	notice string
+	pos    *filepos.Position
+}
+
 // ExampleAnnotation provides the Examples of a node
 type ExampleAnnotation struct {
 	examples []Example
@@ -72,9 +79,11 @@ type Example struct {
 
 // documentation holds metadata about a Type, provided via documentation annotations
 type documentation struct {
-	title       string
-	description string
-	examples    []Example
+	title             string
+	description       string
+	deprecated        bool
+	deprecationNotice string
+	examples          []Example
 }
 
 // NewTypeAnnotation checks the keyword argument provided via @schema/type annotation, and returns wrapper for the annotated node.
@@ -139,6 +148,50 @@ func NewNullableAnnotation(ann template.NodeAnnotation, node yamlmeta.Node) (*Nu
 	}
 
 	return &NullableAnnotation{node, ann.Position}, nil
+}
+
+// NewDeprecatedAnnotation validates the value from the AnnotationDeprecated, and returns the value
+func NewDeprecatedAnnotation(ann template.NodeAnnotation, pos *filepos.Position) (*DeprecatedAnnotation, error) {
+	if len(ann.Kwargs) != 0 {
+		return nil, schemaAssertionError{
+			annPositions: []*filepos.Position{ann.Position},
+			position:     pos,
+			description:  fmt.Sprintf("syntax error in @%v annotation", AnnotationDeprecated),
+			expected:     fmt.Sprintf("string"),
+			found:        fmt.Sprintf("keyword argument in @%v (by %v)", AnnotationDeprecated, ann.Position.AsCompactString()),
+			hints:        []string{"this annotation only accepts one argument: a string."},
+		}
+	}
+	switch numArgs := len(ann.Args); {
+	case numArgs == 0:
+		return nil, schemaAssertionError{
+			annPositions: []*filepos.Position{ann.Position},
+			position:     pos,
+			description:  fmt.Sprintf("syntax error in @%v annotation", AnnotationDeprecated),
+			expected:     fmt.Sprintf("string"),
+			found:        fmt.Sprintf("missing value in @%v (by %v)", AnnotationDeprecated, ann.Position.AsCompactString()),
+		}
+	case numArgs > 1:
+		return nil, schemaAssertionError{
+			annPositions: []*filepos.Position{ann.Position},
+			position:     pos,
+			description:  fmt.Sprintf("syntax error in @%v annotation", AnnotationDeprecated),
+			expected:     fmt.Sprintf("string"),
+			found:        fmt.Sprintf("%v values in @%v (by %v)", numArgs, AnnotationDeprecated, ann.Position.AsCompactString()),
+		}
+	}
+
+	strVal, err := core.NewStarlarkValue(ann.Args[0]).AsString()
+	if err != nil {
+		return nil, schemaAssertionError{
+			annPositions: []*filepos.Position{ann.Position},
+			position:     pos,
+			description:  fmt.Sprintf("syntax error in @%v annotation", AnnotationDeprecated),
+			expected:     fmt.Sprintf("string"),
+			found:        fmt.Sprintf("Non-string value in @%v (by %v)", AnnotationDeprecated, ann.Position.AsCompactString()),
+		}
+	}
+	return &DeprecatedAnnotation{strVal, ann.Position}, nil
 }
 
 // NewDefaultAnnotation checks the argument provided via @schema/default annotation, and returns wrapper for that value.
@@ -376,6 +429,11 @@ func (e *ExampleAnnotation) NewTypeFromAnn() (Type, error) {
 	return nil, nil
 }
 
+// NewTypeFromAnn returns type information given by annotation. DeprecatedAnnotation has no type information.
+func (d *DeprecatedAnnotation) NewTypeFromAnn() (Type, error) {
+	return nil, nil
+}
+
 // NewTypeFromAnn returns type information given by annotation. DescriptionAnnotation has no type information.
 func (d *DescriptionAnnotation) NewTypeFromAnn() (Type, error) {
 	return nil, nil
@@ -398,6 +456,11 @@ func (t *TypeAnnotation) GetPosition() *filepos.Position {
 
 // GetPosition returns position of the source comment used to create this annotation.
 func (d *DefaultAnnotation) GetPosition() *filepos.Position {
+	return d.pos
+}
+
+// GetPosition returns position of the source comment used to create this annotation.
+func (d *DeprecatedAnnotation) GetPosition() *filepos.Position {
 	return d.pos
 }
 
@@ -459,7 +522,7 @@ func collectValueAnnotations(node yamlmeta.Node, effectiveType Type) ([]Annotati
 func collectDocumentationAnnotations(node yamlmeta.Node) ([]Annotation, error) {
 	var anns []Annotation
 
-	for _, annotation := range []template.AnnotationName{AnnotationDescription, AnnotationTitle, AnnotationExamples} {
+	for _, annotation := range []template.AnnotationName{AnnotationDescription, AnnotationTitle, AnnotationExamples, AnnotationDeprecated} {
 		ann, err := processOptionalAnnotation(node, annotation, nil)
 		if err != nil {
 			return nil, err
@@ -512,6 +575,20 @@ func processOptionalAnnotation(node yamlmeta.Node, optionalAnnotation template.A
 				return nil, err
 			}
 			return defaultAnn, nil
+		case AnnotationDeprecated:
+			if _, ok := node.(*yamlmeta.Document); ok {
+				return nil, schemaAssertionError{
+					description:  fmt.Sprintf("@%v not supported on a %s", AnnotationDeprecated, yamlmeta.TypeName(node)),
+					annPositions: []*filepos.Position{ann.Position},
+					position:     node.GetPosition(),
+					hints:        []string{"do you mean to deprecate the entire schema document?", "use schema/deprecated on individual keys."},
+				}
+			}
+			deprAnn, err := NewDeprecatedAnnotation(ann, node.GetPosition())
+			if err != nil {
+				return nil, err
+			}
+			return deprAnn, nil
 		case AnnotationDescription:
 			descAnn, err := NewDescriptionAnnotation(ann, node.GetPosition())
 			if err != nil {
@@ -592,6 +669,8 @@ func setDocumentationFromAnns(docAnns []Annotation, typeOfValue Type) error {
 			typeOfValue.SetTitle(ann.title)
 		case *DescriptionAnnotation:
 			typeOfValue.SetDescription(ann.description)
+		case *DeprecatedAnnotation:
+			typeOfValue.SetDeprecated(true, ann.notice)
 		case *ExampleAnnotation:
 			err := checkExamplesValue(ann, typeOfValue)
 			if err != nil {

@@ -26,6 +26,8 @@ type Type interface {
 	SetTitle(string)
 	GetExamples() []Example
 	SetExamples([]Example)
+	IsDeprecated() (bool, string)
+	SetDeprecated(bool, string)
 	String() string
 }
 
@@ -480,6 +482,86 @@ func (a *AnyType) SetExamples(exs []Example) {
 // SetExamples sets the description and example of the type
 func (n *NullType) SetExamples(exs []Example) {
 	n.documentation.examples = exs
+}
+
+// IsDeprecated provides deprecated field information
+func (t *DocumentType) IsDeprecated() (bool, string) {
+	return false, ""
+}
+
+// IsDeprecated provides deprecated field information
+func (m *MapType) IsDeprecated() (bool, string) {
+	return m.documentation.deprecated, m.documentation.deprecationNotice
+
+}
+
+// IsDeprecated provides deprecated field information
+func (t *MapItemType) IsDeprecated() (bool, string) {
+	return false, ""
+}
+
+// IsDeprecated provides deprecated field information
+func (a *ArrayType) IsDeprecated() (bool, string) {
+	return a.documentation.deprecated, a.documentation.deprecationNotice
+}
+
+// IsDeprecated provides deprecated field information
+func (a *ArrayItemType) IsDeprecated() (bool, string) {
+	return false, ""
+}
+
+// IsDeprecated provides deprecated field information
+func (s *ScalarType) IsDeprecated() (bool, string) {
+	return s.documentation.deprecated, s.documentation.deprecationNotice
+}
+
+// IsDeprecated provides deprecated field information
+func (a *AnyType) IsDeprecated() (bool, string) {
+	return a.documentation.deprecated, a.documentation.deprecationNotice
+}
+
+// IsDeprecated provides deprecated field information
+func (n *NullType) IsDeprecated() (bool, string) {
+	return n.documentation.deprecated, n.documentation.deprecationNotice
+}
+
+// SetDeprecated sets the deprecated field value
+func (t *DocumentType) SetDeprecated(deprecated bool, notice string) {}
+
+// SetDeprecated sets the deprecated field value
+func (m *MapType) SetDeprecated(deprecated bool, notice string) {
+	m.documentation.deprecationNotice = notice
+	m.documentation.deprecated = deprecated
+}
+
+// SetDeprecated sets the deprecated field value
+func (t *MapItemType) SetDeprecated(deprecated bool, notice string) {}
+
+// SetDeprecated sets the deprecated field value
+func (a *ArrayType) SetDeprecated(deprecated bool, notice string) {
+	a.documentation.deprecationNotice = notice
+	a.documentation.deprecated = deprecated
+}
+
+// SetDeprecated sets the deprecated field value
+func (a *ArrayItemType) SetDeprecated(deprecated bool, notice string) {}
+
+// SetDeprecated sets the deprecated field value
+func (s *ScalarType) SetDeprecated(deprecated bool, notice string) {
+	s.documentation.deprecationNotice = notice
+	s.documentation.deprecated = deprecated
+}
+
+// SetDeprecated sets the deprecated field value
+func (a *AnyType) SetDeprecated(deprecated bool, notice string) {
+	a.documentation.deprecationNotice = notice
+	a.documentation.deprecated = deprecated
+}
+
+// SetDeprecated sets the deprecated field value
+func (n *NullType) SetDeprecated(deprecated bool, notice string) {
+	n.documentation.deprecationNotice = notice
+	n.documentation.deprecated = deprecated
 }
 
 // String produces a user-friendly name of the expected type.
