@@ -16,7 +16,7 @@ To keep source code documentation up to date, ytt uses [godoc](https://go.dev/bl
 
 To view the docs
   1. install godoc: `go get -v  golang.org/x/tools/cmd/godoc`
-  1. Start the server: `godoc -http=:6060` and visit [`http://localhost:6060/pkg/github.com/k14s/ytt/`](http://localhost:6060/pkg/github.com/k14s/ytt/).
+  1. Start the server: `godoc -http=:6060` and visit [`http://localhost:6060/pkg/github.com/vmware-tanzu/carvel-ytt/`](http://localhost:6060/pkg/github.com/vmware-tanzu/carvel-ytt/).
   
 ## Source Code Structure
 
