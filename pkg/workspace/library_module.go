@@ -9,13 +9,13 @@ import (
 
 	"github.com/k14s/starlark-go/starlark"
 	"github.com/k14s/starlark-go/starlarkstruct"
-	"github.com/k14s/ytt/pkg/filepos"
-	"github.com/k14s/ytt/pkg/template/core"
-	"github.com/k14s/ytt/pkg/workspace/datavalues"
-	"github.com/k14s/ytt/pkg/workspace/ref"
-	"github.com/k14s/ytt/pkg/yamlmeta"
-	"github.com/k14s/ytt/pkg/yamltemplate"
-	"github.com/k14s/ytt/pkg/yttlibrary/overlay"
+	"github.com/vmware-tanzu/carvel-ytt/pkg/filepos"
+	"github.com/vmware-tanzu/carvel-ytt/pkg/template/core"
+	"github.com/vmware-tanzu/carvel-ytt/pkg/workspace/datavalues"
+	"github.com/vmware-tanzu/carvel-ytt/pkg/workspace/ref"
+	"github.com/vmware-tanzu/carvel-ytt/pkg/yamlmeta"
+	"github.com/vmware-tanzu/carvel-ytt/pkg/yamltemplate"
+	"github.com/vmware-tanzu/carvel-ytt/pkg/yttlibrary/overlay"
 )
 
 type LibraryModule struct {

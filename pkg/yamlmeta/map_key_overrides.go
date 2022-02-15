@@ -4,7 +4,7 @@
 package yamlmeta
 
 import (
-	"github.com/k14s/ytt/pkg/orderedmap"
+	"github.com/vmware-tanzu/carvel-ytt/pkg/orderedmap"
 )
 
 type overrideMapKeys struct{}

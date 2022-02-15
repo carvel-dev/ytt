@@ -6,7 +6,7 @@ package texttemplate
 import (
 	"fmt"
 
-	"github.com/k14s/ytt/pkg/template"
+	"github.com/vmware-tanzu/carvel-ytt/pkg/template"
 )
 
 const (

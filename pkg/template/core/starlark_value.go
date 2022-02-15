@@ -7,7 +7,7 @@ import (
 	"fmt"
 
 	"github.com/k14s/starlark-go/starlark"
-	"github.com/k14s/ytt/pkg/orderedmap"
+	"github.com/vmware-tanzu/carvel-ytt/pkg/orderedmap"
 )
 
 type StarlarkValueToGoValueConversion interface {

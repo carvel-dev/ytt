@@ -10,8 +10,8 @@ import (
 	semver "github.com/hashicorp/go-version"
 	"github.com/k14s/starlark-go/starlark"
 	"github.com/k14s/starlark-go/starlarkstruct"
-	"github.com/k14s/ytt/pkg/template/core"
-	"github.com/k14s/ytt/pkg/version"
+	"github.com/vmware-tanzu/carvel-ytt/pkg/template/core"
+	"github.com/vmware-tanzu/carvel-ytt/pkg/version"
 )
 
 const (

@@ -14,10 +14,10 @@ import (
 	"time"
 
 	fuzz "github.com/google/gofuzz"
-	cmdtpl "github.com/k14s/ytt/pkg/cmd/template"
-	"github.com/k14s/ytt/pkg/cmd/ui"
-	"github.com/k14s/ytt/pkg/files"
 	"github.com/stretchr/testify/require"
+	cmdtpl "github.com/vmware-tanzu/carvel-ytt/pkg/cmd/template"
+	"github.com/vmware-tanzu/carvel-ytt/pkg/cmd/ui"
+	"github.com/vmware-tanzu/carvel-ytt/pkg/files"
 )
 
 func TestSchema_Passes_when_DataValues_conform(t *testing.T) {

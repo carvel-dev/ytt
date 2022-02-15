@@ -6,10 +6,10 @@ package yamltemplate
 import (
 	"fmt"
 
-	"github.com/k14s/ytt/pkg/filepos"
-	"github.com/k14s/ytt/pkg/orderedmap"
-	"github.com/k14s/ytt/pkg/template"
-	"github.com/k14s/ytt/pkg/yamlmeta"
+	"github.com/vmware-tanzu/carvel-ytt/pkg/filepos"
+	"github.com/vmware-tanzu/carvel-ytt/pkg/orderedmap"
+	"github.com/vmware-tanzu/carvel-ytt/pkg/template"
+	"github.com/vmware-tanzu/carvel-ytt/pkg/yamlmeta"
 )
 
 const (

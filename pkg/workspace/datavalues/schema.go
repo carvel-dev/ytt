@@ -7,10 +7,10 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/k14s/ytt/pkg/schema"
-	"github.com/k14s/ytt/pkg/template"
-	"github.com/k14s/ytt/pkg/workspace/ref"
-	"github.com/k14s/ytt/pkg/yamlmeta"
+	"github.com/vmware-tanzu/carvel-ytt/pkg/schema"
+	"github.com/vmware-tanzu/carvel-ytt/pkg/template"
+	"github.com/vmware-tanzu/carvel-ytt/pkg/workspace/ref"
+	"github.com/vmware-tanzu/carvel-ytt/pkg/yamlmeta"
 )
 
 // Schema is a definition of types and default values for Envelope.

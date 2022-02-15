@@ -6,8 +6,8 @@ package cmd
 import (
 	"fmt"
 
-	"github.com/k14s/ytt/pkg/version"
 	"github.com/spf13/cobra"
+	"github.com/vmware-tanzu/carvel-ytt/pkg/version"
 )
 
 type VersionOptions struct{}

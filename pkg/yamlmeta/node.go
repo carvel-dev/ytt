@@ -7,9 +7,9 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/k14s/ytt/pkg/filepos"
-	"github.com/k14s/ytt/pkg/orderedmap"
-	"github.com/k14s/ytt/pkg/yamlmeta/internal/yaml.v2"
+	"github.com/vmware-tanzu/carvel-ytt/pkg/filepos"
+	"github.com/vmware-tanzu/carvel-ytt/pkg/orderedmap"
+	"github.com/vmware-tanzu/carvel-ytt/pkg/yamlmeta/internal/yaml.v2"
 )
 
 // TypeName returns the user-friendly name of the type of `val`

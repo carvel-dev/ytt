@@ -8,10 +8,10 @@ import (
 	"io"
 	"strings"
 
-	"github.com/k14s/ytt/pkg/cmd/ui"
-	"github.com/k14s/ytt/pkg/files"
-	"github.com/k14s/ytt/pkg/yamlmeta"
 	"github.com/spf13/cobra"
+	"github.com/vmware-tanzu/carvel-ytt/pkg/cmd/ui"
+	"github.com/vmware-tanzu/carvel-ytt/pkg/files"
+	"github.com/vmware-tanzu/carvel-ytt/pkg/yamlmeta"
 )
 
 // RegularFilesSourceOpts holds configuration for when regular files are the input/output

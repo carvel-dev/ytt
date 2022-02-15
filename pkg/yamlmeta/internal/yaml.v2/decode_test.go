@@ -11,7 +11,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/k14s/ytt/pkg/yamlmeta/internal/yaml.v2"
+	"github.com/vmware-tanzu/carvel-ytt/pkg/yamlmeta/internal/yaml.v2"
 	. "gopkg.in/check.v1"
 )
 

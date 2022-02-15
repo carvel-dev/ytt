@@ -4,8 +4,8 @@
 package template
 
 import (
-	"github.com/k14s/ytt/pkg/yamlmeta"
-	"github.com/k14s/ytt/pkg/yttlibrary/overlay"
+	"github.com/vmware-tanzu/carvel-ytt/pkg/yamlmeta"
+	"github.com/vmware-tanzu/carvel-ytt/pkg/yttlibrary/overlay"
 )
 
 type DataValuesFile struct {

@@ -9,8 +9,8 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/k14s/ytt/pkg/orderedmap"
-	"github.com/k14s/ytt/pkg/yamlmeta"
+	"github.com/vmware-tanzu/carvel-ytt/pkg/orderedmap"
+	"github.com/vmware-tanzu/carvel-ytt/pkg/yamlmeta"
 )
 
 var _ = fmt.Sprintf

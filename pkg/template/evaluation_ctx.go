@@ -8,8 +8,8 @@ import (
 	"strconv"
 
 	"github.com/k14s/starlark-go/starlark"
-	"github.com/k14s/ytt/pkg/filepos"
-	"github.com/k14s/ytt/pkg/template/core"
+	"github.com/vmware-tanzu/carvel-ytt/pkg/filepos"
+	"github.com/vmware-tanzu/carvel-ytt/pkg/template/core"
 	// Should not import template specific packages here (like yamlmeta)
 )
 

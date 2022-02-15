@@ -4,7 +4,7 @@
 package overlay
 
 import (
-	"github.com/k14s/ytt/pkg/yamlmeta"
+	"github.com/vmware-tanzu/carvel-ytt/pkg/yamlmeta"
 )
 
 func (o Op) mergeMapItem(leftMap *yamlmeta.Map, newItem *yamlmeta.MapItem,

@@ -6,7 +6,7 @@ package overlay
 import (
 	"fmt"
 
-	"github.com/k14s/ytt/pkg/yamlmeta"
+	"github.com/vmware-tanzu/carvel-ytt/pkg/yamlmeta"
 )
 
 func (o Op) mergeDocument(

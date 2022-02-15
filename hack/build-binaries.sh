@@ -14,7 +14,7 @@ go mod tidy
 
 # makes builds reproducible
 export CGO_ENABLED=0
-LDFLAGS="-X github.com/k14s/ytt/pkg/version.Version=$VERSION -buildid="
+LDFLAGS="-X github.com/vmware-tanzu/carvel-ytt/pkg/version.Version=$VERSION -buildid="
 
 ./hack/build.sh $VERSION # Used to generate website/generated.go used by ytt website
 

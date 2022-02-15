@@ -11,8 +11,8 @@ import (
 	"github.com/k14s/starlark-go/resolve"
 	"github.com/k14s/starlark-go/starlark"
 	"github.com/k14s/starlark-go/syntax"
-	"github.com/k14s/ytt/pkg/filepos"
-	tplcore "github.com/k14s/ytt/pkg/template/core"
+	"github.com/vmware-tanzu/carvel-ytt/pkg/filepos"
+	tplcore "github.com/vmware-tanzu/carvel-ytt/pkg/template/core"
 )
 
 type EvaluationCtxDialectName string
