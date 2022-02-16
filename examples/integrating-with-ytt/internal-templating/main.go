@@ -8,9 +8,9 @@ import (
 	"io"
 	"os"
 
-	yttcmd "github.com/vmware-tanzu/carvel-ytt/pkg/cmd/template"
-	yttui "github.com/vmware-tanzu/carvel-ytt/pkg/cmd/ui"
-	yttfiles "github.com/vmware-tanzu/carvel-ytt/pkg/files"
+	yttcmd "github.com/k14s/ytt/pkg/cmd/template"
+	yttui "github.com/k14s/ytt/pkg/cmd/ui"
+	yttfiles "github.com/k14s/ytt/pkg/files"
 )
 
 
