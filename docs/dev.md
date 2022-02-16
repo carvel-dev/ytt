@@ -17,6 +17,8 @@ To keep source code documentation up to date, ytt uses [godoc](https://go.dev/bl
 To view the docs
   1. install godoc: `go get -v  golang.org/x/tools/cmd/godoc`
   1. Start the server: `godoc -http=:6060` and visit [`http://localhost:6060/pkg/github.com/vmware-tanzu/carvel-ytt/`](http://localhost:6060/pkg/github.com/vmware-tanzu/carvel-ytt/).
+
+The go module was renamed from `github.com/k14s` to `github.com/vmware-tanzu/carvel-ytt` in February 2022. Carvel started out as a suite named "k14s" short for Kubernetes Tools.
   
 ## Source Code Structure
 
