@@ -7,9 +7,9 @@ import (
 	"fmt"
 
 	"github.com/k14s/starlark-go/starlark"
-	"github.com/k14s/ytt/pkg/template"
-	tplcore "github.com/k14s/ytt/pkg/template/core"
-	"github.com/k14s/ytt/pkg/yamltemplate"
+	"github.com/vmware-tanzu/carvel-ytt/pkg/template"
+	tplcore "github.com/vmware-tanzu/carvel-ytt/pkg/template/core"
+	"github.com/vmware-tanzu/carvel-ytt/pkg/yamltemplate"
 )
 
 const (

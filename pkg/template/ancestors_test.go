@@ -6,7 +6,7 @@ package template_test
 import (
 	"testing"
 
-	. "github.com/k14s/ytt/pkg/template"
+	. "github.com/vmware-tanzu/carvel-ytt/pkg/template"
 )
 
 func TestAncestorsDeep(t *testing.T) {

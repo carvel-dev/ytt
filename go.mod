@@ -1,4 +1,4 @@
-module github.com/k14s/ytt
+module github.com/vmware-tanzu/carvel-ytt
 
 go 1.17
 

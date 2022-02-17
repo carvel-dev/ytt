@@ -10,7 +10,7 @@ import (
 	"time"
 
 	uierrs "github.com/cppforlife/go-cli-ui/errors"
-	"github.com/k14s/ytt/pkg/cmd"
+	"github.com/vmware-tanzu/carvel-ytt/pkg/cmd"
 )
 
 func main() {

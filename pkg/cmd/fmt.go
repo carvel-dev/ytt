@@ -7,11 +7,11 @@ import (
 	"os"
 	"time"
 
-	"github.com/k14s/ytt/pkg/cmd/ui"
-	"github.com/k14s/ytt/pkg/files"
-	"github.com/k14s/ytt/pkg/yamlfmt"
-	"github.com/k14s/ytt/pkg/yamlmeta"
 	"github.com/spf13/cobra"
+	"github.com/vmware-tanzu/carvel-ytt/pkg/cmd/ui"
+	"github.com/vmware-tanzu/carvel-ytt/pkg/files"
+	"github.com/vmware-tanzu/carvel-ytt/pkg/yamlfmt"
+	"github.com/vmware-tanzu/carvel-ytt/pkg/yamlmeta"
 )
 
 type FmtOptions struct {

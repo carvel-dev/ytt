@@ -9,7 +9,7 @@ import (
 	"io"
 	"strings"
 
-	"github.com/k14s/ytt/pkg/yamlmeta"
+	"github.com/vmware-tanzu/carvel-ytt/pkg/yamlmeta"
 )
 
 // TODO strict mode

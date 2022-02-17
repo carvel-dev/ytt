@@ -10,7 +10,7 @@ import (
 	"strings"
 
 	"github.com/k14s/starlark-go/starlark"
-	"github.com/k14s/ytt/pkg/filepos"
+	"github.com/vmware-tanzu/carvel-ytt/pkg/filepos"
 )
 
 const (

@@ -8,14 +8,14 @@ import (
 	"strings"
 
 	"github.com/k14s/starlark-go/starlark"
-	"github.com/k14s/ytt/pkg/cmd/ui"
-	"github.com/k14s/ytt/pkg/files"
-	"github.com/k14s/ytt/pkg/template"
-	"github.com/k14s/ytt/pkg/texttemplate"
-	"github.com/k14s/ytt/pkg/workspace/datavalues"
-	"github.com/k14s/ytt/pkg/yamlmeta"
-	"github.com/k14s/ytt/pkg/yamltemplate"
-	"github.com/k14s/ytt/pkg/yttlibrary"
+	"github.com/vmware-tanzu/carvel-ytt/pkg/cmd/ui"
+	"github.com/vmware-tanzu/carvel-ytt/pkg/files"
+	"github.com/vmware-tanzu/carvel-ytt/pkg/template"
+	"github.com/vmware-tanzu/carvel-ytt/pkg/texttemplate"
+	"github.com/vmware-tanzu/carvel-ytt/pkg/workspace/datavalues"
+	"github.com/vmware-tanzu/carvel-ytt/pkg/yamlmeta"
+	"github.com/vmware-tanzu/carvel-ytt/pkg/yamltemplate"
+	"github.com/vmware-tanzu/carvel-ytt/pkg/yttlibrary"
 )
 
 type TemplateLoader struct {

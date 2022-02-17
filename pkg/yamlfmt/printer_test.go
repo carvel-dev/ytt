@@ -12,8 +12,8 @@ import (
 	"testing"
 
 	"github.com/k14s/difflib"
-	"github.com/k14s/ytt/pkg/yamlfmt"
-	"github.com/k14s/ytt/pkg/yamlmeta"
+	"github.com/vmware-tanzu/carvel-ytt/pkg/yamlfmt"
+	"github.com/vmware-tanzu/carvel-ytt/pkg/yamlmeta"
 )
 
 var (

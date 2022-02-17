@@ -6,9 +6,9 @@ package workspace
 import (
 	"fmt"
 
-	"github.com/k14s/ytt/pkg/template"
-	"github.com/k14s/ytt/pkg/yamlmeta"
-	"github.com/k14s/ytt/pkg/yamltemplate"
+	"github.com/vmware-tanzu/carvel-ytt/pkg/template"
+	"github.com/vmware-tanzu/carvel-ytt/pkg/yamlmeta"
+	"github.com/vmware-tanzu/carvel-ytt/pkg/yamltemplate"
 )
 
 type DocExtractor struct {

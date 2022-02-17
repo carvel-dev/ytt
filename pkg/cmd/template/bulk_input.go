@@ -6,9 +6,9 @@ package template
 import (
 	"encoding/json"
 
-	"github.com/k14s/ytt/pkg/cmd/ui"
-	"github.com/k14s/ytt/pkg/files"
 	"github.com/spf13/cobra"
+	"github.com/vmware-tanzu/carvel-ytt/pkg/cmd/ui"
+	"github.com/vmware-tanzu/carvel-ytt/pkg/files"
 )
 
 type BulkFilesSourceOpts struct {

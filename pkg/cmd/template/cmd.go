@@ -7,13 +7,13 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/k14s/ytt/pkg/cmd/ui"
-	"github.com/k14s/ytt/pkg/files"
-	"github.com/k14s/ytt/pkg/schema"
-	"github.com/k14s/ytt/pkg/workspace"
-	"github.com/k14s/ytt/pkg/workspace/datavalues"
-	"github.com/k14s/ytt/pkg/yamlmeta"
 	"github.com/spf13/cobra"
+	"github.com/vmware-tanzu/carvel-ytt/pkg/cmd/ui"
+	"github.com/vmware-tanzu/carvel-ytt/pkg/files"
+	"github.com/vmware-tanzu/carvel-ytt/pkg/schema"
+	"github.com/vmware-tanzu/carvel-ytt/pkg/workspace"
+	"github.com/vmware-tanzu/carvel-ytt/pkg/workspace/datavalues"
+	"github.com/vmware-tanzu/carvel-ytt/pkg/yamlmeta"
 )
 
 type Options struct {

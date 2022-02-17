@@ -9,8 +9,8 @@ import (
 	"testing"
 
 	"github.com/k14s/difflib"
-	"github.com/k14s/ytt/pkg/filepos"
-	"github.com/k14s/ytt/pkg/yamlmeta"
+	"github.com/vmware-tanzu/carvel-ytt/pkg/filepos"
+	"github.com/vmware-tanzu/carvel-ytt/pkg/yamlmeta"
 )
 
 var _ = fmt.Sprintf

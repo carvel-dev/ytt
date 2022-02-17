@@ -6,10 +6,10 @@ package template_test
 import (
 	"testing"
 
-	cmdtpl "github.com/k14s/ytt/pkg/cmd/template"
-	"github.com/k14s/ytt/pkg/cmd/ui"
-	"github.com/k14s/ytt/pkg/files"
 	"github.com/stretchr/testify/require"
+	cmdtpl "github.com/vmware-tanzu/carvel-ytt/pkg/cmd/template"
+	"github.com/vmware-tanzu/carvel-ytt/pkg/cmd/ui"
+	"github.com/vmware-tanzu/carvel-ytt/pkg/files"
 )
 
 func TestSchemaInspect_exports_an_OpenAPI_doc(t *testing.T) {

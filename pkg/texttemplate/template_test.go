@@ -13,8 +13,8 @@ import (
 	"testing"
 
 	"github.com/k14s/starlark-go/starlark"
-	"github.com/k14s/ytt/pkg/template"
-	"github.com/k14s/ytt/pkg/texttemplate"
+	"github.com/vmware-tanzu/carvel-ytt/pkg/template"
+	"github.com/vmware-tanzu/carvel-ytt/pkg/texttemplate"
 )
 
 var (

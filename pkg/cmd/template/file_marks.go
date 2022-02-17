@@ -8,8 +8,8 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/k14s/ytt/pkg/files"
 	"github.com/spf13/cobra"
+	"github.com/vmware-tanzu/carvel-ytt/pkg/files"
 )
 
 type FileMarksOpts struct {

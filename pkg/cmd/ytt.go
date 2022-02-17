@@ -5,9 +5,9 @@ package cmd
 
 import (
 	"github.com/cppforlife/cobrautil"
-	cmdtpl "github.com/k14s/ytt/pkg/cmd/template"
-	"github.com/k14s/ytt/pkg/version"
 	"github.com/spf13/cobra"
+	cmdtpl "github.com/vmware-tanzu/carvel-ytt/pkg/cmd/template"
+	"github.com/vmware-tanzu/carvel-ytt/pkg/version"
 )
 
 type YttOptions struct{}

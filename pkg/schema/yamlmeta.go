@@ -3,7 +3,7 @@
 
 package schema
 
-import "github.com/k14s/ytt/pkg/yamlmeta"
+import "github.com/vmware-tanzu/carvel-ytt/pkg/yamlmeta"
 
 // GetType retrieves schema metadata from `n`, set previously via SetType().
 func GetType(n yamlmeta.Node) Type {
