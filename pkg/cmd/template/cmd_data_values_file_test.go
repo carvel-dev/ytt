@@ -118,6 +118,69 @@ array:
 	assert.Equal(t, expectedYAMLTplData, string(file.Bytes()))
 }
 
+func TestDataValuesFileFlagsWithLibRefPath(t *testing.T) {
+	yamlTplData := []byte(`
+#@ load("@ytt:data", "data")
+#@ load("@ytt:library", "library")
+#@ load("@ytt:template", "template")
+---
+fromRoot: #@ data.values
+
+#@ lib = library.get("lib")
+--- #@ template.replace(lib.eval())`)
+
+	libYamlTplData := []byte(`#@ load("@ytt:data", "data")
+---
+fromLibrary: #@ data.values`)
+
+	dvs1 := []byte(`val1: 1`)
+
+	dvs2 := []byte(`val2: 2`)
+
+	dvs3 := []byte(`3`)
+
+	expectedYAMLTplData := `fromRoot:
+  val1: 1
+fromLibrary: 
+  val2: 2
+  val3: 3
+`
+
+	filesToProcess := files.NewSortedFiles([]*files.File{
+		files.MustNewFileFromSource(files.NewBytesSource("tpl.yml", yamlTplData)),
+		files.MustNewFileFromSource(files.NewBytesSource("_ytt_lib/lib/tpl.yml", libYamlTplData)),
+	})
+
+	ui := ui.NewTTY(false)
+	opts := cmdtpl.NewOptions()
+
+	opts.DataValuesFlags = cmdtpl.DataValuesFlags{
+		FromFiles: []string{"c:\\User\\user\\dvs1.yml", "@lib:dvs2.yml"},
+		KVsFromFiles: []string{"val3=@lib:c:\\User\\user\\dvs3.yml"},
+		ReadFileFunc: func(path string) ([]byte, error) {
+			switch path {
+			case "c:\\User\\user\\dvs1.yml":
+				return dvs1, nil
+			case "dvs2.yml":
+				return dvs2, nil
+			case "c:\\User\\user\\dvs3.yml":
+				return dvs3, nil
+			default:
+				return nil, fmt.Errorf("Unknown file '%s'", path)
+			}
+		},
+	}
+
+	out := opts.RunWithFiles(cmdtpl.Input{Files: filesToProcess}, ui)
+	require.NoError(t, out.Err)
+	require.Len(t, out.Files, 1, "unexpected number of output files")
+
+	file := out.Files[0]
+
+	assert.Equal(t, "tpl.yml", file.RelativePath())
+	assert.Equal(t, expectedYAMLTplData, string(file.Bytes()))
+}
+
 func TestDataValuesWithDataValuesFileFlagsForbiddenComment(t *testing.T) {
 	yamlTplData := []byte(`
 #@ load("@ytt:data", "data")
