@@ -442,7 +442,7 @@ yamlfunc: yamlfunc`)
 	out := opts.RunWithFiles(cmdtpl.Input{Files: filesToProcess}, ui)
 	require.Error(t, out.Err)
 
-	expectedErr := "Non-ytt comment at line tpl.yml:2: '# plain YAML comment': Unrecognized comment type (expected '#@' or '#!')"
+	expectedErr := "Failed to parse line 2: '# plain YAML comment'"
 	require.Contains(t, out.Err.Error(), expectedErr)
 }
 

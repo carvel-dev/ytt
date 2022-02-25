@@ -68,7 +68,7 @@ func NewAnnotationFromString(data string, opts MetaOpts) (Annotation, error) {
 				Content: data,
 			}, nil
 		} else {
-			return Annotation{}, fmt.Errorf("Unrecognized comment type (expected '#@' or '#!')")
+			return Annotation{}, fmt.Errorf("Expected ytt-formatted string (use '#@' for annotations or code, '#!' for comments)")
 		}
 	}
 }

@@ -48,8 +48,7 @@ func NewTemplateAnnotationFromYAMLComment(comment *yamlmeta.Comment, nodePos *fi
 	ann, err := template.NewAnnotationFromString(comment.Data, template.MetaOpts{IgnoreUnknown: opts.IgnoreUnknown})
 	if err != nil {
 		return template.Annotation{}, fmt.Errorf(
-			"Non-ytt comment at %s: '#%s': %s. (hint: if this is plain YAML — not a template — consider `--file-mark '<filename>:type=yaml-plain'`)",
-			comment.Position.AsString(), comment.Data, err)
+			"Failed to parse line %s: '#%s': %s", comment.Position.AsIntString(), comment.Data, err)
 	}
 
 	if len(ann.Name) == 0 {
