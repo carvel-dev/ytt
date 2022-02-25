@@ -40,11 +40,10 @@ Examples of how this can be done in Go:
    ...
    require  (
        ...
-       github.com/vmware-tanzu/carvel-ytt v0.38.0
+       github.com/vmware-tanzu/carvel-ytt v0.40.0
        ...
    )
    ```
-   _(note: this is `ytt`'s original/current module name and will be renamed in the future.)_
 
 2. create and populate an instance of the template command:
    ```go
