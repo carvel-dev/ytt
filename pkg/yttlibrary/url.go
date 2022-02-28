@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net/url"
 	"sort"
+	"strings"
 
 	"github.com/k14s/starlark-go/starlark"
 	"github.com/k14s/starlark-go/starlarkstruct"
@@ -169,6 +170,7 @@ func (b urlModule) QueryParamsDecode(thread *starlark.Thread, f *starlark.Builti
 		return starlark.None, err
 	}
 
+	encodedVal = b.allowQuerySemicolons(encodedVal)
 	urlVals, err := url.ParseQuery(encodedVal)
 	if err != nil {
 		return starlark.None, err
@@ -185,6 +187,19 @@ func (b urlModule) QueryParamsDecode(thread *starlark.Thread, f *starlark.Builti
 	}
 
 	return core.NewGoValue(result).AsStarlarkValue(), nil
+}
+
+// allowQuerySemicolons restores pre-Go 1.17 handling of query parameters.
+// Doing so defers making a breaking change as we upgrade from Go 1.16 to 1.17.
+// We expect to pass along this breaking change to end-users at some point, but not at this time (circa v0.37.x).
+// Shamelessly stolen from https://cs.opensource.google/go/go/+/refs/tags/go1.17.2:src/net/http/server.go;l=2892-2908
+// See also:
+// - https://golang.org/doc/go1.17#semicolons
+// - https://github.com/golang/go/issues/25192
+//   - particularly https://github.com/golang/go/issues/25192#issuecomment-789799446 which spells-out the vulnerability
+//     specifically.
+func (b urlModule) allowQuerySemicolons(encodedVal string) string {
+	return strings.ReplaceAll(encodedVal, ";", "&")
 }
 
 func (b urlModule) sortedKeys(vals url.Values) []string {
