@@ -89,6 +89,13 @@ func (ll *LibraryExecution) Values(valuesOverlays []*datavalues.Envelope, schema
 	return dvpp.Apply()
 }
 
+// ValidateValues runs validations from @assert/validate annotations in Data Values for this library.
+//
+// Returns an error if the arguments to an @assert/validate are invalid, or an assertion has a falsey return.
+func (ll *LibraryExecution) ValidateValues(values *datavalues.Envelope) error {
+	return RunAssertions(values.Doc)
+}
+
 func (ll *LibraryExecution) schemaFiles(loader *TemplateLoader) ([]*FileInLibrary, error) {
 	return ll.filesByAnnotation(datavalues.AnnotationDataValuesSchema, loader)
 }

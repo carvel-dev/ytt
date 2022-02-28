@@ -150,6 +150,11 @@ func (o *Options) RunWithFiles(in Input, ui ui.UI) Output {
 		return Output{Err: err}
 	}
 
+	err = rootLibraryExecution.ValidateValues(values)
+	if err != nil {
+		return Output{Err: err}
+	}
+
 	libraryValues = append(libraryValues, libraryValuesOverlays...)
 
 	if o.DataValuesFlags.Inspect {
