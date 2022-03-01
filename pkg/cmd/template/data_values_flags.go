@@ -5,6 +5,7 @@ package template
 
 import (
 	"fmt"
+	"github.com/vmware-tanzu/carvel-ytt/pkg/files"
 	"io/ioutil"
 	"os"
 	"strings"
@@ -142,7 +143,7 @@ func (s *DataValuesFlags) file(path string, strict bool) ([]*datavalues.Envelope
 
 	contents, err := s.readFile(path)
 	if err != nil {
-		return nil, fmt.Errorf("Reading file '%s'", path)
+		return nil, fmt.Errorf("Reading file '%s': %s", path, err)
 	}
 
 	docSetOpts := yamlmeta.DocSetOpts{
@@ -341,6 +342,9 @@ func (s *DataValuesFlags) buildOverlay(keyPieces []string, value interface{}, de
 func (s *DataValuesFlags) readFile(path string) ([]byte, error) {
 	if s.ReadFileFunc != nil {
 		return s.ReadFileFunc(path)
+	}
+	if path == "-" {
+		return files.ReadStdin()
 	}
 	return ioutil.ReadFile(path)
 }

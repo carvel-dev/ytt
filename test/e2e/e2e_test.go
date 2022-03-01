@@ -25,6 +25,34 @@ func TestCheckStdInReading(t *testing.T) {
 	require.Equal(t, string(expectedFileOutput), actualOutput)
 }
 
+func TestDataValuesFileWithStdin(t *testing.T) {
+
+	t.Run("--data-values-file with stdin", func(t *testing.T) {
+		flags := yttFlags{
+			{"--data-values-file": "-"},
+			{"--data-values-inspect": ""},
+		}
+		actualOutput := runYtt(t, []string{}, "../../examples/data-values/values-file.yml", flags, nil)
+		expectedOutput := `nothing: something
+string: str
+bool: true
+int: 124
+new_thing: new
+`
+		require.Equal(t, expectedOutput, actualOutput)
+	})
+
+}
+func TestCheckStdInReadingOnlyOnce(t *testing.T) {
+	flags := yttFlags{
+		{"--data-values-file": "-"},
+		{"-f": "-"},
+	}
+	actualOutput := runYttExpectingError(t, nil, "../../examples/data-values/values-file.yml", flags, nil)
+	expectedOutput := "ytt: Error: Extracting data value from file:\n  Reading file '-':\n    Standard input has been already read once (has the '-' argument been used in more than one flags?)\n"
+	require.Equal(t, expectedOutput, actualOutput)
+}
+
 func TestSanityCheckTemplateWithDataValues(t *testing.T) {
 	t.Run("template file with data value", func(t *testing.T) {
 		actualOutput := runYtt(t, []string{"../../examples/eirini/config.yml", "../../examples/eirini/input.yml"}, "", nil, nil)
@@ -461,7 +489,36 @@ func runYtt(t *testing.T, files testInputFiles, stdinFileName string, flags yttF
 		command.Stdin = fileToUseInStdIn
 	}
 	output, err := command.Output()
+
 	require.NoError(t, err, stdError.String())
 
 	return string(output)
+}
+func runYttExpectingError(t *testing.T, files testInputFiles, stdinFileName string, flags yttFlags, envs []string) string {
+	var fileFlags []string
+	for _, file := range files {
+		fileFlags = append(fileFlags, "-f", file)
+	}
+
+	var yttFlags []string
+	for _, flagElement := range flags {
+		for flagName, flagVal := range flagElement {
+			if flagVal != "" {
+				yttFlags = append(yttFlags, flagName, flagVal)
+			} else {
+				yttFlags = append(yttFlags, flagName)
+			}
+		}
+	}
+
+	command := exec.Command("../../ytt", append(fileFlags, yttFlags...)...)
+	stdError := bytes.NewBufferString("")
+	command.Stderr = stdError
+	command.Env = append(command.Env, envs...)
+
+	_, err := command.Output()
+	require.Error(t, err, stdError.String())
+
+	return stdError.String()
+
 }

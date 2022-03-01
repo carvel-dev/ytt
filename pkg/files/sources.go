@@ -40,7 +40,7 @@ type StdinSource struct {
 
 func NewStdinSource() StdinSource {
 	// only read stdin once
-	bs, err := ioutil.ReadAll(os.Stdin)
+	bs, err := ReadStdin()
 	return StdinSource{bs, err}
 }
 
