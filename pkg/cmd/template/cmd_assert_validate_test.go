@@ -66,7 +66,7 @@ my_map:
 		assertSucceedsDocSet(t, filesToProcess, expected, opts)
 	})
 
-	t.Run("fails with only data values files", func(t *testing.T) {
+	t.Run("assert fails with only data values files", func(t *testing.T) {
 		t.Run("on multiple data values", func(t *testing.T) {
 			opts := cmdtpl.NewOptions()
 			dataValuesYAML := `#@ load("@ytt:assert", "assert")

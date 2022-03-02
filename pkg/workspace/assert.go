@@ -26,7 +26,7 @@ func ProcessAndRunAssertions(n yamlmeta.Node, errMsg string) error {
 		return nil
 	}
 
-	assertionChecker := newAssertChecker()
+	assertionChecker := newAssertChecker("assertions-process-and-run")
 	err := yamlmeta.Walk(n, assertionChecker)
 	if err != nil {
 		return err
@@ -44,11 +44,12 @@ func ProcessAndRunAssertions(n yamlmeta.Node, errMsg string) error {
 }
 
 type assertChecker struct {
+	thread *starlark.Thread
 	violations []error
 }
 
-func newAssertChecker() *assertChecker {
-	return &assertChecker{violations: []error{}}
+func newAssertChecker(threadName string) *assertChecker {
+	return &assertChecker{thread: &starlark.Thread{Name: threadName}, violations: []error{}}
 }
 
 func (a *assertChecker) hasViolations() bool {
@@ -66,7 +67,7 @@ func (a *assertChecker) hasViolations() bool {
 func (a *assertChecker) Visit(node yamlmeta.Node) error {
 	nodeAnnotations := template.NewAnnotations(node)
 	if nodeAnnotations.Has(AnnotationAssertValidate) {
-		validations, syntaxErr := newValidationsFromAssertValidateAnnotation(nodeAnnotations[AnnotationAssertValidate], node)
+		validations, syntaxErr := newValidationsFromAssertValidateAnnotation(nodeAnnotations[AnnotationAssertValidate], node, a.thread)
 		if syntaxErr != nil {
 			return syntaxErr
 		}
@@ -81,10 +82,9 @@ func (a *assertChecker) Visit(node yamlmeta.Node) error {
 	return nil
 }
 
-func newValidationsFromAssertValidateAnnotation(annotation template.NodeAnnotation, n yamlmeta.Node) ([]Validation, error) {
+func newValidationsFromAssertValidateAnnotation(annotation template.NodeAnnotation, n yamlmeta.Node, thread *starlark.Thread) ([]Validation, error) {
 	var validations []Validation
 	validationPosition := createAssertAnnotationPosition(annotation.Position, n)
-	thread := &starlark.Thread{Name: fmt.Sprintf("## %v ##", AnnotationAssertValidate)}
 
 	if len(annotation.Kwargs) != 0 {
 		return nil, fmt.Errorf("Expected @%v to have validation 2-tuple as argument(s), but found keyword argument (by %v)", AnnotationAssertValidate, validationPosition.AsCompactString())
