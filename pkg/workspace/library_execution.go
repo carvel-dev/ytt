@@ -91,9 +91,9 @@ func (ll *LibraryExecution) Values(valuesOverlays []*datavalues.Envelope, schema
 
 // ValidateValues runs validations from @assert/validate annotations in Data Values for this library.
 //
-// Returns an error if the arguments to an @assert/validate are invalid, or an assertion has a falsey return.
+// Returns an error if the arguments to an @assert/validate are invalid, or an assertion has a falsy return.
 func (ll *LibraryExecution) ValidateValues(values *datavalues.Envelope) error {
-	return RunAssertions(values.Doc)
+	return ProcessAndRunAssertions(values.Doc, "One or more data values were invalid")
 }
 
 func (ll *LibraryExecution) schemaFiles(loader *TemplateLoader) ([]*FileInLibrary, error) {

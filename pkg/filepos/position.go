@@ -5,6 +5,7 @@ package filepos
 
 import (
 	"fmt"
+	"strings"
 )
 
 type Position struct {
@@ -121,4 +122,33 @@ func (p *Position) IsNextTo(otherPostion *Position) bool {
 		}
 	}
 	return false
+}
+
+// PopulateAnnotationPositionFromNode takes an annotation's position, the position of the node it annotates,
+// and the comments from the same node, and creates an approximation of the annotation file and line string.
+func PopulateAnnotationPositionFromNode(annPos *Position, nodePosition *Position, nodeComments []Meta) *Position {
+	leftPadding := 0
+	if nodePosition.IsKnown() {
+		nodeLine := nodePosition.GetLine()
+		leftPadding = len(nodeLine) - len(strings.TrimLeft(nodeLine, " "))
+	}
+
+	lineString := ""
+	for _, c := range nodeComments {
+		if c.Position.IsKnown() && c.Position.AsIntString() == fmt.Sprintf("%d", annPos.LineNum()) {
+			lineString = fmt.Sprintf("%v#%s", strings.Repeat(" ", leftPadding), c.Data)
+		}
+	}
+
+	annPos.SetFile(nodePosition.GetFile())
+	annPos.SetLine(lineString)
+
+	return annPos
+}
+
+// Meta is a representation of comment's source, contains comment as a string, and original position.
+// Used to populate
+type Meta struct {
+	Data     string
+	Position *Position
 }
