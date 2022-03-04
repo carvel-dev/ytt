@@ -49,7 +49,7 @@ func TestCheckStdInReadingOnlyOnce(t *testing.T) {
 		{"-f": "-"},
 	}
 	actualOutput := runYttExpectingError(t, nil, "../../examples/data-values/values-file.yml", flags, nil)
-	expectedOutput := "ytt: Error: Extracting data value from file:\n  Reading file '-':\n    Standard input has been already read once (has the '-' argument been used in more than one flags?)\n"
+	expectedOutput := "ytt: Error: Extracting data value from file:\n  Reading file '-':\n    Standard input has already been read, has the '-' argument been used in more than one flag?\n"
 	require.Equal(t, expectedOutput, actualOutput)
 }
 

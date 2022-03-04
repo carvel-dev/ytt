@@ -5,7 +5,6 @@ package template
 
 import (
 	"fmt"
-	"github.com/vmware-tanzu/carvel-ytt/pkg/files"
 	"io/ioutil"
 	"os"
 	"strings"
@@ -13,6 +12,7 @@ import (
 	"github.com/k14s/starlark-go/starlark"
 	"github.com/spf13/cobra"
 	"github.com/vmware-tanzu/carvel-ytt/pkg/filepos"
+	"github.com/vmware-tanzu/carvel-ytt/pkg/files"
 	"github.com/vmware-tanzu/carvel-ytt/pkg/template"
 	"github.com/vmware-tanzu/carvel-ytt/pkg/workspace/datavalues"
 	"github.com/vmware-tanzu/carvel-ytt/pkg/yamlmeta"
