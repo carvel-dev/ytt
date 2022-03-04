@@ -16,12 +16,12 @@ const (
 	AnnotationAssertValidate template.AnnotationName = "assert/validate"
 )
 
-// ProcessAndRunAssertions takes a root Node and traverses the tree checking for assert annotations.
-// Assertions are processed and executed using the value of the annotated node as the parameter to the assertions.
+// ProcessAndRunValidations takes a root Node and traverses the tree checking for assert annotations.
+// Validations are processed and executed using the value of the annotated node as the parameter to the assertions.
 //
-// When the assertions have violations, the errors are collected and returned, prefixed by the errMsg context string.
+// When the assertions have violations, the errors are collected and returned.
 // Otherwise, returns nil.
-func ProcessAndRunAssertions(n yamlmeta.Node, errMsg string) error {
+func ProcessAndRunValidations(n yamlmeta.Node) error {
 	if n == nil {
 		return nil
 	}
@@ -37,14 +37,14 @@ func ProcessAndRunAssertions(n yamlmeta.Node, errMsg string) error {
 		for _, err := range assertionChecker.violations {
 			compiledViolations = compiledViolations + err.Error() + "\n"
 		}
-		return fmt.Errorf("%v\n%v", errMsg, compiledViolations)
+		return fmt.Errorf("%s", compiledViolations)
 	}
 
 	return nil
 }
 
 type assertChecker struct {
-	thread *starlark.Thread
+	thread     *starlark.Thread
 	violations []error
 }
 
@@ -53,26 +53,27 @@ func newAssertChecker(threadName string) *assertChecker {
 }
 
 func (a *assertChecker) hasViolations() bool {
-	if len(a.violations) > 0 {
-		return true
-	}
-	return false
+	return len(a.violations) > 0
 }
 
 // Visit if `node` is annotated with `@assert/validate` (AnnotationAssertValidate).
-// Checks, validates, and runs the assertions, any violations from running the assertions are collected and stored.
+// Checks, validates, and runs the validation Rules, any violations from running the assertions are collected.
 //
 // This visitor returns and error if any assertion is not well-formed,
 // otherwise, returns nil.
 func (a *assertChecker) Visit(node yamlmeta.Node) error {
 	nodeAnnotations := template.NewAnnotations(node)
 	if nodeAnnotations.Has(AnnotationAssertValidate) {
-		validations, syntaxErr := newValidationsFromAssertValidateAnnotation(nodeAnnotations[AnnotationAssertValidate], node, a.thread)
+		switch node.(type) {
+		case *yamlmeta.DocumentSet, *yamlmeta.Array, *yamlmeta.Map:
+			return fmt.Errorf("Invalid @%s annotation - not supported on %s at %s", AnnotationAssertValidate, yamlmeta.TypeName(node), node.GetPosition().AsCompactString())
+		}
+		rules, syntaxErr := newRulesFromAssertValidateAnnotation(nodeAnnotations[AnnotationAssertValidate], node)
 		if syntaxErr != nil {
 			return syntaxErr
 		}
-		for _, v := range validations {
-			err := v.Validate(node)
+		for _, rule := range rules {
+			err := rule.Validate(node, a.thread)
 			if err != nil {
 				a.violations = append(a.violations, err)
 			}
@@ -82,75 +83,75 @@ func (a *assertChecker) Visit(node yamlmeta.Node) error {
 	return nil
 }
 
-func newValidationsFromAssertValidateAnnotation(annotation template.NodeAnnotation, n yamlmeta.Node, thread *starlark.Thread) ([]Validation, error) {
-	var validations []Validation
+func newRulesFromAssertValidateAnnotation(annotation template.NodeAnnotation, n yamlmeta.Node) ([]Rule, error) {
+	var validations []Rule
 	validationPosition := createAssertAnnotationPosition(annotation.Position, n)
 
 	if len(annotation.Kwargs) != 0 {
-		return nil, fmt.Errorf("Expected @%v to have validation 2-tuple as argument(s), but found keyword argument (by %v)", AnnotationAssertValidate, validationPosition.AsCompactString())
+		return nil, fmt.Errorf("Invalid @%s annotation - expected @%s to have 2-tuple as argument(s), but found keyword argument (by %s)", AnnotationAssertValidate, AnnotationAssertValidate, validationPosition.AsCompactString())
 	}
 	if len(annotation.Args) == 0 {
-		return nil, fmt.Errorf("Expected @%v to have validation 2-tuple as argument(s), but found no arguments (by %v)", AnnotationAssertValidate, validationPosition.AsCompactString())
+		return nil, fmt.Errorf("Invalid @%s annotation - expected @%s to have 2-tuple as argument(s), but found no arguments (by %s)", AnnotationAssertValidate, AnnotationAssertValidate, validationPosition.AsCompactString())
 	}
 	for _, arg := range annotation.Args {
-		validationTuple, ok := arg.(starlark.Tuple)
+		ruleTuple, ok := arg.(starlark.Tuple)
 		if !ok {
-			return nil, fmt.Errorf("Expected @%v to have validation 2-tuple as argument(s), but found: %v (by %v)", AnnotationAssertValidate, arg.String(), validationPosition.AsCompactString())
+			return nil, fmt.Errorf("Invalid @%s annotation - expected @%s to have 2-tuple as argument(s), but found: %s (by %s)", AnnotationAssertValidate, AnnotationAssertValidate, arg.String(), validationPosition.AsCompactString())
 		}
-		if len(validationTuple) != 2 {
-			return nil, fmt.Errorf("Expected @%v 2-tuple, but found tuple with length %v (by %v)", AnnotationAssertValidate, len(validationTuple), validationPosition.AsCompactString())
+		if len(ruleTuple) != 2 {
+			return nil, fmt.Errorf("Invalid @%s annotation - expected @%s 2-tuple, but found tuple with length %v (by %s)", AnnotationAssertValidate, AnnotationAssertValidate, len(ruleTuple), validationPosition.AsCompactString())
 		}
-		message, ok := validationTuple[0].(starlark.String)
+		message, ok := ruleTuple[0].(starlark.String)
 		if !ok {
-			return nil, fmt.Errorf("Expected @%v to have descriptive string as the first item in the 2-tuple, but found type: %v (by %v)", AnnotationAssertValidate, validationTuple[0].Type(), validationPosition.AsCompactString())
+			return nil, fmt.Errorf("Invalid @%s annotation - expected @%s to have string describing a valid value as the first item in the 2-tuple, but found type: %s (by %s)", AnnotationAssertValidate, AnnotationAssertValidate, ruleTuple[0].Type(), validationPosition.AsCompactString())
 		}
-		lambda, ok := validationTuple[1].(starlark.Callable)
+		lambda, ok := ruleTuple[1].(starlark.Callable)
 		if !ok {
-			return nil, fmt.Errorf("Expected @%v to have a validation function as the second item in the 2-tuple, but found type: %v (by %v)", AnnotationAssertValidate, validationTuple[1].Type(), validationPosition.AsCompactString())
+			return nil, fmt.Errorf("Invalid @%s annotation - expected @%s to have an assertion function as the second item in the 2-tuple, but found type: %s (by %s)", AnnotationAssertValidate, AnnotationAssertValidate, ruleTuple[1].Type(), validationPosition.AsCompactString())
 		}
-		validations = append(validations, Validation{
-			thread:   thread,
-			msg:      message.String(),
-			f:        lambda,
-			position: validationPosition,
+		validations = append(validations, Rule{
+			msg:       message.String(),
+			assertion: lambda,
+			position:  validationPosition,
 		})
 	}
 
 	return validations, nil
 }
 
-// Validation is an assertion from an @assert/validate annotation.
-// One @assert/validate annotation can have multiple Validations.
-type Validation struct {
-	thread   *starlark.Thread
-	msg      string
-	f        starlark.Callable
-	position *filepos.Position
+// A Rule represents an argument to an @assert/validate annotation;
+// it contains a string description of what constitutes a valid value,
+// and a function that asserts the rule against an actual value.
+// One @assert/validate annotation can have multiple Rules.
+type Rule struct {
+	msg       string
+	assertion starlark.Callable
+	position  *filepos.Position
 }
 
-// Validate runs the function from the Validation with the node's value as arguments.
+// Validate runs the assertion from the Rule with the node's value as arguments.
 //
-// Returns an error if the function returns an error, or if the resulting value from the function is falsy.
+// Returns an error if the assertion returns False (not-None), or assert.fail()s.
 // Otherwise, returns nil.
-func (v Validation) Validate(node yamlmeta.Node) error {
+func (r Rule) Validate(node yamlmeta.Node, thread *starlark.Thread) error {
 	var nodeValue starlark.Value
-	switch values := node.GetValues(); len(values) {
-	case 0: // run validation with no arguments
-	case 1:
+	if values := node.GetValues(); len(values) == 1 {
 		nodeValue = yamltemplate.NewGoValueWithYAML(values[0]).AsStarlarkValue()
-	default:
-		nodeValue = yamltemplate.NewGoValueWithYAML(values).AsStarlarkValue()
+	} else {
+		panic(fmt.Sprintf("%v number of values to validate with @%s annotation at %s", len(values), AnnotationAssertValidate, r.position.AsCompactString()))
 	}
 
-	result, err := starlark.Call(v.thread, v.f, starlark.Tuple{nodeValue}, []starlark.Tuple{})
+	result, err := starlark.Call(thread, r.assertion, starlark.Tuple{nodeValue}, []starlark.Tuple{})
 	if err != nil {
-		return fmt.Errorf("%v requires a valid value: %v; %v (by %v)", node.GetPosition().AsCompactString(), v.msg, err.Error(), v.position.AsCompactString())
+		return fmt.Errorf("%s requires a valid value: %s; %s (by %s)", node.GetPosition().AsCompactString(), r.msg, err.Error(), r.position.AsCompactString())
 	}
-	// From proposal: "if all rules pass (either returns True or None), then the value is valid."
-	// I believe a None result would return an error
-	if !result.Truth() {
-		node.GetAnnotations()
-		return fmt.Errorf("%v requires a valid value: %v (by %v)", node.GetPosition().AsCompactString(), v.msg, v.position.AsCompactString())
+
+	// in order to pass, the assertion must return True or None
+	if _, ok := result.(starlark.NoneType); !ok {
+		if !result.Truth() {
+			node.GetAnnotations()
+			return fmt.Errorf("%s requires a valid value: %s (by %s)", node.GetPosition().AsCompactString(), r.msg, r.position.AsCompactString())
+		}
 	}
 
 	return nil
