@@ -462,26 +462,7 @@ type testInputFiles []string
 type yttFlags []map[string]string
 
 func runYtt(t *testing.T, files testInputFiles, stdinFileName string, flags yttFlags, envs []string) string {
-	var fileFlags []string
-	for _, file := range files {
-		fileFlags = append(fileFlags, "-f", file)
-	}
-
-	var yttFlags []string
-	for _, flagElement := range flags {
-		for flagName, flagVal := range flagElement {
-			if flagVal != "" {
-				yttFlags = append(yttFlags, flagName, flagVal)
-			} else {
-				yttFlags = append(yttFlags, flagName)
-			}
-		}
-	}
-
-	command := exec.Command("../../ytt", append(fileFlags, yttFlags...)...)
-	stdError := bytes.NewBufferString("")
-	command.Stderr = stdError
-	command.Env = append(command.Env, envs...)
+	command, stdError := buildCommand(files, flags, envs)
 
 	if stdinFileName != "" {
 		fileToUseInStdIn, err := os.OpenFile(stdinFileName, os.O_RDONLY, os.ModeAppend)
@@ -495,6 +476,16 @@ func runYtt(t *testing.T, files testInputFiles, stdinFileName string, flags yttF
 	return string(output)
 }
 func runYttExpectingError(t *testing.T, files testInputFiles, stdinFileName string, flags yttFlags, envs []string) string {
+	command, stdError := buildCommand(files, flags, envs)
+
+	_, err := command.Output()
+	require.Error(t, err, stdError.String())
+
+	return stdError.String()
+
+}
+
+func buildCommand(files testInputFiles, flags yttFlags, envs []string) (*exec.Cmd, *bytes.Buffer) {
 	var fileFlags []string
 	for _, file := range files {
 		fileFlags = append(fileFlags, "-f", file)
@@ -515,10 +506,5 @@ func runYttExpectingError(t *testing.T, files testInputFiles, stdinFileName stri
 	stdError := bytes.NewBufferString("")
 	command.Stderr = stdError
 	command.Env = append(command.Env, envs...)
-
-	_, err := command.Output()
-	require.Error(t, err, stdError.String())
-
-	return stdError.String()
-
+	return command, stdError
 }

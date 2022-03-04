@@ -11,7 +11,7 @@ import (
 
 var hasStdinBeenRead bool
 
-//ReadStdin only read stdin once
+// ReadStdin only read stdin once
 func ReadStdin() ([]byte, error) {
 	if hasStdinBeenRead {
 		return nil, fmt.Errorf("Standard input has already been read, has the '-' argument been used in more than one flag?")
