@@ -1231,7 +1231,7 @@ lib_int: #@ data.values.int`)
 
 	out := opts.RunWithFiles(cmdtpl.Input{Files: filesToProcess}, ui)
 	require.Error(t, out.Err)
-	require.Contains(t, out.Err.Error(), "'# ignored!': Unrecognized comment type")
+	require.Contains(t, out.Err.Error(), "'# ignored!': Expected ytt-formatted string")
 }
 
 func runAndCompare(t *testing.T, filesToProcess []*files.File, expectedYAMLTplData string) {
