@@ -4,6 +4,7 @@
 package template
 
 import (
+	"encoding/json"
 	"fmt"
 	"time"
 
@@ -97,6 +98,49 @@ func (o *Options) Run() error {
 
 	out := o.RunWithFiles(in, ui)
 	return o.pickSource(srcs, func(s FileSource) bool { return s.HasOutput() }).Output(out)
+}
+
+func NewBulkOptions(in string, out bool) *Options {
+	return &Options{BulkFilesSourceOpts: BulkFilesSourceOpts{
+		bulkOut: out,
+	}}
+}
+
+func (o *Options) RunLambda() ([]byte, error) {
+	ui := ui.NewTTY(o.Debug)
+	t1 := time.Now()
+
+	defer func() {
+		ui.Debugf("total: %s\n", time.Now().Sub(t1))
+	}()
+
+	srcs := NewBulkFilesSource(o.BulkFilesSourceOpts, ui)
+	in, err := srcs.Input()
+	if err != nil {
+		return nil, err
+	}
+
+	out := o.RunWithFiles(in, ui)
+
+	fs := BulkFiles{}
+
+	if out.Err != nil {
+		return nil, out.Err
+	}
+
+	for _, outputFile := range out.Files {
+		fs.Files = append(fs.Files, BulkFile{
+			Name: outputFile.RelativePath(),
+			Data: string(outputFile.Bytes()),
+		})
+	}
+
+	resultBytes, err := json.Marshal(fs)
+	if err != nil {
+		return nil, err
+	}
+
+	return resultBytes, nil
 }
 
 func (o *Options) RunWithFiles(in Input, ui ui.UI) Output {

@@ -4,11 +4,8 @@
 package cmd
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
-	"os"
-	"os/exec"
 
 	"github.com/spf13/cobra"
 	cmdtpl "github.com/vmware-tanzu/carvel-ytt/pkg/cmd/template"
@@ -18,14 +15,11 @@ import (
 type WebsiteOptions struct {
 	ListenAddr      string
 	RedirectToHTTPS bool
-	BinaryPath      string
 	CheckCookie     bool
 }
 
 func NewWebsiteOptions() *WebsiteOptions {
-	return &WebsiteOptions{
-		BinaryPath: os.Args[0],
-	}
+	return &WebsiteOptions{}
 }
 
 func NewWebsiteCmd(o *WebsiteOptions) *cobra.Command {
@@ -43,7 +37,7 @@ func (o *WebsiteOptions) Server() *website.Server {
 	opts := website.ServerOpts{
 		ListenAddr:      o.ListenAddr,
 		RedirectToHTTPS: o.RedirectToHTTPS,
-		TemplateFunc:    o.execBinary,
+		TemplateFunc:    o.runYtt,
 		ErrorFunc:       o.bulkOutErr,
 		CheckCookie:     o.CheckCookie,
 	}
@@ -54,18 +48,22 @@ func (o *WebsiteOptions) Run() error {
 	return o.Server().Run()
 }
 
-func (o *WebsiteOptions) execBinary(data []byte) ([]byte, error) {
-	var out, stderr bytes.Buffer
-	cmd := exec.Command(o.BinaryPath, "--bulk-in", string(data), "--bulk-out")
-	cmd.Stdout = &out
-	cmd.Stderr = &stderr
+func (o *WebsiteOptions) runYtt(data []byte) ([]byte, error) {
+	//var out, stderr bytes.Buffer
 
-	err := cmd.Run()
+	cmdOptions := cmdtpl.NewBulkOptions(string(data), true)
+	bytes, err := cmdOptions.RunLambda()
+
+	//cmd := exec.Command(o.BinaryPath, "--bulk-in", string(data), "--bulk-out")
+	//cmd.Stdout = &out
+	//cmd.Stderr = &stderr
+	//
+	//err := cmd.Run()
 	if err != nil {
-		return nil, fmt.Errorf("error: %s", stderr.String())
+		return nil, fmt.Errorf("error: %s", err.Error())
 	}
 
-	return out.Bytes(), nil
+	return bytes, nil
 }
 
 func (*WebsiteOptions) bulkOutErr(err error) ([]byte, error) {
