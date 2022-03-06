@@ -15,6 +15,7 @@ import (
 	"github.com/vmware-tanzu/carvel-ytt/pkg/files"
 	"github.com/vmware-tanzu/carvel-ytt/pkg/template"
 	"github.com/vmware-tanzu/carvel-ytt/pkg/workspace/datavalues"
+	"github.com/vmware-tanzu/carvel-ytt/pkg/workspace/ref"
 	"github.com/vmware-tanzu/carvel-ytt/pkg/yamlmeta"
 	yttoverlay "github.com/vmware-tanzu/carvel-ytt/pkg/yttlibrary/overlay"
 )
@@ -289,7 +290,17 @@ func (DataValuesFlags) libraryRefAndKey(key string) (string, string, error) {
 		if len(keyPieces[0]) == 0 {
 			return "", "", fmt.Errorf("Expected library ref to not be empty")
 		}
+		if !strings.HasPrefix(keyPieces[0], ref.LibrarySep) {
+			// the libraryKeySep is part of the path
+			return "", key, nil
+		}
 		return keyPieces[0], keyPieces[1], nil
+	case 3:
+		if strings.HasPrefix(keyPieces[0], ref.LibrarySep) {
+			// the second libraryKeySep is part of the path
+			return keyPieces[0], keyPieces[1] + libraryKeySep + keyPieces[2], nil
+		}
+		return "", "", fmt.Errorf("Expected at most one library-key separator '%s' in '%s'", libraryKeySep, key)
 
 	default:
 		return "", "", fmt.Errorf("Expected at most one library-key separator '%s' in '%s'", libraryKeySep, key)

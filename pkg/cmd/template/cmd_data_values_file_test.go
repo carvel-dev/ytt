@@ -137,13 +137,17 @@ fromLibrary: #@ data.values`)
 
 	dvs2 := []byte(`val2: 2`)
 
-	dvs3 := []byte(`3`)
+	dvs3 := []byte(`val3: 3`)
+
+	dvs4 := []byte(`4`)
 
 	expectedYAMLTplData := `fromRoot:
   val1: 1
-fromLibrary: 
+---
+fromLibrary:
   val2: 2
   val3: 3
+  val4: "4"
 `
 
 	filesToProcess := files.NewSortedFiles([]*files.File{
@@ -155,16 +159,18 @@ fromLibrary:
 	opts := cmdtpl.NewOptions()
 
 	opts.DataValuesFlags = cmdtpl.DataValuesFlags{
-		FromFiles: []string{"c:\\User\\user\\dvs1.yml", "@lib:dvs2.yml"},
-		KVsFromFiles: []string{"val3=@lib:c:\\User\\user\\dvs3.yml"},
+		FromFiles:    []string{"c:\\User\\user\\dvs1.yml", "@lib:dvs2.yml", "@lib:D:\\User\\user\\dvs3.yml"},
+		KVsFromFiles: []string{"@lib:val4=c:\\User\\user\\dvs4.yml"},
 		ReadFileFunc: func(path string) ([]byte, error) {
 			switch path {
 			case "c:\\User\\user\\dvs1.yml":
 				return dvs1, nil
 			case "dvs2.yml":
 				return dvs2, nil
-			case "c:\\User\\user\\dvs3.yml":
+			case "D:\\User\\user\\dvs3.yml":
 				return dvs3, nil
+			case "c:\\User\\user\\dvs4.yml":
+				return dvs4, nil
 			default:
 				return nil, fmt.Errorf("Unknown file '%s'", path)
 			}
