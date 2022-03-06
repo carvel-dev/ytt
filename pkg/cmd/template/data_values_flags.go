@@ -290,21 +290,18 @@ func (DataValuesFlags) libraryRefAndKey(key string) (string, string, error) {
 		if len(keyPieces[0]) == 0 {
 			return "", "", fmt.Errorf("Expected library ref to not be empty")
 		}
-		if !strings.HasPrefix(keyPieces[0], ref.LibrarySep) {
-			// the libraryKeySep is part of the path
-			return "", key, nil
+		if strings.HasPrefix(keyPieces[0], ref.LibrarySep) {
+			return keyPieces[0], keyPieces[1], nil
 		}
-		return keyPieces[0], keyPieces[1], nil
+		// the LibrarySep is part of the path
+		return "", key, nil
 	case 3:
 		if strings.HasPrefix(keyPieces[0], ref.LibrarySep) {
-			// the second libraryKeySep is part of the path
+			// the second LibrarySep is part of the path
 			return keyPieces[0], keyPieces[1] + libraryKeySep + keyPieces[2], nil
 		}
-		return "", "", fmt.Errorf("Expected at most one library-key separator '%s' in '%s'", libraryKeySep, key)
-
-	default:
-		return "", "", fmt.Errorf("Expected at most one library-key separator '%s' in '%s'", libraryKeySep, key)
 	}
+	return "", "", fmt.Errorf("Expected at most one library-key separator '%s' in '%s'", libraryKeySep, key)
 }
 
 func (s *DataValuesFlags) buildOverlay(keyPieces []string, value interface{}, desc string, line string) *yamlmeta.Document {
