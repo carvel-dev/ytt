@@ -1,4 +1,4 @@
-// Copyright 2020 VMware, Inc.
+// Copyright 2022 VMware, Inc.
 // SPDX-License-Identifier: Apache-2.0
 
 package files
@@ -40,7 +40,7 @@ type StdinSource struct {
 
 func NewStdinSource() StdinSource {
 	// only read stdin once
-	bs, err := ioutil.ReadAll(os.Stdin)
+	bs, err := ReadStdin()
 	return StdinSource{bs, err}
 }
 

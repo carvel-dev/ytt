@@ -1,4 +1,4 @@
-// Copyright 2020 VMware, Inc.
+// Copyright 2022 VMware, Inc.
 // SPDX-License-Identifier: Apache-2.0
 
 package e2e
@@ -23,6 +23,34 @@ func TestCheckStdInReading(t *testing.T) {
 	expectedFileOutput, err := ioutil.ReadFile("../../examples/eirini/config-result.yml")
 	require.NoError(t, err)
 	require.Equal(t, string(expectedFileOutput), actualOutput)
+}
+
+func TestDataValuesFileWithStdin(t *testing.T) {
+
+	t.Run("--data-values-file with stdin", func(t *testing.T) {
+		flags := yttFlags{
+			{"--data-values-file": "-"},
+			{"--data-values-inspect": ""},
+		}
+		actualOutput := runYtt(t, []string{}, "../../examples/data-values/values-file.yml", flags, nil)
+		expectedOutput := `nothing: something
+string: str
+bool: true
+int: 124
+new_thing: new
+`
+		require.Equal(t, expectedOutput, actualOutput)
+	})
+
+}
+func TestCheckStdInReadingOnlyOnce(t *testing.T) {
+	flags := yttFlags{
+		{"--data-values-file": "-"},
+		{"-f": "-"},
+	}
+	actualOutput := runYttExpectingError(t, nil, "../../examples/data-values/values-file.yml", flags, nil)
+	expectedOutput := "ytt: Error: Extracting data value from file:\n  Reading file '-':\n    Standard input has already been read, has the '-' argument been used in more than one flag?\n"
+	require.Equal(t, expectedOutput, actualOutput)
 }
 
 func TestSanityCheckTemplateWithDataValues(t *testing.T) {
@@ -434,6 +462,30 @@ type testInputFiles []string
 type yttFlags []map[string]string
 
 func runYtt(t *testing.T, files testInputFiles, stdinFileName string, flags yttFlags, envs []string) string {
+	command, stdError := buildCommand(files, flags, envs)
+
+	if stdinFileName != "" {
+		fileToUseInStdIn, err := os.OpenFile(stdinFileName, os.O_RDONLY, os.ModeAppend)
+		require.NoError(t, err)
+		command.Stdin = fileToUseInStdIn
+	}
+	output, err := command.Output()
+
+	require.NoError(t, err, stdError.String())
+
+	return string(output)
+}
+func runYttExpectingError(t *testing.T, files testInputFiles, stdinFileName string, flags yttFlags, envs []string) string {
+	command, stdError := buildCommand(files, flags, envs)
+
+	_, err := command.Output()
+	require.Error(t, err, stdError.String())
+
+	return stdError.String()
+
+}
+
+func buildCommand(files testInputFiles, flags yttFlags, envs []string) (*exec.Cmd, *bytes.Buffer) {
 	var fileFlags []string
 	for _, file := range files {
 		fileFlags = append(fileFlags, "-f", file)
@@ -454,14 +506,5 @@ func runYtt(t *testing.T, files testInputFiles, stdinFileName string, flags yttF
 	stdError := bytes.NewBufferString("")
 	command.Stderr = stdError
 	command.Env = append(command.Env, envs...)
-
-	if stdinFileName != "" {
-		fileToUseInStdIn, err := os.OpenFile(stdinFileName, os.O_RDONLY, os.ModeAppend)
-		require.NoError(t, err)
-		command.Stdin = fileToUseInStdIn
-	}
-	output, err := command.Output()
-	require.NoError(t, err, stdError.String())
-
-	return string(output)
+	return command, stdError
 }
