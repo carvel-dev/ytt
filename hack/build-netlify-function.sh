@@ -35,3 +35,6 @@ go build -ldflags="$LDFLAGS" -trimpath -o ytt ./cmd/ytt/...
 		--dangerous-emptied-output-directory ../../tmp/
 )
 mv tmp/generated.go.txt pkg/website/generated.go
+
+export GOOS=linux GOARCH=amd64
+go build -ldflags="$LDFLAGS" -trimpath -o ../netlify/functions/template ./cmd/ytt-lambda-website/...
