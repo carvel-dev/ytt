@@ -91,14 +91,15 @@ func (ll *LibraryExecution) Values(valuesOverlays []*datavalues.Envelope, schema
 		return nil, nil, err
 	}
 
-	return values, libValues, ll.ValidateValues(values)
+	return values, libValues, ll.ValidateValues(values, loader)
 }
 
 // ValidateValues runs validations from @assert/validate annotations in Data Values for the current library.
 //
 // Returns an error if the arguments to an @assert/validate are invalid, or an assertion has a non-None, falsy return.
-func (ll *LibraryExecution) ValidateValues(values *datavalues.Envelope) error {
-	err := ProcessAndRunValidations(values.Doc)
+func (ll *LibraryExecution) ValidateValues(values *datavalues.Envelope, loader *TemplateLoader) error {
+	assertionChecker := newAssertChecker("assert-data-values", loader)
+	err := ProcessAndRunValidations(values.Doc, assertionChecker)
 	if err != nil {
 		return fmt.Errorf("One or more data values were invalid:\n%s", err.Error())
 	}

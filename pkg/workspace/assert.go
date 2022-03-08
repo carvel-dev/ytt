@@ -12,6 +12,7 @@ import (
 	"github.com/vmware-tanzu/carvel-ytt/pkg/yamltemplate"
 )
 
+// Declare @assert/... annotation names
 const (
 	AnnotationAssertValidate template.AnnotationName = "assert/validate"
 )
@@ -21,20 +22,19 @@ const (
 //
 // When the assertions have violations, the errors are collected and returned.
 // Otherwise, returns nil.
-func ProcessAndRunValidations(n yamlmeta.Node) error {
+func ProcessAndRunValidations(n yamlmeta.Node, checker *assertChecker) error {
 	if n == nil {
 		return nil
 	}
 
-	assertionChecker := newAssertChecker("assertions-process-and-run")
-	err := yamlmeta.Walk(n, assertionChecker)
+	err := yamlmeta.Walk(n, checker)
 	if err != nil {
 		return err
 	}
 
-	if assertionChecker.hasViolations() {
+	if checker.hasViolations() {
 		var compiledViolations string
-		for _, err := range assertionChecker.violations {
+		for _, err := range checker.violations {
 			compiledViolations = compiledViolations + err.Error() + "\n"
 		}
 		return fmt.Errorf("%s", compiledViolations)
@@ -48,7 +48,7 @@ type assertChecker struct {
 	violations []error
 }
 
-func newAssertChecker(threadName string) *assertChecker {
+func newAssertChecker(threadName string, _ *TemplateLoader) *assertChecker {
 	return &assertChecker{thread: &starlark.Thread{Name: threadName}, violations: []error{}}
 }
 
