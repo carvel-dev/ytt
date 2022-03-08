@@ -35,7 +35,7 @@ func ProcessAndRunValidations(n yamlmeta.Node, checker *assertChecker) error {
 	if checker.hasViolations() {
 		var compiledViolations string
 		for _, err := range checker.violations {
-			compiledViolations = compiledViolations + err.Error() + "\n"
+			compiledViolations = compiledViolations + "- " + err.Error() + "\n"
 		}
 		return fmt.Errorf("%s", compiledViolations)
 	}
@@ -143,14 +143,13 @@ func (r Rule) Validate(node yamlmeta.Node, thread *starlark.Thread) error {
 
 	result, err := starlark.Call(thread, r.assertion, starlark.Tuple{nodeValue}, []starlark.Tuple{})
 	if err != nil {
-		return fmt.Errorf("%s requires a valid value: %s; %s (by %s)", node.GetPosition().AsCompactString(), r.msg, err.Error(), r.position.AsCompactString())
+		return fmt.Errorf("%s requires %s; %s (by %s)", node.GetPosition().AsCompactString(), r.msg, err.Error(), r.position.AsCompactString())
 	}
 
 	// in order to pass, the assertion must return True or None
 	if _, ok := result.(starlark.NoneType); !ok {
 		if !result.Truth() {
-			node.GetAnnotations()
-			return fmt.Errorf("%s requires a valid value: %s (by %s)", node.GetPosition().AsCompactString(), r.msg, r.position.AsCompactString())
+			return fmt.Errorf("%s requires %s (by %s)", node.GetPosition().AsCompactString(), r.msg, r.position.AsCompactString())
 		}
 	}
 
