@@ -67,7 +67,8 @@ func (ll *LibraryExecution) Schemas(overlays []*datavalues.SchemaEnvelope) (*dat
 }
 
 // Values calculates the final Data Values for this library by combining/overlaying defaults from the schema, the Data
-// Values file(s) in the library, and the passed-in Data Values overlays.
+// Values file(s) in the library, and the passed-in Data Values overlays. The final Data Values are validated using
+// the validations attached to a Data Value.
 //
 // Returns this library's Data Values and a collection of Data Values addressed to child libraries.
 // Returns an error if the overlay operation fails or the result over an overlay fails a schema check.
@@ -91,18 +92,28 @@ func (ll *LibraryExecution) Values(valuesOverlays []*datavalues.Envelope, schema
 		return nil, nil, err
 	}
 
-	return values, libValues, ll.ValidateValues(values, loader)
+	return values, libValues, ll.validateValues(values, loader)
 }
 
-// ValidateValues runs validations from @assert/validate annotations in Data Values for the current library.
+// validateValues runs validations from @assert/validate annotations in Data Values for the current library.
 //
-// Returns an error if the arguments to an @assert/validate are invalid, or an assertion has a non-None, falsy return.
-func (ll *LibraryExecution) ValidateValues(values *datavalues.Envelope, loader *TemplateLoader) error {
+// Returns an error if the arguments to an @assert/validate are invalid,
+// otherwise, checks the assertionChecker for violations, and returns nil if there are no violations.
+func (ll *LibraryExecution) validateValues(values *datavalues.Envelope, loader *TemplateLoader) error {
 	assertionChecker := newAssertChecker("assert-data-values", loader)
 	err := ProcessAndRunValidations(values.Doc, assertionChecker)
 	if err != nil {
-		return fmt.Errorf("One or more data values were invalid:\n%s", err.Error())
+		return err
 	}
+
+	if assertionChecker.hasViolations() {
+		var compiledViolations string
+		for _, err := range assertionChecker.violations {
+			compiledViolations = compiledViolations + "- " + err.Error() + "\n"
+		}
+		return fmt.Errorf("One or more data values were invalid:\n%s", compiledViolations)
+	}
+
 	return nil
 }
 

@@ -20,9 +20,9 @@ const (
 // ProcessAndRunValidations takes a root Node and traverses the tree checking for assert annotations.
 // Validations are processed and executed using the value of the annotated node as the parameter to the assertions.
 //
-// When the assertions have violations, the errors are collected and returned.
+// When the assertions have violations, the errors are collected and stored in the checker.
 // Otherwise, returns nil.
-func ProcessAndRunValidations(n yamlmeta.Node, checker *assertChecker) error {
+func ProcessAndRunValidations(n yamlmeta.Node, checker yamlmeta.Visitor) error {
 	if n == nil {
 		return nil
 	}
@@ -30,14 +30,6 @@ func ProcessAndRunValidations(n yamlmeta.Node, checker *assertChecker) error {
 	err := yamlmeta.Walk(n, checker)
 	if err != nil {
 		return err
-	}
-
-	if checker.hasViolations() {
-		var compiledViolations string
-		for _, err := range checker.violations {
-			compiledViolations = compiledViolations + "- " + err.Error() + "\n"
-		}
-		return fmt.Errorf("%s", compiledViolations)
 	}
 
 	return nil
@@ -67,15 +59,16 @@ func (a *assertChecker) Visit(node yamlmeta.Node) error {
 		switch node.(type) {
 		case *yamlmeta.DocumentSet, *yamlmeta.Array, *yamlmeta.Map:
 			return fmt.Errorf("Invalid @%s annotation - not supported on %s at %s", AnnotationAssertValidate, yamlmeta.TypeName(node), node.GetPosition().AsCompactString())
-		}
-		rules, syntaxErr := newRulesFromAssertValidateAnnotation(nodeAnnotations[AnnotationAssertValidate], node)
-		if syntaxErr != nil {
-			return syntaxErr
-		}
-		for _, rule := range rules {
-			err := rule.Validate(node, a.thread)
-			if err != nil {
-				a.violations = append(a.violations, err)
+		default:
+			rules, syntaxErr := newRulesFromAssertValidateAnnotation(nodeAnnotations[AnnotationAssertValidate], node)
+			if syntaxErr != nil {
+				return syntaxErr
+			}
+			for _, rule := range rules {
+				err := rule.Validate(node, a.thread)
+				if err != nil {
+					a.violations = append(a.violations, err)
+				}
 			}
 		}
 	}
@@ -84,7 +77,7 @@ func (a *assertChecker) Visit(node yamlmeta.Node) error {
 }
 
 func newRulesFromAssertValidateAnnotation(annotation template.NodeAnnotation, n yamlmeta.Node) ([]Rule, error) {
-	var validations []Rule
+	var rules []Rule
 	validationPosition := createAssertAnnotationPosition(annotation.Position, n)
 
 	if len(annotation.Kwargs) != 0 {
@@ -109,14 +102,14 @@ func newRulesFromAssertValidateAnnotation(annotation template.NodeAnnotation, n 
 		if !ok {
 			return nil, fmt.Errorf("Invalid @%s annotation - expected @%s to have an assertion function as the second item in the 2-tuple, but found type: %s (by %s)", AnnotationAssertValidate, AnnotationAssertValidate, ruleTuple[1].Type(), validationPosition.AsCompactString())
 		}
-		validations = append(validations, Rule{
+		rules = append(rules, Rule{
 			msg:       message.String(),
 			assertion: lambda,
 			position:  validationPosition,
 		})
 	}
 
-	return validations, nil
+	return rules, nil
 }
 
 // A Rule represents an argument to an @assert/validate annotation;
@@ -135,10 +128,12 @@ type Rule struct {
 // Otherwise, returns nil.
 func (r Rule) Validate(node yamlmeta.Node, thread *starlark.Thread) error {
 	var nodeValue starlark.Value
-	if values := node.GetValues(); len(values) == 1 {
+	switch node.(type) {
+	case *yamlmeta.DocumentSet, *yamlmeta.Array, *yamlmeta.Map:
+		panic(fmt.Sprintf("@%s annotation at %s - not supported on %s at %s", AnnotationAssertValidate, r.position.AsCompactString(), yamlmeta.TypeName(node), node.GetPosition().AsCompactString()))
+	default:
+		values := node.GetValues()
 		nodeValue = yamltemplate.NewGoValueWithYAML(values[0]).AsStarlarkValue()
-	} else {
-		panic(fmt.Sprintf("%v number of values to validate with @%s annotation at %s", len(values), AnnotationAssertValidate, r.position.AsCompactString()))
 	}
 
 	result, err := starlark.Call(thread, r.assertion, starlark.Tuple{nodeValue}, []starlark.Tuple{})
