@@ -195,7 +195,7 @@ Invalid schema
 unknown @schema/type annotation keyword argument
 schema.yml:
     |
-  3 | #@schema/type unknown_kwarg=False
+  3 | @schema/type unknown_kwarg=False
   4 | foo: 0
     |
 
@@ -224,7 +224,7 @@ Invalid schema
 unknown @schema/type annotation keyword argument
 schema.yml:
     |
-  3 | #@schema/type any=1
+  3 | @schema/type any=1
   4 | foo: 0
     |
 
@@ -253,7 +253,7 @@ Invalid schema
 expected @schema/type annotation to have keyword argument and value
 schema.yml:
     |
-  3 | #@schema/type
+  3 | @schema/type
   4 | foo: 0
     |
 
@@ -280,7 +280,7 @@ Invalid schema
 expected @schema/type annotation to have keyword argument and value
 schema.yml:
     |
-  3 | #@schema/type any
+  3 | @schema/type any
   4 | foo: 0
     |
 
@@ -313,9 +313,9 @@ Invalid schema
 Schema was specified within an "any type" fragment
 schema.yml:
     |
-  5 |   #@schema/nullable
-  6 |   #@schema/type any=False
-  7 |   #@schema/default 1
+  5 | @schema/nullable
+  6 | @schema/type any=False
+  7 | @schema/default 1
   8 |   bar: 7
     |
 
@@ -346,8 +346,8 @@ Invalid schema
 @schema/nullable, and @schema/type any=True are mutually exclusive
 schema.yml:
     |
-  3 | #@schema/type any=True
-  4 | #@schema/nullable
+  3 | @schema/type any=True
+  4 | @schema/nullable
   5 | foo: 0
     |
 
@@ -377,7 +377,7 @@ Invalid schema
 syntax error in @schema/default annotation
 schema.yml:
     |
-  3 | #@schema/default
+  3 | @schema/default
   4 | foo: 0
     |
 
@@ -404,7 +404,7 @@ Invalid schema
 syntax error in @schema/default annotation
 schema.yml:
     |
-  3 | #@schema/default 1, 2
+  3 | @schema/default 1, 2
   4 | foo: 0
     |
 
@@ -431,7 +431,7 @@ Invalid schema
 syntax error in @schema/default annotation
 schema.yml:
     |
-  3 | #@schema/default any=True
+  3 | @schema/default any=True
   4 | foo: 0
     |
 
@@ -462,7 +462,7 @@ Invalid schema - @schema/default not supported on array item
 
 schema.yml:
     |
-  4 | #@schema/default "baz"
+  4 | @schema/default "baz"
   5 | - bar
     |
 
@@ -493,7 +493,7 @@ Invalid schema - @schema/default is wrong type
 
 schema.yml:
     |
-  3 | #@schema/default 1
+  3 | @schema/default 1
   4 | foo: a string
     |
 
@@ -521,7 +521,7 @@ Invalid schema - @schema/default is wrong type
 
 schema.yml:
     |
-  3 | #@schema/default [{"item": 1}]
+  3 | @schema/default [{"item": 1}]
   4 | map: thing
     |
 
@@ -551,7 +551,7 @@ Invalid schema
 syntax error in @schema/desc annotation
 schema.yml:
     |
-  3 | #@schema/desc
+  3 | @schema/desc
   4 | key: val
     |
 
@@ -578,7 +578,7 @@ Invalid schema
 syntax error in @schema/desc annotation
 schema.yml:
     |
-  3 | #@schema/desc "two", "strings"
+  3 | @schema/desc "two", "strings"
   4 | key: val
     |
 
@@ -605,7 +605,7 @@ Invalid schema
 syntax error in @schema/desc annotation
 schema.yml:
     |
-  3 | #@schema/desc 1
+  3 | @schema/desc 1
   4 | key: val
     |
 
@@ -632,7 +632,7 @@ Invalid schema
 syntax error in @schema/desc annotation
 schema.yml:
     |
-  3 | #@schema/desc key=True
+  3 | @schema/desc key=True
   4 | key: val
     |
 
@@ -662,7 +662,7 @@ Invalid schema
 syntax error in @schema/title annotation
 schema.yml:
     |
-  3 | #@schema/title
+  3 | @schema/title
   4 | key: val
     |
 
@@ -689,7 +689,7 @@ Invalid schema
 syntax error in @schema/title annotation
 schema.yml:
     |
-  3 | #@schema/title "two", "strings"
+  3 | @schema/title "two", "strings"
   4 | key: val
     |
 
@@ -716,7 +716,7 @@ Invalid schema
 syntax error in @schema/title annotation
 schema.yml:
     |
-  3 | #@schema/title 1
+  3 | @schema/title 1
   4 | key: val
     |
 
@@ -743,7 +743,7 @@ Invalid schema
 syntax error in @schema/title annotation
 schema.yml:
     |
-  3 | #@schema/title key=True
+  3 | @schema/title key=True
   4 | key: val
     |
 
@@ -773,7 +773,7 @@ Invalid schema
 syntax error in @schema/deprecated annotation
 schema.yml:
     |
-  3 | #@schema/deprecated
+  3 | @schema/deprecated
   4 | key: val
     |
 
@@ -800,7 +800,7 @@ Invalid schema
 syntax error in @schema/deprecated annotation
 schema.yml:
     |
-  3 | #@schema/deprecated "two", "strings"
+  3 | @schema/deprecated "two", "strings"
   4 | key: val
     |
 
@@ -827,7 +827,7 @@ Invalid schema
 syntax error in @schema/deprecated annotation
 schema.yml:
     |
-  3 | #@schema/deprecated 1
+  3 | @schema/deprecated 1
   4 | key: val
     |
 
@@ -854,7 +854,7 @@ Invalid schema
 syntax error in @schema/deprecated annotation
 schema.yml:
     |
-  3 | #@schema/deprecated key=True
+  3 | @schema/deprecated key=True
   4 | key: val
     |
 
@@ -884,7 +884,7 @@ Invalid schema
 @schema/deprecated not supported on a document
 schema.yml:
     |
-  2 | #@schema/deprecated ""
+  2 | @schema/deprecated ""
   3 | ---
     |
 
@@ -914,7 +914,7 @@ Invalid schema
 syntax error in @schema/examples annotation
 schema.yml:
     |
-  3 | #@schema/examples
+  3 | @schema/examples
   4 | key: val
     |
 
@@ -941,7 +941,7 @@ Invalid schema
 syntax error in @schema/examples annotation
 schema.yml:
     |
-  3 | #@schema/examples "example value"
+  3 | @schema/examples "example value"
   4 | key: val
     |
 
@@ -968,7 +968,7 @@ Invalid schema
 syntax error in @schema/examples annotation
 schema.yml:
     |
-  3 | #@schema/examples ()
+  3 | @schema/examples ()
   4 | key: val
     |
 
@@ -995,7 +995,7 @@ Invalid schema
 syntax error in @schema/examples annotation
 schema.yml:
     |
-  3 | #@schema/examples ("key example", "val", "value")
+  3 | @schema/examples ("key example", "val", "value")
   4 | key: val
     |
 
@@ -1022,7 +1022,7 @@ Invalid schema
 syntax error in @schema/examples annotation
 schema.yml:
     |
-  3 | #@schema/examples (3.14, 5)
+  3 | @schema/examples (3.14, 5)
   4 | key: 7.3
     |
 
@@ -1049,7 +1049,7 @@ Invalid schema
 syntax error in @schema/examples annotation
 schema.yml:
     |
-  3 | #@schema/examples key=True
+  3 | @schema/examples key=True
   4 | key: val
     |
 
@@ -1074,7 +1074,7 @@ enabled: false
 
 schema.yml:
     |
-  3 | #@schema/examples ("Zero value", 0)
+  3 | @schema/examples ("Zero value", 0)
   4 | enabled: false
     |
 

@@ -35,7 +35,7 @@ func (e *Template) Compile(rootNode *NodeRoot) (*template.CompiledTemplate, erro
 	}
 
 	return template.NewCompiledTemplate(
-		e.name, code, instructions, nodes,
+		e.name, code, instructions, nodes, template.NewAnnotationsForTemplate(),
 		template.EvaluationCtxDialects{
 			EvaluationCtxDialectName: EvaluationCtx{},
 		},

@@ -120,6 +120,7 @@ func extractMetas(node yamlmeta.Node, opts MetasOpts) (Metas, yamlmeta.Node, err
 		default:
 			ann.Position = comment.Position
 			metas.Annotations = append(metas.Annotations, CommentAndAnnotation{comment, &ann})
+			// TODO: should this really be a "non-code comment?"
 			nonCodeComments = append(nonCodeComments, comment)
 		}
 	}

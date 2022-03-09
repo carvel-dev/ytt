@@ -5,10 +5,7 @@ package template
 
 import (
 	"fmt"
-	"strconv"
-
 	"github.com/k14s/starlark-go/starlark"
-	"github.com/vmware-tanzu/carvel-ytt/pkg/filepos"
 	"github.com/vmware-tanzu/carvel-ytt/pkg/template/core"
 	// Should not import template specific packages here (like yamlmeta)
 )
@@ -16,8 +13,9 @@ import (
 type EvaluationCtx struct {
 	dialect EvaluationCtxDialect
 
-	nodes     *Nodes
-	ancestors Ancestors
+	nodes       *Nodes
+	annotations *Annotations
+	ancestors   Ancestors
 
 	pendingAnnotations map[NodeTag]NodeAnnotations
 	pendingMapItemKeys map[NodeTag]interface{}
@@ -145,8 +143,8 @@ func (e *EvaluationCtx) TplStartNodeAnnotation(
 	thread *starlark.Thread, f *starlark.Builtin,
 	args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
 
-	if args.Len() != 4 {
-		return starlark.None, fmt.Errorf("expected exactly 4 arguments")
+	if args.Len() != 3 {
+		return starlark.None, fmt.Errorf("expected exactly 3 arguments")
 	}
 
 	nodeTag, err := NewNodeTagFromStarlarkValue(args.Index(0))
@@ -160,22 +158,15 @@ func (e *EvaluationCtx) TplStartNodeAnnotation(
 	}
 	annName := AnnotationName(annNameStr)
 
-	var position *filepos.Position
-	if _, ok := args.Index(2).(starlark.NoneType); ok {
-		position = filepos.NewUnknownPosition()
-	} else {
-		lineNum, err := strconv.Atoi(args.Index(2).String())
-		if err != nil {
-			panic(fmt.Sprintf("expected line num to be int, but found error: %v", err.Error()))
-		}
-		position = filepos.NewPosition(lineNum)
-	}
-
-	annVals := args.Index(3).(starlark.Tuple)
-
+	annVals := args.Index(2).(starlark.Tuple)
 	kwargs = []starlark.Tuple{}
 	for _, val := range annVals[1:] {
 		kwargs = append(kwargs, val.(starlark.Tuple))
+	}
+
+	ann, ok := e.annotations.FindAnnotation(nodeTag, annName)
+	if !ok {
+		return starlark.None, fmt.Errorf("expected to find %s", nodeTag)
 	}
 
 	if _, found := e.pendingAnnotations[nodeTag]; !found {
@@ -186,7 +177,7 @@ func (e *EvaluationCtx) TplStartNodeAnnotation(
 	e.pendingAnnotations[nodeTag][annName] = NodeAnnotation{
 		Args:     annVals[0].(starlark.Tuple),
 		Kwargs:   kwargs,
-		Position: position,
+		Position: ann.Position.DeepCopy(),
 	}
 
 	return starlark.None, nil
