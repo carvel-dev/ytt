@@ -68,7 +68,7 @@ func (ll *LibraryExecution) Schemas(overlays []*datavalues.SchemaEnvelope) (*dat
 
 // Values calculates the final Data Values for this library by combining/overlaying defaults from the schema, the Data
 // Values file(s) in the library, and the passed-in Data Values overlays. The final Data Values are validated using
-// the validations attached to a Data Value.
+// the validations annotated on a Data Value.
 //
 // Returns this library's Data Values and a collection of Data Values addressed to child libraries.
 // Returns an error if the overlay operation fails or the result over an overlay fails a schema check.

@@ -17,11 +17,11 @@ const (
 	AnnotationAssertValidate template.AnnotationName = "assert/validate"
 )
 
-// ProcessAndRunValidations takes a root Node and traverses the tree checking for assert annotations.
+// ProcessAndRunValidations takes a root Node, and threadName, and traverses the tree checking for assert annotations.
 // Validations are processed and executed using the value of the annotated node as the parameter to the assertions.
 //
-// When the assertions have violations, the errors are collected and stored in the checker.
-// Otherwise, returns nil.
+// When the assertions have violations, the errors are collected and returned in an AssertCheck.
+// Otherwise, returns empty AssertCheck and nil.
 func ProcessAndRunValidations(n yamlmeta.Node, threadName string) (AssertCheck, error) {
 	if n == nil {
 		return AssertCheck{}, nil
