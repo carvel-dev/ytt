@@ -100,18 +100,18 @@ my_map:
 `
 
 			expectedErr := `One or more data values were invalid:
-- schema.yml:6 requires "a map with less than 3 elements"; assert.fail: fail: length of map was more than or equal to 3 (by schema.yml:5)
-- schema.yml:8 requires "a non-empty string"; assert.fail: fail: length of string was 0 (by schema.yml:7)
-- schema.yml:10 requires "an int over 9000"; assert.fail: fail: int was less than 9000 (by schema.yml:9)
-- schema.yml:12 requires "a float less than pi"; assert.fail: fail: float was more than 3.1415 (by schema.yml:11)
-- schema.yml:14 requires "bool evaluating to true" (by schema.yml:13)
-- schema.yml:16 requires "a null value"; assert.fail: fail: value was not null (by schema.yml:15)
-- schema.yml:18 requires "an array with more than or exactly 10 items"; assert.fail: fail: array was less than 10 items (by schema.yml:17)
-- schema.yml:20 requires "a non-empty string"; assert.fail: fail: length of string was 0 (by schema.yml:19)
-- schema.yml:22 requires "an int over 9000"; assert.fail: fail: int was less than 9000 (by schema.yml:21)
-- schema.yml:24 requires "a float less than pi"; assert.fail: fail: float was more than 3.1415 (by schema.yml:23)
-- schema.yml:26 requires "bool evaluating to true" (by schema.yml:25)
-- schema.yml:28 requires "a null value"; assert.fail: fail: value was not null (by schema.yml:27)
+- my_map (schema.yml:6) requires "a map with less than 3 elements"; assert.fail: fail: length of map was more than or equal to 3 (by schema.yml:5)
+- string (schema.yml:8) requires "a non-empty string"; assert.fail: fail: length of string was 0 (by schema.yml:7)
+- int (schema.yml:10) requires "an int over 9000"; assert.fail: fail: int was less than 9000 (by schema.yml:9)
+- float (schema.yml:12) requires "a float less than pi"; assert.fail: fail: float was more than 3.1415 (by schema.yml:11)
+- bool (schema.yml:14) requires "bool evaluating to true" (by schema.yml:13)
+- nil (schema.yml:16) requires "a null value"; assert.fail: fail: value was not null (by schema.yml:15)
+- my_array (schema.yml:18) requires "an array with more than or exactly 10 items"; assert.fail: fail: array was less than 10 items (by schema.yml:17)
+- array item (schema.yml:20) requires "a non-empty string"; assert.fail: fail: length of string was 0 (by schema.yml:19)
+- array item (schema.yml:22) requires "an int over 9000"; assert.fail: fail: int was less than 9000 (by schema.yml:21)
+- array item (schema.yml:24) requires "a float less than pi"; assert.fail: fail: float was more than 3.1415 (by schema.yml:23)
+- array item (schema.yml:26) requires "bool evaluating to true" (by schema.yml:25)
+- array item (schema.yml:28) requires "a null value"; assert.fail: fail: value was not null (by schema.yml:27)
 `
 
 			filesToProcess := files.NewSortedFiles([]*files.File{
@@ -130,7 +130,7 @@ my_map:
 `
 
 			expectedErr := `One or more data values were invalid:
-- schema.yml:5 requires "a non empty data values"; assert.fail: fail: data values was empty (by schema.yml:4)
+- document (schema.yml:5) requires "a non empty data values"; assert.fail: fail: data values was empty (by schema.yml:4)
 `
 
 			filesToProcess := files.NewSortedFiles([]*files.File{
@@ -244,7 +244,7 @@ foo: bar
 foo: bar
 `
 
-			expectedErr := `Invalid @assert/validate annotation - expected @assert/validate to have string describing a valid value as the first item in the 2-tuple, but found type: dict (by schema.yml:3)`
+			expectedErr := `Invalid @assert/validate annotation - expected first item in the 2-tuple to be a string describing a valid value, but was dict (at schema.yml:3)`
 
 			filesToProcess := files.NewSortedFiles([]*files.File{
 				files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(dataValuesYAML))),
@@ -260,7 +260,7 @@ foo: bar
 foo: bar
 `
 
-			expectedErr := `Invalid @assert/validate annotation - expected @assert/validate to have an assertion function as the second item in the 2-tuple, but found type: bool (by schema.yml:3)`
+			expectedErr := `Invalid @assert/validate annotation - expected second item in the 2-tuple to be an assertion function, but was bool (at schema.yml:3)`
 
 			filesToProcess := files.NewSortedFiles([]*files.File{
 				files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(dataValuesYAML))),

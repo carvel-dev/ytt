@@ -22,30 +22,50 @@ const (
 //
 // When the assertions have violations, the errors are collected and stored in the checker.
 // Otherwise, returns nil.
-func ProcessAndRunValidations(n yamlmeta.Node, checker yamlmeta.Visitor) error {
+func ProcessAndRunValidations(n yamlmeta.Node, threadName string) (AssertCheck, error) {
 	if n == nil {
-		return nil
+		return AssertCheck{}, nil
 	}
 
-	err := yamlmeta.Walk(n, checker)
+	assertionChecker := newAssertChecker(threadName)
+	err := yamlmeta.Walk(n, assertionChecker)
 	if err != nil {
-		return err
+		return AssertCheck{}, err
 	}
 
-	return nil
+	return assertionChecker.AssertCheck, nil
+}
+
+// AssertCheck holds the resulting violations from executing Validations on a node.
+type AssertCheck struct {
+	Violations []error
+}
+
+// Error generates the error message composed of the total set of AssertCheck.Violations.
+func (ac AssertCheck) Error() string {
+	if !ac.HasViolations() {
+		return ""
+	}
+
+	msg := ""
+	for _, err := range ac.Violations {
+		msg = msg + "- " + err.Error() + "\n"
+	}
+	return msg
+}
+
+// HasViolations indicates whether this AssertCheck contains any violations.
+func (ac *AssertCheck) HasViolations() bool {
+	return len(ac.Violations) > 0
 }
 
 type assertChecker struct {
-	thread     *starlark.Thread
-	violations []error
+	thread *starlark.Thread
+	AssertCheck
 }
 
-func newAssertChecker(threadName string, _ *TemplateLoader) *assertChecker {
-	return &assertChecker{thread: &starlark.Thread{Name: threadName}, violations: []error{}}
-}
-
-func (a *assertChecker) hasViolations() bool {
-	return len(a.violations) > 0
+func newAssertChecker(threadName string) *assertChecker {
+	return &assertChecker{thread: &starlark.Thread{Name: threadName}, AssertCheck: AssertCheck{[]error{}}}
 }
 
 // Visit if `node` is annotated with `@assert/validate` (AnnotationAssertValidate).
@@ -55,20 +75,21 @@ func (a *assertChecker) hasViolations() bool {
 // otherwise, returns nil.
 func (a *assertChecker) Visit(node yamlmeta.Node) error {
 	nodeAnnotations := template.NewAnnotations(node)
-	if nodeAnnotations.Has(AnnotationAssertValidate) {
-		switch node.(type) {
-		case *yamlmeta.DocumentSet, *yamlmeta.Array, *yamlmeta.Map:
-			return fmt.Errorf("Invalid @%s annotation - not supported on %s at %s", AnnotationAssertValidate, yamlmeta.TypeName(node), node.GetPosition().AsCompactString())
-		default:
-			rules, syntaxErr := newRulesFromAssertValidateAnnotation(nodeAnnotations[AnnotationAssertValidate], node)
-			if syntaxErr != nil {
-				return syntaxErr
-			}
-			for _, rule := range rules {
-				err := rule.Validate(node, a.thread)
-				if err != nil {
-					a.violations = append(a.violations, err)
-				}
+	if !nodeAnnotations.Has(AnnotationAssertValidate) {
+		return nil
+	}
+	switch node.(type) {
+	case *yamlmeta.DocumentSet, *yamlmeta.Array, *yamlmeta.Map:
+		return fmt.Errorf("Invalid @%s annotation - not supported on %s at %s", AnnotationAssertValidate, yamlmeta.TypeName(node), node.GetPosition().AsCompactString())
+	default:
+		rules, syntaxErr := newRulesFromAssertValidateAnnotation(nodeAnnotations[AnnotationAssertValidate], node)
+		if syntaxErr != nil {
+			return syntaxErr
+		}
+		for _, rule := range rules {
+			err := rule.Validate(node, a.thread)
+			if err != nil {
+				a.AssertCheck.Violations = append(a.AssertCheck.Violations, err)
 			}
 		}
 	}
@@ -96,11 +117,11 @@ func newRulesFromAssertValidateAnnotation(annotation template.NodeAnnotation, n 
 		}
 		message, ok := ruleTuple[0].(starlark.String)
 		if !ok {
-			return nil, fmt.Errorf("Invalid @%s annotation - expected @%s to have string describing a valid value as the first item in the 2-tuple, but found type: %s (by %s)", AnnotationAssertValidate, AnnotationAssertValidate, ruleTuple[0].Type(), validationPosition.AsCompactString())
+			return nil, fmt.Errorf("Invalid @%s annotation - expected first item in the 2-tuple to be a string describing a valid value, but was %s (at %s)", AnnotationAssertValidate, ruleTuple[0].Type(), validationPosition.AsCompactString())
 		}
 		lambda, ok := ruleTuple[1].(starlark.Callable)
 		if !ok {
-			return nil, fmt.Errorf("Invalid @%s annotation - expected @%s to have an assertion function as the second item in the 2-tuple, but found type: %s (by %s)", AnnotationAssertValidate, AnnotationAssertValidate, ruleTuple[1].Type(), validationPosition.AsCompactString())
+			return nil, fmt.Errorf("Invalid @%s annotation - expected second item in the 2-tuple to be an assertion function, but was %s (at %s)", AnnotationAssertValidate, ruleTuple[1].Type(), validationPosition.AsCompactString())
 		}
 		rules = append(rules, Rule{
 			msg:       message.String(),
@@ -127,24 +148,31 @@ type Rule struct {
 // Returns an error if the assertion returns False (not-None), or assert.fail()s.
 // Otherwise, returns nil.
 func (r Rule) Validate(node yamlmeta.Node, thread *starlark.Thread) error {
+	var key string
 	var nodeValue starlark.Value
-	switch node.(type) {
+	switch typedNode := node.(type) {
 	case *yamlmeta.DocumentSet, *yamlmeta.Array, *yamlmeta.Map:
 		panic(fmt.Sprintf("@%s annotation at %s - not supported on %s at %s", AnnotationAssertValidate, r.position.AsCompactString(), yamlmeta.TypeName(node), node.GetPosition().AsCompactString()))
-	default:
-		values := node.GetValues()
-		nodeValue = yamltemplate.NewGoValueWithYAML(values[0]).AsStarlarkValue()
+	case *yamlmeta.MapItem:
+		key = fmt.Sprintf("%s", typedNode.Key)
+		nodeValue = yamltemplate.NewGoValueWithYAML(typedNode.Value).AsStarlarkValue()
+	case *yamlmeta.ArrayItem:
+		key = yamlmeta.TypeName(typedNode)
+		nodeValue = yamltemplate.NewGoValueWithYAML(typedNode.Value).AsStarlarkValue()
+	case *yamlmeta.Document:
+		key = yamlmeta.TypeName(typedNode)
+		nodeValue = yamltemplate.NewGoValueWithYAML(typedNode.Value).AsStarlarkValue()
 	}
 
 	result, err := starlark.Call(thread, r.assertion, starlark.Tuple{nodeValue}, []starlark.Tuple{})
 	if err != nil {
-		return fmt.Errorf("%s requires %s; %s (by %s)", node.GetPosition().AsCompactString(), r.msg, err.Error(), r.position.AsCompactString())
+		return fmt.Errorf("%s (%s) requires %s; %s (by %s)", key, node.GetPosition().AsCompactString(), r.msg, err.Error(), r.position.AsCompactString())
 	}
 
 	// in order to pass, the assertion must return True or None
 	if _, ok := result.(starlark.NoneType); !ok {
 		if !result.Truth() {
-			return fmt.Errorf("%s requires %s (by %s)", node.GetPosition().AsCompactString(), r.msg, r.position.AsCompactString())
+			return fmt.Errorf("%s (%s) requires %s (by %s)", key, node.GetPosition().AsCompactString(), r.msg, r.position.AsCompactString())
 		}
 	}
 
