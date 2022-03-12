@@ -91,12 +91,12 @@ test1b:
     key2: true
     key3: string
     key4:
-    - abc
-    - null
+      - abc
+      - null
 ---
 test2:
-- val1
-- val11
+  - val1
+  - val11
 ---
 val1
 ---

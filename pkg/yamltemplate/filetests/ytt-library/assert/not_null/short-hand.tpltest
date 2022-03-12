@@ -15,8 +15,8 @@ short_hand:
 short_hand:
   when_not_null: true
   when_none:
-  - null
-  - 'assert.not_null: fail: value is null'
+    - null
+    - 'assert.not_null: fail: value is null'
   when_null:
-  - null
-  - 'assert.not_null: fail: value is null'
+    - null
+    - 'assert.not_null: fail: value is null'

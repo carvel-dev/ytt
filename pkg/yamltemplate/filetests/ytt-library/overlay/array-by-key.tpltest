@@ -43,15 +43,15 @@ test2
 test1
 ---
 clients:
-- secret: ree
-- secret: bar
-  needsSecret: false
-- secret: ree
+  - secret: ree
+  - secret: bar
+    needsSecret: false
+  - secret: ree
 ---
 test2
 ---
 clients:
-- secret: ree
-- secret: bar
-  needsSecret: false
-- secret: ree
+  - secret: ree
+  - secret: bar
+    needsSecret: false
+  - secret: ree

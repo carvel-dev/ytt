@@ -41,8 +41,8 @@ test1:
     key1: val1
     key2: val2
   key2:
-  - name: foo
-    other: key
+    - name: foo
+      other: key
 test2:
   key1:
     key1: val1

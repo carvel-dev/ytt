@@ -367,9 +367,9 @@ int: 100`)
 #@ def vals(arg1): return [arg1, data.values]`)
 
 	expectedYAMLTplData := `vals:
-- arg1
-- int: 124
-  str: string
+  - arg1
+  - int: 124
+    str: string
 `
 
 	filesToProcess := files.NewSortedFiles([]*files.File{

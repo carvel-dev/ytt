@@ -50,6 +50,6 @@ test1:
     bar: 42
 ---
 test2:
-- - bar 42
+  - - bar 42
 ---
 test3: foo bar

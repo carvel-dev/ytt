@@ -42,15 +42,14 @@ loaddata: #@ data.read("funcs/funcs.star")`)
   yamlfunc: yamlfunc
 textfunc: textfunc
 starfunc:
-- 1
-- 2
+  - 1
+  - 2
 listdata:
-- tpl.yml
-- funcs/funcs.lib.yml
-- funcs/funcs.lib.txt
-- funcs/funcs.star
+  - tpl.yml
+  - funcs/funcs.lib.yml
+  - funcs/funcs.lib.txt
+  - funcs/funcs.star
 loaddata: |2-
-
   def starfunc():
     return [1,2]
   end
@@ -100,16 +99,16 @@ nestedlist: #@ nested_data_list()
 nesteddata: #@ nested_data_read()`)
 
 	expectedYAMLTplData := `rootlist:
-- tpl.yml
-- funcs/funcs.lib.yml
-- funcs/data
+  - tpl.yml
+  - funcs/funcs.lib.yml
+  - funcs/data
 rootdata: |-
   data
   data
 nestedlist:
   list:
-  - funcs.lib.yml
-  - data
+    - funcs.lib.yml
+    - data
 nesteddata:
   data: |-
     data
@@ -169,19 +168,19 @@ nesteddata: #@ nested_data_read()
 `)
 
 	expectedYAMLTplData := `rootlist:
-- /tpl.yml
-- /funcs/funcs.lib.yml
-- /funcs/tpl.yml
-- /funcs/data
+  - /tpl.yml
+  - /funcs/funcs.lib.yml
+  - /funcs/tpl.yml
+  - /funcs/data
 rootdata: |-
   data
   data
 nestedlist:
   list:
-  - /tpl.yml
-  - /funcs/funcs.lib.yml
-  - /funcs/tpl.yml
-  - /funcs/data
+    - /tpl.yml
+    - /funcs/funcs.lib.yml
+    - /funcs/tpl.yml
+    - /funcs/data
 nesteddata:
   data: |-
     data
@@ -231,10 +230,10 @@ libdata: #@ lib_data_read()`)
 
 	expectedYAMLTplData := `liblist:
   liblist1:
-  - funcs.lib.yml
+    - funcs.lib.yml
   liblist2:
-  - /other
-  - /funcs/funcs.lib.yml
+    - /other
+    - /funcs/funcs.lib.yml
 libdata:
   libdata2: |-
     lib1
@@ -347,11 +346,11 @@ localstarfunc: #@ localstarfunc()`)
   yamlfunc: textfunc
 textfunc: textfunc
 starfunc:
-- 1
-- 2
+  - 1
+  - 2
 localstarfunc:
-- 3
-- 4
+  - 3
+  - 4
 `
 
 	yamlFuncsData := []byte(`
@@ -402,8 +401,8 @@ end`)
 
 func TestRelativeLoadInLibrariesForNonRootTemplates(t *testing.T) {
 	expectedYAMLTplData := `libstarfunc:
-- 1
-- 2
+  - 1
+  - 2
 `
 
 	nonTopLevelYmlTplData := []byte(`
@@ -543,29 +542,29 @@ func TestPlainYAMLNoTemplateProcessing(t *testing.T) {
 annotation: 5 #@ 1 + 2
 text_template: (@= "string" @)
 versions:
-- &version
-  name: v1alpha1
-  served: true
-- << : *version
-  name: v1beta1
-- << : *version
-  name: v1
-  storage: true
-- << : *version
+  - &version
+    name: v1alpha1
+    served: true
+  - << : *version
+    name: v1beta1
+  - << : *version
+    name: v1
+    storage: true
+  - << : *version
 `)
 
 		expectedYAMLTplData := `annotation: 5
 text_template: (@= "string" @)
 versions:
-- name: v1alpha1
-  served: true
-- name: v1beta1
-  served: true
-- name: v1
-  served: true
-  storage: true
-- name: v1alpha1
-  served: true
+  - name: v1alpha1
+    served: true
+  - name: v1beta1
+    served: true
+  - name: v1
+    served: true
+    storage: true
+  - name: v1alpha1
+    served: true
 `
 
 		filesToProcess := []*files.File{

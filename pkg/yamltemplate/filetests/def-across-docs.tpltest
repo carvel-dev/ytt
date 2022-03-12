@@ -12,5 +12,5 @@ test1: #@ tpl()
 array: []
 ---
 test1:
-- item1
-- item2
+  - item1
+  - item2

@@ -92,15 +92,15 @@ test1:
 ---
 test2:
   key2:
-  - name: val1
-  - name: val2
-  - name: val3
-  - name: val4
-  - name: val5
+    - name: val1
+    - name: val2
+    - name: val3
+    - name: val4
+    - name: val5
 ---
 key2:
-- name: val1
-- name: val3
+  - name: val1
+  - name: val3
 ---
 key3:
-- name: val3
+  - name: val3

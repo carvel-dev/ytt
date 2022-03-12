@@ -106,10 +106,10 @@ make_and_bind:
 ---
 encode:
   test1:
-  - 1
-  - 2
-  - 3
-  - c: 456
+    - 1
+    - 2
+    - 3
+    - c: 456
   test2: str
   test3: 123
   is_mapping:
@@ -120,30 +120,30 @@ encode:
     test5: true
   is_iterable:
     test1:
-    - a = [1, 2, 3, struct(...)]
-    - b = str
-    - c = struct(...)
+      - a = [1, 2, 3, struct(...)]
+      - b = str
+      - c = struct(...)
     test2:
-    - a = [1, 2, 3, struct(...)]
-    - b = str
-    - c = struct(...)
+      - a = [1, 2, 3, struct(...)]
+      - b = str
+      - c = struct(...)
   is_sequence:
     test1: 3
 ---
 decode:
   test1:
     a:
-    - 1
-    - 2
-    - 3
+      - 1
+      - 2
+      - 3
     b: str
     c:
       d: 123
   test2:
     a:
-    - 1
-    - 2
-    - 3
+      - 1
+      - 2
+      - 3
     b: str
     c:
       d: 123

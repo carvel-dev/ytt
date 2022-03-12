@@ -6,11 +6,11 @@ spec:
   template:
     spec:
       containers:
-      - name: app
-        env:
-        - name: STRIMZI_RESOURCE_LABELS
-          value: strimzi.io/cluster=my-cluster
-        - name: STRIMZI_KAFKA_BOOTSTRAP_SERVERS
-          value: NEW-my-cluster-kafka-bootstrap:9092
-        - name: STRIMZI_ZOOKEEPER_CONNECT
-          value: my-cluster-zookeeper-client:2181
+        - name: app
+          env:
+            - name: STRIMZI_RESOURCE_LABELS
+              value: strimzi.io/cluster=my-cluster
+            - name: STRIMZI_KAFKA_BOOTSTRAP_SERVERS
+              value: NEW-my-cluster-kafka-bootstrap:9092
+            - name: STRIMZI_ZOOKEEPER_CONNECT
+              value: my-cluster-zookeeper-client:2181

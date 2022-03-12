@@ -35,12 +35,12 @@ test2: #@ overlay.apply(test2_left(), test2_right())
 +++
 
 test1:
-- item1
-- item2
-- item3
+  - item1
+  - item2
+  - item3
 ---
 test2:
   list1:
-  - item1
+    - item1
   list2:
-  - item1
+    - item1

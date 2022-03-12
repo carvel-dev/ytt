@@ -105,11 +105,11 @@ test1:
     input_func: func
     input_list: list
   array:
-  - input_string
+    - input_string
   array2:
-  - input_int
+    - input_int
   array3:
-  - input_func
+    - input_func
 ---
 input_string: string
 input_int: int

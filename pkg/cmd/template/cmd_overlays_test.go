@@ -35,11 +35,11 @@ array:
 `)
 
 	expectedYAMLTplData := `array:
-- name: item1
-  subarray:
-  - item1
-  subarray2:
-  - yamlfunc: yamlfunc
+  - name: item1
+    subarray:
+      - item1
+    subarray2:
+      - yamlfunc: yamlfunc
 `
 
 	yamlFuncsData := []byte(`
@@ -100,9 +100,9 @@ array:
 	// subarray2 is not present because it was removed
 	// by overlay1 that comes after overlay2
 	expectedYAMLTplData := `array:
-- name: item1
-  subarray:
-  - item1
+  - name: item1
+    subarray:
+      - item1
 `
 
 	yamlFuncsData := []byte(`

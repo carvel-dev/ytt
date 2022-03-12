@@ -110,6 +110,7 @@ func (s *RegularFilesSource) Output(out Output) error {
 		}
 	}
 
+	// out.DocSet.Items[1].Comments = []*yamlmeta.Comment{{Data: "@ load(\"@ytt:overlay\", \"overlay\")"}, {Data: "@overlay/match by=overlay.all"}}
 	combinedDocBytes, err := out.DocSet.AsBytesWithPrinter(printerFunc)
 	if err != nil {
 		return fmt.Errorf("Marshaling combined template result: %s", err)

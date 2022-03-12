@@ -90,13 +90,13 @@ float: 123.123
 			}
 			actualOutput := runYtt(t, testInputFiles{"../../examples/data-values/config.yml", "../../examples/data-values/values.yml"}, "", flags, envs)
 			expectedOutput := `nothing:
-- 1
-- 2
-- 3
+  - 1
+  - 2
+  - 3
 string:
-- 1
-- 2
-- 4
+  - 1
+  - 2
+  - 4
 bool: true
 int: 123
 float: 123.123
@@ -168,7 +168,7 @@ float: 0
 			expectedOutput := `app_config:
   version: "123"
   ports:
-  - 8080
+    - 8080
 `
 			require.Equal(t, expectedOutput, actualOutput)
 		})
@@ -177,7 +177,7 @@ float: 0
 			expectedOutput := `app_config:
   version: v1alpha1
   ports:
-  - 8080
+    - 8080
 `
 			require.Equal(t, expectedOutput, actualOutput)
 		})
@@ -186,7 +186,7 @@ float: 0
 			expectedOutput := `app_config:
   version: v1beta1
   ports:
-  - 8081
+    - 8081
 `
 			require.Equal(t, expectedOutput, actualOutput)
 		})
@@ -195,7 +195,7 @@ float: 0
 			expectedOutput := `app_config:
   version: v1
   ports:
-  - 80
+    - 80
 `
 			require.Equal(t, expectedOutput, actualOutput)
 		})

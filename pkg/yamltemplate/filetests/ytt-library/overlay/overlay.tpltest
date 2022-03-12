@@ -95,20 +95,20 @@ test2:
   key2: val2
 test3:
   key1:
-  - item1
-  - item3
+    - item1
+    - item3
 test3a:
   key1:
-  - item3
-  - item3
+    - item3
+    - item3
 test4:
   key1:
-  - item4
-  - item4
+    - item4
+    - item4
   key2: []
 test5:
   key1:
-  - name: blah
-  - name: foo
-    other: key
-  - name: foo2
+    - name: blah
+    - name: foo
+      other: key
+    - name: foo2

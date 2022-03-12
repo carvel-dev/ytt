@@ -82,8 +82,8 @@ test1b:
   key1: val1val2
 ---
 test2:
-- prefix-val1-val2
-- prefix-val11-val2
+  - prefix-val1-val2
+  - prefix-val11-val2
 ---
 test3-prefix-val1-val2
 ---

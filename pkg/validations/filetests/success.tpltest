@@ -36,8 +36,8 @@ my_map:
   bool: true
   nil: null
   my_array:
-  - abc
-  - 12345
-  - 3.14
-  - true
-  - null
+    - abc
+    - 12345
+    - 3.14
+    - true
+    - null

@@ -546,15 +546,15 @@ Files_in_schema:
   schema.yml: schema.yml
   values.yml: values.yml
 Files_in_root_values:
-- name: /config.yml
-- name: /other
-- name: /schema.yml
-- name: /values.yml
+  - name: /config.yml
+  - name: /other
+  - name: /schema.yml
+  - name: /values.yml
 Files_in_values:
-- name: config.yml
-- name: other
-- name: schema.yml
-- name: values.yml
+  - name: config.yml
+  - name: other
+  - name: schema.yml
+  - name: values.yml
 `
 
 	yamlSchemaData := []byte(`
@@ -632,17 +632,17 @@ func TestDataValues_data_list_relative_to_library_root(t *testing.T) {
 Files_in_schema:
   schema.yml: schema.yml
 Files_in_root_values:
-- name: /other
-- name: /config.yml
-- name: /schema/schema.yml
-- name: /values/values.yml
+  - name: /other
+  - name: /config.yml
+  - name: /schema/schema.yml
+  - name: /values/values.yml
 Files_in_values:
-- name: values.yml
+  - name: values.yml
 Files_in_template:
-- name: /other
-- name: /config.yml
-- name: /schema/schema.yml
-- name: /values/values.yml
+  - name: /other
+  - name: /config.yml
+  - name: /schema/schema.yml
+  - name: /values/values.yml
 `
 
 	yamlSchemaData := []byte(`

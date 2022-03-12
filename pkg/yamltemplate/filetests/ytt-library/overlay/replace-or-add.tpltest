@@ -65,13 +65,13 @@ test1:
 test1a:
   key1: val1
   key2:
-  - null
-  - val2
+    - null
+    - val2
 ---
 test2:
-- val1
-- val11
-- val2
+  - val1
+  - val11
+  - val2
 ---
 val1
 ---

@@ -19,5 +19,5 @@ test1: #@ overlay.apply(test1_left(), test1_right())
 
 test1:
   key1:
-  - name: foo
-    other: key
+    - name: foo
+      other: key

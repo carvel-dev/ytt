@@ -43,18 +43,18 @@ test1: #@ overlay.apply(test1_left(), test1_right())
 +++
 
 test1:
-- for_item: 1
-  before: true
-- item: 1
-- for_item: 1
-  after: true
-- for_item: 2
-  before: true
-- item: 2
-- for_item: 2
-  after: true
-- for_item: 3
-  before: true
-- item: 3
-- for_item: 3
-  after: true
+  - for_item: 1
+    before: true
+  - item: 1
+  - for_item: 1
+    after: true
+  - for_item: 2
+    before: true
+  - item: 2
+  - for_item: 2
+    after: true
+  - for_item: 3
+    before: true
+  - item: 3
+  - for_item: 3
+    after: true

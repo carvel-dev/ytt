@@ -111,13 +111,13 @@ test1
 metadata:
   name: test1
 key1:
-- name: foo
+  - name: foo
 ---
 metadata:
   name: test1
   other: key
 key1:
-- name: foo
+  - name: foo
 ---
 metadata:
   other: key
@@ -125,18 +125,18 @@ metadata:
 test2
 ---
 metadata:
-- name: test2
+  - name: test2
 key1:
-- name: foo
+  - name: foo
 ---
 metadata:
-- name: test2
-- other: key
+  - name: test2
+  - other: key
 key1:
-- name: foo
+  - name: foo
 ---
 metadata:
-- other: key
+  - other: key
 ---
 test3
 ---

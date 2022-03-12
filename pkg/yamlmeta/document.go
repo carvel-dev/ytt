@@ -4,7 +4,9 @@
 package yamlmeta
 
 import (
-	"github.com/vmware-tanzu/carvel-ytt/pkg/yamlmeta/internal/yaml.v2"
+	"bytes"
+
+	yaml3 "gopkg.in/yaml.v3"
 )
 
 func (d *Document) IsEmpty() bool {
@@ -22,7 +24,22 @@ func (d *Document) IsEmpty() bool {
 }
 
 func (d *Document) AsYAMLBytes() ([]byte, error) {
-	return yaml.Marshal(convertToLowYAML(convertToGo(d.Value)))
+	out := bytes.Buffer{}
+	// TODO: re-enable including comments after all tests are verified working, as is.
+	// if len(d.Comments) > 0 {
+	// 	for _, comment := range d.Comments {
+	// 		out.WriteString(fmt.Sprintf("#%s\n", comment.Data))
+	// 	}
+	// 	out.WriteString("---\n")
+	// }
+
+	encoder := yaml3.NewEncoder(&out)
+	encoder.SetIndent(2)
+	err := encoder.Encode(convertToYAML3Node(d))
+	if err != nil {
+		return nil, err
+	}
+	return out.Bytes(), nil
 }
 
 func (d *Document) AsInterface() interface{} {

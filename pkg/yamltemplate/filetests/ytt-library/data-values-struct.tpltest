@@ -43,38 +43,38 @@ test1:
   map:
     a: 123
   list:
-  - a
-  - 123
-  - a: 123
+    - a
+    - 123
+    - a: 123
 test2:
   a: 123
 test3:
-- a
-- 123
-- a: 123
+  - a
+  - 123
+  - a: 123
 test4:
-- value: a
-- value: 123
-- value:
-    a: 123
+  - value: a
+  - value: 123
+  - value:
+      a: 123
 test5:
-- key: a
-  value: 123
+  - key: a
+    value: 123
 is_mapping:
   test1: 123
   test2: 123
   test3: 123
 is_iterable:
   test1:
-  - int = 123
-  - intNeg = -49
-  - float = 123.123
-  - t = True
-  - f = False
-  - nullz = None
-  - string = string
-  - map = struct(...)
-  - list = ["a", 123, struct(...)]
+    - int = 123
+    - intNeg = -49
+    - float = 123.123
+    - t = True
+    - f = False
+    - nullz = None
+    - string = string
+    - map = struct(...)
+    - list = ["a", 123, struct(...)]
 is_sequence:
   test1: 9
   test2: 1

@@ -52,18 +52,18 @@ test5:
 +++
 
 test1:
-- value
+  - value
 test1a:
-- value
+  - value
 test2:
-- value
+  - value
 test3:
-- key: value
+  - key: value
 test4:
-- key: valuea
-- key: valueb
-- key: valueb
-- {}
+  - key: valuea
+  - key: valueb
+  - key: valueb
+  - {}
 test5:
-- key: a
-- {}
+  - key: a
+  - {}

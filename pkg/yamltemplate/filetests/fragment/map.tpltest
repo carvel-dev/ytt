@@ -36,26 +36,26 @@ test7a: #@ "test3" in map()
 +++
 
 test1:
-- str
-- string
-- true
+  - str
+  - string
+  - true
 test2:
-- sub_key: 123
-- yamlfragment
-- false
+  - sub_key: 123
+  - yamlfragment
+  - false
 test3:
-- 123
-- int
-- true
+  - 123
+  - int
+  - true
 test4:
-- key: test1
-  value: str
-- key: test2
-  value:
-    sub_key: 123
+  - key: test1
+    value: str
+  - key: test2
+    value:
+      sub_key: 123
 test5:
-- str
-- sub_key: 123
+  - str
+  - sub_key: 123
 test5a:
   test1: str
   test2:

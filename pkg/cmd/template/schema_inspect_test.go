@@ -152,9 +152,9 @@ components:
                 type: integer
                 default: 0
               default:
-              - 1
-              - 2
-              - 3
+                - 1
+                - 2
+                - 3
             array_of_maps:
               type: array
               items:
@@ -168,12 +168,12 @@ components:
                     type: string
                     default: default
               default:
-              - bar: thing 1
-                ree: default
-              - bar: thing 2
-                ree: default
-              - bar: thing 3
-                ree: default
+                - bar: thing 1
+                  ree: default
+                - bar: thing 2
+                  ree: default
+                - bar: thing 3
+                  ree: default
 `
 
 		filesToProcess := files.NewSortedFiles([]*files.File{
@@ -308,10 +308,10 @@ components:
         foo:
           int_key: 0
           array_of_scalars:
-          - ""
+            - ""
           array_of_maps:
-          - foo: ""
-            bar: ""
+            - foo: ""
+              bar: ""
 `
 			filesToProcess := files.NewSortedFiles([]*files.File{
 				files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
@@ -351,10 +351,10 @@ components:
           default:
             int_key: 0
             array_of_scalars:
-            - ""
+              - ""
             array_of_maps:
-            - foo: ""
-              bar: ""
+              - foo: ""
+                bar: ""
 `
 			filesToProcess := files.NewSortedFiles([]*files.File{
 				files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
@@ -508,9 +508,9 @@ components:
                 type: integer
                 default: 0
               default:
-              - 1
-              - 2
-              - 3
+                - 1
+                - 2
+                - 3
             array_of_maps:
               type: array
               nullable: true
@@ -527,12 +527,12 @@ components:
                     nullable: true
                     default: null
               default:
-              - bar: thing 1
-                ree: null
-              - bar: thing 2
-                ree: null
-              - bar: thing 3
-                ree: null
+                - bar: thing 1
+                  ree: null
+                - bar: thing 2
+                  ree: null
+                - bar: thing 3
+                  ree: null
 `
 
 		filesToProcess := files.NewSortedFiles([]*files.File{
@@ -798,21 +798,21 @@ components:
       x-example-description: schema example description
       example:
         db_conn:
-        - hostname: localhost
-          port: 8080
-          timeout: 4.2
-          any_key: anything
-          null_key: null
-      properties:
-        db_conn:
-          type: array
-          x-example-description: db_conn example description
-          example:
           - hostname: localhost
             port: 8080
             timeout: 4.2
             any_key: anything
             null_key: null
+      properties:
+        db_conn:
+          type: array
+          x-example-description: db_conn example description
+          example:
+            - hostname: localhost
+              port: 8080
+              timeout: 4.2
+              any_key: anything
+              null_key: null
           items:
             type: object
             additionalProperties: false

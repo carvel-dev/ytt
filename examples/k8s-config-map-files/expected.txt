@@ -11,9 +11,9 @@ data:
   config2.yml: |
     rules2a: 123
     rules2b:
-    - a
-    - b
-    - c
+      - a
+      - b
+      - c
   config2.json: '{"rules2a":123,"rules2b":["a","b","c"]}'
   config3.yml: |
     config3a: config3a

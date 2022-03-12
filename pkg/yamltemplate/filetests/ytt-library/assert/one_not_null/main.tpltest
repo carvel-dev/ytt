@@ -51,30 +51,30 @@ keys_are_specified:
 when_keys_are_not_given:
   one_value_not_null_is_ok: true
   all_values_are_null:
-  - null
-  - 'check: all values are null'
+    - null
+    - 'check: all values are null'
   multiple_values_are_not_null:
-  - null
-  - 'check: multiple values are not null ["foo" "qux"]'
+    - null
+    - 'check: multiple values are not null ["foo" "qux"]'
   value_is_empty:
-  - null
-  - 'check: value is empty'
+    - null
+    - 'check: value is empty'
   value_is_not_a_map:
-  - null
-  - 'check: value must be a map or dict, but was ''list'''
+    - null
+    - 'check: value must be a map or dict, but was ''list'''
   too_many_values:
-  - null
-  - 'check: got 2 arguments, want 1'
+    - null
+    - 'check: got 2 arguments, want 1'
 keys_are_specified:
   true_is_same_as_all: true
   one_value_not_null_is_ok: true
   non_string_keys_are_ok: true
   spec_is_not_a_sequence:
-  - null
-  - 'assert.one_not_null: expected a sequence of keys, but was a ''int'''
+    - null
+    - 'assert.one_not_null: expected a sequence of keys, but was a ''int'''
   key_not_found:
-  - null
-  - 'check: "not-a-key" is not present in value'
+    - null
+    - 'check: "not-a-key" is not present in value'
   too_args:
-  - null
-  - 'assert.one_not_null: got 2 arguments, want 1'
+    - null
+    - 'assert.one_not_null: got 2 arguments, want 1'

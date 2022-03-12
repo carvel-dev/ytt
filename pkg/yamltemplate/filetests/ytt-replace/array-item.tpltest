@@ -33,27 +33,27 @@ empty:
 +++
 
 start:
-- a: 123
-- b: 124
-- item1
-- item2
-- c: 126
+  - a: 123
+  - b: 124
+  - item1
+  - item2
+  - c: 126
 middle:
-- a: 127
-- b: 123
-- c: 124
-- test4: more-than-one-item
-- item1
-- item2
-- d: 126
+  - a: 127
+  - b: 123
+  - c: 124
+  - test4: more-than-one-item
+  - item1
+  - item2
+  - d: 126
 end:
-- a: 126
-- b: 123
-- c: 124
-- item1
-- item2
+  - a: 126
+  - b: 123
+  - c: 124
+  - item1
+  - item2
 empty:
-- b: 123
-- c: 124
-- item1
-- item2
+  - b: 123
+  - c: 124
+  - item1
+  - item2

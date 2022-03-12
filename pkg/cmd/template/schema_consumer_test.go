@@ -57,14 +57,14 @@ rendered: #@ data.values
 
 		expected := `rendered:
   db_conn:
-  - hostname: server.example.com
-    port: 5432
-    username: sa
-    password: changeme
-    metadata:
-      run: ./build.sh
-    timeout: 7.5
-    ttl: 1
+    - hostname: server.example.com
+      port: 5432
+      username: sa
+      password: changeme
+      metadata:
+        run: ./build.sh
+      timeout: 7.5
+      ttl: 1
   top_level: key
 `
 
@@ -91,8 +91,8 @@ rendered: #@ data.values
 rendered: #@ data.values
 `
 		expected := `rendered:
-- first
-- second
+  - first
+  - second
 `
 
 		filesToProcess := files.NewSortedFiles([]*files.File{
@@ -212,9 +212,9 @@ rendered: #@ data.values
 
 		expected := `rendered:
   db_conn:
-  - hostname: server.example.com
-    metadata:
-      run: ./build.sh
+    - hostname: server.example.com
+      metadata:
+        run: ./build.sh
   top_level: key
 `
 
@@ -952,12 +952,12 @@ vpc: #@ data.values.vpc
 			expected := `vpc:
   name: name value
   subnet_config:
-  - id: 2
-    mask: 255.255.0.0
-    private: true
-  - id: 3
-    mask: 255.255.255.0
-    private: true
+    - id: 2
+      mask: 255.255.0.0
+      private: true
+    - id: 3
+      mask: 255.255.255.0
+      private: true
 `
 
 			filesToProcess := files.NewSortedFiles([]*files.File{
@@ -985,7 +985,7 @@ clients:
 			dataValuesYAML := `#@data/values
 ---
 clients:
-- name: foo
+  - name: foo
 `
 			templateYAML := `#@ load("@ytt:data", "data")
 ---
@@ -994,10 +994,10 @@ rendered: #@ data.values
 
 			expected := `rendered:
   clients:
-  - name: foo
-    config:
-      args: []
-      options: null
+    - name: foo
+      config:
+        args: []
+        options: null
 `
 
 			filesToProcess := files.NewSortedFiles([]*files.File{
@@ -1162,8 +1162,8 @@ overriden: #@ data.values.overriden
   contains_array: null
 overriden:
   contains_array:
-  - a: 20
-    b: 0
+    - a: 20
+      b: 0
 `
 
 		filesToProcess := files.NewSortedFiles([]*files.File{
@@ -1194,10 +1194,10 @@ array:
 array: #@ data.values.array
 `
 		expected := `array:
-- one
-- null
-- two
-- null
+  - one
+  - null
+  - two
+  - null
 `
 
 		filesToProcess := files.NewSortedFiles([]*files.File{
@@ -1349,9 +1349,9 @@ foo: ["bar", 7, ~]
 foo: #@ data.values.foo
 `
 		expected := `foo:
-- bar
-- 7
-- null
+  - bar
+  - 7
+  - null
 `
 
 		filesToProcess := files.NewSortedFiles([]*files.File{
@@ -1376,9 +1376,9 @@ foo:
 foo: #@ data.values.foo
 `
 		expected := `foo:
-- bar:
-  - 1
-  - baz
+  - bar:
+      - 1
+      - baz
 `
 
 		filesToProcess := files.NewSortedFiles([]*files.File{
@@ -1454,11 +1454,11 @@ baz: #@ data.values.baz
 		expected := `foo:
   ball: red
 bar:
-- newMap:
-  - ""
-  - 8
+  - newMap:
+      - ""
+      - 8
 baz:
-- newArray: foobar
+  - newArray: foobar
 `
 
 		filesToProcess := files.NewSortedFiles([]*files.File{
@@ -1951,8 +1951,8 @@ bar: from_library_schema
 foo: from_library_dv
 `)
 		expectedYAMLTplData := `key:
-- from_library_schema
-- from_library_dv
+  - from_library_schema
+  - from_library_dv
 `
 
 		filesToProcess := files.NewSortedFiles([]*files.File{

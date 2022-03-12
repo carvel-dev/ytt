@@ -59,36 +59,36 @@ test3a: #@ overlay.apply(test_left(), test3a_right())
 +++
 
 test1:
-- name: first
-- name: second
-- name: third
-- found: true
+  - name: first
+  - name: second
+  - name: third
+  - found: true
 test1a:
-- name: first
-  found: true
-- name: second
-- name: third
+  - name: first
+    found: true
+  - name: second
+  - name: third
 test1b:
-- name: first
-  found: true
-- name: second
-  found: true
-- name: third
-  found: true
+  - name: first
+    found: true
+  - name: second
+    found: true
+  - name: third
+    found: true
 test2:
-- name: first
-  found: true
-- name: second
-- name: third
-  found: true
+  - name: first
+    found: true
+  - name: second
+  - name: third
+    found: true
 test3:
-- name: first
-- name: second
-  found: true
-- name: third
-  found: true
+  - name: first
+  - name: second
+    found: true
+  - name: third
+    found: true
 test3a:
-- name: first
-- name: second
-- name: third
-- found: true
+  - name: first
+  - name: second
+  - name: third
+  - found: true

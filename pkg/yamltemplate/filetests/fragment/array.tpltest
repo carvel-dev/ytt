@@ -28,21 +28,21 @@ test6a: #@ 3 in array()
 +++
 
 test1:
-- str
-- string
-- true
+  - str
+  - string
+  - true
 test2:
-- 123
-- int
-- true
+  - 123
+  - int
+  - true
 test3:
-- key: 123
-- yamlfragment
-- false
+  - key: 123
+  - yamlfragment
+  - false
 test4:
-- str
-- 123
-- key: 123
+  - str
+  - 123
+  - key: 123
 test5: 3
 test6: true
 test6a: false

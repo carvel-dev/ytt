@@ -46,13 +46,13 @@ test1:
     key2a:
       key2aa: val2
     keys:
-    - 1
-    - 2
+      - 1
+      - 2
 test2:
   key1:
     key1a: val1
     key2a:
       key2aa: val2
     keys:
-    - 1
-    - 2
+      - 1
+      - 2

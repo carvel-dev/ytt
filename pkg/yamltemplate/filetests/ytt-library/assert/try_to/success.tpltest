@@ -44,12 +44,12 @@ test_try_to_succeed_tuple: #@ try_to_succeed_tuple()
 +++
 
 test_try_to_fail_data_error:
-- null
-- 'json.decode: invalid character ''}'' looking for beginning of value'
+  - null
+  - 'json.decode: invalid character ''}'' looking for beginning of value'
 test_try_to_fail_bad_ref: NoneType has no .foo field or method
 test_try_to_succeed_lambda:
   ytt: rules
 test_try_to_succeed_function: foo
 test_try_to_succeed_tuple:
-- 1
-- 2
+  - 1
+  - 2

@@ -54,28 +54,28 @@ test5
 
 test1: |
   a:
-  - 1
-  - 2
-  - 3
-  - c: 456
+    - 1
+    - 2
+    - 3
+    - c: 456
   b: str
 test1a: |
   fragment:
-  - piece1
-  - piece2: true
+    - piece1
+    - piece2: true
 test1b: |
   inside_map:
     fragment:
-    - piece1
-    - piece2: true
+      - piece1
+      - piece2: true
   inside_array:
-  - fragment:
-    - piece1
-    - piece2: true
+    - fragment:
+        - piece1
+        - piece2: true
 test1c: |
   fragment:
-  - piece1
-  - piece2: true
+    - piece1
+    - piece2: true
   ---
   doc2
 test2: |
@@ -83,10 +83,10 @@ test2: |
 test3: {}
 test4:
   a:
-  - 1
-  - 2
-  - 3
-  - c: 456
+    - 1
+    - 2
+    - 3
+    - c: 456
   b: str
 ---
 test5

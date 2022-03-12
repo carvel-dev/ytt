@@ -39,7 +39,7 @@ metadata:
       t: 456
       t2: 456
 test2:
-- item1
-- item2
+  - item1
+  - item2
 test3:
-- item2
+  - item2

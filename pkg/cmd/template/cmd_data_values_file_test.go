@@ -81,7 +81,7 @@ array:
       map:
         a: 123
   array:
-  - str
+    - str
 `
 
 	filesToProcess := files.NewSortedFiles([]*files.File{

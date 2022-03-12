@@ -1157,13 +1157,13 @@ foo: #@ data.values.foo
 bar: #@ data.values.bar
 `
 			expected := `foo:
-- new
-- array
-- strings
+  - new
+  - array
+  - strings
 bar:
-- 1
-- 2
-- 3
+  - 1
+  - 2
+  - 3
 `
 
 			filesToProcess := files.NewSortedFiles([]*files.File{
@@ -1193,8 +1193,8 @@ databases: #@ data.values.databases
 users: #@ data.values.users
 `
 			expected := `databases:
-- name: null_db
-  host: ""
+  - name: null_db
+    host: ""
 users:
   admin: admin
   user: []
@@ -1221,8 +1221,8 @@ databases:
 databases: #@ data.values.databases
 `
 			expected := `databases:
-- name: default
-  host: localhost
+  - name: default
+    host: localhost
 `
 
 			filesToProcess := files.NewSortedFiles([]*files.File{

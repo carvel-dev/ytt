@@ -1,4 +1,4 @@
 app_config:
   version: "123"
   ports:
-  - 8080
+    - 8080
