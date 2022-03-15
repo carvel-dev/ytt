@@ -124,7 +124,7 @@ func newRulesFromAssertValidateAnnotation(annotation template.NodeAnnotation, n 
 			return nil, fmt.Errorf("Invalid @%s annotation - expected second item in the 2-tuple to be an assertion function, but was %s (at %s)", AnnotationAssertValidate, ruleTuple[1].Type(), validationPosition.AsCompactString())
 		}
 		rules = append(rules, Rule{
-			msg:       message.String(),
+			msg:       message.GoString(),
 			assertion: lambda,
 			position:  validationPosition,
 		})
@@ -154,7 +154,7 @@ func (r Rule) Validate(node yamlmeta.Node, thread *starlark.Thread) error {
 	case *yamlmeta.DocumentSet, *yamlmeta.Array, *yamlmeta.Map:
 		panic(fmt.Sprintf("@%s annotation at %s - not supported on %s at %s", AnnotationAssertValidate, r.position.AsCompactString(), yamlmeta.TypeName(node), node.GetPosition().AsCompactString()))
 	case *yamlmeta.MapItem:
-		key = fmt.Sprintf("%s", typedNode.Key)
+		key = fmt.Sprintf("%q", typedNode.Key)
 		nodeValue = yamltemplate.NewGoValueWithYAML(typedNode.Value).AsStarlarkValue()
 	case *yamlmeta.ArrayItem:
 		key = yamlmeta.TypeName(typedNode)
@@ -166,13 +166,13 @@ func (r Rule) Validate(node yamlmeta.Node, thread *starlark.Thread) error {
 
 	result, err := starlark.Call(thread, r.assertion, starlark.Tuple{nodeValue}, []starlark.Tuple{})
 	if err != nil {
-		return fmt.Errorf("%s (%s) requires %s; %s (by %s)", key, node.GetPosition().AsCompactString(), r.msg, err.Error(), r.position.AsCompactString())
+		return fmt.Errorf("%s (%s) requires %q; %s (by %s)", key, node.GetPosition().AsCompactString(), r.msg, err.Error(), r.position.AsCompactString())
 	}
 
 	// in order to pass, the assertion must return True or None
 	if _, ok := result.(starlark.NoneType); !ok {
 		if !result.Truth() {
-			return fmt.Errorf("%s (%s) requires %s (by %s)", key, node.GetPosition().AsCompactString(), r.msg, r.position.AsCompactString())
+			return fmt.Errorf("%s (%s) requires %q (by %s)", key, node.GetPosition().AsCompactString(), r.msg, r.position.AsCompactString())
 		}
 	}
 
