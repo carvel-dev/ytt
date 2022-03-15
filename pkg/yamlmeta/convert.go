@@ -32,18 +32,21 @@ func NewGoFromAST(val interface{}) interface{} {
 func convertToYAML3Node(val interface{}) *yaml3.Node {
 	switch typedVal := val.(type) {
 	case *Document:
-		// head, inline := convertYAML3Comments(typedVal)
+		head, inline := convertYAML3Comments(typedVal)
 		return &yaml3.Node{
-			Kind:    yaml3.DocumentNode,
-			Content: []*yaml3.Node{convertToYAML3Node(typedVal.Value)},
-			// HeadComment: head.String(),
-			// LineComment: inline.String(),
+			Kind:        yaml3.DocumentNode,
+			Content:     []*yaml3.Node{convertToYAML3Node(typedVal.Value)},
+			HeadComment: head,
+			LineComment: inline,
 		}
 	case *Map:
 		yamlMap := &yaml3.Node{Kind: yaml3.MappingNode}
 		for _, item := range typedVal.Items {
 			key := convertToYAML3Node(item.Key)
 			value := convertToYAML3Node(item.Value)
+			head, inline := convertYAML3Comments(item)
+			key.HeadComment = head
+			key.LineComment = inline
 			yamlMap.Content = append(yamlMap.Content, key, value)
 		}
 		return yamlMap
@@ -58,7 +61,11 @@ func convertToYAML3Node(val interface{}) *yaml3.Node {
 	case *Array:
 		yamlArray := &yaml3.Node{Kind: yaml3.SequenceNode}
 		for _, item := range typedVal.Items {
-			yamlArray.Content = append(yamlArray.Content, convertToYAML3Node(item.Value))
+			yamlItem := convertToYAML3Node(item.Value)
+			head, inline := convertYAML3Comments(item)
+			yamlItem.HeadComment = head
+			yamlItem.LineComment = inline
+			yamlArray.Content = append(yamlArray.Content, yamlItem)
 		}
 		return yamlArray
 	case []interface{}:
@@ -78,25 +85,28 @@ func convertToYAML3Node(val interface{}) *yaml3.Node {
 	case string:
 		if val == "" {
 			return &yaml3.Node{Kind: yaml3.ScalarNode, Value: "", Style: yaml3.DoubleQuotedStyle}
-		} else {
-			return &yaml3.Node{Kind: yaml3.ScalarNode, Value: fmt.Sprintf("%s", val), Tag: "!!str"}
 		}
+		return &yaml3.Node{Kind: yaml3.ScalarNode, Value: fmt.Sprintf("%s", val), Tag: "!!str"}
 	default:
 		panic(fmt.Sprintf("Unexpected type %T = %#v", val, val))
 	}
 }
 
-func convertYAML3Comments(typedVal Node) (strings.Builder, strings.Builder) {
+func convertYAML3Comments(typedVal Node) (string, string) {
 	head := strings.Builder{}
 	inline := strings.Builder{}
 	for _, comment := range typedVal.GetComments() {
-		if comment.Position.IsNextTo(typedVal.GetPosition()) {
-			inline.WriteString(comment.Data)
+		if comment.Position.LineNum() == typedVal.GetPosition().LineNum() {
+			// yaml.v3 prepends a space to comments that do _not_ begin with an octothorpe
+			if inline.Len() == 0 {
+				inline.WriteString("#")
+			}
+			inline.WriteString(comment.Data + " ")
 		} else {
-			head.WriteString(comment.Data)
+			head.WriteString("#" + comment.Data + "\n")
 		}
 	}
-	return head, inline
+	return head.String(), inline.String()
 }
 
 func convertToLowYAML(val interface{}) interface{} {

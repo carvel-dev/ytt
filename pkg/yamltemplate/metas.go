@@ -62,6 +62,17 @@ func NewTemplateAnnotationFromYAMLComment(comment *yamlmeta.Comment, nodePos *fi
 		}
 	}
 
+	// Allow author to place comments above (head) and inline (line) the node.
+	if ann.Name == AnnotationYAMLComment {
+		ann.Name = AnnotationHeadComment
+
+		if nodePos.IsKnown() {
+			if comment.Position.LineNum() == nodePos.LineNum() {
+				ann.Name = AnnotationLineComment
+			}
+		}
+	}
+
 	return ann, nil
 }
 

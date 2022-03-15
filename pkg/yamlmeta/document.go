@@ -25,13 +25,6 @@ func (d *Document) IsEmpty() bool {
 
 func (d *Document) AsYAMLBytes() ([]byte, error) {
 	out := bytes.Buffer{}
-	// TODO: re-enable including comments after all tests are verified working, as is.
-	// if len(d.Comments) > 0 {
-	// 	for _, comment := range d.Comments {
-	// 		out.WriteString(fmt.Sprintf("#%s\n", comment.Data))
-	// 	}
-	// 	out.WriteString("---\n")
-	// }
 
 	encoder := yaml3.NewEncoder(&out)
 	encoder.SetIndent(2)
@@ -39,6 +32,7 @@ func (d *Document) AsYAMLBytes() ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	return out.Bytes(), nil
 }
 

@@ -185,6 +185,11 @@ func (ll *LibraryExecution) Eval(values *datavalues.Envelope, libraryValues []*d
 		return nil, err
 	}
 
+	docSets, err = (&CommentPostProcessing{docSets: docSets}).Apply()
+	if err != nil {
+		return nil, err
+	}
+
 	result := &EvalResult{
 		Files:   outputFiles,
 		DocSet:  &yamlmeta.DocumentSet{},

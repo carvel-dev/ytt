@@ -19,6 +19,7 @@ metadata:
       fromyaml=(@= yamlfunc() @)
       fromtext=(@= textfunc() @)
 
+#@yaml/comment "Hello, world"
 #@yaml/text-templated-strings
 #@yaml/map-key-override
 ---
