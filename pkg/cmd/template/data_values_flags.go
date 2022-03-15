@@ -136,15 +136,15 @@ func (s *DataValuesFlags) AsOverlays(strict bool) ([]*datavalues.Envelope, []*da
 	return overlayValues, libraryOverlays, nil
 }
 
-func (s *DataValuesFlags) file(path string, strict bool) ([]*datavalues.Envelope, error) {
-	libRef, path, err := s.libraryRefAndKey(path)
+func (s *DataValuesFlags) file(fullPath string, strict bool) ([]*datavalues.Envelope, error) {
+	libRef, path, err := s.libraryRefAndKey(fullPath)
 	if err != nil {
 		return nil, err
 	}
 
 	contents, err := s.readFile(path)
 	if err != nil {
-		return nil, fmt.Errorf("Reading file '%s': %s", path, err)
+		return nil, fmt.Errorf("Unable to read file '%s' from flag value '%s': %s", path, err)
 	}
 
 	docSetOpts := yamlmeta.DocSetOpts{
@@ -275,33 +275,28 @@ func (s *DataValuesFlags) kvFile(kv string) (*datavalues.Envelope, error) {
 	return datavalues.NewEnvelopeWithLibRef(overlay, libRef)
 }
 
+// libraryRefAndKey separates a library reference and a key.
+// A library reference starts with ref.LibrarySep, and ends with the first occurrence of libraryPathSep.
 func (DataValuesFlags) libraryRefAndKey(key string) (string, string, error) {
 	const (
-		libraryKeySep = ":"
+		libraryPathSep = ":"
 	)
 
-	keyPieces := strings.Split(key, libraryKeySep)
-
-	switch len(keyPieces) {
-	case 1:
-		return "", key, nil
-
-	case 2:
-		if len(keyPieces[0]) == 0 {
-			return "", "", fmt.Errorf("Expected library ref to not be empty")
-		}
-		if strings.HasPrefix(keyPieces[0], ref.LibrarySep) {
+	if strings.HasPrefix(key, ref.LibrarySep) {
+		keyPieces := strings.SplitN(key, libraryPathSep, 2)
+		switch len(keyPieces) {
+		case 1:
+			return "", key, nil
+		case 2:
+			if len(keyPieces[0]) == 1 {
+				return "", "", fmt.Errorf("Expected library ref to not be empty")
+			}
 			return keyPieces[0], keyPieces[1], nil
 		}
-		// the LibrarySep is part of the path
-		return "", key, nil
-	case 3:
-		if strings.HasPrefix(keyPieces[0], ref.LibrarySep) {
-			// the second LibrarySep is part of the path
-			return keyPieces[0], keyPieces[1] + libraryKeySep + keyPieces[2], nil
-		}
 	}
-	return "", "", fmt.Errorf("Expected at most one library-key separator '%s' in '%s'", libraryKeySep, key)
+
+	return "", key, nil
+
 }
 
 func (s *DataValuesFlags) buildOverlay(keyPieces []string, value interface{}, desc string, line string) *yamlmeta.Document {
