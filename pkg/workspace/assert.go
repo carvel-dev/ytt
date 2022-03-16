@@ -33,7 +33,7 @@ func ProcessAndRunValidations(n yamlmeta.Node, threadName string) (AssertCheck, 
 		return AssertCheck{}, err
 	}
 
-	return assertionChecker.AssertCheck, nil
+	return assertionChecker.chk, nil
 }
 
 // AssertCheck holds the resulting violations from executing Validations on a node.
@@ -61,11 +61,11 @@ func (ac *AssertCheck) HasViolations() bool {
 
 type assertChecker struct {
 	thread *starlark.Thread
-	AssertCheck
+	chk    AssertCheck
 }
 
 func newAssertChecker(threadName string) *assertChecker {
-	return &assertChecker{thread: &starlark.Thread{Name: threadName}, AssertCheck: AssertCheck{[]error{}}}
+	return &assertChecker{thread: &starlark.Thread{Name: threadName}, chk: AssertCheck{[]error{}}}
 }
 
 // Visit if `node` is annotated with `@assert/validate` (AnnotationAssertValidate).
@@ -89,7 +89,7 @@ func (a *assertChecker) Visit(node yamlmeta.Node) error {
 		for _, rule := range rules {
 			err := rule.Validate(node, a.thread)
 			if err != nil {
-				a.AssertCheck.Violations = append(a.AssertCheck.Violations, err)
+				a.chk.Violations = append(a.chk.Violations, err)
 			}
 		}
 	}

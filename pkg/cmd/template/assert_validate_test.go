@@ -10,8 +10,8 @@ import (
 	"testing"
 )
 
-func TestAssertValidateOnDataValues(t *testing.T) {
-	t.Run("succeeds with data values files using --data-values-inspect", func(t *testing.T) {
+func TestAssertValidateOnDataValuesSucceeds(t *testing.T) {
+	t.Run("when validations pass using --data-values-inspect", func(t *testing.T) {
 		opts := cmdtpl.NewOptions()
 		opts.DataValuesFlags.Inspect = true
 		dataValuesYAML := `#@ load("@ytt:assert", "assert")
@@ -65,93 +65,61 @@ my_map:
 
 		assertSucceedsDocSet(t, filesToProcess, expected, opts)
 	})
-
-	t.Run("assert fails with only data values files", func(t *testing.T) {
-		t.Run("on data values", func(t *testing.T) {
-			opts := cmdtpl.NewOptions()
-			dataValuesYAML := `#@ load("@ytt:assert", "assert")
-
-#@data/values
+	t.Run("when validations on library data values pass", func(t *testing.T) {
+		opts := cmdtpl.NewOptions()
+		configYAML := `
+#@ load("@ytt:template", "template")
+#@ load("@ytt:library", "library")
 ---
-#@assert/validate ("a map with less than 3 elements", lambda v: True if len(v) < 3 else assert.fail("length of map was more than or equal to 3"))
-my_map:
-  #@assert/validate ("a non-empty string", lambda v: True if len(v) > 0 else assert.fail("length of string was 0"))
-  string: ""
-  #@assert/validate ("an int over 9000", lambda v: True if v > 9000 else assert.fail("int was less than 9000"))
-  int: 2
-  #@assert/validate ("a float less than pi", lambda v: True if v < 3.1415 else assert.fail("float was more than 3.1415"))
-  float: 20.3
-  #@assert/validate ("bool evaluating to true", lambda v:  v)
-  bool: false
-  #@assert/validate ("a null value", lambda v: True if v == None else assert.fail("value was not null"))
-  nil: anything else
-  #@assert/validate ("an array with more than or exactly 10 items", lambda v: True if len(v) >= 10 else assert.fail("array was less than 10 items"))
-  my_array:
-  #@assert/validate ("a non-empty string", lambda v: True if len(v) > 0 else assert.fail("length of string was 0"))
-  - ""
-  #@assert/validate ("an int over 9000", lambda v: True if v > 9000 else assert.fail("int was less than 9000"))
-  - 123
-  #@assert/validate ("a float less than pi", lambda v: True if v < 3.1415 else assert.fail("float was more than 3.1415"))
-  - 3.14159
-  #@assert/validate ("bool evaluating to true", lambda v:  v)
-  - false
-  #@assert/validate ("a null value", lambda v: True if v == None else assert.fail("value was not null"))
-  - not null
-`
 
-			expectedErr := `One or more data values were invalid:
-- "my_map" (schema.yml:6) requires "a map with less than 3 elements"; assert.fail: fail: length of map was more than or equal to 3 (by schema.yml:5)
-- "string" (schema.yml:8) requires "a non-empty string"; assert.fail: fail: length of string was 0 (by schema.yml:7)
-- "int" (schema.yml:10) requires "an int over 9000"; assert.fail: fail: int was less than 9000 (by schema.yml:9)
-- "float" (schema.yml:12) requires "a float less than pi"; assert.fail: fail: float was more than 3.1415 (by schema.yml:11)
-- "bool" (schema.yml:14) requires "bool evaluating to true" (by schema.yml:13)
-- "nil" (schema.yml:16) requires "a null value"; assert.fail: fail: value was not null (by schema.yml:15)
-- "my_array" (schema.yml:18) requires "an array with more than or exactly 10 items"; assert.fail: fail: array was less than 10 items (by schema.yml:17)
-- array item (schema.yml:20) requires "a non-empty string"; assert.fail: fail: length of string was 0 (by schema.yml:19)
-- array item (schema.yml:22) requires "an int over 9000"; assert.fail: fail: int was less than 9000 (by schema.yml:21)
-- array item (schema.yml:24) requires "a float less than pi"; assert.fail: fail: float was more than 3.1415 (by schema.yml:23)
-- array item (schema.yml:26) requires "bool evaluating to true" (by schema.yml:25)
-- array item (schema.yml:28) requires "a null value"; assert.fail: fail: value was not null (by schema.yml:27)
-`
 
-			filesToProcess := files.NewSortedFiles([]*files.File{
-				files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(dataValuesYAML))),
-			})
-
-			assertFails(t, filesToProcess, expectedErr, opts)
-		})
-		t.Run("on a document with variables in validation", func(t *testing.T) {
-			opts := cmdtpl.NewOptions()
-			dataValuesYAML := `#@ load("@ytt:assert", "assert")
-#@ validString = "a non empty data values"
-#@ failureString = "data values was empty"
-
-#@ def simpleExists(v):
-#@   if v:
-#@     return True
-#@   else:
-#@     assert.fail(failureString)
-#@  end
+#@ def additional_vals():
+int: 10
+#@overlay/match missing_ok=True
+#@assert/validate ("a non empty string", lambda v: v )
+str: "asdf"
 #@ end
 
+#@ lib = library.get("lib")
+#@ lib2 = lib.with_data_values(additional_vals())
+--- #@ template.replace(lib.eval())
+--- #@ template.replace(lib2.eval())
+`
+
+		libValuesYAML := `#@ load("@ytt:assert", "assert")
+
 #@data/values
-#@assert/validate (validString, simpleExists)
 ---
+#@assert/validate ("an integer over 1", lambda v: True if v > 1 else assert.fail("value was less than 1"))
+int: 2
 `
 
-			expectedErr := `One or more data values were invalid:
-- document (schema.yml:15) requires "a non empty data values"; assert.fail: fail: data values was empty (by schema.yml:14)
+		libConfigYAML := `
+#@ load("@ytt:data", "data")
+---
+values: #@ data.values
 `
 
-			filesToProcess := files.NewSortedFiles([]*files.File{
-				files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(dataValuesYAML))),
-			})
+		expected := `values:
+  int: 2
+---
+values:
+  int: 10
+  str: asdf
+`
 
-			assertFails(t, filesToProcess, expectedErr, opts)
+		filesToProcess := files.NewSortedFiles([]*files.File{
+			files.MustNewFileFromSource(files.NewBytesSource("config.yml", []byte(configYAML))),
+			files.MustNewFileFromSource(files.NewBytesSource("_ytt_lib/lib/values.yml", []byte(libValuesYAML))),
+			files.MustNewFileFromSource(files.NewBytesSource("_ytt_lib/lib/config.yml", []byte(libConfigYAML))),
 		})
-	})
 
-	t.Run("fails when @assert/validate is not well-formed", func(t *testing.T) {
+		assertSucceedsDocSet(t, filesToProcess, expected, opts)
+	})
+}
+
+func TestAssertValidateOnDataValuesFails(t *testing.T) {
+	t.Run("when the annotation is mal-formed because", func(t *testing.T) {
 		t.Run("is empty", func(t *testing.T) {
 			opts := cmdtpl.NewOptions()
 			dataValuesYAML := `#@data/values
@@ -278,64 +246,90 @@ foo: bar
 
 			assertFails(t, filesToProcess, expectedErr, opts)
 		})
-
 	})
-}
-
-func TestAssertValidateOnLibraryDataValues(t *testing.T) {
- 	t.Run("succeeds when library is evaluated", func(t *testing.T) {
+	t.Run("when validations fail", func(t *testing.T) {
 		opts := cmdtpl.NewOptions()
-		configYAML := `
-#@ load("@ytt:template", "template")
-#@ load("@ytt:library", "library")
----
-
-
-#@ def additional_vals():
-int: 10
-#@overlay/match missing_ok=True
-#@assert/validate ("a non empty string", lambda v: v )
-str: "asdf"
-#@ end
-
-#@ lib = library.get("lib")
-#@ lib2 = lib.with_data_values(additional_vals())
---- #@ template.replace(lib.eval())
---- #@ template.replace(lib2.eval())
-`
-
-		libValuesYAML := `#@ load("@ytt:assert", "assert")
+		dataValuesYAML := `#@ load("@ytt:assert", "assert")
 
 #@data/values
 ---
-#@assert/validate ("an integer over 1", lambda v: True if v > 1 else assert.fail("value was less than 1"))
-int: 2
-`
-
-		libConfigYAML := `
-#@ load("@ytt:data", "data")
----
-values: #@ data.values
-`
-
-		expected := `values:
+#@assert/validate ("a map with less than 3 elements", lambda v: True if len(v) < 3 else assert.fail("length of map was more than or equal to 3"))
+my_map:
+  #@assert/validate ("a non-empty string", lambda v: True if len(v) > 0 else assert.fail("length of string was 0"))
+  string: ""
+  #@assert/validate ("an int over 9000", lambda v: True if v > 9000 else assert.fail("int was less than 9000"))
   int: 2
----
-values:
-  int: 10
-  str: asdf
+  #@assert/validate ("a float less than pi", lambda v: True if v < 3.1415 else assert.fail("float was more than 3.1415"))
+  float: 20.3
+  #@assert/validate ("bool evaluating to true", lambda v:  v)
+  bool: false
+  #@assert/validate ("a null value", lambda v: True if v == None else assert.fail("value was not null"))
+  nil: anything else
+  #@assert/validate ("an array with more than or exactly 10 items", lambda v: True if len(v) >= 10 else assert.fail("array was less than 10 items"))
+  my_array:
+  #@assert/validate ("a non-empty string", lambda v: True if len(v) > 0 else assert.fail("length of string was 0"))
+  - ""
+  #@assert/validate ("an int over 9000", lambda v: True if v > 9000 else assert.fail("int was less than 9000"))
+  - 123
+  #@assert/validate ("a float less than pi", lambda v: True if v < 3.1415 else assert.fail("float was more than 3.1415"))
+  - 3.14159
+  #@assert/validate ("bool evaluating to true", lambda v:  v)
+  - false
+  #@assert/validate ("a null value", lambda v: True if v == None else assert.fail("value was not null"))
+  - not null
+`
+
+		expectedErr := `One or more data values were invalid:
+- "my_map" (schema.yml:6) requires "a map with less than 3 elements"; assert.fail: fail: length of map was more than or equal to 3 (by schema.yml:5)
+- "string" (schema.yml:8) requires "a non-empty string"; assert.fail: fail: length of string was 0 (by schema.yml:7)
+- "int" (schema.yml:10) requires "an int over 9000"; assert.fail: fail: int was less than 9000 (by schema.yml:9)
+- "float" (schema.yml:12) requires "a float less than pi"; assert.fail: fail: float was more than 3.1415 (by schema.yml:11)
+- "bool" (schema.yml:14) requires "bool evaluating to true" (by schema.yml:13)
+- "nil" (schema.yml:16) requires "a null value"; assert.fail: fail: value was not null (by schema.yml:15)
+- "my_array" (schema.yml:18) requires "an array with more than or exactly 10 items"; assert.fail: fail: array was less than 10 items (by schema.yml:17)
+- array item (schema.yml:20) requires "a non-empty string"; assert.fail: fail: length of string was 0 (by schema.yml:19)
+- array item (schema.yml:22) requires "an int over 9000"; assert.fail: fail: int was less than 9000 (by schema.yml:21)
+- array item (schema.yml:24) requires "a float less than pi"; assert.fail: fail: float was more than 3.1415 (by schema.yml:23)
+- array item (schema.yml:26) requires "bool evaluating to true" (by schema.yml:25)
+- array item (schema.yml:28) requires "a null value"; assert.fail: fail: value was not null (by schema.yml:27)
 `
 
 		filesToProcess := files.NewSortedFiles([]*files.File{
-			files.MustNewFileFromSource(files.NewBytesSource("config.yml", []byte(configYAML))),
-			files.MustNewFileFromSource(files.NewBytesSource("_ytt_lib/lib/values.yml", []byte(libValuesYAML))),
-			files.MustNewFileFromSource(files.NewBytesSource("_ytt_lib/lib/config.yml", []byte(libConfigYAML))),
+			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(dataValuesYAML))),
 		})
 
-		assertSucceedsDocSet(t, filesToProcess, expected, opts)
+		assertFails(t, filesToProcess, expectedErr, opts)
 	})
+	t.Run("when validations on a document fail with variables in validation", func(t *testing.T) {
+		opts := cmdtpl.NewOptions()
+		dataValuesYAML := `#@ load("@ytt:assert", "assert")
+#@ validString = "a non empty data values"
+#@ failureString = "data values was empty"
 
-	t.Run("assert fails when library is evaluated", func(t *testing.T) {
+#@ def simpleExists(v):
+#@   if v:
+#@     return True
+#@   else:
+#@     assert.fail(failureString)
+#@  end
+#@ end
+
+#@data/values
+#@assert/validate (validString, simpleExists)
+---
+`
+
+		expectedErr := `One or more data values were invalid:
+- document (schema.yml:15) requires "a non empty data values"; assert.fail: fail: data values was empty (by schema.yml:14)
+`
+
+		filesToProcess := files.NewSortedFiles([]*files.File{
+			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(dataValuesYAML))),
+		})
+
+		assertFails(t, filesToProcess, expectedErr, opts)
+	})
+	t.Run("when validations on library data values fail", func(t *testing.T) {
 		opts := cmdtpl.NewOptions()
 		configYAML := `
 #@ load("@ytt:template", "template")
