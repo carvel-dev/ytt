@@ -250,9 +250,9 @@ from_nested_lib:
 	opts := cmdtpl.NewOptions()
 
 	opts.DataValuesFlags = cmdtpl.DataValuesFlags{
-		KVsFromYAML: []string{"@~inst1:val0=0", "@~inst1@nested-lib:val1=1"},
+		KVsFromYAML:    []string{"@~inst1:val0=0", "@~inst1@nested-lib:val1=1"},
 		FromFiles:      []string{"c:\\User\\user\\dvs2.yml", "@~inst1:dvs3.yml", "@lib:D:\\User\\user\\dvs4.yml"},
-		EnvFromStrings: []string{"@lib::DVS"},
+		EnvFromStrings: []string{"@lib:DVS"},
 		EnvironFunc:    func() []string { return []string{"DVS_val5=5"} },
 		KVsFromFiles:   []string{"@lib:val6=c:\\User\\user\\dvs6.yml"},
 		ReadFileFunc: func(path string) ([]byte, error) {
@@ -262,7 +262,7 @@ from_nested_lib:
 			case "dvs3.yml":
 				return dvs3, nil
 			case "D:\\User\\user\\dvs4.yml":
-			return dvs4, nil
+				return dvs4, nil
 			case "c:\\User\\user\\dvs6.yml":
 				return dvs6, nil
 			default:

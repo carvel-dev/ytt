@@ -21,8 +21,9 @@ import (
 )
 
 const (
-	dvsKVSep     = "="
-	dvsMapKeySep = "."
+	dvsKVSep      = "="
+	dvsMapKeySep  = "."
+	libraryKeySep = ":"
 )
 
 type DataValuesFlags struct {
@@ -189,7 +190,7 @@ func (s *DataValuesFlags) env(prefix string, src dataValuesFlagsSource) ([]*data
 		envVars = s.EnvironFunc()
 	}
 
-	libRef, keyPrefix, err := s.libraryRefAndKey(prefix)
+	libRef, keyPrefix, err := s.libraryRefAndKeyStrict(prefix)
 	if err != nil {
 		return nil, err
 	}
@@ -236,7 +237,7 @@ func (s *DataValuesFlags) kv(kv string, src dataValuesFlagsSource) (*datavalues.
 		return nil, fmt.Errorf("Deserializing value for key '%s': %s", pieces[0], err)
 	}
 
-	libRef, key, err := s.libraryRefAndKey(pieces[0])
+	libRef, key, err := s.libraryRefAndKeyStrict(pieces[0])
 	if err != nil {
 		return nil, err
 	}
@@ -274,16 +275,23 @@ func (s *DataValuesFlags) kvFile(kv string) (*datavalues.Envelope, error) {
 
 	return datavalues.NewEnvelopeWithLibRef(overlay, libRef)
 }
+func (DataValuesFlags) libraryRefAndKeyStrict(key string) (string, string, error) {
+	libRef, key, err := DataValuesFlags{}.libraryRefAndKey(key)
+	if err != nil {
+		return "", "", err
+	}
+	if len(strings.Split(key, libraryKeySep)) > 1 {
+		// error on a common syntax mistake
+		return "", "", fmt.Errorf("Expected at most one library-key separator '%s' in '%s'", libraryKeySep, key)
+	}
+	return libRef, key, nil
+}
 
 // libraryRefAndKey separates a library reference and a key.
-// A library reference starts with ref.LibrarySep, and ends with the first occurrence of libraryPathSep.
+// A library reference starts with ref.LibrarySep, and ends with the first occurrence of libraryKeySep.
 func (DataValuesFlags) libraryRefAndKey(key string) (string, string, error) {
-	const (
-		libraryPathSep = ":"
-	)
-
 	if strings.HasPrefix(key, ref.LibrarySep) {
-		keyPieces := strings.SplitN(key, libraryPathSep, 2)
+		keyPieces := strings.SplitN(key, libraryKeySep, 2)
 		switch len(keyPieces) {
 		case 1:
 			return "", key, nil
@@ -294,9 +302,7 @@ func (DataValuesFlags) libraryRefAndKey(key string) (string, string, error) {
 			return keyPieces[0], keyPieces[1], nil
 		}
 	}
-
 	return "", key, nil
-
 }
 
 func (s *DataValuesFlags) buildOverlay(keyPieces []string, value interface{}, desc string, line string) *yamlmeta.Document {
