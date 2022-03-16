@@ -37,7 +37,7 @@ type Envelope struct {
 // NewEnvelope generates a new Envelope from a YAML document containing Data Values, extracting "addressing" from any
 // ref.LibraryRef annotated on the document.
 func NewEnvelope(doc *yamlmeta.Document) (*Envelope, error) {
-	libRef, afterLibMod, err := parseDVAnnotations(ref.LibraryRefExtractor{}, doc)
+	libRef, afterLibMod, err := parseDVLibAnnotations(ref.LibraryRefExtractor{}, doc)
 	if err != nil {
 		return nil, err
 	}
@@ -74,7 +74,7 @@ func newEnvelopeWithLibRef(libRefs ExtractLibRefs, doc *yamlmeta.Document, libRe
 		return nil, err
 	}
 
-	libRefsFromAnnotation, afterLibMod, err := parseDVAnnotations(libRefs, doc)
+	libRefsFromAnnotation, afterLibMod, err := parseDVLibAnnotations(libRefs, doc)
 	if err != nil {
 		return nil, err
 	} else if len(libRefsFromAnnotation) > 0 {
@@ -130,7 +130,7 @@ func (dvd *Envelope) deepCopyUnused() *Envelope {
 		libRef: copiedPieces, originalLibRef: dvd.originalLibRef}
 }
 
-func parseDVAnnotations(libRefs ExtractLibRefs, doc *yamlmeta.Document) ([]ref.LibraryRef, bool, error) {
+func parseDVLibAnnotations(libRefs ExtractLibRefs, doc *yamlmeta.Document) ([]ref.LibraryRef, bool, error) {
 	var afterLibMod bool
 	anns := template.NewAnnotations(doc)
 

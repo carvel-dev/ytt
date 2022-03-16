@@ -539,7 +539,7 @@ func processOptionalAnnotation(node yamlmeta.Node, optionalAnnotation template.A
 
 	if nodeAnnotations.Has(optionalAnnotation) {
 		ann := nodeAnnotations[optionalAnnotation]
-		ann.Position = populateAnnotationPosition(ann.Position, node)
+		ann.Position = populateSchemaAnnotationPosition(ann.Position, node)
 
 		switch optionalAnnotation {
 		case AnnotationNullable:
@@ -716,6 +716,11 @@ func checkExamplesValue(ann *ExampleAnnotation, typeOfValue Type) error {
 
 type checkForAnnotations struct{}
 
+// Visit if `node` is annotated with `@schema/nullable`, `@schema/type`, or `@schema/default` (AnnotationNullable, AnnotationType, AnnotationDefault).
+// Used when checking a node's children for undesired annotations.
+//
+// This visitor returns an error if any listed annotation is found,
+// otherwise it will return nil.
 func (c checkForAnnotations) Visit(n yamlmeta.Node) error {
 	var foundAnns []string
 	var foundAnnsPos []*filepos.Position
@@ -723,7 +728,7 @@ func (c checkForAnnotations) Visit(n yamlmeta.Node) error {
 	for _, annotation := range []template.AnnotationName{AnnotationNullable, AnnotationType, AnnotationDefault} {
 		if nodeAnnotations.Has(annotation) {
 			foundAnns = append(foundAnns, string(annotation))
-			annPos := populateAnnotationPosition(nodeAnnotations[annotation].Position, n)
+			annPos := populateSchemaAnnotationPosition(nodeAnnotations[annotation].Position, n)
 			foundAnnsPos = append(foundAnnsPos, annPos)
 		}
 	}
@@ -742,24 +747,11 @@ func (c checkForAnnotations) Visit(n yamlmeta.Node) error {
 	return nil
 }
 
-func populateAnnotationPosition(annPos *filepos.Position, node yamlmeta.Node) *filepos.Position {
-	leftPadding := 0
-	nodePos := node.GetPosition()
-	if nodePos.IsKnown() {
-		nodeLine := nodePos.GetLine()
-		leftPadding = len(nodeLine) - len(strings.TrimLeft(nodeLine, " "))
+func populateSchemaAnnotationPosition(annPosition *filepos.Position, node yamlmeta.Node) *filepos.Position {
+	filePosComments := make([]filepos.Meta, 0, len(node.GetComments()))
+	for _, c := range node.GetComments() {
+		filePosComments = append(filePosComments, filepos.Meta{Data: c.Data, Position: c.Position.DeepCopy()})
 	}
 
-	lineString := ""
-	nodeComments := node.GetComments()
-	for _, c := range nodeComments {
-		if c.Position.IsKnown() && c.Position.AsIntString() == fmt.Sprintf("%d", annPos.LineNum()) {
-			lineString = fmt.Sprintf("%v#%s", strings.Repeat(" ", leftPadding), c.Data)
-		}
-	}
-
-	annPos.SetFile(nodePos.GetFile())
-	annPos.SetLine(lineString)
-
-	return annPos
+	return filepos.PopulateAnnotationPositionFromNode(annPosition, node.GetPosition(), filePosComments)
 }
