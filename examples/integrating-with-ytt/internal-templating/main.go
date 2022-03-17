@@ -53,7 +53,7 @@ func ytt(tpl, dvs []string) (string, error) {
 	// Evaluate the template given the configured data values...
 	output := templatingOptions.RunWithFiles(input, noopUI)
 	if output.Err != nil {
-		return "", err
+		return "", output.Err
 	}
 
 	// output.DocSet contains the full set of resulting YAML documents, in order.
