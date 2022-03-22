@@ -145,7 +145,7 @@ func (s *DataValuesFlags) file(fullPath string, strict bool) ([]*datavalues.Enve
 
 	contents, err := s.readFile(path)
 	if err != nil {
-		return nil, fmt.Errorf("Unable to read file '%s' from flag value '%s': %s", path, err)
+		return nil, fmt.Errorf("Reading file '%s': %s", path, err)
 	}
 
 	docSetOpts := yamlmeta.DocSetOpts{
