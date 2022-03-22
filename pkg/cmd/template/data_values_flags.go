@@ -190,7 +190,7 @@ func (s *DataValuesFlags) env(prefix string, src dataValuesFlagsSource) ([]*data
 		envVars = s.EnvironFunc()
 	}
 
-	libRef, keyPrefix, err := s.libraryRefAndKeyStrict(prefix)
+	libRef, keyPrefix, err := s.libraryRefAndKeyExactlyOneSep(prefix)
 	if err != nil {
 		return nil, err
 	}
@@ -237,7 +237,7 @@ func (s *DataValuesFlags) kv(kv string, src dataValuesFlagsSource) (*datavalues.
 		return nil, fmt.Errorf("Deserializing value for key '%s': %s", pieces[0], err)
 	}
 
-	libRef, key, err := s.libraryRefAndKeyStrict(pieces[0])
+	libRef, key, err := s.libraryRefAndKeyExactlyOneSep(pieces[0])
 	if err != nil {
 		return nil, err
 	}
@@ -275,7 +275,10 @@ func (s *DataValuesFlags) kvFile(kv string) (*datavalues.Envelope, error) {
 
 	return datavalues.NewEnvelopeWithLibRef(overlay, libRef)
 }
-func (DataValuesFlags) libraryRefAndKeyStrict(key string) (string, string, error) {
+
+// libraryRefAndKeyExactlyOneSep separates a library reference and a key and validates that no libraryKeySep exist in the key.
+// libraryKeySep is disallowed in some data values flags. Should we reconsider allowing this? See issue #637.
+func (DataValuesFlags) libraryRefAndKeyExactlyOneSep(key string) (string, string, error) {
 	libRef, key, err := DataValuesFlags{}.libraryRefAndKey(key)
 	if err != nil {
 		return "", "", err
