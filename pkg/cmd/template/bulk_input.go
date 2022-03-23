@@ -6,7 +6,6 @@ package template
 import (
 	"encoding/json"
 
-	"github.com/spf13/cobra"
 	"github.com/vmware-tanzu/carvel-ytt/pkg/cmd/ui"
 	"github.com/vmware-tanzu/carvel-ytt/pkg/files"
 )
@@ -16,9 +15,11 @@ type BulkFilesSourceOpts struct {
 	bulkOut bool
 }
 
-func (s *BulkFilesSourceOpts) Set(cmd *cobra.Command) {
-	cmd.Flags().StringVar(&s.bulkIn, "bulk-in", "", "Accept files in bulk format")
-	cmd.Flags().BoolVar(&s.bulkOut, "bulk-out", false, "Output files in bulk format")
+// Set registers "bulk" flags and wires-up those flags up to this
+// BulkFilesSourceOpts to be set when the corresponding cobra.Command is executed.
+func (s *BulkFilesSourceOpts) Set(cmdFlags CmdFlags) {
+	cmdFlags.StringVar(&s.bulkIn, "bulk-in", "", "Accept files in bulk format")
+	cmdFlags.BoolVar(&s.bulkOut, "bulk-out", false, "Output files in bulk format")
 }
 
 type BulkFilesSource struct {

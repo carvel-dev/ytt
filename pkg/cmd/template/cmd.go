@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/spf13/cobra"
 	"github.com/vmware-tanzu/carvel-ytt/pkg/cmd/ui"
 	"github.com/vmware-tanzu/carvel-ytt/pkg/files"
 	"github.com/vmware-tanzu/carvel-ytt/pkg/schema"
@@ -55,26 +54,20 @@ func NewOptions() *Options {
 	return &Options{}
 }
 
-func NewCmd(o *Options) *cobra.Command {
-	cmd := &cobra.Command{
-		Use:     "template",
-		Aliases: []string{"t", "tpl"},
-		Short:   "Process YAML templates (deprecated; use top-level command -- e.g. `ytt -f-` instead of `ytt template -f-`)",
-		RunE:    func(c *cobra.Command, args []string) error { return o.Run() },
-	}
-	cmd.Flags().BoolVar(&o.IgnoreUnknownComments, "ignore-unknown-comments", false,
+// BindFlags registers top level template flags for template command.
+func (o *Options) BindFlags(cmdFlags CmdFlags) {
+	cmdFlags.BoolVar(&o.IgnoreUnknownComments, "ignore-unknown-comments", false,
 		"Configure whether unknown comments are considered as errors (comments that do not start with '#@' or '#!')")
-	cmd.Flags().BoolVar(&o.ImplicitMapKeyOverrides, "implicit-map-key-overrides", false,
+	cmdFlags.BoolVar(&o.ImplicitMapKeyOverrides, "implicit-map-key-overrides", false,
 		"Configure whether implicit map keys overrides are allowed")
-	cmd.Flags().BoolVarP(&o.StrictYAML, "strict", "s", false, "Configure to use _strict_ YAML subset")
-	cmd.Flags().BoolVar(&o.Debug, "debug", false, "Enable debug output")
-	cmd.Flags().BoolVar(&o.InspectFiles, "files-inspect", false, "Inspect files")
+	cmdFlags.BoolVarP(&o.StrictYAML, "strict", "s", false, "Configure to use _strict_ YAML subset")
+	cmdFlags.BoolVar(&o.Debug, "debug", false, "Enable debug output")
+	cmdFlags.BoolVar(&o.InspectFiles, "files-inspect", false, "Inspect files")
 
-	o.BulkFilesSourceOpts.Set(cmd)
-	o.RegularFilesSourceOpts.Set(cmd)
-	o.FileMarksOpts.Set(cmd)
-	o.DataValuesFlags.Set(cmd)
-	return cmd
+	o.BulkFilesSourceOpts.Set(cmdFlags)
+	o.RegularFilesSourceOpts.Set(cmdFlags)
+	o.FileMarksOpts.Set(cmdFlags)
+	o.DataValuesFlags.Set(cmdFlags)
 }
 
 func (o *Options) Run() error {

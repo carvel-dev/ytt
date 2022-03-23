@@ -21,7 +21,7 @@ func NewDefaultYttCmd() *cobra.Command {
 }
 
 func NewYttCmd(o *YttOptions) *cobra.Command {
-	cmd := cmdtpl.NewCmd(cmdtpl.NewOptions())
+	cmd := NewCmd(cmdtpl.NewOptions())
 
 	cmd.Use = "ytt"
 	cmd.Aliases = nil
@@ -42,7 +42,7 @@ Docs for data values: https://carvel.dev/ytt/docs/latest/ytt-data-values/`
 	// TODO bash completion
 
 	cmd.AddCommand(NewVersionCmd(NewVersionOptions()))
-	cmd.AddCommand(cmdtpl.NewCmd(cmdtpl.NewOptions())) // for backwards compat
+	cmd.AddCommand(NewCmd(cmdtpl.NewOptions())) // for backwards compat
 	cmd.AddCommand(NewFmtCmd(NewFmtOptions()))
 	cmd.AddCommand(NewWebsiteCmd(NewWebsiteOptions()))
 

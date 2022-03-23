@@ -8,7 +8,6 @@ import (
 	"io"
 	"strings"
 
-	"github.com/spf13/cobra"
 	"github.com/vmware-tanzu/carvel-ytt/pkg/cmd/ui"
 	"github.com/vmware-tanzu/carvel-ytt/pkg/files"
 	"github.com/vmware-tanzu/carvel-ytt/pkg/yamlmeta"
@@ -35,21 +34,21 @@ type OutputType struct {
 
 // Set registers flags related to sourcing ordinary files/directories and wires-up those flags up to this
 // RegularFilesSourceOpts to be set when the corresponding cobra.Command is executed.
-func (s *RegularFilesSourceOpts) Set(cmd *cobra.Command) {
-	cmd.Flags().StringArrayVarP(&s.files, "file", "f", nil, "File (ie local path, HTTP URL, -) (can be specified multiple times)")
+func (s *RegularFilesSourceOpts) Set(cmdFlags CmdFlags) {
+	cmdFlags.StringArrayVarP(&s.files, "file", "f", nil, "File (ie local path, HTTP URL, -) (can be specified multiple times)")
 
-	cmd.Flags().StringVar(&s.outputDir, "dangerous-emptied-output-directory", "",
+	cmdFlags.StringVar(&s.outputDir, "dangerous-emptied-output-directory", "",
 		"Delete given directory, and then create it with output files")
-	cmd.Flags().StringVar(&s.OutputFiles, "output-files", "", "Add output files to given directory")
+	cmdFlags.StringVar(&s.OutputFiles, "output-files", "", "Add output files to given directory")
 
-	cmd.Flags().StringSliceVarP(&s.OutputType.Types, "output", "o", []string{RegularFilesOutputTypeYAML},
+	cmdFlags.StringSliceVarP(&s.OutputType.Types, "output", "o", []string{RegularFilesOutputTypeYAML},
 		fmt.Sprintf("Configure output format. Can specify file format (%s) and/or schema type (%s) (can be specified multiple times)",
 			strings.Join(RegularFilesOutputFormatTypes, ", "),
 			strings.Join(RegularFilesOutputSchemaTypes, ", ")))
 
-	cmd.Flags().BoolVar(&s.SymlinkAllowOpts.AllowAll, "dangerous-allow-all-symlink-destinations", false,
+	cmdFlags.BoolVar(&s.SymlinkAllowOpts.AllowAll, "dangerous-allow-all-symlink-destinations", false,
 		"Symlinks to all destinations are allowed")
-	cmd.Flags().StringSliceVar(&s.SymlinkAllowOpts.AllowedDstPaths, "allow-symlink-destination", nil,
+	cmdFlags.StringSliceVar(&s.SymlinkAllowOpts.AllowedDstPaths, "allow-symlink-destination", nil,
 		"File paths to which symlinks are allowed (can be specified multiple times)")
 }
 
