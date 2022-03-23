@@ -54,7 +54,7 @@ func NewOptions() *Options {
 	return &Options{}
 }
 
-// BindFlags registers top level template flags for template command.
+// BindFlags registers template flags for template command.
 func (o *Options) BindFlags(cmdFlags CmdFlags) {
 	cmdFlags.BoolVar(&o.IgnoreUnknownComments, "ignore-unknown-comments", false,
 		"Configure whether unknown comments are considered as errors (comments that do not start with '#@' or '#!')")

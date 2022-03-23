@@ -20,6 +20,8 @@ import (
 	"github.com/vmware-tanzu/carvel-ytt/pkg/yamlmeta"
 	"github.com/vmware-tanzu/carvel-ytt/pkg/yamltemplate"
 	"github.com/vmware-tanzu/carvel-ytt/pkg/yttlibrary"
+
+	_ "github.com/vmware-tanzu/carvel-ytt/pkg/yttlibraryext"
 )
 
 var (

@@ -1,7 +1,7 @@
 // Copyright 2021 VMware, Inc.
 // SPDX-License-Identifier: Apache-2.0
 
-package yttlibrary
+package toml
 
 import (
 	"bytes"
@@ -14,20 +14,25 @@ import (
 	"github.com/vmware-tanzu/carvel-ytt/pkg/orderedmap"
 	"github.com/vmware-tanzu/carvel-ytt/pkg/template/core"
 	"github.com/vmware-tanzu/carvel-ytt/pkg/yamlmeta"
+	"github.com/vmware-tanzu/carvel-ytt/pkg/yttlibrary"
 )
 
 var (
-	// TOMLAPI contains the definition of the @ytt:toml module
-	TOMLAPI = starlark.StringDict{
-		"toml": &starlarkstruct.Module{
-			Name: "toml",
-			Members: starlark.StringDict{
-				"encode": starlark.NewBuiltin("toml.encode", core.ErrWrapper(tomlModule{}.Encode)),
-				"decode": starlark.NewBuiltin("toml.decode", core.ErrWrapper(tomlModule{}.Decode)),
-			},
+	tomlMod = &starlarkstruct.Module{
+		Name: "toml",
+		Members: starlark.StringDict{
+			"encode": starlark.NewBuiltin("toml.encode", core.ErrWrapper(tomlModule{}.Encode)),
+			"decode": starlark.NewBuiltin("toml.decode", core.ErrWrapper(tomlModule{}.Decode)),
 		},
 	}
+
+	// TOMLAPI contains the definition of the @ytt:toml module
+	TOMLAPI = starlark.StringDict{"toml": tomlMod}
 )
+
+func init() {
+	yttlibrary.RegisterExt(tomlMod)
+}
 
 type tomlModule struct{}
 

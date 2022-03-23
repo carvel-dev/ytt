@@ -82,4 +82,3 @@ func templatesAsInput(tpl... string) (yttcmd.Input, error) {
 
 type noopWriter struct{}
 func (w noopWriter) Write(data []byte) (int, error) { return len(data), nil }
-
