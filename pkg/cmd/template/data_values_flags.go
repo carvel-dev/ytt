@@ -138,7 +138,7 @@ func (s *DataValuesFlags) AsOverlays(strict bool) ([]*datavalues.Envelope, []*da
 }
 
 func (s *DataValuesFlags) file(fullPath string, strict bool) ([]*datavalues.Envelope, error) {
-	libRef, path, err := s.libraryRefAndKey(fullPath)
+	libRef, path, err := s.libraryRefAndString(fullPath)
 	if err != nil {
 		return nil, err
 	}
@@ -190,7 +190,7 @@ func (s *DataValuesFlags) env(prefix string, src dataValuesFlagsSource) ([]*data
 		envVars = s.EnvironFunc()
 	}
 
-	libRef, keyPrefix, err := s.libraryRefAndKeyExactlyOneSep(prefix)
+	libRef, keyPrefix, err := s.libraryRefAndKey(prefix)
 	if err != nil {
 		return nil, err
 	}
@@ -237,7 +237,7 @@ func (s *DataValuesFlags) kv(kv string, src dataValuesFlagsSource) (*datavalues.
 		return nil, fmt.Errorf("Deserializing value for key '%s': %s", pieces[0], err)
 	}
 
-	libRef, key, err := s.libraryRefAndKeyExactlyOneSep(pieces[0])
+	libRef, key, err := s.libraryRefAndKey(pieces[0])
 	if err != nil {
 		return nil, err
 	}
@@ -276,10 +276,10 @@ func (s *DataValuesFlags) kvFile(kv string) (*datavalues.Envelope, error) {
 	return datavalues.NewEnvelopeWithLibRef(overlay, libRef)
 }
 
-// libraryRefAndKeyExactlyOneSep separates a library reference and a key and validates that no libraryKeySep exist in the key.
-// libraryKeySep is disallowed in some data values flags. Should we reconsider allowing this? See issue #637.
-func (DataValuesFlags) libraryRefAndKeyExactlyOneSep(key string) (string, string, error) {
-	libRef, key, err := DataValuesFlags{}.libraryRefAndKey(key)
+// libraryRefAndKey separates a library reference and a key and validates that no libraryKeySep exist in the key.
+// libraryKeySep is disallowed in data value flag keys.
+func (DataValuesFlags) libraryRefAndKey(key string) (string, string, error) {
+	libRef, key, err := DataValuesFlags{}.libraryRefAndString(key)
 	if err != nil {
 		return "", "", err
 	}
@@ -290,22 +290,22 @@ func (DataValuesFlags) libraryRefAndKeyExactlyOneSep(key string) (string, string
 	return libRef, key, nil
 }
 
-// libraryRefAndKey separates a library reference and a key.
+// libraryRefAndString separates a library reference and a string.
 // A library reference starts with ref.LibrarySep, and ends with the first occurrence of libraryKeySep.
-func (DataValuesFlags) libraryRefAndKey(key string) (string, string, error) {
-	if strings.HasPrefix(key, ref.LibrarySep) {
-		keyPieces := strings.SplitN(key, libraryKeySep, 2)
-		switch len(keyPieces) {
+func (DataValuesFlags) libraryRefAndString(str string) (string, string, error) {
+	if strings.HasPrefix(str, ref.LibrarySep) {
+		strPieces := strings.SplitN(str, libraryKeySep, 2)
+		switch len(strPieces) {
 		case 1:
-			return "", key, nil
+			return "", str, nil
 		case 2:
-			if len(keyPieces[0]) == 1 {
+			if len(strPieces[0]) == 1 {
 				return "", "", fmt.Errorf("Expected library ref to not be empty")
 			}
-			return keyPieces[0], keyPieces[1], nil
+			return strPieces[0], strPieces[1], nil
 		}
 	}
-	return "", key, nil
+	return "", str, nil
 }
 
 func (s *DataValuesFlags) buildOverlay(keyPieces []string, value interface{}, desc string, line string) *yamlmeta.Document {
