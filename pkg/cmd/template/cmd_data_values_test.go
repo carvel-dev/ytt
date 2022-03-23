@@ -595,3 +595,21 @@ nested_val: nested_from_env
 	assert.Equal(t, "tpl.yml", file.RelativePath())
 	assert.Equal(t, expectedYAMLTplData, string(file.Bytes()))
 }
+
+func TestDataValuesWithInvalidFlagsFail(t *testing.T) {
+	t.Run("when `--data-value-yaml` has a `:` in the key name", func(t *testing.T) {
+
+		expectedErr := `Extracting data value from KV: Expected at most one library-key separator ':' in 'i:nt'`
+
+		ui := ui.NewTTY(false)
+		opts := cmdtpl.NewOptions()
+
+		opts.DataValuesFlags = cmdtpl.DataValuesFlags{
+			KVsFromYAML: []string{"i:nt=124"},
+		}
+
+		out := opts.RunWithFiles(cmdtpl.Input{}, ui)
+		require.Errorf(t, out.Err, expectedErr)
+		require.Equal(t, expectedErr, out.Err.Error())
+	})
+}
