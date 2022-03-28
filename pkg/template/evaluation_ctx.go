@@ -168,17 +168,15 @@ func (e *EvaluationCtx) TplStartNodeAnnotation(
 	if !ok {
 		return starlark.None, fmt.Errorf("expected to find %s", nodeTag)
 	}
+	ann.Args = annVals[0].(starlark.Tuple)
+	ann.Kwargs = kwargs
 
 	if _, found := e.pendingAnnotations[nodeTag]; !found {
 		e.pendingAnnotations[nodeTag] = NodeAnnotations{}
 	}
 
 	// TODO overrides last set value
-	e.pendingAnnotations[nodeTag][annName] = NodeAnnotation{
-		Args:     annVals[0].(starlark.Tuple),
-		Kwargs:   kwargs,
-		Position: ann.Position.DeepCopy(),
-	}
+	e.pendingAnnotations[nodeTag][annName] = ann
 
 	return starlark.None, nil
 }

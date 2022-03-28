@@ -103,7 +103,7 @@ func (p *Parser) parseBytes(data []byte, lineCorrection int) (*DocumentSet, erro
 			Position: p.newDocPosition(dec.DocumentStartLine(), lineCorrection, len(docSet.Items) == 0, lines),
 		}
 
-		allComments, unassignedComments := p.assignComments(doc, dec.Comments(), lineCorrection)
+		allComments, unassignedComments := p.assignComments(doc, dec.Comments(), lineCorrection, lines)
 		docSet.AllComments = append(docSet.AllComments, allComments...)
 		lastUnassignedComments = unassignedComments
 
@@ -184,7 +184,7 @@ func (p *Parser) parse(val interface{}, lineCorrection int, lines []string) inte
 	}
 }
 
-func (p *Parser) assignComments(val interface{}, comments []yaml.Comment, lineCorrection int) ([]*Comment, []*Comment) {
+func (p *Parser) assignComments(val interface{}, comments []yaml.Comment, lineCorrection int, lines []string) ([]*Comment, []*Comment) {
 	if p.opts.WithoutComments {
 		return nil, nil
 	}
@@ -199,7 +199,7 @@ func (p *Parser) assignComments(val interface{}, comments []yaml.Comment, lineCo
 	for _, comment := range comments {
 		comment := &Comment{
 			Data:     comment.Data,
-			Position: p.newPosition(comment.Line, lineCorrection, comment.Data),
+			Position: p.newPosition(comment.Line, lineCorrection, lines[comment.Line]),
 		}
 		allComments = append(allComments, comment)
 

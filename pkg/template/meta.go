@@ -5,6 +5,7 @@ package template
 
 import (
 	"fmt"
+	"github.com/vmware-tanzu/carvel-ytt/pkg/yamlmeta"
 	"strings"
 
 	"github.com/vmware-tanzu/carvel-ytt/pkg/filepos"
@@ -17,35 +18,31 @@ const (
 	AnnotationNameComment AnnotationName = "comment"
 )
 
-type Meta struct {
-	Annotations []*Annotation
-}
 
 type Annotation struct {
 	Name     AnnotationName // eg template/code
 	Content  string         // eg if True:
 	Position *filepos.Position
 }
-
 type Annotations struct {
-	tagToNodeAnnotations map[NodeTag]map[AnnotationName]Annotation
+	tagToAnnotationsMap map[NodeTag]NodeAnnotations
 }
 
 func NewAnnotationsForTemplate() *Annotations {
 	return &Annotations{
-		tagToNodeAnnotations: map[NodeTag]map[AnnotationName]Annotation{},
+		tagToAnnotationsMap: map[NodeTag]NodeAnnotations{},
 	}
 }
 
 func (a *Annotations) AddAnnotation(tag NodeTag, ann Annotation) {
-	if _, ok := a.tagToNodeAnnotations[tag]; !ok {
-		a.tagToNodeAnnotations[tag] = map[AnnotationName]Annotation{}
+	if _, found := a.tagToAnnotationsMap[tag]; !found {
+		a.tagToAnnotationsMap[tag] = NodeAnnotations{}
 	}
-	a.tagToNodeAnnotations[tag][ann.Name] = ann
+	a.tagToAnnotationsMap[tag][ann.Name] = NodeAnnotation{Position: ann.Position}
 }
 
-func (a *Annotations) FindAnnotation(tag NodeTag, annName AnnotationName) (Annotation, bool) {
-	ann, ok := a.tagToNodeAnnotations[tag][annName]
+func (a *Annotations) FindAnnotation(tag NodeTag, annName AnnotationName) (NodeAnnotation, bool) {
+	ann, ok := a.tagToAnnotationsMap[tag][annName]
 	return ann, ok
 }
 
@@ -61,22 +58,26 @@ type MetaOpts struct {
 	IgnoreUnknown bool
 }
 
-// NewAnnotationFromString constructs an Annotation from a given string.
+// NewAnnotationFromComment constructs an Annotation from a given comment.
 //
 // if opts.IgnoreUnknown is true and the annotation is unknown, it is returned as a comment.
 // if opts.IgnoreUnknown is false and the annotation is unknown, returns an error.
-func NewAnnotationFromString(data string, opts MetaOpts) (Annotation, error) {
+func NewAnnotationFromComment(comment *yamlmeta.Comment, opts MetaOpts) (Annotation, error) {
+	data := comment.Data
+	position := comment.Position.DeepCopy()
 	switch {
 	case len(data) > 0 && data[0] == '!':
 		return Annotation{
 			Name:    AnnotationNameComment,
 			Content: data[1:],
+			Position: position,
 		}, nil
 
 	case len(data) > 0 && data[0] == '@':
 		nameAndContent := strings.SplitN(data[1:], " ", 2)
 		ann := Annotation{
 			Name: AnnotationName(nameAndContent[0]),
+			Position: position,
 		}
 		if len(nameAndContent) == 2 {
 			ann.Content = nameAndContent[1]
@@ -88,8 +89,10 @@ func NewAnnotationFromString(data string, opts MetaOpts) (Annotation, error) {
 			return Annotation{
 				Name:    AnnotationNameComment,
 				Content: data,
+				Position: position,
 			}, nil
 		} else {
+			//TODO: improve err?
 			return Annotation{}, fmt.Errorf("Expected ytt-formatted string (use '#@' for annotations or code, '#!' for comments)")
 		}
 	}

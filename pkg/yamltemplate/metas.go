@@ -45,7 +45,7 @@ type MetasOpts struct {
 // nodePos is the position of the node to which "comment" is attached (this is important to differentiate between
 // @template/code and @template/value).
 func NewTemplateAnnotationFromYAMLComment(comment *yamlmeta.Comment, nodePos *filepos.Position, opts MetasOpts) (template.Annotation, error) {
-	ann, err := template.NewAnnotationFromString(comment.Data, template.MetaOpts{IgnoreUnknown: opts.IgnoreUnknown})
+	ann, err := template.NewAnnotationFromComment(comment, template.MetaOpts{IgnoreUnknown: opts.IgnoreUnknown})
 	if err != nil {
 		return template.Annotation{}, fmt.Errorf(
 			"Failed to parse line %s: '#%s': %s", comment.Position.AsIntString(), comment.Data, err)
@@ -71,7 +71,7 @@ func NewTemplateAnnotationFromYAMLComment(comment *yamlmeta.Comment, nodePos *fi
 func extractMetas(node yamlmeta.Node, opts MetasOpts) (Metas, yamlmeta.Node, error) {
 	metas := Metas{}
 
-	nonCodeComments := []*yamlmeta.Comment{}
+	nonTemplateComments := []*yamlmeta.Comment{}
 	for _, comment := range node.GetComments() {
 		ann, err := NewTemplateAnnotationFromYAMLComment(comment, node.GetPosition(), opts)
 		if err != nil {
@@ -118,14 +118,12 @@ func extractMetas(node yamlmeta.Node, opts MetasOpts) (Metas, yamlmeta.Node, err
 			// They _are_ considered part of the template's code, so these yamlmeta.Comments are "digested."
 
 		default:
-			ann.Position = comment.Position
 			metas.Annotations = append(metas.Annotations, CommentAndAnnotation{comment, &ann})
-			// TODO: should this really be a "non-code comment?"
-			nonCodeComments = append(nonCodeComments, comment)
+			nonTemplateComments = append(nonTemplateComments, comment)
 		}
 	}
 	digestedNode := node.DeepCopyAsNode()
-	digestedNode.SetComments(nonCodeComments)
+	digestedNode.SetComments(nonTemplateComments)
 
 	return metas, digestedNode, nil
 }
