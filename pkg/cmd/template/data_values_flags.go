@@ -138,7 +138,7 @@ func (s *DataValuesFlags) AsOverlays(strict bool) ([]*datavalues.Envelope, []*da
 }
 
 func (s *DataValuesFlags) file(fullPath string, strict bool) ([]*datavalues.Envelope, error) {
-	libRef, path, err := s.libraryRefAndString(fullPath)
+	libRef, path, err := s.libraryRefAndRemainder(fullPath)
 	if err != nil {
 		return nil, err
 	}
@@ -278,8 +278,8 @@ func (s *DataValuesFlags) kvFile(kv string) (*datavalues.Envelope, error) {
 
 // libraryRefAndKey separates a library reference and a key and validates that no libraryKeySep exist in the key.
 // libraryKeySep is disallowed in data value flag keys.
-func (DataValuesFlags) libraryRefAndKey(key string) (string, string, error) {
-	libRef, key, err := DataValuesFlags{}.libraryRefAndString(key)
+func (DataValuesFlags) libraryRefAndKey(arg string) (string, string, error) {
+	libRef, key, err := DataValuesFlags{}.libraryRefAndRemainder(arg)
 	if err != nil {
 		return "", "", err
 	}
@@ -290,14 +290,14 @@ func (DataValuesFlags) libraryRefAndKey(key string) (string, string, error) {
 	return libRef, key, nil
 }
 
-// libraryRefAndString separates a library reference and a string.
+// libraryRefAndRemainder separates a library reference prefix from the remainder of the string.
 // A library reference starts with ref.LibrarySep, and ends with the first occurrence of libraryKeySep.
-func (DataValuesFlags) libraryRefAndString(str string) (string, string, error) {
-	if strings.HasPrefix(str, ref.LibrarySep) {
-		strPieces := strings.SplitN(str, libraryKeySep, 2)
+func (DataValuesFlags) libraryRefAndRemainder(arg string) (string, string, error) {
+	if strings.HasPrefix(arg, ref.LibrarySep) {
+		strPieces := strings.SplitN(arg, libraryKeySep, 2)
 		switch len(strPieces) {
 		case 1:
-			return "", str, nil
+			return "", arg, nil
 		case 2:
 			if len(strPieces[0]) == 1 {
 				return "", "", fmt.Errorf("Expected library ref to not be empty")
@@ -305,7 +305,7 @@ func (DataValuesFlags) libraryRefAndString(str string) (string, string, error) {
 			return strPieces[0], strPieces[1], nil
 		}
 	}
-	return "", str, nil
+	return "", arg, nil
 }
 
 func (s *DataValuesFlags) buildOverlay(keyPieces []string, value interface{}, desc string, line string) *yamlmeta.Document {
