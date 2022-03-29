@@ -121,7 +121,7 @@ end`,
 		instructions := template.NewInstructionSet()
 		compiledTemplate := template.NewCompiledTemplate(
 			"stdin", template.NewCodeFromBytes([]byte("\n"+cs.Input), instructions),
-			instructions, template.NewNodes(), nil, template.EvaluationCtxDialects{})
+			instructions, template.NewNodes(), template.EvaluationCtxDialects{})
 
 		loader := template.NewNoopCompiledTemplateLoader(compiledTemplate)
 		thread := &starlark.Thread{Name: "test", Load: loader.Load}
@@ -151,7 +151,7 @@ func TestNoHints(t *testing.T) {
 		instructions := template.NewInstructionSet()
 		compiledTemplate := template.NewCompiledTemplate(
 			"stdin", template.NewCodeFromBytes([]byte("\n"+cs.Input), instructions),
-			instructions, template.NewNodes(), nil, template.EvaluationCtxDialects{})
+			instructions, template.NewNodes(), template.EvaluationCtxDialects{})
 
 		loader := template.NewNoopCompiledTemplateLoader(compiledTemplate)
 		thread := &starlark.Thread{Name: "test", Load: loader.Load}

@@ -22,7 +22,6 @@ type Template struct {
 	opts         TemplateOpts
 	docSet       *yamlmeta.DocumentSet
 	nodes        *template.Nodes
-	annotations  *template.Annotations
 	instructions *template.InstructionSet
 
 	// memoized source lines
@@ -70,7 +69,6 @@ func NewTemplate(name string, opts TemplateOpts) *Template {
 func (e *Template) Compile(docSet *yamlmeta.DocumentSet) (*template.CompiledTemplate, error) {
 	e.docSet = docSet
 	e.nodes = template.NewNodes()
-	e.annotations = template.NewAnnotationsForTemplate()
 
 	// populates nodes and annotations
 	code, err := e.build(docSet, nil, template.NodeTagRoot, buildOpts{})
@@ -87,7 +85,7 @@ func (e *Template) Compile(docSet *yamlmeta.DocumentSet) (*template.CompiledTemp
 		Instruction: e.instructions.NewEndCtxNone(), // TODO ideally we would return array of docset
 	})
 
-	return template.NewCompiledTemplate(e.name, code, e.instructions, e.nodes, e.annotations, template.EvaluationCtxDialects{
+	return template.NewCompiledTemplate(e.name, code, e.instructions, e.nodes, template.EvaluationCtxDialects{
 		EvaluationCtxDialectName: EvaluationCtx{
 			implicitMapKeyOverrides: e.opts.ImplicitMapKeyOverrides,
 		},
@@ -133,7 +131,7 @@ func (e *Template) build(nodeOrScalar interface{}, parentNode yamlmeta.Node, par
 	}
 
 	for _, ann := range metas.Annotations {
-		e.annotations.AddAnnotation(nodeTag, *ann.Annotation)
+		e.nodes.AddAnnotation(nodeTag, *ann.Annotation)
 		code = append(code, template.Line{
 			Instruction: e.instructions.NewStartNodeAnnotation(nodeTag, *ann.Annotation).WithDebug(e.debugComment(nodeForEval)),
 			SourceLine:  e.newSourceLine(ann.Comment.Position),

@@ -13,9 +13,8 @@ import (
 type EvaluationCtx struct {
 	dialect EvaluationCtxDialect
 
-	nodes       *Nodes
-	annotations *Annotations
-	ancestors   Ancestors
+	nodes     *Nodes
+	ancestors Ancestors
 
 	pendingAnnotations map[NodeTag]NodeAnnotations
 	pendingMapItemKeys map[NodeTag]interface{}
@@ -164,7 +163,7 @@ func (e *EvaluationCtx) TplStartNodeAnnotation(
 		kwargs = append(kwargs, val.(starlark.Tuple))
 	}
 
-	ann, ok := e.annotations.FindAnnotation(nodeTag, annName)
+	ann, ok := e.nodes.FindAnnotation(nodeTag, annName)
 	if !ok {
 		return starlark.None, fmt.Errorf("expected to find %s", nodeTag)
 	}

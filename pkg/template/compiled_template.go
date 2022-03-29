@@ -23,14 +23,13 @@ type CompiledTemplate struct {
 	code         []Line
 	instructions *InstructionSet
 	nodes        *Nodes
-	annotations  *Annotations
 	evalDialects EvaluationCtxDialects
 	rootCtx      *EvaluationCtx
 	ctxs         []*EvaluationCtx
 }
 
 func NewCompiledTemplate(name string, code []Line,
-	instructions *InstructionSet, nodes *Nodes, annotations *Annotations,
+	instructions *InstructionSet, nodes *Nodes,
 	evalDialects EvaluationCtxDialects) *CompiledTemplate {
 
 	// TODO package globals
@@ -47,7 +46,6 @@ func NewCompiledTemplate(name string, code []Line,
 		code:         code,
 		instructions: instructions,
 		nodes:        nodes,
-		annotations:  annotations,
 		evalDialects: evalDialects,
 	}
 }
@@ -199,10 +197,9 @@ func (e *CompiledTemplate) hidePrivateGlobals(globals starlark.StringDict) {
 
 func (e *CompiledTemplate) newCtx(ctxType EvaluationCtxDialectName) *EvaluationCtx {
 	return &EvaluationCtx{
-		nodes:       e.nodes,
-		annotations: e.annotations,
-		ancestors:   e.nodes.Ancestors(),
-		dialect:     e.evalDialects[ctxType],
+		nodes:     e.nodes,
+		ancestors: e.nodes.Ancestors(),
+		dialect:   e.evalDialects[ctxType],
 
 		pendingAnnotations: map[NodeTag]NodeAnnotations{},
 		pendingMapItemKeys: map[NodeTag]interface{}{},

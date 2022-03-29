@@ -23,27 +23,6 @@ type Annotation struct {
 	Content  string         // eg if True:
 	Position *filepos.Position
 }
-type Annotations struct {
-	tagToAnnotationsMap map[NodeTag]NodeAnnotations
-}
-
-func NewAnnotationsForTemplate() *Annotations {
-	return &Annotations{
-		tagToAnnotationsMap: map[NodeTag]NodeAnnotations{},
-	}
-}
-
-func (a *Annotations) AddAnnotation(tag NodeTag, ann Annotation) {
-	if _, found := a.tagToAnnotationsMap[tag]; !found {
-		a.tagToAnnotationsMap[tag] = NodeAnnotations{}
-	}
-	a.tagToAnnotationsMap[tag][ann.Name] = NodeAnnotation{Position: ann.Position}
-}
-
-func (a *Annotations) FindAnnotation(tag NodeTag, annName AnnotationName) (NodeAnnotation, bool) {
-	ann, ok := a.tagToAnnotationsMap[tag][annName]
-	return ann, ok
-}
 
 // Supported formats:
 //   "! comment"

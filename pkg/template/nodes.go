@@ -18,12 +18,14 @@ type Nodes struct {
 	id               int
 	tagToNode        map[NodeTag]EvaluationNode
 	childToParentTag map[NodeTag]NodeTag
+	annotations      map[NodeTag]NodeAnnotations
 }
 
 func NewNodes() *Nodes {
 	return &Nodes{
 		tagToNode:        map[NodeTag]EvaluationNode{},
 		childToParentTag: map[NodeTag]NodeTag{},
+		annotations:      map[NodeTag]NodeAnnotations{},
 	}
 }
 
@@ -48,6 +50,18 @@ func (n *Nodes) AddNode(node EvaluationNode, parentTag NodeTag) NodeTag {
 func (n *Nodes) FindNode(tag NodeTag) (EvaluationNode, bool) {
 	node, ok := n.tagToNode[tag]
 	return node, ok
+}
+
+func (n *Nodes) AddAnnotation(tag NodeTag, ann Annotation) {
+	if _, found := n.annotations[tag]; !found {
+		n.annotations[tag] = NodeAnnotations{}
+	}
+	n.annotations[tag][ann.Name] = NodeAnnotation{Position: ann.Position}
+}
+
+func (n *Nodes) FindAnnotation(tag NodeTag, annName AnnotationName) (NodeAnnotation, bool) {
+	ann, ok := n.annotations[tag][annName]
+	return ann, ok
 }
 
 type NodeTag struct {

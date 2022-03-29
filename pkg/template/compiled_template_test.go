@@ -21,7 +21,7 @@ a = hello()
 	instructions := template.NewInstructionSet()
 	compiledTemplate := template.NewCompiledTemplate(
 		"stdin", template.NewCodeFromBytes([]byte(data), instructions),
-		instructions, template.NewNodes(), nil, template.EvaluationCtxDialects{})
+		instructions, template.NewNodes(), template.EvaluationCtxDialects{})
 
 	loader := template.NoopCompiledTemplateLoader{}
 	thread := &starlark.Thread{Name: "test", Load: loader.Load}
@@ -49,7 +49,7 @@ a = "evaluated"
 	instructions := template.NewInstructionSet()
 	compiledTemplate := template.NewCompiledTemplate(
 		"stdin", template.NewCodeFromBytes([]byte(data), instructions),
-		instructions, template.NewNodes(), nil, template.EvaluationCtxDialects{})
+		instructions, template.NewNodes(), template.EvaluationCtxDialects{})
 
 	loader := template.NewNoopCompiledTemplateLoader(compiledTemplate)
 	thread := &starlark.Thread{Name: "test", Load: loader.Load}
@@ -73,7 +73,7 @@ func TestEvalPreservesIndentationOfContinuedLines(t *testing.T) {
 	instructions := template.NewInstructionSet()
 	compiledTemplate := template.NewCompiledTemplate(
 		"stdin", template.NewCodeFromBytes([]byte(data), instructions),
-		instructions, template.NewNodes(), nil, template.EvaluationCtxDialects{})
+		instructions, template.NewNodes(), template.EvaluationCtxDialects{})
 
 	loader := template.NewNoopCompiledTemplateLoader(compiledTemplate)
 	thread := &starlark.Thread{Name: "test", Load: loader.Load}
@@ -94,7 +94,7 @@ func TestEvalReturnsErrorEvenWhenFailsToCompileOnFirstLine(t *testing.T) {
 	instructions := template.NewInstructionSet()
 	compiledTemplate := template.NewCompiledTemplate(
 		"stdin", template.NewCodeFromBytes([]byte(data), instructions),
-		instructions, template.NewNodes(), nil, template.EvaluationCtxDialects{})
+		instructions, template.NewNodes(), template.EvaluationCtxDialects{})
 
 	loader := template.NewNoopCompiledTemplateLoader(compiledTemplate)
 	thread := &starlark.Thread{Name: "test", Load: loader.Load}
