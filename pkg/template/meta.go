@@ -18,7 +18,6 @@ const (
 	AnnotationNameComment AnnotationName = "comment"
 )
 
-
 type Annotation struct {
 	Name     AnnotationName // eg template/code
 	Content  string         // eg if True:
@@ -68,15 +67,15 @@ func NewAnnotationFromComment(comment *yamlmeta.Comment, opts MetaOpts) (Annotat
 	switch {
 	case len(data) > 0 && data[0] == '!':
 		return Annotation{
-			Name:    AnnotationNameComment,
-			Content: data[1:],
+			Name:     AnnotationNameComment,
+			Content:  data[1:],
 			Position: position,
 		}, nil
 
 	case len(data) > 0 && data[0] == '@':
 		nameAndContent := strings.SplitN(data[1:], " ", 2)
 		ann := Annotation{
-			Name: AnnotationName(nameAndContent[0]),
+			Name:     AnnotationName(nameAndContent[0]),
 			Position: position,
 		}
 		if len(nameAndContent) == 2 {
@@ -87,8 +86,8 @@ func NewAnnotationFromComment(comment *yamlmeta.Comment, opts MetaOpts) (Annotat
 	default:
 		if opts.IgnoreUnknown {
 			return Annotation{
-				Name:    AnnotationNameComment,
-				Content: data,
+				Name:     AnnotationNameComment,
+				Content:  data,
 				Position: position,
 			}, nil
 		} else {
