@@ -165,7 +165,7 @@ func (e *EvaluationCtx) TplStartNodeAnnotation(
 
 	ann, ok := e.nodes.FindAnnotation(nodeTag, annName)
 	if !ok {
-		return starlark.None, fmt.Errorf("expected to find %s", nodeTag)
+		return starlark.None, fmt.Errorf("expected to find %v on node %s", annName, nodeTag)
 	}
 	ann.Args = annVals[0].(starlark.Tuple)
 	ann.Kwargs = kwargs

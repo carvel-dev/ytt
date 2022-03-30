@@ -36,16 +36,12 @@ type CommentAndAnnotation struct {
 	Annotation *template.Annotation
 }
 
-type MetasOpts struct {
-	IgnoreUnknown bool
-}
-
 // NewTemplateAnnotationFromYAMLComment parses "comment" into template.Annotation.
 //
 // nodePos is the position of the node to which "comment" is attached (this is important to differentiate between
 // @template/code and @template/value).
-func NewTemplateAnnotationFromYAMLComment(comment *yamlmeta.Comment, nodePos *filepos.Position, opts MetasOpts) (template.Annotation, error) {
-	ann, err := template.NewAnnotationFromComment(comment, template.MetaOpts{IgnoreUnknown: opts.IgnoreUnknown})
+func NewTemplateAnnotationFromYAMLComment(comment *yamlmeta.Comment, nodePos *filepos.Position, opts template.MetaOpts) (template.Annotation, error) {
+	ann, err := template.NewAnnotationFromComment(comment.Data, comment.Position, opts) //template.MetaOpts{IgnoreUnknown: opts.IgnoreUnknown})
 	if err != nil {
 		return template.Annotation{}, fmt.Errorf(
 			"Failed to parse line %s: '#%s': %s", comment.Position.AsIntString(), comment.Data, err)
@@ -68,7 +64,7 @@ func NewTemplateAnnotationFromYAMLComment(comment *yamlmeta.Comment, nodePos *fi
 // extractMetas parses "metas" (i.e. code, values, and/or annotations) from node comments
 //
 // returns the extracted metas and a copy of "node" with code and value type comments removed.
-func extractMetas(node yamlmeta.Node, opts MetasOpts) (Metas, yamlmeta.Node, error) {
+func extractMetas(node yamlmeta.Node, opts template.MetaOpts) (Metas, yamlmeta.Node, error) {
 	metas := Metas{}
 
 	nonTemplateComments := []*yamlmeta.Comment{}

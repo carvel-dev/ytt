@@ -608,6 +608,8 @@ func TestParserDocSetOnlyComments(t *testing.T) {
 		t.Fatalf("error: %s", err)
 	}
 
+	expectedCommentPosition := filepos.NewPosition(1)
+	expectedCommentPosition.SetLine("# comment-first")
 	expectedVal := yamlmeta.NewDocumentSet(&yamlmeta.DocumentSetProto{
 		Items: []*yamlmeta.DocumentProto{
 			&yamlmeta.DocumentProto{
@@ -615,7 +617,7 @@ func TestParserDocSetOnlyComments(t *testing.T) {
 			},
 			&yamlmeta.DocumentProto{
 				Comments: []*yamlmeta.CommentProto{
-					&yamlmeta.CommentProto{Data: " comment-first", Position: filepos.NewPosition(1)},
+					&yamlmeta.CommentProto{Data: " comment-first", Position: expectedCommentPosition},
 				},
 				Position: filepos.NewUnknownPosition(),
 			},
@@ -623,7 +625,7 @@ func TestParserDocSetOnlyComments(t *testing.T) {
 		Position: filepos.NewUnknownPosition(),
 	})
 
-	printer := yamlmeta.NewPrinterWithOpts(nil, yamlmeta.PrinterOpts{ExcludeRefs: true})
+	printer := yamlmeta.NewPrinterWithOpts(nil, yamlmeta.PrinterOpts{ExcludeRefs: true, IncludeSrcLine: true})
 
 	parsedValStr := printer.PrintStr(parsedVal)
 	expectedValStr := printer.PrintStr(expectedVal)
@@ -688,6 +690,8 @@ key:
 		t.Fatalf("error: %s", err)
 	}
 
+	expectedCommentPosition := filepos.NewPosition(4)
+	expectedCommentPosition.SetLine("# comment")
 	expectedVal := yamlmeta.NewDocumentSet(&yamlmeta.DocumentSetProto{
 		Items: []*yamlmeta.DocumentProto{
 			&yamlmeta.DocumentProto{
@@ -704,7 +708,7 @@ key:
 									},
 									&yamlmeta.MapItemProto{
 										Comments: []*yamlmeta.CommentProto{
-											&yamlmeta.CommentProto{Data: " comment", Position: filepos.NewPosition(4)},
+											&yamlmeta.CommentProto{Data: " comment", Position: expectedCommentPosition},
 										},
 										Key:      "nested",
 										Value:    true,
@@ -724,7 +728,7 @@ key:
 		Position: filepos.NewUnknownPosition(),
 	})
 
-	printer := yamlmeta.NewPrinterWithOpts(nil, yamlmeta.PrinterOpts{ExcludeRefs: true})
+	printer := yamlmeta.NewPrinterWithOpts(nil, yamlmeta.PrinterOpts{ExcludeRefs: true, IncludeSrcLine: true})
 
 	parsedValStr := printer.PrintStr(parsedVal)
 	expectedValStr := printer.PrintStr(expectedVal)

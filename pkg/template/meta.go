@@ -5,7 +5,6 @@ package template
 
 import (
 	"fmt"
-	"github.com/vmware-tanzu/carvel-ytt/pkg/yamlmeta"
 	"strings"
 
 	"github.com/vmware-tanzu/carvel-ytt/pkg/filepos"
@@ -14,8 +13,11 @@ import (
 type AnnotationName string
 type AnnotationNs string
 
+// Declare template AnnotationNames
 const (
-	AnnotationNameComment AnnotationName = "comment"
+	AnnotationComment AnnotationName = "comment"
+	AnnotationCode    AnnotationName = "template/code"
+	AnnotationValue   AnnotationName = "template/value"
 )
 
 type Annotation struct {
@@ -36,26 +38,25 @@ type MetaOpts struct {
 	IgnoreUnknown bool
 }
 
-// NewAnnotationFromComment constructs an Annotation from a given comment.
+// NewAnnotationFromComment constructs an Annotation from a string and position from a Comment.
 //
 // if opts.IgnoreUnknown is true and the annotation is unknown, it is returned as a comment.
 // if opts.IgnoreUnknown is false and the annotation is unknown, returns an error.
-func NewAnnotationFromComment(comment *yamlmeta.Comment, opts MetaOpts) (Annotation, error) {
-	data := comment.Data
-	position := comment.Position.DeepCopy()
+func NewAnnotationFromComment(data string, position *filepos.Position, opts MetaOpts) (Annotation, error) {
+	annotationPosition := position.DeepCopy()
 	switch {
 	case len(data) > 0 && data[0] == '!':
 		return Annotation{
-			Name:     AnnotationNameComment,
+			Name:     AnnotationComment,
 			Content:  data[1:],
-			Position: position,
+			Position: annotationPosition,
 		}, nil
 
 	case len(data) > 0 && data[0] == '@':
 		nameAndContent := strings.SplitN(data[1:], " ", 2)
 		ann := Annotation{
 			Name:     AnnotationName(nameAndContent[0]),
-			Position: position,
+			Position: annotationPosition,
 		}
 		if len(nameAndContent) == 2 {
 			ann.Content = nameAndContent[1]
@@ -65,12 +66,11 @@ func NewAnnotationFromComment(comment *yamlmeta.Comment, opts MetaOpts) (Annotat
 	default:
 		if opts.IgnoreUnknown {
 			return Annotation{
-				Name:     AnnotationNameComment,
+				Name:     AnnotationComment,
 				Content:  data,
-				Position: position,
+				Position: annotationPosition,
 			}, nil
 		} else {
-			//TODO: improve err?
 			return Annotation{}, fmt.Errorf("Expected ytt-formatted string (use '#@' for annotations or code, '#!' for comments)")
 		}
 	}

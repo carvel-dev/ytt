@@ -43,13 +43,13 @@ func hasTemplating(val interface{}) bool {
 		return false
 	}
 
-	metaOpts := MetasOpts{IgnoreUnknown: true}
+	metaOpts := template.MetaOpts{IgnoreUnknown: true}
 	for _, comment := range node.GetComments() {
 		ann, err := NewTemplateAnnotationFromYAMLComment(comment, node.GetPosition(), metaOpts)
 		if err != nil {
 			return false
 		}
-		if ann.Name != template.AnnotationNameComment {
+		if ann.Name != template.AnnotationComment {
 			return true
 		}
 	}
@@ -70,7 +70,6 @@ func (e *Template) Compile(docSet *yamlmeta.DocumentSet) (*template.CompiledTemp
 	e.docSet = docSet
 	e.nodes = template.NewNodes()
 
-	// populates nodes and annotations
 	code, err := e.build(docSet, nil, template.NodeTagRoot, buildOpts{})
 	if err != nil {
 		return nil, err
@@ -110,7 +109,7 @@ func (e *Template) build(nodeOrScalar interface{}, parentNode yamlmeta.Node, par
 		}}, nil
 	}
 
-	metas, nodeForEval, err := extractMetas(node, MetasOpts{IgnoreUnknown: e.opts.IgnoreUnknownComments})
+	metas, nodeForEval, err := extractMetas(node, template.MetaOpts{IgnoreUnknown: e.opts.IgnoreUnknownComments})
 	if err != nil {
 		return nil, err
 	}

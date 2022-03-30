@@ -43,7 +43,7 @@ func (v DocExtractor) extract(docSet *yamlmeta.DocumentSet,
 		for _, comment := range doc.GetComments() {
 			// TODO potentially use template.NewAnnotations(doc).Has(yttoverlay.AnnotationMatch)
 			// however if doc was not processed by the template, it wont have any annotations set
-			ann, err := yamltemplate.NewTemplateAnnotationFromYAMLComment(comment, doc.GetPosition(), yamltemplate.MetasOpts{IgnoreUnknown: true})
+			ann, err := yamltemplate.NewTemplateAnnotationFromYAMLComment(comment, doc.GetPosition(), template.MetaOpts{IgnoreUnknown: true})
 			if err != nil {
 				return nil, nil, err
 			}
@@ -72,7 +72,7 @@ func (v DocExtractor) checkNonDocs(val interface{}, annName template.AnnotationN
 	}
 
 	for _, comment := range node.GetComments() {
-		ann, err := yamltemplate.NewTemplateAnnotationFromYAMLComment(comment, node.GetPosition(), yamltemplate.MetasOpts{IgnoreUnknown: true})
+		ann, err := yamltemplate.NewTemplateAnnotationFromYAMLComment(comment, node.GetPosition(), template.MetaOpts{IgnoreUnknown: true})
 		if err != nil {
 			return err
 		}
