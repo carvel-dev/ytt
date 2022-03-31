@@ -43,20 +43,20 @@ type MetaOpts struct {
 // if opts.IgnoreUnknown is true and the annotation is unknown, it is returned as a comment.
 // if opts.IgnoreUnknown is false and the annotation is unknown, returns an error.
 func NewAnnotationFromComment(data string, position *filepos.Position, opts MetaOpts) (Annotation, error) {
-	annotationPosition := position.DeepCopy()
+	position = position.DeepCopy()
 	switch {
 	case len(data) > 0 && data[0] == '!':
 		return Annotation{
 			Name:     AnnotationComment,
 			Content:  data[1:],
-			Position: annotationPosition,
+			Position: position,
 		}, nil
 
 	case len(data) > 0 && data[0] == '@':
 		nameAndContent := strings.SplitN(data[1:], " ", 2)
 		ann := Annotation{
 			Name:     AnnotationName(nameAndContent[0]),
-			Position: annotationPosition,
+			Position: position,
 		}
 		if len(nameAndContent) == 2 {
 			ann.Content = nameAndContent[1]
@@ -68,7 +68,7 @@ func NewAnnotationFromComment(data string, position *filepos.Position, opts Meta
 			return Annotation{
 				Name:     AnnotationComment,
 				Content:  data,
-				Position: annotationPosition,
+				Position: position,
 			}, nil
 		} else {
 			return Annotation{}, fmt.Errorf("Expected ytt-formatted string (use '#@' for annotations or code, '#!' for comments)")

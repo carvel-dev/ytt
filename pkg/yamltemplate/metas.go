@@ -41,7 +41,7 @@ type CommentAndAnnotation struct {
 // nodePos is the position of the node to which "comment" is attached (this is important to differentiate between
 // @template/code and @template/value).
 func NewTemplateAnnotationFromYAMLComment(comment *yamlmeta.Comment, nodePos *filepos.Position, opts template.MetaOpts) (template.Annotation, error) {
-	ann, err := template.NewAnnotationFromComment(comment.Data, comment.Position, opts) //template.MetaOpts{IgnoreUnknown: opts.IgnoreUnknown})
+	ann, err := template.NewAnnotationFromComment(comment.Data, comment.Position, opts)
 	if err != nil {
 		return template.Annotation{}, fmt.Errorf(
 			"Failed to parse line %s: '#%s': %s", comment.Position.AsIntString(), comment.Data, err)
