@@ -37,9 +37,13 @@ type CommentAndAnnotation struct {
 }
 
 // NewTemplateAnnotationFromYAMLComment parses "comment" into template.Annotation.
+// nodePos is the position of the node to which "comment" is attached.
 //
-// nodePos is the position of the node to which "comment" is attached (this is important to differentiate between
-// @template/code and @template/value).
+// When a comment contains a shorthand annotation (i.e. `#@ `):
+// - and the comment is above its node, it's a template.AnnotationCode annotation: it's _merely_ contributing raw
+//   Starlark code.
+// - and the comment is on the same line as its node, it's a template.AnnotationValue annotation: it's meant to set the
+//   value of the annotated node.
 func NewTemplateAnnotationFromYAMLComment(comment *yamlmeta.Comment, nodePos *filepos.Position, opts template.MetaOpts) (template.Annotation, error) {
 	ann, err := template.NewAnnotationFromComment(comment.Data, comment.Position, opts)
 	if err != nil {

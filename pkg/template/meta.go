@@ -13,11 +13,13 @@ import (
 type AnnotationName string
 type AnnotationNs string
 
-// Declare template AnnotationNames
 const (
+	// AnnotationComment contains user-facing documentation and should be ignored.
 	AnnotationComment AnnotationName = "comment"
-	AnnotationCode    AnnotationName = "template/code"
-	AnnotationValue   AnnotationName = "template/value"
+	// AnnotationCode contains Starlark code that should be inserted, verbatim, into the compiled template.
+	AnnotationCode AnnotationName = "template/code"
+	// AnnotationValue contains a Starlark expression, the result of which should be set as the value of the annotated node.
+	AnnotationValue AnnotationName = "template/value"
 )
 
 type Annotation struct {
