@@ -82,7 +82,7 @@ func (a *assertChecker) Visit(node yamlmeta.Node) error {
 	case *yamlmeta.DocumentSet, *yamlmeta.Array, *yamlmeta.Map:
 		return fmt.Errorf("Invalid @%s annotation - not supported on %s at %s", AnnotationAssertValidate, yamlmeta.TypeName(node), node.GetPosition().AsCompactString())
 	default:
-		rules, syntaxErr := newRulesFromAssertValidateAnnotation(nodeAnnotations[AnnotationAssertValidate], node)
+		rules, syntaxErr := newRulesFromAssertValidateAnnotation(nodeAnnotations[AnnotationAssertValidate])
 		if syntaxErr != nil {
 			return syntaxErr
 		}
@@ -97,36 +97,35 @@ func (a *assertChecker) Visit(node yamlmeta.Node) error {
 	return nil
 }
 
-func newRulesFromAssertValidateAnnotation(annotation template.NodeAnnotation, n yamlmeta.Node) ([]Rule, error) {
+func newRulesFromAssertValidateAnnotation(annotation template.NodeAnnotation) ([]Rule, error) {
 	var rules []Rule
-	validationPosition := createAssertAnnotationPosition(annotation.Position, n)
 
 	if len(annotation.Kwargs) != 0 {
-		return nil, fmt.Errorf("Invalid @%s annotation - expected @%s to have 2-tuple as argument(s), but found keyword argument (by %s)", AnnotationAssertValidate, AnnotationAssertValidate, validationPosition.AsCompactString())
+		return nil, fmt.Errorf("Invalid @%s annotation - expected @%s to have 2-tuple as argument(s), but found keyword argument (by %s)", AnnotationAssertValidate, AnnotationAssertValidate, annotation.Position.AsCompactString())
 	}
 	if len(annotation.Args) == 0 {
-		return nil, fmt.Errorf("Invalid @%s annotation - expected @%s to have 2-tuple as argument(s), but found no arguments (by %s)", AnnotationAssertValidate, AnnotationAssertValidate, validationPosition.AsCompactString())
+		return nil, fmt.Errorf("Invalid @%s annotation - expected @%s to have 2-tuple as argument(s), but found no arguments (by %s)", AnnotationAssertValidate, AnnotationAssertValidate, annotation.Position.AsCompactString())
 	}
 	for _, arg := range annotation.Args {
 		ruleTuple, ok := arg.(starlark.Tuple)
 		if !ok {
-			return nil, fmt.Errorf("Invalid @%s annotation - expected @%s to have 2-tuple as argument(s), but found: %s (by %s)", AnnotationAssertValidate, AnnotationAssertValidate, arg.String(), validationPosition.AsCompactString())
+			return nil, fmt.Errorf("Invalid @%s annotation - expected @%s to have 2-tuple as argument(s), but found: %s (by %s)", AnnotationAssertValidate, AnnotationAssertValidate, arg.String(), annotation.Position.AsCompactString())
 		}
 		if len(ruleTuple) != 2 {
-			return nil, fmt.Errorf("Invalid @%s annotation - expected @%s 2-tuple, but found tuple with length %v (by %s)", AnnotationAssertValidate, AnnotationAssertValidate, len(ruleTuple), validationPosition.AsCompactString())
+			return nil, fmt.Errorf("Invalid @%s annotation - expected @%s 2-tuple, but found tuple with length %v (by %s)", AnnotationAssertValidate, AnnotationAssertValidate, len(ruleTuple), annotation.Position.AsCompactString())
 		}
 		message, ok := ruleTuple[0].(starlark.String)
 		if !ok {
-			return nil, fmt.Errorf("Invalid @%s annotation - expected first item in the 2-tuple to be a string describing a valid value, but was %s (at %s)", AnnotationAssertValidate, ruleTuple[0].Type(), validationPosition.AsCompactString())
+			return nil, fmt.Errorf("Invalid @%s annotation - expected first item in the 2-tuple to be a string describing a valid value, but was %s (at %s)", AnnotationAssertValidate, ruleTuple[0].Type(), annotation.Position.AsCompactString())
 		}
 		lambda, ok := ruleTuple[1].(starlark.Callable)
 		if !ok {
-			return nil, fmt.Errorf("Invalid @%s annotation - expected second item in the 2-tuple to be an assertion function, but was %s (at %s)", AnnotationAssertValidate, ruleTuple[1].Type(), validationPosition.AsCompactString())
+			return nil, fmt.Errorf("Invalid @%s annotation - expected second item in the 2-tuple to be an assertion function, but was %s (at %s)", AnnotationAssertValidate, ruleTuple[1].Type(), annotation.Position.AsCompactString())
 		}
 		rules = append(rules, Rule{
 			msg:       message.GoString(),
 			assertion: lambda,
-			position:  validationPosition,
+			position:  annotation.Position,
 		})
 	}
 
@@ -177,14 +176,4 @@ func (r Rule) Validate(node yamlmeta.Node, thread *starlark.Thread) error {
 	}
 
 	return nil
-}
-
-func createAssertAnnotationPosition(annPosition *filepos.Position, node yamlmeta.Node) *filepos.Position {
-	filePosComments := make([]filepos.Meta, 0, len(node.GetComments()))
-	for _, c := range node.GetComments() {
-		filePosComments = append(filePosComments, filepos.Meta{Data: c.Data, Position: c.Position.DeepCopy()})
-	}
-
-	return filepos.PopulateAnnotationPositionFromNode(annPosition, node.GetPosition(), filePosComments)
-
 }

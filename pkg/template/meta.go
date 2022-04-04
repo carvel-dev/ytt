@@ -14,12 +14,13 @@ type AnnotationName string
 type AnnotationNs string
 
 const (
-	AnnotationNameComment AnnotationName = "comment"
+	// AnnotationComment contains user-facing documentation and should be ignored.
+	AnnotationComment AnnotationName = "comment"
+	// AnnotationCode contains Starlark code that should be inserted, verbatim, into the compiled template.
+	AnnotationCode AnnotationName = "template/code"
+	// AnnotationValue contains a Starlark expression, the result of which should be set as the value of the annotated node.
+	AnnotationValue AnnotationName = "template/value"
 )
-
-type Meta struct {
-	Annotations []*Annotation
-}
 
 type Annotation struct {
 	Name     AnnotationName // eg template/code
@@ -39,22 +40,25 @@ type MetaOpts struct {
 	IgnoreUnknown bool
 }
 
-// NewAnnotationFromString constructs an Annotation from a given string.
+// NewAnnotationFromComment constructs an Annotation from a string and position from a Comment.
 //
 // if opts.IgnoreUnknown is true and the annotation is unknown, it is returned as a comment.
 // if opts.IgnoreUnknown is false and the annotation is unknown, returns an error.
-func NewAnnotationFromString(data string, opts MetaOpts) (Annotation, error) {
+func NewAnnotationFromComment(data string, position *filepos.Position, opts MetaOpts) (Annotation, error) {
+	position = position.DeepCopy()
 	switch {
 	case len(data) > 0 && data[0] == '!':
 		return Annotation{
-			Name:    AnnotationNameComment,
-			Content: data[1:],
+			Name:     AnnotationComment,
+			Content:  data[1:],
+			Position: position,
 		}, nil
 
 	case len(data) > 0 && data[0] == '@':
 		nameAndContent := strings.SplitN(data[1:], " ", 2)
 		ann := Annotation{
-			Name: AnnotationName(nameAndContent[0]),
+			Name:     AnnotationName(nameAndContent[0]),
+			Position: position,
 		}
 		if len(nameAndContent) == 2 {
 			ann.Content = nameAndContent[1]
@@ -64,8 +68,9 @@ func NewAnnotationFromString(data string, opts MetaOpts) (Annotation, error) {
 	default:
 		if opts.IgnoreUnknown {
 			return Annotation{
-				Name:    AnnotationNameComment,
-				Content: data,
+				Name:     AnnotationComment,
+				Content:  data,
+				Position: position,
 			}, nil
 		} else {
 			return Annotation{}, fmt.Errorf("Expected ytt-formatted string (use '#@' for annotations or code, '#!' for comments)")

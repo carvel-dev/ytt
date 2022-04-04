@@ -14,16 +14,25 @@ var (
 	NodeTagRoot = NodeTag{-100}
 )
 
+// Nodes contain source information that is used when building and compiling a template.
+//
+// Nodes track a source's structure by:
+//   - assigning a unique integer id, NodeTag, for each 'Node'.
+//   - storing breadcrumbs to find a Node's Parent.
+//   - keeping track each Node's non-template comments via annotations.
 type Nodes struct {
 	id               int
 	tagToNode        map[NodeTag]EvaluationNode
 	childToParentTag map[NodeTag]NodeTag
+	annotations      map[NodeTag]NodeAnnotations
 }
 
+// NewNodes initializes Nodes with empty maps to store info about the source template.
 func NewNodes() *Nodes {
 	return &Nodes{
 		tagToNode:        map[NodeTag]EvaluationNode{},
 		childToParentTag: map[NodeTag]NodeTag{},
+		annotations:      map[NodeTag]NodeAnnotations{},
 	}
 }
 
@@ -48,6 +57,22 @@ func (n *Nodes) AddNode(node EvaluationNode, parentTag NodeTag) NodeTag {
 func (n *Nodes) FindNode(tag NodeTag) (EvaluationNode, bool) {
 	node, ok := n.tagToNode[tag]
 	return node, ok
+}
+
+// AddAnnotation creates an entry in the annotations map of Nodes.
+// The entry is NodeAnnotation with only the annotation's position,
+// indexed by NodeTag and AnnotationName.
+func (n *Nodes) AddAnnotation(tag NodeTag, ann Annotation) {
+	if _, found := n.annotations[tag]; !found {
+		n.annotations[tag] = NodeAnnotations{}
+	}
+	n.annotations[tag][ann.Name] = NodeAnnotation{Position: ann.Position}
+}
+
+// FindAnnotation uses a NodeTag, and an AnnotationName to retrieve a NodeAnnotation from the annotations map in Nodes.
+func (n *Nodes) FindAnnotation(tag NodeTag, annName AnnotationName) (NodeAnnotation, bool) {
+	ann, ok := n.annotations[tag][annName]
+	return ann, ok
 }
 
 type NodeTag struct {

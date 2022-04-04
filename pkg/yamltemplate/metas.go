@@ -36,16 +36,16 @@ type CommentAndAnnotation struct {
 	Annotation *template.Annotation
 }
 
-type MetasOpts struct {
-	IgnoreUnknown bool
-}
-
 // NewTemplateAnnotationFromYAMLComment parses "comment" into template.Annotation.
+// nodePos is the position of the node to which "comment" is attached.
 //
-// nodePos is the position of the node to which "comment" is attached (this is important to differentiate between
-// @template/code and @template/value).
-func NewTemplateAnnotationFromYAMLComment(comment *yamlmeta.Comment, nodePos *filepos.Position, opts MetasOpts) (template.Annotation, error) {
-	ann, err := template.NewAnnotationFromString(comment.Data, template.MetaOpts{IgnoreUnknown: opts.IgnoreUnknown})
+// When a comment contains a shorthand annotation (i.e. `#@ `):
+// - and the comment is above its node, it's a template.AnnotationCode annotation: it's _merely_ contributing raw
+//   Starlark code.
+// - and the comment is on the same line as its node, it's a template.AnnotationValue annotation: it's meant to set the
+//   value of the annotated node.
+func NewTemplateAnnotationFromYAMLComment(comment *yamlmeta.Comment, nodePos *filepos.Position, opts template.MetaOpts) (template.Annotation, error) {
+	ann, err := template.NewAnnotationFromComment(comment.Data, comment.Position, opts)
 	if err != nil {
 		return template.Annotation{}, fmt.Errorf(
 			"Failed to parse line %s: '#%s': %s", comment.Position.AsIntString(), comment.Data, err)
@@ -68,10 +68,10 @@ func NewTemplateAnnotationFromYAMLComment(comment *yamlmeta.Comment, nodePos *fi
 // extractMetas parses "metas" (i.e. code, values, and/or annotations) from node comments
 //
 // returns the extracted metas and a copy of "node" with code and value type comments removed.
-func extractMetas(node yamlmeta.Node, opts MetasOpts) (Metas, yamlmeta.Node, error) {
+func extractMetas(node yamlmeta.Node, opts template.MetaOpts) (Metas, yamlmeta.Node, error) {
 	metas := Metas{}
 
-	nonCodeComments := []*yamlmeta.Comment{}
+	nonTemplateComments := []*yamlmeta.Comment{}
 	for _, comment := range node.GetComments() {
 		ann, err := NewTemplateAnnotationFromYAMLComment(comment, node.GetPosition(), opts)
 		if err != nil {
@@ -118,13 +118,12 @@ func extractMetas(node yamlmeta.Node, opts MetasOpts) (Metas, yamlmeta.Node, err
 			// They _are_ considered part of the template's code, so these yamlmeta.Comments are "digested."
 
 		default:
-			ann.Position = comment.Position
 			metas.Annotations = append(metas.Annotations, CommentAndAnnotation{comment, &ann})
-			nonCodeComments = append(nonCodeComments, comment)
+			nonTemplateComments = append(nonTemplateComments, comment)
 		}
 	}
 	digestedNode := node.DeepCopyAsNode()
-	digestedNode.SetComments(nonCodeComments)
+	digestedNode.SetComments(nonTemplateComments)
 
 	return metas, digestedNode, nil
 }

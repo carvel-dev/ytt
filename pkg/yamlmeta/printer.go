@@ -17,7 +17,8 @@ type Printer struct {
 }
 
 type PrinterOpts struct {
-	ExcludeRefs bool
+	ExcludeRefs    bool
+	IncludeSrcLine bool
 }
 
 func NewPrinter(writer io.Writer) Printer {
@@ -103,6 +104,10 @@ func (p Printer) ptrStr(node Node) string {
 
 func (p Printer) printComments(comments []*Comment, indent string, writer io.Writer) {
 	for _, comment := range comments {
-		fmt.Fprintf(writer, "%scomment: %s: '%s'\n", indent, p.lineStr(comment.Position), comment.Data)
+		if p.opts.IncludeSrcLine {
+			fmt.Fprintf(writer, "%scomment: %s: '%s' -> '%s'\n", indent, p.lineStr(comment.Position), comment.Position.GetLine(), comment.Data)
+		} else {
+			fmt.Fprintf(writer, "%scomment: %s: '%s'\n", indent, p.lineStr(comment.Position), comment.Data)
+		}
 	}
 }

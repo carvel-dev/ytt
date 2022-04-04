@@ -539,7 +539,6 @@ func processOptionalAnnotation(node yamlmeta.Node, optionalAnnotation template.A
 
 	if nodeAnnotations.Has(optionalAnnotation) {
 		ann := nodeAnnotations[optionalAnnotation]
-		ann.Position = populateSchemaAnnotationPosition(ann.Position, node)
 
 		switch optionalAnnotation {
 		case AnnotationNullable:
@@ -725,11 +724,10 @@ func (c checkForAnnotations) Visit(n yamlmeta.Node) error {
 	var foundAnns []string
 	var foundAnnsPos []*filepos.Position
 	nodeAnnotations := template.NewAnnotations(n)
-	for _, annotation := range []template.AnnotationName{AnnotationNullable, AnnotationType, AnnotationDefault} {
-		if nodeAnnotations.Has(annotation) {
-			foundAnns = append(foundAnns, string(annotation))
-			annPos := populateSchemaAnnotationPosition(nodeAnnotations[annotation].Position, n)
-			foundAnnsPos = append(foundAnnsPos, annPos)
+	for _, annName := range []template.AnnotationName{AnnotationNullable, AnnotationType, AnnotationDefault} {
+		if nodeAnnotations.Has(annName) {
+			foundAnns = append(foundAnns, string(annName))
+			foundAnnsPos = append(foundAnnsPos, nodeAnnotations[annName].Position)
 		}
 	}
 	if len(foundAnnsPos) > 0 {
@@ -745,13 +743,4 @@ func (c checkForAnnotations) Visit(n yamlmeta.Node) error {
 	}
 
 	return nil
-}
-
-func populateSchemaAnnotationPosition(annPosition *filepos.Position, node yamlmeta.Node) *filepos.Position {
-	filePosComments := make([]filepos.Meta, 0, len(node.GetComments()))
-	for _, c := range node.GetComments() {
-		filePosComments = append(filePosComments, filepos.Meta{Data: c.Data, Position: c.Position.DeepCopy()})
-	}
-
-	return filepos.PopulateAnnotationPositionFromNode(annPosition, node.GetPosition(), filePosComments)
 }

@@ -10,12 +10,6 @@ import (
 	"github.com/vmware-tanzu/carvel-ytt/pkg/filepos"
 )
 
-const (
-	AnnotationComment AnnotationName = "comment"
-	AnnotationCode    AnnotationName = "template/code"
-	AnnotationValue   AnnotationName = "template/value"
-)
-
 type NodeAnnotations map[AnnotationName]NodeAnnotation
 
 type NodeAnnotation struct {
