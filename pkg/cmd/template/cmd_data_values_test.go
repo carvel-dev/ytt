@@ -4,6 +4,7 @@
 package template_test
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -183,7 +184,9 @@ func TestDataValuesWithLibraryAttachedFlags(t *testing.T) {
 	tplBytes := []byte(`
 #@ load("@ytt:library", "library")
 #@ load("@ytt:template", "template")
+#@ load("@ytt:data", "data")
 
+root: #@ data.values
 --- #@ template.replace(library.get("lib", alias="inst1").eval())`)
 
 	libTplBytes := []byte(`
@@ -191,31 +194,48 @@ func TestDataValuesWithLibraryAttachedFlags(t *testing.T) {
 #@ load("@ytt:template", "template")
 #@ load("@ytt:data", "data")
 
-lib-val: #@ data.values.lib_val
+from_library: #@ data.values
 --- #@ template.replace(library.get("nested-lib").eval())
 `)
 
 	libValuesBytes := []byte(`
 #@data/values
 ---
-lib_val: override-me
+val0: override-me
 `)
 
 	nestedLibTplBytes := []byte(`
 #@ load("@ytt:data", "data")
 
-nested-lib-val: #@ data.values.nested_lib_val
+from_nested_lib: #@ data.values
 `)
 
 	nestedLibValuesBytes := []byte(`
 #@data/values
 ---
-nested_lib_val: override-me
+val1: override-me
 `)
 
-	expectedYAMLTplData := `lib-val: test
+	dvs2 := []byte(`val2: 2`)
+
+	dvs3 := []byte(`val3: 3`)
+
+	dvs4 := []byte(`val4: 4`)
+
+	dvs6 := []byte(`6`)
+
+	expectedYAMLTplData := `root:
+  val2: 2
 ---
-nested-lib-val: passes
+from_library:
+  val0: 0
+  val3: 3
+  val4: 4
+  val5: "5"
+  val6: "6"
+---
+from_nested_lib:
+  val1: 1
 `
 
 	filesToProcess := files.NewSortedFiles([]*files.File{
@@ -230,8 +250,25 @@ nested-lib-val: passes
 	opts := cmdtpl.NewOptions()
 
 	opts.DataValuesFlags = cmdtpl.DataValuesFlags{
-		// TODO env and files?
-		KVsFromYAML: []string{"@~inst1:lib_val=test", "@~inst1@nested-lib:nested_lib_val=passes"},
+		KVsFromYAML:    []string{"@~inst1:val0=0", "@~inst1@nested-lib:val1=1"},
+		FromFiles:      []string{"c:\\User\\user\\dvs2.yml", "@~inst1:dvs3.yml", "@lib:D:\\User\\user\\dvs4.yml"},
+		EnvFromStrings: []string{"@lib:DVS"},
+		EnvironFunc:    func() []string { return []string{"DVS_val5=5"} },
+		KVsFromFiles:   []string{"@lib:val6=c:\\User\\user\\dvs6.yml"},
+		ReadFileFunc: func(path string) ([]byte, error) {
+			switch path {
+			case "c:\\User\\user\\dvs2.yml":
+				return dvs2, nil
+			case "dvs3.yml":
+				return dvs3, nil
+			case "D:\\User\\user\\dvs4.yml":
+				return dvs4, nil
+			case "c:\\User\\user\\dvs6.yml":
+				return dvs6, nil
+			default:
+				return nil, fmt.Errorf("Unknown file '%s'", path)
+			}
+		},
 	}
 
 	out := opts.RunWithFiles(cmdtpl.Input{Files: filesToProcess}, ui)
@@ -557,4 +594,22 @@ nested_val: nested_from_env
 
 	assert.Equal(t, "tpl.yml", file.RelativePath())
 	assert.Equal(t, expectedYAMLTplData, string(file.Bytes()))
+}
+
+func TestDataValuesWithInvalidFlagsFail(t *testing.T) {
+	t.Run("when `--data-value-yaml` has a `:` in the key name", func(t *testing.T) {
+
+		expectedErr := `Extracting data value from KV: Expected at most one library-key separator ':' in 'i:nt'`
+
+		ui := ui.NewTTY(false)
+		opts := cmdtpl.NewOptions()
+
+		opts.DataValuesFlags = cmdtpl.DataValuesFlags{
+			KVsFromYAML: []string{"i:nt=124"},
+		}
+
+		out := opts.RunWithFiles(cmdtpl.Input{}, ui)
+		require.Errorf(t, out.Err, expectedErr)
+		require.Equal(t, expectedErr, out.Err.Error())
+	})
 }

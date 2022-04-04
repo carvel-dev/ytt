@@ -8,7 +8,6 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/spf13/cobra"
 	"github.com/vmware-tanzu/carvel-ytt/pkg/files"
 )
 
@@ -16,8 +15,10 @@ type FileMarksOpts struct {
 	FileMarks []string
 }
 
-func (s *FileMarksOpts) Set(cmd *cobra.Command) {
-	cmd.Flags().StringArrayVar(&s.FileMarks, "file-mark", nil, "File mark (ie change file path, mark as non-template) (format: file:key=value) (can be specified multiple times)")
+// Set registers file mark flags and wires-up those flags up to this
+// FileMarksOpts to be set when the corresponding cobra.Command is executed.
+func (s *FileMarksOpts) Set(cmdFlags CmdFlags) {
+	cmdFlags.StringArrayVar(&s.FileMarks, "file-mark", nil, "File mark (ie change file path, mark as non-template) (format: file:key=value) (can be specified multiple times)")
 }
 
 func (s *FileMarksOpts) Apply(filesToProcess []*files.File) ([]*files.File, error) {

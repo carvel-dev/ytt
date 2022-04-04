@@ -1,0 +1,12 @@
+#@ load("@ytt:toml", "toml")
+
+#@ def data():
+map:
+  foo: bar
+array:
+- 1
+- 2
+- "three"
+#@ end
+
+toml: #@ toml.encode(data())

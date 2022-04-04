@@ -10,18 +10,19 @@ import (
 	"strings"
 
 	"github.com/k14s/starlark-go/starlark"
-	"github.com/spf13/cobra"
 	"github.com/vmware-tanzu/carvel-ytt/pkg/filepos"
 	"github.com/vmware-tanzu/carvel-ytt/pkg/files"
 	"github.com/vmware-tanzu/carvel-ytt/pkg/template"
 	"github.com/vmware-tanzu/carvel-ytt/pkg/workspace/datavalues"
+	"github.com/vmware-tanzu/carvel-ytt/pkg/workspace/ref"
 	"github.com/vmware-tanzu/carvel-ytt/pkg/yamlmeta"
 	yttoverlay "github.com/vmware-tanzu/carvel-ytt/pkg/yttlibrary/overlay"
 )
 
 const (
-	dvsKVSep     = "="
-	dvsMapKeySep = "."
+	dvsKVSep      = "="
+	dvsMapKeySep  = "."
+	libraryKeySep = ":"
 )
 
 type DataValuesFlags struct {
@@ -41,18 +42,20 @@ type DataValuesFlags struct {
 	ReadFileFunc func(string) ([]byte, error)
 }
 
-func (s *DataValuesFlags) Set(cmd *cobra.Command) {
-	cmd.Flags().StringArrayVar(&s.EnvFromStrings, "data-values-env", nil, "Extract data values (as strings) from prefixed env vars (format: PREFIX for PREFIX_all__key1=str) (can be specified multiple times)")
-	cmd.Flags().StringArrayVar(&s.EnvFromYAML, "data-values-env-yaml", nil, "Extract data values (parsed as YAML) from prefixed env vars (format: PREFIX for PREFIX_all__key1=true) (can be specified multiple times)")
+// Set registers data valuse ingestion flags and wires-up those flags up to this
+// DataValuesFlags to be set when the corresponding cobra.Command is executed.
+func (s *DataValuesFlags) Set(cmdFlags CmdFlags) {
+	cmdFlags.StringArrayVar(&s.EnvFromStrings, "data-values-env", nil, "Extract data values (as strings) from prefixed env vars (format: PREFIX for PREFIX_all__key1=str) (can be specified multiple times)")
+	cmdFlags.StringArrayVar(&s.EnvFromYAML, "data-values-env-yaml", nil, "Extract data values (parsed as YAML) from prefixed env vars (format: PREFIX for PREFIX_all__key1=true) (can be specified multiple times)")
 
-	cmd.Flags().StringArrayVarP(&s.KVsFromStrings, "data-value", "v", nil, "Set specific data value to given value, as string (format: all.key1.subkey=123) (can be specified multiple times)")
-	cmd.Flags().StringArrayVar(&s.KVsFromYAML, "data-value-yaml", nil, "Set specific data value to given value, parsed as YAML (format: all.key1.subkey=true) (can be specified multiple times)")
-	cmd.Flags().StringArrayVar(&s.KVsFromFiles, "data-value-file", nil, "Set specific data value to given file contents, as string (format: all.key1.subkey=/file/path) (can be specified multiple times)")
+	cmdFlags.StringArrayVarP(&s.KVsFromStrings, "data-value", "v", nil, "Set specific data value to given value, as string (format: all.key1.subkey=123) (can be specified multiple times)")
+	cmdFlags.StringArrayVar(&s.KVsFromYAML, "data-value-yaml", nil, "Set specific data value to given value, parsed as YAML (format: all.key1.subkey=true) (can be specified multiple times)")
+	cmdFlags.StringArrayVar(&s.KVsFromFiles, "data-value-file", nil, "Set specific data value to given file contents, as string (format: all.key1.subkey=/file/path) (can be specified multiple times)")
 
-	cmd.Flags().StringArrayVar(&s.FromFiles, "data-values-file", nil, "Set multiple data values via a YAML file (format: /file/path.yml) (can be specified multiple times)")
+	cmdFlags.StringArrayVar(&s.FromFiles, "data-values-file", nil, "Set multiple data values via a YAML file (format: /file/path.yml) (can be specified multiple times)")
 
-	cmd.Flags().BoolVar(&s.Inspect, "data-values-inspect", false, "Calculate the final data values (applying any overlays) and display that result")
-	cmd.Flags().BoolVar(&s.InspectSchema, "data-values-schema-inspect", false, "Determine the complete schema for data values (applying any overlays) and display the result (only OpenAPI v3.0 is supported, see --output)")
+	cmdFlags.BoolVar(&s.Inspect, "data-values-inspect", false, "Calculate the final data values (applying any overlays) and display that result")
+	cmdFlags.BoolVar(&s.InspectSchema, "data-values-schema-inspect", false, "Determine the complete schema for data values (applying any overlays) and display the result (only OpenAPI v3.0 is supported, see --output)")
 }
 
 type dataValuesFlagsSource struct {
@@ -135,8 +138,8 @@ func (s *DataValuesFlags) AsOverlays(strict bool) ([]*datavalues.Envelope, []*da
 	return overlayValues, libraryOverlays, nil
 }
 
-func (s *DataValuesFlags) file(path string, strict bool) ([]*datavalues.Envelope, error) {
-	libRef, path, err := s.libraryRefAndKey(path)
+func (s *DataValuesFlags) file(fullPath string, strict bool) ([]*datavalues.Envelope, error) {
+	libRef, path, err := s.libraryRefAndRemainder(fullPath)
 	if err != nil {
 		return nil, err
 	}
@@ -274,26 +277,36 @@ func (s *DataValuesFlags) kvFile(kv string) (*datavalues.Envelope, error) {
 	return datavalues.NewEnvelopeWithLibRef(overlay, libRef)
 }
 
-func (DataValuesFlags) libraryRefAndKey(key string) (string, string, error) {
-	const (
-		libraryKeySep = ":"
-	)
-
-	keyPieces := strings.Split(key, libraryKeySep)
-
-	switch len(keyPieces) {
-	case 1:
-		return "", key, nil
-
-	case 2:
-		if len(keyPieces[0]) == 0 {
-			return "", "", fmt.Errorf("Expected library ref to not be empty")
-		}
-		return keyPieces[0], keyPieces[1], nil
-
-	default:
+// libraryRefAndKey separates a library reference and a key and validates that no libraryKeySep exist in the key.
+// libraryKeySep is disallowed in data value flag keys.
+func (DataValuesFlags) libraryRefAndKey(arg string) (string, string, error) {
+	libRef, key, err := DataValuesFlags{}.libraryRefAndRemainder(arg)
+	if err != nil {
+		return "", "", err
+	}
+	if len(strings.Split(key, libraryKeySep)) > 1 {
+		// error on a common syntax mistake
 		return "", "", fmt.Errorf("Expected at most one library-key separator '%s' in '%s'", libraryKeySep, key)
 	}
+	return libRef, key, nil
+}
+
+// libraryRefAndRemainder separates a library reference prefix from the remainder of the string.
+// A library reference starts with ref.LibrarySep, and ends with the first occurrence of libraryKeySep.
+func (DataValuesFlags) libraryRefAndRemainder(arg string) (string, string, error) {
+	if strings.HasPrefix(arg, ref.LibrarySep) {
+		strPieces := strings.SplitN(arg, libraryKeySep, 2)
+		switch len(strPieces) {
+		case 1:
+			return "", arg, nil
+		case 2:
+			if len(strPieces[0]) == 1 {
+				return "", "", fmt.Errorf("Expected library ref to not be empty")
+			}
+			return strPieces[0], strPieces[1], nil
+		}
+	}
+	return "", arg, nil
 }
 
 func (s *DataValuesFlags) buildOverlay(keyPieces []string, value interface{}, desc string, line string) *yamlmeta.Document {
