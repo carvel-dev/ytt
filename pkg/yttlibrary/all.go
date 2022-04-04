@@ -7,9 +7,29 @@ import (
 	"fmt"
 
 	"github.com/k14s/starlark-go/starlark"
+	"github.com/k14s/starlark-go/starlarkstruct"
 	tplcore "github.com/vmware-tanzu/carvel-ytt/pkg/template/core"
 	"github.com/vmware-tanzu/carvel-ytt/pkg/yttlibrary/overlay"
 )
+
+var registeredExts []*starlarkstruct.Module
+
+// RegisterExt adds "mod" to the standard set of ytt library modules as an extension.
+// An "extension" is a Starlark module that has external Go dependencies
+// (as opposed to other Starlark modules in the ytt library that either
+// have no dependencies or depend on the Go standard lib).
+// This enables those using ytt as a Go module to opt-in (rather than be forced)
+// to accept such dependencies. Only Carvel-maintained extensions can be registered;
+// this reserves the `@ytt:` namespace. Integrators who want to write their own extensions
+// should construct their own library.
+func RegisterExt(mod *starlarkstruct.Module) {
+	switch mod.Name {
+	case "toml":
+		registeredExts = append(registeredExts, mod)
+	default:
+		panic("ytt library namespace can only be extended with ytt modules")
+	}
+}
 
 type API struct {
 	modules map[string]starlark.StringDict
@@ -18,7 +38,7 @@ type API struct {
 func NewAPI(replaceNodeFunc tplcore.StarlarkFunc, dataMod DataModule,
 	libraryMod starlark.StringDict) API {
 
-	return API{map[string]starlark.StringDict{
+	std := map[string]starlark.StringDict{
 		"assert": AssertAPI,
 		"regexp": RegexpAPI,
 
@@ -29,7 +49,6 @@ func NewAPI(replaceNodeFunc tplcore.StarlarkFunc, dataMod DataModule,
 		// Serializations
 		"base64": Base64API,
 		"json":   JSONAPI,
-		"toml":   TOMLAPI,
 		"yaml":   YAMLAPI,
 		"url":    URLAPI,
 		"ip":     IPAPI,
@@ -47,7 +66,17 @@ func NewAPI(replaceNodeFunc tplcore.StarlarkFunc, dataMod DataModule,
 		"version": VersionAPI,
 
 		"library": libraryMod,
-	}}
+	}
+
+	for _, ext := range registeredExts {
+		// Double check that we are not overriding predefined library
+		if _, found := std[ext.Name]; found {
+			panic("Internal inconsistency: shadowing ytt library with an extension module")
+		}
+		std[ext.Name] = starlark.StringDict{ext.Name: ext}
+	}
+
+	return API{std}
 }
 
 func (a API) FindModule(module string) (starlark.StringDict, error) {

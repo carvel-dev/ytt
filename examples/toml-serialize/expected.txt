@@ -1,0 +1,5 @@
+toml: |
+  array = [1, 2, "three"]
+
+  [map]
+    foo = "bar"

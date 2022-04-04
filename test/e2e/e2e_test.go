@@ -133,6 +133,9 @@ func TestDifferentUsages(t *testing.T) {
 		"k8s-overlay-all-containers",
 		"k8s-overlay-remove-resources",
 		"k8s-overlay-in-config-map",
+		// test that @ytt:toml module works in default ytt binary
+		// as it is loaded in a different way than other @ytt:* modules.
+		"toml-serialize",
 	}
 	for _, k8sDirToTest := range dirs {
 		t.Run(fmt.Sprintf("k8s: %s", k8sDirToTest), func(t *testing.T) {
