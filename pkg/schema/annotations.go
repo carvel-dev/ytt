@@ -31,9 +31,20 @@ type Annotation interface {
 	GetPosition() *filepos.Position
 }
 
+// ValidationAnnotation is a wrapper for a value provided via @schema/validation annotation
 type ValidationAnnotation struct {
 	rules []Rule
 	pos   *filepos.Position
+}
+
+// A Rule represents an argument to an @schema/validation annotation;
+// it contains a string description of what constitutes a valid value,
+// and a function that asserts the rule against an actual value.
+// One @schema/validation annotation can have multiple Rules.
+type Rule struct {
+	Msg       string
+	Assertion starlark.Callable
+	Position  *filepos.Position
 }
 
 func (ValidationAnnotation) NewTypeFromAnn() (Type, error) {
@@ -414,12 +425,6 @@ func NewExampleAnnotation(ann template.NodeAnnotation, pos *filepos.Position) (*
 		}
 	}
 	return &ExampleAnnotation{examples, ann.Position}, nil
-}
-
-type Rule struct {
-	Msg       string
-	Assertion starlark.Callable
-	Position  *filepos.Position
 }
 
 // NewValidationAnnotation checks the argument provided via @schema/validation annotation, and returns wrapper for the rules defined
