@@ -5,9 +5,11 @@ package schema
 
 import "github.com/vmware-tanzu/carvel-ytt/pkg/yamlmeta"
 
+const schemaType = "schema/type"
+
 // GetType retrieves schema metadata from `n`, set previously via SetType().
 func GetType(n yamlmeta.Node) Type {
-	t := n.GetMeta("schema/type")
+	t := n.GetMeta(schemaType)
 	if t == nil {
 		return nil
 	}
@@ -16,5 +18,5 @@ func GetType(n yamlmeta.Node) Type {
 
 // SetType attaches schema metadata to `n`, later retrieved via GetType().
 func SetType(n yamlmeta.Node, t Type) {
-	n.SetMeta("schema/type", t)
+	n.SetMeta(schemaType, t)
 }

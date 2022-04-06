@@ -6,6 +6,7 @@ package schema
 import (
 	"fmt"
 
+	"github.com/vmware-tanzu/carvel-ytt/pkg/assertions"
 	"github.com/vmware-tanzu/carvel-ytt/pkg/filepos"
 	"github.com/vmware-tanzu/carvel-ytt/pkg/yamlmeta"
 )
@@ -28,6 +29,7 @@ type Type interface {
 	SetExamples([]Example)
 	IsDeprecated() (bool, string)
 	SetDeprecated(bool, string)
+	GetValidations() []assertions.Rule
 	String() string
 }
 
@@ -45,40 +47,50 @@ type DocumentType struct {
 	ValueType    Type // typically one of: MapType, ArrayType, ScalarType
 	Position     *filepos.Position
 	defaultValue interface{}
+	validations  []assertions.Rule
 }
+
 type MapType struct {
 	Items         []*MapItemType
 	Position      *filepos.Position
 	documentation documentation
 }
+
 type MapItemType struct {
 	Key          interface{} // usually a string
 	ValueType    Type
 	Position     *filepos.Position
 	defaultValue interface{}
+	validations  []assertions.Rule
 }
+
 type ArrayType struct {
 	ItemsType     Type
 	Position      *filepos.Position
 	defaultValue  interface{}
 	documentation documentation
 }
+
 type ArrayItemType struct {
 	ValueType    Type
 	Position     *filepos.Position
 	defaultValue interface{}
+	validations  []assertions.Rule
 }
+
 type ScalarType struct {
 	ValueType     interface{}
 	Position      *filepos.Position
 	defaultValue  interface{}
 	documentation documentation
 }
+
 type AnyType struct {
 	defaultValue  interface{}
 	Position      *filepos.Position
 	documentation documentation
 }
+
 type NullType struct {
 	ValueType     Type
 	Position      *filepos.Position
@@ -562,6 +574,46 @@ func (a *AnyType) SetDeprecated(deprecated bool, notice string) {
 func (n *NullType) SetDeprecated(deprecated bool, notice string) {
 	n.documentation.deprecationNotice = notice
 	n.documentation.deprecated = deprecated
+}
+
+// GetValidations provides validations from @schema/validation for a node
+func (t *DocumentType) GetValidations() []assertions.Rule {
+	return t.validations
+}
+
+// GetValidations provides validations from @schema/validation for a node
+func (m *MapType) GetValidations() []assertions.Rule {
+	return nil
+}
+
+// GetValidations provides validations from @schema/validation for a node
+func (t *MapItemType) GetValidations() []assertions.Rule {
+	return t.validations
+}
+
+// GetValidations provides validations from @schema/validation for a node
+func (a *ArrayType) GetValidations() []assertions.Rule {
+	return nil
+}
+
+// GetValidations provides validations from @schema/validation for a node
+func (a *ArrayItemType) GetValidations() []assertions.Rule {
+	return a.validations
+}
+
+// GetValidations provides validations from @schema/validation for a node
+func (s *ScalarType) GetValidations() []assertions.Rule {
+	return nil
+}
+
+// GetValidations provides validations from @schema/validation for a node
+func (a AnyType) GetValidations() []assertions.Rule {
+	return nil
+}
+
+// GetValidations provides validations from @schema/validation for a node
+func (n NullType) GetValidations() []assertions.Rule {
+	return nil
 }
 
 // String produces a user-friendly name of the expected type.

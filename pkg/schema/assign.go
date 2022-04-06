@@ -6,6 +6,7 @@ package schema
 import (
 	"fmt"
 
+	"github.com/vmware-tanzu/carvel-ytt/pkg/assertions"
 	"github.com/vmware-tanzu/carvel-ytt/pkg/yamlmeta"
 )
 
@@ -158,4 +159,18 @@ func (n NullType) AssignTypeTo(node yamlmeta.Node) TypeCheck {
 	childCheck := n.ValueType.AssignTypeTo(node)
 	chk.Violations = append(chk.Violations, childCheck.Violations...)
 	return chk
+}
+
+// AssignSchemaValidations implements the visitor interface to set validations from schema validation rules
+type AssignSchemaValidations struct{}
+
+// Visit Extracts the validations from Node's Type and sets them in Node's meta
+// This visitor returns nil if node has no assigned type or when the execution is completed
+func (AssignSchemaValidations) Visit(node yamlmeta.Node) error {
+	if schemaType := GetType(node); schemaType != nil {
+		if rules := schemaType.GetValidations(); rules != nil {
+			assertions.SetValidations(node, rules)
+		}
+	}
+	return nil
 }
