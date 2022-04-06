@@ -1,7 +1,5 @@
+#@ load("@ytt:assert", "assert")
 #@data/values
 ---
-nothing: "something"
-string: ""
-bool: false
-int: 0
-float: 0.0
+#@assert/validate ("a non-empty string", lambda v: assert.fail("was not empty") if len(v) > 0 else None)
+username: "andrew"

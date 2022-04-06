@@ -1,10 +1,7 @@
+#! schema.yml
+  
+#@ load("@ytt:assert", "assert")
 #@data/values-schema
 ---
-#@schema/nullable
-nothing: "a string"
-string: "a string"
-bool: false
-int: 0
-float: 0.1
-#@schema/type any=True
-any: "anything"
+#@schema/validation ("a non-empty string", lambda v: assert.fail("was not empty") if len(v) > 0 else None)
+username: ""

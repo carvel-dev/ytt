@@ -5,7 +5,6 @@ package schema
 
 import (
 	"fmt"
-
 	"github.com/vmware-tanzu/carvel-ytt/pkg/filepos"
 	"github.com/vmware-tanzu/carvel-ytt/pkg/yamlmeta"
 )
@@ -18,6 +17,11 @@ func NewDocumentType(doc *yamlmeta.Document) (*DocumentType, error) {
 	}
 
 	defaultValue, err := getValue(doc, typeOfValue)
+	if err != nil {
+		return nil, err
+	}
+
+	err = getValidations(doc)
 	if err != nil {
 		return nil, err
 	}
@@ -143,6 +147,14 @@ func getValue(node yamlmeta.Node, t Type) (interface{}, error) {
 	}
 
 	return t.GetDefaultValue(), nil
+}
+
+func getValidations(node yamlmeta.Node) error {
+	_, err := processOptionalAnnotation(node, AnnotationValidation, nil)
+	if err != nil {
+		return NewSchemaError("Invalid schema", err)
+	}
+	return nil
 }
 
 // getValueFromAnn extracts the value from the annotation and validates its type

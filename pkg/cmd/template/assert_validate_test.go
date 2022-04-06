@@ -371,3 +371,105 @@ values: #@ data.values
 		assertFails(t, filesToProcess, expectedErr, opts)
 	})
 }
+
+func TestSchemaValidationSucceeds(t *testing.T) {
+	t.Run("when schema validations pass using --data-values-inspect", func(t *testing.T) {
+		opts := cmdtpl.NewOptions()
+		opts.DataValuesFlags.Inspect = true
+
+		schemaYAML := `#@ load("@ytt:assert", "assert")
+
+#@data/values-schema
+#@schema/validation ("a non empty data values", lambda v: True if v else assert.fail("data values was empty"))
+---
+#@schema/validation ("a map with more than 3 elements", lambda v: True if len(v) > 3 else assert.fail("length of map was less than 3"))
+my_map:
+  #@schema/validation ("a non-empty string", lambda v: True if len(v) > 0 else assert.fail("length of string was 0"))
+  string: server.example.com
+  #@schema/validation ("an int over 9000", lambda v: True if v > 9000 else assert.fail("int was less than 9000"))
+  int: 54321
+  #@schema/validation ("a float less than pi", lambda v: True if v < 3.1415 else assert.fail("float was more than 3.1415"))
+  float: 2.3
+  #@schema/validation ("bool evaluating to true", lambda v:  v)
+  bool: true
+  #@schema/validation ("a null value", lambda v: True if v == None else assert.fail("value was not null"))
+  #@schema/nullable 
+  nil: ""
+  #@schema/validation ("an array with less than or exactly 10 items", lambda v: True if len(v) <= 10 else assert.fail("array was more than 10 items"))
+  my_array:
+  #@schema/validation ("a non-empty string", lambda v: True if len(v) > 0 else assert.fail("length of string was 0"))
+  - abc
+`
+
+		expected := `my_map:
+  string: server.example.com
+  int: 54321
+  float: 2.3
+  bool: true
+  nil: null
+  my_array:
+  - abc
+  - 12345
+  - 3.14
+  - true
+  - null
+`
+
+		filesToProcess := files.NewSortedFiles([]*files.File{
+			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
+		})
+
+		assertSucceedsDocSet(t, filesToProcess, expected, opts)
+	})
+	t.Run("when validations on library data values pass", func(t *testing.T) {
+		opts := cmdtpl.NewOptions()
+		configYAML := `
+#@ load("@ytt:template", "template")
+#@ load("@ytt:library", "library")
+---
+
+
+#@ def additional_vals():
+int: 10
+#@overlay/match missing_ok=True
+#@assert/validate ("a non empty string", lambda v: v )
+str: "asdf"
+#@ end
+
+#@ lib = library.get("lib")
+#@ lib2 = lib.with_data_values(additional_vals())
+--- #@ template.replace(lib.eval())
+--- #@ template.replace(lib2.eval())
+`
+
+		libValuesYAML := `#@ load("@ytt:assert", "assert")
+
+#@data/values
+---
+#@assert/validate ("an integer over 1", lambda v: True if v > 1 else assert.fail("value was less than 1"))
+int: 2
+`
+
+		libConfigYAML := `
+#@ load("@ytt:data", "data")
+---
+values: #@ data.values
+`
+
+		expected := `values:
+  int: 2
+---
+values:
+  int: 10
+  str: asdf
+`
+
+		filesToProcess := files.NewSortedFiles([]*files.File{
+			files.MustNewFileFromSource(files.NewBytesSource("config.yml", []byte(configYAML))),
+			files.MustNewFileFromSource(files.NewBytesSource("_ytt_lib/lib/values.yml", []byte(libValuesYAML))),
+			files.MustNewFileFromSource(files.NewBytesSource("_ytt_lib/lib/config.yml", []byte(libConfigYAML))),
+		})
+
+		assertSucceedsDocSet(t, filesToProcess, expected, opts)
+	})
+}
