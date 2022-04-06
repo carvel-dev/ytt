@@ -47,14 +47,6 @@ type Rule struct {
 	Position  *filepos.Position
 }
 
-func (ValidationAnnotation) NewTypeFromAnn() (Type, error) {
-	return nil, nil
-}
-
-func (ValidationAnnotation) GetPosition() *filepos.Position {
-	return nil
-}
-
 type TypeAnnotation struct {
 	any  bool
 	node yamlmeta.Node
@@ -505,6 +497,11 @@ func (t *TitleAnnotation) NewTypeFromAnn() (Type, error) {
 	return nil, nil
 }
 
+// NewTypeFromAnn returns type information given by annotation.
+func (ValidationAnnotation) NewTypeFromAnn() (Type, error) {
+	return nil, nil
+}
+
 // GetPosition returns position of the source comment used to create this annotation.
 func (n *NullableAnnotation) GetPosition() *filepos.Position {
 	return n.pos
@@ -538,6 +535,11 @@ func (e *ExampleAnnotation) GetPosition() *filepos.Position {
 // GetPosition returns position of the source comment used to create this annotation.
 func (t *TitleAnnotation) GetPosition() *filepos.Position {
 	return t.pos
+}
+
+// GetPosition returns position of the source comment used to create this annotation.
+func (ValidationAnnotation) GetPosition() *filepos.Position {
+	return nil
 }
 
 func (t *TypeAnnotation) IsAny() bool {
