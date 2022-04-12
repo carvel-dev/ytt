@@ -416,6 +416,36 @@ my_map:
 
 		assertSucceedsDocSet(t, filesToProcess, expected, opts)
 	})
+	t.Run("when schema validations pass on an array --data-values-inspect", func(t *testing.T) {
+		opts := cmdtpl.NewOptions()
+		opts.DataValuesFlags.Inspect = true
+		schemaYAML := `#@ load("@ytt:assert", "assert")
+#@data/values-schema
+---
+my_array:
+#@schema/validation ("an integer larger than 4", lambda v: True if v > 4 else assert.fail("values less than 5"))
+- 5
+`
+		dvYAML := `#@data/values
+---
+my_array:
+- 5
+- 6
+- 7
+`
+
+		expected := `my_array:
+- 5
+- 6
+- 7`
+
+		filesToProcess := files.NewSortedFiles([]*files.File{
+			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
+			files.MustNewFileFromSource(files.NewBytesSource("dv.yml", []byte(dvYAML))),
+		})
+
+		assertSucceedsDocSet(t, filesToProcess, expected, opts)
+	})
 	t.Run("when validations on library data values pass", func(t *testing.T) {
 		opts := cmdtpl.NewOptions()
 		configYAML := `
@@ -484,6 +514,37 @@ func TestSchemaValidationFails(t *testing.T) {
 
 		filesToProcess := files.NewSortedFiles([]*files.File{
 			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
+		})
+
+		assertFails(t, filesToProcess, expectedErr, opts)
+	})
+	t.Run("when validations fail on an array with data values overlays", func(t *testing.T) {
+		opts := cmdtpl.NewOptions()
+
+		schemaYAML := `#@ load("@ytt:assert", "assert")
+#@data/values-schema
+---
+my_array:
+#@schema/validation ("an integer larger than 4", lambda v: True if v > 4 else assert.fail("values less than 5"))
+- 5
+`
+		dvYAML := `#@data/values
+---
+my_array:
+- 5
+- 6
+- 7
+- 1
+- 2
+- 3
+`
+
+		expectedErr := `One or more data values were invalid:
+- "string" (schema.yml:6) requires "a non-empty string"; assert.fail: fail: length of string was 0 (by schema.yml:5)`
+
+		filesToProcess := files.NewSortedFiles([]*files.File{
+			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
+			files.MustNewFileFromSource(files.NewBytesSource("dv.yml", []byte(dvYAML))),
 		})
 
 		assertFails(t, filesToProcess, expectedErr, opts)

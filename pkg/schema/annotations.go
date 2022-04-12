@@ -14,6 +14,7 @@ import (
 	"github.com/vmware-tanzu/carvel-ytt/pkg/yamlmeta"
 )
 
+// Declare @schema/... annotation names
 const (
 	AnnotationNullable       template.AnnotationName = "schema/nullable"
 	AnnotationType           template.AnnotationName = "schema/type"
@@ -34,11 +35,11 @@ type Annotation interface {
 
 // ValidationAnnotation is a wrapper for a value provided via @schema/validation annotation
 type ValidationAnnotation struct {
-	//	rules []Rule
 	nodeAnnotation template.NodeAnnotation
 	pos            *filepos.Position
 }
 
+// GetNodeAnn gets the node annotation from @schema/validation annotation
 func (v *ValidationAnnotation) GetNodeAnn() template.NodeAnnotation {
 	return v.nodeAnnotation
 }

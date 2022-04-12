@@ -45,7 +45,7 @@ type DocumentType struct {
 	ValueType    Type // typically one of: MapType, ArrayType, ScalarType
 	Position     *filepos.Position
 	defaultValue interface{}
-	validations  ValidationAnnotation
+	//	validations  ValidationAnnotation
 }
 type MapType struct {
 	Items         []*MapItemType
@@ -69,7 +69,7 @@ type ArrayItemType struct {
 	ValueType    Type
 	Position     *filepos.Position
 	defaultValue interface{}
-	validations  ValidationAnnotation
+	//	validations  ValidationAnnotation
 }
 type ScalarType struct {
 	ValueType     interface{}
@@ -154,6 +154,7 @@ func (m MapType) GetDefaultValue() interface{} {
 // GetDefaultValue provides the default value
 func (t MapItemType) GetDefaultValue() interface{} {
 	returnItem := &yamlmeta.MapItem{Key: t.Key, Value: t.defaultValue, Position: t.Position}
+	// condition
 	anns := template.NodeAnnotations{}
 	anns[AnnotationAssertValidate] = t.validations.nodeAnnotation
 	returnItem.SetAnnotations(anns)

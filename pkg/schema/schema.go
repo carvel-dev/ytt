@@ -58,7 +58,7 @@ func NewMapItemType(item *yamlmeta.MapItem) (*MapItemType, error) {
 	typeOfValue.SetDefaultValue(defaultValue)
 	//	validationAnnotation := ValidationAnnotation{rules, item.Position}
 	//validationAnnotation, err := getAndSetValidations(item)
-	err, validations := getValidations(item)
+	validations, err := getValidations(item)
 
 	if err != nil {
 		return nil, err
@@ -160,10 +160,13 @@ func getValue(node yamlmeta.Node, t Type) (interface{}, error) {
 	return t.GetDefaultValue(), nil
 }
 
-func getValidations(node yamlmeta.Node) (error, ValidationAnnotation) {
+func getValidations(node yamlmeta.Node) (ValidationAnnotation, error) {
 	ann, err := processOptionalAnnotation(node, AnnotationValidation, nil)
 	if err != nil {
-		return err, ValidationAnnotation{}
+		return ValidationAnnotation{}, err
+	}
+	if ann == nil {
+		return ValidationAnnotation{}, nil
 	}
 	validationAnn, ok := ann.(*ValidationAnnotation)
 	if !ok {
@@ -175,7 +178,7 @@ func getValidations(node yamlmeta.Node) (error, ValidationAnnotation) {
 	//// side effect
 	//node.SetAnnotations(anns)
 
-	return nil, *validationAnn
+	return *validationAnn, nil
 }
 
 // getValueFromAnn extracts the value from the annotation and validates its type
