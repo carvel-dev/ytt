@@ -6,7 +6,6 @@ package template_test
 import (
 	cmdtpl "github.com/vmware-tanzu/carvel-ytt/pkg/cmd/template"
 	"github.com/vmware-tanzu/carvel-ytt/pkg/files"
-
 	"testing"
 )
 
@@ -378,7 +377,6 @@ func TestSchemaValidationSucceeds(t *testing.T) {
 		opts.DataValuesFlags.Inspect = true
 
 		schemaYAML := `#@ load("@ytt:assert", "assert")
-
 #@data/values-schema
 #@schema/validation ("a non empty data values", lambda v: True if v else assert.fail("data values was empty"))
 ---
@@ -395,7 +393,8 @@ my_map:
   #@schema/validation ("a null value", lambda v: True if v == None else assert.fail("value was not null"))
   #@schema/nullable 
   nil: ""
-  #@schema/validation ("an array with less than or exactly 10 items", lambda v: True if len(v) <= 10 else assert.fail("array was more than 10 items"))
+  #@schema/validation ("an array with 1 or more items", lambda v: True if len(v) >= 1 else assert.fail("array was empty"))
+  #@schema/default ['abc']
   my_array:
   #@schema/validation ("a non-empty string", lambda v: True if len(v) > 0 else assert.fail("length of string was 0"))
   - abc
@@ -409,10 +408,6 @@ my_map:
   nil: null
   my_array:
   - abc
-  - 12345
-  - 3.14
-  - true
-  - null
 `
 
 		filesToProcess := files.NewSortedFiles([]*files.File{
@@ -427,7 +422,6 @@ my_map:
 #@ load("@ytt:template", "template")
 #@ load("@ytt:library", "library")
 ---
-
 
 #@ def additional_vals():
 int: 10
@@ -472,4 +466,27 @@ values:
 
 		assertSucceedsDocSet(t, filesToProcess, expected, opts)
 	})
+}
+
+func TestSchemaValidationFails(t *testing.T) {
+	t.Run("when validations fail", func(t *testing.T) {
+		opts := cmdtpl.NewOptions()
+		schemaYAML := `#@ load("@ytt:assert", "assert")
+
+#@data/values-schema
+---
+  #@schema/validation ("a non-empty string", lambda v: True if len(v) > 0 else assert.fail("length of string was 0"))
+  string: ""
+`
+
+		expectedErr := `One or more data values were invalid:
+- "string" (schema.yml:6) requires "a non-empty string"; assert.fail: fail: length of string was 0 (by schema.yml:5)`
+
+		filesToProcess := files.NewSortedFiles([]*files.File{
+			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
+		})
+
+		assertFails(t, filesToProcess, expectedErr, opts)
+	})
+
 }

@@ -21,13 +21,12 @@ func NewDocumentType(doc *yamlmeta.Document) (*DocumentType, error) {
 		return nil, err
 	}
 
-	err = getValidations(doc)
-	if err != nil {
-		return nil, err
-	}
+	//validationAnnotation, err := getAndSetValidations(doc)
+	//if err != nil {
+	//	return nil, err
+	//}
 
 	typeOfValue.SetDefaultValue(defaultValue)
-
 	return &DocumentType{Source: doc, Position: doc.Position, ValueType: typeOfValue, defaultValue: defaultValue}, nil
 }
 
@@ -57,8 +56,14 @@ func NewMapItemType(item *yamlmeta.MapItem) (*MapItemType, error) {
 	}
 
 	typeOfValue.SetDefaultValue(defaultValue)
+	//	validationAnnotation := ValidationAnnotation{rules, item.Position}
+	//validationAnnotation, err := getAndSetValidations(item)
+	err, validations := getValidations(item)
 
-	return &MapItemType{Key: item.Key, ValueType: typeOfValue, defaultValue: defaultValue, Position: item.Position}, nil
+	if err != nil {
+		return nil, err
+	}
+	return &MapItemType{Key: item.Key, ValueType: typeOfValue, defaultValue: defaultValue, Position: item.Position, validations: validations}, nil
 }
 
 func NewArrayType(a *yamlmeta.Array) (*ArrayType, error) {
@@ -89,6 +94,12 @@ func NewArrayItemType(item *yamlmeta.ArrayItem) (*ArrayItemType, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	////TODO - get and set  validations return err
+	//err = getAndSetValidations(item)
+	//if err != nil {
+	//	return nil, err
+	//}
 
 	typeOfValue.SetDefaultValue(defaultValue)
 
@@ -149,12 +160,22 @@ func getValue(node yamlmeta.Node, t Type) (interface{}, error) {
 	return t.GetDefaultValue(), nil
 }
 
-func getValidations(node yamlmeta.Node) error {
-	_, err := processOptionalAnnotation(node, AnnotationValidation, nil)
+func getValidations(node yamlmeta.Node) (error, ValidationAnnotation) {
+	ann, err := processOptionalAnnotation(node, AnnotationValidation, nil)
 	if err != nil {
-		return NewSchemaError("Invalid schema", err)
+		return err, ValidationAnnotation{}
 	}
-	return nil
+	validationAnn, ok := ann.(*ValidationAnnotation)
+	if !ok {
+		panic("schema validation is not available")
+	}
+
+	//anns := template.NewAnnotations(node)
+	//anns["assert/validate"] = validationAnn.GetNodeAnn()
+	//// side effect
+	//node.SetAnnotations(anns)
+
+	return nil, *validationAnn
 }
 
 // getValueFromAnn extracts the value from the annotation and validates its type

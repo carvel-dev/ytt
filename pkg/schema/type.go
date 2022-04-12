@@ -5,8 +5,8 @@ package schema
 
 import (
 	"fmt"
-
 	"github.com/vmware-tanzu/carvel-ytt/pkg/filepos"
+	"github.com/vmware-tanzu/carvel-ytt/pkg/template"
 	"github.com/vmware-tanzu/carvel-ytt/pkg/yamlmeta"
 )
 
@@ -45,6 +45,7 @@ type DocumentType struct {
 	ValueType    Type // typically one of: MapType, ArrayType, ScalarType
 	Position     *filepos.Position
 	defaultValue interface{}
+	validations  ValidationAnnotation
 }
 type MapType struct {
 	Items         []*MapItemType
@@ -56,6 +57,7 @@ type MapItemType struct {
 	ValueType    Type
 	Position     *filepos.Position
 	defaultValue interface{}
+	validations  ValidationAnnotation
 }
 type ArrayType struct {
 	ItemsType     Type
@@ -67,6 +69,7 @@ type ArrayItemType struct {
 	ValueType    Type
 	Position     *filepos.Position
 	defaultValue interface{}
+	validations  ValidationAnnotation
 }
 type ScalarType struct {
 	ValueType     interface{}
@@ -150,7 +153,11 @@ func (m MapType) GetDefaultValue() interface{} {
 
 // GetDefaultValue provides the default value
 func (t MapItemType) GetDefaultValue() interface{} {
-	return &yamlmeta.MapItem{Key: t.Key, Value: t.defaultValue, Position: t.Position}
+	returnItem := &yamlmeta.MapItem{Key: t.Key, Value: t.defaultValue, Position: t.Position}
+	anns := template.NodeAnnotations{}
+	anns[AnnotationAssertValidate] = t.validations.nodeAnnotation
+	returnItem.SetAnnotations(anns)
+	return returnItem
 }
 
 // GetDefaultValue provides the default value
