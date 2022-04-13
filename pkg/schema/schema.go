@@ -21,13 +21,13 @@ func NewDocumentType(doc *yamlmeta.Document) (*DocumentType, error) {
 		return nil, err
 	}
 
-	//validationAnnotation, err := getAndSetValidations(doc)
-	//if err != nil {
-	//	return nil, err
-	//}
+	validations, err := getValidations(doc)
+	if err != nil {
+		return nil, err
+	}
 
 	typeOfValue.SetDefaultValue(defaultValue)
-	return &DocumentType{Source: doc, Position: doc.Position, ValueType: typeOfValue, defaultValue: defaultValue}, nil
+	return &DocumentType{Source: doc, Position: doc.Position, ValueType: typeOfValue, defaultValue: defaultValue, validations: validations}, nil
 }
 
 func NewMapType(m *yamlmeta.Map) (*MapType, error) {
@@ -77,11 +77,12 @@ func NewArrayType(a *yamlmeta.Array) (*ArrayType, error) {
 	}
 
 	arrayItemType, err := NewArrayItemType(a.Items[0])
+
 	if err != nil {
 		return nil, err
 	}
 
-	return &ArrayType{ItemsType: arrayItemType, defaultValue: &yamlmeta.Array{}, Position: a.Position}, nil
+	return &ArrayType{ItemsType: arrayItemType, defaultValue: &yamlmeta.Array{}, Position: a.Position, itemValidations: arrayItemType.validations}, nil
 }
 
 func NewArrayItemType(item *yamlmeta.ArrayItem) (*ArrayItemType, error) {
@@ -95,15 +96,14 @@ func NewArrayItemType(item *yamlmeta.ArrayItem) (*ArrayItemType, error) {
 		return nil, err
 	}
 
-	////TODO - get and set  validations return err
-	//err = getAndSetValidations(item)
-	//if err != nil {
-	//	return nil, err
-	//}
+	validations, err := getValidations(item)
+	if err != nil {
+		return nil, err
+	}
 
 	typeOfValue.SetDefaultValue(defaultValue)
 
-	return &ArrayItemType{ValueType: typeOfValue, defaultValue: defaultValue, Position: item.GetPosition()}, nil
+	return &ArrayItemType{ValueType: typeOfValue, defaultValue: defaultValue, Position: item.GetPosition(), validations: validations}, nil
 }
 
 func getType(node yamlmeta.Node) (Type, error) {
@@ -160,17 +160,17 @@ func getValue(node yamlmeta.Node, t Type) (interface{}, error) {
 	return t.GetDefaultValue(), nil
 }
 
-func getValidations(node yamlmeta.Node) (ValidationAnnotation, error) {
+func getValidations(node yamlmeta.Node) (*ValidationAnnotation, error) {
 	ann, err := processOptionalAnnotation(node, AnnotationValidation, nil)
 	if err != nil {
-		return ValidationAnnotation{}, err
+		return nil, err
 	}
-	if ann == nil {
-		return ValidationAnnotation{}, nil
-	}
+	//if ann == nil {
+	//	return nil, nil
+	//}
 	validationAnn, ok := ann.(*ValidationAnnotation)
 	if !ok {
-		panic("schema validation is not available")
+		return nil, nil
 	}
 
 	//anns := template.NewAnnotations(node)
@@ -178,7 +178,7 @@ func getValidations(node yamlmeta.Node) (ValidationAnnotation, error) {
 	//// side effect
 	//node.SetAnnotations(anns)
 
-	return *validationAnn, nil
+	return validationAnn, nil
 }
 
 // getValueFromAnn extracts the value from the annotation and validates its type

@@ -540,11 +540,32 @@ my_array:
 `
 
 		expectedErr := `One or more data values were invalid:
-- "string" (schema.yml:6) requires "a non-empty string"; assert.fail: fail: length of string was 0 (by schema.yml:5)`
+- array item (dv.yml:7) requires "an integer larger than 4"; assert.fail: fail: values less than 5 (by schema.yml:5)
+- array item (dv.yml:8) requires "an integer larger than 4"; assert.fail: fail: values less than 5 (by schema.yml:5)
+- array item (dv.yml:9) requires "an integer larger than 4"; assert.fail: fail: values less than 5 (by schema.yml:5)`
 
 		filesToProcess := files.NewSortedFiles([]*files.File{
 			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
 			files.MustNewFileFromSource(files.NewBytesSource("dv.yml", []byte(dvYAML))),
+		})
+
+		assertFails(t, filesToProcess, expectedErr, opts)
+	})
+	t.Run("when validations on a document fail with variables in validation", func(t *testing.T) {
+		opts := cmdtpl.NewOptions()
+		schemaYAML := `#@ load("@ytt:assert", "assert")
+#@data/values-schema
+#@schema/validation ("need more than 1 data value", lambda v: True if len(v) > 1 else assert.fail("less number of data values present"))
+---
+my_map: "abc"
+`
+
+		expectedErr := `One or more data values were invalid:
+- document (schema.yml:4) requires "need more than 1 data value"; assert.fail: fail: less number of data values present (by schema.yml:3)
+`
+
+		filesToProcess := files.NewSortedFiles([]*files.File{
+			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
 		})
 
 		assertFails(t, filesToProcess, expectedErr, opts)

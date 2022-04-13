@@ -45,7 +45,7 @@ type DocumentType struct {
 	ValueType    Type // typically one of: MapType, ArrayType, ScalarType
 	Position     *filepos.Position
 	defaultValue interface{}
-	//	validations  ValidationAnnotation
+	validations  *ValidationAnnotation
 }
 type MapType struct {
 	Items         []*MapItemType
@@ -57,19 +57,20 @@ type MapItemType struct {
 	ValueType    Type
 	Position     *filepos.Position
 	defaultValue interface{}
-	validations  ValidationAnnotation
+	validations  *ValidationAnnotation
 }
 type ArrayType struct {
-	ItemsType     Type
-	Position      *filepos.Position
-	defaultValue  interface{}
-	documentation documentation
+	ItemsType       Type
+	Position        *filepos.Position
+	defaultValue    interface{}
+	documentation   documentation
+	itemValidations *ValidationAnnotation
 }
 type ArrayItemType struct {
 	ValueType    Type
 	Position     *filepos.Position
 	defaultValue interface{}
-	//	validations  ValidationAnnotation
+	validations  *ValidationAnnotation
 }
 type ScalarType struct {
 	ValueType     interface{}
@@ -138,7 +139,13 @@ func (n NullType) GetValueType() Type {
 
 // GetDefaultValue provides the default value
 func (t DocumentType) GetDefaultValue() interface{} {
-	return &yamlmeta.Document{Value: t.defaultValue, Position: t.Position}
+	returnItem := &yamlmeta.Document{Value: t.defaultValue, Position: t.Position}
+	if t.validations != nil {
+		anns := template.NodeAnnotations{}
+		anns[AnnotationAssertValidate] = t.validations.nodeAnnotation
+		returnItem.SetAnnotations(anns)
+	}
+	return returnItem
 }
 
 // GetDefaultValue provides the default value
@@ -154,16 +161,24 @@ func (m MapType) GetDefaultValue() interface{} {
 // GetDefaultValue provides the default value
 func (t MapItemType) GetDefaultValue() interface{} {
 	returnItem := &yamlmeta.MapItem{Key: t.Key, Value: t.defaultValue, Position: t.Position}
-	// condition
-	anns := template.NodeAnnotations{}
-	anns[AnnotationAssertValidate] = t.validations.nodeAnnotation
-	returnItem.SetAnnotations(anns)
+	if t.validations != nil {
+		anns := template.NodeAnnotations{}
+		anns[AnnotationAssertValidate] = t.validations.nodeAnnotation
+		returnItem.SetAnnotations(anns)
+	}
 	return returnItem
 }
 
 // GetDefaultValue provides the default value
 func (a ArrayType) GetDefaultValue() interface{} {
-	return a.defaultValue
+	returnArray := &yamlmeta.Array{Position: a.Position}
+	if a.itemValidations != nil {
+		anns := template.NodeAnnotations{}
+		anns[AnnotationAssertValidate] = a.itemValidations.nodeAnnotation
+		returnArray.SetAnnotations(anns)
+	}
+	//return a.defaultValue
+	return returnArray
 }
 
 // GetDefaultValue provides the default value

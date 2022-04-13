@@ -78,9 +78,27 @@ func (a *assertChecker) Visit(node yamlmeta.Node) error {
 	if !nodeAnnotations.Has(AnnotationAssertValidate) {
 		return nil
 	}
-	switch node.(type) {
-	case *yamlmeta.DocumentSet, *yamlmeta.Array, *yamlmeta.Map:
+	switch typedNode := node.(type) {
+	case *yamlmeta.DocumentSet, *yamlmeta.Map:
 		return fmt.Errorf("Invalid @%s annotation - not supported on %s at %s", AnnotationAssertValidate, yamlmeta.TypeName(node), node.GetPosition().AsCompactString())
+	// assuming that an @assert/validate ann on an Array is from the schema array item
+	// array:
+	// - a
+	// - b
+	case *yamlmeta.Array:
+		rules, syntaxErr := newRulesFromAssertValidateAnnotation(nodeAnnotations[AnnotationAssertValidate])
+		if syntaxErr != nil {
+			return syntaxErr
+		}
+		//apply schema validation to each array item
+		for _, item := range typedNode.Items {
+			for _, rule := range rules {
+				err := rule.Validate(item, a.thread)
+				if err != nil {
+					a.chk.Violations = append(a.chk.Violations, err)
+				}
+			}
+		}
 	default:
 		rules, syntaxErr := newRulesFromAssertValidateAnnotation(nodeAnnotations[AnnotationAssertValidate])
 		if syntaxErr != nil {
