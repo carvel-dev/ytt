@@ -47,7 +47,7 @@ func (s Symlink) IsAllowed(opts SymlinkAllowOpts) error {
 		}
 	}
 
-	return fmt.Errorf("Expected symlink file '%s' -> '%s' to be allowed, but was not", s.path, dstPath)
+	return fmt.Errorf("Expected symlink file '%s' -> '%s' to be allowed, but was not (hint: symlinks are disallowed as a security feature, use '--allow-symlink-destination' flags to override)", s.path, dstPath)
 }
 
 func (s Symlink) isIn(path, allowedPath string) (bool, error) {
