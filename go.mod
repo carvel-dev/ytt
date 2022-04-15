@@ -3,7 +3,7 @@ module github.com/vmware-tanzu/carvel-ytt
 go 1.17
 
 require (
-	github.com/BurntSushi/toml v1.0.0
+	github.com/BurntSushi/toml v1.1.0
 	github.com/aws/aws-lambda-go v1.28.0
 	github.com/cppforlife/cobrautil v0.0.0-20200514214827-bb86e6965d72
 	github.com/cppforlife/go-cli-ui v0.0.0-20200505234325-512793797f05
