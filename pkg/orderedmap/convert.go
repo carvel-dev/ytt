@@ -74,7 +74,13 @@ func (c Conversion) fromUnorderedMaps(object interface{}) interface{} {
 			typedObj[i] = c.fromUnorderedMaps(item)
 		}
 		return typedObj
-
+	case []map[string]interface{}:
+		resultArray := make([]interface{}, len(typedObj))
+		for i, item := range typedObj {
+			resultMap := c.fromUnorderedMaps(item)
+			resultArray[i] = resultMap
+		}
+		return resultArray
 	default:
 		return typedObj
 	}

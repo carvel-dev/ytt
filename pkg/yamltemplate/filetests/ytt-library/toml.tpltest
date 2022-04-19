@@ -5,7 +5,14 @@ fragment:
 - piece1
 - piece2
 #@ end
-#@ arrayOfTables = {"stuff": [{"a": 1},{"b": 2}]}
+
+#@ arrayOfTables = '''
+#@  [[stuff]]
+#@    a = 1
+#@
+#@  [[stuff]]
+#@    b = 2
+#@ '''
 
 encode:
   test1: #@ toml.encode({})
@@ -18,7 +25,7 @@ encode:
 decode:
   test1: #@ toml.decode("")
   test2: #@ toml.decode('a = [ 1, 2, 3, 456 ]\nb = "str"')
-  test3: #@ toml.decode(toml.encode(arrayOfTables))
+  test3: #@ toml.decode(arrayOfTables)
 
 +++
 
@@ -35,12 +42,6 @@ encode:
 
     [inside_map]
       fragment = ["piece1", "piece2"]
-  test5: |
-    [[stuff]]
-      a = 1
-
-    [[stuff]]
-      b = 2
   indent:
     test1: |
       [[inside_array]]
@@ -64,8 +65,6 @@ decode:
     - 456
     b: str
   test3:
-    [[stuff]]
-      a = 1
-
-    [[stuff]]
-      b = 2
+    stuff:
+    - a: 1
+    - b: 2
