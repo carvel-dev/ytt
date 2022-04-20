@@ -60,11 +60,11 @@ type MapItemType struct {
 	validations  *ValidationAnnotation
 }
 type ArrayType struct {
-	ItemsType       Type
-	Position        *filepos.Position
-	defaultValue    interface{}
-	documentation   documentation
-	itemValidations *ValidationAnnotation
+	ItemsType     Type
+	Position      *filepos.Position
+	defaultValue  interface{}
+	documentation documentation
+	//itemValidations *ValidationAnnotation
 }
 type ArrayItemType struct {
 	ValueType    Type
@@ -171,14 +171,14 @@ func (t MapItemType) GetDefaultValue() interface{} {
 
 // GetDefaultValue provides the default value
 func (a ArrayType) GetDefaultValue() interface{} {
-	returnArray := &yamlmeta.Array{Position: a.Position}
-	if a.itemValidations != nil {
-		anns := template.NodeAnnotations{}
-		anns[AnnotationAssertValidate] = a.itemValidations.nodeAnnotation
-		returnArray.SetAnnotations(anns)
-	}
-	//return a.defaultValue
-	return returnArray
+	//returnArray := &yamlmeta.Array{Position: a.Position}
+	//if a.itemValidations != nil {
+	//	anns := template.NodeAnnotations{}
+	//	anns[AnnotationAssertValidate] = a.itemValidations.nodeAnnotation
+	//	returnArray.SetAnnotations(anns)
+	//}
+	return a.defaultValue
+	//return returnArray
 }
 
 // GetDefaultValue provides the default value

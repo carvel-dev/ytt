@@ -55,14 +55,13 @@ func NewMapItemType(item *yamlmeta.MapItem) (*MapItemType, error) {
 		return nil, err
 	}
 
-	typeOfValue.SetDefaultValue(defaultValue)
-	//	validationAnnotation := ValidationAnnotation{rules, item.Position}
-	//validationAnnotation, err := getAndSetValidations(item)
 	validations, err := getValidations(item)
-
 	if err != nil {
 		return nil, err
 	}
+
+	typeOfValue.SetDefaultValue(defaultValue) //<- sets default value of array(child) if @schema/default is on this map item
+
 	return &MapItemType{Key: item.Key, ValueType: typeOfValue, defaultValue: defaultValue, Position: item.Position, validations: validations}, nil
 }
 
@@ -82,7 +81,7 @@ func NewArrayType(a *yamlmeta.Array) (*ArrayType, error) {
 		return nil, err
 	}
 
-	return &ArrayType{ItemsType: arrayItemType, defaultValue: &yamlmeta.Array{}, Position: a.Position, itemValidations: arrayItemType.validations}, nil
+	return &ArrayType{ItemsType: arrayItemType, defaultValue: &yamlmeta.Array{}, Position: a.Position}, nil
 }
 
 func NewArrayItemType(item *yamlmeta.ArrayItem) (*ArrayItemType, error) {

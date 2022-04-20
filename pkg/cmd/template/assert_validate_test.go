@@ -437,7 +437,8 @@ my_array:
 		expected := `my_array:
 - 5
 - 6
-- 7`
+- 7
+`
 
 		filesToProcess := files.NewSortedFiles([]*files.File{
 			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
