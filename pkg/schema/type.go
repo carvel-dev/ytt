@@ -28,6 +28,7 @@ type Type interface {
 	SetExamples([]Example)
 	IsDeprecated() (bool, string)
 	SetDeprecated(bool, string)
+	GetValidations() *template.NodeAnnotation
 	String() string
 }
 
@@ -47,11 +48,23 @@ type DocumentType struct {
 	defaultValue interface{}
 	validations  *ValidationAnnotation
 }
+
+// GetValidations provides validations from @schema/validation for a node
+func (t *DocumentType) GetValidations() *template.NodeAnnotation {
+	return &t.validations.nodeAnnotation
+}
+
 type MapType struct {
 	Items         []*MapItemType
 	Position      *filepos.Position
 	documentation documentation
 }
+
+// GetValidations provides validations from @schema/validation for a node
+func (m *MapType) GetValidations() *template.NodeAnnotation {
+	return nil
+}
+
 type MapItemType struct {
 	Key          interface{} // usually a string
 	ValueType    Type
@@ -59,6 +72,12 @@ type MapItemType struct {
 	defaultValue interface{}
 	validations  *ValidationAnnotation
 }
+
+// GetValidations provides validations from @schema/validation for a node
+func (t *MapItemType) GetValidations() *template.NodeAnnotation {
+	return &t.validations.nodeAnnotation
+}
+
 type ArrayType struct {
 	ItemsType     Type
 	Position      *filepos.Position
@@ -66,27 +85,57 @@ type ArrayType struct {
 	documentation documentation
 	//itemValidations *ValidationAnnotation
 }
+
+// GetValidations provides validations from @schema/validation for a node
+func (a *ArrayType) GetValidations() *template.NodeAnnotation {
+	//TODO implement me
+	return nil
+}
+
 type ArrayItemType struct {
 	ValueType    Type
 	Position     *filepos.Position
 	defaultValue interface{}
 	validations  *ValidationAnnotation
 }
+
+// GetValidations provides validations from @schema/validation for a node
+func (a *ArrayItemType) GetValidations() *template.NodeAnnotation {
+	return &a.validations.nodeAnnotation
+}
+
 type ScalarType struct {
 	ValueType     interface{}
 	Position      *filepos.Position
 	defaultValue  interface{}
 	documentation documentation
 }
+
+// GetValidations provides validations from @schema/validation for a node
+func (s *ScalarType) GetValidations() *template.NodeAnnotation {
+	return nil
+}
+
 type AnyType struct {
 	defaultValue  interface{}
 	Position      *filepos.Position
 	documentation documentation
 }
+
+// GetValidations provides validations from @schema/validation for a node
+func (a AnyType) GetValidations() *template.NodeAnnotation {
+	return nil
+}
+
 type NullType struct {
 	ValueType     Type
 	Position      *filepos.Position
 	documentation documentation
+}
+
+// GetValidations provides validations from @schema/validation for a node
+func (n NullType) GetValidations() *template.NodeAnnotation {
+	return nil
 }
 
 // The total set of supported scalars.
@@ -140,11 +189,6 @@ func (n NullType) GetValueType() Type {
 // GetDefaultValue provides the default value
 func (t DocumentType) GetDefaultValue() interface{} {
 	returnItem := &yamlmeta.Document{Value: t.defaultValue, Position: t.Position}
-	if t.validations != nil {
-		anns := template.NodeAnnotations{}
-		anns[AnnotationAssertValidate] = t.validations.nodeAnnotation
-		returnItem.SetAnnotations(anns)
-	}
 	return returnItem
 }
 
@@ -161,24 +205,12 @@ func (m MapType) GetDefaultValue() interface{} {
 // GetDefaultValue provides the default value
 func (t MapItemType) GetDefaultValue() interface{} {
 	returnItem := &yamlmeta.MapItem{Key: t.Key, Value: t.defaultValue, Position: t.Position}
-	if t.validations != nil {
-		anns := template.NodeAnnotations{}
-		anns[AnnotationAssertValidate] = t.validations.nodeAnnotation
-		returnItem.SetAnnotations(anns)
-	}
 	return returnItem
 }
 
 // GetDefaultValue provides the default value
 func (a ArrayType) GetDefaultValue() interface{} {
-	//returnArray := &yamlmeta.Array{Position: a.Position}
-	//if a.itemValidations != nil {
-	//	anns := template.NodeAnnotations{}
-	//	anns[AnnotationAssertValidate] = a.itemValidations.nodeAnnotation
-	//	returnArray.SetAnnotations(anns)
-	//}
 	return a.defaultValue
-	//return returnArray
 }
 
 // GetDefaultValue provides the default value

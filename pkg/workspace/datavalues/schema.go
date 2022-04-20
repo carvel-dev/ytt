@@ -38,8 +38,6 @@ func NewSchema(doc *yamlmeta.Document) (*Schema, error) {
 
 	schemaDVs := docType.GetDefaultValue()
 
-	//TODO	assign validations (schemaDVs, docType)
-
 	return &Schema{
 		Source:     doc,
 		defaultDVs: schemaDVs.(*yamlmeta.Document),
