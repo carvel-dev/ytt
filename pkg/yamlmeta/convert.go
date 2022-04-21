@@ -8,6 +8,7 @@ import (
 
 	"github.com/vmware-tanzu/carvel-ytt/pkg/filepos"
 	"github.com/vmware-tanzu/carvel-ytt/pkg/orderedmap"
+	tplcore "github.com/vmware-tanzu/carvel-ytt/pkg/template/core"
 	"github.com/vmware-tanzu/carvel-ytt/pkg/yamlmeta/internal/yaml.v2"
 )
 
@@ -25,6 +26,11 @@ func NewASTFromInterfaceWithNoPosition(val interface{}) interface{} {
 
 func NewGoFromAST(val interface{}) interface{} {
 	return convertToGo(val)
+}
+
+//TODO: how else can we provide the RIGHT type of value
+func NewGoValueFromAST(val interface{}) tplcore.GoValue {
+	return tplcore.NewGoValue(convertToGo(val))
 }
 
 func convertToLowYAML(val interface{}) interface{} {
