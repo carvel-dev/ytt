@@ -497,6 +497,78 @@ values:
 
 		assertSucceedsDocSet(t, filesToProcess, expected, opts)
 	})
+	t.Run("when schema validations pass on an array with schema/default --data-values-inspect", func(t *testing.T) {
+		opts := cmdtpl.NewOptions()
+		opts.DataValuesFlags.Inspect = true
+		schemaYAML := `#@ load("@ytt:assert", "assert")
+#@data/values-schema
+---
+#@schema/default [5]
+my_array:
+#@schema/validation ("an integer larger than 4", lambda v: True if v > 4 else assert.fail("values less than 5"))
+- 6
+`
+		expected := `my_array:
+- 5
+`
+
+		filesToProcess := files.NewSortedFiles([]*files.File{
+			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
+		})
+
+		assertSucceedsDocSet(t, filesToProcess, expected, opts)
+	})
+	t.Run("when schema validations pass schema/type any= True --data-values-inspect", func(t *testing.T) {
+		opts := cmdtpl.NewOptions()
+		opts.DataValuesFlags.Inspect = true
+		schemaYAML := `#@ load("@ytt:assert", "assert")
+#@data/values-schema
+---
+#@schema/type any= True
+#@schema/validation ("an integer larger than 4", lambda v: True if v > 4 else assert.fail("values less than 5"))
+my_map: 3
+`
+		dvYAML := `#@data/values
+---
+my_map: 5
+`
+
+		expected := `my_map: 5
+`
+
+		filesToProcess := files.NewSortedFiles([]*files.File{
+			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
+			files.MustNewFileFromSource(files.NewBytesSource("dv.yml", []byte(dvYAML))),
+		})
+
+		assertSucceedsDocSet(t, filesToProcess, expected, opts)
+	})
+	t.Run("when schema validations pass schema/nullable --data-values-inspect", func(t *testing.T) {
+		opts := cmdtpl.NewOptions()
+		opts.DataValuesFlags.Inspect = true
+		schemaYAML := `#@ load("@ytt:assert", "assert")
+#@data/values-schema
+---
+#@schema/nullable
+#@schema/validation ("an integer larger than 4", lambda v: True if v > 4 else assert.fail("values less than 5"))
+my_map: 3
+`
+		dvYAML := `#@data/values
+---
+my_map: 6
+`
+
+		expected := `my_map: 6
+`
+
+		filesToProcess := files.NewSortedFiles([]*files.File{
+			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
+			files.MustNewFileFromSource(files.NewBytesSource("dv.yml", []byte(dvYAML))),
+		})
+
+		assertSucceedsDocSet(t, filesToProcess, expected, opts)
+	})
+
 }
 
 func TestSchemaValidationFails(t *testing.T) {
@@ -567,6 +639,78 @@ my_map: "abc"
 
 		filesToProcess := files.NewSortedFiles([]*files.File{
 			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
+		})
+
+		assertFails(t, filesToProcess, expectedErr, opts)
+	})
+	t.Run("when schema validations fail on an array with schema/default", func(t *testing.T) {
+		opts := cmdtpl.NewOptions()
+		opts.DataValuesFlags.Inspect = true
+		schemaYAML := `#@ load("@ytt:assert", "assert")
+#@data/values-schema
+---
+#@schema/default [3]
+my_array:
+#@schema/validation ("an integer larger than 4", lambda v: True if v > 4 else assert.fail("values less than 5"))
+- 6
+`
+		expectedErr := `One or more data values were invalid:
+- array item (schema.yml:5) requires "an integer larger than 4"; assert.fail: fail: values less than 5 (by schema.yml:6)`
+
+		filesToProcess := files.NewSortedFiles([]*files.File{
+			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
+		})
+
+		assertFails(t, filesToProcess, expectedErr, opts)
+	})
+	t.Run("when schema validations fail schema/type any= True", func(t *testing.T) {
+		opts := cmdtpl.NewOptions()
+		opts.DataValuesFlags.Inspect = true
+		schemaYAML := `#@ load("@ytt:assert", "assert")
+#@data/values-schema
+---
+#@schema/type any= True
+#@schema/validation ("an integer larger than 4", lambda v: True if v > 4 else assert.fail("values less than 5"))
+my_map: 3
+`
+		dvYAML := `#@data/values
+---
+my_map: 2
+`
+
+		expectedErr := `One or more data values were invalid:
+- "my_map" (dv.yml:3) requires "an integer larger than 4"; assert.fail: fail: values less than 5 (by schema.yml:5)
+`
+
+		filesToProcess := files.NewSortedFiles([]*files.File{
+			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
+			files.MustNewFileFromSource(files.NewBytesSource("dv.yml", []byte(dvYAML))),
+		})
+
+		assertFails(t, filesToProcess, expectedErr, opts)
+	})
+	t.Run("when schema validations fail schema/nullable", func(t *testing.T) {
+		opts := cmdtpl.NewOptions()
+		opts.DataValuesFlags.Inspect = true
+		schemaYAML := `#@ load("@ytt:assert", "assert")
+#@data/values-schema
+---
+#@schema/nullable
+#@schema/validation ("an integer larger than 4", lambda v: True if v > 4 else assert.fail("values less than 5"))
+my_map: 3
+`
+		dvYAML := `#@data/values
+---
+my_map: 2
+`
+
+		expectedErr := `One or more data values were invalid:
+- "my_map" (dv.yml:3) requires "an integer larger than 4"; assert.fail: fail: values less than 5 (by schema.yml:5)
+`
+
+		filesToProcess := files.NewSortedFiles([]*files.File{
+			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
+			files.MustNewFileFromSource(files.NewBytesSource("dv.yml", []byte(dvYAML))),
 		})
 
 		assertFails(t, filesToProcess, expectedErr, opts)

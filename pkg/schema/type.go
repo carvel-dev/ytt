@@ -51,7 +51,10 @@ type DocumentType struct {
 
 // GetValidations provides validations from @schema/validation for a node
 func (t *DocumentType) GetValidations() *template.NodeAnnotation {
-	return &t.validations.nodeAnnotation
+	if t.validations != nil {
+		return &t.validations.nodeAnnotation
+	}
+	return nil
 }
 
 type MapType struct {
@@ -75,7 +78,10 @@ type MapItemType struct {
 
 // GetValidations provides validations from @schema/validation for a node
 func (t *MapItemType) GetValidations() *template.NodeAnnotation {
-	return &t.validations.nodeAnnotation
+	if t.validations != nil {
+		return &t.validations.nodeAnnotation
+	}
+	return nil
 }
 
 type ArrayType struct {
@@ -88,7 +94,6 @@ type ArrayType struct {
 
 // GetValidations provides validations from @schema/validation for a node
 func (a *ArrayType) GetValidations() *template.NodeAnnotation {
-	//TODO implement me
 	return nil
 }
 
@@ -101,7 +106,10 @@ type ArrayItemType struct {
 
 // GetValidations provides validations from @schema/validation for a node
 func (a *ArrayItemType) GetValidations() *template.NodeAnnotation {
-	return &a.validations.nodeAnnotation
+	if a.validations != nil {
+		return &a.validations.nodeAnnotation
+	}
+	return nil
 }
 
 type ScalarType struct {

@@ -428,8 +428,6 @@ func NewExampleAnnotation(ann template.NodeAnnotation, pos *filepos.Position) (*
 
 // NewValidationAnnotation checks the argument provided via @schema/validation annotation, and returns wrapper for the rules defined
 func NewValidationAnnotation(ann template.NodeAnnotation, pos *filepos.Position) (*ValidationAnnotation, error) {
-	//var rules []Rule
-
 	if len(ann.Kwargs) != 0 {
 		return nil, fmt.Errorf("Invalid @%s annotation - expected @%s to have 2-tuple as argument(s), but found keyword argument (by %s)", AnnotationValidation, AnnotationValidation, ann.Position.AsCompactString())
 	}
@@ -452,13 +450,7 @@ func NewValidationAnnotation(ann template.NodeAnnotation, pos *filepos.Position)
 		if !ok {
 			return nil, fmt.Errorf("Invalid @%s annotation - expected second item in the 2-tuple to be an assertion function, but was %s (at %s)", AnnotationValidation, ruleTuple[1].Type(), ann.Position.AsCompactString())
 		}
-		//rules = append(rules, Rule{
-		//	Msg:       message.GoString(),
-		//	Assertion: lambda,
-		//	Position:  ann.Position,
-		//})
 	}
-
 	return &ValidationAnnotation{ann, ann.Position}, nil
 }
 

@@ -5,7 +5,6 @@ package workspace
 
 import (
 	"fmt"
-	"github.com/vmware-tanzu/carvel-ytt/pkg/template"
 	"strings"
 
 	"github.com/k14s/starlark-go/starlark"
@@ -112,34 +111,10 @@ func (pp DataValuesPreProcessing) typeAndCheck(dataValuesDoc *yamlmeta.Document)
 	if len(chk.Violations) > 0 {
 		return chk
 	}
-	//Walk function to integrate assert:validate annotation with schema/validation annotation
-	//assignSchemaValidations for each node we visit
-	_ = yamlmeta.Walk(dataValuesDoc, assignSchemaValidations{})
+	//Walk function is used to assign @assert:validate annotation from @schema/validation annotation
+	_ = yamlmeta.Walk(dataValuesDoc, schema.AssignSchemaValidations{})
 	chk = schema.CheckNode(dataValuesDoc)
 	return chk
-}
-
-type assignSchemaValidations struct {
-}
-
-func (assignSchemaValidations) Visit(node yamlmeta.Node) error {
-	if schemaType := node.GetMeta("schema/type"); schemaType != nil {
-		t, ok := schemaType.(schema.Type)
-		if !ok {
-			panic("fixz this later")
-		}
-		if validationsNodeAnn := t.GetValidations(); validationsNodeAnn != nil {
-			//get annonations ON THE NODE
-			//	anns := node.GetAnnotations()
-			anns := template.NewAnnotations(node)
-			//add validation annotation
-			anns[AnnotationAssertValidate] = *validationsNodeAnn
-			node.SetAnnotations(anns)
-			//set validitions
-		}
-
-	}
-	return nil
 }
 
 func (pp DataValuesPreProcessing) extractDataValueDocs(dvFile *FileInLibrary) ([]*yamlmeta.Document, error) {

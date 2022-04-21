@@ -164,19 +164,10 @@ func getValidations(node yamlmeta.Node) (*ValidationAnnotation, error) {
 	if err != nil {
 		return nil, err
 	}
-	//if ann == nil {
-	//	return nil, nil
-	//}
 	validationAnn, ok := ann.(*ValidationAnnotation)
 	if !ok {
 		return nil, nil
 	}
-
-	//anns := template.NewAnnotations(node)
-	//anns["assert/validate"] = validationAnn.GetNodeAnn()
-	//// side effect
-	//node.SetAnnotations(anns)
-
 	return validationAnn, nil
 }
 
