@@ -1,4 +1,3 @@
-#@schema/match data_values=True
 #@data/values-schema
 ---
 #@schema/nullable
