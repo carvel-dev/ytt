@@ -1,16 +1,17 @@
-package yamlmeta
+package assertions
 
 import (
 	"fmt"
 
 	"github.com/k14s/starlark-go/starlark"
 	"github.com/vmware-tanzu/carvel-ytt/pkg/filepos"
+	"github.com/vmware-tanzu/carvel-ytt/pkg/yamlmeta"
+	"github.com/vmware-tanzu/carvel-ytt/pkg/yamltemplate"
 )
 
-// A Rule represents an argument to an @assert/validate annotation;
+// A Rule represents a validation attached to a Node via an annotation;
 // it contains a string description of what constitutes a valid value,
 // and a function that asserts the rule against an actual value.
-// One @assert/validate annotation can have multiple Rules.
 type Rule struct {
 	Msg       string
 	Assertion starlark.Callable
@@ -21,22 +22,21 @@ type Rule struct {
 //
 // Returns an error if the assertion returns False (not-None), or assert.fail()s.
 // Otherwise, returns nil.
-func (r Rule) Validate(node Node, thread *starlark.Thread) error {
+func (r Rule) Validate(node yamlmeta.Node, thread *starlark.Thread) error {
 	var key string
 	var nodeValue starlark.Value
 	switch typedNode := node.(type) {
-	case *DocumentSet, *Array, *Map:
-		// TODO: is this the correct place for as specific of an error
-		panic(fmt.Sprintf("@%s annotation at %s - not supported on %s at %s", "assert/validate", r.Position.AsCompactString(), TypeName(node), node.GetPosition().AsCompactString()))
-	case *MapItem:
+	case *yamlmeta.DocumentSet, *yamlmeta.Array, *yamlmeta.Map:
+		panic(fmt.Sprintf("validation at %s - not supported on %s at %s", r.Position.AsCompactString(), yamlmeta.TypeName(node), node.GetPosition().AsCompactString()))
+	case *yamlmeta.MapItem:
 		key = fmt.Sprintf("%q", typedNode.Key)
-		nodeValue = NewGoValueFromAST(typedNode.Value).AsStarlarkValue()
-	case *ArrayItem:
-		key = TypeName(typedNode)
-		nodeValue = NewGoValueFromAST(typedNode.Value).AsStarlarkValue()
-	case *Document:
-		key = TypeName(typedNode)
-		nodeValue = NewGoValueFromAST(typedNode.Value).AsStarlarkValue()
+		nodeValue = yamltemplate.NewGoValueWithYAML(typedNode.Value).AsStarlarkValue()
+	case *yamlmeta.ArrayItem:
+		key = yamlmeta.TypeName(typedNode)
+		nodeValue = yamltemplate.NewGoValueWithYAML(typedNode.Value).AsStarlarkValue()
+	case *yamlmeta.Document:
+		key = yamlmeta.TypeName(typedNode)
+		nodeValue = yamltemplate.NewGoValueWithYAML(typedNode.Value).AsStarlarkValue()
 	}
 
 	result, err := starlark.Call(thread, r.Assertion, starlark.Tuple{nodeValue}, []starlark.Tuple{})
