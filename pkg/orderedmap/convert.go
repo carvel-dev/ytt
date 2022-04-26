@@ -75,6 +75,15 @@ func (c Conversion) fromUnorderedMaps(object interface{}) interface{} {
 		}
 		return typedObj
 
+	// some sources (e.g. toml library) yield specific type of slices.
+	// slices in Go are not covariant, so each flavor of slice must have its own case, here.
+	// process these exactly the same way we do for generic slices (prior case)
+	case []map[string]interface{}:
+		resultArray := make([]interface{}, len(typedObj))
+		for i, item := range typedObj {
+			resultArray[i] = c.fromUnorderedMaps(item)
+		}
+		return resultArray
 	default:
 		return typedObj
 	}

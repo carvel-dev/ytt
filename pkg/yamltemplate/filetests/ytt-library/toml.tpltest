@@ -6,6 +6,14 @@ fragment:
 - piece2
 #@ end
 
+#@ arrayOfTables = '''
+#@  [[stuff]]
+#@    a = 1
+#@
+#@  [[stuff]]
+#@    b = 2
+#@ '''
+
 encode:
   test1: #@ toml.encode({})
   test2: #@ toml.encode({"a": [1,2,3,456], "b": "str"})
@@ -17,6 +25,7 @@ encode:
 decode:
   test1: #@ toml.decode("")
   test2: #@ toml.decode('a = [ 1, 2, 3, 456 ]\nb = "str"')
+  test3: #@ toml.decode(arrayOfTables)
 
 +++
 
@@ -55,3 +64,7 @@ decode:
     - 3
     - 456
     b: str
+  test3:
+    stuff:
+    - a: 1
+    - b: 2
