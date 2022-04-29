@@ -86,6 +86,7 @@ func (ll *LibraryExecution) Values(valuesOverlays []*datavalues.Envelope, schema
 		valuesOverlays: valuesOverlays,
 		schema:         schema,
 		loader:         loader,
+		rootContext:    &ll.libraryCtx,
 	}
 
 	values, libValues, err := dvpp.Apply()
