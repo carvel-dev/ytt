@@ -117,7 +117,6 @@ func (pp DataValuesPreProcessing) typeAndCheck(dataValuesDoc *yamlmeta.Document)
 }
 
 func (pp DataValuesPreProcessing) extractDataValueDocs(dvFile *FileInLibrary) ([]*yamlmeta.Document, error) {
-	//libraryCtx := LibraryExecutionContext{Current: dvFile.Library, Root: NewRootLibrary(nil)}
 	libraryCtx := LibraryExecutionContext{Current: dvFile.Library, Root: pp.rootLibrary}
 
 	_, resultDocSet, err := pp.loader.EvalYAML(libraryCtx, dvFile.File)
