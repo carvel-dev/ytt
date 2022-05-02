@@ -210,6 +210,94 @@ data: #@ data.read("/funcs/data")`)
 	assert.Equal(t, expectedYAMLTplData, string(file.Bytes()))
 }
 
+func TestDataListRelativeToRootInDataValuesAndSchema(t *testing.T) {
+	yamlTplData := []byte(`
+#@ load("@ytt:data", "data")
+#@ load("@ytt:template", "template")
+_: #@ template.replace(data.values)
+`)
+
+	expectedYAMLTplData := `Files_in_root_schema:
+  /config.yml: /config.yml
+  /other: /other
+  /schema.yml: /schema.yml
+  /values.yml: /values.yml
+Files_in_schema:
+  config.yml: config.yml
+  other: other
+  schema.yml: schema.yml
+  values.yml: values.yml
+Files_in_root_values:
+- name: /config.yml
+- name: /other
+- name: /schema.yml
+- name: /values.yml
+Files_in_values:
+- name: config.yml
+- name: other
+- name: schema.yml
+- name: values.yml
+`
+
+	yamlSchemaData := []byte(`
+#@ load("@ytt:yaml", "yaml")
+#@ load("@ytt:data", "data")
+#@data/values-schema
+---
+
+#@ rootFiles = data.list("/")
+Files_in_root_schema:
+    #@ for/end file in rootFiles:
+    #@yaml/text-templated-strings
+    (@= file @): #@ file
+#@ files = data.list("")
+Files_in_schema:
+    #@ for/end file in files:
+    #@yaml/text-templated-strings
+    (@= file @): #@ file
+Files_in_root_values:
+- name: ""
+Files_in_values:
+- name: ""
+`)
+
+	yamlDataValuesData := []byte(`
+#@data/values
+---
+
+#@ load("@ytt:yaml", "yaml")
+#@ load("@ytt:data", "data")
+
+#@ rootFiles = data.list("/")
+Files_in_root_values:
+    #@ for/end file in rootFiles:
+    - name: #@ file
+#@ files = data.list("")
+Files_in_values:
+    #@ for/end file in files:
+    - name: #@ file`)
+
+	filesToProcess := files.NewSortedFiles([]*files.File{
+		files.MustNewFileFromSource(files.NewBytesSource("config.yml", yamlTplData)),
+		files.MustNewFileFromSource(files.NewBytesSource("other", []byte("lib1\ndata"))),
+		files.MustNewFileFromSource(files.NewBytesSource("schema.yml", yamlSchemaData)),
+		files.MustNewFileFromSource(files.NewBytesSource("values.yml", yamlDataValuesData)),
+	})
+
+	ui := ui.NewTTY(false)
+	opts := cmdtpl.NewOptions()
+
+	out := opts.RunWithFiles(cmdtpl.Input{Files: filesToProcess}, ui)
+
+	require.NoError(t, out.Err)
+	require.Len(t, out.Files, 1, "unexpected number of output files")
+
+	file := out.Files[0]
+
+	assert.Equal(t, "config.yml", file.RelativePath())
+	assert.Equal(t, expectedYAMLTplData, string(file.Bytes()))
+}
+
 func TestDataListRelativeToLibraryRootWithinALibrary(t *testing.T) {
 	yamlTplData := []byte(`
 #@ load("@lib1:funcs/funcs.lib.yml", "lib_data_list", "lib_data_read")
@@ -260,7 +348,7 @@ libdata2: #@ data.read("/other")
 	assert.Equal(t, expectedYAMLTplData, string(file.Bytes()))
 }
 
-func TestDataListRelativeToLibraryRootWithinALibraryDataValues(t *testing.T) {
+func TestDataListRelativeToLibraryRootWithinALibraryDataValuesAndSchema(t *testing.T) {
 	yamlTplData := []byte(`
 #@ load("@ytt:template", "template")
 #@ load("@ytt:library", "library")
@@ -268,29 +356,59 @@ func TestDataListRelativeToLibraryRootWithinALibraryDataValues(t *testing.T) {
 
 --- #@ template.replace(lib.eval())`)
 
-	expectedYAMLTplData := `Files_in_values_dir:
-- name: values.yml
-Files_in_values:
+	expectedYAMLTplData := `Files_in_root_schema:
+  /other: /other
+  /config.yml: /config.yml
+  /schema/schema.yml: /schema/schema.yml
+  /values/values.yml: /values/values.yml
+Files_in_schema:
+  schema.yml: schema.yml
+Files_in_root_values:
 - name: /other
 - name: /config.yml
+- name: /schema/schema.yml
 - name: /values/values.yml
+Files_in_values:
+- name: values.yml
 Files_in_template:
 - name: /other
 - name: /config.yml
+- name: /schema/schema.yml
 - name: /values/values.yml
 `
 
+	yamlSchemaData := []byte(`
+#@ load("@ytt:yaml", "yaml")
+#@ load("@ytt:data", "data")
+#@data/values-schema
+---
+
+#@ rootFiles = data.list("/")
+Files_in_root_schema:
+    #@ for/end file in rootFiles:
+    #@yaml/text-templated-strings
+    (@= file @): #@ file
+#@ files = data.list("")
+Files_in_schema:
+    #@ for/end file in files:
+    #@yaml/text-templated-strings
+    (@= file @): #@ file
+Files_in_root_values:
+- name: ""
+Files_in_values:
+- name: ""
+`)
 	yamlLibDataValues := []byte(`#@data/values
 ---
 #@ load("@ytt:yaml", "yaml")
 #@ load("@ytt:data", "data")
 
 #@ file = data.list("")
-Files_in_values_dir:
+Files_in_values:
     #@ for/end file in file:
     - name: #@ file
 #@ rootFiles = data.list("/")
-Files_in_values:
+Files_in_root_values:
     #@ for/end file in rootFiles:
     - name: #@ file
 `)
@@ -308,6 +426,7 @@ Files_in_template:
 	filesToProcess := files.NewSortedFiles([]*files.File{
 		files.MustNewFileFromSource(files.NewBytesSource("tpl.yml", yamlTplData)),
 		files.MustNewFileFromSource(files.NewBytesSource("_ytt_lib/lib/other", []byte("lib1\ndata"))),
+		files.MustNewFileFromSource(files.NewBytesSource("_ytt_lib/lib/schema/schema.yml", yamlSchemaData)),
 		files.MustNewFileFromSource(files.NewBytesSource("_ytt_lib/lib/values/values.yml", yamlLibDataValues)),
 		files.MustNewFileFromSource(files.NewBytesSource("_ytt_lib/lib/config.yml", yamlLibConfigData)),
 	})
@@ -323,68 +442,6 @@ Files_in_template:
 	file := out.Files[0]
 
 	assert.Equal(t, "tpl.yml", file.RelativePath())
-	assert.Equal(t, expectedYAMLTplData, string(file.Bytes()))
-}
-
-func TestDataListRelativeToRootWithinDataValues(t *testing.T) {
-	yamlTplData := []byte(`
-#@ load("@ytt:data", "data")
-#@ load("@ytt:template", "template")
-_: #@ template.replace(data.values)
----
-#@ files = data.list("/")
-Files_in_template:
-    #@ for/end file in files:
-    - name: #@ file`)
-
-	expectedYAMLTplData := `Files_in_root_values:
-- name: /config.yml
-- name: /other
-- name: /values.yml
-Files_in_values:
-- name: config.yml
-- name: other
-- name: values.yml
----
-Files_in_template:
-- name: /config.yml
-- name: /other
-- name: /values.yml
-`
-
-	yamlDataValuesData := []byte(`
-#@data/values
----
-
-#@ load("@ytt:yaml", "yaml")
-#@ load("@ytt:data", "data")
-
-#@ rootFiles = data.list("/")
-Files_in_root_values:
-    #@ for/end file in rootFiles:
-    - name: #@ file
-#@ files = data.list("")
-Files_in_values:
-    #@ for/end file in files:
-    - name: #@ file`)
-
-	filesToProcess := files.NewSortedFiles([]*files.File{
-		files.MustNewFileFromSource(files.NewBytesSource("config.yml", yamlTplData)),
-		files.MustNewFileFromSource(files.NewBytesSource("other", []byte("lib1\ndata"))),
-		files.MustNewFileFromSource(files.NewBytesSource("values.yml", yamlDataValuesData)),
-	})
-
-	ui := ui.NewTTY(false)
-	opts := cmdtpl.NewOptions()
-
-	out := opts.RunWithFiles(cmdtpl.Input{Files: filesToProcess}, ui)
-
-	require.NoError(t, out.Err)
-	require.Len(t, out.Files, 1, "unexpected number of output files")
-
-	file := out.Files[0]
-
-	assert.Equal(t, "config.yml", file.RelativePath())
 	assert.Equal(t, expectedYAMLTplData, string(file.Bytes()))
 }
 

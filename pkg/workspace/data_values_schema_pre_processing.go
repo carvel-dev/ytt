@@ -18,6 +18,7 @@ type DataValuesSchemaPreProcessing struct {
 	schemaFiles    []*FileInLibrary
 	schemaOverlays []*datavalues.SchemaEnvelope
 	loader         *TemplateLoader
+	rootLibrary    *Library
 }
 
 // Apply executes the pre-processing of schema for data values for all libraries.
@@ -97,7 +98,7 @@ func (pp DataValuesSchemaPreProcessing) collectSchemaDocs(schemaFiles []*FileInL
 }
 
 func (pp DataValuesSchemaPreProcessing) extractSchemaDocs(schemaFile *FileInLibrary) ([]*yamlmeta.Document, error) {
-	libraryCtx := LibraryExecutionContext{Current: schemaFile.Library, Root: NewRootLibrary(nil)}
+	libraryCtx := LibraryExecutionContext{Current: schemaFile.Library, Root: pp.rootLibrary}
 
 	_, resultDocSet, err := pp.loader.EvalYAML(libraryCtx, schemaFile.File)
 	if err != nil {
