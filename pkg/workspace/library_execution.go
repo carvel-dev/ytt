@@ -62,6 +62,7 @@ func (ll *LibraryExecution) Schemas(overlays []*datavalues.SchemaEnvelope) (*dat
 		schemaFiles:    files,
 		schemaOverlays: overlays,
 		loader:         loader,
+		rootLibrary:    ll.libraryCtx.Root,
 	}
 
 	return spp.Apply()
@@ -86,6 +87,7 @@ func (ll *LibraryExecution) Values(valuesOverlays []*datavalues.Envelope, schema
 		valuesOverlays: valuesOverlays,
 		schema:         schema,
 		loader:         loader,
+		rootLibrary:    ll.libraryCtx.Root,
 	}
 
 	values, libValues, err := dvpp.Apply()

@@ -20,6 +20,7 @@ type DataValuesPreProcessing struct {
 	valuesOverlays []*datavalues.Envelope
 	schema         *datavalues.Schema
 	loader         *TemplateLoader
+	rootLibrary    *Library
 }
 
 // Apply executes the pre-processing of data values for all libraries.
@@ -116,7 +117,7 @@ func (pp DataValuesPreProcessing) typeAndCheck(dataValuesDoc *yamlmeta.Document)
 }
 
 func (pp DataValuesPreProcessing) extractDataValueDocs(dvFile *FileInLibrary) ([]*yamlmeta.Document, error) {
-	libraryCtx := LibraryExecutionContext{Current: dvFile.Library, Root: NewRootLibrary(nil)}
+	libraryCtx := LibraryExecutionContext{Current: dvFile.Library, Root: pp.rootLibrary}
 
 	_, resultDocSet, err := pp.loader.EvalYAML(libraryCtx, dvFile.File)
 	if err != nil {
