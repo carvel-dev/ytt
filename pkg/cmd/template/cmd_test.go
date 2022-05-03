@@ -4,14 +4,27 @@
 package template_test
 
 import (
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	cmdtpl "github.com/vmware-tanzu/carvel-ytt/pkg/cmd/template"
 	"github.com/vmware-tanzu/carvel-ytt/pkg/cmd/ui"
+	"github.com/vmware-tanzu/carvel-ytt/pkg/feature"
 	"github.com/vmware-tanzu/carvel-ytt/pkg/files"
 )
+
+// TestMain is invoked when any tests are run in this package, *instead of* those tests being run directly.
+// This allows for setup to occur before *any* test is run.
+func TestMain(m *testing.M) {
+	// Enable experimental code
+	feature.Flags().Enable(feature.Validations)
+
+	exitVal := m.Run() // execute the specified tests
+
+	os.Exit(exitVal) // required in order to properly report the error level when tests fail.
+}
 
 func TestLoad(t *testing.T) {
 	yamlTplData := []byte(`
