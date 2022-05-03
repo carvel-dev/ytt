@@ -29,7 +29,8 @@ func main() {
 }
 
 func enableExperimentalFeatures() {
-	if experiments, isSet := os.LookupEnv("YTTEXPERIMENTS"); isSet {
+	if experiments, isSet := os.LookupEnv("YTTEXPERIMENTS"); isSet && experiments != "" {
+		// if we didn't ignore empty string, we'd attempt to Enable(""); that would panic (rather than ignore).
 		for _, experiment := range strings.Split(experiments, ",") {
 			feature.Flags().Enable(experiment)
 			fmt.Fprintf(os.Stderr, "Experimental feature %q enabled.\n", experiment)

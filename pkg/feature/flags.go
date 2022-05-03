@@ -24,11 +24,12 @@ import "fmt"
 
 // Names of features that can be toggled
 const (
-	Noop = "noop"
+	Noop        = "noop"
+	Validations = "validations"
 )
 
 // allFeatures is the total list of features. It must contain all the constants defined, above.
-var allFeatures = []string{Noop}
+var allFeatures = []string{Noop, Validations}
 
 // Flags returns the singleton instance of feature flags.
 func Flags() *Flagset {
