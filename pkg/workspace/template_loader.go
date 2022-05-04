@@ -28,6 +28,7 @@ type TemplateLoader struct {
 	libraryExecFactory *LibraryExecutionFactory
 }
 
+// TemplateLoaderOpts holds configuration options that adjust how each individual template is executed/evaluated.
 type TemplateLoaderOpts struct {
 	IgnoreUnknownComments   bool
 	ImplicitMapKeyOverrides bool
@@ -35,6 +36,8 @@ type TemplateLoaderOpts struct {
 	SchemaEnabled           bool
 }
 
+// TemplateLoaderOptsOverrides hold potential overriding values to be merged over a TemplateLoaderOpts.
+// Only non-null values are merged.
 type TemplateLoaderOptsOverrides struct {
 	IgnoreUnknownComments   *bool
 	ImplicitMapKeyOverrides *bool

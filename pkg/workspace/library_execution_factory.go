@@ -34,6 +34,10 @@ func (f *LibraryExecutionFactory) WithTemplateLoaderOptsOverrides(overrides Temp
 
 // ThatSkipsDataValuesValidations produces a new LibraryExecutionFactory identical to this one, except it might also
 // skip running validation rules over Data Values.
+//
+// If a LibraryExecutionFactory has already been configured to skip validations, calling this method with `true` has
+// no effect. This stems from the assumption that the downstream user is the most informed whether validations ought to
+// be run.
 func (f *LibraryExecutionFactory) ThatSkipsDataValuesValidations(skipDataValuesValidation bool) *LibraryExecutionFactory {
 	return NewLibraryExecutionFactory(f.ui, f.templateLoaderOpts, f.skipDataValuesValidation || skipDataValuesValidation)
 }
