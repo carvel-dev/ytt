@@ -15,6 +15,9 @@ import (
 	"github.com/vmware-tanzu/carvel-ytt/pkg/yamlmeta"
 )
 
+// Options both holds all settings for and implements the "template" command.
+//
+// For proper initialization, always use NewOptions().
 type Options struct {
 	IgnoreUnknownComments   bool
 	ImplicitMapKeyOverrides bool
@@ -51,7 +54,7 @@ type FileSource interface {
 var _ []FileSource = []FileSource{&BulkFilesSource{}, &RegularFilesSource{}}
 
 func NewOptions() *Options {
-	return &Options{}
+	return &Options{DataValuesFlags: DataValuesFlags{Validate: true}}
 }
 
 // BindFlags registers template flags for template command.
@@ -112,11 +115,14 @@ func (o *Options) RunWithFiles(in Input, ui ui.UI) Output {
 		return Output{Err: err}
 	}
 
-	libraryExecutionFactory := workspace.NewLibraryExecutionFactory(ui, workspace.TemplateLoaderOpts{
-		IgnoreUnknownComments:   o.IgnoreUnknownComments,
-		ImplicitMapKeyOverrides: o.ImplicitMapKeyOverrides,
-		StrictYAML:              o.StrictYAML,
-	})
+	libraryExecutionFactory := workspace.NewLibraryExecutionFactory(
+		ui,
+		workspace.TemplateLoaderOpts{
+			IgnoreUnknownComments:   o.IgnoreUnknownComments,
+			ImplicitMapKeyOverrides: o.ImplicitMapKeyOverrides,
+			StrictYAML:              o.StrictYAML,
+		},
+		!o.DataValuesFlags.Validate)
 
 	libraryCtx := workspace.LibraryExecutionContext{Current: rootLibrary, Root: rootLibrary}
 	rootLibraryExecution := libraryExecutionFactory.New(libraryCtx)

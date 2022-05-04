@@ -17,10 +17,11 @@ import (
 )
 
 type LibraryExecution struct {
-	libraryCtx         LibraryExecutionContext
-	ui                 ui.UI
-	templateLoaderOpts TemplateLoaderOpts
-	libraryExecFactory *LibraryExecutionFactory
+	libraryCtx               LibraryExecutionContext
+	ui                       ui.UI
+	templateLoaderOpts       TemplateLoaderOpts
+	libraryExecFactory       *LibraryExecutionFactory
+	skipDataValuesValidation bool
 }
 
 type EvalResult struct {
@@ -34,15 +35,14 @@ type EvalExport struct {
 	Symbols starlark.StringDict
 }
 
-func NewLibraryExecution(libraryCtx LibraryExecutionContext,
-	ui ui.UI, templateLoaderOpts TemplateLoaderOpts,
-	libraryExecFactory *LibraryExecutionFactory) *LibraryExecution {
+func NewLibraryExecution(libraryCtx LibraryExecutionContext, ui ui.UI, templateLoaderOpts TemplateLoaderOpts, libraryExecFactory *LibraryExecutionFactory, skipDataValuesValidation bool) *LibraryExecution {
 
 	return &LibraryExecution{
-		libraryCtx:         libraryCtx,
-		ui:                 ui,
-		templateLoaderOpts: templateLoaderOpts,
-		libraryExecFactory: libraryExecFactory,
+		libraryCtx:               libraryCtx,
+		ui:                       ui,
+		templateLoaderOpts:       templateLoaderOpts,
+		libraryExecFactory:       libraryExecFactory,
+		skipDataValuesValidation: skipDataValuesValidation,
 	}
 }
 
@@ -95,7 +95,10 @@ func (ll *LibraryExecution) Values(valuesOverlays []*datavalues.Envelope, schema
 		return nil, nil, err
 	}
 
-	return values, libValues, ll.validateValues(values)
+	if !ll.skipDataValuesValidation {
+		err = ll.validateValues(values)
+	}
+	return values, libValues, err
 }
 
 // validateValues runs validations from @assert/validate annotations in Data Values for the current library.
