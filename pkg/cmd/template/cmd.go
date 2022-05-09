@@ -15,9 +15,10 @@ import (
 	"github.com/vmware-tanzu/carvel-ytt/pkg/yamlmeta"
 )
 
-// Options both holds all settings for and implements the "template" command.
+// Options both contains the configuration for a "template" command AND the
+// top-level implementation of that command.
 //
-// For proper initialization, always use NewOptions().
+// For most intents and purposes, RunWithFiles() is the entrypoint.
 type Options struct {
 	IgnoreUnknownComments   bool
 	ImplicitMapKeyOverrides bool
