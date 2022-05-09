@@ -8,10 +8,10 @@ import (
 	"strings"
 
 	"github.com/k14s/starlark-go/starlark"
-	"github.com/vmware-tanzu/carvel-ytt/pkg/assertions"
 	"github.com/vmware-tanzu/carvel-ytt/pkg/cmd/ui"
 	"github.com/vmware-tanzu/carvel-ytt/pkg/files"
 	"github.com/vmware-tanzu/carvel-ytt/pkg/template"
+	"github.com/vmware-tanzu/carvel-ytt/pkg/validations"
 	"github.com/vmware-tanzu/carvel-ytt/pkg/workspace/datavalues"
 	"github.com/vmware-tanzu/carvel-ytt/pkg/yamlmeta"
 )
@@ -103,7 +103,7 @@ func (ll *LibraryExecution) Values(valuesOverlays []*datavalues.Envelope, schema
 // Returns an error if the arguments to an @assert/validate are invalid,
 // otherwise, checks the AssertCheck for violations, and returns nil if there are no violations.
 func (ll *LibraryExecution) validateValues(values *datavalues.Envelope) error {
-	assertCheck, err := assertions.ProcessAndRunValidations(values.Doc, "assert-data-values")
+	assertCheck, err := validations.ProcessAndRunValidations(values.Doc, "assert-data-values")
 	if err != nil {
 		return err
 	}

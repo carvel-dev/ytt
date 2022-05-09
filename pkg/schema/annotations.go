@@ -11,9 +11,11 @@ import (
 	"github.com/vmware-tanzu/carvel-ytt/pkg/filepos"
 	"github.com/vmware-tanzu/carvel-ytt/pkg/template"
 	"github.com/vmware-tanzu/carvel-ytt/pkg/template/core"
+	"github.com/vmware-tanzu/carvel-ytt/pkg/validations"
 	"github.com/vmware-tanzu/carvel-ytt/pkg/yamlmeta"
 )
 
+// Declare @schema/... annotation names
 const (
 	AnnotationNullable     template.AnnotationName = "schema/nullable"
 	AnnotationType         template.AnnotationName = "schema/type"
@@ -23,6 +25,7 @@ const (
 	AnnotationExamples     template.AnnotationName = "schema/examples"
 	AnnotationDeprecated   template.AnnotationName = "schema/deprecated"
 	TypeAnnotationKwargAny string                  = "any"
+	AnnotationValidation   template.AnnotationName = "schema/validation"
 )
 
 type Annotation interface {
@@ -69,6 +72,12 @@ type DeprecatedAnnotation struct {
 type ExampleAnnotation struct {
 	examples []Example
 	pos      *filepos.Position
+}
+
+// ValidationAnnotation is a wrapper for validations provided via @schema/validation annotation
+type ValidationAnnotation struct {
+	rules []validations.Rule
+	pos   *filepos.Position
 }
 
 // Example contains a yaml example and its description
@@ -402,6 +411,41 @@ func NewExampleAnnotation(ann template.NodeAnnotation, pos *filepos.Position) (*
 	return &ExampleAnnotation{examples, ann.Position}, nil
 }
 
+// NewValidationAnnotation checks the argument provided via @schema/validation annotation, and returns wrapper for the rules defined
+func NewValidationAnnotation(ann template.NodeAnnotation, pos *filepos.Position) (*ValidationAnnotation, error) {
+	var rules []validations.Rule
+
+	if len(ann.Kwargs) != 0 {
+		return nil, fmt.Errorf("Invalid @%s annotation - expected @%s to have 2-tuple as argument(s), but found keyword argument (by %s)", AnnotationValidation, AnnotationValidation, ann.Position.AsCompactString())
+	}
+	if len(ann.Args) == 0 {
+		return nil, fmt.Errorf("Invalid @%s annotation - expected @%s to have 2-tuple as argument(s), but found no arguments (by %s)", AnnotationValidation, AnnotationValidation, ann.Position.AsCompactString())
+	}
+	for _, arg := range ann.Args {
+		ruleTuple, ok := arg.(starlark.Tuple)
+		if !ok {
+			return nil, fmt.Errorf("Invalid @%s annotation - expected @%s to have 2-tuple as argument(s), but found: %s (by %s)", AnnotationValidation, AnnotationValidation, arg.String(), ann.Position.AsCompactString())
+		}
+		if len(ruleTuple) != 2 {
+			return nil, fmt.Errorf("Invalid @%s annotation - expected @%s 2-tuple, but found tuple with length %v (by %s)", AnnotationValidation, AnnotationValidation, len(ruleTuple), ann.Position.AsCompactString())
+		}
+		message, ok := ruleTuple[0].(starlark.String)
+		if !ok {
+			return nil, fmt.Errorf("Invalid @%s annotation - expected first item in the 2-tuple to be a string describing a valid value, but was %s (at %s)", AnnotationValidation, ruleTuple[0].Type(), ann.Position.AsCompactString())
+		}
+		lambda, ok := ruleTuple[1].(starlark.Callable)
+		if !ok {
+			return nil, fmt.Errorf("Invalid @%s annotation - expected second item in the 2-tuple to be an assertion function, but was %s (at %s)", AnnotationValidation, ruleTuple[1].Type(), ann.Position.AsCompactString())
+		}
+		rules = append(rules, validations.Rule{
+			Msg:       message.GoString(),
+			Assertion: lambda,
+			Position:  ann.Position,
+		})
+	}
+	return &ValidationAnnotation{rules, ann.Position}, nil
+}
+
 // NewTypeFromAnn returns type information given by annotation.
 func (t *TypeAnnotation) NewTypeFromAnn() (Type, error) {
 	if t.any {
@@ -444,6 +488,11 @@ func (t *TitleAnnotation) NewTypeFromAnn() (Type, error) {
 	return nil, nil
 }
 
+// NewTypeFromAnn returns type information given by annotation.
+func (v *ValidationAnnotation) NewTypeFromAnn() (Type, error) {
+	return nil, nil
+}
+
 // GetPosition returns position of the source comment used to create this annotation.
 func (n *NullableAnnotation) GetPosition() *filepos.Position {
 	return n.pos
@@ -477,6 +526,16 @@ func (e *ExampleAnnotation) GetPosition() *filepos.Position {
 // GetPosition returns position of the source comment used to create this annotation.
 func (t *TitleAnnotation) GetPosition() *filepos.Position {
 	return t.pos
+}
+
+// GetPosition returns position of the source comment used to create this annotation.
+func (v *ValidationAnnotation) GetPosition() *filepos.Position {
+	return nil
+}
+
+// GetRules gets the validation rules from @schema/validation annotation
+func (v *ValidationAnnotation) GetRules() []validations.Rule {
+	return v.rules
 }
 
 func (t *TypeAnnotation) IsAny() bool {
@@ -609,6 +668,18 @@ func processOptionalAnnotation(node yamlmeta.Node, optionalAnnotation template.A
 		}
 	}
 
+	return nil, nil
+}
+
+func processValidationAnnotation(node yamlmeta.Node) (*ValidationAnnotation, error) {
+	nodeAnnotations := template.NewAnnotations(node)
+	if nodeAnnotations.Has(AnnotationValidation) {
+		validationAnn, err := NewValidationAnnotation(nodeAnnotations[AnnotationValidation], node.GetPosition())
+		if err != nil {
+			return nil, err
+		}
+		return validationAnn, nil
+	}
 	return nil, nil
 }
 
