@@ -6,8 +6,8 @@ package schema
 import (
 	"fmt"
 
-	"github.com/vmware-tanzu/carvel-ytt/pkg/assertions"
 	"github.com/vmware-tanzu/carvel-ytt/pkg/filepos"
+	"github.com/vmware-tanzu/carvel-ytt/pkg/validations"
 	"github.com/vmware-tanzu/carvel-ytt/pkg/yamlmeta"
 )
 
@@ -29,7 +29,7 @@ type Type interface {
 	SetExamples([]Example)
 	IsDeprecated() (bool, string)
 	SetDeprecated(bool, string)
-	GetValidations() []assertions.Rule
+	GetValidations() []validations.Rule
 	String() string
 }
 
@@ -47,7 +47,7 @@ type DocumentType struct {
 	ValueType    Type // typically one of: MapType, ArrayType, ScalarType
 	Position     *filepos.Position
 	defaultValue interface{}
-	validations  []assertions.Rule
+	validations  []validations.Rule
 }
 
 type MapType struct {
@@ -61,7 +61,7 @@ type MapItemType struct {
 	ValueType    Type
 	Position     *filepos.Position
 	defaultValue interface{}
-	validations  []assertions.Rule
+	validations  []validations.Rule
 }
 
 type ArrayType struct {
@@ -75,7 +75,7 @@ type ArrayItemType struct {
 	ValueType    Type
 	Position     *filepos.Position
 	defaultValue interface{}
-	validations  []assertions.Rule
+	validations  []validations.Rule
 }
 
 type ScalarType struct {
@@ -577,42 +577,42 @@ func (n *NullType) SetDeprecated(deprecated bool, notice string) {
 }
 
 // GetValidations provides validations from @schema/validation for a node
-func (t *DocumentType) GetValidations() []assertions.Rule {
+func (t *DocumentType) GetValidations() []validations.Rule {
 	return t.validations
 }
 
 // GetValidations provides validations from @schema/validation for a node
-func (m *MapType) GetValidations() []assertions.Rule {
+func (m *MapType) GetValidations() []validations.Rule {
 	return nil
 }
 
 // GetValidations provides validations from @schema/validation for a node
-func (t *MapItemType) GetValidations() []assertions.Rule {
+func (t *MapItemType) GetValidations() []validations.Rule {
 	return t.validations
 }
 
 // GetValidations provides validations from @schema/validation for a node
-func (a *ArrayType) GetValidations() []assertions.Rule {
+func (a *ArrayType) GetValidations() []validations.Rule {
 	return nil
 }
 
 // GetValidations provides validations from @schema/validation for a node
-func (a *ArrayItemType) GetValidations() []assertions.Rule {
+func (a *ArrayItemType) GetValidations() []validations.Rule {
 	return a.validations
 }
 
 // GetValidations provides validations from @schema/validation for a node
-func (s *ScalarType) GetValidations() []assertions.Rule {
+func (s *ScalarType) GetValidations() []validations.Rule {
 	return nil
 }
 
 // GetValidations provides validations from @schema/validation for a node
-func (a AnyType) GetValidations() []assertions.Rule {
+func (a AnyType) GetValidations() []validations.Rule {
 	return nil
 }
 
 // GetValidations provides validations from @schema/validation for a node
-func (n NullType) GetValidations() []assertions.Rule {
+func (n NullType) GetValidations() []validations.Rule {
 	return nil
 }
 

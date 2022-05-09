@@ -1,7 +1,7 @@
 // Copyright 2022 VMware, Inc.
 // SPDX-License-Identifier: Apache-2.0
 
-package assertions
+package validations
 
 import (
 	"fmt"
@@ -84,7 +84,7 @@ func (a *convertAssertAnnsToValidations) Visit(node yamlmeta.Node) error {
 			return syntaxErr
 		}
 		// store rules in node's validations meta without overriding any existing rules
-		AddValidations(node, rules)
+		AddRules(node, rules)
 	}
 
 	return nil
@@ -134,13 +134,13 @@ func newValidationRunner(threadName string) *validationRunner {
 	return &validationRunner{thread: &starlark.Thread{Name: threadName}, chk: AssertCheck{[]error{}}}
 }
 
-// Visit if `node` is has validations in its meta.
+// Visit if `node` has validations in its meta.
 // Runs the validation Rules, any violations from running the assertions are collected.
 //
 // This visitor stores error(violations) in the validationRunner and returns nil.
 func (a *validationRunner) Visit(node yamlmeta.Node) error {
 	// get rules in node's meta
-	rules := GetValidations(node)
+	rules := GetRules(node)
 	if rules == nil {
 		return nil
 	}

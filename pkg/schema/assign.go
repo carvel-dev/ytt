@@ -6,7 +6,7 @@ package schema
 import (
 	"fmt"
 
-	"github.com/vmware-tanzu/carvel-ytt/pkg/assertions"
+	"github.com/vmware-tanzu/carvel-ytt/pkg/validations"
 	"github.com/vmware-tanzu/carvel-ytt/pkg/yamlmeta"
 )
 
@@ -169,7 +169,7 @@ type AssignSchemaValidations struct{}
 func (AssignSchemaValidations) Visit(node yamlmeta.Node) error {
 	if schemaType := GetType(node); schemaType != nil {
 		if rules := schemaType.GetValidations(); rules != nil {
-			assertions.SetValidations(node, rules)
+			validations.SetRules(node, rules)
 		}
 	}
 	return nil

@@ -8,10 +8,10 @@ import (
 	"strings"
 
 	"github.com/k14s/starlark-go/starlark"
-	"github.com/vmware-tanzu/carvel-ytt/pkg/assertions"
 	"github.com/vmware-tanzu/carvel-ytt/pkg/filepos"
 	"github.com/vmware-tanzu/carvel-ytt/pkg/template"
 	"github.com/vmware-tanzu/carvel-ytt/pkg/template/core"
+	"github.com/vmware-tanzu/carvel-ytt/pkg/validations"
 	"github.com/vmware-tanzu/carvel-ytt/pkg/yamlmeta"
 )
 
@@ -76,7 +76,7 @@ type ExampleAnnotation struct {
 
 // ValidationAnnotation is a wrapper for validations provided via @schema/validation annotation
 type ValidationAnnotation struct {
-	rules []assertions.Rule
+	rules []validations.Rule
 	pos   *filepos.Position
 }
 
@@ -413,7 +413,7 @@ func NewExampleAnnotation(ann template.NodeAnnotation, pos *filepos.Position) (*
 
 // NewValidationAnnotation checks the argument provided via @schema/validation annotation, and returns wrapper for the rules defined
 func NewValidationAnnotation(ann template.NodeAnnotation, pos *filepos.Position) (*ValidationAnnotation, error) {
-	var rules []assertions.Rule
+	var rules []validations.Rule
 
 	if len(ann.Kwargs) != 0 {
 		return nil, fmt.Errorf("Invalid @%s annotation - expected @%s to have 2-tuple as argument(s), but found keyword argument (by %s)", AnnotationValidation, AnnotationValidation, ann.Position.AsCompactString())
@@ -437,7 +437,7 @@ func NewValidationAnnotation(ann template.NodeAnnotation, pos *filepos.Position)
 		if !ok {
 			return nil, fmt.Errorf("Invalid @%s annotation - expected second item in the 2-tuple to be an assertion function, but was %s (at %s)", AnnotationValidation, ruleTuple[1].Type(), ann.Position.AsCompactString())
 		}
-		rules = append(rules, assertions.Rule{
+		rules = append(rules, validations.Rule{
 			Msg:       message.GoString(),
 			Assertion: lambda,
 			Position:  ann.Position,
@@ -534,7 +534,7 @@ func (v *ValidationAnnotation) GetPosition() *filepos.Position {
 }
 
 // GetRules gets the validation rules from @schema/validation annotation
-func (v *ValidationAnnotation) GetRules() []assertions.Rule {
+func (v *ValidationAnnotation) GetRules() []validations.Rule {
 	return v.rules
 }
 
