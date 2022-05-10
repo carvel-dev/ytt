@@ -11,15 +11,15 @@ import (
 	"github.com/stretchr/testify/require"
 	cmdtpl "github.com/vmware-tanzu/carvel-ytt/pkg/cmd/template"
 	"github.com/vmware-tanzu/carvel-ytt/pkg/cmd/ui"
-	"github.com/vmware-tanzu/carvel-ytt/pkg/feature"
+	"github.com/vmware-tanzu/carvel-ytt/pkg/experiments"
 	"github.com/vmware-tanzu/carvel-ytt/pkg/files"
 )
 
 // TestMain is invoked when any tests are run in this package, *instead of* those tests being run directly.
 // This allows for setup to occur before *any* test is run.
 func TestMain(m *testing.M) {
-	// Enable experimental code
-	feature.Flags().Enable(feature.Validations)
+	experiments.ResetForTesting()
+	os.Setenv(experiments.Env, "validations")
 
 	exitVal := m.Run() // execute the specified tests
 

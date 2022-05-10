@@ -7,7 +7,7 @@ import (
 	"fmt"
 
 	"github.com/k14s/starlark-go/starlark"
-	"github.com/vmware-tanzu/carvel-ytt/pkg/feature"
+	"github.com/vmware-tanzu/carvel-ytt/pkg/experiments"
 	"github.com/vmware-tanzu/carvel-ytt/pkg/template"
 	"github.com/vmware-tanzu/carvel-ytt/pkg/yamlmeta"
 )
@@ -24,7 +24,7 @@ const (
 // When a Node's value is invalid, the errors are collected and returned in an AssertCheck.
 // Otherwise, returns empty AssertCheck and nil error.
 func ProcessAndRunValidations(n yamlmeta.Node, threadName string) (AssertCheck, error) {
-	if !feature.Flags().IsEnabled(feature.Validations) {
+	if !experiments.IsValidationsEnabled() {
 		return AssertCheck{}, nil
 	}
 	if n == nil {
