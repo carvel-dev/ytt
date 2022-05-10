@@ -11,10 +11,11 @@ import (
 )
 
 func TestAssertValidateOnDataValuesSucceeds(t *testing.T) {
-	t.Run("when validations pass using --data-values-inspect", func(t *testing.T) {
-		opts := cmdtpl.NewOptions()
-		opts.DataValuesFlags.Inspect = true
-		dataValuesYAML := `#@ load("@ytt:assert", "assert")
+	t.Run("when validations pass", func(t *testing.T) {
+		t.Run("on all Node types", func(t *testing.T) {
+			opts := cmdtpl.NewOptions()
+			opts.DataValuesFlags.Inspect = true
+			dataValuesYAML := `#@ load("@ytt:assert", "assert")
 
 #@data/values
 #@assert/validate ("a non empty data values", lambda v: True if v else assert.fail("data values was empty"))
@@ -45,7 +46,7 @@ my_map:
   - null
 `
 
-		expected := `my_map:
+			expected := `my_map:
   string: server.example.com
   int: 54321
   float: 2.3
@@ -59,11 +60,69 @@ my_map:
   - null
 `
 
-		filesToProcess := files.NewSortedFiles([]*files.File{
-			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(dataValuesYAML))),
-		})
+			filesToProcess := files.NewSortedFiles([]*files.File{
+				files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(dataValuesYAML))),
+			})
 
-		assertSucceedsDocSet(t, filesToProcess, expected, opts)
+			assertSucceedsDocSet(t, filesToProcess, expected, opts)
+		})
+		t.Run("using the when kwarg", func(t *testing.T) {
+			opts := cmdtpl.NewOptions()
+			opts.DataValuesFlags.Inspect = true
+			dataValuesYAML := `#@data/values
+#@ def failAssert(v):
+#@ return False
+#@ end
+
+#@ def skip(v):
+#@ return False
+#@ end
+---
+#@assert/validate ("validation that always fails", failAssert), when=skip
+string: "example"
+array:
+#@assert/validate ("validation that always fails", failAssert), when=skip
+-  1
+`
+
+			expected := `string: example
+array:
+- 1
+`
+
+			filesToProcess := files.NewSortedFiles([]*files.File{
+				files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(dataValuesYAML))),
+			})
+
+			assertSucceedsDocSet(t, filesToProcess, expected, opts)
+		})
+		t.Run("using the when_null_skip kwarg", func(t *testing.T) {
+			opts := cmdtpl.NewOptions()
+			opts.DataValuesFlags.Inspect = true
+			dataValuesYAML := `#@data/values
+#@ def failAssert(v):
+#@ return False
+#@ end
+
+---
+#@assert/validate ("validation that always fails", failAssert), when_null_skip=True
+string: null
+array:
+#@assert/validate ("validation that always fails", failAssert), when_null_skip=True
+-  null
+`
+
+			expected := `string: null
+array:
+- null
+`
+
+			filesToProcess := files.NewSortedFiles([]*files.File{
+				files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(dataValuesYAML))),
+			})
+
+			assertSucceedsDocSet(t, filesToProcess, expected, opts)
+		})
 	})
 	t.Run("when validations on library data values pass", func(t *testing.T) {
 		opts := cmdtpl.NewOptions()
@@ -128,7 +187,7 @@ func TestAssertValidateOnDataValuesFails(t *testing.T) {
 foo: bar
 `
 
-			expectedErr := `Invalid @assert/validate annotation - expected @assert/validate to have 2-tuple as argument(s), but found no arguments (by schema.yml:3)`
+			expectedErr := `Invalid @assert/validate annotation - expected annotation to have 2-tuple as argument(s), but found no arguments (by schema.yml:3)`
 
 			filesToProcess := files.NewSortedFiles([]*files.File{
 				files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(dataValuesYAML))),
@@ -144,7 +203,7 @@ foo: bar
 foo: bar
 `
 
-			expectedErr := `Invalid @assert/validate annotation - expected @assert/validate to have 2-tuple as argument(s), but found: "string" (by schema.yml:3)`
+			expectedErr := `Invalid @assert/validate annotation - expected annotation to have 2-tuple as argument(s), but found: "string" (by schema.yml:3)`
 
 			filesToProcess := files.NewSortedFiles([]*files.File{
 				files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(dataValuesYAML))),
@@ -160,7 +219,7 @@ foo: bar
 foo: bar
 `
 
-			expectedErr := `Invalid @assert/validate annotation - expected @assert/validate 2-tuple, but found tuple with length 0 (by schema.yml:3)`
+			expectedErr := `Invalid @assert/validate annotation - expected 2-tuple, but found tuple with length 0 (by schema.yml:3)`
 
 			filesToProcess := files.NewSortedFiles([]*files.File{
 				files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(dataValuesYAML))),
@@ -168,7 +227,7 @@ foo: bar
 
 			assertFails(t, filesToProcess, expectedErr, opts)
 		})
-		t.Run("has incorrect number of args in a validation", func(t *testing.T) {
+		t.Run("has incorrect number of args in a rule", func(t *testing.T) {
 			opts := cmdtpl.NewOptions()
 			dataValuesYAML := `#@data/values
 ---
@@ -176,7 +235,7 @@ foo: bar
 foo: bar
 `
 
-			expectedErr := `Invalid @assert/validate annotation - expected @assert/validate 2-tuple, but found tuple with length 1 (by schema.yml:3)`
+			expectedErr := `Invalid @assert/validate annotation - expected 2-tuple, but found tuple with length 1 (by schema.yml:3)`
 
 			filesToProcess := files.NewSortedFiles([]*files.File{
 				files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(dataValuesYAML))),
@@ -189,7 +248,7 @@ foo: bar
 #@assert/validate ("some validation", lambda v: v, "a message if valid", "a message if fail")
 foo: bar
 `
-			expectedErr = `Invalid @assert/validate annotation - expected @assert/validate 2-tuple, but found tuple with length 4 (by schema.yml:3)`
+			expectedErr = `Invalid @assert/validate annotation - expected 2-tuple, but found tuple with length 4 (by schema.yml:3)`
 
 			filesToProcess = files.NewSortedFiles([]*files.File{
 				files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(dataValuesYAML2))),
@@ -197,22 +256,6 @@ foo: bar
 
 			assertFails(t, filesToProcess, expectedErr, opts)
 
-		})
-		t.Run("is a key=value pair", func(t *testing.T) {
-			opts := cmdtpl.NewOptions()
-			dataValuesYAML := `#@data/values
----
-#@assert/validate foo=True
-foo: bar
-`
-
-			expectedErr := `Invalid @assert/validate annotation - expected @assert/validate to have 2-tuple as argument(s), but found keyword argument (by schema.yml:3)`
-
-			filesToProcess := files.NewSortedFiles([]*files.File{
-				files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(dataValuesYAML))),
-			})
-
-			assertFails(t, filesToProcess, expectedErr, opts)
 		})
 		t.Run("has incorrect string args in a validation", func(t *testing.T) {
 			opts := cmdtpl.NewOptions()

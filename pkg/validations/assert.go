@@ -15,6 +15,8 @@ import (
 // Declare @assert/... annotation names
 const (
 	AnnotationAssertValidate template.AnnotationName = "assert/validate"
+	ValidationKwargWhen      string                  = "when"
+	ValidationKwargWhenNull  string                  = "when_null_skip"
 )
 
 // ProcessAndRunValidations takes a root Node, and threadName, and validates each Node in the tree.
@@ -84,50 +86,50 @@ func (a *convertAssertAnnsToValidations) Visit(node yamlmeta.Node) error {
 	case *yamlmeta.DocumentSet, *yamlmeta.Array, *yamlmeta.Map:
 		return fmt.Errorf("Invalid @%s annotation - not supported on %s at %s", AnnotationAssertValidate, yamlmeta.TypeName(node), node.GetPosition().AsCompactString())
 	default:
-		rules, syntaxErr := newRulesFromAssertValidateAnnotation(nodeAnnotations[AnnotationAssertValidate])
+		validation, syntaxErr := NewValidationFromValidationAnnotation(nodeAnnotations[AnnotationAssertValidate])
 		if syntaxErr != nil {
-			return syntaxErr
+			return fmt.Errorf("Invalid @%s annotation - %s", AnnotationAssertValidate, syntaxErr.Error())
 		}
 		// store rules in node's validations meta without overriding any existing rules
-		AddRules(node, rules)
+		Add(node, []NodeValidation{*validation})
 	}
 
 	return nil
 }
 
-func newRulesFromAssertValidateAnnotation(annotation template.NodeAnnotation) ([]Rule, error) {
+func NewValidationFromValidationAnnotation(annotation template.NodeAnnotation) (*NodeValidation, error) {
 	var rules []Rule
 
-	if len(annotation.Kwargs) != 0 {
-		return nil, fmt.Errorf("Invalid @%s annotation - expected @%s to have 2-tuple as argument(s), but found keyword argument (by %s)", AnnotationAssertValidate, AnnotationAssertValidate, annotation.Position.AsCompactString())
-	}
 	if len(annotation.Args) == 0 {
-		return nil, fmt.Errorf("Invalid @%s annotation - expected @%s to have 2-tuple as argument(s), but found no arguments (by %s)", AnnotationAssertValidate, AnnotationAssertValidate, annotation.Position.AsCompactString())
+		return nil, fmt.Errorf("expected annotation to have 2-tuple as argument(s), but found no arguments (by %s)", annotation.Position.AsCompactString())
 	}
 	for _, arg := range annotation.Args {
 		ruleTuple, ok := arg.(starlark.Tuple)
 		if !ok {
-			return nil, fmt.Errorf("Invalid @%s annotation - expected @%s to have 2-tuple as argument(s), but found: %s (by %s)", AnnotationAssertValidate, AnnotationAssertValidate, arg.String(), annotation.Position.AsCompactString())
+			return nil, fmt.Errorf("expected annotation to have 2-tuple as argument(s), but found: %s (by %s)", arg.String(), annotation.Position.AsCompactString())
 		}
 		if len(ruleTuple) != 2 {
-			return nil, fmt.Errorf("Invalid @%s annotation - expected @%s 2-tuple, but found tuple with length %v (by %s)", AnnotationAssertValidate, AnnotationAssertValidate, len(ruleTuple), annotation.Position.AsCompactString())
+			return nil, fmt.Errorf("expected 2-tuple, but found tuple with length %v (by %s)", len(ruleTuple), annotation.Position.AsCompactString())
 		}
 		message, ok := ruleTuple[0].(starlark.String)
 		if !ok {
-			return nil, fmt.Errorf("Invalid @%s annotation - expected first item in the 2-tuple to be a string describing a valid value, but was %s (at %s)", AnnotationAssertValidate, ruleTuple[0].Type(), annotation.Position.AsCompactString())
+			return nil, fmt.Errorf("expected first item in the 2-tuple to be a string describing a valid value, but was %s (at %s)", ruleTuple[0].Type(), annotation.Position.AsCompactString())
 		}
 		lambda, ok := ruleTuple[1].(starlark.Callable)
 		if !ok {
-			return nil, fmt.Errorf("Invalid @%s annotation - expected second item in the 2-tuple to be an assertion function, but was %s (at %s)", AnnotationAssertValidate, ruleTuple[1].Type(), annotation.Position.AsCompactString())
+			return nil, fmt.Errorf("expected second item in the 2-tuple to be an assertion function, but was %s (at %s)", ruleTuple[1].Type(), annotation.Position.AsCompactString())
 		}
 		rules = append(rules, Rule{
-			Msg:       message.GoString(),
-			Assertion: lambda,
-			Position:  annotation.Position,
+			msg:       message.GoString(),
+			assertion: lambda,
 		})
 	}
+	kwargs, err := NewValidationKwargs(annotation.Kwargs, annotation.Position)
+	if err != nil {
+		return nil, err
+	}
 
-	return rules, nil
+	return &NodeValidation{rules, kwargs, annotation.Position}, nil
 }
 
 type validationRunner struct {
@@ -145,14 +147,15 @@ func newValidationRunner(threadName string) *validationRunner {
 // This visitor stores error(violations) in the validationRunner and returns nil.
 func (a *validationRunner) Visit(node yamlmeta.Node) error {
 	// get rules in node's meta
-	rules := GetRules(node)
-	if rules == nil {
+	validations := Get(node)
+
+	if validations == nil {
 		return nil
 	}
-	for _, rule := range rules {
-		err := rule.Validate(node, a.thread)
-		if err != nil {
-			a.chk.Violations = append(a.chk.Violations, err)
+	for _, v := range validations {
+		errs := v.Validate(node, a.thread)
+		if errs != nil {
+			a.chk.Violations = append(a.chk.Violations, errs...)
 		}
 	}
 

@@ -169,7 +169,7 @@ type AssignSchemaValidations struct{}
 func (AssignSchemaValidations) Visit(node yamlmeta.Node) error {
 	if schemaType := GetType(node); schemaType != nil {
 		if rules := schemaType.GetValidations(); rules != nil {
-			validations.SetRules(node, rules)
+			validations.Set(node, rules)
 		}
 	}
 	return nil

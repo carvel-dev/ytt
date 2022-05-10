@@ -162,13 +162,13 @@ func getValue(node yamlmeta.Node, t Type) (interface{}, error) {
 	return t.GetDefaultValue(), nil
 }
 
-func getValidations(node yamlmeta.Node) ([]validations.Rule, error) {
+func getValidations(node yamlmeta.Node) ([]validations.NodeValidation, error) {
 	validationAnn, err := processValidationAnnotation(node)
 	if err != nil {
 		return nil, err
 	}
 	if validationAnn != nil {
-		return validationAnn.GetRules(), nil
+		return []validations.NodeValidation{*validationAnn.GetValidation()}, nil
 	}
 	return nil, nil
 }
