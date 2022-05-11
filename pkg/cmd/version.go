@@ -7,6 +7,7 @@ import (
 	"fmt"
 
 	"github.com/spf13/cobra"
+	"github.com/vmware-tanzu/carvel-ytt/pkg/experiments"
 	"github.com/vmware-tanzu/carvel-ytt/pkg/version"
 )
 
@@ -27,6 +28,8 @@ func NewVersionCmd(o *VersionOptions) *cobra.Command {
 
 func (o *VersionOptions) Run() error {
 	fmt.Printf("ytt version %s\n", version.Version)
-
+	for _, experiment := range experiments.GetEnabled() {
+		fmt.Printf("- experiment %q enabled.\n", experiment)
+	}
 	return nil
 }
