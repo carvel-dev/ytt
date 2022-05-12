@@ -9,7 +9,7 @@ import (
 
 const validationsMeta = "validations"
 
-// AddRules appends validation Rules to node's validations metadata, later retrieved via GetRules().
+// Add appends validations to node's validations metadata, later retrieved via Get().
 func Add(node yamlmeta.Node, validations []NodeValidation) {
 	metas := node.GetMeta(validationsMeta)
 	if metas != nil {
@@ -18,12 +18,12 @@ func Add(node yamlmeta.Node, validations []NodeValidation) {
 	Set(node, validations)
 }
 
-// SetRules attaches validations to node's metadata, later retrieved via GetRules().
+// Set attaches validations to node's metadata, later retrieved via Get().
 func Set(node yamlmeta.Node, meta []NodeValidation) {
 	node.SetMeta(validationsMeta, meta)
 }
 
-// GetRules retrieves validations from node metadata, set previously via SetRules().
+// Get retrieves validations from node metadata, set previously via Set().
 func Get(node yamlmeta.Node) []NodeValidation {
 	metas := node.GetMeta(validationsMeta)
 	if metas == nil {

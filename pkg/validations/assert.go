@@ -7,7 +7,7 @@ import (
 	"fmt"
 
 	"github.com/k14s/starlark-go/starlark"
-	"github.com/vmware-tanzu/carvel-ytt/pkg/experiments"
+	"github.com/vmware-tanzu/carvel-ytt/pkg/filepos"
 	"github.com/vmware-tanzu/carvel-ytt/pkg/template"
 	"github.com/vmware-tanzu/carvel-ytt/pkg/yamlmeta"
 )
@@ -19,55 +19,13 @@ const (
 	ValidationKwargWhenNull  string                  = "when_null_skip"
 )
 
-// ProcessAndRunValidations takes a root Node, and threadName, and validates each Node in the tree.
-// Assert annotations are stored on the Node as Validations, which are then executed using the
-// value of the annotated node as the parameter to the assertions.
-//
-// When a Node's value is invalid, the errors are collected and returned in an AssertCheck.
-// Otherwise, returns empty AssertCheck and nil error.
-func ProcessAndRunValidations(n yamlmeta.Node, threadName string) (AssertCheck, error) {
-	if !experiments.IsValidationsEnabled() {
-		return AssertCheck{}, nil
+// ProcessAssertValidateAnns checks Assert annotations on data values and stores them on a Node as Validations.
+// Returns an error if any Assert annotations are malformed.
+func ProcessAssertValidateAnns(rootNode yamlmeta.Node) error {
+	if rootNode == nil {
+		return nil
 	}
-	if n == nil {
-		return AssertCheck{}, nil
-	}
-
-	err := yamlmeta.Walk(n, &convertAssertAnnsToValidations{})
-	if err != nil {
-		return AssertCheck{}, err
-	}
-
-	validationRunner := newValidationRunner(threadName)
-	err = yamlmeta.Walk(n, validationRunner)
-	if err != nil {
-		return AssertCheck{}, err
-	}
-
-	return validationRunner.chk, nil
-}
-
-// AssertCheck holds the resulting violations from executing Validations on a node.
-type AssertCheck struct {
-	Violations []error
-}
-
-// Error generates the error message composed of the total set of AssertCheck.Violations.
-func (ac AssertCheck) Error() string {
-	if !ac.HasViolations() {
-		return ""
-	}
-
-	msg := ""
-	for _, err := range ac.Violations {
-		msg = msg + "- " + err.Error() + "\n"
-	}
-	return msg
-}
-
-// HasViolations indicates whether this AssertCheck contains any violations.
-func (ac *AssertCheck) HasViolations() bool {
-	return len(ac.Violations) > 0
+	return yamlmeta.Walk(rootNode, &convertAssertAnnsToValidations{})
 }
 
 type convertAssertAnnsToValidations struct{}
@@ -86,9 +44,9 @@ func (a *convertAssertAnnsToValidations) Visit(node yamlmeta.Node) error {
 	case *yamlmeta.DocumentSet, *yamlmeta.Array, *yamlmeta.Map:
 		return fmt.Errorf("Invalid @%s annotation - not supported on %s at %s", AnnotationAssertValidate, yamlmeta.TypeName(node), node.GetPosition().AsCompactString())
 	default:
-		validation, syntaxErr := NewValidationFromValidationAnnotation(nodeAnnotations[AnnotationAssertValidate])
-		if syntaxErr != nil {
-			return fmt.Errorf("Invalid @%s annotation - %s", AnnotationAssertValidate, syntaxErr.Error())
+		validation, err := NewValidationFromValidationAnnotation(nodeAnnotations[AnnotationAssertValidate])
+		if err != nil {
+			return fmt.Errorf("Invalid @%s annotation - %s", AnnotationAssertValidate, err.Error())
 		}
 		// store rules in node's validations meta without overriding any existing rules
 		Add(node, []NodeValidation{*validation})
@@ -97,8 +55,10 @@ func (a *convertAssertAnnsToValidations) Visit(node yamlmeta.Node) error {
 	return nil
 }
 
+// NewValidationFromValidationAnnotation creates a NodeValidation from the values provided in a validation annotation.
+// If any value in the annotation is not well-formed, it returns an error.
 func NewValidationFromValidationAnnotation(annotation template.NodeAnnotation) (*NodeValidation, error) {
-	var rules []Rule
+	var rules []rule
 
 	if len(annotation.Args) == 0 {
 		return nil, fmt.Errorf("expected annotation to have 2-tuple as argument(s), but found no arguments (by %s)", annotation.Position.AsCompactString())
@@ -119,12 +79,12 @@ func NewValidationFromValidationAnnotation(annotation template.NodeAnnotation) (
 		if !ok {
 			return nil, fmt.Errorf("expected second item in the 2-tuple to be an assertion function, but was %s (at %s)", ruleTuple[1].Type(), annotation.Position.AsCompactString())
 		}
-		rules = append(rules, Rule{
+		rules = append(rules, rule{
 			msg:       message.GoString(),
 			assertion: lambda,
 		})
 	}
-	kwargs, err := NewValidationKwargs(annotation.Kwargs, annotation.Position)
+	kwargs, err := newValidationKwargs(annotation.Kwargs, annotation.Position)
 	if err != nil {
 		return nil, err
 	}
@@ -132,32 +92,26 @@ func NewValidationFromValidationAnnotation(annotation template.NodeAnnotation) (
 	return &NodeValidation{rules, kwargs, annotation.Position}, nil
 }
 
-type validationRunner struct {
-	thread *starlark.Thread
-	chk    AssertCheck
-}
-
-func newValidationRunner(threadName string) *validationRunner {
-	return &validationRunner{thread: &starlark.Thread{Name: threadName}, chk: AssertCheck{[]error{}}}
-}
-
-// Visit if `node` has validations in its meta.
-// Runs the validation Rules, any violations from running the assertions are collected.
-//
-// This visitor stores error(violations) in the validationRunner and returns nil.
-func (a *validationRunner) Visit(node yamlmeta.Node) error {
-	// get rules in node's meta
-	validations := Get(node)
-
-	if validations == nil {
-		return nil
-	}
-	for _, v := range validations {
-		errs := v.Validate(node, a.thread)
-		if errs != nil {
-			a.chk.Violations = append(a.chk.Violations, errs...)
+func newValidationKwargs(kwargs []starlark.Tuple, annPos *filepos.Position) (validationKwargs, error) {
+	var processedKwargs validationKwargs
+	for _, value := range kwargs {
+		kwargName := string(value[0].(starlark.String))
+		switch kwargName {
+		case ValidationKwargWhen:
+			lambda, ok := value[1].(starlark.Callable)
+			if !ok {
+				return validationKwargs{}, fmt.Errorf("expected keyword argument %q to be a function, but was %s (at %s)", ValidationKwargWhen, value[1].Type(), annPos.AsCompactString())
+			}
+			processedKwargs.when = &lambda
+		case ValidationKwargWhenNull:
+			b, ok := value[1].(starlark.Bool)
+			if !ok {
+				return validationKwargs{}, fmt.Errorf("expected keyword argument %q to be a boolean, but was %s (at %s)", ValidationKwargWhenNull, value[1].Type(), annPos.AsCompactString())
+			}
+			processedKwargs.whenNullSkip = bool(b)
+		default:
+			return validationKwargs{}, fmt.Errorf("unknown keyword argument %q (at %s)", kwargName, annPos.AsCompactString())
 		}
 	}
-
-	return nil
+	return processedKwargs, nil
 }

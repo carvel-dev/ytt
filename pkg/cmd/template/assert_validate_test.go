@@ -289,6 +289,56 @@ foo: bar
 
 			assertFails(t, filesToProcess, expectedErr, opts)
 		})
+		t.Run("has invalid kwargs", func(t *testing.T) {
+			t.Run("when value is not a function", func(t *testing.T) {
+				opts := cmdtpl.NewOptions()
+				dataValuesYAML := `#@data/values
+---
+#@assert/validate ("", lambda v:  v), when=None
+foo: bar
+`
+
+				expectedErr := `Invalid @assert/validate annotation - expected keyword argument "when" to be a function, but was NoneType (at schema.yml:3)`
+
+				filesToProcess := files.NewSortedFiles([]*files.File{
+					files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(dataValuesYAML))),
+				})
+
+				assertFails(t, filesToProcess, expectedErr, opts)
+			})
+			t.Run("when_null_skip value is not a bool", func(t *testing.T) {
+				opts := cmdtpl.NewOptions()
+				dataValuesYAML := `#@data/values
+---
+#@assert/validate ("", lambda v:  v), when_null_skip=None
+foo: bar
+`
+
+				expectedErr := `Invalid @assert/validate annotation - expected keyword argument "when_null_skip" to be a boolean, but was NoneType (at schema.yml:3)`
+
+				filesToProcess := files.NewSortedFiles([]*files.File{
+					files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(dataValuesYAML))),
+				})
+
+				assertFails(t, filesToProcess, expectedErr, opts)
+			})
+			t.Run("unrecognised keyword", func(t *testing.T) {
+				opts := cmdtpl.NewOptions()
+				dataValuesYAML := `#@data/values
+---
+#@assert/validate ("", lambda v:  v), unknown=""
+foo: bar
+`
+
+				expectedErr := `Invalid @assert/validate annotation - unknown keyword argument "unknown" (at schema.yml:3)`
+
+				filesToProcess := files.NewSortedFiles([]*files.File{
+					files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(dataValuesYAML))),
+				})
+
+				assertFails(t, filesToProcess, expectedErr, opts)
+			})
+		})
 	})
 	t.Run("when validations fail", func(t *testing.T) {
 		opts := cmdtpl.NewOptions()
@@ -343,6 +393,53 @@ my_map:
 
 		assertFails(t, filesToProcess, expectedErr, opts)
 	})
+	t.Run("when validations conditionally fail due to kwargs", func(t *testing.T) {
+		t.Run("when", func(t *testing.T) {
+
+			opts := cmdtpl.NewOptions()
+			dataValuesYAML := `#@ load("@ytt:assert", "assert")
+
+#@data/values
+---
+my_map:
+  #@assert/validate ("a string longer than 5 chars", lambda v: True if len(v) > 5 else False), when=lambda v: True if 'a' in v else False
+  string: "a"
+`
+
+			expectedErr := `One or more data values were invalid:
+- "string" (dv.yml:7) requires "a string longer than 5 chars" (by dv.yml:6)
+`
+
+			filesToProcess := files.NewSortedFiles([]*files.File{
+				files.MustNewFileFromSource(files.NewBytesSource("dv.yml", []byte(dataValuesYAML))),
+			})
+
+			assertFails(t, filesToProcess, expectedErr, opts)
+		})
+		t.Run("when_null_skip", func(t *testing.T) {
+
+			opts := cmdtpl.NewOptions()
+			dataValuesYAML := `#@ load("@ytt:assert", "assert")
+
+#@data/values
+---
+my_map:
+  #@assert/validate ("a string longer than 5 chars", lambda v: True if len(v) > 5 else False), when_null_skip=True
+  string: "asdf"
+`
+
+			expectedErr := `One or more data values were invalid:
+- "string" (dv.yml:7) requires "a string longer than 5 chars" (by dv.yml:6)
+`
+
+			filesToProcess := files.NewSortedFiles([]*files.File{
+				files.MustNewFileFromSource(files.NewBytesSource("dv.yml", []byte(dataValuesYAML))),
+			})
+
+			assertFails(t, filesToProcess, expectedErr, opts)
+		})
+	})
+
 	t.Run("when validations on a document fail with variables in validation", func(t *testing.T) {
 		opts := cmdtpl.NewOptions()
 		dataValuesYAML := `#@ load("@ytt:assert", "assert")
@@ -574,9 +671,230 @@ values:
 
 		assertSucceedsDocSet(t, filesToProcess, expected, opts)
 	})
+	t.Run("using the when kwarg", func(t *testing.T) {
+		opts := cmdtpl.NewOptions()
+		opts.DataValuesFlags.Inspect = true
+		schemaYAML := `#@data/values-schema
+#@ def failAssert(v):
+#@ return False
+#@ end
+
+#@ def skip(v):
+#@ return False
+#@ end
+---
+#@schema/validation ("validation that always fails", failAssert), when=skip
+string: "example"
+array:
+#@schema/validation ("validation that always fails", failAssert), when=skip
+-  1
+`
+
+		expected := `string: example
+array: []
+`
+
+		filesToProcess := files.NewSortedFiles([]*files.File{
+			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
+		})
+
+		assertSucceedsDocSet(t, filesToProcess, expected, opts)
+	})
+	t.Run("using the when_null_skip kwarg with schema default", func(t *testing.T) {
+		opts := cmdtpl.NewOptions()
+		opts.DataValuesFlags.Inspect = true
+		schemaYAML := `#@data/values-schema
+#@ def failAssert(v):
+#@ return False
+#@ end
+
+---
+#@schema/validation ("validation that always fails", failAssert), when_null_skip=True
+#@schema/nullable
+string: ""
+#@schema/default [None]
+array:
+#@schema/validation ("validation that always fails", failAssert), when_null_skip=True
+#@schema/nullable
+-  3
+`
+
+		expected := `string: null
+array:
+- null
+`
+
+		filesToProcess := files.NewSortedFiles([]*files.File{
+			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
+		})
+
+		assertSucceedsDocSet(t, filesToProcess, expected, opts)
+	})
 }
 
 func TestSchemaValidationFails(t *testing.T) {
+	t.Run("when the annotation is mal-formed because", func(t *testing.T) {
+		t.Run("is empty", func(t *testing.T) {
+			opts := cmdtpl.NewOptions()
+			schemaYAML := `#@data/values-schema
+---
+#@schema/validation 
+foo: bar
+`
+
+			expectedErr := `Invalid @schema/validation annotation - expected annotation to have 2-tuple as argument(s), but found no arguments (by schema.yml:3)`
+
+			filesToProcess := files.NewSortedFiles([]*files.File{
+				files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
+			})
+
+			assertFails(t, filesToProcess, expectedErr, opts)
+		})
+		t.Run("is not a tuple", func(t *testing.T) {
+			opts := cmdtpl.NewOptions()
+			schemaYAML := `#@data/values-schema
+---
+#@schema/validation "string"
+foo: bar
+`
+
+			expectedErr := `Invalid @schema/validation annotation - expected annotation to have 2-tuple as argument(s), but found: "string" (by schema.yml:3)`
+
+			filesToProcess := files.NewSortedFiles([]*files.File{
+				files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
+			})
+
+			assertFails(t, filesToProcess, expectedErr, opts)
+		})
+		t.Run("is an empty tuple", func(t *testing.T) {
+			opts := cmdtpl.NewOptions()
+			schemaYAML := `#@data/values-schema
+---
+#@schema/validation ()
+foo: bar
+`
+
+			expectedErr := `Invalid @schema/validation annotation - expected 2-tuple, but found tuple with length 0 (by schema.yml:3)`
+
+			filesToProcess := files.NewSortedFiles([]*files.File{
+				files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
+			})
+
+			assertFails(t, filesToProcess, expectedErr, opts)
+		})
+		t.Run("has incorrect number of args in a rule", func(t *testing.T) {
+			opts := cmdtpl.NewOptions()
+			schemaYAML := `#@data/values-schema
+---
+#@schema/validation (lambda v: v,)
+foo: bar
+`
+
+			expectedErr := `Invalid @schema/validation annotation - expected 2-tuple, but found tuple with length 1 (by schema.yml:3)`
+
+			filesToProcess := files.NewSortedFiles([]*files.File{
+				files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
+			})
+
+			assertFails(t, filesToProcess, expectedErr, opts)
+
+			schemaYAML2 := `#@data/values-schema
+---
+#@schema/validation ("some validation", lambda v: v, "a message if valid", "a message if fail")
+foo: bar
+`
+			expectedErr = `Invalid @schema/validation annotation - expected 2-tuple, but found tuple with length 4 (by schema.yml:3)`
+
+			filesToProcess = files.NewSortedFiles([]*files.File{
+				files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML2))),
+			})
+
+			assertFails(t, filesToProcess, expectedErr, opts)
+
+		})
+		t.Run("has incorrect string args in a validation", func(t *testing.T) {
+			opts := cmdtpl.NewOptions()
+			schemaYAML := `#@data/values-schema
+---
+#@schema/validation ({"foo":"bar"}, lambda v: v)
+foo: bar
+`
+
+			expectedErr := `Invalid @schema/validation annotation - expected first item in the 2-tuple to be a string describing a valid value, but was dict (at schema.yml:3)`
+
+			filesToProcess := files.NewSortedFiles([]*files.File{
+				files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
+			})
+
+			assertFails(t, filesToProcess, expectedErr, opts)
+		})
+		t.Run("has incorrect function arg in a validation", func(t *testing.T) {
+			opts := cmdtpl.NewOptions()
+			schemaYAML := `#@data/values-schema
+---
+#@schema/validation ("some validation", True)
+foo: bar
+`
+
+			expectedErr := `Invalid @schema/validation annotation - expected second item in the 2-tuple to be an assertion function, but was bool (at schema.yml:3)`
+
+			filesToProcess := files.NewSortedFiles([]*files.File{
+				files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
+			})
+
+			assertFails(t, filesToProcess, expectedErr, opts)
+		})
+		t.Run("has invalid kwargs", func(t *testing.T) {
+			t.Run("when value is not a function", func(t *testing.T) {
+				opts := cmdtpl.NewOptions()
+				schemaYAML := `#@data/values-schema
+---
+#@schema/validation ("", lambda v:  v), when=None
+foo: bar
+`
+
+				expectedErr := `Invalid @schema/validation annotation - expected keyword argument "when" to be a function, but was NoneType (at schema.yml:3)`
+
+				filesToProcess := files.NewSortedFiles([]*files.File{
+					files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
+				})
+
+				assertFails(t, filesToProcess, expectedErr, opts)
+			})
+			t.Run("when_null_skip value is not a bool", func(t *testing.T) {
+				opts := cmdtpl.NewOptions()
+				schemaYAML := `#@data/values-schema
+---
+#@schema/validation ("", lambda v:  v), when_null_skip=None
+foo: bar
+`
+
+				expectedErr := `Invalid @schema/validation annotation - expected keyword argument "when_null_skip" to be a boolean, but was NoneType (at schema.yml:3)`
+
+				filesToProcess := files.NewSortedFiles([]*files.File{
+					files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
+				})
+
+				assertFails(t, filesToProcess, expectedErr, opts)
+			})
+			t.Run("unrecognised keyword", func(t *testing.T) {
+				opts := cmdtpl.NewOptions()
+				schemaYAML := `#@data/values-schema
+---
+#@schema/validation ("", lambda v:  v), unknown=""
+foo: bar
+`
+
+				expectedErr := `Invalid @schema/validation annotation - unknown keyword argument "unknown" (at schema.yml:3)`
+
+				filesToProcess := files.NewSortedFiles([]*files.File{
+					files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
+				})
+
+				assertFails(t, filesToProcess, expectedErr, opts)
+			})
+		})
+	})
 	t.Run("when validations fail", func(t *testing.T) {
 		opts := cmdtpl.NewOptions()
 		schemaYAML := `#@ load("@ytt:assert", "assert")
@@ -742,6 +1060,48 @@ values: #@ data.values
 		})
 
 		assertFails(t, filesToProcess, expectedErr, opts)
+	})
+	t.Run("when validations conditionally fail due to kwargs", func(t *testing.T) {
+		t.Run("when", func(t *testing.T) {
+
+			opts := cmdtpl.NewOptions()
+			schemaYAML := `#@data/values-schema
+---
+my_map:
+  #@schema/validation ("a string longer than 5 chars", lambda v: True if len(v) > 5 else False), when=lambda v: True if 'a' in v else False
+  string: "a"
+`
+
+			expectedErr := `One or more data values were invalid:
+- "string" (schema.yml:5) requires "a string longer than 5 chars" (by schema.yml:4)
+`
+
+			filesToProcess := files.NewSortedFiles([]*files.File{
+				files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
+			})
+
+			assertFails(t, filesToProcess, expectedErr, opts)
+		})
+		t.Run("when_null_skip", func(t *testing.T) {
+
+			opts := cmdtpl.NewOptions()
+			schemaYAML := `#@data/values-schema
+---
+my_map:
+  #@schema/validation ("a string longer than 5 chars", lambda v: True if len(v) > 5 else False), when_null_skip=True
+  string: ""
+`
+
+			expectedErr := `One or more data values were invalid:
+- "string" (schema.yml:5) requires "a string longer than 5 chars" (by schema.yml:4)
+`
+
+			filesToProcess := files.NewSortedFiles([]*files.File{
+				files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
+			})
+
+			assertFails(t, filesToProcess, expectedErr, opts)
+		})
 	})
 
 }

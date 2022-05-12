@@ -68,7 +68,7 @@ func (pp DataValuesPreProcessing) apply(files []*FileInLibrary) (*datavalues.Env
 		if len(typeCheck.Violations) > 0 {
 			return nil, nil, schema.NewSchemaError("One or more data values were invalid", typeCheck.Violations...)
 		}
-		// Walk updates node's validations meta from Node's assigned type
+		// updates node's validations meta from Node's assigned type
 		yamlmeta.Walk(dvsDoc, schema.AssignSchemaValidations{})
 	}
 

@@ -161,15 +161,15 @@ func (n NullType) AssignTypeTo(node yamlmeta.Node) TypeCheck {
 	return chk
 }
 
-// AssignSchemaValidations implements the visitor interface to set validations from schema validation rules
+// AssignSchemaValidations implements the visitor interface to set validations from the schema type
 type AssignSchemaValidations struct{}
 
 // Visit Extracts the validations from Node's Type and sets them in Node's meta
 // This visitor returns nil if node has no assigned type or when the execution is completed
 func (AssignSchemaValidations) Visit(node yamlmeta.Node) error {
 	if schemaType := GetType(node); schemaType != nil {
-		if rules := schemaType.GetValidations(); rules != nil {
-			validations.Set(node, rules)
+		if v := schemaType.GetValidation(); v != nil {
+			validations.Set(node, []validations.NodeValidation{*v})
 		}
 	}
 	return nil

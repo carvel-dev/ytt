@@ -76,8 +76,8 @@ type ExampleAnnotation struct {
 
 // ValidationAnnotation is a wrapper for validations provided via @schema/validation annotation
 type ValidationAnnotation struct {
-	validations *validations.NodeValidation
-	pos         *filepos.Position
+	validation *validations.NodeValidation
+	pos        *filepos.Position
 }
 
 // Example contains a yaml example and its description
@@ -411,7 +411,7 @@ func NewExampleAnnotation(ann template.NodeAnnotation, pos *filepos.Position) (*
 	return &ExampleAnnotation{examples, ann.Position}, nil
 }
 
-// NewValidationAnnotation checks the argument provided via @schema/validation annotation, and returns wrapper for the rules defined
+// NewValidationAnnotation checks the values provided via @schema/validation annotation, and returns wrapper for the validation defined
 func NewValidationAnnotation(ann template.NodeAnnotation) (*ValidationAnnotation, error) {
 	validation, err := validations.NewValidationFromValidationAnnotation(ann)
 	if err != nil {
@@ -508,9 +508,9 @@ func (v *ValidationAnnotation) GetPosition() *filepos.Position {
 	return nil
 }
 
-// GetRules gets the validation rules from @schema/validation annotation
+// GetValidation gets the NodeValidation created from @schema/validation annotation
 func (v *ValidationAnnotation) GetValidation() *validations.NodeValidation {
-	return v.validations
+	return v.validation
 }
 
 func (t *TypeAnnotation) IsAny() bool {
