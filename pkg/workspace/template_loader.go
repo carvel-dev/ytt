@@ -33,7 +33,6 @@ type TemplateLoaderOpts struct {
 	IgnoreUnknownComments   bool
 	ImplicitMapKeyOverrides bool
 	StrictYAML              bool
-	SchemaEnabled           bool
 }
 
 // TemplateLoaderOptsOverrides hold potential overriding values to be merged over a TemplateLoaderOpts.
