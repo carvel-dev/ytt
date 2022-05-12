@@ -704,10 +704,10 @@ values: #@ data.values
 }
 
 func TestAssertValidateOnDataValuesAreSkippedWhenDisabled(t *testing.T) {
-	t.Run("via the --data-values-validation flag", func(t *testing.T) {
+	t.Run("via the --dangerous-data-values-disable-validation flag", func(t *testing.T) {
 		t.Run("in the root library", func(t *testing.T) {
 			opts := cmdtpl.NewOptions()
-			opts.DataValuesFlags.Validate = false
+			opts.DataValuesFlags.SkipValidation = true
 			opts.DataValuesFlags.Inspect = true
 			dataValuesYAML := `#@ load("@ytt:assert", "assert")
 #@data/values
@@ -726,7 +726,7 @@ foo: bar
 		})
 		t.Run("or in any evaluated private libraries, regardless", func(t *testing.T) {
 			opts := cmdtpl.NewOptions()
-			opts.DataValuesFlags.Validate = false
+			opts.DataValuesFlags.SkipValidation = true
 			configYAML := `
 #@ load("@ytt:template", "template")
 #@ load("@ytt:library", "library")
@@ -734,7 +734,7 @@ foo: bar
 --- #@ template.replace(library.get("lib").eval())
 
 #! even if validations are explicitly enabled...
---- #@ template.replace(library.get("lib", data_values_validation=False).eval())
+--- #@ template.replace(library.get("lib", dangerous_data_values_disable_validation=False).eval())
 `
 
 			libValuesYAML := `#@ load("@ytt:assert", "assert")
@@ -766,14 +766,14 @@ values:
 			assertSucceedsDocSet(t, filesToProcess, expected, opts)
 		})
 	})
-	t.Run("via the data_values_validation kwarg", func(t *testing.T) {
+	t.Run("via the dangerous_data_values_disable_validation= kwarg", func(t *testing.T) {
 		t.Run("in the evaluated library", func(t *testing.T) {
 			opts := cmdtpl.NewOptions()
 			configYAML := `
 #@ load("@ytt:template", "template")
 #@ load("@ytt:library", "library")
 
---- #@ template.replace(library.get("lib", data_values_validation=False).eval())
+--- #@ template.replace(library.get("lib", dangerous_data_values_disable_validation=True).eval())
 `
 
 			libValuesYAML := `#@ load("@ytt:assert", "assert")
@@ -807,14 +807,14 @@ values: #@ data.values
 #@ load("@ytt:template", "template")
 #@ load("@ytt:library", "library")
 
---- #@ template.replace(library.get("foo", data_values_validation=False).eval())
+--- #@ template.replace(library.get("foo", dangerous_data_values_disable_validation=True).eval())
 `
 			fooConfigYAML := `
 #@ load("@ytt:template", "template")
 #@ load("@ytt:library", "library")
 
 --- #@ template.replace(library.get("bar").eval())
---- #@ template.replace(library.get("bar", data_values_validation=True).eval())
+--- #@ template.replace(library.get("bar", dangerous_data_values_disable_validation=False).eval())
 `
 
 			barValuesYAML := `#@ load("@ytt:assert", "assert")

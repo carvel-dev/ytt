@@ -54,7 +54,7 @@ type FileSource interface {
 var _ []FileSource = []FileSource{&BulkFilesSource{}, &RegularFilesSource{}}
 
 func NewOptions() *Options {
-	return &Options{DataValuesFlags: DataValuesFlags{Validate: true}}
+	return &Options{}
 }
 
 // BindFlags registers template flags for template command.
@@ -122,7 +122,7 @@ func (o *Options) RunWithFiles(in Input, ui ui.UI) Output {
 			ImplicitMapKeyOverrides: o.ImplicitMapKeyOverrides,
 			StrictYAML:              o.StrictYAML,
 		},
-		!o.DataValuesFlags.Validate)
+		o.DataValuesFlags.SkipValidation)
 
 	libraryCtx := workspace.LibraryExecutionContext{Current: rootLibrary, Root: rootLibrary}
 	rootLibraryExecution := libraryExecutionFactory.New(libraryCtx)

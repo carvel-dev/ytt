@@ -128,12 +128,12 @@ func (b LibraryModule) getOpts(kwargs []starlark.Tuple) (string, TemplateLoaderO
 			}
 			overrides.StrictYAML = &result
 
-		case "data_values_validation":
+		case "dangerous_data_values_disable_validation":
 			result, err := core.NewStarlarkValue(kwarg[1]).AsBool()
 			if err != nil {
 				return "", overrides, false, err
 			}
-			skipDataValuesValidation = !result
+			skipDataValuesValidation = result
 
 		default:
 			return "", overrides, false, fmt.Errorf("Unexpected kwarg '%s'", name)

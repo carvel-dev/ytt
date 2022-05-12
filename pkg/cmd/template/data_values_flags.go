@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/k14s/starlark-go/starlark"
+	"github.com/vmware-tanzu/carvel-ytt/pkg/experiments"
 	"github.com/vmware-tanzu/carvel-ytt/pkg/filepos"
 	"github.com/vmware-tanzu/carvel-ytt/pkg/files"
 	"github.com/vmware-tanzu/carvel-ytt/pkg/template"
@@ -35,15 +36,15 @@ type DataValuesFlags struct {
 
 	FromFiles []string
 
-	Inspect       bool
-	InspectSchema bool
-	Validate      bool
+	Inspect        bool
+	InspectSchema  bool
+	SkipValidation bool
 
 	EnvironFunc  func() []string
 	ReadFileFunc func(string) ([]byte, error)
 }
 
-// Set registers data valuse ingestion flags and wires-up those flags up to this
+// Set registers data values ingestion flags and wires-up those flags up to this
 // DataValuesFlags to be set when the corresponding cobra.Command is executed.
 func (s *DataValuesFlags) Set(cmdFlags CmdFlags) {
 	cmdFlags.StringArrayVar(&s.EnvFromStrings, "data-values-env", nil, "Extract data values (as strings) from prefixed env vars (format: PREFIX for PREFIX_all__key1=str) (can be specified multiple times)")
@@ -56,7 +57,9 @@ func (s *DataValuesFlags) Set(cmdFlags CmdFlags) {
 	cmdFlags.StringArrayVar(&s.FromFiles, "data-values-file", nil, "Set multiple data values via a YAML file (format: /file/path.yml) (can be specified multiple times)")
 
 	cmdFlags.BoolVar(&s.Inspect, "data-values-inspect", false, "Calculate the final data values (applying any overlays) and display that result")
-	cmdFlags.BoolVar(&s.Validate, "data-values-validation", true, "Validate data values before use")
+	if experiments.IsValidationsEnabled() {
+		cmdFlags.BoolVar(&s.SkipValidation, "dangerous-data-values-disable-validation", false, "Skip validating data values (not recommended: may result in templates failing or invalid output)")
+	}
 	cmdFlags.BoolVar(&s.InspectSchema, "data-values-schema-inspect", false, "Determine the complete schema for data values (applying any overlays) and display the result (only OpenAPI v3.0 is supported, see --output)")
 }
 
