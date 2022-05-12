@@ -2,7 +2,7 @@
 
 # makes builds reproducible
 $env:CGO_ENABLED = 0
-$repro_flags = "-ldflags=-buildid= -trimpath"
+$repro_flags = "-ldflags=-trimpath"
 
 echo Formatting
 go fmt ./cmd/... ./pkg/...

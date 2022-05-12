@@ -20,7 +20,6 @@ builds:
       - -trimpath
 
     ldflags:
-      - -buildid=
       - -X github.com/vmware-tanzu/carvel-ytt/pkg/version.Version={{ .Version }}
 
 archives:
