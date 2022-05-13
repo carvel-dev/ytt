@@ -16,11 +16,14 @@ import (
 	"github.com/vmware-tanzu/carvel-ytt/pkg/yamlmeta"
 )
 
+// LibraryExecution is the total set of configuration and dependencies that are used to accomplish the execution of a
+// Library.
 type LibraryExecution struct {
-	libraryCtx         LibraryExecutionContext
-	ui                 ui.UI
-	templateLoaderOpts TemplateLoaderOpts
-	libraryExecFactory *LibraryExecutionFactory
+	libraryCtx               LibraryExecutionContext
+	ui                       ui.UI
+	templateLoaderOpts       TemplateLoaderOpts
+	libraryExecFactory       *LibraryExecutionFactory
+	skipDataValuesValidation bool // when true, any validation rules present on data values are skipped
 }
 
 type EvalResult struct {
@@ -34,15 +37,15 @@ type EvalExport struct {
 	Symbols starlark.StringDict
 }
 
-func NewLibraryExecution(libraryCtx LibraryExecutionContext,
-	ui ui.UI, templateLoaderOpts TemplateLoaderOpts,
-	libraryExecFactory *LibraryExecutionFactory) *LibraryExecution {
+// NewLibraryExecution configures a new instance of a LibraryExecution.
+func NewLibraryExecution(libraryCtx LibraryExecutionContext, ui ui.UI, templateLoaderOpts TemplateLoaderOpts, libraryExecFactory *LibraryExecutionFactory, skipDataValuesValidation bool) *LibraryExecution {
 
 	return &LibraryExecution{
-		libraryCtx:         libraryCtx,
-		ui:                 ui,
-		templateLoaderOpts: templateLoaderOpts,
-		libraryExecFactory: libraryExecFactory,
+		libraryCtx:               libraryCtx,
+		ui:                       ui,
+		templateLoaderOpts:       templateLoaderOpts,
+		libraryExecFactory:       libraryExecFactory,
+		skipDataValuesValidation: skipDataValuesValidation,
 	}
 }
 
@@ -95,7 +98,10 @@ func (ll *LibraryExecution) Values(valuesOverlays []*datavalues.Envelope, schema
 		return nil, nil, err
 	}
 
-	return values, libValues, ll.validateValues(values)
+	if !ll.skipDataValuesValidation {
+		err = ll.validateValues(values)
+	}
+	return values, libValues, err
 }
 
 // validateValues runs validations from @assert/validate annotations in Data Values for the current library.
@@ -150,8 +156,8 @@ func (ll *LibraryExecution) filesByAnnotation(annName template.AnnotationName, l
 	return valuesFiles, nil
 }
 
-// Eval runs this LibraryExecution, evaluating all templates in this library and then applying overlays over that
-// result.
+// Eval given the final data values (as the parameter values) runs this LibraryExecution, evaluating all templates in
+// this library and then applying overlays over that result.
 //
 // Returns the final set of Documents and output files.
 // Returns an error if any template fails to evaluate, any overlay fails to apply, or if one or more "Envelopes" were

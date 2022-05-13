@@ -18,6 +18,10 @@ import (
 	"github.com/vmware-tanzu/carvel-ytt/pkg/yttlibrary/overlay"
 )
 
+// LibraryModule is the definition of the ytt-supplied Starlark module `@ytt:library`
+//
+// This module produces library instances (see Get()). The configuration is copied from the
+// library execution to the new instance of a library module (see NewLibraryModule())
 type LibraryModule struct {
 	libraryCtx              LibraryExecutionContext
 	libraryExecutionFactory *LibraryExecutionFactory
@@ -32,6 +36,8 @@ func NewLibraryModule(libraryCtx LibraryExecutionContext,
 	return LibraryModule{libraryCtx, libraryExecutionFactory, libraryValues, librarySchemas}
 }
 
+// AsModule defines the contents of the "@ytt:library" module.
+// Produces an instance of the "@ytt:library" module suitable to be consumed by starlark.Thread.Load()
 func (b LibraryModule) AsModule() starlark.StringDict {
 	return starlark.StringDict{
 		"library": &starlarkstruct.Module{
@@ -43,6 +49,7 @@ func (b LibraryModule) AsModule() starlark.StringDict {
 	}
 }
 
+// Get is a starlark.Builtin that, given the path to a private library, returns an instance of it as a libraryValue.
 func (b LibraryModule) Get(thread *starlark.Thread, f *starlark.Builtin,
 	args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
 
@@ -55,7 +62,7 @@ func (b LibraryModule) Get(thread *starlark.Thread, f *starlark.Builtin,
 		return starlark.None, err
 	}
 
-	libAlias, tplLoaderOptsOverrides, err := b.getOpts(kwargs)
+	libAlias, tplLoaderOptsOverrides, wantsToSkipDVValidations, err := b.getOpts(kwargs)
 	if err != nil {
 		return starlark.None, err
 	}
@@ -75,57 +82,69 @@ func (b LibraryModule) Get(thread *starlark.Thread, f *starlark.Builtin,
 	libraryCtx := LibraryExecutionContext{Current: foundLib, Root: foundLib}
 
 	return (&libraryValue{libPath, libAlias, dataValuess, b.librarySchemas, libraryCtx,
-		b.libraryExecutionFactory.WithTemplateLoaderOptsOverrides(tplLoaderOptsOverrides),
+		b.libraryExecutionFactory.
+			WithTemplateLoaderOptsOverrides(tplLoaderOptsOverrides).
+			ThatSkipsDataValuesValidations(wantsToSkipDVValidations),
 	}).AsStarlarkValue(), nil
 }
 
-func (b LibraryModule) getOpts(kwargs []starlark.Tuple) (string, TemplateLoaderOptsOverrides, error) {
+func (b LibraryModule) getOpts(kwargs []starlark.Tuple) (string, TemplateLoaderOptsOverrides, bool, error) {
 	var alias string
 	var overrides TemplateLoaderOptsOverrides
+	var skipDataValuesValidation = false
 
 	for _, kwarg := range kwargs {
 		name, err := core.NewStarlarkValue(kwarg[0]).AsString()
 		if err != nil {
-			return "", overrides, err
+			return "", overrides, false, err
 		}
 
 		switch name {
 		case "alias":
 			val, err := core.NewStarlarkValue(kwarg[1]).AsString()
 			if err != nil {
-				return "", overrides, err
+				return "", overrides, false, err
 			}
 			alias = val
 
 		case "ignore_unknown_comments":
 			result, err := core.NewStarlarkValue(kwarg[1]).AsBool()
 			if err != nil {
-				return "", overrides, err
+				return "", overrides, false, err
 			}
 			overrides.IgnoreUnknownComments = &result
 
 		case "implicit_map_key_overrides":
 			result, err := core.NewStarlarkValue(kwarg[1]).AsBool()
 			if err != nil {
-				return "", overrides, err
+				return "", overrides, false, err
 			}
 			overrides.ImplicitMapKeyOverrides = &result
 
 		case "strict":
 			result, err := core.NewStarlarkValue(kwarg[1]).AsBool()
 			if err != nil {
-				return "", overrides, err
+				return "", overrides, false, err
 			}
 			overrides.StrictYAML = &result
 
+		case "dangerous_data_values_disable_validation":
+			result, err := core.NewStarlarkValue(kwarg[1]).AsBool()
+			if err != nil {
+				return "", overrides, false, err
+			}
+			skipDataValuesValidation = result
+
 		default:
-			return "", overrides, fmt.Errorf("Unexpected kwarg '%s'", name)
+			return "", overrides, false, fmt.Errorf("Unexpected kwarg '%s'", name)
 		}
 	}
 
-	return alias, overrides, nil
+	return alias, overrides, skipDataValuesValidation, nil
 }
 
+// libraryValue is an instance of a private library.
+// Instances are immutable.
 type libraryValue struct {
 	path        string
 	alias       string

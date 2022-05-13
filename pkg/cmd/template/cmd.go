@@ -15,6 +15,9 @@ import (
 	"github.com/vmware-tanzu/carvel-ytt/pkg/yamlmeta"
 )
 
+// Options both holds all settings for and implements the "template" command.
+//
+// For proper initialization, always use NewOptions().
 type Options struct {
 	IgnoreUnknownComments   bool
 	ImplicitMapKeyOverrides bool
@@ -112,11 +115,14 @@ func (o *Options) RunWithFiles(in Input, ui ui.UI) Output {
 		return Output{Err: err}
 	}
 
-	libraryExecutionFactory := workspace.NewLibraryExecutionFactory(ui, workspace.TemplateLoaderOpts{
-		IgnoreUnknownComments:   o.IgnoreUnknownComments,
-		ImplicitMapKeyOverrides: o.ImplicitMapKeyOverrides,
-		StrictYAML:              o.StrictYAML,
-	})
+	libraryExecutionFactory := workspace.NewLibraryExecutionFactory(
+		ui,
+		workspace.TemplateLoaderOpts{
+			IgnoreUnknownComments:   o.IgnoreUnknownComments,
+			ImplicitMapKeyOverrides: o.ImplicitMapKeyOverrides,
+			StrictYAML:              o.StrictYAML,
+		},
+		o.DataValuesFlags.SkipValidation)
 
 	libraryCtx := workspace.LibraryExecutionContext{Current: rootLibrary, Root: rootLibrary}
 	rootLibraryExecution := libraryExecutionFactory.New(libraryCtx)

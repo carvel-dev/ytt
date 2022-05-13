@@ -702,3 +702,149 @@ values: #@ data.values
 	})
 
 }
+
+func TestAssertValidateOnDataValuesAreSkippedWhenDisabled(t *testing.T) {
+	t.Run("via the --dangerous-data-values-disable-validation flag", func(t *testing.T) {
+		t.Run("in the root library", func(t *testing.T) {
+			opts := cmdtpl.NewOptions()
+			opts.DataValuesFlags.SkipValidation = true
+			opts.DataValuesFlags.Inspect = true
+			dataValuesYAML := `#@ load("@ytt:assert", "assert")
+#@data/values
+---
+#@assert/validate ("nothing is valid", lambda v: False)
+foo: bar
+`
+			expected := `foo: bar
+`
+
+			filesToProcess := files.NewSortedFiles([]*files.File{
+				files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(dataValuesYAML))),
+			})
+
+			assertSucceedsDocSet(t, filesToProcess, expected, opts)
+		})
+		t.Run("or in any evaluated private libraries, regardless", func(t *testing.T) {
+			opts := cmdtpl.NewOptions()
+			opts.DataValuesFlags.SkipValidation = true
+			configYAML := `
+#@ load("@ytt:template", "template")
+#@ load("@ytt:library", "library")
+
+--- #@ template.replace(library.get("lib").eval())
+
+#! even if validations are explicitly enabled...
+--- #@ template.replace(library.get("lib", dangerous_data_values_disable_validation=False).eval())
+`
+
+			libValuesYAML := `#@ load("@ytt:assert", "assert")
+#@data/values
+---
+#@assert/validate ("nothing is valid", lambda v: False)
+foo: bar
+`
+
+			libConfigYAML := `
+#@ load("@ytt:data", "data")
+---
+values: #@ data.values
+`
+
+			expected := `values:
+  foo: bar
+---
+values:
+  foo: bar
+`
+
+			filesToProcess := files.NewSortedFiles([]*files.File{
+				files.MustNewFileFromSource(files.NewBytesSource("config.yml", []byte(configYAML))),
+				files.MustNewFileFromSource(files.NewBytesSource("_ytt_lib/lib/values.yml", []byte(libValuesYAML))),
+				files.MustNewFileFromSource(files.NewBytesSource("_ytt_lib/lib/config.yml", []byte(libConfigYAML))),
+			})
+
+			assertSucceedsDocSet(t, filesToProcess, expected, opts)
+		})
+	})
+	t.Run("via the dangerous_data_values_disable_validation= kwarg", func(t *testing.T) {
+		t.Run("in the evaluated library", func(t *testing.T) {
+			opts := cmdtpl.NewOptions()
+			configYAML := `
+#@ load("@ytt:template", "template")
+#@ load("@ytt:library", "library")
+
+--- #@ template.replace(library.get("lib", dangerous_data_values_disable_validation=True).eval())
+`
+
+			libValuesYAML := `#@ load("@ytt:assert", "assert")
+#@data/values
+---
+#@assert/validate ("nothing is valid", lambda v: False)
+foo: bar
+`
+
+			libConfigYAML := `
+#@ load("@ytt:data", "data")
+---
+values: #@ data.values
+`
+
+			expected := `values:
+  foo: bar
+`
+
+			filesToProcess := files.NewSortedFiles([]*files.File{
+				files.MustNewFileFromSource(files.NewBytesSource("config.yml", []byte(configYAML))),
+				files.MustNewFileFromSource(files.NewBytesSource("_ytt_lib/lib/values.yml", []byte(libValuesYAML))),
+				files.MustNewFileFromSource(files.NewBytesSource("_ytt_lib/lib/config.yml", []byte(libConfigYAML))),
+			})
+
+			assertSucceedsDocSet(t, filesToProcess, expected, opts)
+		})
+		t.Run("or any of its dependencies, regardless", func(t *testing.T) {
+			opts := cmdtpl.NewOptions()
+			configYAML := `
+#@ load("@ytt:template", "template")
+#@ load("@ytt:library", "library")
+
+--- #@ template.replace(library.get("foo", dangerous_data_values_disable_validation=True).eval())
+`
+			fooConfigYAML := `
+#@ load("@ytt:template", "template")
+#@ load("@ytt:library", "library")
+
+--- #@ template.replace(library.get("bar").eval())
+--- #@ template.replace(library.get("bar", dangerous_data_values_disable_validation=False).eval())
+`
+
+			barValuesYAML := `#@ load("@ytt:assert", "assert")
+#@data/values
+---
+#@assert/validate ("nothing is valid", lambda v: False)
+foo: bar
+`
+
+			barConfigYAML := `
+#@ load("@ytt:data", "data")
+---
+values: #@ data.values
+`
+
+			expected := `values:
+  foo: bar
+---
+values:
+  foo: bar
+`
+
+			filesToProcess := files.NewSortedFiles([]*files.File{
+				files.MustNewFileFromSource(files.NewBytesSource("config.yml", []byte(configYAML))),
+				files.MustNewFileFromSource(files.NewBytesSource("_ytt_lib/foo/config.yml", []byte(fooConfigYAML))),
+				files.MustNewFileFromSource(files.NewBytesSource("_ytt_lib/foo/_ytt_lib/bar/values.yml", []byte(barValuesYAML))),
+				files.MustNewFileFromSource(files.NewBytesSource("_ytt_lib/foo/_ytt_lib/bar/config.yml", []byte(barConfigYAML))),
+			})
+
+			assertSucceedsDocSet(t, filesToProcess, expected, opts)
+		})
+	})
+}
