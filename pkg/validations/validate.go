@@ -7,7 +7,6 @@ import (
 	"fmt"
 
 	"github.com/k14s/starlark-go/starlark"
-	"github.com/vmware-tanzu/carvel-ytt/pkg/experiments"
 	"github.com/vmware-tanzu/carvel-ytt/pkg/filepos"
 	"github.com/vmware-tanzu/carvel-ytt/pkg/yamlmeta"
 	"github.com/vmware-tanzu/carvel-ytt/pkg/yamltemplate"
@@ -38,9 +37,6 @@ type validationKwargs struct {
 // When a Node's value is invalid, the errors are collected and returned in an AssertCheck.
 // Otherwise, returns empty AssertCheck and nil error.
 func Run(n yamlmeta.Node, threadName string) AssertCheck {
-	if !experiments.IsValidationsEnabled() {
-		return AssertCheck{}
-	}
 	if n == nil {
 		return AssertCheck{}
 	}
