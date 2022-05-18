@@ -107,8 +107,8 @@ func (ll *LibraryExecution) Values(valuesOverlays []*datavalues.Envelope, schema
 
 // validateValues runs validations on Data Values for the current library.
 // Validations are attached to data value and come from two sources:
-//   1. @assert/validate annotations in a data values file.
-//   2. @schema/validation annotations in a data values schema file.
+//   1. @schema/validation annotations in a data values schema file.
+//   2. @assert/validate annotations in a data values file.
 //
 // Returns an error if the arguments to an @assert/validate are invalid,
 // otherwise, checks the AssertCheck for violations, and returns nil if there are no violations.

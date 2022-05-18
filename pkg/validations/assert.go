@@ -14,9 +14,9 @@ import (
 
 // Declare @assert/... annotation names
 const (
-	AnnotationAssertValidate template.AnnotationName = "assert/validate"
-	ValidationKwargWhen      string                  = "when"
-	ValidationKwargWhenNull  string                  = "when_null_skip"
+	AnnotationAssertValidate    template.AnnotationName = "assert/validate"
+	ValidationKwargWhen         string                  = "when"
+	ValidationKwargWhenNullSkip string                  = "when_null_skip"
 )
 
 // ProcessAssertValidateAnns checks Assert annotations on data values and stores them on a Node as Validations.
@@ -31,7 +31,7 @@ func ProcessAssertValidateAnns(rootNode yamlmeta.Node) error {
 type convertAssertAnnsToValidations struct{}
 
 // Visit if `node` is annotated with `@assert/validate` (AnnotationAssertValidate).
-// Checks annotation, and stores validation Rules on Node's validations meta.
+// Checks annotation, and stores the validation on Node's validations meta.
 //
 // This visitor returns and error if any assert annotation is not well-formed,
 // otherwise, returns nil.
@@ -103,10 +103,10 @@ func newValidationKwargs(kwargs []starlark.Tuple, annPos *filepos.Position) (val
 				return validationKwargs{}, fmt.Errorf("expected keyword argument %q to be a function, but was %s (at %s)", ValidationKwargWhen, value[1].Type(), annPos.AsCompactString())
 			}
 			processedKwargs.when = &lambda
-		case ValidationKwargWhenNull:
+		case ValidationKwargWhenNullSkip:
 			b, ok := value[1].(starlark.Bool)
 			if !ok {
-				return validationKwargs{}, fmt.Errorf("expected keyword argument %q to be a boolean, but was %s (at %s)", ValidationKwargWhenNull, value[1].Type(), annPos.AsCompactString())
+				return validationKwargs{}, fmt.Errorf("expected keyword argument %q to be a boolean, but was %s (at %s)", ValidationKwargWhenNullSkip, value[1].Type(), annPos.AsCompactString())
 			}
 			processedKwargs.whenNullSkip = bool(b)
 		default:

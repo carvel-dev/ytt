@@ -71,6 +71,7 @@ func (a *validationRunner) Visit(node yamlmeta.Node) error {
 		return nil
 	}
 	for _, v := range validations {
+		// possible refactor to check validation kwargs prior to validating rules
 		errs := v.Validate(node, a.thread)
 		if errs != nil {
 			a.chk.Violations = append(a.chk.Violations, errs...)
@@ -86,34 +87,34 @@ func (a *validationRunner) Visit(node yamlmeta.Node) error {
 // Returns an error if the assertion returns False (not-None), or assert.fail()s.
 // Otherwise, returns nil.
 func (v NodeValidation) Validate(node yamlmeta.Node, thread *starlark.Thread) []error {
-	key, nodeValue := v.convertToStarlarkValue(node)
+	key, nodeValue := v.newKeyAndStarlarkValue(node)
 
-	executeRules, err := v.validationKwargs.Check(nodeValue, thread)
+	executeRules, err := v.validationKwargs.shouldValidate(nodeValue, thread)
 	if err != nil {
 		return []error{err}
 	}
-	if executeRules {
-		var failures []error
-		for _, r := range v.rules {
-			result, err := starlark.Call(thread, r.assertion, starlark.Tuple{nodeValue}, []starlark.Tuple{})
-			if err != nil {
-				failures = append(failures, fmt.Errorf("%s (%s) requires %q; %s (by %s)", key, node.GetPosition().AsCompactString(), r.msg, err.Error(), v.position.AsCompactString()))
-			} else if _, ok := result.(starlark.NoneType); !ok {
-				// in order to pass, the assertion must return True or None
-				if !result.Truth() {
-					failures = append(failures, fmt.Errorf("%s (%s) requires %q (by %s)", key, node.GetPosition().AsCompactString(), r.msg, v.position.AsCompactString()))
-				}
-			}
-		}
-		return failures
+	if !executeRules {
+		return nil
 	}
 
-	return nil
+	var failures []error
+	for _, r := range v.rules {
+		result, err := starlark.Call(thread, r.assertion, starlark.Tuple{nodeValue}, []starlark.Tuple{})
+		if err != nil {
+			failures = append(failures, fmt.Errorf("%s (%s) requires %q; %s (by %s)", key, node.GetPosition().AsCompactString(), r.msg, err.Error(), v.position.AsCompactString()))
+		} else if _, ok := result.(starlark.NoneType); !ok {
+			// in order to pass, the assertion must return True or None
+			if !result.Truth() {
+				failures = append(failures, fmt.Errorf("%s (%s) requires %q (by %s)", key, node.GetPosition().AsCompactString(), r.msg, v.position.AsCompactString()))
+			}
+		}
+	}
+	return failures
 }
 
-// Check uses validationKwargs and the node's value to run checks on the value. If the value satisfies the checks,
-// then the NodeValidation's rules will execute, otherwise the rules will be skipped.
-func (v validationKwargs) Check(value starlark.Value, thread *starlark.Thread) (bool, error) {
+// shouldValidate uses validationKwargs and the node's value to run checks on the value. If the value satisfies the checks,
+// then the NodeValidation's rules should execute, otherwise the rules will be skipped.
+func (v validationKwargs) shouldValidate(value starlark.Value, thread *starlark.Thread) (bool, error) {
 	if v.whenNullSkip {
 		if _, ok := value.(starlark.NoneType); ok {
 			return false, nil
@@ -163,7 +164,7 @@ func (ac *AssertCheck) HasViolations() bool {
 	return len(ac.Violations) > 0
 }
 
-func (v NodeValidation) convertToStarlarkValue(node yamlmeta.Node) (string, starlark.Value) {
+func (v NodeValidation) newKeyAndStarlarkValue(node yamlmeta.Node) (string, starlark.Value) {
 	var key string
 	var nodeValue starlark.Value
 	switch typedNode := node.(type) {
