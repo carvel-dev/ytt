@@ -104,11 +104,12 @@ func newValidationKwargs(kwargs []starlark.Tuple, annPos *filepos.Position) (val
 			}
 			processedKwargs.when = &lambda
 		case ValidationKwargWhenNullSkip:
-			b, ok := value[1].(starlark.Bool)
+			v, ok := value[1].(starlark.Bool)
 			if !ok {
 				return validationKwargs{}, fmt.Errorf("expected keyword argument %q to be a boolean, but was %s (at %s)", ValidationKwargWhenNullSkip, value[1].Type(), annPos.AsCompactString())
 			}
-			processedKwargs.whenNullSkip = bool(b)
+			b := bool(v)
+			processedKwargs.whenNullSkip = &b
 		default:
 			return validationKwargs{}, fmt.Errorf("unknown keyword argument %q (at %s)", kwargName, annPos.AsCompactString())
 		}

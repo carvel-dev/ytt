@@ -557,6 +557,40 @@ my_map:
 
 		assertSucceedsDocSet(t, filesToProcess, expected, opts)
 	})
+	t.Run("when validations pass on nullable schema type", func(t *testing.T) {
+		opts := cmdtpl.NewOptions()
+		opts.DataValuesFlags.Inspect = true
+
+		schemaYAML := `#@data/values-schema
+---
+#@schema/nullable
+#@schema/validation ("a failing validation", lambda v: False)
+my_map:
+  foo: bar
+#@schema/nullable
+#@schema/validation ("a failing validation", lambda v:  False)
+my_array:
+  - abc
+#@schema/default [None]
+my_array_item:
+  #@schema/nullable
+  #@schema/validation ("a failing validation", lambda v: False) 
+  - abc
+`
+
+		expected := `my_map: null
+my_array: null
+my_array_item:
+- null
+`
+
+		filesToProcess := files.NewSortedFiles([]*files.File{
+			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
+		})
+
+		assertSucceedsDocSet(t, filesToProcess, expected, opts)
+	})
+
 	t.Run("when validations pass on an array item using --data-values-inspect", func(t *testing.T) {
 		opts := cmdtpl.NewOptions()
 		opts.DataValuesFlags.Inspect = true

@@ -14,8 +14,8 @@ import (
 
 // NodeValidation represents a validation attached to a Node via an annotation.
 type NodeValidation struct {
-	rules []rule
-	validationKwargs
+	rules    []rule
+	kwargs   validationKwargs
 	position *filepos.Position
 }
 
@@ -29,7 +29,7 @@ type rule struct {
 // validationKwargs represent the optional keyword arguments and their values in a validation annotation.
 type validationKwargs struct {
 	when         *starlark.Callable
-	whenNullSkip bool
+	whenNullSkip *bool
 }
 
 // Run takes a root Node, and threadName, and validates each Node in the tree.
@@ -89,7 +89,7 @@ func (a *validationRunner) Visit(node yamlmeta.Node) error {
 func (v NodeValidation) Validate(node yamlmeta.Node, thread *starlark.Thread) []error {
 	key, nodeValue := v.newKeyAndStarlarkValue(node)
 
-	executeRules, err := v.validationKwargs.shouldValidate(nodeValue, thread)
+	executeRules, err := v.kwargs.shouldValidate(nodeValue, thread)
 	if err != nil {
 		return []error{err}
 	}
@@ -114,10 +114,24 @@ func (v NodeValidation) Validate(node yamlmeta.Node, thread *starlark.Thread) []
 	return failures
 }
 
+// WithNullSkipTrue sets the kwarg when_null_skip to true if not set explicitly.
+func (v NodeValidation) WithNullSkipTrue() *NodeValidation {
+	t := true
+	if v.kwargs.whenNullSkip == nil {
+		return &NodeValidation{
+			rules:    v.rules,
+			kwargs:   validationKwargs{when: v.kwargs.when, whenNullSkip: &t},
+			position: v.position,
+		}
+	}
+	return &v
+}
+
 // shouldValidate uses validationKwargs and the node's value to run checks on the value. If the value satisfies the checks,
 // then the NodeValidation's rules should execute, otherwise the rules will be skipped.
 func (v validationKwargs) shouldValidate(value starlark.Value, thread *starlark.Thread) (bool, error) {
-	if v.whenNullSkip {
+	// lazy evaluation prevents nil pointer dereference panic
+	if v.whenNullSkip != nil && *v.whenNullSkip {
 		if _, ok := value.(starlark.NoneType); ok {
 			return false, nil
 		}
