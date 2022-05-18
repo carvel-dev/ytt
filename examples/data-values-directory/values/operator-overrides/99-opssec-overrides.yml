@@ -1,0 +1,3 @@
+---
+# Policy 1.31a: all north-south connections must be encrypted.
+accept_insecure_conns: false

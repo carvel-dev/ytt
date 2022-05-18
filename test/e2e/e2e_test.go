@@ -104,6 +104,18 @@ float: 123.123
 
 			require.Equal(t, expectedOutput, actualOutput)
 		})
+		t.Run("--data-values-file enumerates YAML files from given directory", func(t *testing.T) {
+			testDir := "../../examples/data-values-directory"
+			flags := yttFlags{
+				{"--data-values-file": testDir + "/values"},
+			}
+			actualOutput := runYtt(t, testInputFiles{testDir + "/config"}, "", flags, nil)
+
+			expectedOutput, err := ioutil.ReadFile(filepath.Join(testDir, "expected.txt"))
+			require.NoError(t, err)
+
+			require.Equal(t, string(expectedOutput), actualOutput)
+		})
 	})
 	t.Run("can be 'required'", func(t *testing.T) {
 		expectedFileOutput, err := ioutil.ReadFile("../../examples/data-values-required/expected.txt")
