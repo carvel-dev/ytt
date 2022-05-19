@@ -7,27 +7,27 @@ import (
 	"github.com/vmware-tanzu/carvel-ytt/pkg/yamlmeta"
 )
 
-const validations = "validations"
+const validationsMeta = "validations"
 
-// AddRules appends validation Rules to node's validations metadata, later retrieved via GetRules().
-func AddRules(node yamlmeta.Node, rules []Rule) {
-	metas := node.GetMeta(validations)
+// Add appends validations to node's validations metadata, later retrieved via Get().
+func Add(node yamlmeta.Node, validations []NodeValidation) {
+	metas := node.GetMeta(validationsMeta)
 	if metas != nil {
-		rules = append(metas.([]Rule), rules...)
+		validations = append(metas.([]NodeValidation), validations...)
 	}
-	SetRules(node, rules)
+	Set(node, validations)
 }
 
-// SetRules attaches validation Rules to node's metadata, later retrieved via GetRules().
-func SetRules(node yamlmeta.Node, rules []Rule) {
-	node.SetMeta(validations, rules)
+// Set attaches validations to node's metadata, later retrieved via Get().
+func Set(node yamlmeta.Node, meta []NodeValidation) {
+	node.SetMeta(validationsMeta, meta)
 }
 
-// GetRules retrieves validation Rules from node metadata, set previously via SetRules().
-func GetRules(node yamlmeta.Node) []Rule {
-	metas := node.GetMeta(validations)
+// Get retrieves validations from node metadata, set previously via Set().
+func Get(node yamlmeta.Node) []NodeValidation {
+	metas := node.GetMeta(validationsMeta)
 	if metas == nil {
 		return nil
 	}
-	return metas.([]Rule)
+	return metas.([]NodeValidation)
 }

@@ -6,6 +6,7 @@ package schema
 import (
 	"fmt"
 
+	"github.com/vmware-tanzu/carvel-ytt/pkg/experiments"
 	"github.com/vmware-tanzu/carvel-ytt/pkg/filepos"
 	"github.com/vmware-tanzu/carvel-ytt/pkg/validations"
 	"github.com/vmware-tanzu/carvel-ytt/pkg/yamlmeta"
@@ -23,14 +24,14 @@ func NewDocumentType(doc *yamlmeta.Document) (*DocumentType, error) {
 		return nil, err
 	}
 
-	validations, err := getValidations(doc)
+	v, err := getValidation(doc)
 	if err != nil {
 		return nil, err
 	}
 
 	typeOfValue.SetDefaultValue(defaultValue)
 
-	return &DocumentType{Source: doc, Position: doc.Position, ValueType: typeOfValue, defaultValue: defaultValue, validations: validations}, nil
+	return &DocumentType{Source: doc, Position: doc.Position, ValueType: typeOfValue, defaultValue: defaultValue, validations: v}, nil
 }
 
 func NewMapType(m *yamlmeta.Map) (*MapType, error) {
@@ -58,14 +59,14 @@ func NewMapItemType(item *yamlmeta.MapItem) (*MapItemType, error) {
 		return nil, err
 	}
 
-	validations, err := getValidations(item)
+	v, err := getValidation(item)
 	if err != nil {
 		return nil, err
 	}
 
 	typeOfValue.SetDefaultValue(defaultValue)
 
-	return &MapItemType{Key: item.Key, ValueType: typeOfValue, defaultValue: defaultValue, Position: item.Position, validations: validations}, nil
+	return &MapItemType{Key: item.Key, ValueType: typeOfValue, defaultValue: defaultValue, Position: item.Position, validations: v}, nil
 }
 
 func NewArrayType(a *yamlmeta.Array) (*ArrayType, error) {
@@ -98,14 +99,14 @@ func NewArrayItemType(item *yamlmeta.ArrayItem) (*ArrayItemType, error) {
 		return nil, err
 	}
 
-	validations, err := getValidations(item)
+	v, err := getValidation(item)
 	if err != nil {
 		return nil, err
 	}
 
 	typeOfValue.SetDefaultValue(defaultValue)
 
-	return &ArrayItemType{ValueType: typeOfValue, defaultValue: defaultValue, Position: item.GetPosition(), validations: validations}, nil
+	return &ArrayItemType{ValueType: typeOfValue, defaultValue: defaultValue, Position: item.GetPosition(), validations: v}, nil
 }
 
 func getType(node yamlmeta.Node) (Type, error) {
@@ -162,13 +163,17 @@ func getValue(node yamlmeta.Node, t Type) (interface{}, error) {
 	return t.GetDefaultValue(), nil
 }
 
-func getValidations(node yamlmeta.Node) ([]validations.Rule, error) {
+func getValidation(node yamlmeta.Node) (*validations.NodeValidation, error) {
+	if !experiments.IsValidationsEnabled() {
+		return nil, nil
+	}
+
 	validationAnn, err := processValidationAnnotation(node)
 	if err != nil {
 		return nil, err
 	}
 	if validationAnn != nil {
-		return validationAnn.GetRules(), nil
+		return validationAnn.GetValidation(), nil
 	}
 	return nil, nil
 }

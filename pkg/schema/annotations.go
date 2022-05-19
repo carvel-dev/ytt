@@ -76,8 +76,8 @@ type ExampleAnnotation struct {
 
 // ValidationAnnotation is a wrapper for validations provided via @schema/validation annotation
 type ValidationAnnotation struct {
-	rules []validations.Rule
-	pos   *filepos.Position
+	validation *validations.NodeValidation
+	pos        *filepos.Position
 }
 
 // Example contains a yaml example and its description
@@ -411,39 +411,14 @@ func NewExampleAnnotation(ann template.NodeAnnotation, pos *filepos.Position) (*
 	return &ExampleAnnotation{examples, ann.Position}, nil
 }
 
-// NewValidationAnnotation checks the argument provided via @schema/validation annotation, and returns wrapper for the rules defined
-func NewValidationAnnotation(ann template.NodeAnnotation, pos *filepos.Position) (*ValidationAnnotation, error) {
-	var rules []validations.Rule
+// NewValidationAnnotation checks the values provided via @schema/validation annotation, and returns wrapper for the validation defined
+func NewValidationAnnotation(ann template.NodeAnnotation) (*ValidationAnnotation, error) {
+	validation, err := validations.NewValidationFromValidationAnnotation(ann)
+	if err != nil {
+		return nil, fmt.Errorf("Invalid @%s annotation - %s", AnnotationValidation, err.Error())
+	}
 
-	if len(ann.Kwargs) != 0 {
-		return nil, fmt.Errorf("Invalid @%s annotation - expected @%s to have 2-tuple as argument(s), but found keyword argument (by %s)", AnnotationValidation, AnnotationValidation, ann.Position.AsCompactString())
-	}
-	if len(ann.Args) == 0 {
-		return nil, fmt.Errorf("Invalid @%s annotation - expected @%s to have 2-tuple as argument(s), but found no arguments (by %s)", AnnotationValidation, AnnotationValidation, ann.Position.AsCompactString())
-	}
-	for _, arg := range ann.Args {
-		ruleTuple, ok := arg.(starlark.Tuple)
-		if !ok {
-			return nil, fmt.Errorf("Invalid @%s annotation - expected @%s to have 2-tuple as argument(s), but found: %s (by %s)", AnnotationValidation, AnnotationValidation, arg.String(), ann.Position.AsCompactString())
-		}
-		if len(ruleTuple) != 2 {
-			return nil, fmt.Errorf("Invalid @%s annotation - expected @%s 2-tuple, but found tuple with length %v (by %s)", AnnotationValidation, AnnotationValidation, len(ruleTuple), ann.Position.AsCompactString())
-		}
-		message, ok := ruleTuple[0].(starlark.String)
-		if !ok {
-			return nil, fmt.Errorf("Invalid @%s annotation - expected first item in the 2-tuple to be a string describing a valid value, but was %s (at %s)", AnnotationValidation, ruleTuple[0].Type(), ann.Position.AsCompactString())
-		}
-		lambda, ok := ruleTuple[1].(starlark.Callable)
-		if !ok {
-			return nil, fmt.Errorf("Invalid @%s annotation - expected second item in the 2-tuple to be an assertion function, but was %s (at %s)", AnnotationValidation, ruleTuple[1].Type(), ann.Position.AsCompactString())
-		}
-		rules = append(rules, validations.Rule{
-			Msg:       message.GoString(),
-			Assertion: lambda,
-			Position:  ann.Position,
-		})
-	}
-	return &ValidationAnnotation{rules, ann.Position}, nil
+	return &ValidationAnnotation{validation, ann.Position}, nil
 }
 
 // NewTypeFromAnn returns type information given by annotation.
@@ -533,9 +508,9 @@ func (v *ValidationAnnotation) GetPosition() *filepos.Position {
 	return nil
 }
 
-// GetRules gets the validation rules from @schema/validation annotation
-func (v *ValidationAnnotation) GetRules() []validations.Rule {
-	return v.rules
+// GetValidation gets the NodeValidation created from @schema/validation annotation
+func (v *ValidationAnnotation) GetValidation() *validations.NodeValidation {
+	return v.validation
 }
 
 func (t *TypeAnnotation) IsAny() bool {
@@ -674,7 +649,7 @@ func processOptionalAnnotation(node yamlmeta.Node, optionalAnnotation template.A
 func processValidationAnnotation(node yamlmeta.Node) (*ValidationAnnotation, error) {
 	nodeAnnotations := template.NewAnnotations(node)
 	if nodeAnnotations.Has(AnnotationValidation) {
-		validationAnn, err := NewValidationAnnotation(nodeAnnotations[AnnotationValidation], node.GetPosition())
+		validationAnn, err := NewValidationAnnotation(nodeAnnotations[AnnotationValidation])
 		if err != nil {
 			return nil, err
 		}

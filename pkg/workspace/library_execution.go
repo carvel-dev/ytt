@@ -9,6 +9,7 @@ import (
 
 	"github.com/k14s/starlark-go/starlark"
 	"github.com/vmware-tanzu/carvel-ytt/pkg/cmd/ui"
+	"github.com/vmware-tanzu/carvel-ytt/pkg/experiments"
 	"github.com/vmware-tanzu/carvel-ytt/pkg/files"
 	"github.com/vmware-tanzu/carvel-ytt/pkg/template"
 	"github.com/vmware-tanzu/carvel-ytt/pkg/validations"
@@ -104,12 +105,23 @@ func (ll *LibraryExecution) Values(valuesOverlays []*datavalues.Envelope, schema
 	return values, libValues, err
 }
 
-// validateValues runs validations from @assert/validate annotations in Data Values for the current library.
+// validateValues runs validations on Data Values for the current library.
+// Validations are attached to data value and come from two sources:
+//   1. @schema/validation annotations in a data values schema file.
+//   2. @assert/validate annotations in a data values file.
 //
 // Returns an error if the arguments to an @assert/validate are invalid,
 // otherwise, checks the AssertCheck for violations, and returns nil if there are no violations.
 func (ll *LibraryExecution) validateValues(values *datavalues.Envelope) error {
-	assertCheck, err := validations.ProcessAndRunValidations(values.Doc, "assert-data-values")
+	if !experiments.IsValidationsEnabled() {
+		return nil
+	}
+	err := validations.ProcessAssertValidateAnns(values.Doc)
+	if err != nil {
+		return err
+	}
+
+	assertCheck := validations.Run(values.Doc, "run-data-values-validations")
 	if err != nil {
 		return err
 	}
