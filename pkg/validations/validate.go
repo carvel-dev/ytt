@@ -102,9 +102,11 @@ func (v NodeValidation) Validate(node yamlmeta.Node, thread *starlark.Thread) []
 		result, err := starlark.Call(thread, r.assertion, starlark.Tuple{nodeValue}, []starlark.Tuple{})
 		if err != nil {
 			failures = append(failures, fmt.Errorf("%s (%s) requires %q; %s (by %s)", key, node.GetPosition().AsCompactString(), r.msg, err.Error(), v.position.AsCompactString()))
-		} else if _, ok := result.(starlark.NoneType); !ok {
-			// in order to pass, the assertion must return True or None
-			if !result.Truth() {
+		} else {
+			_, isNone := result.(starlark.NoneType)
+			isTrue := bool(result.Truth())
+			// in order to pass, the assertion must return Truthy value or None
+			if !(isNone || isTrue){
 				failures = append(failures, fmt.Errorf("%s (%s) requires %q (by %s)", key, node.GetPosition().AsCompactString(), r.msg, v.position.AsCompactString()))
 			}
 		}
@@ -127,15 +129,9 @@ func (v validationKwargs) shouldValidate(value starlark.Value, thread *starlark.
 			return false, err
 		}
 
-		switch typedResult := result.(type) {
-		// if None or True, then execute rules
-		case starlark.NoneType:
-			return true, nil
-		case starlark.Bool:
-			return bool(typedResult), nil
-		default:
-			return false, fmt.Errorf("when kwarg function must reutrn a bool or None type")
-		}
+		_, isNone := result.(starlark.NoneType)
+		isTrue := bool(result.Truth())
+		return isNone || isTrue, nil
 	}
 	// if no kwargs then execute rules
 	return true, nil

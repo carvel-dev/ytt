@@ -114,7 +114,7 @@ func (pp DataValuesPreProcessing) typeAndCheck(dataValuesDoc *yamlmeta.Document)
 	}
 
 	// updates node's validations meta from Node's assigned type
-	yamlmeta.Walk(dataValuesDoc, schema.AssignSchemaValidations{})
+	_ = yamlmeta.Walk(dataValuesDoc, schema.AssignSchemaValidations{})
 
 	chk = schema.CheckNode(dataValuesDoc)
 	return chk
