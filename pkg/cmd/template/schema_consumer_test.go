@@ -255,10 +255,10 @@ foo:
 
 		opts.DataValuesFlags = cmdtpl.DataValuesFlags{
 			FromFiles: []string{"dvs1.yml"},
-			ReadFileFunc: func(path string) ([]byte, error) {
+			ReadFilesFunc: func(path string) ([]*files.File, error) {
 				switch path {
 				case "dvs1.yml":
-					return []byte(dvs1), nil
+					return []*files.File{files.MustNewFileFromSource(files.NewBytesSource("dvs1.yml", []byte(dvs1)))}, nil
 				default:
 					return nil, fmt.Errorf("Unknown file '%s'", path)
 				}
@@ -707,10 +707,10 @@ rendered: #@ data.values.foo
 `
 		cmdOpts.DataValuesFlags = cmdtpl.DataValuesFlags{
 			KVsFromFiles: []string{"foo=dvs1.yml"},
-			ReadFileFunc: func(path string) ([]byte, error) {
+			ReadFilesFunc: func(path string) ([]*files.File, error) {
 				switch path {
 				case "dvs1.yml":
-					return []byte(dvs1), nil
+					return []*files.File{files.MustNewFileFromSource(files.NewBytesSource("dvs1.yml", []byte(dvs1)))}, nil
 				default:
 					return nil, fmt.Errorf("Unknown file '%s'", path)
 				}
@@ -752,10 +752,10 @@ rendered: #@ data.values.foo
 `
 		cmdOpts.DataValuesFlags = cmdtpl.DataValuesFlags{
 			FromFiles: []string{"dvs1.yml"},
-			ReadFileFunc: func(path string) ([]byte, error) {
+			ReadFilesFunc: func(path string) ([]*files.File, error) {
 				switch path {
 				case "dvs1.yml":
-					return []byte(dvs1), nil
+					return []*files.File{files.MustNewFileFromSource(files.NewBytesSource("dvs1.yml", []byte(dvs1)))}, nil
 				default:
 					return nil, fmt.Errorf("Unknown file '%s'", path)
 				}
@@ -787,11 +787,11 @@ dvs1.yml:
 ---
 hostname: ""
 `
-		dvs1Data := `---
+		dvs1 := `---
 not_in_schema: this should be the only violation reported
 `
 
-		dvs2Data := `---
+		dvs2 := `---
 hostname: 14   # wrong type; but will never be caught
 `
 		templateYAML := `---
@@ -803,12 +803,12 @@ rendered: true`
 		})
 		opts.DataValuesFlags = cmdtpl.DataValuesFlags{
 			FromFiles: []string{"dvs1.yml", "dvs2.yml"},
-			ReadFileFunc: func(path string) ([]byte, error) {
+			ReadFilesFunc: func(path string) ([]*files.File, error) {
 				switch path {
 				case "dvs1.yml":
-					return []byte(dvs1Data), nil
+					return []*files.File{files.MustNewFileFromSource(files.NewBytesSource("dvs1.yml", []byte(dvs1)))}, nil
 				case "dvs2.yml":
-					return []byte(dvs2Data), nil
+					return []*files.File{files.MustNewFileFromSource(files.NewBytesSource("dvs2.yml", []byte(dvs2)))}, nil
 				default:
 					return nil, fmt.Errorf("Unknown file '%s'", path)
 				}
