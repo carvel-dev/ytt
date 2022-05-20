@@ -175,9 +175,7 @@ func getValidation(node yamlmeta.Node, nodeType Type) (*validations.NodeValidati
 
 	if validationAnn != nil {
 		if _, ok := nodeType.(*NullType); ok {
-			// will not override explicit use of when_null_skip kwarg
-			v := validationAnn.GetValidation().WithNullSkipTrue()
-			validationAnn.SetValidation(v)
+			validationAnn.GetValidation().DefaultNullSkipTrue()
 		}
 		return validationAnn.GetValidation(), nil
 	}

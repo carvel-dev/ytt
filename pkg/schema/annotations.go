@@ -508,11 +508,6 @@ func (v *ValidationAnnotation) GetPosition() *filepos.Position {
 	return nil
 }
 
-// SetValidation sets the NodeValidation on the Validation annotation
-func (v *ValidationAnnotation) SetValidation(validation *validations.NodeValidation) {
-	v.validation = validation
-}
-
 // GetValidation gets the NodeValidation created from @schema/validation annotation
 func (v *ValidationAnnotation) GetValidation() *validations.NodeValidation {
 	return v.validation

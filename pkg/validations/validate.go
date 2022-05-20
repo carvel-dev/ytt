@@ -106,7 +106,7 @@ func (v NodeValidation) Validate(node yamlmeta.Node, thread *starlark.Thread) []
 			_, isNone := result.(starlark.NoneType)
 			isTrue := bool(result.Truth())
 			// in order to pass, the assertion must return Truthy value or None
-			if !(isNone || isTrue){
+			if !(isNone || isTrue) {
 				failures = append(failures, fmt.Errorf("%s (%s) requires %q (by %s)", key, node.GetPosition().AsCompactString(), r.msg, v.position.AsCompactString()))
 			}
 		}
@@ -114,17 +114,12 @@ func (v NodeValidation) Validate(node yamlmeta.Node, thread *starlark.Thread) []
 	return failures
 }
 
-// WithNullSkipTrue sets the kwarg when_null_skip to true if not set explicitly.
-func (v NodeValidation) WithNullSkipTrue() *NodeValidation {
-	t := true
+// DefaultNullSkipTrue sets the kwarg when_null_skip to true if not set explicitly.
+func (v *NodeValidation) DefaultNullSkipTrue() {
 	if v.kwargs.whenNullSkip == nil {
-		return &NodeValidation{
-			rules:    v.rules,
-			kwargs:   validationKwargs{when: v.kwargs.when, whenNullSkip: &t},
-			position: v.position,
-		}
+		t := true
+		v.kwargs.whenNullSkip = &t
 	}
-	return &v
 }
 
 // shouldValidate uses validationKwargs and the node's value to run checks on the value. If the value satisfies the checks,

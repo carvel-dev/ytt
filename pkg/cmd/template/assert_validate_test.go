@@ -557,41 +557,7 @@ my_map:
 
 		assertSucceedsDocSet(t, filesToProcess, expected, opts)
 	})
-	t.Run("when validations pass on nullable schema type", func(t *testing.T) {
-		opts := cmdtpl.NewOptions()
-		opts.DataValuesFlags.Inspect = true
-
-		schemaYAML := `#@data/values-schema
----
-#@schema/nullable
-#@schema/validation ("a failing validation", lambda v: False)
-my_map:
-  foo: bar
-#@schema/nullable
-#@schema/validation ("a failing validation", lambda v:  False)
-my_array:
-  - abc
-#@schema/default [None]
-my_array_item:
-  #@schema/nullable
-  #@schema/validation ("a failing validation", lambda v: False) 
-  - abc
-`
-
-		expected := `my_map: null
-my_array: null
-my_array_item:
-- null
-`
-
-		filesToProcess := files.NewSortedFiles([]*files.File{
-			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
-		})
-
-		assertSucceedsDocSet(t, filesToProcess, expected, opts)
-	})
-
-	t.Run("when validations pass on an array item using --data-values-inspect", func(t *testing.T) {
+	t.Run("when validations pass on an array item", func(t *testing.T) {
 		opts := cmdtpl.NewOptions()
 		opts.DataValuesFlags.Inspect = true
 		schemaYAML := `#@ load("@ytt:assert", "assert")
@@ -734,7 +700,7 @@ array: []
 
 		assertSucceedsDocSet(t, filesToProcess, expected, opts)
 	})
-	t.Run("using the when_null_skip kwarg with schema default", func(t *testing.T) {
+	t.Run("using the when_null_skip kwarg", func(t *testing.T) {
 		opts := cmdtpl.NewOptions()
 		opts.DataValuesFlags.Inspect = true
 		schemaYAML := `#@data/values-schema
@@ -755,6 +721,39 @@ array:
 
 		expected := `string: null
 array:
+- null
+`
+
+		filesToProcess := files.NewSortedFiles([]*files.File{
+			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
+		})
+
+		assertSucceedsDocSet(t, filesToProcess, expected, opts)
+	})
+	t.Run("when validations pass by default on nullable schema type", func(t *testing.T) {
+		opts := cmdtpl.NewOptions()
+		opts.DataValuesFlags.Inspect = true
+
+		schemaYAML := `#@data/values-schema
+---
+#@schema/nullable
+#@schema/validation ("a failing validation", lambda v: False)
+my_map:
+  foo: bar
+#@schema/nullable
+#@schema/validation ("a failing validation", lambda v:  False)
+my_array:
+  - abc
+#@schema/default [None]
+my_array_item:
+  #@schema/nullable
+  #@schema/validation ("a failing validation", lambda v: False) 
+  - abc
+`
+
+		expected := `my_map: null
+my_array: null
+my_array_item:
 - null
 `
 
@@ -1136,8 +1135,39 @@ my_map:
 
 			assertFails(t, filesToProcess, expectedErr, opts)
 		})
-	})
+		t.Run("when_null_skip and nullable schema type", func(t *testing.T) {
+			opts := cmdtpl.NewOptions()
+			opts.DataValuesFlags.Inspect = true
 
+			schemaYAML := `#@data/values-schema
+---
+#@schema/nullable
+#@schema/validation ("a failing validation", lambda v: False), when_null_skip=False
+my_map:
+  foo: bar
+#@schema/nullable
+#@schema/validation ("a failing validation", lambda v:  False), when_null_skip=False
+my_array:
+  - abc
+#@schema/default [None]
+my_array_item:
+  #@schema/nullable
+  #@schema/validation ("a failing validation", lambda v: False), when_null_skip=False
+  - abc
+`
+
+			expectedErr := `One or more data values were invalid:
+- "my_map" (schema.yml:5) requires "a failing validation" (by schema.yml:4)
+- "my_array" (schema.yml:9) requires "a failing validation" (by schema.yml:8)
+- array item (schema.yml:12) requires "a failing validation" (by schema.yml:14)`
+
+			filesToProcess := files.NewSortedFiles([]*files.File{
+				files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
+			})
+
+			assertFails(t, filesToProcess, expectedErr, opts)
+		})
+	})
 }
 
 func TestAssertValidateOnDataValuesAreSkippedWhenDisabled(t *testing.T) {
