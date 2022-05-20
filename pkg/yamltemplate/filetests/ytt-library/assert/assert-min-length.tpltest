@@ -1,0 +1,35 @@
+#@ load("@ytt:assert", "assert")
+
+#@ def docset():
+---
+first
+---
+second
+#@ end
+---
+#@ def mapping():
+first: 1
+second: 2
+#@ end
+---
+#@ def array():
+- first
+- second
+#@ end
+---
+
+min_len_of_string: #@ assert.min_len(2, "o0")
+min_len_of_dict:   #@ assert.min_len(2, {"first": 1, "second": 2})
+min_len_of_list:   #@ assert.min_len(2, ["first", "second"])
+min_len_of_docset: #@ assert.min_len(2, docset())
+min_len_of_map:    #@ assert.min_len(2, mapping())
+min_len_of_array:  #@ assert.min_len(2, array())
+
++++
+
+min_len_of_string: null
+min_len_of_dict: null
+min_len_of_list: null
+min_len_of_docset: null
+min_len_of_map: null
+min_len_of_array: null

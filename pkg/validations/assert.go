@@ -17,6 +17,11 @@ const (
 	AnnotationAssertValidate    template.AnnotationName = "assert/validate"
 	ValidationKwargWhen         string                  = "when"
 	ValidationKwargWhenNullSkip string                  = "when_null_skip"
+	ValidationKwargMinLength    string                  = "min_len"
+	ValidationKwargMaxLength    string                  = "max_len"
+	ValidationKwargMin          string                  = "min"
+	ValidationKwargMax          string                  = "max"
+	ValidationKwargNotNull      string                  = "not_null"
 )
 
 // ProcessAssertValidateAnns checks Assert annotations on data values and stores them on a Node as Validations.
@@ -59,8 +64,8 @@ func (a *convertAssertAnnsToValidations) Visit(node yamlmeta.Node) error {
 // If any value in the annotation is not well-formed, it returns an error.
 func NewValidationFromValidationAnnotation(annotation template.NodeAnnotation) (*NodeValidation, error) {
 	var rules []rule
-
-	if len(annotation.Args) == 0 {
+	// TODO: what makes a malformed annotation??
+	if len(annotation.Args) == 0 && len(annotation.Kwargs) == 0 {
 		return nil, fmt.Errorf("expected annotation to have 2-tuple as argument(s), but found no arguments (by %s)", annotation.Position.AsCompactString())
 	}
 	for _, arg := range annotation.Args {
@@ -89,9 +94,13 @@ func NewValidationFromValidationAnnotation(annotation template.NodeAnnotation) (
 		return nil, err
 	}
 
+	rules = append(rules, kwargs.convertToRules()...)
+
 	return &NodeValidation{rules, kwargs, annotation.Position}, nil
 }
 
+// newValidationKwargs takes the keyword arguments from a Validation annotation,
+// and makes sure they are well-formed.
 func newValidationKwargs(kwargs []starlark.Tuple, annPos *filepos.Position) (validationKwargs, error) {
 	var processedKwargs validationKwargs
 	for _, value := range kwargs {
@@ -110,6 +119,31 @@ func newValidationKwargs(kwargs []starlark.Tuple, annPos *filepos.Position) (val
 			}
 			b := bool(v)
 			processedKwargs.whenNullSkip = &b
+		case ValidationKwargMinLength:
+			v, err := starlark.NumberToInt(value[1])
+			if err != nil {
+				return validationKwargs{}, fmt.Errorf("expected keyword argument %q to be a number, but was %s (at %s)", ValidationKwargMinLength, value[1].Type(), annPos.AsCompactString())
+			}
+			num, _ := v.Int64()
+			processedKwargs.minLength = int(num)
+		case ValidationKwargMaxLength:
+			v, err := starlark.NumberToInt(value[1])
+			if err != nil {
+				return validationKwargs{}, fmt.Errorf("expected keyword argument %q to be a number, but was %s (at %s)", ValidationKwargMaxLength, value[1].Type(), annPos.AsCompactString())
+			}
+			num, _ := v.Int64()
+			intNum := int(num)
+			processedKwargs.maxLength = &intNum
+		case ValidationKwargMin:
+			processedKwargs.min = value[1]
+		case ValidationKwargMax:
+			processedKwargs.max = value[1]
+		case ValidationKwargNotNull:
+			v, ok := value[1].(starlark.Bool)
+			if !ok {
+				return validationKwargs{}, fmt.Errorf("expected keyword argument %q to be a boolean, but was %s (at %s)", ValidationKwargNotNull, value[1].Type(), annPos.AsCompactString())
+			}
+			processedKwargs.notNull = bool(v)
 		default:
 			return validationKwargs{}, fmt.Errorf("unknown keyword argument %q (at %s)", kwargName, annPos.AsCompactString())
 		}

@@ -10,6 +10,7 @@ import (
 	"github.com/vmware-tanzu/carvel-ytt/pkg/filepos"
 	"github.com/vmware-tanzu/carvel-ytt/pkg/yamlmeta"
 	"github.com/vmware-tanzu/carvel-ytt/pkg/yamltemplate"
+	"github.com/vmware-tanzu/carvel-ytt/pkg/yttlibrary"
 )
 
 // NodeValidation represents a validation attached to a Node via an annotation.
@@ -30,6 +31,12 @@ type rule struct {
 type validationKwargs struct {
 	when         *starlark.Callable
 	whenNullSkip *bool // default: nil if kwarg is not set, True if value is Nullable
+	minLength    int   // 0 len("") == 0, this always passes
+	maxLength    *int
+	min          starlark.Value
+	max          starlark.Value
+	notNull      bool
+	// *int , default=nil possible_values={&1, &2, &-3, ..}
 }
 
 // Run takes a root Node, and threadName, and validates each Node in the tree.
@@ -125,8 +132,10 @@ func (v *NodeValidation) DefaultNullSkipTrue() {
 // shouldValidate uses validationKwargs and the node's value to run checks on the value. If the value satisfies the checks,
 // then the NodeValidation's rules should execute, otherwise the rules will be skipped.
 func (v validationKwargs) shouldValidate(value starlark.Value, thread *starlark.Thread) (bool, error) {
-	_, isNone := value.(starlark.NoneType)
-	if isNone && (v.whenNullSkip != nil && *v.whenNullSkip) {
+	_, isNull := value.(starlark.NoneType)
+	nullAllowed := !v.notNull
+	whenNullSkip := v.whenNullSkip != nil && *v.whenNullSkip
+	if isNull && nullAllowed && whenNullSkip {
 		return false, nil
 	}
 
@@ -137,10 +146,51 @@ func (v validationKwargs) shouldValidate(value starlark.Value, thread *starlark.
 		}
 
 		isTrue := bool(result.Truth())
-		return isNone || isTrue, nil
+		return isNull || isTrue, nil
 	}
 	// if no kwargs then execute rules
 	return true, nil
+}
+
+func (v validationKwargs) convertToRules() []rule {
+	var rules []rule
+	if minLen := v.minLength; minLen > 0 {
+		a := yttlibrary.NewAssertMinLength(minLen)
+		rules = append(rules, rule{
+			msg:       fmt.Sprintf("length greater or equal to %v", minLen),
+			assertion: a,
+		})
+	}
+	if v.maxLength != nil {
+		a := yttlibrary.NewAssertMaxLength(*v.maxLength)
+		rules = append(rules, rule{
+			msg:       fmt.Sprintf("length less than or equal to %v", *v.maxLength),
+			assertion: a,
+		})
+	}
+	if v.min != nil {
+		a := yttlibrary.NewAssertMin(v.min)
+		rules = append(rules, rule{
+			msg:       fmt.Sprintf("a value greater or equal to %v", v.min),
+			assertion: a,
+		})
+	}
+	if v.max != nil {
+		a := yttlibrary.NewAssertMax(v.max)
+		rules = append(rules, rule{
+			msg:       fmt.Sprintf("a value less than or equal to %v", v.max),
+			assertion: a,
+		})
+	}
+	if v.notNull {
+		a := yttlibrary.NewAssertNotNull()
+		rules = append(rules, rule{
+			msg:       fmt.Sprintf("not null"),
+			assertion: a,
+		})
+	}
+
+	return rules
 }
 
 // AssertCheck holds the resulting violations from executing Validations on a node.

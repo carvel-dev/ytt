@@ -1,0 +1,31 @@
+#@ load("@ytt:assert", "assert")
+
+#@ def docset():
+---
+first
+#@ end
+---
+#@ def mapping():
+first: 1
+#@ end
+---
+#@ def array():
+- first
+#@ end
+---
+
+max_len_of_string: #@ assert.not_null("o0")
+max_len_of_dict:   #@ assert.not_null({"first": 1, "second": 2})
+max_len_of_list:   #@ assert.not_null(["first", "second"])
+max_len_of_docset: #@ assert.not_null(docset())
+max_len_of_map:    #@ assert.not_null(mapping())
+max_len_of_array:  #@ assert.not_null(array())
+
++++
+
+max_len_of_string: null
+max_len_of_dict: null
+max_len_of_list: null
+max_len_of_docset: null
+max_len_of_map: null
+max_len_of_array: null
