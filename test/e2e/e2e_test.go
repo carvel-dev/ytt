@@ -17,171 +17,167 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestCheckStdInReading(t *testing.T) {
-	actualOutput := runYtt(t, []string{"-", "../../examples/eirini/input.yml"}, "../../examples/eirini/config.yml", nil, nil)
+func TestDataValues(t *testing.T) {
+	t.Run("can be set through command-line flags", func(t *testing.T) {
+		t.Run("--data-value flag", func(t *testing.T) {
+			flags := yttFlags{
+				{"--data-value": "nothing=null"},
+				{"--data-value": "string=str"},
+				{"--data-value": "bool=true"},
+				{"--data-value": "int=123"},
+				{"--data-value": "float=123.123"},
+			}
+			actualOutput := runYtt(t, testInputFiles{"../../examples/data-values/config.yml", "../../examples/data-values/values.yml"}, "", flags, nil)
+			expectedOutput := `nothing: "null"
+string: str
+bool: "true"
+int: "123"
+float: "123.123"
+`
 
-	expectedFileOutput, err := ioutil.ReadFile("../../examples/eirini/config-result.yml")
-	require.NoError(t, err)
-	require.Equal(t, string(expectedFileOutput), actualOutput)
-}
-
-func TestDataValuesFileWithStdin(t *testing.T) {
-
-	t.Run("--data-values-file with stdin", func(t *testing.T) {
-		flags := yttFlags{
-			{"--data-values-file": "-"},
-			{"--data-values-inspect": ""},
-		}
-		actualOutput := runYtt(t, []string{}, "../../examples/data-values/values-file.yml", flags, nil)
-		expectedOutput := `nothing: something
+			require.Equal(t, expectedOutput, actualOutput)
+		})
+		t.Run("--data-value-yaml flag", func(t *testing.T) {
+			flags := yttFlags{
+				{"--data-value-yaml": "nothing=null"},
+				{"--data-value-yaml": "string=str"},
+				{"--data-value-yaml": "bool=true"},
+				{"--data-value-yaml": "int=123"},
+				{"--data-value-yaml": "float=123.123"},
+			}
+			actualOutput := runYtt(t, testInputFiles{"../../examples/data-values/config.yml", "../../examples/data-values/values.yml"}, "", flags, nil)
+			expectedOutput := `nothing: null
 string: str
 bool: true
-int: 124
-new_thing: new
+int: 123
+float: 123.123
 `
-		require.Equal(t, expectedOutput, actualOutput)
+
+			require.Equal(t, expectedOutput, actualOutput)
+		})
+		t.Run("--data-values-env flag", func(t *testing.T) {
+			flags := yttFlags{
+				{"--data-values-env": "STR_VAL"},
+				{"--data-values-env-yaml": "YAML_VAL"},
+			}
+			envs := []string{
+				"STR_VAL_nothing=null",
+				"YAML_VAL_string=str",
+				"YAML_VAL_bool=true",
+				"YAML_VAL_int=123",
+				"YAML_VAL_float=123.123",
+			}
+			actualOutput := runYtt(t, testInputFiles{"../../examples/data-values/config.yml", "../../examples/data-values/values.yml"}, "", flags, envs)
+			expectedOutput := `nothing: "null"
+string: str
+bool: true
+int: 123
+float: 123.123
+`
+
+			require.Equal(t, expectedOutput, actualOutput)
+		})
+		t.Run("--data-value-yaml && --data-values-env-yaml flag", func(t *testing.T) {
+			flags := yttFlags{
+				{"--data-value-yaml": "nothing=[1,2,3]"},
+				{"--data-values-env-yaml": "YAML_VAL"},
+			}
+			envs := []string{
+				"YAML_VAL_string=[1,2,4]",
+				"YAML_VAL_bool=true",
+				"YAML_VAL_int=123",
+				"YAML_VAL_float=123.123",
+			}
+			actualOutput := runYtt(t, testInputFiles{"../../examples/data-values/config.yml", "../../examples/data-values/values.yml"}, "", flags, envs)
+			expectedOutput := `nothing:
+- 1
+- 2
+- 3
+string:
+- 1
+- 2
+- 4
+bool: true
+int: 123
+float: 123.123
+`
+
+			require.Equal(t, expectedOutput, actualOutput)
+		})
 	})
-
-}
-func TestCheckStdInReadingOnlyOnce(t *testing.T) {
-	flags := yttFlags{
-		{"--data-values-file": "-"},
-		{"-f": "-"},
-	}
-	actualOutput := runYttExpectingError(t, nil, "../../examples/data-values/values-file.yml", flags, nil)
-	expectedOutput := "ytt: Error: Extracting data value from file:\n  Reading file 'stdin.yml':\n    Standard input has already been read, has the '-' argument been used in more than one flag?\n"
-	require.Equal(t, expectedOutput, actualOutput)
-}
-
-func TestSanityCheckTemplateWithDataValues(t *testing.T) {
-	t.Run("template file with data value", func(t *testing.T) {
-		actualOutput := runYtt(t, []string{"../../examples/eirini/config.yml", "../../examples/eirini/input.yml"}, "", nil, nil)
-
-		expectedFileOutput, err := ioutil.ReadFile("../../examples/eirini/config-result.yml")
+	t.Run("can be 'required'", func(t *testing.T) {
+		expectedFileOutput, err := ioutil.ReadFile("../../examples/data-values-required/expected.txt")
 		require.NoError(t, err)
-		require.Equal(t, string(expectedFileOutput), actualOutput)
-	})
 
-	t.Run("another template file with data value", func(t *testing.T) {
-		actualOutput := runYtt(t, []string{"../../examples/eirini/config-alt1.yml", "../../examples/eirini/input.yml"}, "", nil, nil)
-
-		expectedFileOutput, err := ioutil.ReadFile("../../examples/eirini/config-result.yml")
-		require.NoError(t, err)
-		require.Equal(t, string(expectedFileOutput), actualOutput)
-	})
-}
-
-func TestCheckDirectoryReading(t *testing.T) {
-	tempOutputDir, err := ioutil.TempDir(os.TempDir(), "ytt-check-dir")
-	require.NoError(t, err)
-	defer os.Remove(tempOutputDir)
-	flags := yttFlags{{fmt.Sprintf("--dangerous-emptied-output-directory=%s", tempOutputDir): ""}}
-	runYtt(t, []string{"../../examples/eirini/"}, "", flags, nil)
-
-	expectedFileOutput, err := ioutil.ReadFile("../../examples/eirini/config-result.yml")
-	require.NoError(t, err)
-
-	actualOutput, err := ioutil.ReadFile(filepath.Join(tempOutputDir, "config-result.yml"))
-	require.NoError(t, err)
-
-	require.Equal(t, string(expectedFileOutput), string(actualOutput))
-}
-
-func TestPlaygroundExamples(t *testing.T) {
-
-	filepath.WalkDir("../../examples/playground/basics", func(path string, d fs.DirEntry, err error) error {
-		if !d.IsDir() {
-			return filepath.SkipDir
+		dirs := []string{
+			"data-values-required/inline",
+			"data-values-required/function",
+			"data-values-required/bulk",
 		}
+		for _, dir := range dirs {
+			t.Run(dir, func(t *testing.T) {
+				dirPath := fmt.Sprintf("../../examples/%s", dir)
+				flags := yttFlags{
+					{"-v": "version=123"},
+				}
+				actualOutput := runYtt(t, testInputFiles{dirPath}, "", flags, nil)
 
-		switch d.Name() {
-		case "example-assert", "example-load-custom-library-module", "example-ytt-library-module":
-			return filepath.SkipDir
-		case "basics":
-			return nil
-		default:
-			t.Run(fmt.Sprintf("playground %s", d.Name()), func(t *testing.T) {
-				runYtt(t, testInputFiles{path}, "", nil, nil)
+				require.Equal(t, string(expectedFileOutput), actualOutput)
 			})
-			return nil
 		}
 	})
+	t.Run("example supporting multi-environment scenarios", func(t *testing.T) {
+		t.Run("with defaults", func(t *testing.T) {
+			flags := yttFlags{
+				{"-v": "version=123"},
+			}
+			actualOutput := runYtt(t, testInputFiles{"../../examples/data-values-multiple-envs/config/"}, "", flags, nil)
+
+			expectedOutput := `app_config:
+  version: "123"
+  ports:
+  - 8080
+`
+			require.Equal(t, expectedOutput, actualOutput)
+		})
+		t.Run("with 'dev' overrides", func(t *testing.T) {
+			actualOutput := runYtt(t, testInputFiles{"../../examples/data-values-multiple-envs/config/", "../../examples/data-values-multiple-envs/envs/dev.yml"}, "", nil, nil)
+			expectedOutput := `app_config:
+  version: v1alpha1
+  ports:
+  - 8080
+`
+			require.Equal(t, expectedOutput, actualOutput)
+		})
+		t.Run("with 'staging' overrides", func(t *testing.T) {
+			actualOutput := runYtt(t, testInputFiles{"../../examples/data-values-multiple-envs/config/", "../../examples/data-values-multiple-envs/envs/staging.yml"}, "", nil, nil)
+			expectedOutput := `app_config:
+  version: v1beta1
+  ports:
+  - 8081
+`
+			require.Equal(t, expectedOutput, actualOutput)
+		})
+		t.Run("with 'prod' overrides", func(t *testing.T) {
+			actualOutput := runYtt(t, testInputFiles{"../../examples/data-values-multiple-envs/config/", "../../examples/data-values-multiple-envs/envs/prod.yml"}, "", nil, nil)
+			expectedOutput := `app_config:
+  version: v1
+  ports:
+  - 80
+`
+			require.Equal(t, expectedOutput, actualOutput)
+		})
+	})
 }
 
-func TestOverlays(t *testing.T) {
-	t.Run(fmt.Sprintf("overlay ../../examples/overlay"), func(t *testing.T) {
-		runYtt(t, testInputFiles{"../../examples/overlay"}, "", nil, nil)
-	})
-
-	t.Run(fmt.Sprintf("overlay ../../examples/overlay-files"), func(t *testing.T) {
-		runYtt(t, testInputFiles{"../../examples/overlay-files"}, "", nil, nil)
-	})
-
-	t.Run(fmt.Sprintf("overlay ../../examples/overlay-regular-files"), func(t *testing.T) {
-		runYtt(t, testInputFiles{"../../examples/overlay"}, "", yttFlags{{"--file-mark": "file.yml:type=yaml-plain"}}, nil)
-	})
-}
-
-func TestDifferentUsages(t *testing.T) {
+func TestSchema(t *testing.T) {
 	dirs := []string{
-		"k8s-add-global-label",
-		"k8s-adjust-rbac-version",
-		"k8s-docker-secret",
-		"k8s-relative-rolling-update",
-		"k8s-config-map-files",
-		"k8s-update-env-var",
-		"k8s-overlay-all-containers",
-		"k8s-overlay-remove-resources",
-		"k8s-overlay-in-config-map",
-		// test that @ytt:toml module works in default ytt binary
-		// as it is loaded in a different way than other @ytt:* modules.
-		"toml-serialize",
-	}
-	for _, k8sDirToTest := range dirs {
-		t.Run(fmt.Sprintf("k8s: %s", k8sDirToTest), func(t *testing.T) {
-			dirPath := fmt.Sprintf("../../examples/%s", k8sDirToTest)
-			actualOutput := runYtt(t, testInputFiles{dirPath}, "", nil, nil)
-
-			expectedOutput, err := ioutil.ReadFile(filepath.Join(dirPath, "expected.txt"))
-			require.NoError(t, err)
-
-			require.Equal(t, string(expectedOutput), actualOutput)
-		})
-	}
-
-	dirs = []string{"concourse-overlay"}
-	for _, concourseDirToTest := range dirs {
-		t.Run(fmt.Sprintf("concourse: %s", concourseDirToTest), func(t *testing.T) {
-			dirPath := fmt.Sprintf("../../examples/%s", concourseDirToTest)
-			actualOutput := runYtt(t, testInputFiles{dirPath}, "", nil, nil)
-
-			expectedOutput, err := ioutil.ReadFile(filepath.Join(dirPath, "expected.txt"))
-			require.NoError(t, err)
-
-			require.Equal(t, string(expectedOutput), actualOutput)
-		})
-	}
-
-	dirs = []string{"overlay-not-matcher"}
-	for _, overlayDirToTest := range dirs {
-		t.Run(fmt.Sprintf("overlay-not-matcher: %s", overlayDirToTest), func(t *testing.T) {
-			dirPath := fmt.Sprintf("../../examples/%s", overlayDirToTest)
-			actualOutput := runYtt(t, testInputFiles{dirPath}, "", nil, nil)
-
-			expectedOutput, err := ioutil.ReadFile(filepath.Join(dirPath, "expected.txt"))
-			require.NoError(t, err)
-
-			require.Equal(t, string(expectedOutput), actualOutput)
-		})
-	}
-
-	dirs = []string{
 		"schema",
 		"schema-arrays",
 	}
-	for _, schemaDirToTest := range dirs {
-		t.Run(fmt.Sprintf("schema: %s", schemaDirToTest), func(t *testing.T) {
-			dirPath := fmt.Sprintf("../../examples/%s", schemaDirToTest)
+	for _, dir := range dirs {
+		t.Run(dir, func(t *testing.T) {
+			dirPath := fmt.Sprintf("../../examples/%s", dir)
 			actualOutput := runYtt(t, testInputFiles{dirPath}, "", nil, nil)
 
 			expectedOutput, err := ioutil.ReadFile(filepath.Join(dirPath, "expected.txt"))
@@ -192,11 +188,28 @@ func TestDifferentUsages(t *testing.T) {
 	}
 }
 
-func TestJsonOutput(t *testing.T) {
-	actualOutput := runYtt(t, testInputFiles{"../../examples/k8s-adjust-rbac-version"}, "", yttFlags{{"-o": "json"}}, nil)
-	expectedOutput := `{"apiVersion":"rbac.authorization.k8s.io/v1","kind":"ClusterRole"}{"apiVersion":"rbac.authorization.k8s.io/v1","kind":"ClusterRole"}`
+func TestOverlays(t *testing.T) {
+	dirs := []string{
+		"overlay",
+		"overlay-files",
+		"overlay-not-matcher",
+		"overlay-regular-files",
+	}
+	for _, dir := range dirs {
+		t.Run(dir, func(t *testing.T) {
+			dirPath := fmt.Sprintf("../../examples/%s", dir)
+			actualOutput := runYtt(t, testInputFiles{dirPath}, "", nil, nil)
 
-	require.Equal(t, expectedOutput, actualOutput)
+			expectedOutput, err := ioutil.ReadFile(filepath.Join(dirPath, "expected.txt"))
+			require.NoError(t, err)
+
+			require.Equal(t, string(expectedOutput), actualOutput)
+		})
+	}
+}
+
+func TestVersionIsValid(t *testing.T) {
+	runYtt(t, testInputFiles{"../../examples/version-constraint"}, "", yttFlags{}, nil)
 }
 
 func TestPipes(t *testing.T) {
@@ -215,249 +228,186 @@ func TestPipes(t *testing.T) {
 	})
 }
 
-func TestDataValues(t *testing.T) {
-	t.Run("--data-value flag", func(t *testing.T) {
-		flags := yttFlags{
-			{"--data-value": "nothing=null"},
-			{"--data-value": "string=str"},
-			{"--data-value": "bool=true"},
-			{"--data-value": "int=123"},
-			{"--data-value": "float=123.123"},
-		}
-		actualOutput := runYtt(t, testInputFiles{"../../examples/data-values/config.yml", "../../examples/data-values/values.yml"}, "", flags, nil)
-		expectedOutput := `nothing: "null"
-string: str
-bool: "true"
-int: "123"
-float: "123.123"
-`
+func TestReadingFromStandardIn(t *testing.T) {
+	t.Run("through --file", func(t *testing.T) {
+		actualOutput := runYtt(t, []string{"-", "../../examples/eirini/input.yml"}, "../../examples/eirini/config.yml", nil, nil)
 
-		require.Equal(t, expectedOutput, actualOutput)
+		expectedFileOutput, err := ioutil.ReadFile("../../examples/eirini/config-result.yml")
+		require.NoError(t, err)
+		require.Equal(t, string(expectedFileOutput), actualOutput)
 	})
-
-	t.Run("--data-value-yaml flag", func(t *testing.T) {
+	t.Run("through --data-values-file", func(t *testing.T) {
 		flags := yttFlags{
-			{"--data-value-yaml": "nothing=null"},
-			{"--data-value-yaml": "string=str"},
-			{"--data-value-yaml": "bool=true"},
-			{"--data-value-yaml": "int=123"},
-			{"--data-value-yaml": "float=123.123"},
+			{"--data-values-file": "-"},
+			{"--data-values-inspect": ""},
 		}
-		actualOutput := runYtt(t, testInputFiles{"../../examples/data-values/config.yml", "../../examples/data-values/values.yml"}, "", flags, nil)
-		expectedOutput := `nothing: null
+		actualOutput := runYtt(t, []string{}, "../../examples/data-values/values-file.yml", flags, nil)
+		expectedOutput := `nothing: something
 string: str
 bool: true
-int: 123
-float: 123.123
+int: 124
+new_thing: new
 `
-
 		require.Equal(t, expectedOutput, actualOutput)
 	})
-
-	t.Run("--data-values-env flag", func(t *testing.T) {
+	t.Run("can only be read once", func(t *testing.T) {
 		flags := yttFlags{
-			{"--data-values-env": "STR_VAL"},
-			{"--data-values-env-yaml": "YAML_VAL"},
+			{"--data-values-file": "-"},
+			{"-f": "-"},
 		}
-		envs := []string{
-			"STR_VAL_nothing=null",
-			"YAML_VAL_string=str",
-			"YAML_VAL_bool=true",
-			"YAML_VAL_int=123",
-			"YAML_VAL_float=123.123",
-		}
-		actualOutput := runYtt(t, testInputFiles{"../../examples/data-values/config.yml", "../../examples/data-values/values.yml"}, "", flags, envs)
-		expectedOutput := `nothing: "null"
-string: str
-bool: true
-int: 123
-float: 123.123
-`
-
-		require.Equal(t, expectedOutput, actualOutput)
-	})
-
-	t.Run("--data-value-yaml && --data-values-env-yaml flag", func(t *testing.T) {
-		flags := yttFlags{
-			{"--data-value-yaml": "nothing=[1,2,3]"},
-			{"--data-values-env-yaml": "YAML_VAL"},
-		}
-		envs := []string{
-			"YAML_VAL_string=[1,2,4]",
-			"YAML_VAL_bool=true",
-			"YAML_VAL_int=123",
-			"YAML_VAL_float=123.123",
-		}
-		actualOutput := runYtt(t, testInputFiles{"../../examples/data-values/config.yml", "../../examples/data-values/values.yml"}, "", flags, envs)
-		expectedOutput := `nothing:
-- 1
-- 2
-- 3
-string:
-- 1
-- 2
-- 4
-bool: true
-int: 123
-float: 123.123
-`
-
+		actualOutput := runYttExpectingError(t, nil, "../../examples/data-values/values-file.yml", flags, nil)
+		expectedOutput := "ytt: Error: Extracting data value from file:\n  Reading file 'stdin.yml':\n    Standard input has already been read, has the '-' argument been used in more than one flag?\n"
 		require.Equal(t, expectedOutput, actualOutput)
 	})
 }
 
-func TestSchema(t *testing.T) {
-	t.Run("--data-value flag", func(t *testing.T) {
-		flags := yttFlags{
-			{"--data-value": "nothing=a new string"},
-			{"--data-value": "string=str"},
-		}
+func TestCheckDirectoryOutput(t *testing.T) {
+	tempOutputDir, err := ioutil.TempDir(os.TempDir(), "ytt-check-dir")
+	require.NoError(t, err)
+	defer os.Remove(tempOutputDir)
+	flags := yttFlags{{fmt.Sprintf("--dangerous-emptied-output-directory=%s", tempOutputDir): ""}}
+	runYtt(t, []string{"../../examples/eirini/"}, "", flags, nil)
 
-		actualOutput := runYtt(t, testInputFiles{"../../examples/schema/config.yml", "../../examples/schema/schema.yml"}, "", flags, nil)
-		expectedOutput := `nothing: a new string
-string: str
-bool: false
-int: 0
-float: 0.1
-any: anything
-`
-
-		require.Equal(t, expectedOutput, actualOutput)
-	})
-
-	t.Run("--data-value-yaml flag", func(t *testing.T) {
-		flags := yttFlags{
-			{"--data-value-yaml": "nothing=a new string"},
-			{"--data-value-yaml": "string=str"},
-			{"--data-value-yaml": "bool=true"},
-			{"--data-value-yaml": "int=123"},
-			{"--data-value-yaml": "float=123.123"},
-			{"--data-value-yaml": "any=[1,2,4]"},
-		}
-		actualOutput := runYtt(t, testInputFiles{"../../examples/schema/config.yml", "../../examples/schema/schema.yml"}, "", flags, nil)
-		expectedOutput := `nothing: a new string
-string: str
-bool: true
-int: 123
-float: 123.123
-any:
-- 1
-- 2
-- 4
-`
-
-		require.Equal(t, expectedOutput, actualOutput)
-	})
-
-	t.Run("--data-values-env && --data-values-env-yaml flag", func(t *testing.T) {
-		flags := yttFlags{
-			{"--data-values-env": "STR_VAL"},
-			{"--data-values-env-yaml": "YAML_VAL"},
-		}
-		envs := []string{
-			"STR_VAL_nothing=a new string",
-			"YAML_VAL_string=str",
-			"YAML_VAL_bool=true",
-			"YAML_VAL_int=123",
-			"YAML_VAL_float=123.123",
-			"YAML_VAL_any=[1,2,4]",
-		}
-		actualOutput := runYtt(t, testInputFiles{"../../examples/schema/config.yml", "../../examples/schema/schema.yml"}, "", flags, envs)
-		expectedOutput := `nothing: a new string
-string: str
-bool: true
-int: 123
-float: 123.123
-any:
-- 1
-- 2
-- 4
-`
-
-		require.Equal(t, expectedOutput, actualOutput)
-	})
-}
-
-func TestDataValuesRequired(t *testing.T) {
-	expectedFileOutput, err := ioutil.ReadFile("../../examples/data-values-required/expected.txt")
+	expectedFileOutput, err := ioutil.ReadFile("../../examples/eirini/config-result.yml")
 	require.NoError(t, err)
 
-	t.Run("inline", func(t *testing.T) {
-		flags := yttFlags{
-			{"-v": "version=123"},
-		}
-		actualOutput := runYtt(t, testInputFiles{"../../examples/data-values-required/inline"}, "", flags, nil)
+	actualOutput, err := ioutil.ReadFile(filepath.Join(tempOutputDir, "config-result.yml"))
+	require.NoError(t, err)
 
-		require.Equal(t, string(expectedFileOutput), actualOutput)
+	require.Equal(t, string(expectedFileOutput), string(actualOutput))
+}
+
+func TestJsonOutput(t *testing.T) {
+	actualOutput := runYtt(t, testInputFiles{"../../examples/k8s-adjust-rbac-version"}, "", yttFlags{{"-o": "json"}}, nil)
+	expectedOutput := `{"apiVersion":"rbac.authorization.k8s.io/v1","kind":"ClusterRole"}{"apiVersion":"rbac.authorization.k8s.io/v1","kind":"ClusterRole"}`
+
+	require.Equal(t, expectedOutput, actualOutput)
+}
+
+func TestPlaygroundExamplesExecuteWithoutError(t *testing.T) {
+	t.Run("Basics", func(t *testing.T) {
+		filepath.WalkDir("../../examples/playground/basics", func(path string, d fs.DirEntry, err error) error {
+			if !d.IsDir() {
+				return filepath.SkipDir
+			}
+
+			switch d.Name() {
+			case "example-assert", "example-load-custom-library-module", "example-ytt-library-module":
+				return filepath.SkipDir
+			case "basics":
+				return nil
+			default:
+				t.Run(fmt.Sprintf("playground %s", d.Name()), func(t *testing.T) {
+					runYtt(t, testInputFiles{path}, "", nil, nil)
+				})
+				return nil
+			}
+		})
 	})
+	t.Run("Overlays", func(t *testing.T) {
+		filepath.WalkDir("../../examples/playground/overlays", func(path string, d fs.DirEntry, err error) error {
+			if !d.IsDir() {
+				return filepath.SkipDir
+			}
 
-	t.Run("function", func(t *testing.T) {
-		flags := yttFlags{
-			{"-v": "version=123"},
-		}
-		actualOutput := runYtt(t, testInputFiles{"../../examples/data-values-required/function"}, "", flags, nil)
-
-		require.Equal(t, string(expectedFileOutput), actualOutput)
-	})
-
-	t.Run("bulk", func(t *testing.T) {
-		flags := yttFlags{
-			{"-v": "version=123"},
-		}
-		actualOutput := runYtt(t, testInputFiles{"../../examples/data-values-required/bulk"}, "", flags, nil)
-
-		require.Equal(t, string(expectedFileOutput), actualOutput)
+			if d.Name() == "overlays" {
+				return nil
+			}
+			t.Run(fmt.Sprintf("playground %s", d.Name()), func(t *testing.T) {
+				runYtt(t, testInputFiles{path}, "", nil, nil)
+			})
+			return nil
+		})
 	})
 }
 
-func TestDataValuesUsages(t *testing.T) {
-	t.Run("multiple envs", func(t *testing.T) {
-		flags := yttFlags{
-			{"-v": "version=123"},
+func TestApplicationSpecificScenarios(t *testing.T) {
+	t.Run("Kubernetes", func(t *testing.T) {
+		dirs := []string{
+			"k8s-add-global-label",
+			"k8s-adjust-rbac-version",
+			"k8s-docker-secret",
+			"k8s-relative-rolling-update",
+			"k8s-config-map-files",
+			"k8s-update-env-var",
+			"k8s-overlay-all-containers",
+			"k8s-overlay-remove-resources",
+			"k8s-overlay-in-config-map",
 		}
-		actualOutput := runYtt(t, testInputFiles{"../../examples/data-values-multiple-envs/config/"}, "", flags, nil)
+		for _, dir := range dirs {
+			t.Run(dir, func(t *testing.T) {
+				dirPath := fmt.Sprintf("../../examples/%s", dir)
+				actualOutput := runYtt(t, testInputFiles{dirPath}, "", nil, nil)
 
-		expectedOutput := `app_config:
-  version: "123"
-  ports:
-  - 8080
-`
-		require.Equal(t, expectedOutput, actualOutput)
+				expectedOutput, err := ioutil.ReadFile(filepath.Join(dirPath, "expected.txt"))
+				require.NoError(t, err)
+
+				require.Equal(t, string(expectedOutput), actualOutput)
+			})
+		}
 	})
+	t.Run("Concourse", func(t *testing.T) {
+		dirs := []string{"concourse-overlay"}
+		for _, dir := range dirs {
+			t.Run(dir, func(t *testing.T) {
+				dirPath := fmt.Sprintf("../../examples/%s", dir)
+				actualOutput := runYtt(t, testInputFiles{dirPath}, "", nil, nil)
 
-	t.Run("when using data values in dev", func(t *testing.T) {
-		actualOutput := runYtt(t, testInputFiles{"../../examples/data-values-multiple-envs/config/", "../../examples/data-values-multiple-envs/envs/dev.yml"}, "", nil, nil)
-		expectedOutput := `app_config:
-  version: v1alpha1
-  ports:
-  - 8080
-`
-		require.Equal(t, expectedOutput, actualOutput)
+				expectedOutput, err := ioutil.ReadFile(filepath.Join(dirPath, "expected.txt"))
+				require.NoError(t, err)
+
+				require.Equal(t, string(expectedOutput), actualOutput)
+			})
+		}
 	})
+	t.Run("Eirini", func(t *testing.T) {
+		t.Run("config.yml", func(t *testing.T) {
+			actualOutput := runYtt(t, []string{"../../examples/eirini/config.yml", "../../examples/eirini/input.yml"}, "", nil, nil)
 
-	t.Run("when using data values in staging", func(t *testing.T) {
-		actualOutput := runYtt(t, testInputFiles{"../../examples/data-values-multiple-envs/config/", "../../examples/data-values-multiple-envs/envs/staging.yml"}, "", nil, nil)
-		expectedOutput := `app_config:
-  version: v1beta1
-  ports:
-  - 8081
-`
-		require.Equal(t, expectedOutput, actualOutput)
-	})
+			expectedFileOutput, err := ioutil.ReadFile("../../examples/eirini/config-result.yml")
+			require.NoError(t, err)
+			require.Equal(t, string(expectedFileOutput), actualOutput)
+		})
+		t.Run("config-alt1.yml", func(t *testing.T) {
+			actualOutput := runYtt(t, []string{"../../examples/eirini/config-alt1.yml", "../../examples/eirini/input.yml"}, "", nil, nil)
 
-	t.Run("when using data values in prod", func(t *testing.T) {
-		actualOutput := runYtt(t, testInputFiles{"../../examples/data-values-multiple-envs/config/", "../../examples/data-values-multiple-envs/envs/prod.yml"}, "", nil, nil)
-		expectedOutput := `app_config:
-  version: v1
-  ports:
-  - 80
-`
-		require.Equal(t, expectedOutput, actualOutput)
+			expectedFileOutput, err := ioutil.ReadFile("../../examples/eirini/config-result.yml")
+			require.NoError(t, err)
+			require.Equal(t, string(expectedFileOutput), actualOutput)
+		})
+		t.Run("config-alt2.yml and friends", func(t *testing.T) {
+			actualOutput := runYtt(t, []string{"../../examples/eirini/config-alt2.yml",
+				"../../examples/eirini/config.lib.yaml",
+				"../../examples/eirini/config.star",
+				"../../examples/eirini/data.txt",
+				"../../examples/eirini/data2.lib.txt",
+				"../../examples/eirini/input.yml"},
+				"", nil, nil)
+
+			expectedFileOutput, err := ioutil.ReadFile("../../examples/eirini/config-result.yml")
+			require.NoError(t, err)
+			require.Equal(t, string(expectedFileOutput), actualOutput)
+		})
 	})
 }
 
-func TestVersionIsValid(t *testing.T) {
-	runYtt(t, testInputFiles{"../../examples/version-constraint"}, "", yttFlags{}, nil)
+func TestRemainingExamples(t *testing.T) {
+	dirs := []string{
+		// test that @ytt:toml module works in default ytt binary
+		// as it is loaded in a different way than other @ytt:* modules.
+		"toml-serialize",
+	}
+	for _, dir := range dirs {
+		t.Run(dir, func(t *testing.T) {
+			dirPath := fmt.Sprintf("../../examples/%s", dir)
+			actualOutput := runYtt(t, testInputFiles{dirPath}, "", nil, nil)
+
+			expectedOutput, err := ioutil.ReadFile(filepath.Join(dirPath, "expected.txt"))
+			require.NoError(t, err)
+
+			require.Equal(t, string(expectedOutput), actualOutput)
+		})
+	}
 }
 
 type testInputFiles []string
@@ -478,6 +428,7 @@ func runYtt(t *testing.T, files testInputFiles, stdinFileName string, flags yttF
 
 	return string(output)
 }
+
 func runYttExpectingError(t *testing.T, files testInputFiles, stdinFileName string, flags yttFlags, envs []string) string {
 	command, stdError := buildCommand(files, flags, envs)
 
