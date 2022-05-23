@@ -29,7 +29,7 @@ type rule struct {
 // validationKwargs represent the optional keyword arguments and their values in a validation annotation.
 type validationKwargs struct {
 	when         *starlark.Callable
-	whenNullSkip *bool
+	whenNullSkip *bool // default: nil if kwarg is not set, True if value is Nullable
 }
 
 // Run takes a root Node, and threadName, and validates each Node in the tree.
@@ -125,11 +125,9 @@ func (v *NodeValidation) DefaultNullSkipTrue() {
 // shouldValidate uses validationKwargs and the node's value to run checks on the value. If the value satisfies the checks,
 // then the NodeValidation's rules should execute, otherwise the rules will be skipped.
 func (v validationKwargs) shouldValidate(value starlark.Value, thread *starlark.Thread) (bool, error) {
-	// lazy evaluation prevents nil pointer dereference panic
-	if v.whenNullSkip != nil && *v.whenNullSkip {
-		if _, ok := value.(starlark.NoneType); ok {
-			return false, nil
-		}
+	_, isNone := value.(starlark.NoneType)
+	if isNone && (v.whenNullSkip != nil && *v.whenNullSkip) {
+		return false, nil
 	}
 
 	if v.when != nil {
@@ -138,7 +136,6 @@ func (v validationKwargs) shouldValidate(value starlark.Value, thread *starlark.
 			return false, err
 		}
 
-		_, isNone := result.(starlark.NoneType)
 		isTrue := bool(result.Truth())
 		return isNone || isTrue, nil
 	}
