@@ -24,7 +24,7 @@ func NewDocumentType(doc *yamlmeta.Document) (*DocumentType, error) {
 		return nil, err
 	}
 
-	v, err := getValidation(doc)
+	v, err := getValidation(doc, typeOfValue)
 	if err != nil {
 		return nil, err
 	}
@@ -59,7 +59,7 @@ func NewMapItemType(item *yamlmeta.MapItem) (*MapItemType, error) {
 		return nil, err
 	}
 
-	v, err := getValidation(item)
+	v, err := getValidation(item, typeOfValue)
 	if err != nil {
 		return nil, err
 	}
@@ -99,7 +99,7 @@ func NewArrayItemType(item *yamlmeta.ArrayItem) (*ArrayItemType, error) {
 		return nil, err
 	}
 
-	v, err := getValidation(item)
+	v, err := getValidation(item, typeOfValue)
 	if err != nil {
 		return nil, err
 	}
@@ -163,7 +163,7 @@ func getValue(node yamlmeta.Node, t Type) (interface{}, error) {
 	return t.GetDefaultValue(), nil
 }
 
-func getValidation(node yamlmeta.Node) (*validations.NodeValidation, error) {
+func getValidation(node yamlmeta.Node, nodeType Type) (*validations.NodeValidation, error) {
 	if !experiments.IsValidationsEnabled() {
 		return nil, nil
 	}
@@ -172,7 +172,11 @@ func getValidation(node yamlmeta.Node) (*validations.NodeValidation, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	if validationAnn != nil {
+		if _, ok := nodeType.(*NullType); ok {
+			validationAnn.GetValidation().DefaultNullSkipTrue()
+		}
 		return validationAnn.GetValidation(), nil
 	}
 	return nil, nil

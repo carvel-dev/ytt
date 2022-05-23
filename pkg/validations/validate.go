@@ -14,8 +14,8 @@ import (
 
 // NodeValidation represents a validation attached to a Node via an annotation.
 type NodeValidation struct {
-	rules []rule
-	validationKwargs
+	rules    []rule
+	kwargs   validationKwargs
 	position *filepos.Position
 }
 
@@ -29,7 +29,7 @@ type rule struct {
 // validationKwargs represent the optional keyword arguments and their values in a validation annotation.
 type validationKwargs struct {
 	when         *starlark.Callable
-	whenNullSkip bool
+	whenNullSkip *bool // default: nil if kwarg is not set, True if value is Nullable
 }
 
 // Run takes a root Node, and threadName, and validates each Node in the tree.
@@ -89,7 +89,7 @@ func (a *validationRunner) Visit(node yamlmeta.Node) error {
 func (v NodeValidation) Validate(node yamlmeta.Node, thread *starlark.Thread) []error {
 	key, nodeValue := v.newKeyAndStarlarkValue(node)
 
-	executeRules, err := v.validationKwargs.shouldValidate(nodeValue, thread)
+	executeRules, err := v.kwargs.shouldValidate(nodeValue, thread)
 	if err != nil {
 		return []error{err}
 	}
@@ -106,7 +106,7 @@ func (v NodeValidation) Validate(node yamlmeta.Node, thread *starlark.Thread) []
 			_, isNone := result.(starlark.NoneType)
 			isTrue := bool(result.Truth())
 			// in order to pass, the assertion must return Truthy value or None
-			if !(isNone || isTrue){
+			if !(isNone || isTrue) {
 				failures = append(failures, fmt.Errorf("%s (%s) requires %q (by %s)", key, node.GetPosition().AsCompactString(), r.msg, v.position.AsCompactString()))
 			}
 		}
@@ -114,13 +114,20 @@ func (v NodeValidation) Validate(node yamlmeta.Node, thread *starlark.Thread) []
 	return failures
 }
 
+// DefaultNullSkipTrue sets the kwarg when_null_skip to true if not set explicitly.
+func (v *NodeValidation) DefaultNullSkipTrue() {
+	if v.kwargs.whenNullSkip == nil {
+		t := true
+		v.kwargs.whenNullSkip = &t
+	}
+}
+
 // shouldValidate uses validationKwargs and the node's value to run checks on the value. If the value satisfies the checks,
 // then the NodeValidation's rules should execute, otherwise the rules will be skipped.
 func (v validationKwargs) shouldValidate(value starlark.Value, thread *starlark.Thread) (bool, error) {
-	if v.whenNullSkip {
-		if _, ok := value.(starlark.NoneType); ok {
-			return false, nil
-		}
+	_, isNone := value.(starlark.NoneType)
+	if isNone && (v.whenNullSkip != nil && *v.whenNullSkip) {
+		return false, nil
 	}
 
 	if v.when != nil {
@@ -129,7 +136,6 @@ func (v validationKwargs) shouldValidate(value starlark.Value, thread *starlark.
 			return false, err
 		}
 
-		_, isNone := result.(starlark.NoneType)
 		isTrue := bool(result.Truth())
 		return isNone || isTrue, nil
 	}
