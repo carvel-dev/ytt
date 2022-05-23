@@ -7,7 +7,7 @@ The default value for an array is an empty array. Run this command to see the em
 ytt -f config.yml -f schema.yml
 ```
 
-To override the default values from the schema file, provide data values via a [data values file](https://carvel.dev/ytt/docs/latest/ytt-data-values/#declaring-and-using-data-values). The values must be of the same type that is declared in `schema.yml`. 
+To override the default values from the schema file, provide data values via a [data values file](http://carvel.dev/ytt/docs/develop/ytt-data-values/#configuring-data-values-via-command-line-flags). The values must be of the same type that is declared in `schema.yml`.
 
 Run this command to see that when an array item is provided in a data values file, the defaults for the item are filled in:
 ```bash
