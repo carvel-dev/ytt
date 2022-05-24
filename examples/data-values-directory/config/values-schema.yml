@@ -1,0 +1,10 @@
+#@data/values-schema
+---
+name: suggestion-service
+instances: 0
+accept_insecure_conns: true
+#@schema/nullable
+cache:
+  driver: ""
+  #@schema/type any=True
+  config: {}

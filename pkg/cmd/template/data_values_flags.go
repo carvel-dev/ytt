@@ -5,7 +5,6 @@ package template
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"strings"
 
@@ -40,8 +39,10 @@ type DataValuesFlags struct {
 	InspectSchema  bool
 	SkipValidation bool
 
-	EnvironFunc  func() []string
-	ReadFileFunc func(string) ([]byte, error)
+	EnvironFunc   func() []string
+	ReadFilesFunc func(paths string) ([]*files.File, error)
+
+	*files.SymlinkAllowOpts
 }
 
 // Set registers data values ingestion flags and wires-up those flags up to this
@@ -52,11 +53,10 @@ func (s *DataValuesFlags) Set(cmdFlags CmdFlags) {
 
 	cmdFlags.StringArrayVarP(&s.KVsFromStrings, "data-value", "v", nil, "Set specific data value to given value, as string (format: all.key1.subkey=123) (can be specified multiple times)")
 	cmdFlags.StringArrayVar(&s.KVsFromYAML, "data-value-yaml", nil, "Set specific data value to given value, parsed as YAML (format: all.key1.subkey=true) (can be specified multiple times)")
-	cmdFlags.StringArrayVar(&s.KVsFromFiles, "data-value-file", nil, "Set specific data value to given file contents, as string (format: all.key1.subkey=/file/path) (can be specified multiple times)")
+	cmdFlags.StringArrayVar(&s.FromFiles, "data-value-file", nil, "Set specific data value to contents of a file (format: [@lib1:]all.key1.subkey={file path, HTTP URL, or '-' (i.e. stdin)}) (can be specified multiple times)")
+	cmdFlags.StringArrayVar(&s.FromFiles, "data-values-file", nil, "Set multiple data values via plain YAML files (format: [@lib1:]{file path, HTTP URL, or '-' (i.e. stdin)}) (can be specified multiple times)")
 
-	cmdFlags.StringArrayVar(&s.FromFiles, "data-values-file", nil, "Set multiple data values via a YAML file (format: /file/path.yml) (can be specified multiple times)")
-
-	cmdFlags.BoolVar(&s.Inspect, "data-values-inspect", false, "Calculate the final data values (applying any overlays) and display that result")
+	cmdFlags.BoolVar(&s.Inspect, "data-values-inspect", false, "Determine the final data values (applying any overlays) and display that result")
 	if experiments.IsValidationsEnabled() {
 		cmdFlags.BoolVar(&s.SkipValidation, "dangerous-data-values-disable-validation", false, "Skip validating data values (not recommended: may result in templates failing or invalid output)")
 	}
@@ -149,34 +149,43 @@ func (s *DataValuesFlags) file(fullPath string, strict bool) ([]*datavalues.Enve
 		return nil, err
 	}
 
-	contents, err := s.readFile(path)
+	dvFiles, err := s.asFiles(path)
 	if err != nil {
-		return nil, fmt.Errorf("Reading file '%s': %s", path, err)
-	}
-
-	docSetOpts := yamlmeta.DocSetOpts{
-		AssociatedName: path,
-		Strict:         strict,
-	}
-
-	docSet, err := yamlmeta.NewDocumentSetFromBytes(contents, docSetOpts)
-	if err != nil {
-		return nil, fmt.Errorf("Unmarshaling YAML data values file '%s': %s", path, err)
+		return nil, fmt.Errorf("Find files '%s': %s", path, err)
 	}
 
 	var result []*datavalues.Envelope
+	for _, dvFile := range dvFiles {
+		// Users may want to store other files (docs, etc.) within this directory; ignore those.
+		if dvFile.IsImplied() && !(dvFile.Type() == files.TypeYAML) {
+			continue
+		}
+		contents, err := dvFile.Bytes()
+		if err != nil {
+			return nil, fmt.Errorf("Reading file '%s': %s", dvFile.RelativePath(), err)
+		}
 
-	for _, doc := range docSet.Items {
-		if doc.Value != nil {
-			dvsOverlay, err := NewDataValuesFile(doc).AsOverlay()
-			if err != nil {
-				return nil, fmt.Errorf("Checking data values file '%s': %s", path, err)
+		docSetOpts := yamlmeta.DocSetOpts{
+			AssociatedName: dvFile.RelativePath(),
+			Strict:         strict,
+		}
+		docSet, err := yamlmeta.NewDocumentSetFromBytes(contents, docSetOpts)
+		if err != nil {
+			return nil, fmt.Errorf("Unmarshaling YAML data values file '%s': %s", dvFile.RelativePath(), err)
+		}
+
+		for _, doc := range docSet.Items {
+			if doc.Value != nil {
+				dvsOverlay, err := NewDataValuesFile(doc).AsOverlay()
+				if err != nil {
+					return nil, fmt.Errorf("Checking data values file '%s': %s", path, err)
+				}
+				dvs, err := datavalues.NewEnvelopeWithLibRef(dvsOverlay, libRef)
+				if err != nil {
+					return nil, err
+				}
+				result = append(result, dvs)
 			}
-			dvs, err := datavalues.NewEnvelopeWithLibRef(dvsOverlay, libRef)
-			if err != nil {
-				return nil, err
-			}
-			result = append(result, dvs)
 		}
 	}
 
@@ -267,7 +276,15 @@ func (s *DataValuesFlags) kvFile(kv string) (*datavalues.Envelope, error) {
 		return nil, fmt.Errorf("Expected format key=/file/path")
 	}
 
-	contents, err := s.readFile(pieces[1])
+	dvFile, err := s.asFiles(pieces[1])
+	if err != nil {
+		return nil, fmt.Errorf("Finding file '%s': %s", pieces[1], err)
+	}
+	if len(dvFile) > 1 {
+		return nil, fmt.Errorf("Expected '%s' to be a file, but is a directory", pieces[1])
+	}
+
+	contents, err := dvFile[0].Bytes()
 	if err != nil {
 		return nil, fmt.Errorf("Reading file '%s'", pieces[1])
 	}
@@ -357,12 +374,13 @@ func (s *DataValuesFlags) buildOverlay(keyPieces []string, value interface{}, de
 	return &yamlmeta.Document{Value: resultMap, Position: pos}
 }
 
-func (s *DataValuesFlags) readFile(path string) ([]byte, error) {
-	if s.ReadFileFunc != nil {
-		return s.ReadFileFunc(path)
+// asFiles enumerates the files that are found at "path"
+//
+// If a DataValuesFlags.ReadFilesFunc has been injected, that service is used.
+// Otherwise, uses files.NewSortedFilesFromPaths() is used.
+func (s *DataValuesFlags) asFiles(path string) ([]*files.File, error) {
+	if s.ReadFilesFunc != nil {
+		return s.ReadFilesFunc(path)
 	}
-	if path == "-" {
-		return files.ReadStdin()
-	}
-	return ioutil.ReadFile(path)
+	return files.NewSortedFilesFromPaths([]string{path}, *s.SymlinkAllowOpts)
 }

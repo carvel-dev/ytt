@@ -233,6 +233,12 @@ func (r *File) isTemplate() bool {
 	return !r.IsLibrary() && (t == TypeYAML || t == TypeText)
 }
 
+// IsImplied reports whether this file was implicitly included (found within an explicitly named directory) or not
+// (named explicitly as input).
+func (r *File) IsImplied() bool {
+	return strings.ContainsRune(r.OriginalRelativePath(), os.PathSeparator)
+}
+
 func (r *File) IsLibrary() bool {
 	exts := strings.Split(filepath.Base(r.RelativePath()), ".")
 

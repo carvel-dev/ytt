@@ -1,0 +1,7 @@
+[[approvals]]
+    dept = "operations"
+    user = "grumpy-grey-beard@example.com"
+
+[[approvals]]
+    dept = "Operations Security"
+    user = "pedantic-protector@example.com"

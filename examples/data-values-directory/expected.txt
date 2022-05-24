@@ -1,0 +1,12 @@
+values:
+  name: suggestion-service
+  instances: 4
+  accept_insecure_conns: false
+  cache:
+    driver: redis
+    config:
+      maxEntries: 1024
+      strategy: MRU
+      host: localhost:6379
+      tls-client-cert-file: client.crt
+      tls-client-key-file: client.key

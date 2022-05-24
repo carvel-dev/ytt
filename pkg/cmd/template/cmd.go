@@ -54,8 +54,13 @@ type FileSource interface {
 
 var _ []FileSource = []FileSource{&BulkFilesSource{}, &RegularFilesSource{}}
 
+// NewOptions initializes a new instance of template.Options.
 func NewOptions() *Options {
-	return &Options{}
+	var opts files.SymlinkAllowOpts
+	return &Options{
+		RegularFilesSourceOpts: RegularFilesSourceOpts{SymlinkAllowOpts: &opts},
+		DataValuesFlags:        DataValuesFlags{SymlinkAllowOpts: &opts},
+	}
 }
 
 // BindFlags registers template flags for template command.
@@ -66,7 +71,7 @@ func (o *Options) BindFlags(cmdFlags CmdFlags) {
 		"Configure whether implicit map keys overrides are allowed")
 	cmdFlags.BoolVarP(&o.StrictYAML, "strict", "s", false, "Configure to use _strict_ YAML subset")
 	cmdFlags.BoolVar(&o.Debug, "debug", false, "Enable debug output")
-	cmdFlags.BoolVar(&o.InspectFiles, "files-inspect", false, "Inspect files")
+	cmdFlags.BoolVar(&o.InspectFiles, "files-inspect", false, "Determine the set of files that would be processed and display that result")
 
 	o.BulkFilesSourceOpts.Set(cmdFlags)
 	o.RegularFilesSourceOpts.Set(cmdFlags)

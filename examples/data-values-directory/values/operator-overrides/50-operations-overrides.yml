@@ -1,0 +1,10 @@
+---
+# 2022-05-13: avg + rms over last 3 months
+instances: 4
+
+cache:
+  driver: redis
+  config:
+    host: localhost:6379
+    tls-client-cert-file: client.crt
+    tls-client-key-file: client.key

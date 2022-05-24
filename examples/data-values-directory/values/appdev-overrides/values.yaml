@@ -1,0 +1,8 @@
+---
+instances: 1
+accept_insecure_conns: true
+cache:
+  driver: in-memory
+  config:
+    maxEntries: 1024
+    strategy: MRU

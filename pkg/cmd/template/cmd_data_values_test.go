@@ -181,48 +181,48 @@ another:
 }
 
 func TestDataValuesWithLibraryAttachedFlags(t *testing.T) {
-	tplBytes := []byte(`
+	tplBytes := `
 #@ load("@ytt:library", "library")
 #@ load("@ytt:template", "template")
 #@ load("@ytt:data", "data")
 
 root: #@ data.values
---- #@ template.replace(library.get("lib", alias="inst1").eval())`)
+--- #@ template.replace(library.get("lib", alias="inst1").eval())`
 
-	libTplBytes := []byte(`
+	libTplBytes := `
 #@ load("@ytt:library", "library")
 #@ load("@ytt:template", "template")
 #@ load("@ytt:data", "data")
 
 from_library: #@ data.values
 --- #@ template.replace(library.get("nested-lib").eval())
-`)
+`
 
-	libValuesBytes := []byte(`
+	libValuesBytes := `
 #@data/values
 ---
 val0: override-me
-`)
+`
 
-	nestedLibTplBytes := []byte(`
+	nestedLibTplBytes := `
 #@ load("@ytt:data", "data")
 
 from_nested_lib: #@ data.values
-`)
+`
 
-	nestedLibValuesBytes := []byte(`
+	nestedLibValuesBytes := `
 #@data/values
 ---
 val1: override-me
-`)
+`
 
-	dvs2 := []byte(`val2: 2`)
+	dvs2 := `val2: 2`
 
-	dvs3 := []byte(`val3: 3`)
+	dvs3 := `val3: 3`
 
-	dvs4 := []byte(`val4: 4`)
+	dvs4 := `val4: 4`
 
-	dvs6 := []byte(`6`)
+	dvs6 := `6`
 
 	expectedYAMLTplData := `root:
   val2: 2
@@ -239,11 +239,11 @@ from_nested_lib:
 `
 
 	filesToProcess := files.NewSortedFiles([]*files.File{
-		files.MustNewFileFromSource(files.NewBytesSource("config.yml", tplBytes)),
-		files.MustNewFileFromSource(files.NewBytesSource("_ytt_lib/lib/values.yml", libValuesBytes)),
-		files.MustNewFileFromSource(files.NewBytesSource("_ytt_lib/lib/config.yml", libTplBytes)),
-		files.MustNewFileFromSource(files.NewBytesSource("_ytt_lib/lib/_ytt_lib/nested-lib/values.yml", nestedLibValuesBytes)),
-		files.MustNewFileFromSource(files.NewBytesSource("_ytt_lib/lib/_ytt_lib/nested-lib/config.yml", nestedLibTplBytes)),
+		files.MustNewFileFromSource(files.NewBytesSource("config.yml", []byte(tplBytes))),
+		files.MustNewFileFromSource(files.NewBytesSource("_ytt_lib/lib/values.yml", []byte(libValuesBytes))),
+		files.MustNewFileFromSource(files.NewBytesSource("_ytt_lib/lib/config.yml", []byte(libTplBytes))),
+		files.MustNewFileFromSource(files.NewBytesSource("_ytt_lib/lib/_ytt_lib/nested-lib/values.yml", []byte(nestedLibValuesBytes))),
+		files.MustNewFileFromSource(files.NewBytesSource("_ytt_lib/lib/_ytt_lib/nested-lib/config.yml", []byte(nestedLibTplBytes))),
 	})
 
 	ui := ui.NewTTY(false)
@@ -255,16 +255,16 @@ from_nested_lib:
 		EnvFromStrings: []string{"@lib:DVS"},
 		EnvironFunc:    func() []string { return []string{"DVS_val5=5"} },
 		KVsFromFiles:   []string{"@lib:val6=c:\\User\\user\\dvs6.yml"},
-		ReadFileFunc: func(path string) ([]byte, error) {
+		ReadFilesFunc: func(path string) ([]*files.File, error) {
 			switch path {
 			case "c:\\User\\user\\dvs2.yml":
-				return dvs2, nil
+				return []*files.File{files.MustNewFileFromSource(files.NewBytesSource("dvs2.yml", []byte(dvs2)))}, nil
 			case "dvs3.yml":
-				return dvs3, nil
+				return []*files.File{files.MustNewFileFromSource(files.NewBytesSource("dvs3.yml", []byte(dvs3)))}, nil
 			case "D:\\User\\user\\dvs4.yml":
-				return dvs4, nil
+				return []*files.File{files.MustNewFileFromSource(files.NewBytesSource("dvs4.yml", []byte(dvs4)))}, nil
 			case "c:\\User\\user\\dvs6.yml":
-				return dvs6, nil
+				return []*files.File{files.MustNewFileFromSource(files.NewBytesSource("dvs6.yml", []byte(dvs6)))}, nil
 			default:
 				return nil, fmt.Errorf("Unknown file '%s'", path)
 			}

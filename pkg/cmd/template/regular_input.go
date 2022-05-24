@@ -22,7 +22,7 @@ type RegularFilesSourceOpts struct {
 	OutputFiles string
 	OutputType  OutputType
 
-	files.SymlinkAllowOpts
+	*files.SymlinkAllowOpts
 }
 
 // OutputType holds the user's desire for two (2) categories of output:
@@ -35,7 +35,7 @@ type OutputType struct {
 // Set registers flags related to sourcing ordinary files/directories and wires-up those flags up to this
 // RegularFilesSourceOpts to be set when the corresponding cobra.Command is executed.
 func (s *RegularFilesSourceOpts) Set(cmdFlags CmdFlags) {
-	cmdFlags.StringArrayVarP(&s.files, "file", "f", nil, "File (ie local path, HTTP URL, -) (can be specified multiple times)")
+	cmdFlags.StringArrayVarP(&s.files, "file", "f", nil, "File(s) to process {filepath, HTTP URL, or '-' (i.e. stdin)} (can be specified multiple times)")
 
 	cmdFlags.StringVar(&s.outputDir, "dangerous-emptied-output-directory", "",
 		"Delete given directory, and then create it with output files")
@@ -65,7 +65,7 @@ func (s *RegularFilesSource) HasInput() bool  { return len(s.opts.files) > 0 }
 func (s *RegularFilesSource) HasOutput() bool { return true }
 
 func (s *RegularFilesSource) Input() (Input, error) {
-	filesToProcess, err := files.NewSortedFilesFromPaths(s.opts.files, s.opts.SymlinkAllowOpts)
+	filesToProcess, err := files.NewSortedFilesFromPaths(s.opts.files, *s.opts.SymlinkAllowOpts)
 	if err != nil {
 		return Input{}, err
 	}

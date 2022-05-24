@@ -1,0 +1,8 @@
+#! In the real-world, this configuration would be the manifests that describe
+#! this application's deployment. For this example, we simply render the
+#! net values; this is the point of this example.
+
+#@ load("@ytt:data", "data")
+
+---
+values: #@ data.values
