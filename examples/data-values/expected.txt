@@ -33,3 +33,14 @@ string: str
 bool: true
 int: 124
 float: 0
+***
+nothing: something
+string: |-
+  Value that comes from a file.
+
+  Typically, useful for files that contain values
+  that should just be passed through to system
+  configuration, wholesale (e.g. certs).
+bool: false
+int: 0
+float: 0
