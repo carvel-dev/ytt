@@ -42,3 +42,8 @@ echo '***'
 
 ./ytt -f examples/data-values/config.yml -f examples/data-values/values.yml \
   --data-values-file examples/data-values/values-file.yml
+
+echo '***'
+
+./ytt -f examples/data-values/config.yml -f examples/data-values/values.yml \
+  --data-value-file string=examples/data-values/file-as-value.txt

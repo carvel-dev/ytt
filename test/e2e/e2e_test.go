@@ -116,6 +116,26 @@ float: 123.123
 
 			require.Equal(t, string(expectedOutput), actualOutput)
 		})
+		t.Run("--data-value-file flag", func(t *testing.T) {
+			flags := yttFlags{
+				{"--data-value-file": "string=../../examples/data-values/file-as-value.txt"},
+			}
+			actualOutput := runYtt(t, testInputFiles{"../../examples/data-values/config.yml", "../../examples/data-values/values.yml"}, "", flags, nil)
+			expectedOutput := `nothing: something
+string: |-
+  Value that comes from a file.
+
+  Typically, useful for files that contain values
+  that should just be passed through to system
+  configuration, wholesale (e.g. certs).
+bool: false
+int: 0
+float: 0
+`
+
+			require.Equal(t, expectedOutput, actualOutput)
+		})
+
 	})
 	t.Run("can be 'required'", func(t *testing.T) {
 		expectedFileOutput, err := ioutil.ReadFile("../../examples/data-values-required/expected.txt")

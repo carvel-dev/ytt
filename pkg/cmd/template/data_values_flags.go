@@ -53,7 +53,7 @@ func (s *DataValuesFlags) Set(cmdFlags CmdFlags) {
 
 	cmdFlags.StringArrayVarP(&s.KVsFromStrings, "data-value", "v", nil, "Set specific data value to given value, as string (format: all.key1.subkey=123) (can be specified multiple times)")
 	cmdFlags.StringArrayVar(&s.KVsFromYAML, "data-value-yaml", nil, "Set specific data value to given value, parsed as YAML (format: all.key1.subkey=true) (can be specified multiple times)")
-	cmdFlags.StringArrayVar(&s.FromFiles, "data-value-file", nil, "Set specific data value to contents of a file (format: [@lib1:]all.key1.subkey={file path, HTTP URL, or '-' (i.e. stdin)}) (can be specified multiple times)")
+	cmdFlags.StringArrayVar(&s.KVsFromFiles, "data-value-file", nil, "Set specific data value to contents of a file (format: [@lib1:]all.key1.subkey={file path, HTTP URL, or '-' (i.e. stdin)}) (can be specified multiple times)")
 	cmdFlags.StringArrayVar(&s.FromFiles, "data-values-file", nil, "Set multiple data values via plain YAML files (format: [@lib1:]{file path, HTTP URL, or '-' (i.e. stdin)}) (can be specified multiple times)")
 
 	cmdFlags.BoolVar(&s.Inspect, "data-values-inspect", false, "Determine the final data values (applying any overlays) and display that result")
