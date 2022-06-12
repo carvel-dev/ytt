@@ -6,6 +6,11 @@
 #! And this > https://github.com/falcosecurity/charts/blob/d2c6b91ff7339a5108abe23208212eb53b535463/falcosidekick/templates/_helpers.tpl#L38
 #! does not seem to work with the version value that the K3s distribution
 #! uses. For more background see > https://github.com/falcosecurity/charts/issues/288
+#!
+#! "Bumping" the apiVersion is the first step of
+#! getting the Falco chart installed like we want it
+#! on K3s backend flavored clusters.
+#! We want to be on the latest version of the networking.k8s... API
 #! ----------------------
 #! END OF COMMENT SECTION
 
