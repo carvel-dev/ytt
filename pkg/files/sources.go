@@ -84,10 +84,11 @@ func (s LocalSource) RelativePath() (string, error) {
 func (s LocalSource) Bytes() ([]byte, error) { return ioutil.ReadFile(s.path) }
 
 type HTTPSource struct {
-	url string
+	url    string
+	Client *http.Client
 }
 
-func NewHTTPSource(path string) HTTPSource { return HTTPSource{path} }
+func NewHTTPSource(path string) HTTPSource { return HTTPSource{path, &http.Client{}} }
 
 func (s HTTPSource) Description() string {
 	return fmt.Sprintf("HTTP URL '%s'", s.url)
@@ -96,12 +97,16 @@ func (s HTTPSource) Description() string {
 func (s HTTPSource) RelativePath() (string, error) { return path.Base(s.url), nil }
 
 func (s HTTPSource) Bytes() ([]byte, error) {
-	resp, err := http.Get(s.url)
+	resp, err := s.Client.Get(s.url)
 	if err != nil {
 		return nil, fmt.Errorf("Requesting URL '%s': %s", s.url, err)
 	}
 
 	defer resp.Body.Close()
+
+	if resp.StatusCode < 200 || resp.StatusCode > 299 {
+		return nil, fmt.Errorf("Requesting URL '%s': %s", s.url, resp.Status)
+	}
 
 	result, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
