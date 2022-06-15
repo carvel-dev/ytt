@@ -88,6 +88,7 @@ type HTTPSource struct {
 	Client *http.Client
 }
 
+// NewHTTPSource returns a new source of type HTTP
 func NewHTTPSource(path string) HTTPSource { return HTTPSource{path, &http.Client{}} }
 
 func (s HTTPSource) Description() string {
