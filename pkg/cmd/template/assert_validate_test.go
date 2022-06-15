@@ -699,7 +699,7 @@ foo: null
 `
 
 			expectedErr := `One or more data values were invalid:
-- "foo" (dv.yml:4) requires "not null"; assert.not_null: value was null (by dv.yml:3)
+- "foo" (dv.yml:4) requires "not null"; fail: value is null (by dv.yml:3)
 `
 
 			filesToProcess := files.NewSortedFiles([]*files.File{
@@ -1715,10 +1715,10 @@ map: {}
 `
 
 			expectedErr := `One or more data values were invalid:
-- "string" (schema.yml:5) requires "not null"; assert.not_null: value was null (by schema.yml:3)
-- "int" (schema.yml:8) requires "not null"; assert.not_null: value was null (by schema.yml:7)
-- "array" (schema.yml:11) requires "not null"; assert.not_null: value was null (by schema.yml:10)
-- "map" (schema.yml:15) requires "not null"; assert.not_null: value was null (by schema.yml:14)
+- "string" (schema.yml:5) requires "not null"; fail: value is null (by schema.yml:3)
+- "int" (schema.yml:8) requires "not null"; fail: value is null (by schema.yml:7)
+- "array" (schema.yml:11) requires "not null"; fail: value is null (by schema.yml:10)
+- "map" (schema.yml:15) requires "not null"; fail: value is null (by schema.yml:14)
 `
 
 			filesToProcess := files.NewSortedFiles([]*files.File{

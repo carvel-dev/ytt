@@ -8,6 +8,7 @@ import (
 
 	"github.com/k14s/starlark-go/starlark"
 	"github.com/vmware-tanzu/carvel-ytt/pkg/filepos"
+	"github.com/vmware-tanzu/carvel-ytt/pkg/template/core"
 	"github.com/vmware-tanzu/carvel-ytt/pkg/yamlmeta"
 	"github.com/vmware-tanzu/carvel-ytt/pkg/yamltemplate"
 	"github.com/vmware-tanzu/carvel-ytt/pkg/yttlibrary"
@@ -155,14 +156,14 @@ func (v validationKwargs) shouldValidate(value starlark.Value, thread *starlark.
 func (v validationKwargs) convertToRules() []rule {
 	var rules []rule
 	if minLen := v.minLength; minLen > 0 {
-		a := yttlibrary.NewAssertMinLength(minLen)
+		a := yttlibrary.NewAssertMinLen(core.NewGoValue(minLen).AsStarlarkValue())
 		rules = append(rules, rule{
 			msg:       fmt.Sprintf("length greater or equal to %v", minLen),
 			assertion: a,
 		})
 	}
 	if v.maxLength != nil {
-		a := yttlibrary.NewAssertMaxLength(*v.maxLength)
+		a := yttlibrary.NewAssertMaxLen(core.NewGoValue(*v.maxLength).AsStarlarkValue())
 		rules = append(rules, rule{
 			msg:       fmt.Sprintf("length less than or equal to %v", *v.maxLength),
 			assertion: a,
