@@ -1,29 +1,35 @@
 #@ load("@ytt:assert", "assert")
 
-min_of_int:
-  as_validation_assertion: #@ assert.min(1)(2)
-  as_plain_func:           #@ assert.min(1, 2)
-min_of_float:
-  as_validation_assertion: #@ assert.min(1.1)(1.2)
-  as_plain_func:           #@ assert.min(1.1, 1.2)
-min_of_string:
-  as_validation_assertion: #@ assert.min("a")("b")
-  as_plain_func:           #@ assert.min("a", "b")
+#@ def array():
+- a
+- 1
+#@ end
+---
+
+min_of_bool: #@ assert.min(False)(True)
+min_of_int: #@ assert.min(1)(2)
+min_of_float: #@ assert.min(1.1)(1.2)
+min_of_string: #@ assert.min("a")("b")
 min_of_list:
-  as_validation_assertion: #@ assert.min(["a", 1])(["a", 2])
-  as_plain_func: #@ assert.min(["a", 1], ["a", 2])
+  array: #@ assert.min(["a", 1])(array())
+  list: #@ assert.min(["a", 1])(["a", 2])
+  tuple: #@ assert.min(["a", 1])(("a", 2))
+min_of_array:
+  array: #@ assert.min(array(), array())
+  list: #@ assert.min(array(), ["a", 2])
+  tuple: #@ assert.min(array(), ("a", 2))
 
 +++
 
-min_of_int:
-  as_validation_assertion: null
-  as_plain_func: null
-min_of_float:
-  as_validation_assertion: null
-  as_plain_func: null
-min_of_string:
-  as_validation_assertion: null
-  as_plain_func: null
+min_of_bool: null
+min_of_int: null
+min_of_float: null
+min_of_string: null
 min_of_list:
-  as_validation_assertion: null
-  as_plain_func: null
+  array: null
+  list: null
+  tuple: null
+min_of_array:
+  array: null
+  list: null
+  tuple: null
