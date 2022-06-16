@@ -1,0 +1,10 @@
+#@ load("@ytt:assert", "assert")
+
+max_len: #@ assert.max_len()
+
++++
+
+ERR: 
+- assert.max_len: expected exactly one argument
+    in <toplevel>
+      stdin:3 | max_len: #@ assert.max_len()

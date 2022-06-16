@@ -1,0 +1,12 @@
+#@ load("@ytt:assert", "assert")
+
+min_len_of_string: #@ assert.min_len(2).check("a")
++++
+
+ERR:
+- fail: length of 1 is less than 2
+    in lambda
+      assert.min_len:? | __ytt_tplXXX_set_ctx_type("yaml") (generated)
+      stdin:1 | #@ load("@ytt:assert", "assert")
+    in <toplevel>
+      stdin:3 | min_len_of_string: #@ assert.min_len(2).check("a")

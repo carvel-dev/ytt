@@ -18,12 +18,12 @@ second: 2
 #@ end
 ---
 
-min_len_of_string: #@ assert.min_len(2, "o0")
-min_len_of_dict:   #@ assert.min_len(2, {"first": 1, "second": 2})
-min_len_of_list:   #@ assert.min_len(2, ["first", "second"])
-min_len_of_docset: #@ assert.min_len(2, docset())
-min_len_of_map:    #@ assert.min_len(2, mapping())
-min_len_of_array:  #@ assert.min_len(2, array())
+min_len_of_string: #@ assert.min_len(2).check("o0")
+min_len_of_dict:   #@ assert.min_len(2).check({"first": 1, "second": 2})
+min_len_of_list:   #@ assert.min_len(2).check(["first", "second"])
+min_len_of_docset: #@ assert.min_len(2).check(docset())
+min_len_of_map:    #@ assert.min_len(2).check(mapping())
+min_len_of_array:  #@ assert.min_len(2).check(array())
 
 +++
 

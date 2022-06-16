@@ -18,12 +18,12 @@ second: 2
 #@ end
 ---
 
-max_len_of_string: #@ assert.max_len(2, "o0")
-max_len_of_dict:   #@ assert.max_len(2, {"first": 1, "second": 2})
-max_len_of_list:   #@ assert.max_len(2, ["first", "second"])
-max_len_of_docset: #@ assert.max_len(2, docset())
-max_len_of_map:    #@ assert.max_len(2, mapping())
-max_len_of_array:  #@ assert.max_len(2, array())
+max_len_of_string: #@ assert.max_len(2).check("o0")
+max_len_of_dict:   #@ assert.max_len(2).check({"first": 1, "second": 2})
+max_len_of_list:   #@ assert.max_len(2).check(["first", "second"])
+max_len_of_docset: #@ assert.max_len(2).check(docset())
+max_len_of_map:    #@ assert.max_len(2).check(mapping())
+max_len_of_array:  #@ assert.max_len(2).check(array())
 
 +++
 

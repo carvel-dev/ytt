@@ -5,6 +5,6 @@ max_of_string: #@ assert.max()
 +++
 
 ERR: 
-- assert.max: expected at least one argument.
+- assert.max: expected exactly one argument
     in <toplevel>
       stdin:3 | max_of_string: #@ assert.max()

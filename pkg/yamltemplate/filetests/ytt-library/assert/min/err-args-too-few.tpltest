@@ -5,6 +5,6 @@ min_of_string: #@ assert.min()
 +++
 
 ERR: 
-- assert.min: expected at least one argument.
+- assert.min: expected exactly one argument
     in <toplevel>
       stdin:3 | min_of_string: #@ assert.min()

@@ -6,10 +6,10 @@ package yttlibrary
 import (
 	"fmt"
 
-	"github.com/k14s/starlark-go/syntax"
-
 	"github.com/k14s/starlark-go/starlark"
 	"github.com/k14s/starlark-go/starlarkstruct"
+	"github.com/k14s/starlark-go/syntax"
+	"github.com/vmware-tanzu/carvel-ytt/pkg/orderedmap"
 	"github.com/vmware-tanzu/carvel-ytt/pkg/template/core"
 )
 
@@ -109,7 +109,24 @@ func (b assertModule) TryTo(thread *starlark.Thread, f *starlark.Builtin, args s
 	return starlark.Tuple{retVal, starlark.None}, nil
 }
 
-func newAssertFunc(funcName, src string, env starlark.StringDict) *starlark.Function {
+// Assertion encapsulates a specific assertion, ready to be checked against any number of values.
+type Assertion struct {
+	check starlark.Callable
+	*core.StarlarkStruct
+}
+
+const assertionTypeName = "assert.assertion"
+
+// Type reports the name of this type in the Starlark type system.
+func (a *Assertion) Type() string { return "@ytt:" + assertionTypeName }
+
+// CheckFunc returns the function that — given a value — makes this assertion on it.
+func (a *Assertion) CheckFunc() starlark.Callable {
+	return a.check
+}
+
+// NewAssertion creates a struct with one attribute: "check" that contains the assertion defined by "src".
+func NewAssertion(funcName, src string, env starlark.StringDict) *Assertion {
 	expr, err := syntax.ParseExpr(funcName, src, syntax.BlockScanner)
 	if err != nil {
 		panic(fmt.Sprintf("Failed to parse internal expression (%s) :%s", src, err))
@@ -120,15 +137,20 @@ func newAssertFunc(funcName, src string, env starlark.StringDict) *starlark.Func
 	if err != nil {
 		panic(fmt.Sprintf("Failed to evaluate internal expression (%s) given env=%s", src, env))
 	}
-	return evalExpr.(*starlark.Function)
+
+	a := &Assertion{check: evalExpr.(*starlark.Function)}
+	m := orderedmap.NewMap()
+	m.Set("check", a.check)
+	a.StarlarkStruct = core.NewStarlarkStruct(m)
+	return a
 }
 
-// NewAssertMaxLen produces a higher-order Starlark function that asserts that a given sequence is at most
+// NewAssertMaxLen produces an assertion object that asserts that a given sequence is at most
 // "maximum" in length.
 //
 // see also: https://github.com/google/starlark-go/blob/master/doc/spec.md#len
-func NewAssertMaxLen(maximum starlark.Value) *starlark.Function {
-	return newAssertFunc(
+func NewAssertMaxLen(maximum starlark.Value) *Assertion {
+	return NewAssertion(
 		"assert.max_len",
 		`lambda sequence: fail("length of {} is more than {}".format(len(sequence), maximum)) if len(sequence) > maximum else None`,
 		starlark.StringDict{"maximum": maximum},
@@ -137,11 +159,8 @@ func NewAssertMaxLen(maximum starlark.Value) *starlark.Function {
 
 // MaxLength is a core.StarlarkFunc that asserts that a given sequence is at most a given maximum length.
 func (b assertModule) MaxLength(thread *starlark.Thread, f *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
-	if len(args) == 0 {
-		return starlark.None, fmt.Errorf("expected at least one argument.")
-	}
-	if len(args) > 2 {
-		return starlark.None, fmt.Errorf("expected at no more than two arguments.")
+	if args.Len() != 1 {
+		return starlark.None, fmt.Errorf("expected exactly one argument")
 	}
 
 	max := args[0]
@@ -149,23 +168,15 @@ func (b assertModule) MaxLength(thread *starlark.Thread, f *starlark.Builtin, ar
 		return starlark.None, fmt.Errorf("expected value to be an number, but was %s", max.Type())
 	}
 	maxLenFunc := NewAssertMaxLen(args[0])
-	if len(args) == 1 {
-		return maxLenFunc, nil
-	}
-
-	result, err := starlark.Call(thread, maxLenFunc, starlark.Tuple{args[1]}, []starlark.Tuple{})
-	if err != nil {
-		return starlark.None, err
-	}
-	return result, nil
+	return maxLenFunc, nil
 }
 
-// NewAssertMinLen produces a higher-order Starlark function that asserts that a given sequence is at least
+// NewAssertMinLen produces an assertion object that asserts that a given sequence is at least
 // "minimum" in length.
 //
 // see also: https://github.com/google/starlark-go/blob/master/doc/spec.md#len
-func NewAssertMinLen(minimum starlark.Value) *starlark.Function {
-	return newAssertFunc(
+func NewAssertMinLen(minimum starlark.Value) *Assertion {
+	return NewAssertion(
 		"assert.min_len",
 		`lambda sequence: fail("length of {} is less than {}".format(len(sequence), minimum)) if len(sequence) < minimum else None`,
 		starlark.StringDict{"minimum": minimum},
@@ -174,11 +185,8 @@ func NewAssertMinLen(minimum starlark.Value) *starlark.Function {
 
 // MinLength is a core.StarlarkFunc that asserts that a given sequence is at least a given minimum length.
 func (b assertModule) MinLength(thread *starlark.Thread, f *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
-	if len(args) == 0 {
-		return starlark.None, fmt.Errorf("expected at least one argument.")
-	}
-	if len(args) > 2 {
-		return starlark.None, fmt.Errorf("expected at no more than two arguments.")
+	if args.Len() != 1 {
+		return starlark.None, fmt.Errorf("expected exactly one argument")
 	}
 
 	min := args[0]
@@ -186,22 +194,14 @@ func (b assertModule) MinLength(thread *starlark.Thread, f *starlark.Builtin, ar
 		return starlark.None, fmt.Errorf("expected value to be an number, but was %s", min.Type())
 	}
 	minLengthFunc := NewAssertMinLen(min)
-	if len(args) == 1 {
-		return minLengthFunc, nil
-	}
-
-	result, err := starlark.Call(thread, minLengthFunc, starlark.Tuple{args[1]}, []starlark.Tuple{})
-	if err != nil {
-		return starlark.None, err
-	}
-	return result, nil
+	return minLengthFunc, nil
 }
 
-// NewAssertMin produces a higher-order Starlark function that asserts that a given value is at least "minimum".
+// NewAssertMin produces an assertion object that asserts that a given value is at least "minimum".
 //
 // see also:https://github.com/google/starlark-go/blob/master/doc/spec.md#comparisons
-func NewAssertMin(minimum starlark.Value) *starlark.Function {
-	return newAssertFunc(
+func NewAssertMin(minimum starlark.Value) *Assertion {
+	return NewAssertion(
 		"assert.min",
 		`lambda value: fail("{} is less than {}".format(value, minimum)) if yaml.decode(yaml.encode(value)) < yaml.decode(yaml.encode(minimum)) else None`,
 		starlark.StringDict{"minimum": minimum, "yaml": YAMLAPI["yaml"]},
@@ -210,30 +210,19 @@ func NewAssertMin(minimum starlark.Value) *starlark.Function {
 
 // Min is a core.StarlarkFunc that asserts that a given value is at least a given minimum.
 func (b assertModule) Min(thread *starlark.Thread, f *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
-	if len(args) == 0 {
-		return starlark.None, fmt.Errorf("expected at least one argument.")
-	}
-	if len(args) > 2 {
-		return starlark.None, fmt.Errorf("expected at no more than two arguments.")
+	if args.Len() != 1 {
+		return starlark.None, fmt.Errorf("expected exactly one argument")
 	}
 
 	minFunc := NewAssertMin(args[0])
-	if len(args) == 1 {
-		return minFunc, nil
-	}
-
-	result, err := starlark.Call(thread, minFunc, starlark.Tuple{args[1]}, []starlark.Tuple{})
-	if err != nil {
-		return starlark.None, err
-	}
-	return result, nil
+	return minFunc, nil
 }
 
-// NewAssertMax produces a higher-order Starlark function that asserts that a given value is less than or equal to "maximum".
+// NewAssertMax produces an assertion object that asserts that a given value is less than or equal to "maximum".
 //
 // see also:https://github.com/google/starlark-go/blob/master/doc/spec.md#comparisons
-func NewAssertMax(maximum starlark.Value) *starlark.Function {
-	return newAssertFunc(
+func NewAssertMax(maximum starlark.Value) *Assertion {
+	return NewAssertion(
 		"assert.max",
 		`lambda value: fail("{} is more than {}".format(value, maximum)) if yaml.decode(yaml.encode(value)) > yaml.decode(yaml.encode(maximum)) else None`,
 		starlark.StringDict{"maximum": maximum, "yaml": YAMLAPI["yaml"]},
@@ -242,40 +231,24 @@ func NewAssertMax(maximum starlark.Value) *starlark.Function {
 
 // Max is a core.StarlarkFunc that asserts that a given value is less than or equal to a given maximum.
 func (b assertModule) Max(thread *starlark.Thread, f *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
-	if len(args) == 0 {
-		return starlark.None, fmt.Errorf("expected at least one argument.")
-	}
-	if len(args) > 2 {
-		return starlark.None, fmt.Errorf("expected at no more than two arguments.")
+	if args.Len() != 1 {
+		return starlark.None, fmt.Errorf("expected exactly one argument")
 	}
 
 	maxFunc := NewAssertMax(args[0])
-	if len(args) == 1 {
-		return maxFunc, nil
-	}
-
-	result, err := starlark.Call(thread, maxFunc, starlark.Tuple{args[1]}, []starlark.Tuple{})
-	if err != nil {
-		return starlark.None, err
-	}
-	return result, nil
+	return maxFunc, nil
 }
 
-func NewAssertNotNull() *starlark.Function {
-	return newAssertFunc(
+// NewAssertNotNull produces an assertion object that asserts that a given value is not null.
+func NewAssertNotNull() *Assertion {
+	return NewAssertion(
 		"assert.not_null",
 		`lambda value: fail("value is null") if value == None else None`,
 		starlark.StringDict{},
 	)
 }
 
+// NotNull is a core.StarlarkFunc that asserts that a given value is not null.
 func (b assertModule) NotNull(thread *starlark.Thread, f *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
-	if len(args) == 0 {
-		return starlark.None, fmt.Errorf("expected at least one argument.")
-	}
-	result, err := starlark.Call(thread, NewAssertNotNull(), args, []starlark.Tuple{})
-	if err != nil {
-		return starlark.None, err
-	}
-	return result, nil
+	return NewAssertNotNull(), nil
 }

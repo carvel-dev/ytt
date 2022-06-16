@@ -76,17 +76,23 @@ func NewValidationFromValidationAnnotation(annotation template.NodeAnnotation) (
 		if len(ruleTuple) != 2 {
 			return nil, fmt.Errorf("expected 2-tuple, but found tuple with length %v (by %s)", len(ruleTuple), annotation.Position.AsCompactString())
 		}
+
 		message, ok := ruleTuple[0].(starlark.String)
 		if !ok {
 			return nil, fmt.Errorf("expected first item in the 2-tuple to be a string describing a valid value, but was %s (at %s)", ruleTuple[0].Type(), annotation.Position.AsCompactString())
 		}
-		lambda, ok := ruleTuple[1].(starlark.Callable)
+
+		assertion, ok := ruleTuple[1].(starlark.Callable)
 		if !ok {
-			return nil, fmt.Errorf("expected second item in the 2-tuple to be an assertion function, but was %s (at %s)", ruleTuple[1].Type(), annotation.Position.AsCompactString())
+			var err error
+			assertion, err = assertionFromCheckAttr(ruleTuple[1])
+			if err != nil {
+				return nil, fmt.Errorf("%s (at %s)", err, annotation.Position.AsCompactString())
+			}
 		}
 		rules = append(rules, rule{
 			msg:       message.GoString(),
-			assertion: lambda,
+			assertion: assertion,
 		})
 	}
 	kwargs, err := newValidationKwargs(annotation.Kwargs, annotation.Position)
@@ -97,6 +103,25 @@ func NewValidationFromValidationAnnotation(annotation template.NodeAnnotation) (
 	rules = append(rules, kwargs.convertToRules()...)
 
 	return &NodeValidation{rules, kwargs, annotation.Position}, nil
+}
+
+func assertionFromCheckAttr(value starlark.Value) (starlark.Callable, error) {
+	val, hasAttrs := value.(starlark.HasAttrs)
+	if !hasAttrs {
+		return nil, fmt.Errorf("expected second item in the 2-tuple to be an assertion function, but was %s", value.Type())
+	}
+
+	checkAttr, err := val.Attr("check")
+	if err != nil {
+		return nil, fmt.Errorf("expected second item in the 2-tuple to be an assertion function or assertion object, but was %s", value.Type())
+	}
+
+	assertionFunc, ok := checkAttr.(starlark.Callable)
+	if !ok {
+		return nil, fmt.Errorf("expected assertion object with assertion function \"check()\" , but was %s", checkAttr.Type())
+	}
+
+	return assertionFunc, nil
 }
 
 // newValidationKwargs takes the keyword arguments from a Validation annotation,

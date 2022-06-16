@@ -1,0 +1,13 @@
+#@ load("@ytt:assert", "assert")
+
+string_not_null: #@ assert.not_null().check(1,2)
+
++++
+
+ERR:
+- function lambda accepts 1 positional argument (2 given)
+    in lambda
+      assert.not_null:? | __ytt_tplXXX_set_ctx_type("yaml") (generated)
+      stdin:1 | #@ load("@ytt:assert", "assert")
+    in <toplevel>
+      stdin:3 | string_not_null: #@ assert.not_null().check(1,2)

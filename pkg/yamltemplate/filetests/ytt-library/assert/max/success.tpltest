@@ -1,29 +1,32 @@
 #@ load("@ytt:assert", "assert")
 
-max_of_int:
-  as_validation_assertion: #@ assert.max(2)(2)
-  as_plain_func:           #@ assert.max(2, 1)
-max_of_float:
-  as_validation_assertion: #@ assert.max(2.1)(1.2)
-  as_plain_func:           #@ assert.max(2.1, 1.2)
-max_of_string:
-  as_validation_assertion: #@ assert.max("c")("b")
-  as_plain_func:           #@ assert.max("c", "b")
+#@ def array_smaller():
+- "a"
+- 1
+#@ end
+
+#@ def array_bigger():
+- "b"
+- 2
+#@ end
+---
+
+max_of_int: #@ assert.max(2).check(2)
+max_of_string: #@ assert.max("c").check("b")
 max_of_list:
-  as_validation_assertion: #@ assert.max(["b", 2])(["a", 1])
-  as_plain_func:          #@ assert.max(["c", 2], ["a", 1])
+ to_list: #@ assert.max(["b", 2]).check(["a", 1])
+ to_array: #@ assert.max(["b", 2]).check(array_smaller())
+max_of_array:
+ to_list: #@ assert.max(array_bigger()).check(["a", 1])
+ to_array: #@ assert.max(array_bigger()).check(array_smaller())
 
 +++
 
-max_of_int:
-  as_validation_assertion: null
-  as_plain_func: null
-max_of_float:
-  as_validation_assertion: null
-  as_plain_func: null
-max_of_string:
-  as_validation_assertion: null
-  as_plain_func: null
+max_of_int: null
+max_of_string: null
 max_of_list:
-  as_validation_assertion: null
-  as_plain_func: null
+  to_list: null
+  to_array: null
+max_of_array:
+  to_list: null
+  to_array: null

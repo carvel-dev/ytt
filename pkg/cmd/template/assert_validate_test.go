@@ -275,6 +275,25 @@ array:
 				assertSucceedsDocSet(t, filesToProcess, expected, opts)
 			})
 		})
+		t.Run("with assertion object", func(t *testing.T) {
+			opts := cmdtpl.NewOptions()
+			opts.DataValuesFlags.Inspect = true
+			dataValuesYAML := `#@ load("@ytt:assert", "assert")
+#@data/values
+---
+#@assert/validate ("", assert.min(10))
+foo: 10
+`
+
+			expected := `foo: 10
+`
+
+			filesToProcess := files.NewSortedFiles([]*files.File{
+				files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(dataValuesYAML))),
+			})
+
+			assertSucceedsDocSet(t, filesToProcess, expected, opts)
+		})
 	})
 	t.Run("when validations on library data values pass", func(t *testing.T) {
 		opts := cmdtpl.NewOptions()

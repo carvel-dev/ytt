@@ -133,10 +133,9 @@ func (v *NodeValidation) DefaultNullSkipTrue() {
 // shouldValidate uses validationKwargs and the node's value to run checks on the value. If the value satisfies the checks,
 // then the NodeValidation's rules should execute, otherwise the rules will be skipped.
 func (v validationKwargs) shouldValidate(value starlark.Value, thread *starlark.Thread) (bool, error) {
-	_, isNull := value.(starlark.NoneType)
-	nullAllowed := !v.notNull
+	_, valueIsNull := value.(starlark.NoneType)
 	whenNullSkip := v.whenNullSkip != nil && *v.whenNullSkip
-	if isNull && nullAllowed && whenNullSkip {
+	if !v.notNull && whenNullSkip && valueIsNull {
 		return false, nil
 	}
 
@@ -147,7 +146,7 @@ func (v validationKwargs) shouldValidate(value starlark.Value, thread *starlark.
 		}
 
 		isTrue := bool(result.Truth())
-		return isNull || isTrue, nil
+		return valueIsNull || isTrue, nil
 	}
 	// if no kwargs then execute rules
 	return true, nil
@@ -159,35 +158,35 @@ func (v validationKwargs) convertToRules() []rule {
 		a := yttlibrary.NewAssertMinLen(core.NewGoValue(minLen).AsStarlarkValue())
 		rules = append(rules, rule{
 			msg:       fmt.Sprintf("length greater or equal to %v", minLen),
-			assertion: a,
+			assertion: a.CheckFunc(),
 		})
 	}
 	if v.maxLength != nil {
 		a := yttlibrary.NewAssertMaxLen(core.NewGoValue(*v.maxLength).AsStarlarkValue())
 		rules = append(rules, rule{
 			msg:       fmt.Sprintf("length less than or equal to %v", *v.maxLength),
-			assertion: a,
+			assertion: a.CheckFunc(),
 		})
 	}
 	if v.min != nil {
 		a := yttlibrary.NewAssertMin(v.min)
 		rules = append(rules, rule{
 			msg:       fmt.Sprintf("a value greater or equal to %v", v.min),
-			assertion: a,
+			assertion: a.CheckFunc(),
 		})
 	}
 	if v.max != nil {
 		a := yttlibrary.NewAssertMax(v.max)
 		rules = append(rules, rule{
 			msg:       fmt.Sprintf("a value less than or equal to %v", v.max),
-			assertion: a,
+			assertion: a.CheckFunc(),
 		})
 	}
 	if v.notNull {
 		a := yttlibrary.NewAssertNotNull()
 		rules = append(rules, rule{
 			msg:       fmt.Sprintf("not null"),
-			assertion: a,
+			assertion: a.CheckFunc(),
 		})
 	}
 

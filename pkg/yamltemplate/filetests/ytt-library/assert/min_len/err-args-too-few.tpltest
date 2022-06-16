@@ -1,0 +1,10 @@
+#@ load("@ytt:assert", "assert")
+
+min_len: #@ assert.min_len()
+
++++
+
+ERR: 
+- assert.min_len: expected exactly one argument
+    in <toplevel>
+      stdin:3 | min_len: #@ assert.min_len()
