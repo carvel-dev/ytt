@@ -1,7 +1,7 @@
 // Copyright 2022 VMware, Inc.
 // SPDX-License-Identifier: Apache-2.0
 
-package files
+package files_test
 
 import (
 	"bytes"
@@ -11,6 +11,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	"github.com/vmware-tanzu/carvel-ytt/pkg/files"
 )
 
 func TestHTTPFileSources(t *testing.T) {
@@ -28,7 +29,7 @@ func TestHTTPFileSources(t *testing.T) {
 		}
 	})
 
-	fileSource := NewHTTPSource(url)
+	fileSource := files.NewHTTPSource(url)
 	fileSource.Client = client
 	body, err := fileSource.Bytes()
 	require.NoError(t, err)
@@ -45,7 +46,7 @@ func TestHTTPFileSources(t *testing.T) {
 		}
 	})
 
-	fileSource = NewHTTPSource(url)
+	fileSource = files.NewHTTPSource(url)
 	fileSource.Client = client
 	body, err = fileSource.Bytes()
 	require.NoError(t, err)
@@ -63,7 +64,7 @@ func TestHTTPFileSources(t *testing.T) {
 		}
 	})
 
-	fileSource = NewHTTPSource(url)
+	fileSource = files.NewHTTPSource(url)
 	fileSource.Client = client
 	_, err = fileSource.Bytes()
 	require.EqualError(t, err, fmt.Sprintf("Requesting URL '%s': %s", url, status))
