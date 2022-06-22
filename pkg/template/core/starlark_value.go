@@ -57,6 +57,17 @@ func (e StarlarkValue) AsInt64() (int64, error) {
 	return 0, fmt.Errorf("expected starlark.Int")
 }
 
+// AsFloat64 converts a Starlark number (either int or float) to the corresponding Go double-precision float.
+func (e StarlarkValue) AsFloat64() (float64, error) {
+	switch e := e.val.(type) {
+	case starlark.Int:
+		return float64(e.Float()), nil
+	case starlark.Float:
+		return float64(e), nil
+	}
+	return 0, fmt.Errorf("expected float value, but was %T", e.val)
+}
+
 func (e StarlarkValue) asInterface(val starlark.Value) (interface{}, error) {
 	if obj, ok := val.(UnconvertableStarlarkValue); ok {
 		return nil, fmt.Errorf("Unable to convert value: %s", obj.ConversionHint())

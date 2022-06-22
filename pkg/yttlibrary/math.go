@@ -33,7 +33,6 @@
 package yttlibrary
 
 import (
-	"errors"
 	"fmt"
 	"github.com/k14s/starlark-go/starlark"
 	"github.com/k14s/starlark-go/starlarkstruct"
@@ -139,54 +138,19 @@ var MathAPI = starlark.StringDict{
 
 type mathModule struct{}
 
-func (b mathModule) unpackFloatFromValue(v starlark.Value) (float64, error) {
-	switch v := v.(type) {
-	case starlark.Int:
-		return float64(v.Float()), nil
-	case starlark.Float:
-		return float64(v), nil
-	}
-	return 0, fmt.Errorf("got %s, want float or int", v.Type())
-}
-
-// Unpack one float (or int) positional argument.
-func (b mathModule) unpackUnaryFloat(name string, args starlark.Tuple, kwargs []starlark.Tuple) (float64, error) {
-	var arg starlark.Value
-	if err := starlark.UnpackPositionalArgs(name, args, kwargs, 1, &arg); err != nil {
-		return 0, err
-	}
-
-	return b.unpackFloatFromValue(arg)
-}
-
-// Unpack two float (or int) positional arguments.
-func (b mathModule) unpackBinaryFloat(name string, args starlark.Tuple, kwargs []starlark.Tuple) (float64, float64, error) {
-	var arg1, arg2 starlark.Value
-	if err := starlark.UnpackPositionalArgs(name, args, kwargs, 2, &arg1, &arg2); err != nil {
-		return 0, 0, err
-	}
-
-	float1, err := b.unpackFloatFromValue(arg1)
-	if err != nil {
-		return 0, 0, err
-	}
-
-	float2, err := b.unpackFloatFromValue(arg2)
-	if err != nil {
-		return 0, 0, err
-	}
-
-	return float1, float2, nil
-}
-
 // newUnaryBuiltin wraps a unary floating-point Go function
 // as a Starlark built-in that accepts int or float arguments.
 func (b mathModule) newUnaryBuiltin(name string, fn func(float64) float64) *starlark.Builtin {
 	return starlark.NewBuiltin(name, core.ErrWrapper(func(_ *starlark.Thread, _ *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
-		x, err := b.unpackUnaryFloat(name, args, kwargs)
-		if err != nil {
-			return nil, err
+		if args.Len() != 1 {
+			return starlark.None, fmt.Errorf("expected exactly one argument")
 		}
+
+		x, err := core.NewStarlarkValue(args.Index(0)).AsFloat64()
+		if err != nil {
+			return starlark.None, err
+		}
+
 		return starlark.Float(fn(x)), nil
 	}))
 }
@@ -195,9 +159,18 @@ func (b mathModule) newUnaryBuiltin(name string, fn func(float64) float64) *star
 // as a Starlark built-in that accepts int or float arguments.
 func (b mathModule) newBinaryBuiltin(name string, fn func(float64, float64) float64) *starlark.Builtin {
 	return starlark.NewBuiltin(name, core.ErrWrapper(func(_ *starlark.Thread, _ *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
-		x, y, err := b.unpackBinaryFloat(name, args, kwargs)
+		if args.Len() != 2 {
+			return starlark.None, fmt.Errorf("expected exactly two arguments")
+		}
+
+		x, err := core.NewStarlarkValue(args.Index(0)).AsFloat64()
 		if err != nil {
-			return nil, err
+			return starlark.None, err
+		}
+
+		y, err := core.NewStarlarkValue(args.Index(1)).AsFloat64()
+		if err != nil {
+			return starlark.None, err
 		}
 		return starlark.Float(fn(x, y)), nil
 	}))
@@ -214,17 +187,14 @@ func (b mathModule) log(_ *starlark.Thread, _ *starlark.Builtin, args starlark.T
 		return nil, err
 	}
 
-	x, err := b.unpackFloatFromValue(xValue)
+	x, err := core.NewStarlarkValue(xValue).AsFloat64()
 	if err != nil {
-		return nil, err
-	}
-	base, err := b.unpackFloatFromValue(baseValue)
-	if err != nil {
-		return nil, err
+		return starlark.None, err
 	}
 
-	if base == 1 {
-		return nil, errors.New("division by zero")
+	base, err := core.NewStarlarkValue(baseValue).AsFloat64()
+	if err != nil {
+		return starlark.None, err
 	}
 
 	return starlark.Float(math.Log(x) / math.Log(base)), nil
@@ -244,7 +214,7 @@ func (b mathModule) ceil(_ *starlark.Thread, _ *starlark.Builtin, args starlark.
 		return starlark.NumberToInt(starlark.Float(math.Ceil(float64(t))))
 	}
 
-	return nil, fmt.Errorf("got %s, want float or int", x.Type())
+	return nil, fmt.Errorf("expected float value, but was %T", x)
 }
 
 func (b mathModule) floor(_ *starlark.Thread, _ *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
@@ -261,7 +231,7 @@ func (b mathModule) floor(_ *starlark.Thread, _ *starlark.Builtin, args starlark
 		return starlark.NumberToInt(starlark.Float(math.Floor(float64(t))))
 	}
 
-	return nil, fmt.Errorf("got %s, want float or int", x.Type())
+	return nil, fmt.Errorf("expected float value, but was %T", x)
 }
 
 func (b mathModule) degrees(x float64) float64 {
