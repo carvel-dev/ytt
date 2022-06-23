@@ -183,8 +183,7 @@ func (e CompiledTemplateMultiError) buildPos(pos syntax.Position) CompiledTempla
 		sc = unavailableSource{}
 	}
 
-	p := filepos.NewPosition(int(pos.Line))
-	p.SetFile(pos.Filename())
+	p := filepos.NewPositionInFile(int(pos.Line), pos.Filename())
 
 	line := sc.CodeAtLine(p)
 	if line == nil {

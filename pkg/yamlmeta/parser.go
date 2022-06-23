@@ -65,8 +65,7 @@ func (p *Parser) ParseBytes(data []byte, associatedName string) (*DocumentSet, e
 	// since we always present line numbers as 1 based
 	// (note that first doc marker may be several lines down)
 	if !startsWithDocMarker && !docSet.Items[0].Position.IsKnown() {
-		docSet.Items[0].Position = filepos.NewPosition(1)
-		docSet.Items[0].Position.SetFile(associatedName)
+		docSet.Items[0].Position = filepos.NewPositionInFile(1, associatedName)
 	}
 	setPositionOfCollections(docSet, nil)
 
@@ -276,14 +275,11 @@ func (p *Parser) newDocPosition(actualLineNum, correction int, firstDoc bool, li
 }
 
 func (p *Parser) newPosition(actualLineNum, correction int, line string) *filepos.Position {
-	pos := filepos.NewPosition(actualLineNum + correction)
-	pos.SetFile(p.associatedName)
+	pos := filepos.NewPositionInFile(actualLineNum+correction, p.associatedName)
 	pos.SetLine(line)
 	return pos
 }
 
 func (p *Parser) newUnknownPosition() *filepos.Position {
-	pos := filepos.NewUnknownPosition()
-	pos.SetFile(p.associatedName)
-	return pos
+	return filepos.NewUnknownPositionInFile(p.associatedName)
 }

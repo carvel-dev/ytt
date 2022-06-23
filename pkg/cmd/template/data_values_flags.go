@@ -336,8 +336,7 @@ func (s *DataValuesFlags) buildOverlay(keyPieces []string, value interface{}, de
 	currMap := resultMap
 	var lastMapItem *yamlmeta.MapItem
 
-	pos := filepos.NewPosition(1)
-	pos.SetFile(desc)
+	pos := filepos.NewPositionInFile(1, desc)
 	pos.SetLine(line)
 
 	for _, piece := range keyPieces {
