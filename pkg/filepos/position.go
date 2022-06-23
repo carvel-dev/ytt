@@ -34,6 +34,7 @@ func NewUnknownPosition() *Position {
 	return &Position{}
 }
 
+// NewUnknownPositionInFile produces a Position of a known file at an unknown line.
 func NewUnknownPositionInFile(file string) *Position {
 	return &Position{file: file}
 }

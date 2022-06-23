@@ -10,7 +10,7 @@ import (
 )
 
 type CompiledTemplateLoader interface {
-	FindCompiledTemplate(string) (*CompiledTemplate, error)
+	FindCompiledTemplate(string) *CompiledTemplate
 	Load(*starlark.Thread, string) (starlark.StringDict, error)
 }
 
@@ -24,11 +24,9 @@ func NewNoopCompiledTemplateLoader(tpl *CompiledTemplate) NoopCompiledTemplateLo
 
 var _ CompiledTemplateLoader = NoopCompiledTemplateLoader{}
 
-func (l NoopCompiledTemplateLoader) FindCompiledTemplate(_ string) (*CompiledTemplate, error) {
-	if l.tpl != nil {
-		return l.tpl, nil
-	}
-	return nil, fmt.Errorf("FindCompiledTemplate is not supported")
+// FindCompiledTemplate returns the CompiledTemplate this CompiledTemplateLoader was constructed with.
+func (l NoopCompiledTemplateLoader) FindCompiledTemplate(_ string) *CompiledTemplate {
+	return l.tpl
 }
 
 func (l NoopCompiledTemplateLoader) Load(

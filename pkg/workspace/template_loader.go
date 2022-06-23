@@ -61,12 +61,11 @@ func NewTemplateLoader(values *datavalues.Envelope, libraryValuess []*datavalues
 	}
 }
 
-func (l *TemplateLoader) FindCompiledTemplate(path string) (*template.CompiledTemplate, error) {
-	ct, found := l.compiledTemplates[path]
-	if !found {
-		return nil, fmt.Errorf("Expected to find '%s' compiled template", path)
-	}
-	return ct, nil
+// FindCompiledTemplate returns the template.CompiledTemplate that was produced from the file at "path".
+//
+// If no such template exists, returns nil.
+func (l *TemplateLoader) FindCompiledTemplate(path string) *template.CompiledTemplate {
+	return l.compiledTemplates[path]
 }
 
 func (l *TemplateLoader) Load(thread *starlark.Thread, module string) (starlark.StringDict, error) {

@@ -141,8 +141,8 @@ type singleTemplateLoader struct {
 	template.NoopCompiledTemplateLoader
 }
 
-func (l singleTemplateLoader) FindCompiledTemplate(_ string) (*template.CompiledTemplate, error) {
-	return l.compiledTemplate, nil
+func (l singleTemplateLoader) FindCompiledTemplate(_ string) *template.CompiledTemplate {
+	return l.compiledTemplate
 }
 
 func expectEquals(t *testing.T, resultStr, expectedStr string) error {

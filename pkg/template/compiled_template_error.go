@@ -5,6 +5,7 @@ package template
 
 import (
 	"fmt"
+	"reflect"
 	"regexp"
 	"strings"
 
@@ -152,16 +153,18 @@ type sourceCode interface {
 	CodeAtLine(pos *filepos.Position) *Line
 }
 
+// unavailableSource is a stub for when the source code line for a filepos.Position cannot be found.
+// This occurs when the position refers to a file that is not part of this Library:
+// - a function from another Library (e.g. via library.get().export())
+// - Starlark sourced from within ytt (e.g. some out-of-the-box validation functions)
 type unavailableSource struct {
 }
 
 func (s unavailableSource) CodeAtLine(pos *filepos.Position) *Line {
 	return &Line{
-		Instruction: Instruction{},
 		SourceLine: &SourceLine{
-			Position:  pos,
-			Content:   "(unavailable)",
-			Selection: nil,
+			Position: pos,
+			Content:  "(unavailable)",
 		},
 	}
 }
@@ -175,11 +178,9 @@ func (e CompiledTemplateMultiError) buildPos(pos syntax.Position) CompiledTempla
 	}
 
 	var sc sourceCode
-	sc, err := e.loader.FindCompiledTemplate(pos.Filename())
-	if err != nil {
-		// Most likely because the position refers to a file that is not part of this Library:
-		// - a function from another Library
-		// - Starlark sourced from within ytt (e.g. out-of-the-box validation functions)
+	sc = e.loader.FindCompiledTemplate(pos.Filename())
+	if reflect.ValueOf(sc).IsNil() {
+		// TODO: find a way to register/locate such sources from within the current Library so that we _can_ include it.
 		sc = unavailableSource{}
 	}
 
