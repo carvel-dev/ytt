@@ -22,16 +22,26 @@ func NewPosition(lineNum int) *Position {
 	return &Position{lineNum: &lineNum, known: true}
 }
 
+// NewPositionInFile returns the Position of line "lineNum" within the file "file"
+func NewPositionInFile(lineNum int, file string) *Position {
+	p := NewPosition(lineNum)
+	p.file = file
+	return p
+}
+
 // NewUnknownPosition is equivalent of zero value *Position
 func NewUnknownPosition() *Position {
 	return &Position{}
 }
 
+// NewUnknownPositionInFile produces a Position of a known file at an unknown line.
+func NewUnknownPositionInFile(file string) *Position {
+	return &Position{file: file}
+}
+
 func NewUnknownPositionWithKeyVal(k, v interface{}, separator string) *Position {
 	return &Position{line: fmt.Sprintf("%v%v %#v", k, separator, v), fromMemory: true}
 }
-
-func (p *Position) SetFile(file string) { p.file = file }
 
 func (p *Position) SetLine(line string) { p.line = line }
 

@@ -225,8 +225,8 @@ type stdTemplateLoader struct {
 	template.NoopCompiledTemplateLoader
 }
 
-func (l stdTemplateLoader) FindCompiledTemplate(_ string) (*template.CompiledTemplate, error) {
-	return l.compiledTemplate, nil
+func (l stdTemplateLoader) FindCompiledTemplate(_ string) *template.CompiledTemplate {
+	return l.compiledTemplate
 }
 
 func (l stdTemplateLoader) Load(thread *starlark.Thread, module string) (starlark.StringDict, error) {

@@ -5,6 +5,7 @@ package template
 
 import (
 	"fmt"
+	"reflect"
 	"regexp"
 	"strings"
 
@@ -148,6 +149,26 @@ func (e CompiledTemplateMultiError) buildEvalErr(err *starlark.EvalError) Compil
 	return result
 }
 
+type sourceCode interface {
+	CodeAtLine(pos *filepos.Position) *Line
+}
+
+// unavailableSource is a stub for when the source code line for a filepos.Position cannot be found.
+// This occurs when the position refers to a file that is not part of this Library:
+// - a function from another Library (e.g. via library.get().export())
+// - Starlark sourced from within ytt (e.g. some out-of-the-box validation functions)
+type unavailableSource struct {
+}
+
+func (s unavailableSource) CodeAtLine(pos *filepos.Position) *Line {
+	return &Line{
+		SourceLine: &SourceLine{
+			Position: pos,
+			Content:  "(unavailable)",
+		},
+	}
+}
+
 func (e CompiledTemplateMultiError) buildPos(pos syntax.Position) CompiledTemplateErrorPosition {
 	// TODO seems to be a bug in starlark where, for example,
 	// "function call2 takes exactly 1 positional argument (0 given)"
@@ -156,12 +177,16 @@ func (e CompiledTemplateMultiError) buildPos(pos syntax.Position) CompiledTempla
 		return CompiledTemplateErrorPosition{}
 	}
 
-	ct, err := e.loader.FindCompiledTemplate(pos.Filename())
-	if err != nil {
-		panic(fmt.Errorf("Expected to find compiled template: %s", err))
+	var sc sourceCode
+	sc = e.loader.FindCompiledTemplate(pos.Filename())
+	if reflect.ValueOf(sc).IsNil() {
+		// TODO: find a way to register/locate such sources from within the current Library so that we _can_ include it.
+		sc = unavailableSource{}
 	}
 
-	line := ct.CodeAtLine(filepos.NewPosition(int(pos.Line)))
+	p := filepos.NewPositionInFile(int(pos.Line), pos.Filename())
+
+	line := sc.CodeAtLine(p)
 	if line == nil {
 		panic(fmt.Errorf("Expected to find compiled template line %d", pos.Line))
 	}
@@ -169,19 +194,19 @@ func (e CompiledTemplateMultiError) buildPos(pos syntax.Position) CompiledTempla
 	return CompiledTemplateErrorPosition{
 		Filename:           pos.Filename(),
 		TemplateLine:       line,
-		BeforeTemplateLine: e.findClosestLine(ct, int(pos.Line), -1),
-		AfterTemplateLine:  e.findClosestLine(ct, int(pos.Line), 1),
+		BeforeTemplateLine: e.findClosestLine(sc, int(pos.Line), -1),
+		AfterTemplateLine:  e.findClosestLine(sc, int(pos.Line), 1),
 	}
 }
 
-func (CompiledTemplateMultiError) findClosestLine(ct *CompiledTemplate, posLine int, lineInc int) *Line {
+func (CompiledTemplateMultiError) findClosestLine(sc sourceCode, posLine int, lineInc int) *Line {
 	for {
 		posLine += lineInc
 		if posLine < 1 {
 			return nil
 		}
 
-		line := ct.CodeAtLine(filepos.NewPosition(posLine))
+		line := sc.CodeAtLine(filepos.NewPosition(posLine))
 		if line == nil || line.SourceLine != nil {
 			return line
 		}

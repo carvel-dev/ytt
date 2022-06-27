@@ -102,7 +102,5 @@ func (p *Parser) parse(dataBs []byte, associatedName string, startPos *filepos.P
 }
 
 func (p *Parser) newPosition(line int) *filepos.Position {
-	pos := filepos.NewPosition(line)
-	pos.SetFile(p.associatedName)
-	return pos
+	return filepos.NewPositionInFile(line, p.associatedName)
 }
