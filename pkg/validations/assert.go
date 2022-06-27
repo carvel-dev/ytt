@@ -22,6 +22,7 @@ const (
 	ValidationKwargMin          string                  = "min"
 	ValidationKwargMax          string                  = "max"
 	ValidationKwargNotNull      string                  = "not_null"
+	ValidationKwargOneNotNull   string                  = "one_not_null"
 )
 
 // ProcessAssertValidateAnns checks Assert annotations on data values and stores them on a Node as Validations.
@@ -166,6 +167,19 @@ func newValidationKwargs(kwargs []starlark.Tuple, annPos *filepos.Position) (val
 				return validationKwargs{}, fmt.Errorf("expected keyword argument %q to be a boolean, but was %s (at %s)", ValidationKwargNotNull, value[1].Type(), annPos.AsCompactString())
 			}
 			processedKwargs.notNull = bool(v)
+		case ValidationKwargOneNotNull:
+			switch v := value[1].(type) {
+			case starlark.Bool:
+				if v {
+					processedKwargs.oneNotNull = v
+				} else {
+					return validationKwargs{}, fmt.Errorf("one_not_null= cannot be False")
+				}
+			case starlark.Sequence:
+				processedKwargs.oneNotNull = v
+			default:
+				return validationKwargs{}, fmt.Errorf("expected True or a sequence of keys, but was a \"%s\"", value[1].Type())
+			}
 		default:
 			return validationKwargs{}, fmt.Errorf("unknown keyword argument %q (at %s)", kwargName, annPos.AsCompactString())
 		}

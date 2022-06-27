@@ -354,7 +354,7 @@ func TestAssertValidateOnDataValuesFails(t *testing.T) {
 			opts := cmdtpl.NewOptions()
 			dataValuesYAML := `#@data/values
 ---
-#@assert/validate 
+#@assert/validate
 foo: bar
 `
 
@@ -726,6 +726,50 @@ foo: null
 			})
 
 			assertFails(t, filesToProcess, expectedErr, opts)
+		})
+		t.Run("one_not_null", func(t *testing.T) {
+			t.Run("over entire value", func(t *testing.T) {
+				opts := cmdtpl.NewOptions()
+				dataValuesYAML := `#@data/values
+---
+#@assert/validate one_not_null=True
+values:
+  foo: notNull
+  bar: notNull
+`
+
+				expectedErr := `One or more data values were invalid:
+- "values" (dv.yml:4) requires "exactly one child not null"; check: multiple values are not null ["foo" "bar"] (by dv.yml:3)
+`
+
+				filesToProcess := files.NewSortedFiles([]*files.File{
+					files.MustNewFileFromSource(files.NewBytesSource("dv.yml", []byte(dataValuesYAML))),
+				})
+
+				assertFails(t, filesToProcess, expectedErr, opts)
+			})
+			t.Run("over specific keys", func(t *testing.T) {
+				opts := cmdtpl.NewOptions()
+				dataValuesYAML := `#@data/values
+---
+#@assert/validate one_not_null=["foo", "bar", "qux"]
+values:
+  foo: notNull
+  bar: null
+  baz: null
+  qux: notNull
+`
+
+				expectedErr := `One or more data values were invalid:
+- "values" (dv.yml:4) requires "exactly one child not null"; check: multiple values are not null ["foo" "qux"] (by dv.yml:3)
+`
+
+				filesToProcess := files.NewSortedFiles([]*files.File{
+					files.MustNewFileFromSource(files.NewBytesSource("dv.yml", []byte(dataValuesYAML))),
+				})
+
+				assertFails(t, filesToProcess, expectedErr, opts)
+			})
 		})
 	})
 
@@ -1216,7 +1260,7 @@ func TestSchemaValidationFails(t *testing.T) {
 			opts := cmdtpl.NewOptions()
 			schemaYAML := `#@data/values-schema
 ---
-#@schema/validation 
+#@schema/validation
 foo: bar
 `
 
@@ -1738,6 +1782,32 @@ map: {}
 - "int" (schema.yml:8) requires "not null"; fail: value is null (by schema.yml:7)
 - "array" (schema.yml:11) requires "not null"; fail: value is null (by schema.yml:10)
 - "map" (schema.yml:15) requires "not null"; fail: value is null (by schema.yml:14)
+`
+
+			filesToProcess := files.NewSortedFiles([]*files.File{
+				files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
+			})
+
+			assertFails(t, filesToProcess, expectedErr, opts)
+		})
+		t.Run("one_not_null and nullable schema type", func(t *testing.T) {
+			opts := cmdtpl.NewOptions()
+			opts.DataValuesFlags.Inspect = true
+			schemaYAML := `#@data/values-schema
+---
+#@schema/validation one_not_null=["one", "two", "three"]
+map:
+  other: not null
+  #@schema/nullable
+  one: configuration
+  #@schema/nullable
+  two: configuration
+  #@schema/nullable
+  three: configuration
+`
+
+			expectedErr := `One or more data values were invalid:
+- "map" (schema.yml:4) requires "exactly one child not null"; check: all values are null (by schema.yml:3)
 `
 
 			filesToProcess := files.NewSortedFiles([]*files.File{

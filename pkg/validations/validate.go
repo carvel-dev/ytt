@@ -5,6 +5,7 @@ package validations
 
 import (
 	"fmt"
+
 	"github.com/k14s/starlark-go/starlark"
 	"github.com/vmware-tanzu/carvel-ytt/pkg/filepos"
 	"github.com/vmware-tanzu/carvel-ytt/pkg/yamlmeta"
@@ -35,6 +36,7 @@ type validationKwargs struct {
 	min          starlark.Value
 	max          starlark.Value
 	notNull      bool
+	oneNotNull   starlark.Value
 }
 
 // Run takes a root Node, and threadName, and validates each Node in the tree.
@@ -186,6 +188,29 @@ func (v validationKwargs) convertToRules() []rule {
 		a := yttlibrary.NewAssertNotNull()
 		rules = append(rules, rule{
 			msg:       fmt.Sprintf("not null"),
+			assertion: a.CheckFunc(),
+		})
+	}
+	if v.oneNotNull != nil {
+		var a *yttlibrary.Assertion
+
+		switch oneNotNull := v.oneNotNull.(type) {
+		case starlark.Bool:
+			if oneNotNull {
+				a = yttlibrary.NewAssertOneNotNull(nil)
+			} else {
+				// should have been caught when args were parsed
+				panic("one_not_null= cannot be False")
+			}
+		case starlark.Sequence:
+			a = yttlibrary.NewAssertOneNotNull(oneNotNull)
+		default:
+			// should have been caught when args were parsed
+			panic(fmt.Sprintf("Unexpected type \"%s\" for one_not_null=", v.oneNotNull.Type()))
+		}
+
+		rules = append(rules, rule{
+			msg:       fmt.Sprintf("exactly one child not null"),
 			assertion: a.CheckFunc(),
 		})
 	}
