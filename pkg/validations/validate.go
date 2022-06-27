@@ -5,6 +5,7 @@ package validations
 
 import (
 	"fmt"
+	"github.com/vmware-tanzu/carvel-ytt/pkg/yttlibrary"
 
 	"github.com/k14s/starlark-go/starlark"
 	"github.com/vmware-tanzu/carvel-ytt/pkg/filepos"
@@ -30,6 +31,7 @@ type rule struct {
 type validationKwargs struct {
 	when         *starlark.Callable
 	whenNullSkip *bool // default: nil if kwarg is not set, True if value is Nullable
+	oneNotNull   bool
 }
 
 // Run takes a root Node, and threadName, and validates each Node in the tree.
@@ -141,6 +143,18 @@ func (v validationKwargs) shouldValidate(value starlark.Value, thread *starlark.
 	}
 	// if no kwargs then execute rules
 	return true, nil
+}
+
+func (v validationKwargs) convertToRules() []rule {
+	var rules []rule
+	if v.oneNotNull {
+		a := yttlibrary.NewAssertOneNotNull()
+		rules = append(rules, rule{
+			msg:       fmt.Sprintf("one not null"),
+			assertion: a.CheckFunc(),
+		})
+	}
+	return rules
 }
 
 // AssertCheck holds the resulting violations from executing Validations on a node.

@@ -1,0 +1,13 @@
+#@ load("@ytt:assert", "assert")
+
+#@ def map():
+foo: "notnull"
+bar: null
+#@ end
+---
+
+map_success: #@ assert.one_not_null().check(map())
+
++++
+
+map_success: null

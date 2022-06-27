@@ -1,0 +1,19 @@
+#@ load("@ytt:assert", "assert")
+
+#@ def map():
+foo: "not null"
+bar: "also not null"
+#@ end
+---
+
+one_not_null: #@ assert.one_not_null().check(map())
+
++++
+
+ERR:
+- fail: multiple values are not null
+    in lambda
+      assert.one_not_null:? | __ytt_tplXXX_set_ctx_type("yaml") (generated)
+      stdin:1 | #@ load("@ytt:assert", "assert")
+    in <toplevel>
+      stdin:9 | one_not_null: #@ assert.one_not_null().check(map())

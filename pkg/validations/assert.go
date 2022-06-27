@@ -17,6 +17,7 @@ const (
 	AnnotationAssertValidate    template.AnnotationName = "assert/validate"
 	ValidationKwargWhen         string                  = "when"
 	ValidationKwargWhenNullSkip string                  = "when_null_skip"
+	ValidationKwargOneNotNull   string                  = "one_not_null"
 )
 
 // ProcessAssertValidateAnns checks Assert annotations on data values and stores them on a Node as Validations.
@@ -60,9 +61,9 @@ func (a *convertAssertAnnsToValidations) Visit(node yamlmeta.Node) error {
 func NewValidationFromValidationAnnotation(annotation template.NodeAnnotation) (*NodeValidation, error) {
 	var rules []rule
 
-	if len(annotation.Args) == 0 {
-		return nil, fmt.Errorf("expected annotation to have 2-tuple as argument(s), but found no arguments (by %s)", annotation.Position.AsCompactString())
-	}
+	//if len(annotation.Args) == 0 {
+	//	return nil, fmt.Errorf("expected annotation to have 2-tuple as argument(s), but found no arguments (by %s)", annotation.Position.AsCompactString())
+	//}
 	for _, arg := range annotation.Args {
 		ruleTuple, ok := arg.(starlark.Tuple)
 		if !ok {
@@ -89,6 +90,8 @@ func NewValidationFromValidationAnnotation(annotation template.NodeAnnotation) (
 		return nil, err
 	}
 
+	rules = append(rules, kwargs.convertToRules()...)
+
 	return &NodeValidation{rules, kwargs, annotation.Position}, nil
 }
 
@@ -110,6 +113,12 @@ func newValidationKwargs(kwargs []starlark.Tuple, annPos *filepos.Position) (val
 			}
 			b := bool(v)
 			processedKwargs.whenNullSkip = &b
+		case ValidationKwargOneNotNull:
+			v, ok := value[1].(starlark.Bool)
+			if !ok {
+				return validationKwargs{}, fmt.Errorf("expected keyword argument %q to be a boolean, but was %s (at %s)", ValidationKwargOneNotNull, value[1].Type(), annPos.AsCompactString())
+			}
+			processedKwargs.oneNotNull = bool(v)
 		default:
 			return validationKwargs{}, fmt.Errorf("unknown keyword argument %q (at %s)", kwargName, annPos.AsCompactString())
 		}

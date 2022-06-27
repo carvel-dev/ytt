@@ -179,22 +179,22 @@ values:
 
 func TestAssertValidateOnDataValuesFails(t *testing.T) {
 	t.Run("when the annotation is mal-formed because", func(t *testing.T) {
-		t.Run("is empty", func(t *testing.T) {
-			opts := cmdtpl.NewOptions()
-			dataValuesYAML := `#@data/values
----
-#@assert/validate 
-foo: bar
-`
-
-			expectedErr := `Invalid @assert/validate annotation - expected annotation to have 2-tuple as argument(s), but found no arguments (by schema.yml:3)`
-
-			filesToProcess := files.NewSortedFiles([]*files.File{
-				files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(dataValuesYAML))),
-			})
-
-			assertFails(t, filesToProcess, expectedErr, opts)
-		})
+		//		t.Run("is empty", func(t *testing.T) {
+		//			opts := cmdtpl.NewOptions()
+		//			dataValuesYAML := `#@data/values
+		//---
+		//#@assert/validate
+		//foo: bar
+		//`
+		//
+		//			expectedErr := `Invalid @assert/validate annotation - expected annotation to have 2-tuple as argument(s), but found no arguments (by schema.yml:3)`
+		//
+		//			filesToProcess := files.NewSortedFiles([]*files.File{
+		//				files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(dataValuesYAML))),
+		//			})
+		//
+		//			assertFails(t, filesToProcess, expectedErr, opts)
+		//		})
 		t.Run("is not a tuple", func(t *testing.T) {
 			opts := cmdtpl.NewOptions()
 			dataValuesYAML := `#@data/values
@@ -767,22 +767,22 @@ my_array_item:
 
 func TestSchemaValidationFails(t *testing.T) {
 	t.Run("when the annotation is mal-formed because", func(t *testing.T) {
-		t.Run("is empty", func(t *testing.T) {
-			opts := cmdtpl.NewOptions()
-			schemaYAML := `#@data/values-schema
----
-#@schema/validation 
-foo: bar
-`
-
-			expectedErr := `Invalid @schema/validation annotation - expected annotation to have 2-tuple as argument(s), but found no arguments (by schema.yml:3)`
-
-			filesToProcess := files.NewSortedFiles([]*files.File{
-				files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
-			})
-
-			assertFails(t, filesToProcess, expectedErr, opts)
-		})
+		//		t.Run("is empty", func(t *testing.T) {
+		//			opts := cmdtpl.NewOptions()
+		//			schemaYAML := `#@data/values-schema
+		//---
+		//#@schema/validation
+		//foo: bar
+		//`
+		//
+		//			expectedErr := `Invalid @schema/validation annotation - expected annotation to have 2-tuple as argument(s), but found no arguments (by schema.yml:3)`
+		//
+		//			filesToProcess := files.NewSortedFiles([]*files.File{
+		//				files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
+		//			})
+		//
+		//			assertFails(t, filesToProcess, expectedErr, opts)
+		//		})
 		t.Run("is not a tuple", func(t *testing.T) {
 			opts := cmdtpl.NewOptions()
 			schemaYAML := `#@data/values-schema
