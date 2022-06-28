@@ -40,6 +40,7 @@ func NewAPI(replaceNodeFunc tplcore.StarlarkFunc, dataMod DataModule,
 
 	std := map[string]starlark.StringDict{
 		"assert": AssertAPI,
+		"math":   MathAPI,
 		"regexp": RegexpAPI,
 
 		// Hashes
