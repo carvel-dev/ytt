@@ -8,6 +8,7 @@ import (
 
 	"github.com/k14s/starlark-go/starlark"
 	"github.com/k14s/starlark-go/starlarkstruct"
+	"github.com/vmware-tanzu/carvel-ytt/pkg/cmd/ui"
 	tplcore "github.com/vmware-tanzu/carvel-ytt/pkg/template/core"
 	"github.com/vmware-tanzu/carvel-ytt/pkg/yttlibrary/overlay"
 )
@@ -35,12 +36,16 @@ type API struct {
 	modules map[string]starlark.StringDict
 }
 
-func NewAPI(replaceNodeFunc tplcore.StarlarkFunc, dataMod DataModule,
-	libraryMod starlark.StringDict) API {
+// NewAPI builds an API instance to be used in executing a template.
+func NewAPI(
+	replaceNodeFunc tplcore.StarlarkFunc,
+	dataMod DataModule,
+	libraryMod starlark.StringDict,
+	ui ui.UI) API {
 
 	std := map[string]starlark.StringDict{
 		"assert": AssertAPI,
-		"math":   MathAPI,
+		"math":   NewMathModule(ui).AsModule(),
 		"regexp": RegexpAPI,
 
 		// Hashes
