@@ -28,6 +28,8 @@ type CompiledTemplate struct {
 	ctxs         []*EvaluationCtx
 }
 
+// NewCompiledTemplate creates a CompiledTemplate containing the generated code,
+// InstructionSet, and Nodes needed to template the resulting document.
 func NewCompiledTemplate(name string, code []Line,
 	instructions *InstructionSet, nodes *Nodes,
 	evalDialects EvaluationCtxDialects) *CompiledTemplate {
@@ -96,6 +98,8 @@ func (e *CompiledTemplate) DebugCodeAsString() string {
 	return strings.Join(result, "\n")
 }
 
+// Eval templates a document by executing the compiled code and instructions from a CompiledTemplate.
+// `instructionBindings` maps the compiled code and instructions to functions defined on a CompiledTemplate.
 func (e *CompiledTemplate) Eval(thread *starlark.Thread, loader CompiledTemplateLoader) (
 	starlark.StringDict, interface{}, error) {
 

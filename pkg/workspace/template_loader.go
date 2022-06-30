@@ -155,6 +155,9 @@ func (l *TemplateLoader) EvalPlainYAML(file *files.File) (*yamlmeta.DocumentSet,
 	return docSet, nil
 }
 
+// EvalYAML parses the file into a Node AST, then compiles that Node tree into a starlark program.
+//
+// Returns the templated file by evaluating the compiled starlark program.
 func (l *TemplateLoader) EvalYAML(libraryCtx LibraryExecutionContext, file *files.File) (starlark.StringDict, *yamlmeta.DocumentSet, error) {
 	docSet, err := l.EvalPlainYAML(file)
 	if err != nil {
