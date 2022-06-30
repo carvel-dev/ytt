@@ -66,6 +66,7 @@ func NewTemplate(name string, opts TemplateOpts) *Template {
 	return &Template{name: name, opts: opts, instructions: template.NewInstructionSet()}
 }
 
+// Compile converts a DocumentSet into code and metadata, returned via CompiledTemplate.
 func (e *Template) Compile(docSet *yamlmeta.DocumentSet) (*template.CompiledTemplate, error) {
 	e.docSet = docSet
 	e.nodes = template.NewNodes()
@@ -96,6 +97,7 @@ type buildOpts struct {
 	TextTemplatedStrings bool
 }
 
+// build translates a document into a starlark program. This code is later evaluated to rebuild the output line by line, where annotated expressions are evaluated.
 func (e *Template) build(nodeOrScalar interface{}, parentNode yamlmeta.Node, parentTag template.NodeTag, opts buildOpts) ([]template.Line, error) {
 	node, ok := nodeOrScalar.(yamlmeta.Node)
 	if !ok {

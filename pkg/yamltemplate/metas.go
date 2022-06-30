@@ -40,9 +40,9 @@ type CommentAndAnnotation struct {
 // nodePos is the position of the node to which "comment" is attached.
 //
 // When a comment contains a shorthand annotation (i.e. `#@ `):
-// - and the comment is above its node, it's a template.AnnotationCode annotation: it's _merely_ contributing raw
+// - if the comment is above its node, it's a template.AnnotationCode annotation: it's _merely_ contributing raw
 //   Starlark code.
-// - and the comment is on the same line as its node, it's a template.AnnotationValue annotation: it's meant to set the
+// - if the comment is on the same line as its node, it's a template.AnnotationValue annotation: it's meant to set the
 //   value of the annotated node.
 func NewTemplateAnnotationFromYAMLComment(comment *yamlmeta.Comment, nodePos *filepos.Position, opts template.MetaOpts) (template.Annotation, error) {
 	ann, err := template.NewAnnotationFromComment(comment.Data, comment.Position, opts)
@@ -65,9 +65,11 @@ func NewTemplateAnnotationFromYAMLComment(comment *yamlmeta.Comment, nodePos *fi
 	return ann, nil
 }
 
-// extractMetas parses "metas" (i.e. code, values, and/or annotations) from node comments
+// extractMetas parses "metas" (i.e. code, values, and/or annotations) from node comments.
+// Annotations that are consumable, such as AnnotationValue, AnnotationCode, and AnnotationComment,
+// are processed and added for later consumption. Other annotations remain attached to the node.
 //
-// returns the extracted metas and a copy of "node" with code and value type comments removed.
+// Returns the extracted metas and a copy of "node" with code and value type comments removed.
 func extractMetas(node yamlmeta.Node, opts template.MetaOpts) (Metas, yamlmeta.Node, error) {
 	metas := Metas{}
 

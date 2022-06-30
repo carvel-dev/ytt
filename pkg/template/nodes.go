@@ -38,6 +38,7 @@ func NewNodes() *Nodes {
 
 func (n *Nodes) Ancestors() Ancestors { return NewAncestors(n.childToParentTag) }
 
+// AddRootNode creates a new unique NodeTag to keep track of an EvaluationNode that has no parent.
 func (n *Nodes) AddRootNode(node EvaluationNode) NodeTag {
 	n.id++
 	tag := NodeTag{n.id}
@@ -46,6 +47,7 @@ func (n *Nodes) AddRootNode(node EvaluationNode) NodeTag {
 	return tag
 }
 
+// AddNode creates a new unique NodeTag to keep track of the EvaluationNode and its parent.
 func (n *Nodes) AddNode(node EvaluationNode, parentTag NodeTag) NodeTag {
 	n.id++
 	tag := NodeTag{n.id}
@@ -54,6 +56,7 @@ func (n *Nodes) AddNode(node EvaluationNode, parentTag NodeTag) NodeTag {
 	return tag
 }
 
+// FindNode uses a NodeTag to retrieve an EvaluationNode from the annotations map in Nodes.
 func (n *Nodes) FindNode(tag NodeTag) (EvaluationNode, bool) {
 	node, ok := n.tagToNode[tag]
 	return node, ok
