@@ -250,5 +250,15 @@ func NewAssertNotNull() *Assertion {
 
 // NotNull is a core.StarlarkFunc that asserts that a given value is not null.
 func (b assertModule) NotNull(thread *starlark.Thread, f *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
-	return NewAssertNotNull(), nil
+	if args.Len() > 1 {
+		return starlark.None, fmt.Errorf("expected no more than one argument")
+	}
+
+	result := NewAssertNotNull()
+	if args.Len() == 0 {
+		return result, nil
+	}
+
+	// support shorthand syntax: assert.not_null(value)
+	return starlark.Call(thread, result.CheckFunc(), args, []starlark.Tuple{})
 }

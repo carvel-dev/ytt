@@ -1,0 +1,22 @@
+#@ load("@ytt:assert", "assert")
+
+#@ def kv():
+foo: null
+#@ end
+
+short_hand:
+  when_not_null: #@ assert.not_null("a")
+  when_none: #@ assert.try_to(lambda: assert.not_null(None))
+  when_null: #@ assert.try_to(lambda: assert.not_null(kv()["foo"]))
+
+
++++
+
+short_hand:
+  when_not_null: true
+  when_none:
+  - null
+  - 'assert.not_null: fail: value is null'
+  when_null:
+  - null
+  - 'assert.not_null: fail: value is null'
