@@ -61,9 +61,9 @@ func (a *convertAssertAnnsToValidations) Visit(node yamlmeta.Node) error {
 func NewValidationFromValidationAnnotation(annotation template.NodeAnnotation) (*NodeValidation, error) {
 	var rules []rule
 
-	//if len(annotation.Args) == 0 {
-	//	return nil, fmt.Errorf("expected annotation to have 2-tuple as argument(s), but found no arguments (by %s)", annotation.Position.AsCompactString())
-	//}
+	if len(annotation.Args) == 0 && len(annotation.Kwargs) == 0 {
+		return nil, fmt.Errorf("expected annotation to have 2-tuple as argument(s), but found no arguments (by %s)", annotation.Position.AsCompactString())
+	}
 	for _, arg := range annotation.Args {
 		ruleTuple, ok := arg.(starlark.Tuple)
 		if !ok {

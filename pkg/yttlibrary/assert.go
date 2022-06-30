@@ -145,7 +145,7 @@ func NewAssertion(funcName, src string, env starlark.StringDict) *Assertion {
 func NewAssertOneNotNull() *Assertion {
 	return NewAssertion(
 		"assert.one_not_null",
-		`lambda v: None if len([x for x in v if v[x] != None]) == 1 else fail("all values are null") if len([x for x in v if v[x] != None]) == 0 else fail("multiple values are not null")`,
+		`lambda v: True if len([x for x in v if v[x] != None]) == 1 else fail("all values are null") if len([x for x in v if v[x] != None]) == 0 else fail("multiple values are not null")`,
 		starlark.StringDict{},
 	)
 }
