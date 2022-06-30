@@ -152,7 +152,7 @@ func NewAssertion(funcName, src string, env starlark.StringDict) *Assertion {
 func NewAssertMaxLen(maximum starlark.Value) *Assertion {
 	return NewAssertion(
 		"assert.max_len",
-		`lambda sequence: fail("length of {} is more than {}".format(len(sequence), maximum)) if len(sequence) > maximum else None`,
+		`lambda sequence: fail("length of {} is more than {}".format(len(sequence), maximum)) if len(sequence) > maximum else True`,
 		starlark.StringDict{"maximum": maximum},
 	)
 }
@@ -178,7 +178,7 @@ func (b assertModule) MaxLength(thread *starlark.Thread, f *starlark.Builtin, ar
 func NewAssertMinLen(minimum starlark.Value) *Assertion {
 	return NewAssertion(
 		"assert.min_len",
-		`lambda sequence: fail("length of {} is less than {}".format(len(sequence), minimum)) if len(sequence) < minimum else None`,
+		`lambda sequence: fail("length of {} is less than {}".format(len(sequence), minimum)) if len(sequence) < minimum else True`,
 		starlark.StringDict{"minimum": minimum},
 	)
 }
@@ -203,7 +203,7 @@ func (b assertModule) MinLength(thread *starlark.Thread, f *starlark.Builtin, ar
 func NewAssertMin(minimum starlark.Value) *Assertion {
 	return NewAssertion(
 		"assert.min",
-		`lambda value: fail("{} is less than {}".format(value, minimum)) if yaml.decode(yaml.encode(value)) < yaml.decode(yaml.encode(minimum)) else None`,
+		`lambda value: fail("{} is less than {}".format(value, minimum)) if yaml.decode(yaml.encode(value)) < yaml.decode(yaml.encode(minimum)) else True`,
 		starlark.StringDict{"minimum": minimum, "yaml": YAMLAPI["yaml"]},
 	)
 }
@@ -224,7 +224,7 @@ func (b assertModule) Min(thread *starlark.Thread, f *starlark.Builtin, args sta
 func NewAssertMax(maximum starlark.Value) *Assertion {
 	return NewAssertion(
 		"assert.max",
-		`lambda value: fail("{} is more than {}".format(value, maximum)) if yaml.decode(yaml.encode(value)) > yaml.decode(yaml.encode(maximum)) else None`,
+		`lambda value: fail("{} is more than {}".format(value, maximum)) if yaml.decode(yaml.encode(value)) > yaml.decode(yaml.encode(maximum)) else True`,
 		starlark.StringDict{"maximum": maximum, "yaml": YAMLAPI["yaml"]},
 	)
 }
@@ -243,7 +243,7 @@ func (b assertModule) Max(thread *starlark.Thread, f *starlark.Builtin, args sta
 func NewAssertNotNull() *Assertion {
 	return NewAssertion(
 		"assert.not_null",
-		`lambda value: fail("value is null") if value == None else None`,
+		`lambda value: fail("value is null") if value == None else True`,
 		starlark.StringDict{},
 	)
 }

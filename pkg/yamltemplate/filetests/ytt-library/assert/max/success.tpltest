@@ -22,11 +22,11 @@ max_of_array:
 
 +++
 
-max_of_int: null
-max_of_string: null
+max_of_int: true
+max_of_string: true
 max_of_list:
-  to_list: null
-  to_array: null
+  to_list: true
+  to_array: true
 max_of_array:
-  to_list: null
-  to_array: null
+  to_list: true
+  to_array: true

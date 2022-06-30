@@ -27,9 +27,9 @@ min_len_of_array:  #@ assert.min_len(2).check(array())
 
 +++
 
-min_len_of_string: null
-min_len_of_dict: null
-min_len_of_list: null
-min_len_of_docset: null
-min_len_of_map: null
-min_len_of_array: null
+min_len_of_string: true
+min_len_of_dict: true
+min_len_of_list: true
+min_len_of_docset: true
+min_len_of_map: true
+min_len_of_array: true

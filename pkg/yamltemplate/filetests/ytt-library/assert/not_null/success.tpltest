@@ -5,4 +5,4 @@ string_not_null: #@ assert.not_null().check("a")
 
 +++
 
-string_not_null: null
+string_not_null: true

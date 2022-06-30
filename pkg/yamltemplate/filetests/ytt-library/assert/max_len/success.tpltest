@@ -27,9 +27,9 @@ max_len_of_array:  #@ assert.max_len(2).check(array())
 
 +++
 
-max_len_of_string: null
-max_len_of_dict: null
-max_len_of_list: null
-max_len_of_docset: null
-max_len_of_map: null
-max_len_of_array: null
+max_len_of_string: true
+max_len_of_dict: true
+max_len_of_list: true
+max_len_of_docset: true
+max_len_of_map: true
+max_len_of_array: true
