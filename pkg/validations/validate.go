@@ -5,10 +5,8 @@ package validations
 
 import (
 	"fmt"
-
 	"github.com/k14s/starlark-go/starlark"
 	"github.com/vmware-tanzu/carvel-ytt/pkg/filepos"
-	"github.com/vmware-tanzu/carvel-ytt/pkg/template/core"
 	"github.com/vmware-tanzu/carvel-ytt/pkg/yamlmeta"
 	"github.com/vmware-tanzu/carvel-ytt/pkg/yamltemplate"
 	"github.com/vmware-tanzu/carvel-ytt/pkg/yttlibrary"
@@ -31,13 +29,12 @@ type rule struct {
 // validationKwargs represent the optional keyword arguments and their values in a validation annotation.
 type validationKwargs struct {
 	when         *starlark.Callable
-	whenNullSkip *bool // default: nil if kwarg is not set, True if value is Nullable
-	minLength    int   // 0 len("") == 0, this always passes
-	maxLength    *int
+	whenNullSkip *bool         // default: nil if kwarg is not set, True if value is Nullable
+	minLength    *starlark.Int // 0 len("") == 0, this always passes
+	maxLength    *starlark.Int
 	min          starlark.Value
 	max          starlark.Value
 	notNull      bool
-	// *int , default=nil possible_values={&1, &2, &-3, ..}
 }
 
 // Run takes a root Node, and threadName, and validates each Node in the tree.
@@ -154,20 +151,23 @@ func (v validationKwargs) shouldValidate(value starlark.Value, thread *starlark.
 
 func (v validationKwargs) convertToRules() []rule {
 	var rules []rule
-	if minLen := v.minLength; minLen > 0 {
-		a := yttlibrary.NewAssertMinLen(core.NewGoValue(minLen).AsStarlarkValue())
+
+	if v.minLength != nil {
+		a := yttlibrary.NewAssertMinLen(*v.minLength)
 		rules = append(rules, rule{
-			msg:       fmt.Sprintf("length greater or equal to %v", minLen),
+			msg:       fmt.Sprintf("length greater or equal to %v", *v.minLength),
 			assertion: a.CheckFunc(),
 		})
 	}
+
 	if v.maxLength != nil {
-		a := yttlibrary.NewAssertMaxLen(core.NewGoValue(*v.maxLength).AsStarlarkValue())
+		a := yttlibrary.NewAssertMaxLen(*v.maxLength)
 		rules = append(rules, rule{
 			msg:       fmt.Sprintf("length less than or equal to %v", *v.maxLength),
 			assertion: a.CheckFunc(),
 		})
 	}
+
 	if v.min != nil {
 		a := yttlibrary.NewAssertMin(v.min)
 		rules = append(rules, rule{
