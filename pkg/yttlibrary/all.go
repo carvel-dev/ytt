@@ -44,7 +44,7 @@ func NewAPI(
 	ui ui.UI) API {
 
 	std := map[string]starlark.StringDict{
-		"assert": AssertAPI,
+		"assert": NewAssertModule().AsModule(),
 		"math":   NewMathModule(ui).AsModule(),
 		"regexp": RegexpAPI,
 

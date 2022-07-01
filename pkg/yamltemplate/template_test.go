@@ -14,6 +14,7 @@ import (
 	"testing"
 
 	"github.com/k14s/starlark-go/starlark"
+	"github.com/vmware-tanzu/carvel-ytt/pkg/experiments"
 	"github.com/vmware-tanzu/carvel-ytt/pkg/orderedmap"
 	"github.com/vmware-tanzu/carvel-ytt/pkg/template"
 	"github.com/vmware-tanzu/carvel-ytt/pkg/version"
@@ -33,6 +34,17 @@ var (
 	//   ./hack/test-all.sh -v -run TestYAMLTemplate/filetests/if.tpltest TestYAMLTemplate.code=true
 	showTemplateCodeFlag = kvArg("TestYAMLTemplate.code")
 )
+
+// TestMain is invoked when any tests are run in this package, *instead of* those tests being run directly.
+// This allows for setup to occur before *any* test is run.
+func TestMain(m *testing.M) {
+	experiments.ResetForTesting()
+	os.Setenv(experiments.Env, "validations")
+
+	exitVal := m.Run() // execute the specified tests
+
+	os.Exit(exitVal) // required in order to properly report the error level when tests fail.
+}
 
 // TestYAMLTemplate runs suite of test cases, each described in a separate file, verifying the behavior of templates.
 //

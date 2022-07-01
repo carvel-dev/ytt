@@ -9,32 +9,48 @@ import (
 	"github.com/k14s/starlark-go/starlark"
 	"github.com/k14s/starlark-go/starlarkstruct"
 	"github.com/k14s/starlark-go/syntax"
+	"github.com/vmware-tanzu/carvel-ytt/pkg/experiments"
 	"github.com/vmware-tanzu/carvel-ytt/pkg/orderedmap"
 	"github.com/vmware-tanzu/carvel-ytt/pkg/template/core"
 )
 
-var (
-	AssertAPI = starlark.StringDict{
+// NewAssertModule constructs a new instance of AssertModule, respecting the "validations" experiment flag.
+func NewAssertModule() AssertModule {
+	return AssertModule{}
+}
+
+// AssertModule contains the definition of the @ytt:assert module.
+type AssertModule struct{}
+
+// AsModule produces the corresponding Starlark module definition suitable for use in running a Starlark program.
+func (m AssertModule) AsModule() starlark.StringDict {
+	members := starlark.StringDict{
+		"equals": starlark.NewBuiltin("assert.equals", core.ErrWrapper(m.Equals)),
+		"fail":   starlark.NewBuiltin("assert.fail", core.ErrWrapper(m.Fail)),
+		"try_to": starlark.NewBuiltin("assert.try_to", core.ErrWrapper(m.TryTo)),
+	}
+	if experiments.IsValidationsEnabled() {
+		members = starlark.StringDict{
+			"equals":   starlark.NewBuiltin("assert.equals", core.ErrWrapper(m.Equals)),
+			"fail":     starlark.NewBuiltin("assert.fail", core.ErrWrapper(m.Fail)),
+			"try_to":   starlark.NewBuiltin("assert.try_to", core.ErrWrapper(m.TryTo)),
+			"min":      starlark.NewBuiltin("assert.min", core.ErrWrapper(m.Min)),
+			"min_len":  starlark.NewBuiltin("assert.min_len", core.ErrWrapper(m.MinLen)),
+			"max":      starlark.NewBuiltin("assert.max", core.ErrWrapper(m.Max)),
+			"max_len":  starlark.NewBuiltin("assert.max_len", core.ErrWrapper(m.MaxLen)),
+			"not_null": starlark.NewBuiltin("assert.not_null", core.ErrWrapper(m.NotNull)),
+		}
+	}
+	return starlark.StringDict{
 		"assert": &starlarkstruct.Module{
-			Name: "assert",
-			Members: starlark.StringDict{
-				"equals":   starlark.NewBuiltin("assert.equals", core.ErrWrapper(assertModule{}.Equals)),
-				"fail":     starlark.NewBuiltin("assert.fail", core.ErrWrapper(assertModule{}.Fail)),
-				"try_to":   starlark.NewBuiltin("assert.try_to", core.ErrWrapper(assertModule{}.TryTo)),
-				"min":      starlark.NewBuiltin("assert.min", core.ErrWrapper(assertModule{}.Min)),
-				"min_len":  starlark.NewBuiltin("assert.min_len", core.ErrWrapper(assertModule{}.MinLength)),
-				"max":      starlark.NewBuiltin("assert.max", core.ErrWrapper(assertModule{}.Max)),
-				"max_len":  starlark.NewBuiltin("assert.max_len", core.ErrWrapper(assertModule{}.MaxLength)),
-				"not_null": starlark.NewBuiltin("assert.not_null", core.ErrWrapper(assertModule{}.NotNull)),
-			},
+			Name:    "assert",
+			Members: members,
 		},
 	}
-)
-
-type assertModule struct{}
+}
 
 // Equals compares two values for equality
-func (b assertModule) Equals(thread *starlark.Thread, f *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
+func (m AssertModule) Equals(thread *starlark.Thread, f *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
 	if args.Len() != 2 {
 		return starlark.None, fmt.Errorf("expected two arguments")
 	}
@@ -49,12 +65,12 @@ func (b assertModule) Equals(thread *starlark.Thread, f *starlark.Builtin, args 
 		return starlark.None, fmt.Errorf("expected argument not to be a function, but was %T", actual)
 	}
 
-	expectedString, err := b.asString(expected)
+	expectedString, err := m.asString(expected)
 	if err != nil {
 		return starlark.None, err
 	}
 
-	actualString, err := b.asString(actual)
+	actualString, err := m.asString(actual)
 	if err != nil {
 		return starlark.None, err
 	}
@@ -67,7 +83,7 @@ func (b assertModule) Equals(thread *starlark.Thread, f *starlark.Builtin, args 
 	return starlark.None, nil
 }
 
-func (b assertModule) asString(value starlark.Value) (string, error) {
+func (m AssertModule) asString(value starlark.Value) (string, error) {
 	starlarkValue, err := core.NewStarlarkValue(value).AsGoValue()
 	if err != nil {
 		return "", err
@@ -79,7 +95,8 @@ func (b assertModule) asString(value starlark.Value) (string, error) {
 	return yamlString, nil
 }
 
-func (b assertModule) Fail(thread *starlark.Thread, f *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
+// Fail is a core.StarlarkFunc that forces a Starlark failure.
+func (m AssertModule) Fail(thread *starlark.Thread, f *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
 	if args.Len() != 1 {
 		return starlark.None, fmt.Errorf("expected exactly one argument")
 	}
@@ -92,7 +109,9 @@ func (b assertModule) Fail(thread *starlark.Thread, f *starlark.Builtin, args st
 	return starlark.None, fmt.Errorf("fail: %s", val)
 }
 
-func (b assertModule) TryTo(thread *starlark.Thread, f *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
+// TryTo is a core.StarlarkFunc that attempts to invoke the passed in starlark.Callable, converting any error into
+// an error message.
+func (m AssertModule) TryTo(thread *starlark.Thread, f *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
 	if args.Len() != 1 {
 		return starlark.None, fmt.Errorf("expected exactly one argument")
 	}
@@ -157,8 +176,8 @@ func NewAssertMaxLen(maximum starlark.Value) *Assertion {
 	)
 }
 
-// MaxLength is a core.StarlarkFunc that asserts that a given sequence is at most a given maximum length.
-func (b assertModule) MaxLength(thread *starlark.Thread, f *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
+// MaxLen is a core.StarlarkFunc that asserts that a given sequence is at most a given maximum length.
+func (m AssertModule) MaxLen(thread *starlark.Thread, f *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
 	if args.Len() != 1 {
 		return starlark.None, fmt.Errorf("expected exactly one argument")
 	}
@@ -183,8 +202,8 @@ func NewAssertMinLen(minimum starlark.Value) *Assertion {
 	)
 }
 
-// MinLength is a core.StarlarkFunc that asserts that a given sequence is at least a given minimum length.
-func (b assertModule) MinLength(thread *starlark.Thread, f *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
+// MinLen is a core.StarlarkFunc that asserts that a given sequence is at least a given minimum length.
+func (m AssertModule) MinLen(thread *starlark.Thread, f *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
 	if args.Len() != 1 {
 		return starlark.None, fmt.Errorf("expected exactly one argument")
 	}
@@ -209,7 +228,7 @@ func NewAssertMin(minimum starlark.Value) *Assertion {
 }
 
 // Min is a core.StarlarkFunc that asserts that a given value is at least a given minimum.
-func (b assertModule) Min(thread *starlark.Thread, f *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
+func (m AssertModule) Min(thread *starlark.Thread, f *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
 	if args.Len() != 1 {
 		return starlark.None, fmt.Errorf("expected exactly one argument")
 	}
@@ -230,7 +249,7 @@ func NewAssertMax(maximum starlark.Value) *Assertion {
 }
 
 // Max is a core.StarlarkFunc that asserts that a given value is less than or equal to a given maximum.
-func (b assertModule) Max(thread *starlark.Thread, f *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
+func (m AssertModule) Max(thread *starlark.Thread, f *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
 	if args.Len() != 1 {
 		return starlark.None, fmt.Errorf("expected exactly one argument")
 	}
@@ -249,7 +268,7 @@ func NewAssertNotNull() *Assertion {
 }
 
 // NotNull is a core.StarlarkFunc that asserts that a given value is not null.
-func (b assertModule) NotNull(thread *starlark.Thread, f *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
+func (m AssertModule) NotNull(thread *starlark.Thread, f *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
 	if args.Len() > 1 {
 		return starlark.None, fmt.Errorf("expected no more than one argument")
 	}
