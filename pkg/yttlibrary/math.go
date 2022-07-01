@@ -34,13 +34,15 @@ package yttlibrary
 
 import (
 	"fmt"
+	"math"
+
 	"github.com/k14s/starlark-go/starlark"
 	"github.com/k14s/starlark-go/starlarkstruct"
+	"github.com/vmware-tanzu/carvel-ytt/pkg/cmd/ui"
 	"github.com/vmware-tanzu/carvel-ytt/pkg/template/core"
-	"math"
 )
 
-// MathAPI contains the definition of the @ytt:math module.
+// MathModule contains the definition of the @ytt:math module.
 // It contains math-related functions and constants.
 // The module defines the following functions:
 //
@@ -91,57 +93,71 @@ import (
 //     e - The base of natural logarithms, approximately 2.71828.
 //     pi - The ratio of a circle's circumference to its diameter, approximately 3.14159.
 //
-var MathAPI = starlark.StringDict{
-	"math": &starlarkstruct.Module{
-		Name: "math",
-		Members: starlark.StringDict{
-			"ceil":      starlark.NewBuiltin("ceil", core.ErrWrapper(mathModule{}.ceil)),
-			"copysign":  mathModule{}.newBinaryBuiltin("copysign", math.Copysign),
-			"fabs":      mathModule{}.newUnaryBuiltin("fabs", math.Abs),
-			"floor":     starlark.NewBuiltin("floor", core.ErrWrapper(mathModule{}.floor)),
-			"mod":       mathModule{}.newBinaryBuiltin("round", math.Mod),
-			"pow":       mathModule{}.newBinaryBuiltin("pow", math.Pow),
-			"remainder": mathModule{}.newBinaryBuiltin("remainder", math.Remainder),
-			"round":     mathModule{}.newUnaryBuiltin("round", math.Round),
-
-			"exp":  mathModule{}.newUnaryBuiltin("exp", math.Exp),
-			"sqrt": mathModule{}.newUnaryBuiltin("sqrt", math.Sqrt),
-
-			"acos":  mathModule{}.newUnaryBuiltin("acos", math.Acos),
-			"asin":  mathModule{}.newUnaryBuiltin("asin", math.Asin),
-			"atan":  mathModule{}.newUnaryBuiltin("atan", math.Atan),
-			"atan2": mathModule{}.newBinaryBuiltin("atan2", math.Atan2),
-			"cos":   mathModule{}.newUnaryBuiltin("cos", math.Cos),
-			"hypot": mathModule{}.newBinaryBuiltin("hypot", math.Hypot),
-			"sin":   mathModule{}.newUnaryBuiltin("sin", math.Sin),
-			"tan":   mathModule{}.newUnaryBuiltin("tan", math.Tan),
-
-			"degrees": mathModule{}.newUnaryBuiltin("degrees", mathModule{}.degrees),
-			"radians": mathModule{}.newUnaryBuiltin("radians", mathModule{}.radians),
-
-			"acosh": mathModule{}.newUnaryBuiltin("acosh", math.Acosh),
-			"asinh": mathModule{}.newUnaryBuiltin("asinh", math.Asinh),
-			"atanh": mathModule{}.newUnaryBuiltin("atanh", math.Atanh),
-			"cosh":  mathModule{}.newUnaryBuiltin("cosh", math.Cosh),
-			"sinh":  mathModule{}.newUnaryBuiltin("sinh", math.Sinh),
-			"tanh":  mathModule{}.newUnaryBuiltin("tanh", math.Tanh),
-
-			"log": starlark.NewBuiltin("log", mathModule{}.log),
-
-			"gamma": mathModule{}.newUnaryBuiltin("gamma", math.Gamma),
-
-			"e":  starlark.Float(math.E),
-			"pi": starlark.Float(math.Pi),
-		},
-	},
+type MathModule struct {
+	ui ui.UI
 }
 
-type mathModule struct{}
+// hasWarned indicates whether the caveat associated with using this module has been displayed.
+// This flag ensures we display that warning only once; more than once and its noise.
+var hasWarned bool
+
+// NewMathModule constructs a new instance of MathModule with the configured UI (to enable displaying a warning).
+func NewMathModule(ui ui.UI) MathModule {
+	return MathModule{ui: ui}
+}
+
+// AsModule produces the corresponding Starlark module definition suitable for use in running a Starlark program.
+func (m MathModule) AsModule() starlark.StringDict {
+	return starlark.StringDict{
+		"math": &starlarkstruct.Module{
+			Name: "math",
+			Members: starlark.StringDict{
+				"ceil":      starlark.NewBuiltin("ceil", m.warnOnCall(core.ErrWrapper(m.ceil))),
+				"copysign":  m.newBinaryBuiltin("copysign", math.Copysign),
+				"fabs":      m.newUnaryBuiltin("fabs", math.Abs),
+				"floor":     starlark.NewBuiltin("floor", m.warnOnCall(core.ErrWrapper(m.floor))),
+				"mod":       m.newBinaryBuiltin("round", math.Mod),
+				"pow":       m.newBinaryBuiltin("pow", math.Pow),
+				"remainder": m.newBinaryBuiltin("remainder", math.Remainder),
+				"round":     m.newUnaryBuiltin("round", math.Round),
+
+				"exp":  m.newUnaryBuiltin("exp", math.Exp),
+				"sqrt": m.newUnaryBuiltin("sqrt", math.Sqrt),
+
+				"acos":  m.newUnaryBuiltin("acos", math.Acos),
+				"asin":  m.newUnaryBuiltin("asin", math.Asin),
+				"atan":  m.newUnaryBuiltin("atan", math.Atan),
+				"atan2": m.newBinaryBuiltin("atan2", math.Atan2),
+				"cos":   m.newUnaryBuiltin("cos", math.Cos),
+				"hypot": m.newBinaryBuiltin("hypot", math.Hypot),
+				"sin":   m.newUnaryBuiltin("sin", math.Sin),
+				"tan":   m.newUnaryBuiltin("tan", math.Tan),
+
+				"degrees": m.newUnaryBuiltin("degrees", m.degrees),
+				"radians": m.newUnaryBuiltin("radians", m.radians),
+
+				"acosh": m.newUnaryBuiltin("acosh", math.Acosh),
+				"asinh": m.newUnaryBuiltin("asinh", math.Asinh),
+				"atanh": m.newUnaryBuiltin("atanh", math.Atanh),
+				"cosh":  m.newUnaryBuiltin("cosh", math.Cosh),
+				"sinh":  m.newUnaryBuiltin("sinh", math.Sinh),
+				"tanh":  m.newUnaryBuiltin("tanh", math.Tanh),
+
+				"log": starlark.NewBuiltin("log", m.warnOnCall(m.log)),
+
+				"gamma": m.newUnaryBuiltin("gamma", math.Gamma),
+
+				"e":  starlark.Float(math.E),
+				"pi": starlark.Float(math.Pi),
+			},
+		},
+	}
+}
 
 // newUnaryBuiltin wraps a unary floating-point Go function
 // as a Starlark built-in that accepts int or float arguments.
-func (b mathModule) newUnaryBuiltin(name string, fn func(float64) float64) *starlark.Builtin {
-	return starlark.NewBuiltin(name, core.ErrWrapper(func(_ *starlark.Thread, _ *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
+func (m MathModule) newUnaryBuiltin(name string, fn func(float64) float64) *starlark.Builtin {
+	return starlark.NewBuiltin(name, m.warnOnCall(core.ErrWrapper(func(_ *starlark.Thread, _ *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
 		if args.Len() != 1 {
 			return starlark.None, fmt.Errorf("expected exactly one argument")
 		}
@@ -152,13 +168,13 @@ func (b mathModule) newUnaryBuiltin(name string, fn func(float64) float64) *star
 		}
 
 		return starlark.Float(fn(x)), nil
-	}))
+	})))
 }
 
 // newBinaryBuiltin wraps a binary floating-point Go function
 // as a Starlark built-in that accepts int or float arguments.
-func (b mathModule) newBinaryBuiltin(name string, fn func(float64, float64) float64) *starlark.Builtin {
-	return starlark.NewBuiltin(name, core.ErrWrapper(func(_ *starlark.Thread, _ *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
+func (m MathModule) newBinaryBuiltin(name string, fn func(float64, float64) float64) *starlark.Builtin {
+	return starlark.NewBuiltin(name, m.warnOnCall(core.ErrWrapper(func(_ *starlark.Thread, _ *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
 		if args.Len() != 2 {
 			return starlark.None, fmt.Errorf("expected exactly two arguments")
 		}
@@ -173,12 +189,23 @@ func (b mathModule) newBinaryBuiltin(name string, fn func(float64, float64) floa
 			return starlark.None, err
 		}
 		return starlark.Float(fn(x, y)), nil
-	}))
+	})))
+}
+
+// warnOnCall ensures that if any wrapped function is called, the user is warned that the execution is no longer guaranteed to be deterministic.
+func (m MathModule) warnOnCall(wrappedFunc core.StarlarkFunc) core.StarlarkFunc {
+	return func(thread *starlark.Thread, f *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (val starlark.Value, resultErr error) {
+		if !hasWarned {
+			m.ui.Warnf("\nWarning: a function from the @ytt:math module is used in this invocation; this module does not guarantee bit-identical results across CPU architectures.\n")
+			hasWarned = true
+		}
+		return wrappedFunc(thread, f, args, kwargs)
+	}
 }
 
 //  log wraps the Log function
 // as a Starlark built-in that accepts int or float arguments.
-func (b mathModule) log(_ *starlark.Thread, _ *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
+func (m MathModule) log(_ *starlark.Thread, _ *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
 	var (
 		xValue    starlark.Value
 		baseValue starlark.Value = starlark.Float(math.E)
@@ -200,7 +227,7 @@ func (b mathModule) log(_ *starlark.Thread, _ *starlark.Builtin, args starlark.T
 	return starlark.Float(math.Log(x) / math.Log(base)), nil
 }
 
-func (b mathModule) ceil(_ *starlark.Thread, _ *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
+func (m MathModule) ceil(_ *starlark.Thread, _ *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
 	var x starlark.Value
 
 	if err := starlark.UnpackPositionalArgs("ceil", args, kwargs, 1, &x); err != nil {
@@ -217,7 +244,7 @@ func (b mathModule) ceil(_ *starlark.Thread, _ *starlark.Builtin, args starlark.
 	return nil, fmt.Errorf("expected float value, but was %T", x)
 }
 
-func (b mathModule) floor(_ *starlark.Thread, _ *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
+func (m MathModule) floor(_ *starlark.Thread, _ *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
 	var x starlark.Value
 
 	if err := starlark.UnpackPositionalArgs("floor", args, kwargs, 1, &x); err != nil {
@@ -234,10 +261,10 @@ func (b mathModule) floor(_ *starlark.Thread, _ *starlark.Builtin, args starlark
 	return nil, fmt.Errorf("expected float value, but was %T", x)
 }
 
-func (b mathModule) degrees(x float64) float64 {
+func (m MathModule) degrees(x float64) float64 {
 	return 360 * x / (2 * math.Pi)
 }
 
-func (b mathModule) radians(x float64) float64 {
+func (m MathModule) radians(x float64) float64 {
 	return 2 * math.Pi * x / 360
 }

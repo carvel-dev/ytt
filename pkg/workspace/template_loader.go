@@ -196,7 +196,7 @@ func (l *TemplateLoader) EvalYAML(libraryCtx LibraryExecutionContext, file *file
 
 	yttLibrary := yttlibrary.NewAPI(compiledTemplate.TplReplaceNode,
 		yttlibrary.NewDataModule(l.values.Doc, DataLoader{libraryCtx}),
-		NewLibraryModule(libraryCtx, l.libraryExecFactory, l.libraryValuess, l.librarySchemas).AsModule())
+		NewLibraryModule(libraryCtx, l.libraryExecFactory, l.libraryValuess, l.librarySchemas).AsModule(), l.ui)
 
 	thread := l.newThread(libraryCtx, yttLibrary, file)
 
@@ -238,7 +238,7 @@ func (l *TemplateLoader) EvalText(libraryCtx LibraryExecutionContext, file *file
 
 	yttLibrary := yttlibrary.NewAPI(compiledTemplate.TplReplaceNode,
 		yttlibrary.NewDataModule(l.values.Doc, DataLoader{libraryCtx}),
-		NewLibraryModule(libraryCtx, l.libraryExecFactory, l.libraryValuess, l.librarySchemas).AsModule())
+		NewLibraryModule(libraryCtx, l.libraryExecFactory, l.libraryValuess, l.librarySchemas).AsModule(), l.ui)
 
 	thread := l.newThread(libraryCtx, yttLibrary, file)
 
@@ -268,7 +268,7 @@ func (l *TemplateLoader) EvalStarlark(libraryCtx LibraryExecutionContext, file *
 
 	yttLibrary := yttlibrary.NewAPI(compiledTemplate.TplReplaceNode,
 		yttlibrary.NewDataModule(l.values.Doc, DataLoader{libraryCtx}),
-		NewLibraryModule(libraryCtx, l.libraryExecFactory, l.libraryValuess, l.librarySchemas).AsModule())
+		NewLibraryModule(libraryCtx, l.libraryExecFactory, l.libraryValuess, l.librarySchemas).AsModule(), l.ui)
 
 	thread := l.newThread(libraryCtx, yttLibrary, file)
 

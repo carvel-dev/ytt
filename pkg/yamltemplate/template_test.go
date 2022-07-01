@@ -231,7 +231,7 @@ func (l stdTemplateLoader) FindCompiledTemplate(_ string) *template.CompiledTemp
 
 func (l stdTemplateLoader) Load(thread *starlark.Thread, module string) (starlark.StringDict, error) {
 	api := yttlibrary.NewAPI(l.compiledTemplate.TplReplaceNode,
-		yttlibrary.NewDataModule(defaultInput(), nil), nil)
+		yttlibrary.NewDataModule(defaultInput(), nil), nil, nil)
 	return api.FindModule(strings.TrimPrefix(module, "@ytt:"))
 }
 
