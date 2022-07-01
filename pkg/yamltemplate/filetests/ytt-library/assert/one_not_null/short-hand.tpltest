@@ -1,0 +1,33 @@
+#@ load("@ytt:assert", "assert")
+
+#@ def one_not_null():
+foo: null
+bar: notNull
+#@ end
+
+#@ def all_null():
+foo: null
+bar: null
+#@ end
+
+#@ def no_null():
+foo: notNull
+bar: notNull
+#@ end
+
+short_hand:
+  when_one_not_null: #@ assert.one_not_null(one_not_null())
+  when_null: #@ assert.try_to(lambda: assert.one_not_null(all_null()))
+  when_not_null: #@ assert.try_to(lambda: assert.one_not_null(no_null()))
+
+
++++
+
+short_hand:
+  when_one_not_null: true
+  when_null:
+  - null
+  - 'assert.one_not_null: fail: all values are null'
+  when_not_null:
+  - null
+  - 'assert.one_not_null: fail: multiple values are not null'

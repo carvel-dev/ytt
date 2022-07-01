@@ -152,5 +152,15 @@ func NewAssertOneNotNull() *Assertion {
 
 // OneNotNull is a core.StarlarkFunc that asserts that a given map has one and only one not null map item.
 func (b assertModule) OneNotNull(thread *starlark.Thread, f *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
-	return NewAssertOneNotNull(), nil
+	if args.Len() > 1 {
+		return starlark.None, fmt.Errorf("expected no more than one argument")
+	}
+
+	result := NewAssertOneNotNull()
+	if args.Len() == 0 {
+		return result, nil
+	}
+
+	// support shorthand syntax: assert.not_null(value)
+	return starlark.Call(thread, result.CheckFunc(), args, []starlark.Tuple{})
 }
