@@ -171,7 +171,7 @@ func NewAssertion(funcName, src string, env starlark.StringDict) *Assertion {
 func NewAssertMaxLen(maximum starlark.Value) *Assertion {
 	return NewAssertion(
 		"assert.max_len",
-		`lambda sequence: fail("length of {} is more than {}".format(len(sequence), maximum)) if len(sequence) > maximum else True`,
+		`lambda sequence: True if len(sequence) <= maximum else fail ("length of {} is more than {}".format(len(sequence), maximum))`,
 		starlark.StringDict{"maximum": maximum},
 	)
 }
@@ -197,7 +197,7 @@ func (m AssertModule) MaxLen(thread *starlark.Thread, f *starlark.Builtin, args 
 func NewAssertMinLen(minimum starlark.Value) *Assertion {
 	return NewAssertion(
 		"assert.min_len",
-		`lambda sequence: fail("length of {} is less than {}".format(len(sequence), minimum)) if len(sequence) < minimum else True`,
+		`lambda sequence: True if len(sequence) >= minimum else fail ("length of {} is less than {}".format(len(sequence), minimum))`,
 		starlark.StringDict{"minimum": minimum},
 	)
 }
@@ -222,7 +222,7 @@ func (m AssertModule) MinLen(thread *starlark.Thread, f *starlark.Builtin, args 
 func NewAssertMin(minimum starlark.Value) *Assertion {
 	return NewAssertion(
 		"assert.min",
-		`lambda value: fail("{} is less than {}".format(value, minimum)) if yaml.decode(yaml.encode(value)) < yaml.decode(yaml.encode(minimum)) else True`,
+		`lambda value: True if yaml.decode(yaml.encode(value)) >= yaml.decode(yaml.encode(minimum)) else fail("{} is less than {}".format(value, minimum))`,
 		starlark.StringDict{"minimum": minimum, "yaml": YAMLAPI["yaml"]},
 	)
 }
@@ -243,7 +243,7 @@ func (m AssertModule) Min(thread *starlark.Thread, f *starlark.Builtin, args sta
 func NewAssertMax(maximum starlark.Value) *Assertion {
 	return NewAssertion(
 		"assert.max",
-		`lambda value: fail("{} is more than {}".format(value, maximum)) if yaml.decode(yaml.encode(value)) > yaml.decode(yaml.encode(maximum)) else True`,
+		`lambda value: True if yaml.decode(yaml.encode(value)) <= yaml.decode(yaml.encode(maximum)) else fail("{} is more than {}".format(value, maximum))`,
 		starlark.StringDict{"maximum": maximum, "yaml": YAMLAPI["yaml"]},
 	)
 }
