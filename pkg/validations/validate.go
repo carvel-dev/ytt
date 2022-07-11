@@ -5,6 +5,7 @@ package validations
 
 import (
 	"fmt"
+	"reflect"
 
 	"github.com/k14s/starlark-go/starlark"
 	"github.com/vmware-tanzu/carvel-ytt/pkg/filepos"
@@ -29,14 +30,14 @@ type rule struct {
 
 // validationKwargs represent the optional keyword arguments and their values in a validation annotation.
 type validationKwargs struct {
-	when         *starlark.Callable
+	when         starlark.Callable
 	whenNullSkip *bool         // default: nil if kwarg is not set, True if value is Nullable
 	minLength    *starlark.Int // 0 len("") == 0, this always passes
 	maxLength    *starlark.Int
 	min          starlark.Value
 	max          starlark.Value
 	notNull      bool
-	oneNotNull   starlark.Value
+	oneNotNull   starlark.Value // valid values are either starlark.Sequence or starlark.Bool
 }
 
 // Run takes a root Node, and threadName, and validates each Node in the tree.
@@ -138,8 +139,8 @@ func (v validationKwargs) shouldValidate(value starlark.Value, thread *starlark.
 		return false, nil
 	}
 
-	if v.when != nil {
-		result, err := starlark.Call(thread, *v.when, starlark.Tuple{value}, []starlark.Tuple{})
+	if !(v.when == nil || reflect.ValueOf(v.when).IsNil()) {
+		result, err := starlark.Call(thread, v.when, starlark.Tuple{value}, []starlark.Tuple{})
 		if err != nil {
 			return false, err
 		}
@@ -161,7 +162,6 @@ func (v validationKwargs) convertToRules() []rule {
 			assertion: a.CheckFunc(),
 		})
 	}
-
 	if v.maxLength != nil {
 		a := yttlibrary.NewAssertMaxLen(*v.maxLength)
 		rules = append(rules, rule{
@@ -169,7 +169,6 @@ func (v validationKwargs) convertToRules() []rule {
 			assertion: a.CheckFunc(),
 		})
 	}
-
 	if v.min != nil {
 		a := yttlibrary.NewAssertMin(v.min)
 		rules = append(rules, rule{

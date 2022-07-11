@@ -132,11 +132,11 @@ func newValidationKwargs(kwargs []starlark.Tuple, annPos *filepos.Position) (val
 		kwargName := string(value[0].(starlark.String))
 		switch kwargName {
 		case ValidationKwargWhen:
-			lambda, ok := value[1].(starlark.Callable)
+			v, ok := value[1].(starlark.Callable)
 			if !ok {
 				return validationKwargs{}, fmt.Errorf("expected keyword argument %q to be a function, but was %s (at %s)", ValidationKwargWhen, value[1].Type(), annPos.AsCompactString())
 			}
-			processedKwargs.when = &lambda
+			processedKwargs.when = v
 		case ValidationKwargWhenNullSkip:
 			v, ok := value[1].(starlark.Bool)
 			if !ok {
