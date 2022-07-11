@@ -65,7 +65,6 @@ func (a *convertAssertAnnsToValidations) Visit(node yamlmeta.Node) error {
 // If any value in the annotation is not well-formed, it returns an error.
 func NewValidationFromValidationAnnotation(annotation template.NodeAnnotation) (*NodeValidation, error) {
 	var rules []rule
-	// TODO: what makes a malformed annotation??
 	if len(annotation.Args) == 0 && len(annotation.Kwargs) == 0 {
 		return nil, fmt.Errorf("expected annotation to have 2-tuple as argument(s), but found no arguments (by %s)", annotation.Position.AsCompactString())
 	}
