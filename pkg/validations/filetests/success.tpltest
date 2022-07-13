@@ -1,0 +1,11 @@
+config:
+  #@assert/validate min_len=1
+  username: ""
+  #@assert/validate min_len=1
+  password: ""
+
++++
+
+ERR:
+- "username" (stdin:3) requires "length greater or equal to 1"; fail: length of 0 is less than 1 (by stdin:2)
+- "password" (stdin:5) requires "length greater or equal to 1"; fail: length of 0 is less than 1 (by stdin:4)
