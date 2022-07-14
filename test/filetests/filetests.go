@@ -47,6 +47,10 @@ type FileTests struct {
 	DataValues       yamlmeta.Document
 }
 
+// Run runs each tests: enumerates each file within FileTests.PathToTests; splits and evaluates using FileTests.EvalFunc
+// optionally supplying FileTests.DataValues to that evaluation.
+//
+// If an error occurs and FileTests.ShowTemplateCode is set, then the output includes the debug output of the template.
 func (f FileTests) Run(t *testing.T) {
 	var files []string
 	version.Version = "0.0.0"
@@ -159,11 +163,13 @@ func (f FileTests) asString(result MarshalableResult) (string, error) {
 	return string(resultBytes), nil
 }
 
+// TestErr captures an error result from a single test.
 type TestErr struct {
 	realErr error
 	testErr error
 }
 
+// NewTestErr creates a new TestErr
 func NewTestErr(realErr, testErr error) *TestErr {
 	return &TestErr{realErr, testErr}
 }
@@ -232,10 +238,13 @@ type DefaultTemplateLoader struct {
 	DataValues       yamlmeta.Document
 }
 
+// FindCompiledTemplate returns the compiled template that is the subject of the current executing test.
 func (l DefaultTemplateLoader) FindCompiledTemplate(_ string) *template.CompiledTemplate {
 	return l.CompiledTemplate
 }
 
+// Load provides the ability to load any module from the ytt standard library (including `@ytt:data` populated with
+// DefaultTemplateLoader.DataValues)
 func (l DefaultTemplateLoader) Load(thread *starlark.Thread, module string) (starlark.StringDict, error) {
 	api := yttlibrary.NewAPI(l.CompiledTemplate.TplReplaceNode,
 		yttlibrary.NewDataModule(&l.DataValues, nil), nil, nil)

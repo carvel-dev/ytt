@@ -5,6 +5,6 @@ test_equals: #@ assert.equals("foo")
 +++
 
 ERR: 
-- assert.equals: expected two arguments
+- assert.equals: got 1 arguments, want 2
     in <toplevel>
       stdin:3 | test_equals: #@ assert.equals("foo")

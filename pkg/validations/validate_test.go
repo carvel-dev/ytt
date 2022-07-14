@@ -16,16 +16,6 @@ import (
 	"github.com/vmware-tanzu/carvel-ytt/test/filetests"
 )
 
-var (
-	// Example usage:
-	//   Run a specific test:
-	//   ./hack/test-all.sh -v -run TestYAMLTemplate/filetests/if.tpltest
-	//
-	//   Include template compilation results in the output:
-	//   ./hack/test-all.sh -v -run TestYAMLTemplate/filetests/if.tpltest TestYAMLTemplate.code=true
-	showTemplateCodeFlag = kvArg("TestYAMLTemplate.code")
-)
-
 // TestMain is invoked when any tests are run in this package, *instead of* those tests being run directly.
 // This allows for setup to occur before *any* test is run.
 func TestMain(m *testing.M) {
@@ -37,6 +27,12 @@ func TestMain(m *testing.M) {
 	os.Exit(exitVal) // required in order to properly report the error level when tests fail.
 }
 
+// Example usage:
+//   Run a specific test:
+//   ./hack/test-all.sh -v -run TestYAMLTemplate/filetests/if.tpltest
+//
+//   Include template compilation results in the output:
+//   ./hack/test-all.sh -v -run TestYAMLTemplate/filetests/if.tpltest TestYAMLTemplate.code=true
 func TestYAMLTemplate(t *testing.T) {
 	ft := filetests.FileTests{}
 	ft.PathToTests = "filetests"
@@ -52,13 +48,13 @@ func EvalAndValidateTemplate(ft filetests.FileTests) filetests.EvaluateTemplate 
 
 		err := validations.ProcessAssertValidateAnns(result.(yamlmeta.Node))
 		if err != nil {
-			return nil, filetests.NewTestErr(err, fmt.Errorf("Failed to process @assert/validate annotations."))
+			return nil, filetests.NewTestErr(err, fmt.Errorf("Failed to process @assert/validate annotations"))
 		}
 
 		chk := validations.Run(result.(yamlmeta.Node), "template-test")
 		if chk.HasViolations() {
 			err := fmt.Errorf("\n%s", chk.Error())
-			return nil, filetests.NewTestErr(err, fmt.Errorf("validation error: %v\n", err))
+			return nil, filetests.NewTestErr(err, fmt.Errorf("validationRun error: %v", err))
 		}
 
 		return result, testErr

@@ -5,6 +5,6 @@ max_len: #@ assert.max_len()
 +++
 
 ERR: 
-- assert.max_len: expected exactly one argument
+- assert.max_len: got 0 arguments, want 1
     in <toplevel>
       stdin:3 | max_len: #@ assert.max_len()

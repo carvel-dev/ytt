@@ -61,7 +61,7 @@ when_keys_are_not_given:
   - 'check: value is empty'
   value_is_not_a_map:
   - null
-  - 'check: value must be a map or dict, but was "list"'
+  - 'check: value must be a map or dict, but was ''list'''
   too_many_values:
   - null
   - 'check: got 2 arguments, want 1'
@@ -71,7 +71,7 @@ keys_are_specified:
   non_string_keys_are_ok: true
   spec_is_not_a_sequence:
   - null
-  - 'assert.one_not_null: expected a sequence of keys, but was a "int"'
+  - 'assert.one_not_null: expected a sequence of keys, but was a ''int'''
   key_not_found:
   - null
   - 'check: "not-a-key" is not present in value'

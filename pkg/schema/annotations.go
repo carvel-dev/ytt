@@ -62,7 +62,7 @@ type TitleAnnotation struct {
 	pos   *filepos.Position
 }
 
-//DeprecatedAnnotation is a wrapper for a value provided via @schema/deprecated annotation
+// DeprecatedAnnotation is a wrapper for a value provided via @schema/deprecated annotation
 type DeprecatedAnnotation struct {
 	notice string
 	pos    *filepos.Position
@@ -238,7 +238,7 @@ func NewDefaultAnnotation(ann template.NodeAnnotation, effectiveType Type, pos *
 
 	val, err := core.NewStarlarkValue(ann.Args[0]).AsGoValue()
 	if err != nil {
-		//at this point the annotation is processed, and the Starlark evaluated
+		// at this point the annotation is processed, and the Starlark evaluated
 		panic(err)
 	}
 	return &DefaultAnnotation{yamlmeta.NewASTFromInterfaceWithPosition(val, pos), ann.Position}, nil
@@ -413,7 +413,7 @@ func NewExampleAnnotation(ann template.NodeAnnotation, pos *filepos.Position) (*
 
 // NewValidationAnnotation checks the values provided via @schema/validation annotation, and returns wrapper for the validation defined
 func NewValidationAnnotation(ann template.NodeAnnotation) (*ValidationAnnotation, error) {
-	validation, err := validations.NewValidationFromValidationAnnotation(ann)
+	validation, err := validations.NewValidationFromAnn(ann)
 	if err != nil {
 		return nil, fmt.Errorf("Invalid @%s annotation - %s", AnnotationValidation, err.Error())
 	}

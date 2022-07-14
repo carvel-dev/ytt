@@ -12,17 +12,18 @@ import (
 	"github.com/vmware-tanzu/carvel-ytt/pkg/yamlmeta"
 )
 
-// Declare @assert/... annotation names
+// Declare @assert/... annotation and keyword argument names
 const (
-	AnnotationAssertValidate    template.AnnotationName = "assert/validate"
-	ValidationKwargWhen         string                  = "when"
-	ValidationKwargWhenNullSkip string                  = "when_null_skip"
-	ValidationKwargMinLength    string                  = "min_len"
-	ValidationKwargMaxLength    string                  = "max_len"
-	ValidationKwargMin          string                  = "min"
-	ValidationKwargMax          string                  = "max"
-	ValidationKwargNotNull      string                  = "not_null"
-	ValidationKwargOneNotNull   string                  = "one_not_null"
+	AnnotationAssertValidate template.AnnotationName = "assert/validate"
+
+	KwargWhen         string = "when"
+	KwargWhenNullSkip string = "when_null_skip"
+	KwargMinLength    string = "min_len"
+	KwargMaxLength    string = "max_len"
+	KwargMin          string = "min"
+	KwargMax          string = "max"
+	KwargNotNull      string = "not_null"
+	KwargOneNotNull   string = "one_not_null"
 )
 
 // ProcessAssertValidateAnns checks Assert annotations on data values and stores them on a Node as Validations.
@@ -37,7 +38,7 @@ func ProcessAssertValidateAnns(rootNode yamlmeta.Node) error {
 type convertAssertAnnsToValidations struct{}
 
 // Visit if `node` is annotated with `@assert/validate` (AnnotationAssertValidate).
-// Checks annotation, and stores the validation on Node's validations meta.
+// Checks annotation, and stores the validationRun on Node's validations meta.
 //
 // This visitor returns and error if any assert annotation is not well-formed,
 // otherwise, returns nil.
@@ -50,7 +51,7 @@ func (a *convertAssertAnnsToValidations) Visit(node yamlmeta.Node) error {
 	case *yamlmeta.DocumentSet, *yamlmeta.Array, *yamlmeta.Map:
 		return fmt.Errorf("Invalid @%s annotation - not supported on %s at %s", AnnotationAssertValidate, yamlmeta.TypeName(node), node.GetPosition().AsCompactString())
 	default:
-		validation, err := NewValidationFromValidationAnnotation(nodeAnnotations[AnnotationAssertValidate])
+		validation, err := NewValidationFromAnn(nodeAnnotations[AnnotationAssertValidate])
 		if err != nil {
 			return fmt.Errorf("Invalid @%s annotation - %s", AnnotationAssertValidate, err.Error())
 		}
@@ -61,9 +62,8 @@ func (a *convertAssertAnnsToValidations) Visit(node yamlmeta.Node) error {
 	return nil
 }
 
-// NewValidationFromValidationAnnotation creates a NodeValidation from the values provided in a validation annotation.
-// If any value in the annotation is not well-formed, it returns an error.
-func NewValidationFromValidationAnnotation(annotation template.NodeAnnotation) (*NodeValidation, error) {
+// NewValidationFromAnn creates a NodeValidation from the values provided in a validationRun-style annotation.
+func NewValidationFromAnn(annotation template.NodeAnnotation) (*NodeValidation, error) {
 	var rules []rule
 	if len(annotation.Args) == 0 && len(annotation.Kwargs) == 0 {
 		return nil, fmt.Errorf("expected annotation to have 2-tuple as argument(s), but found no arguments (by %s)", annotation.Position.AsCompactString())
@@ -100,7 +100,7 @@ func NewValidationFromValidationAnnotation(annotation template.NodeAnnotation) (
 		return nil, err
 	}
 
-	rules = append(rules, kwargs.convertToRules()...)
+	rules = append(rules, kwargs.asRules()...)
 
 	return &NodeValidation{rules, kwargs, annotation.Position}, nil
 }
@@ -118,7 +118,7 @@ func assertionFromCheckAttr(value starlark.Value) (starlark.Callable, error) {
 
 	assertionFunc, ok := checkAttr.(starlark.Callable)
 	if !ok {
-		return nil, fmt.Errorf("expected assertion object with assertion function \"check()\" , but was %s", checkAttr.Type())
+		return nil, fmt.Errorf("expected struct with attribute check(), but was %s", checkAttr.Type())
 	}
 
 	return assertionFunc, nil
@@ -131,42 +131,42 @@ func newValidationKwargs(kwargs []starlark.Tuple, annPos *filepos.Position) (val
 	for _, value := range kwargs {
 		kwargName := string(value[0].(starlark.String))
 		switch kwargName {
-		case ValidationKwargWhen:
+		case KwargWhen:
 			v, ok := value[1].(starlark.Callable)
 			if !ok {
-				return validationKwargs{}, fmt.Errorf("expected keyword argument %q to be a function, but was %s (at %s)", ValidationKwargWhen, value[1].Type(), annPos.AsCompactString())
+				return validationKwargs{}, fmt.Errorf("expected keyword argument %q to be a function, but was %s (at %s)", KwargWhen, value[1].Type(), annPos.AsCompactString())
 			}
 			processedKwargs.when = v
-		case ValidationKwargWhenNullSkip:
+		case KwargWhenNullSkip:
 			v, ok := value[1].(starlark.Bool)
 			if !ok {
-				return validationKwargs{}, fmt.Errorf("expected keyword argument %q to be a boolean, but was %s (at %s)", ValidationKwargWhenNullSkip, value[1].Type(), annPos.AsCompactString())
+				return validationKwargs{}, fmt.Errorf("expected keyword argument %q to be a boolean, but was %s (at %s)", KwargWhenNullSkip, value[1].Type(), annPos.AsCompactString())
 			}
 			b := bool(v)
 			processedKwargs.whenNullSkip = &b
-		case ValidationKwargMinLength:
+		case KwargMinLength:
 			v, err := starlark.NumberToInt(value[1])
 			if err != nil {
-				return validationKwargs{}, fmt.Errorf("expected keyword argument %q to be a number, but was %s (at %s)", ValidationKwargMinLength, value[1].Type(), annPos.AsCompactString())
+				return validationKwargs{}, fmt.Errorf("expected keyword argument %q to be a number, but was %s (at %s)", KwargMinLength, value[1].Type(), annPos.AsCompactString())
 			}
 			processedKwargs.minLength = &v
-		case ValidationKwargMaxLength:
+		case KwargMaxLength:
 			v, err := starlark.NumberToInt(value[1])
 			if err != nil {
-				return validationKwargs{}, fmt.Errorf("expected keyword argument %q to be a number, but was %s (at %s)", ValidationKwargMaxLength, value[1].Type(), annPos.AsCompactString())
+				return validationKwargs{}, fmt.Errorf("expected keyword argument %q to be a number, but was %s (at %s)", KwargMaxLength, value[1].Type(), annPos.AsCompactString())
 			}
 			processedKwargs.maxLength = &v
-		case ValidationKwargMin:
+		case KwargMin:
 			processedKwargs.min = value[1]
-		case ValidationKwargMax:
+		case KwargMax:
 			processedKwargs.max = value[1]
-		case ValidationKwargNotNull:
+		case KwargNotNull:
 			v, ok := value[1].(starlark.Bool)
 			if !ok {
-				return validationKwargs{}, fmt.Errorf("expected keyword argument %q to be a boolean, but was %s (at %s)", ValidationKwargNotNull, value[1].Type(), annPos.AsCompactString())
+				return validationKwargs{}, fmt.Errorf("expected keyword argument %q to be a boolean, but was %s (at %s)", KwargNotNull, value[1].Type(), annPos.AsCompactString())
 			}
 			processedKwargs.notNull = bool(v)
-		case ValidationKwargOneNotNull:
+		case KwargOneNotNull:
 			switch v := value[1].(type) {
 			case starlark.Bool:
 				if v {
@@ -177,7 +177,7 @@ func newValidationKwargs(kwargs []starlark.Tuple, annPos *filepos.Position) (val
 			case starlark.Sequence:
 				processedKwargs.oneNotNull = v
 			default:
-				return validationKwargs{}, fmt.Errorf("expected True or a sequence of keys, but was a \"%s\"", value[1].Type())
+				return validationKwargs{}, fmt.Errorf("expected True or a sequence of keys, but was a '%s'", value[1].Type())
 			}
 		default:
 			return validationKwargs{}, fmt.Errorf("unknown keyword argument %q (at %s)", kwargName, annPos.AsCompactString())
