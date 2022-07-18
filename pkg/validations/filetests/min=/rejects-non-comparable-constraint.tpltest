@@ -1,0 +1,8 @@
+#@assert/validate min={"foo": True}
+value:
+ foo: true
+
++++
+
+ERR:
+- "value" (stdin:2) requires "a value greater or equal to {\"foo\": True}"; dict >= dict not implemented (by stdin:1)

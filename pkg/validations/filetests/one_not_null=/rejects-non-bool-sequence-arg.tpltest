@@ -1,0 +1,7 @@
+#@assert/validate one_not_null=4
+config:
+  foo: ""
+
++++
+
+ERR: Invalid @assert/validate annotation - expected True or a sequence of keys, but was a 'int'

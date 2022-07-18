@@ -1,0 +1,7 @@
+#@assert/validate ("", lambda v: fail("rule ran")), when=lambda v: "non-bool"
+foo: bar
+
++++
+
+ERR:
+- want when= to be bool, got string

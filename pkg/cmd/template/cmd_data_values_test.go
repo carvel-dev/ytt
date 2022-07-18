@@ -72,7 +72,7 @@ str: str`)
 	assert.Equal(t, expectedYAMLTplData, string(file.Bytes()))
 }
 
-func TestDataValuesWithFlags(t *testing.T) {
+func TestDataValues_with_flags(t *testing.T) {
 	yamlTplData := []byte(`
 #@ load("@ytt:data", "data")
 data_int: #@ data.values.int
@@ -127,7 +127,7 @@ another:
 	assert.Equal(t, expectedYAMLTplData, string(file.Bytes()))
 }
 
-func TestDataValuesWithFlagsWithoutDataValuesOverlay(t *testing.T) {
+func TestDataValues_with_flags_without_data_values_overlay(t *testing.T) {
 	yamlTplData := []byte(`
 #@ load("@ytt:data", "data")
 data_int: #@ data.values.int
@@ -180,7 +180,7 @@ another:
 	assert.Equal(t, expectedYAMLTplData, string(file.Bytes()))
 }
 
-func TestDataValuesWithLibraryAttachedFlags(t *testing.T) {
+func TestDataValues_with_library_attached_flags(t *testing.T) {
 	tplBytes := `
 #@ load("@ytt:library", "library")
 #@ load("@ytt:template", "template")
@@ -281,7 +281,7 @@ from_nested_lib:
 	assert.Equal(t, expectedYAMLTplData, string(file.Bytes()))
 }
 
-func TestDataValuesMultipleFiles(t *testing.T) {
+func TestDataValues_multiple_files(t *testing.T) {
 	yamlTplData := []byte(`
 #@ load("@ytt:data", "data")
 data_int: #@ data.values.int
@@ -321,7 +321,7 @@ str: str2`)
 	assert.Equal(t, expectedYAMLTplData, string(file.Bytes()))
 }
 
-func TestDataValuesMultipleInOneFile(t *testing.T) {
+func TestDataValues_multiple_in_one_file(t *testing.T) {
 	yamlTplData := []byte(`
 #@ load("@ytt:data", "data")
 data_int: #@ data.values.int
@@ -360,7 +360,7 @@ int: 123`)
 	assert.Equal(t, expectedYAMLTplData, string(file.Bytes()))
 }
 
-func TestDataValuesOverlayNewKey(t *testing.T) {
+func TestDataValues_overlay_new_key(t *testing.T) {
 	yamlTplData := []byte(`
 #@ load("@ytt:data", "data")
 data_int: #@ data.values.int
@@ -401,7 +401,7 @@ int: 123`)
 	assert.Equal(t, expectedYAMLTplData, string(file.Bytes()))
 }
 
-func TestDataValuesOverlayRemoveKey(t *testing.T) {
+func TestDataValues_overlay_remove_key(t *testing.T) {
 	yamlTplData := []byte(`
 #@ load("@ytt:data", "data")
 data: #@ data.values.data`)
@@ -443,7 +443,7 @@ data:
 	assert.Equal(t, expectedYAMLTplData, string(file.Bytes()))
 }
 
-func TestDataValuesWithNonDataValuesDocsErr(t *testing.T) {
+func TestDataValues_with_non_data_values_docs_err(t *testing.T) {
 	yamlData := []byte(`
 #@data/values
 ---
@@ -464,7 +464,7 @@ non-data-values-doc`)
 	require.EqualError(t, out.Err, expectedError)
 }
 
-func TestDataValuesWithNonDocDataValuesErr(t *testing.T) {
+func TestDataValues_with_non_doc_data_values_err(t *testing.T) {
 	yamlData := []byte(`
 ---
 #@data/values
@@ -484,7 +484,7 @@ str: str`)
 	require.EqualError(t, out.Err, expectedErrorMessage)
 }
 
-func TestDataValuesOverlayChildDefaults(t *testing.T) {
+func TestDataValues_overlay_child_defaults(t *testing.T) {
 	yamlTplData := []byte(`
 #@ load("@ytt:data", "data")
 data: #@ data.values.data`)
@@ -528,7 +528,7 @@ data:
 	assert.Equal(t, expectedYAMLTplData, string(file.Bytes()))
 }
 
-func TestDataValuesDataListRelativeToRoot(t *testing.T) {
+func TestDataValues_data_list_relative_to_root(t *testing.T) {
 	yamlTplData := []byte(`
 #@ load("@ytt:data", "data")
 #@ load("@ytt:template", "template")
@@ -616,7 +616,7 @@ Files_in_values:
 	assert.Equal(t, expectedYAMLTplData, string(file.Bytes()))
 }
 
-func TestDataValuesDataListRelativeToLibraryRoot(t *testing.T) {
+func TestDataValues_data_list_relative_to_library_root(t *testing.T) {
 	yamlTplData := []byte(`
 #@ load("@ytt:template", "template")
 #@ load("@ytt:library", "library")
@@ -713,7 +713,7 @@ Files_in_template:
 	assert.Equal(t, expectedYAMLTplData, string(file.Bytes()))
 }
 
-func TestDataValuesFromEnv(t *testing.T) {
+func TestDataValues_from_env(t *testing.T) {
 	tmplBytes := []byte(`
 #@ load("@ytt:template", "template")
 #@ load("@ytt:library", "library")
@@ -781,7 +781,7 @@ nested_val: nested_from_env
 	assert.Equal(t, expectedYAMLTplData, string(file.Bytes()))
 }
 
-func TestDataValuesWithInvalidFlagsFail(t *testing.T) {
+func TestDataValues_with_invalid_flags_fail(t *testing.T) {
 	t.Run("when `--data-value-yaml` has a `:` in the key name", func(t *testing.T) {
 
 		expectedErr := `Extracting data value from KV: Expected at most one library-key separator ':' in 'i:nt'`
@@ -796,5 +796,151 @@ func TestDataValuesWithInvalidFlagsFail(t *testing.T) {
 		out := opts.RunWithFiles(cmdtpl.Input{}, ui)
 		require.Errorf(t, out.Err, expectedErr)
 		require.Equal(t, expectedErr, out.Err.Error())
+	})
+}
+
+func TestDataValues_validations_are_skipped_when_disabled(t *testing.T) {
+	t.Run("via the --dangerous-data-values-disable-validation flag", func(t *testing.T) {
+		t.Run("in the root library", func(t *testing.T) {
+			opts := cmdtpl.NewOptions()
+			opts.DataValuesFlags.SkipValidation = true
+			opts.DataValuesFlags.Inspect = true
+			dataValuesYAML := `#@ load("@ytt:assert", "assert")
+#@data/values
+---
+#@assert/validate ("nothing is valid", lambda v: False)
+foo: bar
+`
+			expected := `foo: bar
+`
+
+			filesToProcess := files.NewSortedFiles([]*files.File{
+				files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(dataValuesYAML))),
+			})
+
+			assertSucceedsDocSet(t, filesToProcess, expected, opts)
+		})
+		t.Run("or in any evaluated private libraries, regardless", func(t *testing.T) {
+			opts := cmdtpl.NewOptions()
+			opts.DataValuesFlags.SkipValidation = true
+			configYAML := `
+#@ load("@ytt:template", "template")
+#@ load("@ytt:library", "library")
+
+--- #@ template.replace(library.get("lib").eval())
+
+#! even if validations are explicitly enabled...
+--- #@ template.replace(library.get("lib", dangerous_data_values_disable_validation=False).eval())
+`
+
+			libValuesYAML := `#@ load("@ytt:assert", "assert")
+#@data/values
+---
+#@assert/validate ("nothing is valid", lambda v: False)
+foo: bar
+`
+
+			libConfigYAML := `
+#@ load("@ytt:data", "data")
+---
+values: #@ data.values
+`
+
+			expected := `values:
+  foo: bar
+---
+values:
+  foo: bar
+`
+
+			filesToProcess := files.NewSortedFiles([]*files.File{
+				files.MustNewFileFromSource(files.NewBytesSource("config.yml", []byte(configYAML))),
+				files.MustNewFileFromSource(files.NewBytesSource("_ytt_lib/lib/values.yml", []byte(libValuesYAML))),
+				files.MustNewFileFromSource(files.NewBytesSource("_ytt_lib/lib/config.yml", []byte(libConfigYAML))),
+			})
+
+			assertSucceedsDocSet(t, filesToProcess, expected, opts)
+		})
+	})
+	t.Run("via the dangerous_data_values_disable_validation= kwarg", func(t *testing.T) {
+		t.Run("in the evaluated library", func(t *testing.T) {
+			opts := cmdtpl.NewOptions()
+			configYAML := `
+#@ load("@ytt:template", "template")
+#@ load("@ytt:library", "library")
+
+--- #@ template.replace(library.get("lib", dangerous_data_values_disable_validation=True).eval())
+`
+
+			libValuesYAML := `#@ load("@ytt:assert", "assert")
+#@data/values
+---
+#@assert/validate ("nothing is valid", lambda v: False)
+foo: bar
+`
+
+			libConfigYAML := `
+#@ load("@ytt:data", "data")
+---
+values: #@ data.values
+`
+
+			expected := `values:
+  foo: bar
+`
+
+			filesToProcess := files.NewSortedFiles([]*files.File{
+				files.MustNewFileFromSource(files.NewBytesSource("config.yml", []byte(configYAML))),
+				files.MustNewFileFromSource(files.NewBytesSource("_ytt_lib/lib/values.yml", []byte(libValuesYAML))),
+				files.MustNewFileFromSource(files.NewBytesSource("_ytt_lib/lib/config.yml", []byte(libConfigYAML))),
+			})
+
+			assertSucceedsDocSet(t, filesToProcess, expected, opts)
+		})
+		t.Run("or any of its dependencies, regardless", func(t *testing.T) {
+			opts := cmdtpl.NewOptions()
+			configYAML := `
+#@ load("@ytt:template", "template")
+#@ load("@ytt:library", "library")
+
+--- #@ template.replace(library.get("foo", dangerous_data_values_disable_validation=True).eval())
+`
+			fooConfigYAML := `
+#@ load("@ytt:template", "template")
+#@ load("@ytt:library", "library")
+
+--- #@ template.replace(library.get("bar").eval())
+--- #@ template.replace(library.get("bar", dangerous_data_values_disable_validation=False).eval())
+`
+
+			barValuesYAML := `#@ load("@ytt:assert", "assert")
+#@data/values
+---
+#@assert/validate ("nothing is valid", lambda v: False)
+foo: bar
+`
+
+			barConfigYAML := `
+#@ load("@ytt:data", "data")
+---
+values: #@ data.values
+`
+
+			expected := `values:
+  foo: bar
+---
+values:
+  foo: bar
+`
+
+			filesToProcess := files.NewSortedFiles([]*files.File{
+				files.MustNewFileFromSource(files.NewBytesSource("config.yml", []byte(configYAML))),
+				files.MustNewFileFromSource(files.NewBytesSource("_ytt_lib/foo/config.yml", []byte(fooConfigYAML))),
+				files.MustNewFileFromSource(files.NewBytesSource("_ytt_lib/foo/_ytt_lib/bar/values.yml", []byte(barValuesYAML))),
+				files.MustNewFileFromSource(files.NewBytesSource("_ytt_lib/foo/_ytt_lib/bar/config.yml", []byte(barConfigYAML))),
+			})
+
+			assertSucceedsDocSet(t, filesToProcess, expected, opts)
+		})
 	})
 }

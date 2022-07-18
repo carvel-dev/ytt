@@ -1,0 +1,8 @@
+#@assert/validate one_not_null=False
+config:
+  foo: ""
+  bar: ""
+
++++
+
+ERR: Invalid @assert/validate annotation - one_not_null= cannot be False

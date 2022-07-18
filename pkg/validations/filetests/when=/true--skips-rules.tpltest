@@ -1,0 +1,6 @@
+#@assert/validate ("fail", lambda v: fail("fails")), when=lambda v: False
+foo: ""
+
++++
+
+foo: ""

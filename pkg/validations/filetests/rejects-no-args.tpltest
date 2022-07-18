@@ -1,0 +1,6 @@
+#@assert/validate
+foo: ""
+
++++
+
+ERR: Invalid @assert/validate annotation - expected annotation to have 2-tuple as argument(s), but found no arguments (by stdin:1)

@@ -112,8 +112,8 @@ func assertionFromCheckAttr(value starlark.Value) (starlark.Callable, error) {
 	}
 
 	checkAttr, err := val.Attr("check")
-	if err != nil {
-		return nil, fmt.Errorf("expected second item in the 2-tuple to be an assertion function or assertion object, but was %s", value.Type())
+	if err != nil || (checkAttr == nil && err == nil) {
+		return nil, fmt.Errorf("expected second item in tuple to be an assertion function or assertion object, but was a %s", value.Type())
 	}
 
 	assertionFunc, ok := checkAttr.(starlark.Callable)

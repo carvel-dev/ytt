@@ -31,7 +31,7 @@ fooX: not-used
 
 }
 
-func TestSchema_When_invalid_reports_error(t *testing.T) {
+func TestSchema_When_malformed_reports_error(t *testing.T) {
 	opts := cmdtpl.NewOptions()
 
 	t.Run("array with fewer than one element", func(t *testing.T) {

@@ -1,0 +1,6 @@
+#@assert/validate (lambda v: len(v) > 1)
+foo: ""
+
++++
+
+ERR: Invalid @assert/validate annotation - expected annotation to have 2-tuple as argument(s), but found: <function lambda> (by stdin:1)

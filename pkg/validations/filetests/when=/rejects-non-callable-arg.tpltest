@@ -1,0 +1,6 @@
+#@assert/validate ("", lambda v: fail("rule ran")), when=True
+foo: bar
+
++++
+
+ERR: Invalid @assert/validate annotation - expected keyword argument "when" to be a function, but was bool (at stdin:1)

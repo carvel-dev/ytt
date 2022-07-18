@@ -20,7 +20,7 @@ import (
 	"github.com/vmware-tanzu/carvel-ytt/pkg/files"
 )
 
-func TestSchema_Passes_when_DataValues_conform(t *testing.T) {
+func TestSchema_passes_when_DataValues_conform(t *testing.T) {
 	opts := cmdtpl.NewOptions()
 
 	t.Run("when document's value is a map", func(t *testing.T) {
@@ -229,7 +229,7 @@ rendered: #@ data.values
 	})
 }
 
-func TestSchema_Reports_violations_when_DataValues_do_NOT_conform(t *testing.T) {
+func TestSchema_reports_violations_when_DataValues_are_the_wrong_Type(t *testing.T) {
 	opts := cmdtpl.NewOptions()
 
 	t.Run("when map item's key is not among those declared in schema", func(t *testing.T) {
@@ -894,7 +894,7 @@ values.yml:
 	})
 }
 
-func TestSchema_Defaults_partially_supplied_data_values(t *testing.T) {
+func TestSchema_defaults_partially_supplied_data_values(t *testing.T) {
 	opts := cmdtpl.NewOptions()
 
 	t.Run("defaults arrays to an empty list", func(t *testing.T) {
@@ -1039,7 +1039,7 @@ rendered: #@ data.values
 	})
 }
 
-func TestSchema_Allows_null_values_via_nullable_annotation(t *testing.T) {
+func TestSchema_allows_null_values_via_nullable_annotation(t *testing.T) {
 	opts := cmdtpl.NewOptions()
 	t.Run("on a document", func(t *testing.T) {
 		schemaYAML := `#@data/values-schema
@@ -1259,7 +1259,7 @@ overriden:
 	})
 }
 
-func TestSchema_Allows_any_value_via_any_annotation(t *testing.T) {
+func TestSchema_allows_any_value_via_type_any_annotation(t *testing.T) {
 	opts := cmdtpl.NewOptions()
 
 	t.Run("on a map", func(t *testing.T) {
@@ -1497,6 +1497,201 @@ baz: #@ data.values.baz
 		})
 
 		assertSucceeds(t, filesToProcess, expected, opts)
+	})
+}
+
+func TestSchema_reports_violations_when_DataValues_fail_validations(t *testing.T) {
+	t.Run("on a document", func(t *testing.T) {
+		schemaYAML := `#@data/values-schema
+#@schema/validation ("foo > 2", lambda v: v["foo"] > 2)
+---
+foo: 0
+`
+		valuesYAML := `foo: 1`
+
+		expectedErrMsg := `One or more data values were invalid:
+- document (schema.yaml:3) requires "foo > 2" (by schema.yaml:2)
+`
+		assertFailsWithSchemaAndDataValues(t, schemaYAML, valuesYAML, expectedErrMsg)
+	})
+	t.Run("on a map item", func(t *testing.T) {
+		schemaYAML := `#@data/values-schema
+---
+#@schema/validation ("foo > 2", lambda v: v > 2)
+foo: 0
+`
+		valuesYAML := `foo: 1`
+
+		expectedErrMsg := `One or more data values were invalid:
+- "foo" (values.yaml:1) requires "foo > 2" (by schema.yaml:3)
+`
+		assertFailsWithSchemaAndDataValues(t, schemaYAML, valuesYAML, expectedErrMsg)
+	})
+	t.Run("on array items (each is checked)", func(t *testing.T) {
+		schemaYAML := `#@data/values-schema
+---
+foo:
+#@schema/validation ("foo > 2", lambda v: v > 2)
+- 0
+`
+		valuesYAML := `foo: 
+- 0
+- 1
+`
+
+		expectedErrMsg := `One or more data values were invalid:
+- array item (values.yaml:2) requires "foo > 2" (by schema.yaml:4)
+- array item (values.yaml:3) requires "foo > 2" (by schema.yaml:4)
+`
+		assertFailsWithSchemaAndDataValues(t, schemaYAML, valuesYAML, expectedErrMsg)
+	})
+
+	t.Run("when @schema/nullable, skips if value is null (unless either not_null=True or when_null_skip=False)", func(t *testing.T) {
+		schemaYAML := `#@data/values-schema
+---
+#@schema/nullable
+#@schema/validation ("foo > 2", lambda v: v > 2)
+foo: 0
+#@schema/nullable
+#@schema/validation ("bar > 2", lambda v: True if v == None else v > 2), not_null=True
+bar: 0
+#@schema/nullable
+#@schema/validation ("qux > 2", lambda v: v > 2), when_null_skip=False
+qux: 0
+`
+		valuesYAML := ``
+
+		expectedErrMsg := `One or more data values were invalid:
+- "bar" (schema.yaml:8) requires "not null"; fail: value is null (by schema.yaml:7)
+- "qux" (schema.yaml:11) requires "qux > 2"; NoneType > int not implemented (by schema.yaml:10)
+`
+		assertFailsWithSchemaAndDataValues(t, schemaYAML, valuesYAML, expectedErrMsg)
+	})
+
+	t.Run("even when @schema/type any=True", func(t *testing.T) {
+		schemaYAML := `#@data/values-schema
+---
+#@schema/type any=True
+#@schema/validation ("foo > 2", lambda v: v > 2)
+foo: 0
+`
+		valuesYAML := `foo: 1`
+
+		expectedErrMsg := `One or more data values were invalid:
+- "foo" (values.yaml:1) requires "foo > 2" (by schema.yaml:4)
+`
+		assertFailsWithSchemaAndDataValues(t, schemaYAML, valuesYAML, expectedErrMsg)
+	})
+
+	t.Run("schema overlays", func(t *testing.T) {
+		t.Run("include/run validations for *new* data values", func(t *testing.T) {
+			schemaYAML := `
+#@data/values-schema
+---
+#@schema/validation ("non-empty", lambda v: len(v) > 0)
+existing: ""
+
+#@data/values-schema
+---
+#@overlay/match missing_ok=True
+#@schema/validation ("non-empty", lambda v: len(v) > 0)
+new: ""
+`
+			valuesYAML := `existing: foo`
+
+			expectedErrMsg := `One or more data values were invalid:
+- "new" (schema.yaml:11) requires "non-empty" (by schema.yaml:10)
+`
+			assertFailsWithSchemaAndDataValues(t, schemaYAML, valuesYAML, expectedErrMsg)
+		})
+		t.Run("ignores/skips validations for *existing* data values", func(t *testing.T) {
+			schemaYAML := `
+#@data/values-schema
+---
+#@schema/validation ("a long string", lambda v: len(v) > 10)
+existing: ""
+
+#@data/values-schema
+---
+#@schema/validation ("at least not empty", lambda v: len(v) > 0)
+existing: ""
+`
+			valuesYAML := `
+existing: foo
+`
+
+			expectedErrMsg := `One or more data values were invalid:
+- "existing" (values.yaml:2) requires "a long string" (by schema.yaml:4)
+`
+			assertFailsWithSchemaAndDataValues(t, schemaYAML, valuesYAML, expectedErrMsg)
+		})
+	})
+}
+
+func TestSchema_combines_validations_with_Data_Values(t *testing.T) {
+	t.Run("ignores/skips validation rules from Data Values overlay in most cases", func(t *testing.T) {
+		schemaYAML := `#@data/values-schema
+#@schema/validation ("has 3 map items", lambda v: len(v) == 3)
+---
+#@schema/validation ("non-zero", lambda v: v > 0)
+foo: 0
+#@schema/validation ("has 2 items", lambda v: len(v) == 2)
+bar:
+- 0
+`
+		dataValuesYAML := `#@data/values
+#@assert/validate ("has 3 map items", lambda v: len(v) == 3)
+---
+#@assert/validate ("non-zero", lambda v: v > 0)
+foo: -1
+#@assert/validate ("has 2 items", lambda v: len(v) == 2)
+bar:
+- 0
+`
+
+		// none of the rules are from values.yml:
+		expectedErr := `One or more data values were invalid:
+- document (schema.yml:3) requires "has 3 map items" (by schema.yml:2)
+- "foo" (values.yml:5) requires "non-zero" (by schema.yml:4)
+- "bar" (schema.yml:7) requires "has 2 items" (by schema.yml:6)
+`
+
+		opts := &cmdtpl.Options{}
+		filesToProcess := files.NewSortedFiles([]*files.File{
+			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
+			files.MustNewFileFromSource(files.NewBytesSource("values.yml", []byte(dataValuesYAML))),
+		})
+		assertFails(t, filesToProcess, expectedErr, opts)
+	})
+	t.Run("runs validations rules from Data Values defined on array items", func(t *testing.T) {
+		schemaYAML := `#@data/values-schema
+---
+foo:
+#@schema/validation ("non-zero", lambda v: v > 0)
+- 0
+`
+		dataValuesYAML := `#@data/values
+---
+foo:
+#@assert/validate ("be odd", lambda v: v % 2 == 1)
+- 0
+#@assert/validate ("be even", lambda v: v % 2 == 0)
+- -1
+`
+
+		expectedErr := `One or more data values were invalid:
+- array item (values.yml:5) requires "non-zero" (by schema.yml:4)
+- array item (values.yml:5) requires "be odd" (by values.yml:4)
+- array item (values.yml:7) requires "non-zero" (by schema.yml:4)
+- array item (values.yml:7) requires "be even" (by values.yml:6)
+`
+
+		opts := &cmdtpl.Options{}
+		filesToProcess := files.NewSortedFiles([]*files.File{
+			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
+			files.MustNewFileFromSource(files.NewBytesSource("values.yml", []byte(dataValuesYAML))),
+		})
+		assertFails(t, filesToProcess, expectedErr, opts)
 	})
 }
 
@@ -2211,7 +2406,7 @@ cat: meow
 	})
 }
 
-func TestSchema_With_fuzzed_inputs(t *testing.T) {
+func TestSchema_with_fuzzed_inputs(t *testing.T) {
 	opts := cmdtpl.NewOptions()
 
 	validIntegerRange := fuzz.UnicodeRange{First: '0', Last: '9'}
@@ -2342,4 +2537,25 @@ func assertFails(t *testing.T, filesToProcess []*files.File, expectedErr string,
 	require.Error(t, out.Err)
 
 	require.Contains(t, out.Err.Error(), expectedErr)
+}
+
+// assertFailsWithSchemaAndDataValues asserts on the commonly-shaped scenario where there's one schema file and
+// one data values file, absorbing a bunch of boilerplate setup for such tests.
+func assertFailsWithSchemaAndDataValues(t *testing.T, schema, dataValues, errMsg string) {
+	filesToProcess := files.NewSortedFiles([]*files.File{
+		files.MustNewFileFromSource(files.NewBytesSource("schema.yaml", []byte(schema))),
+	})
+	opts := cmdtpl.NewOptions()
+	opts.DataValuesFlags = cmdtpl.DataValuesFlags{
+		FromFiles: []string{"values.yaml"},
+		ReadFilesFunc: func(path string) ([]*files.File, error) {
+			switch path {
+			case "values.yaml":
+				return []*files.File{files.MustNewFileFromSource(files.NewBytesSource("values.yaml", []byte(dataValues)))}, nil
+			default:
+				return nil, fmt.Errorf("Unknown file '%s'", path)
+			}
+		},
+	}
+	assertFails(t, filesToProcess, errMsg, opts)
 }

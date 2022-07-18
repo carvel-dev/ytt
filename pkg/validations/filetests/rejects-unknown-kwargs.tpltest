@@ -1,0 +1,6 @@
+#@assert/validate invalid_kwarg=True
+foo: ""
+
++++
+
+ERR: Invalid @assert/validate annotation - unknown keyword argument "invalid_kwarg" (at stdin:1)

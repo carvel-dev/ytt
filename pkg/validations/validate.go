@@ -111,10 +111,7 @@ func (v NodeValidation) Validate(node yamlmeta.Node, thread *starlark.Thread) []
 		if err != nil {
 			failures = append(failures, fmt.Errorf("%s (%s) requires %q; %s (by %s)", key, node.GetPosition().AsCompactString(), r.msg, err.Error(), v.position.AsCompactString()))
 		} else {
-			_, isNone := result.(starlark.NoneType)
-			isTrue := bool(result.Truth())
-			// in order to pass, the assertion must return Truthy value or None
-			if !(isNone || isTrue) {
+			if !(result == starlark.True) {
 				failures = append(failures, fmt.Errorf("%s (%s) requires %q (by %s)", key, node.GetPosition().AsCompactString(), r.msg, v.position.AsCompactString()))
 			}
 		}
@@ -147,7 +144,12 @@ func (v validationKwargs) shouldValidate(value starlark.Value, thread *starlark.
 			return false, err
 		}
 
-		return result == starlark.True, nil
+		resultBool, isBool := result.(starlark.Bool)
+		if !isBool {
+			return false, fmt.Errorf("want when= to be bool, got %s", result.Type())
+		}
+
+		return bool(resultBool), nil
 	}
 
 	return true, nil
