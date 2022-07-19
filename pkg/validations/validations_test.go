@@ -28,7 +28,7 @@ func TestMain(m *testing.M) {
 }
 
 // TestValidations verifies that the validations mechanism correctly:
-// 1. parses `@assert/validate` annotations,
+// 1. parses `@assert/validate` annotations (and because schema package delegates, `@schema/validation` too),
 // 2. decides which rules run under various conditions
 // 3. checks the rules
 // 4. combines rule results into an appropriate validation outcome (list of error or passing)
