@@ -1,0 +1,10 @@
+#@ load("@ytt:assert", "assert")
+
+min_of_string: #@ assert.min(3, 2)
+
++++
+
+ERR:
+- assert.min: got 2 arguments, want 1
+    in <toplevel>
+      stdin:3 | min_of_string: #@ assert.min(3, 2)

@@ -111,7 +111,7 @@ func (ll *LibraryExecution) Values(valuesOverlays []*datavalues.Envelope, schema
 //   2. @assert/validate annotations in a data values file.
 //
 // Returns an error if the arguments to an @assert/validate are invalid,
-// otherwise, checks the AssertCheck for violations, and returns nil if there are no violations.
+// otherwise, checks the Check for violations, and returns nil if there are no violations.
 func (ll *LibraryExecution) validateValues(values *datavalues.Envelope) error {
 	if !experiments.IsValidationsEnabled() {
 		return nil

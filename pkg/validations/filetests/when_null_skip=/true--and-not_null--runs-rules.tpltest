@@ -1,0 +1,7 @@
+#@assert/validate when_null_skip=True, not_null=True
+foo: null
+
++++
+
+ERR:
+- "foo" (stdin:2) requires "not null"; fail: value is null (by stdin:1)

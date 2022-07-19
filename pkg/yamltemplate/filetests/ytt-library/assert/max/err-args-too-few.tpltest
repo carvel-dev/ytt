@@ -1,0 +1,10 @@
+#@ load("@ytt:assert", "assert")
+
+max_of_string: #@ assert.max()
+
++++
+
+ERR: 
+- assert.max: got 0 arguments, want 1
+    in <toplevel>
+      stdin:3 | max_of_string: #@ assert.max()

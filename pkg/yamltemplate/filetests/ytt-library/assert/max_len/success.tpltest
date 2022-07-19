@@ -1,0 +1,38 @@
+#@ load("@ytt:assert", "assert")
+#@ load("@ytt:struct", "struct")
+
+#@ def docset():
+---
+first
+---
+second
+#@ end
+---
+#@ def mapping():
+first: 1
+second: 2
+#@ end
+---
+#@ def array():
+- first
+- second
+#@ end
+---
+
+max_len_of_string: #@ assert.max_len(2).check("o0")
+max_len_of_dict:   #@ assert.max_len(2).check({"first": 1, "second": 2})
+max_len_of_list:   #@ assert.max_len(2).check(["first", "second"])
+max_len_of_struct: #@ assert.max_len(2).check(struct.make(one=True, two=True))
+max_len_of_docset: #@ assert.max_len(2).check(docset())
+max_len_of_map:    #@ assert.max_len(2).check(mapping())
+max_len_of_array:  #@ assert.max_len(2).check(array())
+
++++
+
+max_len_of_string: true
+max_len_of_dict: true
+max_len_of_list: true
+max_len_of_struct: true
+max_len_of_docset: true
+max_len_of_map: true
+max_len_of_array: true

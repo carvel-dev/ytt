@@ -1,0 +1,8 @@
+#@ load("@ytt:struct", "struct")
+
+#@assert/validate ("", struct.make(not_check=lambda v: fail("yers")))
+foo: ""
+
++++
+
+ERR: Invalid @assert/validate annotation - expected second item in tuple to be an assertion function or assertion object, but was a struct (at stdin:3)

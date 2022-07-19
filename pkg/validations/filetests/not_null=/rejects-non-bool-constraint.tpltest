@@ -1,0 +1,6 @@
+#@assert/validate not_null="truthy"
+foo: notNull
+
++++
+
+ERR: Invalid @assert/validate annotation - expected keyword argument "not_null" to be a boolean, but was string (at stdin:1)

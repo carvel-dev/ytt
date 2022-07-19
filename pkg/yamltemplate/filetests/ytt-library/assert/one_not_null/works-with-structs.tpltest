@@ -1,0 +1,23 @@
+#@ load("@ytt:assert", "assert")
+#@ load("@ytt:struct", "struct")
+
+#@ def multiple_values_are_not_null():
+#@   return struct.make(foo="notNull", bar=None, baz=None, qux="notNull")
+#@ end
+
+---
+
+#! when no argument is given for one_not_null(), assume checks are over the entire value
+when_keys_are_not_given:
+  multiple_values_are_not_null: #@ assert.try_to(lambda: assert.one_not_null().check(multiple_values_are_not_null()))
+keys_are_specified:
+  one_value_not_null_is_ok: #@ assert.one_not_null(["foo", "bar", "baz"]).check(multiple_values_are_not_null())
+
++++
+
+when_keys_are_not_given:
+  multiple_values_are_not_null:
+  - null
+  - 'check: multiple values are not null ["foo" "qux"]'
+keys_are_specified:
+  one_value_not_null_is_ok: true

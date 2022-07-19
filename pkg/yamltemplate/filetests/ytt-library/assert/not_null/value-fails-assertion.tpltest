@@ -1,0 +1,13 @@
+#@ load("@ytt:assert", "assert")
+
+string_not_null: #@ assert.not_null().check(None)
+
++++
+
+ERR:
+- fail: value is null
+    in lambda
+      assert.not_null:? | __ytt_tplXXX_set_ctx_type("yaml") (generated)
+      stdin:1 | #@ load("@ytt:assert", "assert")
+    in <toplevel>
+      stdin:3 | string_not_null: #@ assert.not_null().check(None)

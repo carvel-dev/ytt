@@ -19,7 +19,7 @@ var (
 			Name: "yaml",
 			Members: starlark.StringDict{
 				"encode": starlark.NewBuiltin("yaml.encode", core.ErrWrapper(yamlModule{}.starlarkEncode)),
-				"decode": starlark.NewBuiltin("yaml.decode", core.ErrWrapper(yamlModule{}.Decode)),
+				"decode": starlark.NewBuiltin("yaml.decode", core.ErrWrapper(yamlModule{}.starlarkDecode)),
 			},
 		},
 	}
@@ -69,7 +69,7 @@ func (b yamlModule) Encode(goValue interface{}) (string, error) {
 }
 
 // Decode is a core.StarlarkFunc that parses the provided input from YAML format into dicts, lists, and scalars
-func (b yamlModule) Decode(thread *starlark.Thread, f *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
+func (b yamlModule) starlarkDecode(thread *starlark.Thread, f *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
 	if args.Len() != 1 {
 		return starlark.None, fmt.Errorf("expected exactly one argument")
 	}
@@ -79,12 +79,22 @@ func (b yamlModule) Decode(thread *starlark.Thread, f *starlark.Builtin, args st
 		return starlark.None, err
 	}
 
-	var valDecoded interface{}
+	value, err := b.Decode(valEncoded)
+	if err != nil {
+		return nil, err
+	}
 
-	err = yamlmeta.PlainUnmarshal([]byte(valEncoded), &valDecoded)
+	return value, nil
+}
+
+func (b yamlModule) Decode(yamlString string) (starlark.Value, error) {
+	var decoded interface{}
+
+	err := yamlmeta.PlainUnmarshal([]byte(yamlString), &decoded)
 	if err != nil {
 		return starlark.None, err
 	}
 
-	return core.NewGoValue(valDecoded).AsStarlarkValue(), nil
+	value := core.NewGoValue(decoded).AsStarlarkValue()
+	return value, nil
 }

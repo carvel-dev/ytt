@@ -1,0 +1,43 @@
+#@ load("@ytt:assert", "assert")
+
+#@assert/validate ("a non empty data values", lambda v: True if v else assert.fail("data values was empty"))
+---
+#@assert/validate ("a map with more than 3 elements", lambda v: True if len(v) > 3 else assert.fail("length of map was less than 3"))
+my_map:
+  #@assert/validate ("a non-empty string", lambda v: True if len(v) > 0 else assert.fail("length of string was 0"))
+  string: server.example.com
+  #@assert/validate ("an int over 9000", lambda v: True if v > 9000 else assert.fail("int was less than 9000"))
+  int: 54321
+  #@assert/validate ("a float less than pi", lambda v: True if v < 3.1415 else assert.fail("float was more than 3.1415"))
+  float: 2.3
+  #@assert/validate ("bool evaluating to true", lambda v:  v)
+  bool: true
+  #@assert/validate ("a null value", lambda v: True if v == None else assert.fail("value was not null"))
+  nil: null
+  #@assert/validate ("an array with less than or exactly 10 items", lambda v: True if len(v) <= 10 else assert.fail("array was more than 10 items"))
+  my_array:
+  #@assert/validate ("a non-empty string", lambda v: True if len(v) > 0 else assert.fail("length of string was 0"))
+  - abc
+  #@assert/validate ("an int over 9000", lambda v: True if v > 9000 else assert.fail("int was less than 9000"))
+  - 12345
+  #@assert/validate ("a float less than pi", lambda v: True if v < 3.1415 else assert.fail("float was more than 3.1415"))
+  - 3.14
+  #@assert/validate ("bool evaluating to true", lambda v:  v)
+  - true
+  #@assert/validate ("a null value", lambda v: True if v == None else assert.fail("value was not null"))
+  - null
+
++++
+
+my_map:
+  string: server.example.com
+  int: 54321
+  float: 2.3
+  bool: true
+  nil: null
+  my_array:
+  - abc
+  - 12345
+  - 3.14
+  - true
+  - null

@@ -1,0 +1,6 @@
+#@assert/validate (False, lambda v: fail("rule ran"))
+foo: ""
+
++++
+
+ERR: Invalid @assert/validate annotation - expected first item in the 2-tuple to be a string describing a valid value, but was bool (at stdin:1)

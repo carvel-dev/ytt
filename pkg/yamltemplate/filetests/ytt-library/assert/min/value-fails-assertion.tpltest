@@ -1,0 +1,13 @@
+#@ load("@ytt:assert", "assert")
+
+min_of_int: #@ assert.min(3).check(2)
+
++++
+
+ERR:
+- fail: 2 is less than 3
+    in lambda
+      assert.min:? | __ytt_tplXXX_set_ctx_type("yaml") (generated)
+      stdin:1 | #@ load("@ytt:assert", "assert")
+    in <toplevel>
+      stdin:3 | min_of_int: #@ assert.min(3).check(2)

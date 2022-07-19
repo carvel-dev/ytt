@@ -1,0 +1,6 @@
+#@assert/validate min_len="4"
+foo: value
+
++++
+
+ERR: Invalid @assert/validate annotation - expected keyword argument "min_len" to be a number, but was string (at stdin:1)

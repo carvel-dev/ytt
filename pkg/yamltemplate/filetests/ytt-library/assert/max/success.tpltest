@@ -1,0 +1,32 @@
+#@ load("@ytt:assert", "assert")
+
+#@ def array_smaller():
+- "a"
+- 1
+#@ end
+
+#@ def array_bigger():
+- "b"
+- 2
+#@ end
+---
+
+max_of_int: #@ assert.max(2).check(2)
+max_of_string: #@ assert.max("c").check("b")
+max_of_list:
+ to_list: #@ assert.max(["b", 2]).check(["a", 1])
+ to_array: #@ assert.max(["b", 2]).check(array_smaller())
+max_of_array:
+ to_list: #@ assert.max(array_bigger()).check(["a", 1])
+ to_array: #@ assert.max(array_bigger()).check(array_smaller())
+
++++
+
+max_of_int: true
+max_of_string: true
+max_of_list:
+  to_list: true
+  to_array: true
+max_of_array:
+  to_list: true
+  to_array: true

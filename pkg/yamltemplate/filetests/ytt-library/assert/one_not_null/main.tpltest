@@ -1,0 +1,80 @@
+#@ load("@ytt:assert", "assert")
+
+#@ def one_value_is_not_null():
+foo: notNull
+bar: null
+baz: null
+qux: null
+#@ end
+
+#@ def multiple_values_are_not_null():
+foo: notNull
+bar: null
+baz: null
+qux: notNull
+#@ end
+
+#@ def all_values_are_null():
+foo: null
+bar: null
+baz: null
+qux: null
+#@ end
+
+#@ def non_string_keys():
+0: null
+false: null
+0.1: null
+foo: notNull
+#@ end
+
+---
+
+#! when no argument is given for one_not_null(), assume checks are over the entire value
+when_keys_are_not_given:
+  one_value_not_null_is_ok: #@ assert.one_not_null().check(one_value_is_not_null())
+  all_values_are_null: #@ assert.try_to(lambda: assert.one_not_null().check(all_values_are_null()))
+  multiple_values_are_not_null: #@ assert.try_to(lambda: assert.one_not_null().check(multiple_values_are_not_null()))
+  value_is_empty: #@ assert.try_to(lambda: assert.one_not_null().check({}))
+  value_is_not_a_map: #@ assert.try_to(lambda: assert.one_not_null().check(["foo", "bar"]))
+  too_many_values: #@ assert.try_to(lambda: assert.one_not_null().check({}, {}))
+keys_are_specified:
+  true_is_same_as_all: #@ assert.one_not_null(True).check(one_value_is_not_null())
+  one_value_not_null_is_ok: #@ assert.one_not_null(["foo", "bar", "baz"]).check(multiple_values_are_not_null())
+  non_string_keys_are_ok: #@ assert.one_not_null([0, False, 0.1, "foo"]).check(non_string_keys())
+  spec_is_not_a_sequence: #@ assert.try_to(lambda: assert.one_not_null(13).check(one_value_is_not_null()))
+  key_not_found: #@ assert.try_to(lambda: assert.one_not_null(["foo", "not-a-key"]).check(one_value_is_not_null()))
+  too_args: #@ assert.try_to(lambda: assert.one_not_null([], []).check({}))
+
++++
+
+when_keys_are_not_given:
+  one_value_not_null_is_ok: true
+  all_values_are_null:
+  - null
+  - 'check: all values are null'
+  multiple_values_are_not_null:
+  - null
+  - 'check: multiple values are not null ["foo" "qux"]'
+  value_is_empty:
+  - null
+  - 'check: value is empty'
+  value_is_not_a_map:
+  - null
+  - 'check: value must be a map or dict, but was ''list'''
+  too_many_values:
+  - null
+  - 'check: got 2 arguments, want 1'
+keys_are_specified:
+  true_is_same_as_all: true
+  one_value_not_null_is_ok: true
+  non_string_keys_are_ok: true
+  spec_is_not_a_sequence:
+  - null
+  - 'assert.one_not_null: expected a sequence of keys, but was a ''int'''
+  key_not_found:
+  - null
+  - 'check: "not-a-key" is not present in value'
+  too_args:
+  - null
+  - 'assert.one_not_null: got 2 arguments, want 1'

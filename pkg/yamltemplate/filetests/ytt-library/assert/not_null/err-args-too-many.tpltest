@@ -1,0 +1,13 @@
+#@ load("@ytt:assert", "assert")
+
+not_null: #@ assert.try_to(lambda: assert.not_null(1,2))
+check: #@ assert.try_to(lambda: assert.not_null().check(1,2))
+
++++
+
+not_null:
+- null
+- 'assert.not_null: got 2 arguments, want at most 1'
+check:
+- null
+- function lambda accepts 1 positional argument (2 given)

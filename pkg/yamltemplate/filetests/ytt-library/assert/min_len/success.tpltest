@@ -1,0 +1,38 @@
+#@ load("@ytt:assert", "assert")
+#@ load("@ytt:struct", "struct")
+
+#@ def docset():
+---
+first
+---
+second
+#@ end
+---
+#@ def mapping():
+first: 1
+second: 2
+#@ end
+---
+#@ def array():
+- first
+- second
+#@ end
+---
+
+min_len_of_string: #@ assert.min_len(2).check("o0")
+min_len_of_dict:   #@ assert.min_len(2).check({"first": 1, "second": 2})
+min_len_of_list:   #@ assert.min_len(2).check(["first", "second"])
+min_len_of_struct: #@ assert.min_len(2).check(struct.make(one=True, two=True))
+min_len_of_docset: #@ assert.min_len(2).check(docset())
+min_len_of_map:    #@ assert.min_len(2).check(mapping())
+min_len_of_array:  #@ assert.min_len(2).check(array())
+
++++
+
+min_len_of_string: true
+min_len_of_dict: true
+min_len_of_list: true
+min_len_of_struct: true
+min_len_of_docset: true
+min_len_of_map: true
+min_len_of_array: true

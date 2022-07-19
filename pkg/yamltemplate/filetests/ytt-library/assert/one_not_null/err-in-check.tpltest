@@ -1,0 +1,19 @@
+#@ load("@ytt:assert", "assert")
+
+---
+
+#@ def multiple_values_are_not_null():
+foo: notNull
+bar: null
+baz: null
+qux: notNull
+#@ end
+
+multiple_values_are_not_null: #@ assert.one_not_null().check(multiple_values_are_not_null())
+
++++
+
+ERR:
+- check: multiple values are not null ["foo" "qux"]
+    in <toplevel>
+      stdin:12 | multiple_values_are_not_null: #@ assert.one_not_null().check(multiple_values_are_not_null())

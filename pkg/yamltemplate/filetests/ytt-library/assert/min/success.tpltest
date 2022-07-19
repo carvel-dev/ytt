@@ -1,0 +1,32 @@
+#@ load("@ytt:assert", "assert")
+
+#@ def array_smaller():
+- "a"
+- 1
+#@ end
+
+#@ def array_bigger():
+- "b"
+- 2
+#@ end
+---
+
+min_of_int: #@ assert.min(2).check(3)
+min_of_string: #@ assert.min("c").check("d")
+min_of_list:
+ to_list: #@ assert.min(["a", 1]).check(["b", 2])
+ to_array: #@ assert.min(["a", 1]).check(array_bigger())  
+min_of_array:
+ to_list: #@ assert.min(array_smaller()).check(["c", 3])
+ to_array: #@ assert.min(array_smaller()).check(array_bigger())
+
++++
+
+min_of_int: true
+min_of_string: true
+min_of_list:
+  to_list: true
+  to_array: true
+min_of_array:
+  to_list: true
+  to_array: true

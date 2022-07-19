@@ -1,0 +1,10 @@
+#@ load("@ytt:assert", "assert")
+
+multiple_values_are_not_null: #@ assert.one_not_null(13).check({})
+
++++
+
+ERR:
+- assert.one_not_null: expected a sequence of keys, but was a 'int'
+    in <toplevel>
+      stdin:3 | multiple_values_are_not_null: #@ assert.one_not_null(13).check({})

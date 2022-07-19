@@ -1,0 +1,8 @@
+#@ load("@ytt:assert", "assert")
+
+
+string_not_null: #@ assert.not_null().check("a")
+
++++
+
+string_not_null: true
