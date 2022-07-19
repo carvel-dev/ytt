@@ -1,0 +1,9 @@
+#@ load("@ytt:assert", "assert")
+
+check: #@ assert.try_to(lambda: assert.one_of([1,2]).check(1,2))
+
++++
+
+check:
+- null
+- function lambda accepts 1 positional argument (2 given)

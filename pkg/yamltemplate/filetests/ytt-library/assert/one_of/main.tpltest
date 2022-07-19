@@ -1,0 +1,31 @@
+#@ load("@ytt:assert", "assert")
+
+pass:
+  list: #@ assert.one_of(["aws", "azure", "vsphere"]).check("azure")
+  tuple: #@ assert.one_of(( "aws", "azure", "vsphere" )).check("azure")
+  heterogeneous: #@ assert.one_of("aws", 4, False, {"azure": "vsphere"}).check({"azure": "vsphere"})
+  positional_args: #@ assert.one_of("aws", "azure", "vsphere").check("azure")
+fail:
+  not_in_enum: #@ assert.try_to(lambda: assert.one_of("aws", "azure", "vsphere").check("not-in-set"))
+  enum_not_a_sequence:
+    int: #@ assert.try_to(lambda: assert.one_of(4))
+    string: #@ assert.try_to(lambda: assert.one_of("aws,azure,vsphere"))
+
++++
+
+pass:
+  list: true
+  tuple: true
+  heterogeneous: true
+  positional_args: true
+fail:
+  not_in_enum:
+  - null
+  - 'fail: not-in-set not in ["aws", "azure", "vsphere"]'
+  enum_not_a_sequence:
+    int:
+    - null
+    - 'assert.one_of: expected a sequence, but was a ''int'''
+    string:
+    - null
+    - 'assert.one_of: expected a sequence, but was a ''string'''

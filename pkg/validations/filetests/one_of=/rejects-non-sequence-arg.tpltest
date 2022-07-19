@@ -1,0 +1,6 @@
+#@assert/validate one_of="one,two,three"
+foo: two
+
++++
+
+ERR: Invalid @assert/validate annotation - expected keyword argument one_of to be a sequence, but was string

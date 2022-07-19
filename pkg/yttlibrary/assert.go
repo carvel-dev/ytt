@@ -36,6 +36,7 @@ func (m AssertModule) AsModule() starlark.StringDict {
 		members["max_len"] = starlark.NewBuiltin("assert.max_len", core.ErrWrapper(m.MaxLen))
 		members["not_null"] = starlark.NewBuiltin("assert.not_null", core.ErrWrapper(m.NotNull))
 		members["one_not_null"] = starlark.NewBuiltin("assert.one_not_null", core.ErrWrapper(m.OneNotNull))
+		members["one_of"] = starlark.NewBuiltin("assert.one_of", core.ErrWrapper(m.OneOf))
 	}
 	return starlark.StringDict{
 		"assert": &starlarkstruct.Module{
@@ -380,6 +381,37 @@ func (m AssertModule) oneNotNullCheck(keys starlark.Sequence) core.StarlarkFunc 
 			return nil, fmt.Errorf("check: multiple values are not null %s", notNulls)
 		}
 	}
+}
+
+// NewAssertOneOf produces an Assertion that a given value is one of a pre-defined set.
+//
+// see also:https://github.com/google/starlark-go/blob/master/doc/spec.md#membership-tests
+func NewAssertOneOf(enum starlark.Sequence) *Assertion {
+	return NewAssertionFromSource(
+		"assert.one_of",
+		`lambda val: True if yaml.decode(yaml.encode(val)) in yaml.decode(yaml.encode(enum)) else fail("{} not in {}".format(yaml.decode(yaml.encode(val)), yaml.decode(yaml.encode(enum))))`,
+		starlark.StringDict{"enum": enum, "yaml": YAMLAPI["yaml"]},
+	)
+}
+
+// OneOf is a core.StarlarkFunc wrapping NewAssertOneOf()
+func (m AssertModule) OneOf(thread *starlark.Thread, f *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
+	if args.Len() == 0 {
+		return starlark.None, fmt.Errorf("got %d arguments, want at least %d", args.Len(), 1)
+	}
+
+	enum := args[0]
+	if args.Len() > 1 {
+		enum = args
+	}
+
+	seq, ok := enum.(starlark.Sequence)
+	if !ok {
+		return nil, fmt.Errorf("expected a sequence, but was a '%s'", enum.Type())
+	}
+
+	maxFunc := NewAssertOneOf(seq)
+	return maxFunc, nil
 }
 
 func (m AssertModule) maybeSuggestKey(given starlark.Value, expected starlark.Dict) string {

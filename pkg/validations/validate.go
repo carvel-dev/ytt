@@ -38,6 +38,7 @@ type validationKwargs struct {
 	max          starlark.Value
 	notNull      bool
 	oneNotNull   starlark.Value // valid values are either starlark.Sequence or starlark.Bool
+	oneOf        starlark.Sequence
 }
 
 // Run takes a root Node, and threadName, and validates each Node in the tree.
@@ -209,6 +210,12 @@ func (v validationKwargs) asRules() []rule {
 		rules = append(rules, rule{
 			msg:       fmt.Sprintf("exactly one child not null"),
 			assertion: assertion.CheckFunc(),
+		})
+	}
+	if v.oneOf != nil {
+		rules = append(rules, rule{
+			msg:       fmt.Sprintf("one of"),
+			assertion: yttlibrary.NewAssertOneOf(v.oneOf).CheckFunc(),
 		})
 	}
 
