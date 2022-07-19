@@ -1,0 +1,27 @@
+#@ load("@ytt:data", "data")
+---
+ebpf:
+  enabled: #@ data.values.ebpf.enabled
+auditLog:
+  enabled: #@ data.values.auditLog.enabled
+falcosidekick:
+  enabled: #@ data.values.falcosidekick.enabled
+  fullfqdn: #@ data.values.falcosidekick.fullfqdn
+  config:
+    teams: 
+      webhookurl: #@ data.values.falcosidekick.config.teams.webhookurl
+  ingress:
+    enabled: #@ data.values.falcosidekick.ingress.enabled
+    annotations: #@ data.values.falcosidekick.ingress.annotations
+    hosts: 
+    - host: #@ data.values.clusters[data.values.cluster].falcosidekick.ingress.host
+      paths: #@ data.values.falcosidekick.ingress.paths
+  webui:
+    enabled: #@ data.values.falcosidekick.webui.enabled
+    darkmode: #@ data.values.falcosidekick.webui.darkmode
+    ingress:
+      enabled: #@ data.values.falcosidekick.webui.ingress.enabled
+      annotations: #@ data.values.falcosidekick.webui.ingress.annotations
+      hosts: 
+      - host: #@ data.values.clusters[data.values.cluster].falcosidekick.webui.ingress.host
+        paths: ["/ui", "/events", "/healthz", "/ws"]

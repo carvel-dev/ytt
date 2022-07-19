@@ -1,0 +1,80 @@
+#! START OF COMMENT SECTION
+#! ------------------------
+#! We're overlaying the apiVersion used by falco charts
+#! We need to do so because we're rolling at least
+#! v1.22+ of Kubernetes ( as of 211230 )
+#! And this > https://github.com/falcosecurity/charts/blob/d2c6b91ff7339a5108abe23208212eb53b535463/falcosidekick/templates/_helpers.tpl#L38
+#! does not seem to work with the version value that the K3s distribution
+#! uses. For more background see > https://github.com/falcosecurity/charts/issues/288
+#!
+#! "Bumping" the apiVersion is the first step of
+#! getting the Falco chart installed like we want it
+#! on K3s backend flavored clusters.
+#! We want to be on the latest version of the networking.k8s... API
+#! ----------------------
+#! END OF COMMENT SECTION
+
+#@ load("@ytt:data", "data")
+#@ load("@ytt:overlay", "overlay")
+
+#@overlay/match by=overlay.subset({"apiVersion":"networking.k8s.io/v1beta1"}),expects="1+"
+---
+apiVersion: networking.k8s.io/v1
+
+#! START OF COMMENT SECTION
+#! ------------------------
+#! As we overlay the apiVersion used
+#! we need to reflect that change as well
+#! So in the below we're ytt overlaying on
+#! the backend of the [INGRESS FOR THE FALCO WEB UI]
+#! ----------------------
+#! END OF COMMENT SECTION
+#@ kindIngressMatcher = overlay.subset({"kind": "Ingress"})
+#@ falcosideKickUiMatcher = overlay.subset({"metadata": {"name": "falco-falcosidekick-ui"}})
+#@overlay/match by=overlay.and_op(kindIngressMatcher, falcosideKickUiMatcher), expects=1
+---
+spec:
+  rules:
+    #@overlay/match by=lambda i,l,r: "host" in l
+    - host: #@ data.values.clusters[data.values.cluster].falcosidekick.webui.ingress.host
+      http:
+        paths:
+        #@overlay/match by=overlay.all, expects="1+"
+        #@overlay/match-child-defaults missing_ok=True
+        - #! the value for the `path` key comes in via the `paths` Array
+          #! defined in the config.yaml file
+          pathType: "ImpleOmentationSpecific"
+          #@overlay/replace
+          backend:
+            service:
+              name: falco-falcosidekick-ui
+              port:
+                name: http
+
+#! START OF COMMENT SECTION
+#! ------------------------
+#! As we overlay the apiVersion used
+#! we need to reflect that change as well
+#! So in the below we're ytt overlaying on
+#! the backend: parf of the [THE ROOT INGRESS FOR FALCO]
+#! ----------------------
+#! END OF COMMENT SECTION
+#@ kindIngressMatcher = overlay.subset({"kind": "Ingress"})
+#@ falcosideKickMatcher = overlay.subset({"metadata": {"name": "falco-falcosidekick"}})
+#@overlay/match by=overlay.and_op(kindIngressMatcher, falcosideKickMatcher), expects=1
+---
+spec:
+  rules:
+    #@overlay/match by=lambda i,l,r: "host" in l
+    - host: #@ data.values.clusters[data.values.cluster].falcosidekick.ingress.host
+      http:
+        paths:
+        #@overlay/match by=overlay.all, expects="1+"
+        #@overlay/match-child-defaults missing_ok=True
+        #@overlay/replace
+        - backend:
+            service:
+              name: falco-falcosidekick
+              port:
+                name: http
+          pathType: "ImplementationSpecific"
