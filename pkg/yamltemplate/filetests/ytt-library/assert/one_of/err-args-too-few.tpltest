@@ -1,0 +1,14 @@
+#@ load("@ytt:assert", "assert")
+
+
+one_of: #@ assert.try_to(lambda: assert.one_of())
+check: #@ assert.try_to(lambda: assert.one_of(1,2).check())
+
++++
+
+one_of:
+- null
+- 'assert.one_of: got 0 arguments, want at least 1'
+check:
+- null
+- function lambda missing 1 argument (val)

@@ -1,0 +1,9 @@
+#@assert/validate one_not_null=True
+config:
+  foo: ""
+  bar: ""
+
++++
+
+ERR:
+- "config" (stdin:2) requires "exactly one child not null"; check: multiple values are not null ["foo" "bar"] (by stdin:1)

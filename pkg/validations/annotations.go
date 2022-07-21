@@ -24,6 +24,7 @@ const (
 	KwargMax          string = "max"
 	KwargNotNull      string = "not_null"
 	KwargOneNotNull   string = "one_not_null"
+	KwargOneOf        string = "one_of"
 )
 
 // ProcessAssertValidateAnns checks Assert annotations on data values and stores them on a Node as Validations.
@@ -179,6 +180,12 @@ func newValidationKwargs(kwargs []starlark.Tuple, annPos *filepos.Position) (val
 			default:
 				return validationKwargs{}, fmt.Errorf("expected True or a sequence of keys, but was a '%s'", value[1].Type())
 			}
+		case KwargOneOf:
+			v, ok := value[1].(starlark.Sequence)
+			if !ok {
+				return validationKwargs{}, fmt.Errorf("expected keyword argument %s to be a sequence, but was %s", KwargOneOf, value[1].Type())
+			}
+			processedKwargs.oneOf = v
 		default:
 			return validationKwargs{}, fmt.Errorf("unknown keyword argument %q (at %s)", kwargName, annPos.AsCompactString())
 		}
