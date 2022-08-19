@@ -3,17 +3,19 @@
 
 function NewTemplates(parentEl, templatesOpts) {
   var fileObjects = [];
+  var configBoxesCount = 0;
 
   function resetFiles() {
-    fileObjects = []
+    fileObjects = [];
+    configBoxesCount = 0;
     $(".config-boxes", parentEl).empty();
   }
 
   function addFile(e, opts) { // opts = {text, name, focus}
-    var configId = "config-box-"+fileObjects.length;
+    var configId = "config-box-" + configBoxesCount;
 
     if (!opts.name) {
-      opts.name = "config-" + (fileObjects.length+1) + ".yml";
+      opts.name = "config-" + (configBoxesCount+1) + ".yml";
     }
 
     if (!opts.text) { opts.text = ""; }
@@ -63,6 +65,7 @@ function NewTemplates(parentEl, templatesOpts) {
     });
 
     fileObjects.push(file);
+    configBoxesCount++;
 
     if (opts.focus) {
       file.data.focus();
@@ -184,6 +187,9 @@ function NewExamples(parentEl, templates, exampleLocation, blocker) {
     $.get('/examples/' + id, function(data) {
       var content = JSON.parse(data);
 
+      $('.item.active').removeClass('active');
+      $('.item#item-' + id).addClass("active");
+
       if (opts.preDoneCallback) opts.preDoneCallback(id);
 
       var files = [];
@@ -200,14 +206,20 @@ function NewExamples(parentEl, templates, exampleLocation, blocker) {
     });
   }
 
-  $.get("/examples", function(data) {
+  $.get('/examples', function(data) {
     var exampleSets = JSON.parse(data);
 
     exampleSets.forEach(exampleSet => {
-
+      
       $(".button-container").append(
-          '<button type="button" class="button example-set-button" name="' + exampleSet.id + '">' +
-           exampleSet.display_name + '</button>'
+          '<p>' +
+            '<button type="button" class="button example-set-button" name="' + exampleSet.id + '">' +
+             exampleSet.display_name + '</button>' +
+            '<div class="example-set" id="example-set-' + exampleSet.id + '">' +
+              '<p class="example-set-description">' + exampleSet.description + '</p>' +
+              '<ol class="dropdown-content" id="' + exampleSet.id + '"></ol>' +
+            '</div>' +
+          '</p>'
       );
 
       $('button[name="' + exampleSet.id + '"]', parentEl).click(function () {
@@ -216,19 +228,12 @@ function NewExamples(parentEl, templates, exampleLocation, blocker) {
         return false;
       });
 
-      $(".example-sets").append(
-          '<div class="example-set" id="example-set-' + exampleSet.id + '">' +
-            '<h3 class="example-set-name">' + exampleSet.display_name + '</h3>' +
-            '<p class="example-set-description">' + exampleSet.description + '</p>' +
-            '<ol class="dropdown-content" id="' + exampleSet.id + '"></ol>' +
-          '</div>'
-      );
-
       var examples = exampleSet.examples
       for (var i = 0; i < examples.length; i++) {
         $("ol#" + exampleSet.id, parentEl).append(
-            '<li><a class="item" href="#" data-example-id="' +
-            examples[i].id + '">' + examples[i].display_name + '</a></li>');
+            '<li><a class="item" id="item-' + examples[i].id + '" href="#" data-example-id="' +
+            examples[i].id + '" data-group-id="' + exampleSet.id + '">' + examples[i].display_name +
+            '</a></li>');
       }
 
       $('.dropdown-content .item', parentEl).click(function (e) {
@@ -238,8 +243,14 @@ function NewExamples(parentEl, templates, exampleLocation, blocker) {
         return false;
       });
     })
-    
-    $('button[name="' + exampleSets[0].id + '"]', parentEl).click();
+    var activeID = window.location.hash.replace("#example:", "", 1)
+    if (activeID && activeID != "#playground") {
+      var group = $('.item#item-' + activeID).data("group-id")
+      $('.item#item-' + activeID).addClass("active");
+      $('button[name="' + group + '"]', parentEl).click();
+    } else {
+      $('button[name="' + exampleSets[0].id + '"]', parentEl).click();
+    }
   });
 
   return {
@@ -250,7 +261,7 @@ function NewExamples(parentEl, templates, exampleLocation, blocker) {
 function NewGist(parentEl, templates, gistLocation, blocker) {
   function load(id, opts){
     blocker.on();
-
+    $('.item.active').removeClass('active');
     $.get('https://api.github.com/gists/' + id, function(data) {
       if (opts.preDoneCallback) opts.preDoneCallback(id);
 
