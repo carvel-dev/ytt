@@ -3,17 +3,19 @@
 
 function NewTemplates(parentEl, templatesOpts) {
   var fileObjects = [];
+  var configBoxesCount = 0;
 
   function resetFiles() {
-    fileObjects = []
+    fileObjects = [];
+    configBoxesCount = 0;
     $(".config-boxes", parentEl).empty();
   }
 
   function addFile(e, opts) { // opts = {text, name, focus}
-    var configId = "config-box-"+fileObjects.length;
+    var configId = "config-box-"+configBoxesCount;
 
     if (!opts.name) {
-      opts.name = "config-" + (fileObjects.length+1) + ".yml";
+      opts.name = "config-" + (configBoxesCount+1) + ".yml";
     }
 
     if (!opts.text) { opts.text = ""; }
@@ -63,6 +65,7 @@ function NewTemplates(parentEl, templatesOpts) {
     });
 
     fileObjects.push(file);
+    configBoxesCount++
 
     if (opts.focus) {
       file.data.focus();
