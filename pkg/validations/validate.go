@@ -6,6 +6,7 @@ package validations
 import (
 	"fmt"
 	"reflect"
+	"sort"
 
 	"github.com/k14s/starlark-go/starlark"
 	"github.com/vmware-tanzu/carvel-ytt/pkg/filepos"
@@ -26,6 +27,23 @@ type NodeValidation struct {
 type rule struct {
 	msg       string
 	assertion starlark.Callable
+	priority  int  // how early to run this rule. 0 = order it appears; more positive: earlier, more negative: later.
+	isFatal   bool // whether not satisfying this rule prevents others rules from running.
+}
+
+// byPriority is a sort.Interface that orders rules based on priority
+type byPriority []rule
+
+func (r byPriority) Len() int {
+	return len(r)
+}
+func (r byPriority) Swap(idx, jdx int) {
+	r[idx], r[jdx] = r[jdx], r[idx]
+}
+
+// Less reports whether the rule at "idx" should run _later_ than the rule at "jdx".
+func (r byPriority) Less(idx, jdx int) bool {
+	return r[idx].priority > r[jdx].priority
 }
 
 // validationKwargs represent the optional keyword arguments and their values in a validationRun annotation.
@@ -106,14 +124,21 @@ func (v NodeValidation) Validate(node yamlmeta.Node, thread *starlark.Thread) []
 		return nil
 	}
 
+	sort.Sort(byPriority(v.rules))
 	var failures []error
 	for _, r := range v.rules {
 		result, err := starlark.Call(thread, r.assertion, starlark.Tuple{nodeValue}, []starlark.Tuple{})
 		if err != nil {
 			failures = append(failures, fmt.Errorf("%s (%s) requires %q; %s (by %s)", key, node.GetPosition().AsCompactString(), r.msg, err.Error(), v.position.AsCompactString()))
+			if r.isFatal {
+				break
+			}
 		} else {
 			if !(result == starlark.True) {
 				failures = append(failures, fmt.Errorf("%s (%s) requires %q (by %s)", key, node.GetPosition().AsCompactString(), r.msg, v.position.AsCompactString()))
+				if r.isFatal {
+					break
+				}
 			}
 		}
 	}
@@ -187,6 +212,8 @@ func (v validationKwargs) asRules() []rule {
 		rules = append(rules, rule{
 			msg:       fmt.Sprintf("not null"),
 			assertion: yttlibrary.NewAssertNotNull().CheckFunc(),
+			isFatal:   true,
+			priority:  100,
 		})
 	}
 	if v.oneNotNull != nil {
