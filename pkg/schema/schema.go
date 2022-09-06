@@ -116,7 +116,7 @@ func getType(node yamlmeta.Node) (Type, error) {
 	if err != nil {
 		return nil, NewSchemaError("Invalid schema", err)
 	}
-	typeOfValue, err = getTypeFromAnnotations(anns, node.GetPosition())
+	typeOfValue, err = getTypeFromAnnotations(anns)
 	if err != nil {
 		return nil, NewSchemaError("Invalid schema", err)
 	}
@@ -154,10 +154,6 @@ func getValue(node yamlmeta.Node, t Type) (interface{}, error) {
 		if defaultAnn, ok := ann.(*DefaultAnnotation); ok {
 			return getValueFromAnn(defaultAnn, t)
 		}
-	}
-
-	if _, ok := t.(*AnyType); ok {
-		return node.GetValues()[0], nil
 	}
 
 	return t.GetDefaultValue(), nil

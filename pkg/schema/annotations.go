@@ -658,52 +658,35 @@ func processValidationAnnotation(node yamlmeta.Node) (*ValidationAnnotation, err
 	return nil, nil
 }
 
-func getTypeFromAnnotations(anns []Annotation, pos *filepos.Position) (Type, error) {
+func getTypeFromAnnotations(anns []Annotation) (Type, error) {
 	annsCopy := append([]Annotation{}, anns...)
 
-	if len(annsCopy) == 0 {
-		return nil, nil
-	}
-	if len(annsCopy) == 1 {
-		typeFromAnn, err := annsCopy[0].NewTypeFromAnn()
-		if err != nil {
-			return nil, err
-		}
-		return typeFromAnn, nil
-	}
-
-	var conflictingTypeAnns []Annotation
+	var typeFromAnn Type
 	for _, ann := range annsCopy {
 		switch typedAnn := ann.(type) {
-		case *NullableAnnotation:
-			conflictingTypeAnns = append(conflictingTypeAnns, ann)
 		case *TypeAnnotation:
 			if typedAnn.IsAny() {
-				conflictingTypeAnns = append(conflictingTypeAnns, ann)
+				var err error
+				typeFromAnn, err = typedAnn.NewTypeFromAnn()
+				if err != nil {
+					return nil, err
+				}
+			}
+		case *NullableAnnotation:
+			if typeFromAnn == nil {
+				var err error
+				typeFromAnn, err = typedAnn.NewTypeFromAnn()
+				if err != nil {
+					return nil, err
+				}
+			} else {
+				typeFromAnn.SetDefaultValue(nil)
 			}
 		default:
 			continue
 		}
 	}
 
-	if len(conflictingTypeAnns) > 1 {
-		annPositions := make([]*filepos.Position, len(conflictingTypeAnns))
-		for i, a := range conflictingTypeAnns {
-			annPositions[i] = a.GetPosition()
-		}
-		return nil, schemaAssertionError{
-			annPositions: annPositions,
-			position:     pos,
-			description:  fmt.Sprintf("@%v, and @%v any=True are mutually exclusive", AnnotationNullable, AnnotationType),
-			expected:     fmt.Sprintf("one of %v, or %v any=True", AnnotationNullable, AnnotationType),
-			found:        fmt.Sprintf("both @%v, and @%v any=True annotations", AnnotationNullable, AnnotationType),
-		}
-	}
-
-	typeFromAnn, err := conflictingTypeAnns[0].NewTypeFromAnn()
-	if err != nil {
-		return nil, err
-	}
 	return typeFromAnn, nil
 }
 

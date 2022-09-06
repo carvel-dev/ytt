@@ -331,37 +331,6 @@ schema.yml:
 			assertFails(t, filesToProcess, expectedErr, opts)
 		})
 	})
-	t.Run("when schema/type and schema/nullable annotate a map", func(t *testing.T) {
-		schemaYAML := `#@data/values-schema
----
-#@schema/type any=True
-#@schema/nullable
-foo: 0
-`
-
-		expectedErr := `
-Invalid schema
-==============
-
-@schema/nullable, and @schema/type any=True are mutually exclusive
-schema.yml:
-    |
-  3 | #@schema/type any=True
-  4 | #@schema/nullable
-  5 | foo: 0
-    |
-
-    = found: both @schema/nullable, and @schema/type any=True annotations
-    = expected: one of schema/nullable, or schema/type any=True
-`
-
-		filesToProcess := files.NewSortedFiles([]*files.File{
-			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
-		})
-
-		assertFails(t, filesToProcess, expectedErr, opts)
-
-	})
 
 	t.Run("when schema/default annotation value", func(t *testing.T) {
 		t.Run("is empty", func(t *testing.T) {

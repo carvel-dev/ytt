@@ -1420,6 +1420,33 @@ rendered: #@ data.values
 
 		assertSucceeds(t, filesToProcess, expected, opts)
 	})
+
+	t.Run("when the type is also explicitly set", func(t *testing.T) {
+		schemaYAML := `#@data/values-schema
+---
+#@schema/nullable
+#@schema/type any=True
+foo: 0
+#@schema/type any=True
+#@schema/nullable
+bar: ""
+`
+		templateYAML := `#@ load("@ytt:data", "data")
+---
+rendered: #@ data.values
+`
+		expected := `rendered:
+  foo: null
+  bar: null
+`
+
+		filesToProcess := files.NewSortedFiles([]*files.File{
+			files.MustNewFileFromSource(files.NewBytesSource("schema.yml", []byte(schemaYAML))),
+			files.MustNewFileFromSource(files.NewBytesSource("template.yml", []byte(templateYAML))),
+		})
+
+		assertSucceeds(t, filesToProcess, expected, opts)
+	})
 	t.Run("when any is set on maps and arrays with nested dvs and overlay/replace", func(t *testing.T) {
 		schemaYAML := `#@data/values-schema
 ---
