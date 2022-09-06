@@ -21,7 +21,7 @@ pass:
 fail:
   not_in_enum:
   - null
-  - 'fail: not-in-set not in ["aws", "azure", "vsphere"]'
+  - 'fail: value not in ["aws", "azure", "vsphere"]'
   enum_not_a_sequence:
     int:
     - null

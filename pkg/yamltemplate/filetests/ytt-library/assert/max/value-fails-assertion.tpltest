@@ -5,7 +5,7 @@ max_of_int: #@ assert.max(2).check(3)
 +++
 
 ERR:
-- fail: 3 is more than 2
+- fail: value is more than 2
     in lambda
       assert.max:? | __ytt_tplXXX_set_ctx_type("yaml") (generated)
       stdin:1 | #@ load("@ytt:assert", "assert")
