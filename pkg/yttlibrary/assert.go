@@ -11,7 +11,6 @@ import (
 	"github.com/k14s/starlark-go/syntax"
 	"github.com/vmware-tanzu/carvel-ytt/pkg/experiments"
 	"github.com/vmware-tanzu/carvel-ytt/pkg/orderedmap"
-	"github.com/vmware-tanzu/carvel-ytt/pkg/spell"
 	"github.com/vmware-tanzu/carvel-ytt/pkg/template/core"
 )
 
@@ -359,8 +358,8 @@ func (m AssertModule) oneNotNullCheck(keys starlark.Sequence) core.StarlarkFunc 
 				return nil, fmt.Errorf("check: unexpected error while looking up key %s in dict %s", key, dict)
 			}
 			if !found {
-				hint := m.maybeSuggestKey(key, *dict)
-				return nil, fmt.Errorf("check: %s is not present in value%s", key, hint)
+				// allow schema to catch this (see also https://github.com/vmware-tanzu/carvel-ytt/issues/722)
+				nulls = append(nulls, key.String())
 			}
 			if value == starlark.None {
 				nulls = append(nulls, key.String())
@@ -412,19 +411,6 @@ func (m AssertModule) OneOf(thread *starlark.Thread, f *starlark.Builtin, args s
 
 	maxFunc := NewAssertOneOf(seq)
 	return maxFunc, nil
-}
-
-func (m AssertModule) maybeSuggestKey(given starlark.Value, expected starlark.Dict) string {
-	var keysAsStrings []string
-	for _, k := range expected.Keys() {
-		keysAsStrings = append(keysAsStrings, k.String())
-	}
-	mostSimilarKey := spell.Nearest(given.String(), keysAsStrings)
-	var hint string
-	if mostSimilarKey != "" {
-		hint = fmt.Sprintf(" (did you mean %s?)", mostSimilarKey)
-	}
-	return hint
 }
 
 func (m AssertModule) yamlEncodeDecode(val starlark.Value) (starlark.Value, error) {
