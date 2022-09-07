@@ -16,7 +16,7 @@ Before submitting an issue, please search through open ones to ensure others hav
 
 ## Issues Lifecycle
 
-Once an issue is labeled with `in-progress`, a team member has begun investigating it. We keep `in-progress` issues open until they have been resolved and released. Once released, a comment containing release information will be posted in the issue's thread. 
+Once an issue is labeled with `in-progress`, a team member has begun investigating it. We keep `in-progress` issues open until they have been resolved and released. Once released, a comment containing release information will be posted in the issue's thread.
 
 # Contributor License Agreement
 
