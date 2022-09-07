@@ -6,6 +6,7 @@ package validations
 import (
 	"fmt"
 	"reflect"
+	"sort"
 
 	"github.com/k14s/starlark-go/starlark"
 	"github.com/vmware-tanzu/carvel-ytt/pkg/filepos"
@@ -24,8 +25,20 @@ type NodeValidation struct {
 // A rule contains a string description of what constitutes a valid value,
 // and a function that asserts the rule against an actual value.
 type rule struct {
-	msg       string
-	assertion starlark.Callable
+	msg        string
+	assertion  starlark.Callable
+	priority   int  // how early to run this rule. 0 = order it appears; more positive: earlier, more negative: later.
+	isCritical bool // whether not satisfying this rule prevents others rules from running.
+}
+
+// byPriority sorts (a copy) of "rules" by priority in descending order (i.e. the order in which the rules should run)
+func byPriority(rules []rule) []rule {
+	sorted := make([]rule, len(rules))
+	copy(sorted, rules)
+	sort.SliceStable(sorted, func(idx, jdx int) bool {
+		return sorted[idx].priority > sorted[jdx].priority
+	})
+	return sorted
 }
 
 // validationKwargs represent the optional keyword arguments and their values in a validationRun annotation.
@@ -107,13 +120,19 @@ func (v NodeValidation) Validate(node yamlmeta.Node, thread *starlark.Thread) []
 	}
 
 	var failures []error
-	for _, r := range v.rules {
+	for _, r := range byPriority(v.rules) {
 		result, err := starlark.Call(thread, r.assertion, starlark.Tuple{nodeValue}, []starlark.Tuple{})
 		if err != nil {
 			failures = append(failures, fmt.Errorf("%s (%s) requires %q; %s (by %s)", key, node.GetPosition().AsCompactString(), r.msg, err.Error(), v.position.AsCompactString()))
+			if r.isCritical {
+				break
+			}
 		} else {
 			if !(result == starlark.True) {
 				failures = append(failures, fmt.Errorf("%s (%s) requires %q (by %s)", key, node.GetPosition().AsCompactString(), r.msg, v.position.AsCompactString()))
+				if r.isCritical {
+					break
+				}
 			}
 		}
 	}
@@ -185,8 +204,10 @@ func (v validationKwargs) asRules() []rule {
 	}
 	if v.notNull {
 		rules = append(rules, rule{
-			msg:       fmt.Sprintf("not null"),
-			assertion: yttlibrary.NewAssertNotNull().CheckFunc(),
+			msg:        fmt.Sprintf("not null"),
+			assertion:  yttlibrary.NewAssertNotNull().CheckFunc(),
+			isCritical: true,
+			priority:   100,
 		})
 	}
 	if v.oneNotNull != nil {
