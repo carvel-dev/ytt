@@ -230,7 +230,7 @@ func (m AssertModule) MinLen(thread *starlark.Thread, f *starlark.Builtin, args 
 func NewAssertMin(min starlark.Value) *Assertion {
 	return NewAssertionFromSource(
 		"assert.min",
-		`lambda val: True if yaml.decode(yaml.encode(val)) >= yaml.decode(yaml.encode(min)) else fail("{} is less than {}".format(val, min))`,
+		`lambda val: True if yaml.decode(yaml.encode(val)) >= yaml.decode(yaml.encode(min)) else fail("value is less than {}".format(yaml.decode(yaml.encode(min))))`,
 		starlark.StringDict{"min": min, "yaml": YAMLAPI["yaml"]},
 	)
 }
@@ -251,7 +251,7 @@ func (m AssertModule) Min(thread *starlark.Thread, f *starlark.Builtin, args sta
 func NewAssertMax(max starlark.Value) *Assertion {
 	return NewAssertionFromSource(
 		"assert.max",
-		`lambda val: True if yaml.decode(yaml.encode(val)) <= yaml.decode(yaml.encode(max)) else fail("{} is more than {}".format(val, max))`,
+		`lambda val: True if yaml.decode(yaml.encode(val)) <= yaml.decode(yaml.encode(max)) else fail("value is more than {}".format(yaml.decode(yaml.encode(max))))`,
 		starlark.StringDict{"max": max, "yaml": YAMLAPI["yaml"]},
 	)
 }
@@ -388,7 +388,7 @@ func (m AssertModule) oneNotNullCheck(keys starlark.Sequence) core.StarlarkFunc 
 func NewAssertOneOf(enum starlark.Sequence) *Assertion {
 	return NewAssertionFromSource(
 		"assert.one_of",
-		`lambda val: True if yaml.decode(yaml.encode(val)) in yaml.decode(yaml.encode(enum)) else fail("{} not in {}".format(yaml.decode(yaml.encode(val)), yaml.decode(yaml.encode(enum))))`,
+		`lambda val: True if yaml.decode(yaml.encode(val)) in yaml.decode(yaml.encode(enum)) else fail("value not in {}".format(yaml.decode(yaml.encode(enum))))`,
 		starlark.StringDict{"enum": enum, "yaml": YAMLAPI["yaml"]},
 	)
 }
