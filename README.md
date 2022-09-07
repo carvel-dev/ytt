@@ -13,7 +13,7 @@
 
 `ytt` (pronounced spelled out) is a templating tool that understands YAML structure. It helps you easily configure complex software via reusable templates and user provided values. Ytt includes the following features:
 - Structural templating: understands yaml structure so users can focus on their configuration instead of issues associated with text templating, such as YAML value quoting or manual template indentation
-- Built-in programming language: includes the "fully featured" Python-like programming language Starklark which helps ease the burden of configuring complex software through a richer set of functionality.
+- Built-in programming language: includes the "fully featured" Python-like programming language Starlark which helps ease the burden of configuring complex software through a richer set of functionality.
 - Reusable configuration: You can reuse the same configuration in different environments by applying environment-specific values.
 - Custom validations: coupled with the fast and deterministic execution, allows you to take advantage of faster feedback loops when creating and testing templates
 - Overlays: this advanced configuration helps users manage the customization required for complex software. For more, see [this example](https://carvel.dev/ytt/#example:example-overlay-files) in the online playground.
