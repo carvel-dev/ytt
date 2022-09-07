@@ -16,15 +16,14 @@ import (
 const (
 	AnnotationAssertValidate template.AnnotationName = "assert/validate"
 
-	KwargWhen         string = "when"
-	KwargWhenNullSkip string = "when_null_skip"
-	KwargMinLength    string = "min_len"
-	KwargMaxLength    string = "max_len"
-	KwargMin          string = "min"
-	KwargMax          string = "max"
-	KwargNotNull      string = "not_null"
-	KwargOneNotNull   string = "one_not_null"
-	KwargOneOf        string = "one_of"
+	KwargWhen       string = "when"
+	KwargMinLength  string = "min_len"
+	KwargMaxLength  string = "max_len"
+	KwargMin        string = "min"
+	KwargMax        string = "max"
+	KwargNotNull    string = "not_null"
+	KwargOneNotNull string = "one_not_null"
+	KwargOneOf      string = "one_of"
 )
 
 // ProcessAssertValidateAnns checks Assert annotations on data values and stores them on a Node as Validations.
@@ -138,13 +137,6 @@ func newValidationKwargs(kwargs []starlark.Tuple, annPos *filepos.Position) (val
 				return validationKwargs{}, fmt.Errorf("expected keyword argument %q to be a function, but was %s (at %s)", KwargWhen, value[1].Type(), annPos.AsCompactString())
 			}
 			processedKwargs.when = v
-		case KwargWhenNullSkip:
-			v, ok := value[1].(starlark.Bool)
-			if !ok {
-				return validationKwargs{}, fmt.Errorf("expected keyword argument %q to be a boolean, but was %s (at %s)", KwargWhenNullSkip, value[1].Type(), annPos.AsCompactString())
-			}
-			b := bool(v)
-			processedKwargs.whenNullSkip = &b
 		case KwargMinLength:
 			v, err := starlark.NumberToInt(value[1])
 			if err != nil {

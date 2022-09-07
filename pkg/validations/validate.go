@@ -43,15 +43,14 @@ func byPriority(rules []rule) []rule {
 
 // validationKwargs represent the optional keyword arguments and their values in a validationRun annotation.
 type validationKwargs struct {
-	when         starlark.Callable
-	whenNullSkip *bool         // default: nil if kwarg is not set, True if value is Nullable
-	minLength    *starlark.Int // 0 len("") == 0, this always passes
-	maxLength    *starlark.Int
-	min          starlark.Value
-	max          starlark.Value
-	notNull      bool
-	oneNotNull   starlark.Value // valid values are either starlark.Sequence or starlark.Bool
-	oneOf        starlark.Sequence
+	when       starlark.Callable
+	minLength  *starlark.Int // 0 len("") == 0, this always passes
+	maxLength  *starlark.Int
+	min        starlark.Value
+	max        starlark.Value
+	notNull    bool
+	oneNotNull starlark.Value // valid values are either starlark.Sequence or starlark.Bool
+	oneOf      starlark.Sequence
 }
 
 // Run takes a root Node, and threadName, and validates each Node in the tree.
@@ -139,22 +138,11 @@ func (v NodeValidation) Validate(node yamlmeta.Node, thread *starlark.Thread) []
 	return failures
 }
 
-// DefaultNullSkipTrue sets the kwarg when_null_skip to true if not set explicitly.
-func (v *NodeValidation) DefaultNullSkipTrue() {
-	if v.kwargs.whenNullSkip == nil {
-		t := true
-		v.kwargs.whenNullSkip = &t
-	}
-}
-
 // shouldValidate uses validationKwargs and the node's value to run checks on the value. If the value satisfies the checks,
 // then the NodeValidation's rules should execute, otherwise the rules will be skipped.
 func (v validationKwargs) shouldValidate(value starlark.Value, thread *starlark.Thread) (bool, error) {
-	// avoid nil pointer errors: handle `when_null_skip=`, first
 	_, valueIsNull := value.(starlark.NoneType)
-	nullIsAllowed := !v.notNull
-	whenNullSkip := v.whenNullSkip != nil && *v.whenNullSkip
-	if valueIsNull && nullIsAllowed && whenNullSkip {
+	if valueIsNull && !v.notNull {
 		return false, nil
 	}
 

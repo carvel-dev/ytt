@@ -1,4 +1,4 @@
-#@assert/validate ("", lambda v: fail("fails")), when_null_skip=True
+#@assert/validate ("", lambda v: fail("fails"))
 foo: null
 
 +++

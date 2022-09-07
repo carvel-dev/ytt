@@ -1,4 +1,4 @@
-#@assert/validate when_null_skip=True, not_null=True
+#@assert/validate not_null=True
 foo: null
 
 +++

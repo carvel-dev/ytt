@@ -1573,7 +1573,7 @@ foo:
 		assertFailsWithSchemaAndDataValues(t, schemaYAML, valuesYAML, expectedErrMsg)
 	})
 
-	t.Run("when @schema/nullable, skips if value is null (unless either not_null=True or when_null_skip=False)", func(t *testing.T) {
+	t.Run("when @schema/nullable, skips if value is null (unless not_null=True)", func(t *testing.T) {
 		schemaYAML := `#@data/values-schema
 ---
 #@schema/nullable
@@ -1582,15 +1582,11 @@ foo: 0
 #@schema/nullable
 #@schema/validation ("bar > 2", lambda v: True if v == None else v > 2), not_null=True
 bar: 0
-#@schema/nullable
-#@schema/validation ("qux > 2", lambda v: v > 2), when_null_skip=False
-qux: 0
 `
 		valuesYAML := ``
 
 		expectedErrMsg := `One or more data values were invalid:
 - "bar" (schema.yaml:8) requires "not null"; fail: value is null (by schema.yaml:7)
-- "qux" (schema.yaml:11) requires "qux > 2"; NoneType > int not implemented (by schema.yaml:10)
 `
 		assertFailsWithSchemaAndDataValues(t, schemaYAML, valuesYAML, expectedErrMsg)
 	})
