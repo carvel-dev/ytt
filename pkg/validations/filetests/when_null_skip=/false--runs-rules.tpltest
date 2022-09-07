@@ -1,7 +1,0 @@
-#@assert/validate ("", lambda v: fail("rules were run")), when_null_skip=False
-foo: null
-
-+++
-
-ERR:
-- "foo" (stdin:2) requires ""; fail: rules were run (by stdin:1)
