@@ -6,4 +6,4 @@ config:
 +++
 
 ERR:
-- "config" (stdin:2) requires "exactly one child not null"; check: multiple values are not null ["foo" "bar"] (by stdin:1)
+- .config (stdin:2) requires "exactly one child not null"; check: multiple values are not null ["foo" "bar"] (by stdin:1)

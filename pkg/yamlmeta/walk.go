@@ -3,6 +3,8 @@
 
 package yamlmeta
 
+import "fmt"
+
 // Visitor performs an operation on the given Node while traversing the AST.
 // Typically defines the action taken during a Walk().
 type Visitor interface {
@@ -33,25 +35,36 @@ func Walk(n Node, v Visitor) error {
 //
 // Typically defines the action taken during a WalkWithParent().
 type VisitorWithParent interface {
-	VisitWithParent(Node, Node) error
+	VisitWithParent(value Node, parent Node, path string) error
 }
 
 // WalkWithParent traverses the tree starting at `n`, recursively, depth-first, invoking `v` on each node and including
 //   a reference to "node"s parent node as well.
 // if `v` returns non-nil error, the traversal is aborted.
-func WalkWithParent(node Node, parent Node, v VisitorWithParent) error {
-	err := v.VisitWithParent(node, parent)
+func WalkWithParent(node Node, parent Node, path string, v VisitorWithParent) error {
+	err := v.VisitWithParent(node, parent, path)
 	if err != nil {
 		return err
 	}
 
-	for _, child := range node.GetValues() {
+	for idx, child := range node.GetValues() {
 		if childNode, ok := child.(Node); ok {
-			err = WalkWithParent(childNode, node, v)
+			err = WalkWithParent(childNode, node, path+keyOrIdxPart(childNode, idx), v)
 			if err != nil {
 				return err
 			}
 		}
 	}
 	return nil
+}
+
+func keyOrIdxPart(node Node, idx int) string {
+	switch typedNode := node.(type) {
+	case *MapItem:
+		return fmt.Sprintf(".%s", typedNode.Key)
+	case *ArrayItem:
+		return fmt.Sprintf("[%d]", idx)
+	default:
+		return ""
+	}
 }

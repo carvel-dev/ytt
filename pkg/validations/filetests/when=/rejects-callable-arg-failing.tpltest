@@ -6,4 +6,4 @@ foo: bar
 +++
 
 ERR:
-Validating "foo": Failure evaluating when=: fail: error from within lambda
+Validating .foo: Failure evaluating when=: fail: error from within lambda

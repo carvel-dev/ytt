@@ -4,4 +4,4 @@ value: "123456"
 +++
 
 ERR:
-- "value" (stdin:2) requires "length less than or equal to 5"; fail: length of 6 is more than 5 (by stdin:1)
+- .value (stdin:2) requires "length less than or equal to 5"; fail: length of 6 is more than 5 (by stdin:1)

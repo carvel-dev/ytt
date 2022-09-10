@@ -4,4 +4,4 @@ foo: ""
 +++
 
 ERR:
-- "foo" (stdin:2) requires ""; fail: rules were run (by stdin:1)
+- .foo (stdin:2) requires ""; fail: rules were run (by stdin:1)

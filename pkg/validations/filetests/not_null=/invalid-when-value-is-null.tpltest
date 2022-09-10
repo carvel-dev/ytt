@@ -4,4 +4,4 @@ value: null
 +++
 
 ERR:
-- "value" (stdin:2) requires "not null"; fail: value is null (by stdin:1)
+- .value (stdin:2) requires "not null"; fail: value is null (by stdin:1)

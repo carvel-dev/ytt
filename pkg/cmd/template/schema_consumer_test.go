@@ -1537,7 +1537,7 @@ foo: 0
 		valuesYAML := `foo: 1`
 
 		expectedErrMsg := `One or more data values were invalid:
-- document (schema.yaml:3) requires "foo > 2" (by schema.yaml:2)
+-  (schema.yaml:3) requires "foo > 2" (by schema.yaml:2)
 `
 		assertFailsWithSchemaAndDataValues(t, schemaYAML, valuesYAML, expectedErrMsg)
 	})
@@ -1550,7 +1550,7 @@ foo: 0
 		valuesYAML := `foo: 1`
 
 		expectedErrMsg := `One or more data values were invalid:
-- "foo" (values.yaml:1) requires "foo > 2" (by schema.yaml:3)
+- .foo (values.yaml:1) requires "foo > 2" (by schema.yaml:3)
 `
 		assertFailsWithSchemaAndDataValues(t, schemaYAML, valuesYAML, expectedErrMsg)
 	})
@@ -1567,8 +1567,8 @@ foo:
 `
 
 		expectedErrMsg := `One or more data values were invalid:
-- array item (values.yaml:2) requires "foo > 2" (by schema.yaml:4)
-- array item (values.yaml:3) requires "foo > 2" (by schema.yaml:4)
+- .foo[0] (values.yaml:2) requires "foo > 2" (by schema.yaml:4)
+- .foo[1] (values.yaml:3) requires "foo > 2" (by schema.yaml:4)
 `
 		assertFailsWithSchemaAndDataValues(t, schemaYAML, valuesYAML, expectedErrMsg)
 	})
@@ -1586,7 +1586,7 @@ bar: 0
 		valuesYAML := ``
 
 		expectedErrMsg := `One or more data values were invalid:
-- "bar" (schema.yaml:8) requires "not null"; fail: value is null (by schema.yaml:7)
+- .bar (schema.yaml:8) requires "not null"; fail: value is null (by schema.yaml:7)
 `
 		assertFailsWithSchemaAndDataValues(t, schemaYAML, valuesYAML, expectedErrMsg)
 	})
@@ -1601,7 +1601,7 @@ foo: 0
 		valuesYAML := `foo: 1`
 
 		expectedErrMsg := `One or more data values were invalid:
-- "foo" (values.yaml:1) requires "foo > 2" (by schema.yaml:4)
+- .foo (values.yaml:1) requires "foo > 2" (by schema.yaml:4)
 `
 		assertFailsWithSchemaAndDataValues(t, schemaYAML, valuesYAML, expectedErrMsg)
 	})
@@ -1623,7 +1623,7 @@ new: ""
 			valuesYAML := `existing: foo`
 
 			expectedErrMsg := `One or more data values were invalid:
-- "new" (schema.yaml:11) requires "non-empty" (by schema.yaml:10)
+- .new (schema.yaml:11) requires "non-empty" (by schema.yaml:10)
 `
 			assertFailsWithSchemaAndDataValues(t, schemaYAML, valuesYAML, expectedErrMsg)
 		})
@@ -1644,7 +1644,7 @@ existing: foo
 `
 
 			expectedErrMsg := `One or more data values were invalid:
-- "existing" (values.yaml:2) requires "a long string" (by schema.yaml:4)
+- .existing (values.yaml:2) requires "a long string" (by schema.yaml:4)
 `
 			assertFailsWithSchemaAndDataValues(t, schemaYAML, valuesYAML, expectedErrMsg)
 		})
@@ -1674,9 +1674,9 @@ bar:
 
 		// none of the rules are from values.yml:
 		expectedErr := `One or more data values were invalid:
-- document (schema.yml:3) requires "has 3 map items" (by schema.yml:2)
-- "foo" (values.yml:5) requires "non-zero" (by schema.yml:4)
-- "bar" (schema.yml:7) requires "has 2 items" (by schema.yml:6)
+-  (schema.yml:3) requires "has 3 map items" (by schema.yml:2)
+- .foo (values.yml:5) requires "non-zero" (by schema.yml:4)
+- .bar (schema.yml:7) requires "has 2 items" (by schema.yml:6)
 `
 
 		opts := &cmdtpl.Options{}
@@ -1703,10 +1703,10 @@ foo:
 `
 
 		expectedErr := `One or more data values were invalid:
-- array item (values.yml:5) requires "non-zero" (by schema.yml:4)
-- array item (values.yml:5) requires "be odd" (by values.yml:4)
-- array item (values.yml:7) requires "non-zero" (by schema.yml:4)
-- array item (values.yml:7) requires "be even" (by values.yml:6)
+- .foo[0] (values.yml:5) requires "non-zero" (by schema.yml:4)
+- .foo[0] (values.yml:5) requires "be odd" (by values.yml:4)
+- .foo[1] (values.yml:7) requires "non-zero" (by schema.yml:4)
+- .foo[1] (values.yml:7) requires "be even" (by values.yml:6)
 `
 
 		opts := &cmdtpl.Options{}

@@ -6,4 +6,4 @@ value:
 +++
 
 ERR:
-- "value" (stdin:2) requires "a value greater or equal to 4"; dict >= int not implemented (by stdin:1)
+- .value (stdin:2) requires "a value greater or equal to 4"; dict >= int not implemented (by stdin:1)

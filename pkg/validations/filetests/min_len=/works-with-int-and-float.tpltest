@@ -6,5 +6,5 @@ bar: "shorter than 20"
 +++
 
 ERR:
-- "foo" (stdin:2) requires "length greater or equal to 20"; fail: length of 15 is less than 20 (by stdin:1)
-- "bar" (stdin:4) requires "length greater or equal to 20"; fail: length of 15 is less than 20 (by stdin:3)
+- .foo (stdin:2) requires "length greater or equal to 20"; fail: length of 15 is less than 20 (by stdin:1)
+- .bar (stdin:4) requires "length greater or equal to 20"; fail: length of 15 is less than 20 (by stdin:3)

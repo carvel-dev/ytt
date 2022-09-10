@@ -63,7 +63,7 @@ func Run(node yamlmeta.Node, threadName string) (Check, error) {
 	}
 
 	validation := newValidationRun(threadName, node)
-	err := yamlmeta.WalkWithParent(node, nil, validation)
+	err := yamlmeta.WalkWithParent(node, nil, "", validation)
 	if err != nil {
 		return Check{}, err
 	}
@@ -85,16 +85,16 @@ func newValidationRun(threadName string, root yamlmeta.Node) *validationRun {
 // Runs those validations, collecting any violations
 //
 // This visitor stores error(violations) in the validationRun and returns nil.
-func (a *validationRun) VisitWithParent(node yamlmeta.Node, parent yamlmeta.Node) error {
+func (a *validationRun) VisitWithParent(value yamlmeta.Node, parent yamlmeta.Node, path string) error {
 	// get rules in node's meta
-	validations := Get(node)
+	validations := Get(value)
 
 	if validations == nil {
 		return nil
 	}
 	for _, v := range validations {
 		// possible refactor to check validationRun kwargs prior to validating rules
-		violations, err := v.Validate(node, parent, a.root, a.thread)
+		violations, err := v.Validate(value, parent, a.root, path, a.thread)
 		if err != nil {
 			return err
 		}
@@ -111,14 +111,14 @@ func (a *validationRun) VisitWithParent(node yamlmeta.Node, parent yamlmeta.Node
 //
 // Returns an error if the assertion returns False (not-None), or assert.fail()s.
 // Otherwise, returns nil.
-func (v NodeValidation) Validate(node yamlmeta.Node, parent yamlmeta.Node, root yamlmeta.Node, thread *starlark.Thread) ([]error, error) {
-	nodeKey, nodeValue := v.newKeyAndStarlarkValue(node)
-	_, parentValue := v.newKeyAndStarlarkValue(parent)
-	_, rootValue := v.newKeyAndStarlarkValue(root)
+func (v NodeValidation) Validate(node yamlmeta.Node, parent yamlmeta.Node, root yamlmeta.Node, path string, thread *starlark.Thread) ([]error, error) {
+	nodeValue := v.newStarlarkValue(node)
+	parentValue := v.newStarlarkValue(parent)
+	rootValue := v.newStarlarkValue(root)
 
 	executeRules, err := v.kwargs.shouldValidate(nodeValue, parentValue, thread, rootValue)
 	if err != nil {
-		return nil, fmt.Errorf("Validating %s: %s", nodeKey, err)
+		return nil, fmt.Errorf("Validating %s: %s", path, err)
 	}
 	if !executeRules {
 		return nil, nil
@@ -128,13 +128,13 @@ func (v NodeValidation) Validate(node yamlmeta.Node, parent yamlmeta.Node, root 
 	for _, rul := range byPriority(v.rules) {
 		result, err := starlark.Call(thread, rul.assertion, starlark.Tuple{nodeValue}, []starlark.Tuple{})
 		if err != nil {
-			violations = append(violations, fmt.Errorf("%s (%s) requires %q; %s (by %s)", nodeKey, node.GetPosition().AsCompactString(), rul.msg, err.Error(), v.position.AsCompactString()))
+			violations = append(violations, fmt.Errorf("%s (%s) requires %q; %s (by %s)", path, node.GetPosition().AsCompactString(), rul.msg, err.Error(), v.position.AsCompactString()))
 			if rul.isCritical {
 				break
 			}
 		} else {
 			if !(result == starlark.True) {
-				violations = append(violations, fmt.Errorf("%s (%s) requires %q (by %s)", nodeKey, node.GetPosition().AsCompactString(), rul.msg, v.position.AsCompactString()))
+				violations = append(violations, fmt.Errorf("%s (%s) requires %q (by %s)", path, node.GetPosition().AsCompactString(), rul.msg, v.position.AsCompactString()))
 				if rul.isCritical {
 					break
 				}
@@ -289,29 +289,22 @@ func (c *Check) HasViolations() bool {
 	return len(c.Violations) > 0
 }
 
-func (v NodeValidation) newKeyAndStarlarkValue(node yamlmeta.Node) (string, starlark.Value) {
-	var key string
+func (v NodeValidation) newStarlarkValue(node yamlmeta.Node) starlark.Value {
 	var nodeValue starlark.Value
 	switch typedNode := node.(type) {
 	case *yamlmeta.DocumentSet:
-		key = yamlmeta.TypeName(typedNode)
 		nodeValue = yamltemplate.NewGoValueWithYAML(typedNode).AsStarlarkValue()
 	case *yamlmeta.Array:
-		key = yamlmeta.TypeName(typedNode)
 		nodeValue = yamltemplate.NewGoValueWithYAML(typedNode).AsStarlarkValue()
 	case *yamlmeta.Map:
-		key = yamlmeta.TypeName(typedNode)
 		nodeValue = yamltemplate.NewGoValueWithYAML(typedNode).AsStarlarkValue()
 	case *yamlmeta.Document:
-		key = yamlmeta.TypeName(typedNode)
 		nodeValue = yamltemplate.NewGoValueWithYAML(typedNode.Value).AsStarlarkValue()
 	case *yamlmeta.MapItem:
-		key = fmt.Sprintf("%q", typedNode.Key)
 		nodeValue = yamltemplate.NewGoValueWithYAML(typedNode.Value).AsStarlarkValue()
 	case *yamlmeta.ArrayItem:
-		key = yamlmeta.TypeName(typedNode)
 		nodeValue = yamltemplate.NewGoValueWithYAML(typedNode.Value).AsStarlarkValue()
 	}
 
-	return key, nodeValue
+	return nodeValue
 }

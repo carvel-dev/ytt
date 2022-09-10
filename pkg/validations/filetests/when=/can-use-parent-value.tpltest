@@ -8,4 +8,4 @@ counters:
 +++
 
 ERR:
-- "foo" (stdin:4) requires "fail"; fail: fails (by stdin:3)
+- .counters.foo (stdin:4) requires "fail"; fail: fails (by stdin:3)
