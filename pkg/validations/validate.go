@@ -57,34 +57,35 @@ type validationKwargs struct {
 //
 // When a Node's value is invalid, the errors are collected and returned in a Check.
 // Otherwise, returns empty Check and nil error.
-func Run(node yamlmeta.Node, threadName string) Check {
+func Run(node yamlmeta.Node, threadName string) (Check, error) {
 	if node == nil {
-		return Check{}
+		return Check{}, nil
 	}
 
-	validation := newValidationRun(threadName)
-	err := yamlmeta.Walk(node, validation)
+	validation := newValidationRun(threadName, node)
+	err := yamlmeta.WalkWithParent(node, nil, validation)
 	if err != nil {
-		return Check{}
+		return Check{}, err
 	}
 
-	return validation.chk
+	return validation.chk, nil
 }
 
 type validationRun struct {
 	thread *starlark.Thread
 	chk    Check
+	root   yamlmeta.Node
 }
 
-func newValidationRun(threadName string) *validationRun {
-	return &validationRun{thread: &starlark.Thread{Name: threadName}, chk: Check{[]error{}}}
+func newValidationRun(threadName string, root yamlmeta.Node) *validationRun {
+	return &validationRun{thread: &starlark.Thread{Name: threadName}, chk: Check{[]error{}}, root: root}
 }
 
-// Visit if `node` has validations in its meta.
-// Runs the validations, any violations from executing the assertions are collected.
+// VisitWithParent if `node` has validations in its meta.
+// Runs those validations, collecting any violations
 //
 // This visitor stores error(violations) in the validationRun and returns nil.
-func (a *validationRun) Visit(node yamlmeta.Node) error {
+func (a *validationRun) VisitWithParent(node yamlmeta.Node, parent yamlmeta.Node) error {
 	// get rules in node's meta
 	validations := Get(node)
 
@@ -93,9 +94,12 @@ func (a *validationRun) Visit(node yamlmeta.Node) error {
 	}
 	for _, v := range validations {
 		// possible refactor to check validationRun kwargs prior to validating rules
-		errs := v.Validate(node, a.thread)
-		if errs != nil {
-			a.chk.Violations = append(a.chk.Violations, errs...)
+		violations, err := v.Validate(node, parent, a.root, a.thread)
+		if err != nil {
+			return err
+		}
+		if violations != nil {
+			a.chk.Violations = append(a.chk.Violations, violations...)
 		}
 	}
 
@@ -107,49 +111,56 @@ func (a *validationRun) Visit(node yamlmeta.Node) error {
 //
 // Returns an error if the assertion returns False (not-None), or assert.fail()s.
 // Otherwise, returns nil.
-func (v NodeValidation) Validate(node yamlmeta.Node, thread *starlark.Thread) []error {
-	key, nodeValue := v.newKeyAndStarlarkValue(node)
+func (v NodeValidation) Validate(node yamlmeta.Node, parent yamlmeta.Node, root yamlmeta.Node, thread *starlark.Thread) ([]error, error) {
+	nodeKey, nodeValue := v.newKeyAndStarlarkValue(node)
+	_, parentValue := v.newKeyAndStarlarkValue(parent)
+	_, rootValue := v.newKeyAndStarlarkValue(root)
 
-	executeRules, err := v.kwargs.shouldValidate(nodeValue, thread)
+	executeRules, err := v.kwargs.shouldValidate(nodeValue, parentValue, thread, rootValue)
 	if err != nil {
-		return []error{err}
+		return nil, fmt.Errorf("Validating %s: %s", nodeKey, err)
 	}
 	if !executeRules {
-		return nil
+		return nil, nil
 	}
 
-	var failures []error
-	for _, r := range byPriority(v.rules) {
-		result, err := starlark.Call(thread, r.assertion, starlark.Tuple{nodeValue}, []starlark.Tuple{})
+	var violations []error
+	for _, rul := range byPriority(v.rules) {
+		result, err := starlark.Call(thread, rul.assertion, starlark.Tuple{nodeValue}, []starlark.Tuple{})
 		if err != nil {
-			failures = append(failures, fmt.Errorf("%s (%s) requires %q; %s (by %s)", key, node.GetPosition().AsCompactString(), r.msg, err.Error(), v.position.AsCompactString()))
-			if r.isCritical {
+			violations = append(violations, fmt.Errorf("%s (%s) requires %q; %s (by %s)", nodeKey, node.GetPosition().AsCompactString(), rul.msg, err.Error(), v.position.AsCompactString()))
+			if rul.isCritical {
 				break
 			}
 		} else {
 			if !(result == starlark.True) {
-				failures = append(failures, fmt.Errorf("%s (%s) requires %q (by %s)", key, node.GetPosition().AsCompactString(), r.msg, v.position.AsCompactString()))
-				if r.isCritical {
+				violations = append(violations, fmt.Errorf("%s (%s) requires %q (by %s)", nodeKey, node.GetPosition().AsCompactString(), rul.msg, v.position.AsCompactString()))
+				if rul.isCritical {
 					break
 				}
 			}
 		}
 	}
-	return failures
+	return violations, nil
 }
 
 // shouldValidate uses validationKwargs and the node's value to run checks on the value. If the value satisfies the checks,
 // then the NodeValidation's rules should execute, otherwise the rules will be skipped.
-func (v validationKwargs) shouldValidate(value starlark.Value, thread *starlark.Thread) (bool, error) {
+func (v validationKwargs) shouldValidate(value starlark.Value, parent starlark.Value, thread *starlark.Thread, root starlark.Value) (bool, error) {
 	_, valueIsNull := value.(starlark.NoneType)
 	if valueIsNull && !v.notNull {
 		return false, nil
 	}
 
 	if v.when != nil && !reflect.ValueOf(v.when).IsNil() {
-		result, err := starlark.Call(thread, v.when, starlark.Tuple{value}, []starlark.Tuple{})
+		kwargs, err := v.populateArgs(value, parent, root)
 		if err != nil {
-			return false, err
+			return false, fmt.Errorf("Failed to evaluate when=: %s", err)
+		}
+
+		result, err := starlark.Call(thread, v.when, starlark.Tuple{}, kwargs)
+		if err != nil {
+			return false, fmt.Errorf("Failure evaluating when=: %s", err)
 		}
 
 		resultBool, isBool := result.(starlark.Bool)
@@ -161,6 +172,30 @@ func (v validationKwargs) shouldValidate(value starlark.Value, thread *starlark.
 	}
 
 	return true, nil
+}
+
+func (v validationKwargs) populateArgs(value starlark.Value, parent starlark.Value, root starlark.Value) ([]starlark.Tuple, error) {
+	kwargs := []starlark.Tuple{}
+	if whenFunc, isFunc := v.when.(*starlark.Function); isFunc {
+		for idx := 0; idx < whenFunc.NumParams(); idx++ {
+			name, _ := whenFunc.Param(idx)
+			switch name {
+			case "v", "val", "value":
+				kwargs = append(kwargs, starlark.Tuple{starlark.String(name), value})
+			case "p", "par", "parent":
+				kwargs = append(kwargs, starlark.Tuple{starlark.String(name), parent})
+			case "r", "root", "d", "doc", "document":
+				// When validation support is extended beyond Data Values and into documents in general, differentiate
+				//   between "root" and "document":
+				//   - since data values validation occurs on a document, "root" and "document" are synonyms, right now.
+				//   - once validations can be defined in templates, then "root" will be a DocSet.
+				kwargs = append(kwargs, starlark.Tuple{starlark.String(name), root})
+			default:
+				return nil, fmt.Errorf("Unknown argument (%s) expected one of [value, parent, document]", name)
+			}
+		}
+	}
+	return kwargs, nil
 }
 
 func (v validationKwargs) asRules() []rule {
@@ -258,8 +293,15 @@ func (v NodeValidation) newKeyAndStarlarkValue(node yamlmeta.Node) (string, star
 	var key string
 	var nodeValue starlark.Value
 	switch typedNode := node.(type) {
-	case *yamlmeta.DocumentSet, *yamlmeta.Array, *yamlmeta.Map:
-		panic(fmt.Sprintf("validationRun at %s - not supported on %s at %s", v.position.AsCompactString(), yamlmeta.TypeName(node), node.GetPosition().AsCompactString()))
+	case *yamlmeta.DocumentSet:
+		key = yamlmeta.TypeName(typedNode)
+		nodeValue = yamltemplate.NewGoValueWithYAML(typedNode).AsStarlarkValue()
+	case *yamlmeta.Array:
+		key = yamlmeta.TypeName(typedNode)
+		nodeValue = yamltemplate.NewGoValueWithYAML(typedNode).AsStarlarkValue()
+	case *yamlmeta.Map:
+		key = yamlmeta.TypeName(typedNode)
+		nodeValue = yamltemplate.NewGoValueWithYAML(typedNode).AsStarlarkValue()
 	case *yamlmeta.Document:
 		key = yamlmeta.TypeName(typedNode)
 		nodeValue = yamltemplate.NewGoValueWithYAML(typedNode.Value).AsStarlarkValue()

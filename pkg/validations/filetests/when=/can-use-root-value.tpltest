@@ -1,0 +1,11 @@
+enabled: true
+counters:
+  #@assert/validate ("fail", lambda v: fail("fails")), when=lambda root: not root[0]["enabled"]
+  foo: ""
+  #@assert/validate ("fail", lambda v: fail("fails")), when=lambda root, document: root[0]["enabled"] and len(root[0]["counters"]) == 2
+  bar: ""
+
++++
+
+ERR:
+- "bar" (stdin:6) requires "fail"; fail: fails (by stdin:5)

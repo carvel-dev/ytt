@@ -64,7 +64,12 @@ func EvalAndValidateTemplate(ft filetests.FileTests) filetests.EvaluateTemplate 
 			return nil, filetests.NewTestErr(err, fmt.Errorf("Failed to process @assert/validate annotations: %s", err))
 		}
 
-		chk := validations.Run(result.(yamlmeta.Node), "template-test")
+		chk, err := validations.Run(result.(yamlmeta.Node), "template-test")
+		if err != nil {
+			err := fmt.Errorf("\n%s", err)
+			return nil, filetests.NewTestErr(err, fmt.Errorf("Unexpected error (did you include the \"ERR:\" marker in the output?):%v", err))
+		}
+		// TODO: proper error handling!
 		if chk.HasViolations() {
 			err := fmt.Errorf("\n%s", chk.Error())
 			return nil, filetests.NewTestErr(err, fmt.Errorf("Unexpected violations (did you include the \"ERR:\" marker in the output?):%v", err))

@@ -1,9 +1,9 @@
 #@ load("@ytt:assert", "assert")
 
-#@assert/validate min_len=5, when=lambda v: fail("error while checking when=")
+#@assert/validate min_len=5, when=lambda v: fail("error from within lambda")
 foo: bar
 
 +++
 
 ERR:
-- fail: error while checking when=
+Validating "foo": Failure evaluating when=: fail: error from within lambda

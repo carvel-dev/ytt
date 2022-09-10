@@ -101,6 +101,9 @@ func (ll *LibraryExecution) Values(valuesOverlays []*datavalues.Envelope, schema
 
 	if !ll.skipDataValuesValidation {
 		err = ll.validateValues(values)
+		if err != nil {
+			return nil, nil, fmt.Errorf("Validating final data values: %s", err)
+		}
 	}
 	return values, libValues, err
 }
@@ -121,7 +124,7 @@ func (ll *LibraryExecution) validateValues(values *datavalues.Envelope) error {
 		return err
 	}
 
-	assertCheck := validations.Run(values.Doc, "run-data-values-validations")
+	assertCheck, err := validations.Run(values.Doc, "run-data-values-validations")
 	if err != nil {
 		return err
 	}

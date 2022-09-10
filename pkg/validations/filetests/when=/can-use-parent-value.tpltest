@@ -1,0 +1,11 @@
+counters:
+  enabled: true
+  #@assert/validate ("fail", lambda v: fail("fails")), when=lambda par: par["enabled"]
+  foo: ""
+  #@assert/validate ("fail", lambda v: fail("fails")), when=lambda par: not par["enabled"]
+  bar: ""
+
++++
+
+ERR:
+- "foo" (stdin:4) requires "fail"; fail: fails (by stdin:3)
