@@ -1,0 +1,82 @@
+#@ load("@ytt:template", "template")
+#@ load("@ytt:overlay", "overlay")
+
+#@ def test1_left():
+---
+item: 1
+---
+item: 2
+---
+item: 3
+#@ end
+
+#@ def is_item(indexOrKey, left, right):
+#@   return "item" in left
+#@ end
+
+#@ def insert_function(left, right):
+#@   return {"left": left, "right": right, "combined": {"item": left["item"] + right["item"]}}
+#@ end
+
+#@ def test1_right():
+#@overlay/match by=is_item, expects=3
+#@overlay/insert before=True, via=insert_function
+---
+item: 100
+#@overlay/match by=is_item, expects=3
+#@overlay/insert after=True, via=insert_function
+---
+item: 200
+#@ end
+
+--- #@ template.replace(overlay.apply(test1_left(), test1_right()))
+
++++
+
+left:
+  item: 1
+right:
+  item: 100
+combined:
+  item: 101
+---
+item: 1
+---
+left:
+  item: 1
+right:
+  item: 200
+combined:
+  item: 201
+---
+left:
+  item: 2
+right:
+  item: 100
+combined:
+  item: 102
+---
+item: 2
+---
+left:
+  item: 2
+right:
+  item: 200
+combined:
+  item: 202
+---
+left:
+  item: 3
+right:
+  item: 100
+combined:
+  item: 103
+---
+item: 3
+---
+left:
+  item: 3
+right:
+  item: 200
+combined:
+  item: 203
