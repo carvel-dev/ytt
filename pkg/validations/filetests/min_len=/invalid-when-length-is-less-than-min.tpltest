@@ -4,4 +4,8 @@ value: "1234"
 +++
 
 ERR:
-- .value (stdin:2) requires "length greater or equal to 5"; fail: length of 4 is less than 5 (by stdin:1)
+  value
+    from: stdin:2
+    - must be: length >= 5 (by: stdin:1)
+      found: length = 4
+

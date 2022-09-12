@@ -1,0 +1,11 @@
+#@assert/validate ("", lambda v: fail("rules were run"))
+foo: ""
+
++++
+
+ERR:
+  foo
+    from: stdin:2
+    - must be:  (by: stdin:1)
+      found: rules were run
+

@@ -14,6 +14,6 @@ multiple_values_are_not_null: #@ assert.one_not_null().check(multiple_values_are
 +++
 
 ERR:
-- check: multiple values are not null ["foo" "qux"]
+- check: ["foo", "qux"] are not null
     in <toplevel>
       stdin:12 | multiple_values_are_not_null: #@ assert.one_not_null().check(multiple_values_are_not_null())

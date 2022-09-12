@@ -6,5 +6,13 @@ bar: "longer than 10"
 +++
 
 ERR:
-- .foo (stdin:2) requires "length less than or equal to 10"; fail: length of 14 is more than 10 (by stdin:1)
-- .bar (stdin:4) requires "length less than or equal to 10"; fail: length of 14 is more than 10 (by stdin:3)
+  foo
+    from: stdin:2
+    - must be: length <= 10 (by: stdin:1)
+      found: length = 14
+
+  bar
+    from: stdin:4
+    - must be: length <= 10 (by: stdin:3)
+      found: length = 14
+

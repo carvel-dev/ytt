@@ -70,8 +70,8 @@ func EvalAndValidateTemplate(ft filetests.FileTests) filetests.EvaluateTemplate 
 			return nil, filetests.NewTestErr(err, fmt.Errorf("Unexpected error (did you include the \"ERR:\" marker in the output?):%v", err))
 		}
 		// TODO: proper error handling!
-		if chk.HasViolations() {
-			err := fmt.Errorf("\n%s", chk.Error())
+		if chk.HasInvalidations() {
+			err := fmt.Errorf("\n%s", chk.ResultsAsString())
 			return nil, filetests.NewTestErr(err, fmt.Errorf("Unexpected violations (did you include the \"ERR:\" marker in the output?):%v", err))
 		}
 

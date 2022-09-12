@@ -49,7 +49,7 @@ func WalkWithParent(node Node, parent Node, path string, v VisitorWithParent) er
 
 	for idx, child := range node.GetValues() {
 		if childNode, ok := child.(Node); ok {
-			err = WalkWithParent(childNode, node, path+keyOrIdxPart(childNode, idx), v)
+			err = WalkWithParent(childNode, node, pathToNode(path, childNode, idx), v)
 			if err != nil {
 				return err
 			}
@@ -58,13 +58,16 @@ func WalkWithParent(node Node, parent Node, path string, v VisitorWithParent) er
 	return nil
 }
 
-func keyOrIdxPart(node Node, idx int) string {
+func pathToNode(path string, node Node, idx int) string {
 	switch typedNode := node.(type) {
 	case *MapItem:
-		return fmt.Sprintf(".%s", typedNode.Key)
+		if path == "" {
+			return fmt.Sprintf("%s", typedNode.Key)
+		}
+		return fmt.Sprintf("%s.%s", path, typedNode.Key)
 	case *ArrayItem:
-		return fmt.Sprintf("[%d]", idx)
+		return fmt.Sprintf("%s[%d]", path, idx)
 	default:
-		return ""
+		return path
 	}
 }

@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"reflect"
 	"sort"
+	"strings"
 
 	"github.com/k14s/starlark-go/starlark"
 	"github.com/vmware-tanzu/carvel-ytt/pkg/filepos"
@@ -78,7 +79,7 @@ type validationRun struct {
 }
 
 func newValidationRun(threadName string, root yamlmeta.Node) *validationRun {
-	return &validationRun{thread: &starlark.Thread{Name: threadName}, chk: Check{[]error{}}, root: root}
+	return &validationRun{thread: &starlark.Thread{Name: threadName}, root: root}
 }
 
 // VisitWithParent if `node` has validations in its meta.
@@ -93,13 +94,12 @@ func (a *validationRun) VisitWithParent(value yamlmeta.Node, parent yamlmeta.Nod
 		return nil
 	}
 	for _, v := range validations {
-		// possible refactor to check validationRun kwargs prior to validating rules
-		violations, err := v.Validate(value, parent, a.root, path, a.thread)
+		invalid, err := v.Validate(value, parent, a.root, path, a.thread)
 		if err != nil {
 			return err
 		}
-		if violations != nil {
-			a.chk.Violations = append(a.chk.Violations, violations...)
+		if len(invalid.Violations) > 0 {
+			a.chk.Invalidations = append(a.chk.Invalidations, invalid)
 		}
 	}
 
@@ -111,37 +111,55 @@ func (a *validationRun) VisitWithParent(value yamlmeta.Node, parent yamlmeta.Nod
 //
 // Returns an error if the assertion returns False (not-None), or assert.fail()s.
 // Otherwise, returns nil.
-func (v NodeValidation) Validate(node yamlmeta.Node, parent yamlmeta.Node, root yamlmeta.Node, path string, thread *starlark.Thread) ([]error, error) {
+func (v NodeValidation) Validate(node yamlmeta.Node, parent yamlmeta.Node, root yamlmeta.Node, path string, thread *starlark.Thread) (Invalidation, error) {
 	nodeValue := v.newStarlarkValue(node)
 	parentValue := v.newStarlarkValue(parent)
 	rootValue := v.newStarlarkValue(root)
 
 	executeRules, err := v.kwargs.shouldValidate(nodeValue, parentValue, thread, rootValue)
 	if err != nil {
-		return nil, fmt.Errorf("Validating %s: %s", path, err)
+		return Invalidation{}, fmt.Errorf("Validating %s: %s", path, err)
 	}
 	if !executeRules {
-		return nil, nil
+		return Invalidation{}, nil
 	}
 
-	var violations []error
+	displayedPath := path
+	if displayedPath == "" {
+		displayedPath = fmt.Sprintf("(%s)", yamlmeta.TypeName(node))
+	}
+	invalid := Invalidation{
+		Path:        displayedPath,
+		ValueSource: node.GetPosition(),
+	}
+
 	for _, rul := range byPriority(v.rules) {
 		result, err := starlark.Call(thread, rul.assertion, starlark.Tuple{nodeValue}, []starlark.Tuple{})
 		if err != nil {
-			violations = append(violations, fmt.Errorf("%s (%s) requires %q; %s (by %s)", path, node.GetPosition().AsCompactString(), rul.msg, err.Error(), v.position.AsCompactString()))
+			violation := Violation{
+				RuleSource:  v.position,
+				Description: rul.msg,
+				Results:     strings.TrimPrefix(strings.TrimPrefix(err.Error(), "fail: "), "check: "),
+			}
+			invalid.Violations = append(invalid.Violations, violation)
 			if rul.isCritical {
 				break
 			}
 		} else {
 			if !(result == starlark.True) {
-				violations = append(violations, fmt.Errorf("%s (%s) requires %q (by %s)", path, node.GetPosition().AsCompactString(), rul.msg, v.position.AsCompactString()))
+				violation := Violation{
+					RuleSource:  v.position,
+					Description: rul.msg,
+					Results:     "",
+				}
+				invalid.Violations = append(invalid.Violations, violation)
 				if rul.isCritical {
 					break
 				}
 			}
 		}
 	}
-	return violations, nil
+	return invalid, nil
 }
 
 // shouldValidate uses validationKwargs and the node's value to run checks on the value. If the value satisfies the checks,
@@ -203,25 +221,25 @@ func (v validationKwargs) asRules() []rule {
 
 	if v.minLength != nil {
 		rules = append(rules, rule{
-			msg:       fmt.Sprintf("length greater or equal to %v", *v.minLength),
+			msg:       fmt.Sprintf("length >= %v", *v.minLength),
 			assertion: yttlibrary.NewAssertMinLen(*v.minLength).CheckFunc(),
 		})
 	}
 	if v.maxLength != nil {
 		rules = append(rules, rule{
-			msg:       fmt.Sprintf("length less than or equal to %v", *v.maxLength),
+			msg:       fmt.Sprintf("length <= %v", *v.maxLength),
 			assertion: yttlibrary.NewAssertMaxLen(*v.maxLength).CheckFunc(),
 		})
 	}
 	if v.min != nil {
 		rules = append(rules, rule{
-			msg:       fmt.Sprintf("a value greater or equal to %v", v.min),
+			msg:       fmt.Sprintf("a value >= %v", v.min),
 			assertion: yttlibrary.NewAssertMin(v.min).CheckFunc(),
 		})
 	}
 	if v.max != nil {
 		rules = append(rules, rule{
-			msg:       fmt.Sprintf("a value less than or equal to %v", v.max),
+			msg:       fmt.Sprintf("a value <= %v", v.max),
 			assertion: yttlibrary.NewAssertMax(v.max).CheckFunc(),
 		})
 	}
@@ -235,30 +253,33 @@ func (v validationKwargs) asRules() []rule {
 	}
 	if v.oneNotNull != nil {
 		var assertion *yttlibrary.Assertion
+		var childKeys = ""
 
 		switch oneNotNull := v.oneNotNull.(type) {
 		case starlark.Bool:
 			if oneNotNull {
 				assertion = yttlibrary.NewAssertOneNotNull(nil)
+				childKeys = "all children"
 			} else {
 				// should have been caught when args were parsed
 				panic("one_not_null= cannot be False")
 			}
 		case starlark.Sequence:
 			assertion = yttlibrary.NewAssertOneNotNull(oneNotNull)
+			childKeys = oneNotNull.String()
 		default:
 			// should have been caught when args were parsed
 			panic(fmt.Sprintf("Unexpected type \"%s\" for one_not_null=", v.oneNotNull.Type()))
 		}
 
 		rules = append(rules, rule{
-			msg:       fmt.Sprintf("exactly one child not null"),
+			msg:       fmt.Sprintf("exactly one of %s to be not null", childKeys),
 			assertion: assertion.CheckFunc(),
 		})
 	}
 	if v.oneOf != nil {
 		rules = append(rules, rule{
-			msg:       fmt.Sprintf("one of"),
+			msg:       fmt.Sprintf("one of %s", v.oneOf.String()),
 			assertion: yttlibrary.NewAssertOneOf(v.oneOf).CheckFunc(),
 		})
 	}
@@ -266,45 +287,61 @@ func (v validationKwargs) asRules() []rule {
 	return rules
 }
 
-// Check holds the resulting violations from executing Validations on a node.
-type Check struct {
-	Violations []error
+// Invalidation describes a value that was invalidated, and how.
+type Invalidation struct {
+	Path        string
+	ValueSource *filepos.Position
+	Violations  []Violation
 }
 
-// Error generates the error message composed of the total set of Check.Violations.
-func (c Check) Error() string {
-	if !c.HasViolations() {
+// Violation describes how a value failed to satisfy a rule.
+type Violation struct {
+	RuleSource  *filepos.Position
+	Description string
+	Results     string
+}
+
+// Check holds the complete set of Invalidations (if any) resulting from checking all validation rules.
+type Check struct {
+	Invalidations []Invalidation
+}
+
+// ResultsAsString generates the error message composed of the total set of Check.Invalidations.
+func (c Check) ResultsAsString() string {
+	if !c.HasInvalidations() {
 		return ""
 	}
 
 	msg := ""
-	for _, err := range c.Violations {
-		msg = msg + "- " + err.Error() + "\n"
+	for _, inval := range c.Invalidations {
+		msg += fmt.Sprintf("  %s\n    from: %s\n", inval.Path, inval.ValueSource.AsCompactString())
+		for _, viol := range inval.Violations {
+			msg += fmt.Sprintf("    - must be: %s (by: %s)\n", viol.Description, viol.RuleSource.AsCompactString())
+			if viol.Results != "" {
+				msg += fmt.Sprintf("      found: %s\n", viol.Results)
+			}
+		}
+		msg += "\n"
 	}
 	return msg
 }
 
-// HasViolations indicates whether this Check contains any violations.
-func (c *Check) HasViolations() bool {
-	return len(c.Violations) > 0
+// HasInvalidations indicates whether this Check contains any violations.
+func (c Check) HasInvalidations() bool {
+	return len(c.Invalidations) > 0
 }
 
 func (v NodeValidation) newStarlarkValue(node yamlmeta.Node) starlark.Value {
-	var nodeValue starlark.Value
-	switch typedNode := node.(type) {
-	case *yamlmeta.DocumentSet:
-		nodeValue = yamltemplate.NewGoValueWithYAML(typedNode).AsStarlarkValue()
-	case *yamlmeta.Array:
-		nodeValue = yamltemplate.NewGoValueWithYAML(typedNode).AsStarlarkValue()
-	case *yamlmeta.Map:
-		nodeValue = yamltemplate.NewGoValueWithYAML(typedNode).AsStarlarkValue()
-	case *yamlmeta.Document:
-		nodeValue = yamltemplate.NewGoValueWithYAML(typedNode.Value).AsStarlarkValue()
-	case *yamlmeta.MapItem:
-		nodeValue = yamltemplate.NewGoValueWithYAML(typedNode.Value).AsStarlarkValue()
-	case *yamlmeta.ArrayItem:
-		nodeValue = yamltemplate.NewGoValueWithYAML(typedNode.Value).AsStarlarkValue()
+	if node == nil || reflect.ValueOf(node).IsNil() {
+		return starlark.None
 	}
 
-	return nodeValue
+	switch node.(type) {
+	case *yamlmeta.DocumentSet, *yamlmeta.Array, *yamlmeta.Map:
+		return yamltemplate.NewGoValueWithYAML(node).AsStarlarkValue()
+	case *yamlmeta.Document, *yamlmeta.MapItem, *yamlmeta.ArrayItem:
+		return yamltemplate.NewGoValueWithYAML(node.GetValues()[0]).AsStarlarkValue()
+	default:
+		panic(fmt.Sprintf("Unexpected node type %T (at or near %s)", node, node.GetPosition().AsCompactString()))
+	}
 }

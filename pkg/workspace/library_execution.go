@@ -4,6 +4,7 @@
 package workspace
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 
@@ -102,7 +103,7 @@ func (ll *LibraryExecution) Values(valuesOverlays []*datavalues.Envelope, schema
 	if !ll.skipDataValuesValidation {
 		err = ll.validateValues(values)
 		if err != nil {
-			return nil, nil, fmt.Errorf("Validating final data values: %s", err)
+			return nil, nil, fmt.Errorf("Validating final data values:\n%s", err)
 		}
 	}
 	return values, libValues, err
@@ -124,14 +125,13 @@ func (ll *LibraryExecution) validateValues(values *datavalues.Envelope) error {
 		return err
 	}
 
-	assertCheck, err := validations.Run(values.Doc, "run-data-values-validations")
+	chk, err := validations.Run(values.Doc, "run-data-values-validations")
 	if err != nil {
 		return err
 	}
 
-	if assertCheck.HasViolations() {
-		combinedViolations := assertCheck.Error()
-		return fmt.Errorf("One or more data values were invalid:\n%s", combinedViolations)
+	if chk.HasInvalidations() {
+		return errors.New(chk.ResultsAsString())
 	}
 
 	return nil

@@ -5,4 +5,8 @@ value:
 +++
 
 ERR:
-- .value (stdin:2) requires "a value greater or equal to {\"foo\": True}"; dict >= dict not implemented (by stdin:1)
+  value
+    from: stdin:2
+    - must be: a value >= {"foo": True} (by: stdin:1)
+      found: dict >= dict not implemented
+

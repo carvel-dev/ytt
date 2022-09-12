@@ -18,6 +18,6 @@ keys_are_specified:
 when_keys_are_not_given:
   multiple_values_are_not_null:
   - null
-  - 'check: multiple values are not null ["foo" "qux"]'
+  - 'check: ["foo", "qux"] are not null'
 keys_are_specified:
   one_value_not_null_is_ok: true

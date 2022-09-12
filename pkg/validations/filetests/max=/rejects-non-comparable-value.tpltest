@@ -6,4 +6,8 @@ value:
 +++
 
 ERR:
-- .value (stdin:2) requires "a value less than or equal to 4"; dict <= int not implemented (by stdin:1)
+  value
+    from: stdin:2
+    - must be: a value <= 4 (by: stdin:1)
+      found: dict <= int not implemented
+

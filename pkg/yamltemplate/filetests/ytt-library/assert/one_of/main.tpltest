@@ -21,7 +21,7 @@ pass:
 fail:
   not_in_enum:
   - null
-  - 'fail: value not in ["aws", "azure", "vsphere"]'
+  - 'fail: not one of allowed values'
   enum_not_a_sequence:
     int:
     - null
