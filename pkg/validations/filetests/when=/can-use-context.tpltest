@@ -1,0 +1,22 @@
+counters:
+  enabled: true
+  #@assert/validate ("fail", lambda v: fail("runs")), when=lambda v, ctx: ctx.parent["enabled"]
+  foo: ""
+other:
+  #@assert/validate ("fail", lambda v: fail("runs")), when=lambda v, ctx: ctx.root[0]["counters"]["enabled"] and len(ctx.parent) == 2
+  bar: ""
+  ree: ""
+
++++
+
+ERR:
+  counters.foo
+    from: stdin:4
+    - must be: fail (by: stdin:3)
+      found: runs
+
+  other.bar
+    from: stdin:7
+    - must be: fail (by: stdin:6)
+      found: runs
+

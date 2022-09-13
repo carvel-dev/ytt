@@ -11,6 +11,8 @@ import (
 
 	"github.com/k14s/starlark-go/starlark"
 	"github.com/vmware-tanzu/carvel-ytt/pkg/filepos"
+	"github.com/vmware-tanzu/carvel-ytt/pkg/orderedmap"
+	"github.com/vmware-tanzu/carvel-ytt/pkg/template/core"
 	"github.com/vmware-tanzu/carvel-ytt/pkg/yamlmeta"
 	"github.com/vmware-tanzu/carvel-ytt/pkg/yamltemplate"
 	"github.com/vmware-tanzu/carvel-ytt/pkg/yttlibrary"
@@ -171,12 +173,12 @@ func (v validationKwargs) shouldValidate(value starlark.Value, parent starlark.V
 	}
 
 	if v.when != nil && !reflect.ValueOf(v.when).IsNil() {
-		kwargs, err := v.populateArgs(value, parent, root)
+		args, err := v.populateArgs(value, parent, root)
 		if err != nil {
 			return false, fmt.Errorf("Failed to evaluate when=: %s", err)
 		}
 
-		result, err := starlark.Call(thread, v.when, starlark.Tuple{}, kwargs)
+		result, err := starlark.Call(thread, v.when, args, []starlark.Tuple{})
 		if err != nil {
 			return false, fmt.Errorf("Failure evaluating when=: %s", err)
 		}
@@ -192,28 +194,22 @@ func (v validationKwargs) shouldValidate(value starlark.Value, parent starlark.V
 	return true, nil
 }
 
-func (v validationKwargs) populateArgs(value starlark.Value, parent starlark.Value, root starlark.Value) ([]starlark.Tuple, error) {
-	kwargs := []starlark.Tuple{}
-	if whenFunc, isFunc := v.when.(*starlark.Function); isFunc {
-		for idx := 0; idx < whenFunc.NumParams(); idx++ {
-			name, _ := whenFunc.Param(idx)
-			switch name {
-			case "v", "val", "value":
-				kwargs = append(kwargs, starlark.Tuple{starlark.String(name), value})
-			case "p", "par", "parent":
-				kwargs = append(kwargs, starlark.Tuple{starlark.String(name), parent})
-			case "r", "root", "d", "doc", "document":
-				// When validation support is extended beyond Data Values and into documents in general, differentiate
-				//   between "root" and "document":
-				//   - since data values validation occurs on a document, "root" and "document" are synonyms, right now.
-				//   - once validations can be defined in templates, then "root" will be a DocSet.
-				kwargs = append(kwargs, starlark.Tuple{starlark.String(name), root})
-			default:
-				return nil, fmt.Errorf("Unknown argument (%s) expected one of [value, parent, document]", name)
-			}
-		}
+func (v validationKwargs) populateArgs(value starlark.Value, parent starlark.Value, root starlark.Value) ([]starlark.Value, error) {
+	args := []starlark.Value{}
+	args = append(args, value)
+
+	whenFunc := v.when.(*starlark.Function)
+	switch whenFunc.NumParams() {
+	case 1:
+	case 2:
+		ctx := orderedmap.NewMap()
+		ctx.Set("parent", parent)
+		ctx.Set("root", root)
+		args = append(args, core.NewStarlarkStruct(ctx))
+	default:
+		return nil, fmt.Errorf("function must accept 1 or 2 arguments (%d given)", whenFunc.NumParams())
 	}
-	return kwargs, nil
+	return args, nil
 }
 
 func (v validationKwargs) asRules() []rule {

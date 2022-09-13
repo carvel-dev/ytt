@@ -1,0 +1,7 @@
+#@assert/validate ("fail", lambda v: fail("runs")), when=lambda v, parent, doc: v == ""
+foo: ""
+
++++
+
+ERR:
+Validating foo: Failed to evaluate when=: function must accept 1 or 2 arguments (3 given)
