@@ -1536,8 +1536,11 @@ foo: 0
 `
 		valuesYAML := `foo: 1`
 
-		expectedErrMsg := `One or more data values were invalid:
-- document (schema.yaml:3) requires "foo > 2" (by schema.yaml:2)
+		expectedErrMsg := `Validating final data values:
+  (document)
+    from: schema.yaml:3
+    - must be: foo > 2 (by: schema.yaml:2)
+
 `
 		assertFailsWithSchemaAndDataValues(t, schemaYAML, valuesYAML, expectedErrMsg)
 	})
@@ -1549,8 +1552,11 @@ foo: 0
 `
 		valuesYAML := `foo: 1`
 
-		expectedErrMsg := `One or more data values were invalid:
-- "foo" (values.yaml:1) requires "foo > 2" (by schema.yaml:3)
+		expectedErrMsg := `Validating final data values:
+  foo
+    from: values.yaml:1
+    - must be: foo > 2 (by: schema.yaml:3)
+
 `
 		assertFailsWithSchemaAndDataValues(t, schemaYAML, valuesYAML, expectedErrMsg)
 	})
@@ -1566,9 +1572,15 @@ foo:
 - 1
 `
 
-		expectedErrMsg := `One or more data values were invalid:
-- array item (values.yaml:2) requires "foo > 2" (by schema.yaml:4)
-- array item (values.yaml:3) requires "foo > 2" (by schema.yaml:4)
+		expectedErrMsg := `Validating final data values:
+  foo[0]
+    from: values.yaml:2
+    - must be: foo > 2 (by: schema.yaml:4)
+
+  foo[1]
+    from: values.yaml:3
+    - must be: foo > 2 (by: schema.yaml:4)
+
 `
 		assertFailsWithSchemaAndDataValues(t, schemaYAML, valuesYAML, expectedErrMsg)
 	})
@@ -1585,8 +1597,12 @@ bar: 0
 `
 		valuesYAML := ``
 
-		expectedErrMsg := `One or more data values were invalid:
-- "bar" (schema.yaml:8) requires "not null"; fail: value is null (by schema.yaml:7)
+		expectedErrMsg := `Validating final data values:
+  bar
+    from: schema.yaml:8
+    - must be: not null (by: schema.yaml:7)
+      found: value is null
+
 `
 		assertFailsWithSchemaAndDataValues(t, schemaYAML, valuesYAML, expectedErrMsg)
 	})
@@ -1600,8 +1616,11 @@ foo: 0
 `
 		valuesYAML := `foo: 1`
 
-		expectedErrMsg := `One or more data values were invalid:
-- "foo" (values.yaml:1) requires "foo > 2" (by schema.yaml:4)
+		expectedErrMsg := `Validating final data values:
+  foo
+    from: values.yaml:1
+    - must be: foo > 2 (by: schema.yaml:4)
+
 `
 		assertFailsWithSchemaAndDataValues(t, schemaYAML, valuesYAML, expectedErrMsg)
 	})
@@ -1622,8 +1641,11 @@ new: ""
 `
 			valuesYAML := `existing: foo`
 
-			expectedErrMsg := `One or more data values were invalid:
-- "new" (schema.yaml:11) requires "non-empty" (by schema.yaml:10)
+			expectedErrMsg := `Validating final data values:
+  new
+    from: schema.yaml:11
+    - must be: non-empty (by: schema.yaml:10)
+
 `
 			assertFailsWithSchemaAndDataValues(t, schemaYAML, valuesYAML, expectedErrMsg)
 		})
@@ -1643,8 +1665,11 @@ existing: ""
 existing: foo
 `
 
-			expectedErrMsg := `One or more data values were invalid:
-- "existing" (values.yaml:2) requires "a long string" (by schema.yaml:4)
+			expectedErrMsg := `Validating final data values:
+  existing
+    from: values.yaml:2
+    - must be: a long string (by: schema.yaml:4)
+
 `
 			assertFailsWithSchemaAndDataValues(t, schemaYAML, valuesYAML, expectedErrMsg)
 		})
@@ -1673,10 +1698,19 @@ bar:
 `
 
 		// none of the rules are from values.yml:
-		expectedErr := `One or more data values were invalid:
-- document (schema.yml:3) requires "has 3 map items" (by schema.yml:2)
-- "foo" (values.yml:5) requires "non-zero" (by schema.yml:4)
-- "bar" (schema.yml:7) requires "has 2 items" (by schema.yml:6)
+		expectedErr := `Validating final data values:
+  (document)
+    from: schema.yml:3
+    - must be: has 3 map items (by: schema.yml:2)
+
+  foo
+    from: values.yml:5
+    - must be: non-zero (by: schema.yml:4)
+
+  bar
+    from: schema.yml:7
+    - must be: has 2 items (by: schema.yml:6)
+
 `
 
 		opts := &cmdtpl.Options{}
@@ -1702,11 +1736,23 @@ foo:
 - -1
 `
 
-		expectedErr := `One or more data values were invalid:
-- array item (values.yml:5) requires "non-zero" (by schema.yml:4)
-- array item (values.yml:5) requires "be odd" (by values.yml:4)
-- array item (values.yml:7) requires "non-zero" (by schema.yml:4)
-- array item (values.yml:7) requires "be even" (by values.yml:6)
+		expectedErr := `Validating final data values:
+  foo[0]
+    from: values.yml:5
+    - must be: non-zero (by: schema.yml:4)
+
+  foo[0]
+    from: values.yml:5
+    - must be: be odd (by: values.yml:4)
+
+  foo[1]
+    from: values.yml:7
+    - must be: non-zero (by: schema.yml:4)
+
+  foo[1]
+    from: values.yml:7
+    - must be: be even (by: values.yml:6)
+
 `
 
 		opts := &cmdtpl.Options{}

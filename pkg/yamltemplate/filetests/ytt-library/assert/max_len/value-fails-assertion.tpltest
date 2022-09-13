@@ -4,7 +4,7 @@ max_len_of_string: #@ assert.max_len(2).check("abc")
 +++
 
 ERR:
-- fail: length of 3 is more than 2
+- fail: length = 3
     in lambda
       assert.max_len:? | __ytt_tplXXX_set_ctx_type("yaml") (generated)
       stdin:1 | #@ load("@ytt:assert", "assert")

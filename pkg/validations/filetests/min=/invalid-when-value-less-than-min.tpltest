@@ -4,4 +4,8 @@ value: 9
 +++
 
 ERR:
-- "value" (stdin:2) requires "a value greater or equal to 10"; fail: value is less than 10 (by stdin:1)
+  value
+    from: stdin:2
+    - must be: a value >= 10 (by: stdin:1)
+      found: value < 10
+

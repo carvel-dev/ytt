@@ -6,8 +6,16 @@ config: [1,1]
 +++
 
 ERR:
-- "config" (stdin:4) requires "custom rule"; fail: fails (by stdin:3)
-- "config" (stdin:4) requires "length greater or equal to 10"; fail: length of 2 is less than 10 (by stdin:3)
-- "config" (stdin:4) requires "length less than or equal to 1"; fail: length of 2 is more than 1 (by stdin:3)
-- "config" (stdin:4) requires "a value greater or equal to [2, 2]"; fail: value is less than [2, 2] (by stdin:3)
-- "config" (stdin:4) requires "a value less than or equal to [0, 0]"; fail: value is more than [0, 0] (by stdin:3)
+  config
+    from: stdin:4
+    - must be: custom rule (by: stdin:3)
+      found: fails
+    - must be: length >= 10 (by: stdin:3)
+      found: length = 2
+    - must be: length <= 1 (by: stdin:3)
+      found: length = 2
+    - must be: a value >= [2, 2] (by: stdin:3)
+      found: value < [2, 2]
+    - must be: a value <= [0, 0] (by: stdin:3)
+      found: value > [0, 0]
+

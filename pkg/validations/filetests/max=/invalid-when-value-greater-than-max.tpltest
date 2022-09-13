@@ -4,4 +4,8 @@ foo: 11
 +++
 
 ERR:
-- "foo" (stdin:2) requires "a value less than or equal to 10"; fail: value is more than 10 (by stdin:1)
+  foo
+    from: stdin:2
+    - must be: a value <= 10 (by: stdin:1)
+      found: value > 10
+

@@ -55,7 +55,7 @@ when_keys_are_not_given:
   - 'check: all values are null'
   multiple_values_are_not_null:
   - null
-  - 'check: multiple values are not null ["foo" "qux"]'
+  - 'check: ["foo", "qux"] are not null'
   value_is_empty:
   - null
   - 'check: value is empty'

@@ -182,7 +182,7 @@ func NewAssertionFromStarlarkFunc(funcName string, checkFunc core.StarlarkFunc) 
 func NewAssertMaxLen(maximum starlark.Int) *Assertion {
 	return NewAssertionFromSource(
 		"assert.max_len",
-		`lambda sequence: True if len(sequence) <= maximum else fail ("length of {} is more than {}".format(len(sequence), maximum))`,
+		`lambda sequence: True if len(sequence) <= maximum else fail ("length = {}".format(len(sequence)))`,
 		starlark.StringDict{"maximum": maximum},
 	)
 }
@@ -206,7 +206,7 @@ func (m AssertModule) MaxLen(thread *starlark.Thread, f *starlark.Builtin, args 
 func NewAssertMinLen(minimum starlark.Int) *Assertion {
 	return NewAssertionFromSource(
 		"assert.min_len",
-		`lambda sequence: True if len(sequence) >= minimum else fail ("length of {} is less than {}".format(len(sequence), minimum))`,
+		`lambda sequence: True if len(sequence) >= minimum else fail ("length = {}".format(len(sequence)))`,
 		starlark.StringDict{"minimum": minimum},
 	)
 }
@@ -230,7 +230,7 @@ func (m AssertModule) MinLen(thread *starlark.Thread, f *starlark.Builtin, args 
 func NewAssertMin(min starlark.Value) *Assertion {
 	return NewAssertionFromSource(
 		"assert.min",
-		`lambda val: True if yaml.decode(yaml.encode(val)) >= yaml.decode(yaml.encode(min)) else fail("value is less than {}".format(yaml.decode(yaml.encode(min))))`,
+		`lambda val: yaml.decode(yaml.encode(val)) >= yaml.decode(yaml.encode(min)) or fail("value < {}".format(yaml.decode(yaml.encode(min))))`,
 		starlark.StringDict{"min": min, "yaml": YAMLAPI["yaml"]},
 	)
 }
@@ -251,7 +251,7 @@ func (m AssertModule) Min(thread *starlark.Thread, f *starlark.Builtin, args sta
 func NewAssertMax(max starlark.Value) *Assertion {
 	return NewAssertionFromSource(
 		"assert.max",
-		`lambda val: True if yaml.decode(yaml.encode(val)) <= yaml.decode(yaml.encode(max)) else fail("value is more than {}".format(yaml.decode(yaml.encode(max))))`,
+		`lambda val: yaml.decode(yaml.encode(val)) <= yaml.decode(yaml.encode(max)) or fail("value > {}".format(yaml.decode(yaml.encode(max))))`,
 		starlark.StringDict{"max": max, "yaml": YAMLAPI["yaml"]},
 	)
 }
@@ -270,7 +270,7 @@ func (m AssertModule) Max(thread *starlark.Thread, f *starlark.Builtin, args sta
 func NewAssertNotNull() *Assertion {
 	return NewAssertionFromSource(
 		"assert.not_null",
-		`lambda value: fail("value is null") if value == None else True`,
+		`lambda value: value != None or fail("value is null")`,
 		starlark.StringDict{},
 	)
 }
@@ -350,7 +350,7 @@ func (m AssertModule) oneNotNullCheck(keys starlark.Sequence) core.StarlarkFunc 
 			}
 		}
 
-		var nulls, notNulls []string
+		var nulls, notNulls []starlark.Value
 
 		for _, key := range keysToCheck {
 			value, found, err := dict.Get(key)
@@ -359,12 +359,12 @@ func (m AssertModule) oneNotNullCheck(keys starlark.Sequence) core.StarlarkFunc 
 			}
 			if !found {
 				// allow schema to catch this (see also https://github.com/vmware-tanzu/carvel-ytt/issues/722)
-				nulls = append(nulls, key.String())
+				nulls = append(nulls, key)
 			}
 			if value == starlark.None {
-				nulls = append(nulls, key.String())
+				nulls = append(nulls, key)
 			} else {
-				notNulls = append(notNulls, key.String())
+				notNulls = append(notNulls, key)
 			}
 		}
 
@@ -377,7 +377,7 @@ func (m AssertModule) oneNotNullCheck(keys starlark.Sequence) core.StarlarkFunc 
 		case 1:
 			return starlark.True, nil
 		default:
-			return nil, fmt.Errorf("check: multiple values are not null %s", notNulls)
+			return nil, fmt.Errorf("check: %s are not null", starlark.NewList(notNulls).String())
 		}
 	}
 }
@@ -388,7 +388,7 @@ func (m AssertModule) oneNotNullCheck(keys starlark.Sequence) core.StarlarkFunc 
 func NewAssertOneOf(enum starlark.Sequence) *Assertion {
 	return NewAssertionFromSource(
 		"assert.one_of",
-		`lambda val: True if yaml.decode(yaml.encode(val)) in yaml.decode(yaml.encode(enum)) else fail("value not in {}".format(yaml.decode(yaml.encode(enum))))`,
+		`lambda val: yaml.decode(yaml.encode(val)) in yaml.decode(yaml.encode(enum)) or fail("not one of allowed values")`,
 		starlark.StringDict{"enum": enum, "yaml": YAMLAPI["yaml"]},
 	)
 }

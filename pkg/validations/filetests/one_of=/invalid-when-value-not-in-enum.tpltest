@@ -4,4 +4,8 @@ foo: critical
 +++
 
 ERR:
-- "foo" (stdin:2) requires "one of"; fail: value not in ["debug", "info", "warning", "error", "fatal"] (by stdin:1)
+  foo
+    from: stdin:2
+    - must be: one of ["debug", "info", "warning", "error", "fatal"] (by: stdin:1)
+      found: not one of allowed values
+

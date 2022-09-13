@@ -4,4 +4,4 @@ foo: bar
 +++
 
 ERR:
-- want when= to be bool, got string
+Validating foo: want when= to be bool, got string
