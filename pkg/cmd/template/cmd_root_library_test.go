@@ -114,3 +114,35 @@ func3:
 
 	runAndCompare(t, filesToProcess, expectedYAMLTplData)
 }
+
+func TestLoadAbsFromYttLibDirectory(t *testing.T) {
+	configTplData := []byte(`
+#@ load("@ytt:library", "library")
+#@ load("@ytt:template", "template")
+
+--- #@ template.replace(library.get("lib").eval())
+`)
+
+	helperLibData := []byte(`
+#@ def foo():
+fooy: 42
+#@ end
+`)
+
+	libConfigTplData := []byte(`
+#@ load("/helpers.lib.yml", "foo")
+x: #@ foo()
+`)
+
+	expectedYAMLTplData := `x:
+  fooy: 42
+`
+
+	filesToProcess := files.NewSortedFiles([]*files.File{
+		files.MustNewFileFromSource(files.NewBytesSource("config.yml", configTplData)),
+		files.MustNewFileFromSource(files.NewBytesSource("helpers.lib.yml", helperLibData)),
+		files.MustNewFileFromSource(files.NewBytesSource("_ytt_lib/lib/config.yml", libConfigTplData)),
+	})
+
+	runAndCompare(t, filesToProcess, expectedYAMLTplData)
+}
