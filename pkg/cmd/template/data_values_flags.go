@@ -9,7 +9,6 @@ import (
 	"strings"
 
 	"github.com/k14s/starlark-go/starlark"
-	"github.com/vmware-tanzu/carvel-ytt/pkg/experiments"
 	"github.com/vmware-tanzu/carvel-ytt/pkg/filepos"
 	"github.com/vmware-tanzu/carvel-ytt/pkg/files"
 	"github.com/vmware-tanzu/carvel-ytt/pkg/template"
@@ -57,9 +56,7 @@ func (s *DataValuesFlags) Set(cmdFlags CmdFlags) {
 	cmdFlags.StringArrayVar(&s.FromFiles, "data-values-file", nil, "Set multiple data values via plain YAML files (format: [@lib1:]{file path, HTTP URL, or '-' (i.e. stdin)}) (can be specified multiple times)")
 
 	cmdFlags.BoolVar(&s.Inspect, "data-values-inspect", false, "Determine the final data values (applying any overlays) and display that result")
-	if experiments.IsValidationsEnabled() {
-		cmdFlags.BoolVar(&s.SkipValidation, "dangerous-data-values-disable-validation", false, "Skip validating data values (not recommended: may result in templates failing or invalid output)")
-	}
+	cmdFlags.BoolVar(&s.SkipValidation, "dangerous-data-values-disable-validation", false, "Skip validating data values (not recommended: may result in templates failing or invalid output)")
 	cmdFlags.BoolVar(&s.InspectSchema, "data-values-schema-inspect", false, "Determine the complete schema for data values (applying any overlays) and display the result (only OpenAPI v3.0 is supported, see --output)")
 }
 

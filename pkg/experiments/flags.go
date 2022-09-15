@@ -28,20 +28,11 @@ Registering a New Experiment
 // Env is the OS environment variable with comma-separated names of experiments to enable.
 const Env = "YTTEXPERIMENTS"
 
-// IsValidationsEnabled reports whether the "validations" experiment was enabled by the user (via the Env).
-func IsValidationsEnabled() bool {
-	return isSet("validations")
-}
-
 // GetEnabled reports the name of all enabled experiments.
 //
 // An experiment is enabled by including its name in the OS environment variable named Env.
 func GetEnabled() []string {
 	experiments := []string{}
-	if IsValidationsEnabled() {
-		experiments = append(experiments, "validations")
-	}
-
 	return experiments
 }
 

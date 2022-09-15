@@ -9,7 +9,6 @@ import (
 	"github.com/k14s/starlark-go/starlark"
 	"github.com/k14s/starlark-go/starlarkstruct"
 	"github.com/k14s/starlark-go/syntax"
-	"github.com/vmware-tanzu/carvel-ytt/pkg/experiments"
 	"github.com/vmware-tanzu/carvel-ytt/pkg/orderedmap"
 	"github.com/vmware-tanzu/carvel-ytt/pkg/template/core"
 )
@@ -28,15 +27,13 @@ func (m AssertModule) AsModule() starlark.StringDict {
 	members["equals"] = starlark.NewBuiltin("assert.equals", core.ErrWrapper(m.Equals))
 	members["fail"] = starlark.NewBuiltin("assert.fail", core.ErrWrapper(m.Fail))
 	members["try_to"] = starlark.NewBuiltin("assert.try_to", core.ErrWrapper(m.TryTo))
-	if experiments.IsValidationsEnabled() {
-		members["min"] = starlark.NewBuiltin("assert.min", core.ErrWrapper(m.Min))
-		members["min_len"] = starlark.NewBuiltin("assert.min_len", core.ErrWrapper(m.MinLen))
-		members["max"] = starlark.NewBuiltin("assert.max", core.ErrWrapper(m.Max))
-		members["max_len"] = starlark.NewBuiltin("assert.max_len", core.ErrWrapper(m.MaxLen))
-		members["not_null"] = starlark.NewBuiltin("assert.not_null", core.ErrWrapper(m.NotNull))
-		members["one_not_null"] = starlark.NewBuiltin("assert.one_not_null", core.ErrWrapper(m.OneNotNull))
-		members["one_of"] = starlark.NewBuiltin("assert.one_of", core.ErrWrapper(m.OneOf))
-	}
+	members["min"] = starlark.NewBuiltin("assert.min", core.ErrWrapper(m.Min))
+	members["min_len"] = starlark.NewBuiltin("assert.min_len", core.ErrWrapper(m.MinLen))
+	members["max"] = starlark.NewBuiltin("assert.max", core.ErrWrapper(m.Max))
+	members["max_len"] = starlark.NewBuiltin("assert.max_len", core.ErrWrapper(m.MaxLen))
+	members["not_null"] = starlark.NewBuiltin("assert.not_null", core.ErrWrapper(m.NotNull))
+	members["one_not_null"] = starlark.NewBuiltin("assert.one_not_null", core.ErrWrapper(m.OneNotNull))
+	members["one_of"] = starlark.NewBuiltin("assert.one_of", core.ErrWrapper(m.OneOf))
 	return starlark.StringDict{
 		"assert": &starlarkstruct.Module{
 			Name:    "assert",

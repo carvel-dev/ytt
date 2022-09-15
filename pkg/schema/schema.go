@@ -6,7 +6,6 @@ package schema
 import (
 	"fmt"
 
-	"github.com/vmware-tanzu/carvel-ytt/pkg/experiments"
 	"github.com/vmware-tanzu/carvel-ytt/pkg/filepos"
 	"github.com/vmware-tanzu/carvel-ytt/pkg/validations"
 	"github.com/vmware-tanzu/carvel-ytt/pkg/yamlmeta"
@@ -160,10 +159,6 @@ func getValue(node yamlmeta.Node, t Type) (interface{}, error) {
 }
 
 func getValidation(node yamlmeta.Node) (*validations.NodeValidation, error) {
-	if !experiments.IsValidationsEnabled() {
-		return nil, nil
-	}
-
 	validationAnn, err := processValidationAnnotation(node)
 	if err != nil {
 		return nil, err
