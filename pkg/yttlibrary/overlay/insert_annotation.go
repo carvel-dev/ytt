@@ -22,7 +22,7 @@ type InsertAnnotation struct {
 	newItem template.EvaluationNode
 	before  bool
 	after   bool
-	via     *starlark.Value
+	via     *starlark.Callable
 	thread  *starlark.Thread
 }
 
@@ -64,7 +64,13 @@ func NewInsertAnnotation(newItem template.EvaluationNode, thread *starlark.Threa
 			annotation.after = resultBool
 
 		case InsertAnnotationKwargVia:
-			annotation.via = &kwarg[1]
+			via, ok := kwarg[1].(starlark.Callable)
+			if !ok {
+				return InsertAnnotation{}, fmt.Errorf(
+					"Expected '%s' annotation keyword argument '%s' to be function, "+
+						"but was %T", AnnotationInsert, kwargName, kwarg[1])
+			}
+			annotation.via = &via
 
 		default:
 			return annotation, fmt.Errorf(
@@ -86,29 +92,22 @@ func (a InsertAnnotation) Value(existingNode template.EvaluationNode) (interface
 		return newNode.GetValues()[0], nil
 	}
 
-	switch typedVal := (*a.via).(type) {
-	case starlark.Callable:
-		var existingVal interface{}
-		if existingNode != nil {
-			existingVal = existingNode.DeepCopyAsInterface().(template.EvaluationNode).GetValues()[0]
-		} else {
-			existingVal = nil
-		}
-
-		viaArgs := starlark.Tuple{
-			yamltemplate.NewGoValueWithYAML(existingVal).AsStarlarkValue(),
-			yamltemplate.NewGoValueWithYAML(newNode.GetValues()[0]).AsStarlarkValue(),
-		}
-
-		result, err := starlark.Call(a.thread, *a.via, viaArgs, []starlark.Tuple{})
-		if err != nil {
-			return nil, err
-		}
-
-		return tplcore.NewStarlarkValue(result).AsGoValue()
-
-	default:
-		return nil, fmt.Errorf("Expected '%s' annotation keyword argument 'via'"+
-			" to be function, but was %T", AnnotationInsert, typedVal)
+	var existingVal interface{}
+	if existingNode != nil {
+		existingVal = existingNode.DeepCopyAsInterface().(template.EvaluationNode).GetValues()[0]
+	} else {
+		existingVal = nil
 	}
+
+	viaArgs := starlark.Tuple{
+		yamltemplate.NewGoValueWithYAML(existingVal).AsStarlarkValue(),
+		yamltemplate.NewGoValueWithYAML(newNode.GetValues()[0]).AsStarlarkValue(),
+	}
+
+	result, err := starlark.Call(a.thread, *a.via, viaArgs, []starlark.Tuple{})
+	if err != nil {
+		return nil, err
+	}
+
+	return tplcore.NewStarlarkValue(result).AsGoValue()
 }

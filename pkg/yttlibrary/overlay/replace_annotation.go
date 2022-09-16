@@ -20,7 +20,7 @@ const (
 type ReplaceAnnotation struct {
 	newNode template.EvaluationNode
 	thread  *starlark.Thread
-	via     *starlark.Value
+	via     *starlark.Callable
 	orAdd   bool
 }
 
@@ -36,7 +36,13 @@ func NewReplaceAnnotation(newNode template.EvaluationNode, thread *starlark.Thre
 
 		switch kwargName {
 		case ReplaceAnnotationKwargVia:
-			annotation.via = &kwarg[1]
+			via, ok := kwarg[1].(starlark.Callable)
+			if !ok {
+				return ReplaceAnnotation{}, fmt.Errorf(
+					"Expected '%s' annotation keyword argument '%s' to be function, "+
+						"but was %T", AnnotationReplace, kwargName, kwarg[1])
+			}
+			annotation.via = &via
 
 		case ReplaceAnnotationKwargOrAdd:
 			resultBool, err := tplcore.NewStarlarkValue(kwarg[1]).AsBool()
@@ -63,33 +69,26 @@ func (a ReplaceAnnotation) Value(existingNode template.EvaluationNode) (interfac
 		return newNode.GetValues()[0], nil
 	}
 
-	switch typedVal := (*a.via).(type) {
-	case starlark.Callable:
-		var existingVal interface{}
-		if existingNode != nil {
-			// Make sure original nodes are not affected in any way
-			existingVal = existingNode.DeepCopyAsInterface().(template.EvaluationNode).GetValues()[0]
-		} else {
-			existingVal = nil
-		}
-
-		viaArgs := starlark.Tuple{
-			yamltemplate.NewGoValueWithYAML(existingVal).AsStarlarkValue(),
-			yamltemplate.NewGoValueWithYAML(newNode.GetValues()[0]).AsStarlarkValue(),
-		}
-
-		// TODO check thread correctness
-		result, err := starlark.Call(a.thread, *a.via, viaArgs, []starlark.Tuple{})
-		if err != nil {
-			return nil, err
-		}
-
-		return tplcore.NewStarlarkValue(result).AsGoValue()
-
-	default:
-		return nil, fmt.Errorf("Expected '%s' annotation keyword argument 'via'"+
-			" to be function, but was %T", AnnotationReplace, typedVal)
+	var existingVal interface{}
+	if existingNode != nil {
+		// Make sure original nodes are not affected in any way
+		existingVal = existingNode.DeepCopyAsInterface().(template.EvaluationNode).GetValues()[0]
+	} else {
+		existingVal = nil
 	}
+
+	viaArgs := starlark.Tuple{
+		yamltemplate.NewGoValueWithYAML(existingVal).AsStarlarkValue(),
+		yamltemplate.NewGoValueWithYAML(newNode.GetValues()[0]).AsStarlarkValue(),
+	}
+
+	// TODO check thread correctness
+	result, err := starlark.Call(a.thread, *a.via, viaArgs, []starlark.Tuple{})
+	if err != nil {
+		return nil, err
+	}
+
+	return tplcore.NewStarlarkValue(result).AsGoValue()
 }
 
 func (a ReplaceAnnotation) OrAdd() bool { return a.orAdd }
