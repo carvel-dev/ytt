@@ -40,6 +40,17 @@ type EvaluateTemplate func(src string) (MarshalableResult, *TestErr)
 // - expected output starting with `ERR:` indicate that expected output is an error message
 // - expected output starting with `OUTPUT POSITION:` indicate that expected output is "pos" format
 // - otherwise expected output is the literal output from template
+//
+// For example:
+//
+//	#! my-test.tpltest
+//	---
+//	#@ msg = "hello"
+//	msg: #@ msg
+//	+++
+//
+//	msg: hello
+//
 type FileTests struct {
 	PathToTests      string
 	EvalFunc         EvaluateTemplate
