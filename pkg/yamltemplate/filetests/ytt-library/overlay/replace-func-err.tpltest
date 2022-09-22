@@ -1,0 +1,22 @@
+#@ load("@ytt:template", "template")
+#@ load("@ytt:overlay", "overlay")
+
+#@ def test1_left():
+---
+item: 1
+#@ end
+
+#@ def test1_right():
+#@overlay/match by=overlay.all, expects=1
+#@overlay/replace via="not a function"
+---
+#@ end
+
+--- #@ template.replace(overlay.apply(test1_left(), test1_right()))
+
++++
+
+ERR:
+- overlay.apply: Document on line stdin:12: Expected 'overlay/replace' annotation keyword argument 'via' to be function, but was starlark.String
+    in <toplevel>
+      stdin:15 | --- #@ template.replace(overlay.apply(test1_left(), test1_right()))
