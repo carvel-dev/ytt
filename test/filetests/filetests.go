@@ -1,6 +1,10 @@
 // Copyright 2022 VMware, Inc.
 // SPDX-License-Identifier: Apache-2.0
 
+/*
+Package filetests houses a test harness for evaluating templates and asserting
+the expected output.
+*/
 package filetests
 
 import (
