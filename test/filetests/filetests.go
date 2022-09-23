@@ -1,6 +1,10 @@
 // Copyright 2022 VMware, Inc.
 // SPDX-License-Identifier: Apache-2.0
 
+/*
+Package filetests houses a test harness for evaluating templates and asserting
+the expected output.
+*/
 package filetests
 
 import (
@@ -40,6 +44,17 @@ type EvaluateTemplate func(src string) (MarshalableResult, *TestErr)
 // - expected output starting with `ERR:` indicate that expected output is an error message
 // - expected output starting with `OUTPUT POSITION:` indicate that expected output is "pos" format
 // - otherwise expected output is the literal output from template
+//
+// For example:
+//
+//	#! my-test.tpltest
+//	---
+//	#@ msg = "hello"
+//	msg: #@ msg
+//	+++
+//
+//	msg: hello
+//
 type FileTests struct {
 	PathToTests      string
 	EvalFunc         EvaluateTemplate
@@ -93,12 +108,12 @@ func (f FileTests) Run(t *testing.T) {
 				} else {
 					resultStr := testErr.UserErr().Error()
 					resultStr = regexp.MustCompile("__ytt_tpl\\d+_").ReplaceAllString(resultStr, "__ytt_tplXXX_")
-					resultStr = f.trimTrailingWhitespace(resultStr)
+					resultStr = TrimTrailingMultilineWhitespace(resultStr)
 
 					expectedStr = strings.TrimPrefix(expectedStr, "ERR:")
 					expectedStr = strings.TrimPrefix(expectedStr, " ")
 					expectedStr = strings.ReplaceAll(expectedStr, "__YTT_VERSION__", version.Version)
-					expectedStr = f.trimTrailingWhitespace(expectedStr)
+					expectedStr = TrimTrailingMultilineWhitespace(expectedStr)
 					err = f.expectEquals(resultStr, expectedStr)
 				}
 			case strings.HasPrefix(expectedStr, "OUTPUT POSITION:"):
@@ -132,14 +147,6 @@ func (f FileTests) Run(t *testing.T) {
 			}
 		})
 	}
-}
-
-func (f FileTests) trimTrailingWhitespace(multiLineString string) string {
-	var newLines []string
-	for _, line := range strings.Split(multiLineString, "\n") {
-		newLines = append(newLines, strings.TrimRight(line, "\t "))
-	}
-	return strings.Join(newLines, "\n")
 }
 
 func (f FileTests) asFilePositionsStr(result MarshalableResult) (string, error) {
@@ -249,4 +256,16 @@ func (l DefaultTemplateLoader) Load(thread *starlark.Thread, module string) (sta
 	api := yttlibrary.NewAPI(l.CompiledTemplate.TplReplaceNode,
 		yttlibrary.NewDataModule(&l.DataValues, nil), nil, nil)
 	return api.FindModule(strings.TrimPrefix(module, "@ytt:"))
+}
+
+// TrimTrailingMultilineWhitespace returns a string with trailing whitespace trimmed from every line as well
+// as trimmed trailing empty lines
+func TrimTrailingMultilineWhitespace(s string) string {
+	var trimmedLines []string
+	for _, line := range strings.Split(s, "\n") {
+		trimmedLine := strings.TrimRight(line, "\t ")
+		trimmedLines = append(trimmedLines, trimmedLine)
+	}
+	multiline := strings.Join(trimmedLines, "\n")
+	return strings.TrimRight(multiline, "\n")
 }
