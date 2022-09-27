@@ -9,7 +9,14 @@ if [ -z "$GITHUB_ACTION" ]; then
 fi
 
 go test ./... "$@"
-( cd examples/integrating-with-ytt/internal-templating && go test ./... )
+
+# run a "contract test" to smoke Go module integration
+(
+  cd examples/integrating-with-ytt/internal-templating
+  # in the case where a dependency is being bumped, update that dependency in this 👆 module.
+  go mod tidy
+  go test ./...
+)
 
 # error out if -run is given but no test is run
 if [[ "$@" == *"-run "* ]]; then
