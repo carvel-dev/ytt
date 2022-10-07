@@ -59,6 +59,9 @@ func NewAPI(
 		"url":    URLAPI,
 		"ip":     IPAPI,
 
+		// Compression
+		"gzip": GzipAPI,
+
 		// Templating
 		"template": NewTemplateModule(replaceNodeFunc).AsModule(),
 		"data":     dataMod.AsModule(),
