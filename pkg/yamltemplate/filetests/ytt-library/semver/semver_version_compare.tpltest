@@ -1,0 +1,16 @@
+#@ load("@ytt:semver", "semver")
+
+---
+got: #@ semver.from_str("1.2.3").cmp(semver.from_str("1.2.3"))
+---
+got: #@ semver.from_str("1.2.3").cmp(semver.from_str("2.0.0"))
+---
+got: #@ semver.from_str("1.2.3").cmp(semver.from_str("1.0.0"))
+
++++
+
+got: 0
+---
+got: -1
+---
+got: 1

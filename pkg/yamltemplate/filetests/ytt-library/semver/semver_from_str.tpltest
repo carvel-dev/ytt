@@ -1,0 +1,45 @@
+#@ load("@ytt:semver", "semver")
+#@ load("@ytt:template", "template")
+#@ load("@ytt:assert", "assert")
+
+---
+got: #@ semver.from_str("1.2.3").dict()
+---
+got: #@ semver.from_str("1.2.3-pre.123+build.456").dict()
+---
+#@ got, err = assert.try_to(lambda: semver.from_str())
+got: #@ got
+err: #@ err
+---
+#@ got, err = assert.try_to(lambda: semver.from_str("hello"))
+got: #@ got
+err: #@ err
+---
+#@ got, err = assert.try_to(lambda: semver.from_str("1.2.3-illeg@l"))
+got: #@ got
+err: #@ err
+
++++
+
+got:
+  major: 1
+  minor: 2
+  patch: 3
+  prerelease: ""
+  build: ""
+---
+got:
+  major: 1
+  minor: 2
+  patch: 3
+  prerelease: pre.123
+  build: build.456
+---
+got: null
+err: 'semver.version: expected exactly one argument'
+---
+got: null
+err: 'semver.version: No Major.Minor.Patch elements found'
+---
+got: null
+err: 'semver.version: Invalid character(s) found in PreRelease "illeg@l"'

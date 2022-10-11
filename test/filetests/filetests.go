@@ -9,6 +9,7 @@ package filetests
 
 import (
 	"fmt"
+	"github.com/google/go-cmp/cmp"
 	"io"
 	"io/ioutil"
 	"os"
@@ -188,8 +189,8 @@ func (e TestErr) UserErr() error { return e.realErr }
 func (e TestErr) TestErr() error { return e.testErr }
 
 func (f FileTests) expectEquals(resultStr, expectedStr string) error {
-	if resultStr != expectedStr {
-		return fmt.Errorf("not equal\n\n### result %d chars:\n>>>%s<<<\n###expected %d chars:\n>>>%s<<<", len(resultStr), resultStr, len(expectedStr), expectedStr)
+	if diff := cmp.Diff(expectedStr, resultStr); diff != "" {
+		return fmt.Errorf("not equal (-want +got) ### :\n\n%s", diff)
 	}
 	return nil
 }

@@ -1,0 +1,15 @@
+#@ load("@ytt:semver", "semver")
+#@ load("@ytt:assert", "assert")
+
+---
+#@ _, err = assert.try_to(lambda: semver.range("1.2.3"))
+err: #@ err
+---
+#@ _, err = assert.try_to(lambda: semver.range())
+err: #@ err
+
++++
+
+err: null
+---
+err: 'semver.version: expected exactly one argument'
