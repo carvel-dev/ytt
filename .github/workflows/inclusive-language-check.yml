@@ -1,0 +1,10 @@
+---
+name: Check inclusive language
+
+on:
+  pull_request:
+    types: ['opened', 'reopened', 'synchronize']
+
+jobs:
+  check-inclusive-language:
+    uses: vmware-tanzu/carvel-release-scripts/.github/workflows/inclusive-language-check.yml@main
