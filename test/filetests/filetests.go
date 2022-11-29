@@ -1,6 +1,9 @@
 // Copyright 2022 VMware, Inc.
 // SPDX-License-Identifier: Apache-2.0
 
+/*
+Package filetests contain a suite of test cases to verify the behavior of templates.
+*/
 package filetests
 
 import (
