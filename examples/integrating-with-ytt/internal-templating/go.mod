@@ -1,6 +1,6 @@
 module example_internal_templating
 
-go 1.17
+go 1.19
 
 require github.com/k14s/ytt v0.38.0
 
