@@ -34,11 +34,12 @@ func TestMain(m *testing.M) {
 // 4. combines rule results into an appropriate validation outcome (list of error or passing)
 //
 // Example usage:
-//   Run a specific test:
-//   ./hack/test-all.sh -v -run TestValidations/filetests/success.tpltest
 //
-//   Include template compilation results in the output:
-//   ./hack/test-all.sh -v -run TestValidations/filetests/success.tpltest TestValidations.code=true
+//	Run a specific test:
+//	./hack/test-all.sh -v -run TestValidations/filetests/success.tpltest
+//
+//	Include template compilation results in the output:
+//	./hack/test-all.sh -v -run TestValidations/filetests/success.tpltest TestValidations.code=true
 //
 // see also:
 // - pkg/template/... for tests around validations used in schema and data values.
