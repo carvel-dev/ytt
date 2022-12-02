@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 /*
-Package filetests contain a suite of test cases to verify the behavior of templates.
+Package filetests houses a test harness for evaluating templates and asserting
+the expected output.
 */
 package filetests
 
