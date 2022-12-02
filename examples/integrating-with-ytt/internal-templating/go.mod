@@ -1,6 +1,6 @@
 module example_internal_templating
 
-go 1.17
+go 1.19
 
 // ensure example works with this copy of ytt; remove before use
 replace github.com/vmware-tanzu/carvel-ytt => ../../../

@@ -10,10 +10,10 @@ jobs:
     name: Test Windows
     runs-on: windows-latest
     steps:
-    - name: Install Go 1.17
+    - name: Install Go 1.19.3
       uses: actions/setup-go@v3
       with:
-        go-version: "1.17"
+        go-version: "1.19.3"
     - name: Check out code into the Go module directory
       uses: actions/checkout@v2
     - name: Run Tests

@@ -9,7 +9,7 @@ A cobra.Command is the starting point of execution.
 
 For a list of commands run:
 
-   $ ytt help
+	$ ytt help
 
 The default command is "template".
 */
