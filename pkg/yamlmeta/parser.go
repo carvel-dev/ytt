@@ -124,11 +124,12 @@ func (p *Parser) parseBytes(data []byte, lineCorrection int) (*DocumentSet, erro
 }
 
 // setPositionOfCollections assigns the Position of Maps and Arrays to their parent
-//   these kinds of nodes are not visible and therefore technically don't have a position.
-//   However, it is useful when communicating certain error cases to be able to reference
-//   a collection by line number.
-//   The position of the parent matches well with what the user sees. E.g. the MapItem that
-//   holds an Array is a great place to point at when referring to the entire array.
+//
+//	these kinds of nodes are not visible and therefore technically don't have a position.
+//	However, it is useful when communicating certain error cases to be able to reference
+//	a collection by line number.
+//	The position of the parent matches well with what the user sees. E.g. the MapItem that
+//	holds an Array is a great place to point at when referring to the entire array.
 func setPositionOfCollections(node Node, parent Node) {
 	if !node.GetPosition().IsKnown() {
 		if parent != nil {

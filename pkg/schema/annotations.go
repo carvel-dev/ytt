@@ -59,7 +59,7 @@ type TitleAnnotation struct {
 	pos   *filepos.Position
 }
 
-//DeprecatedAnnotation is a wrapper for a value provided via @schema/deprecated annotation
+// DeprecatedAnnotation is a wrapper for a value provided via @schema/deprecated annotation
 type DeprecatedAnnotation struct {
 	notice string
 	pos    *filepos.Position
