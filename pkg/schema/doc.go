@@ -4,7 +4,7 @@
 /*
 Package schema enhances yamlmeta.Node structures with fine-grain data types.
 
-Type and Checking
+# Type and Checking
 
 Within a schema document (which itself is a yamlmeta.Document), type metadata is
 attached to nodes via @schema/... annotations. Those annotations are parsed and
@@ -18,12 +18,12 @@ corresponding yamlmeta.Node.
 "Typed" documents can then be "checked" (via schema.CheckNode()) to determine if
 their fine-grain types conform to the assigned schema.
 
-Documenting
+# Documenting
 
 Other @schema/... annotations are used to describe the exact syntax and semantic
 of values.
 
-Other Schema Formats
+# Other Schema Formats
 
 Like other Carvel tools, ytt aims to interoperate well with other tooling. In
 this vein, ytt can export schema defined within ytt as an OpenAPI v3 document.
