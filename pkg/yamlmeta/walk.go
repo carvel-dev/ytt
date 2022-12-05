@@ -31,7 +31,8 @@ func Walk(n Node, v Visitor) error {
 }
 
 // VisitorWithParent performs an operation on the given Node while traversing the AST, including a reference to "node"'s
-//   parent node.
+//
+//	parent node.
 //
 // Typically defines the action taken during a WalkWithParent().
 type VisitorWithParent interface {
@@ -39,7 +40,9 @@ type VisitorWithParent interface {
 }
 
 // WalkWithParent traverses the tree starting at `n`, recursively, depth-first, invoking `v` on each node and including
-//   a reference to "node"s parent node as well.
+//
+//	a reference to "node"s parent node as well.
+//
 // if `v` returns non-nil error, the traversal is aborted.
 func WalkWithParent(node Node, parent Node, path string, v VisitorWithParent) error {
 	err := v.VisitWithParent(node, parent, path)
