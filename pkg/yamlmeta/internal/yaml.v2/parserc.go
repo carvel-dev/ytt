@@ -173,7 +173,8 @@ func yamlParserStateMachine(parser *yamlParserT, event *yamlEventT) bool {
 
 // Parse the production:
 // stream   ::= STREAM-START implicit_document? explicit_document* STREAM-END
-//              ************
+//
+//	************
 func yamlParserParseStreamStart(parser *yamlParserT, event *yamlEventT) bool {
 	token := peekToken(parser)
 	if token == nil {
@@ -195,9 +196,12 @@ func yamlParserParseStreamStart(parser *yamlParserT, event *yamlEventT) bool {
 
 // Parse the productions:
 // implicit_document    ::= block_node DOCUMENT-END*
-//                          *
+//
+//	*
+//
 // explicit_document    ::= DIRECTIVE* DOCUMENT-START block_node? DOCUMENT-END*
-//                          *************************
+//
+//	*************************
 func yamlParserParseDocumentStart(parser *yamlParserT, event *yamlEventT, implicit bool) bool {
 
 	token := peekToken(parser)
@@ -280,8 +284,8 @@ func yamlParserParseDocumentStart(parser *yamlParserT, event *yamlEventT, implic
 
 // Parse the productions:
 // explicit_document    ::= DIRECTIVE* DOCUMENT-START block_node? DOCUMENT-END*
-//                                                    ***********
 //
+//	***********
 func yamlParserParseDocumentContent(parser *yamlParserT, event *yamlEventT) bool {
 	token := peekToken(parser)
 	if token == nil {
@@ -302,9 +306,10 @@ func yamlParserParseDocumentContent(parser *yamlParserT, event *yamlEventT) bool
 
 // Parse the productions:
 // implicit_document    ::= block_node DOCUMENT-END*
-//                                     *************
-// explicit_document    ::= DIRECTIVE* DOCUMENT-START block_node? DOCUMENT-END*
 //
+//	*************
+//
+// explicit_document    ::= DIRECTIVE* DOCUMENT-START block_node? DOCUMENT-END*
 func yamlParserParseDocumentEnd(parser *yamlParserT, event *yamlEventT) bool {
 	token := peekToken(parser)
 	if token == nil {
@@ -335,30 +340,41 @@ func yamlParserParseDocumentEnd(parser *yamlParserT, event *yamlEventT) bool {
 
 // Parse the productions:
 // block_node_or_indentless_sequence    ::=
-//                          ALIAS
-//                          *****
-//                          | properties (block_content | indentless_block_sequence)?
-//                            **********  *
-//                          | block_content | indentless_block_sequence
-//                            *
+//
+//	ALIAS
+//	*****
+//	| properties (block_content | indentless_block_sequence)?
+//	  **********  *
+//	| block_content | indentless_block_sequence
+//	  *
+//
 // block_node           ::= ALIAS
-//                          *****
-//                          | properties block_content?
-//                            ********** *
-//                          | block_content
-//                            *
+//
+//	*****
+//	| properties block_content?
+//	  ********** *
+//	| block_content
+//	  *
+//
 // flow_node            ::= ALIAS
-//                          *****
-//                          | properties flow_content?
-//                            ********** *
-//                          | flow_content
-//                            *
+//
+//	*****
+//	| properties flow_content?
+//	  ********** *
+//	| flow_content
+//	  *
+//
 // properties           ::= TAG ANCHOR? | ANCHOR TAG?
-//                          *************************
+//
+//	*************************
+//
 // block_content        ::= block_collection | flow_collection | SCALAR
-//                                                               ******
+//
+//	******
+//
 // flow_content         ::= flow_collection | SCALAR
-//                                            ******
+//
+//	******
 func yamlParserParseNode(parser *yamlParserT, event *yamlEventT, block, indentlessSequence bool) bool {
 	//defer trace("yaml_parser_parse_node", "block:", block, "indentless_sequence:", indentless_sequence)()
 
@@ -577,8 +593,8 @@ func yamlParserParseNode(parser *yamlParserT, event *yamlEventT, block, indentle
 
 // Parse the productions:
 // block_sequence ::= BLOCK-SEQUENCE-START (BLOCK-ENTRY block_node?)* BLOCK-END
-//                    ********************  *********** *             *********
 //
+//	********************  *********** *             *********
 func yamlParserParseBlockSequenceEntry(parser *yamlParserT, event *yamlEventT, first bool) bool {
 	if first {
 		token := peekToken(parser)
@@ -633,7 +649,8 @@ func yamlParserParseBlockSequenceEntry(parser *yamlParserT, event *yamlEventT, f
 
 // Parse the productions:
 // indentless_sequence  ::= (BLOCK-ENTRY block_node?)+
-//                           *********** *
+//
+//	*********** *
 func yamlParserParseIndentlessSequenceEntry(parser *yamlParserT, event *yamlEventT) bool {
 	token := peekToken(parser)
 	if token == nil {
@@ -674,14 +691,14 @@ func yamlParserParseIndentlessSequenceEntry(parser *yamlParserT, event *yamlEven
 
 // Parse the productions:
 // block_mapping        ::= BLOCK-MAPPING_START
-//                          *******************
-//                          ((KEY block_node_or_indentless_sequence?)?
-//                            *** *
-//                          (VALUE block_node_or_indentless_sequence?)?)*
 //
-//                          BLOCK-END
-//                          *********
+//	*******************
+//	((KEY block_node_or_indentless_sequence?)?
+//	  *** *
+//	(VALUE block_node_or_indentless_sequence?)?)*
 //
+//	BLOCK-END
+//	*********
 func yamlParserParseBlockMappingKey(parser *yamlParserT, event *yamlEventT, first bool) bool {
 	if first {
 		token := peekToken(parser)
@@ -732,13 +749,11 @@ func yamlParserParseBlockMappingKey(parser *yamlParserT, event *yamlEventT, firs
 // Parse the productions:
 // block_mapping        ::= BLOCK-MAPPING_START
 //
-//                          ((KEY block_node_or_indentless_sequence?)?
+//	((KEY block_node_or_indentless_sequence?)?
 //
-//                          (VALUE block_node_or_indentless_sequence?)?)*
-//                           ***** *
-//                          BLOCK-END
-//
-//
+//	(VALUE block_node_or_indentless_sequence?)?)*
+//	 ***** *
+//	BLOCK-END
 func yamlParserParseBlockMappingValue(parser *yamlParserT, event *yamlEventT) bool {
 	token := peekToken(parser)
 	if token == nil {
@@ -766,16 +781,18 @@ func yamlParserParseBlockMappingValue(parser *yamlParserT, event *yamlEventT) bo
 
 // Parse the productions:
 // flow_sequence        ::= FLOW-SEQUENCE-START
-//                          *******************
-//                          (flow_sequence_entry FLOW-ENTRY)*
-//                           *                   **********
-//                          flow_sequence_entry?
-//                          *
-//                          FLOW-SEQUENCE-END
-//                          *****************
-// flow_sequence_entry  ::= flow_node | KEY flow_node? (VALUE flow_node?)?
-//                          *
 //
+//	*******************
+//	(flow_sequence_entry FLOW-ENTRY)*
+//	 *                   **********
+//	flow_sequence_entry?
+//	*
+//	FLOW-SEQUENCE-END
+//	*****************
+//
+// flow_sequence_entry  ::= flow_node | KEY flow_node? (VALUE flow_node?)?
+//
+//	*
 func yamlParserParseFlowSequenceEntry(parser *yamlParserT, event *yamlEventT, first bool) bool {
 	if first {
 		token := peekToken(parser)
@@ -842,11 +859,10 @@ func yamlParserParseFlowSequenceEntry(parser *yamlParserT, event *yamlEventT, fi
 	return true
 }
 
-//
 // Parse the productions:
 // flow_sequence_entry  ::= flow_node | KEY flow_node? (VALUE flow_node?)?
-//                                      *** *
 //
+//	*** *
 func yamlParserParseFlowSequenceEntryMappingKey(parser *yamlParserT, event *yamlEventT) bool {
 	token := peekToken(parser)
 	if token == nil {
@@ -866,8 +882,8 @@ func yamlParserParseFlowSequenceEntryMappingKey(parser *yamlParserT, event *yaml
 
 // Parse the productions:
 // flow_sequence_entry  ::= flow_node | KEY flow_node? (VALUE flow_node?)?
-//                                                      ***** *
 //
+//	***** *
 func yamlParserParseFlowSequenceEntryMappingValue(parser *yamlParserT, event *yamlEventT) bool {
 	token := peekToken(parser)
 	if token == nil {
@@ -890,8 +906,8 @@ func yamlParserParseFlowSequenceEntryMappingValue(parser *yamlParserT, event *ya
 
 // Parse the productions:
 // flow_sequence_entry  ::= flow_node | KEY flow_node? (VALUE flow_node?)?
-//                                                                      *
 //
+//	*
 func yamlParserParseFlowSequenceEntryMappingEnd(parser *yamlParserT, event *yamlEventT) bool {
 	token := peekToken(parser)
 	if token == nil {
@@ -908,16 +924,17 @@ func yamlParserParseFlowSequenceEntryMappingEnd(parser *yamlParserT, event *yaml
 
 // Parse the productions:
 // flow_mapping         ::= FLOW-MAPPING-START
-//                          ******************
-//                          (flow_mapping_entry FLOW-ENTRY)*
-//                           *                  **********
-//                          flow_mapping_entry?
-//                          ******************
-//                          FLOW-MAPPING-END
-//                          ****************
-// flow_mapping_entry   ::= flow_node | KEY flow_node? (VALUE flow_node?)?
-//                          *           *** *
 //
+//	******************
+//	(flow_mapping_entry FLOW-ENTRY)*
+//	 *                  **********
+//	flow_mapping_entry?
+//	******************
+//	FLOW-MAPPING-END
+//	****************
+//
+// flow_mapping_entry   ::= flow_node | KEY flow_node? (VALUE flow_node?)?
+//   - *** *
 func yamlParserParseFlowMappingKey(parser *yamlParserT, event *yamlEventT, first bool) bool {
 	if first {
 		token := peekToken(parser)
@@ -981,8 +998,7 @@ func yamlParserParseFlowMappingKey(parser *yamlParserT, event *yamlEventT, first
 
 // Parse the productions:
 // flow_mapping_entry   ::= flow_node | KEY flow_node? (VALUE flow_node?)?
-//                                   *                  ***** *
-//
+//   - ***** *
 func yamlParserParseFlowMappingValue(parser *yamlParserT, event *yamlEventT, empty bool) bool {
 	token := peekToken(parser)
 	if token == nil {

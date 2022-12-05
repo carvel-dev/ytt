@@ -1506,11 +1506,11 @@ func yamlParserScanToNextToken(parser *yamlParserT) bool {
 // Scan a YAML-DIRECTIVE or TAG-DIRECTIVE token.
 //
 // Scope:
-//      %YAML    1.1    # a comment \n
-//      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-//      %TAG    !yaml!  tag:yaml.org,2002:  \n
-//      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 //
+//	%YAML    1.1    # a comment \n
+//	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//	%TAG    !yaml!  tag:yaml.org,2002:  \n
+//	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 func yamlParserScanDirective(parser *yamlParserT, token *yamlTokenT) bool {
 	// Eat '%'.
 	startMark := parser.mark
@@ -1607,11 +1607,11 @@ func yamlParserScanDirective(parser *yamlParserT, token *yamlTokenT) bool {
 // Scan the directive name.
 //
 // Scope:
-//      %YAML   1.1     # a comment \n
-//       ^^^^
-//      %TAG    !yaml!  tag:yaml.org,2002:  \n
-//       ^^^
 //
+//	%YAML   1.1     # a comment \n
+//	 ^^^^
+//	%TAG    !yaml!  tag:yaml.org,2002:  \n
+//	 ^^^
 func yamlParserScanDirectiveName(parser *yamlParserT, startMark yamlMarkT, name *[]byte) bool {
 	// Consume the directive name.
 	if parser.unread < 1 && !yamlParserUpdateBuffer(parser, 1) {
@@ -1646,8 +1646,9 @@ func yamlParserScanDirectiveName(parser *yamlParserT, startMark yamlMarkT, name 
 // Scan the value of VERSION-DIRECTIVE.
 //
 // Scope:
-//      %YAML   1.1     # a comment \n
-//           ^^^^^^
+//
+//	%YAML   1.1     # a comment \n
+//	     ^^^^^^
 func yamlParserScanVersionDirectiveValue(parser *yamlParserT, startMark yamlMarkT, major, minor *int8) bool {
 	// Eat whitespaces.
 	if parser.unread < 1 && !yamlParserUpdateBuffer(parser, 1) {
@@ -1685,10 +1686,11 @@ const maxNumberLength = 2
 // Scan the version number of VERSION-DIRECTIVE.
 //
 // Scope:
-//      %YAML   1.1     # a comment \n
-//              ^
-//      %YAML   1.1     # a comment \n
-//                ^
+//
+//	%YAML   1.1     # a comment \n
+//	        ^
+//	%YAML   1.1     # a comment \n
+//	          ^
 func yamlParserScanVersionDirectiveNumber(parser *yamlParserT, startMark yamlMarkT, number *int8) bool {
 
 	// Repeat while the next character is digit.
@@ -1722,9 +1724,9 @@ func yamlParserScanVersionDirectiveNumber(parser *yamlParserT, startMark yamlMar
 // Scan the value of a TAG-DIRECTIVE token.
 //
 // Scope:
-//      %TAG    !yaml!  tag:yaml.org,2002:  \n
-//          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 //
+//	%TAG    !yaml!  tag:yaml.org,2002:  \n
+//	    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 func yamlParserScanTagDirectiveValue(parser *yamlParserT, startMark yamlMarkT, handle, prefix *[]byte) bool {
 	var handleValue, prefixValue []byte
 
