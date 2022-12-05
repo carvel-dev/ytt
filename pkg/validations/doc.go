@@ -5,7 +5,7 @@
 Package validations enriches YAML structures by attaching user-defined
 constraints (that is, validationRun rules) onto individual yamlmeta.Node's.
 
-Validations on Data Values
+# Validations on Data Values
 
 While "@data/values" can technically be annotated with "@assert/validate"
 annotations, it is expected that authors will use "@schema/validationRun" in
