@@ -54,7 +54,6 @@ type EvaluateTemplate func(src string) (MarshalableResult, *TestErr)
 //	+++
 //
 //	msg: hello
-//
 type FileTests struct {
 	PathToTests      string
 	EvalFunc         EvaluateTemplate
