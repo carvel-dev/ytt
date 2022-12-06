@@ -8,10 +8,6 @@ function get_latest_git_tag {
 
 VERSION="${1:-`get_latest_git_tag`}"
 
-go fmt ./cmd/... ./pkg/... ./test/...
-go mod vendor
-go mod tidy
-
 # makes builds reproducible
 export CGO_ENABLED=0
 LDFLAGS="-X github.com/vmware-tanzu/carvel-ytt/pkg/version.Version=$VERSION"
