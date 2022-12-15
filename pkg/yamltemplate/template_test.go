@@ -27,11 +27,12 @@ func TestMain(m *testing.M) {
 }
 
 // Example usage:
-//   Run a specific test:
-//   ./hack/test-all.sh -v -run TestYAMLTemplate/filetests/if.tpltest
 //
-//   Include template compilation results in the output:
-//   ./hack/test-all.sh -v -run TestYAMLTemplate/filetests/if.tpltest TestYAMLTemplate.code=true
+//	Run a specific test:
+//	./hack/test-all.sh -v -run TestYAMLTemplate/filetests/if.tpltest
+//
+//	Include template compilation results in the output:
+//	./hack/test-all.sh -v -run TestYAMLTemplate/filetests/if.tpltest TestYAMLTemplate.code=true
 func TestYAMLTemplate(t *testing.T) {
 	fileTests := filetests.FileTests{
 		PathToTests:      "filetests",
