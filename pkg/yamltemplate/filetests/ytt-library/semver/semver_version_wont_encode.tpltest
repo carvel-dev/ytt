@@ -1,0 +1,11 @@
+#@ load("@ytt:semver", "semver")
+
+#@ version = semver.version(1, 2, 3)
+version: #@ version
+
++++
+
+ERR: 
+- __ytt_tplXXX_set_node: Unable to convert value: @ytt:semver.version does not automatically encode (hint: use .string())
+    in <toplevel>
+      stdin:4 | version: #@ version

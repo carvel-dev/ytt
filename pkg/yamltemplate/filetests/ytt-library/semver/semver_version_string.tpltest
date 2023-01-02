@@ -1,0 +1,26 @@
+#@ load("@ytt:semver", "semver")
+#@ load("@ytt:template", "template")
+#@ load("@ytt:assert", "assert")
+
+---
+got: #@ semver.version().string()
+---
+got: #@ semver.version(1, 2, 3).string()
+---
+got: #@ semver.version(1, 2, 3, "pre.123").string()
+---
+got: #@ semver.version(1, 2, 3, "pre.123", "build.456").string()
+---
+got: #@ semver.version(prerelease="pre.123", build="build.456").string()
+
++++
+
+got: 0.0.0
+---
+got: 1.2.3
+---
+got: 1.2.3-pre.123
+---
+got: 1.2.3-pre.123+build.456
+---
+got: 0.0.0-pre.123+build.456

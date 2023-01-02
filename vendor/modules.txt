@@ -18,6 +18,13 @@ github.com/cppforlife/go-cli-ui/errors
 # github.com/davecgh/go-spew v1.1.1
 ## explicit
 github.com/davecgh/go-spew/spew
+# github.com/google/go-cmp v0.5.9
+## explicit; go 1.13
+github.com/google/go-cmp/cmp
+github.com/google/go-cmp/cmp/internal/diff
+github.com/google/go-cmp/cmp/internal/flags
+github.com/google/go-cmp/cmp/internal/function
+github.com/google/go-cmp/cmp/internal/value
 # github.com/google/gofuzz v1.2.0
 ## explicit; go 1.12
 github.com/google/gofuzz
@@ -31,6 +38,9 @@ github.com/inconshreveable/mousetrap
 # github.com/k14s/difflib v0.0.0-20201117154628-0c031775bf57
 ## explicit
 github.com/k14s/difflib
+# github.com/k14s/semver/v4 v4.0.1-0.20210701191048-266d47ac6115
+## explicit; go 1.14
+github.com/k14s/semver/v4
 # github.com/k14s/starlark-go v0.0.0-20200720175618-3a5c849cc368
 ## explicit; go 1.13
 github.com/k14s/starlark-go/internal/compile

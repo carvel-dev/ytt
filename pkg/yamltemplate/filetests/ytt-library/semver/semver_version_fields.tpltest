@@ -1,0 +1,23 @@
+#@ load("@ytt:semver", "semver")
+#@ load("@ytt:template", "template")
+#@ load("@ytt:assert", "assert")
+
+---
+description: "All defaults"
+#@ got, _ = assert.try_to(lambda: semver.version())
+got:
+  major: #@ got.major
+  minor: #@ got.minor
+  patch: #@ got.patch
+  prerelease: #@ got.prerelease
+  build: #@ got.build
+
++++
+
+description: All defaults
+got:
+  major: 0
+  minor: 0
+  patch: 0
+  prerelease: ""
+  build: ""

@@ -1,0 +1,17 @@
+#@ load("@ytt:semver", "semver")
+#@ load("@ytt:assert", "assert")
+
+---
+got: #@ semver.range("1.2.3").contains(semver.from_str("1.2.3"))
+---
+got: #@ semver.range("1.2.3").contains(semver.version())
+---
+got: #@ semver.range("1.2.3 || 2.0.0").contains(semver.from_str("2.0.0"))
+
++++
+
+got: true
+---
+got: false
+---
+got: true

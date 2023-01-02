@@ -1,0 +1,116 @@
+#@ load("@ytt:semver", "semver")
+#@ load("@ytt:template", "template")
+#@ load("@ytt:assert", "assert")
+
+---
+description: "All defaults"
+#@ got, _ = assert.try_to(lambda: semver.version())
+got: #@ got.dict()
+---
+description: "Major arg"
+#@ got, _ = assert.try_to(lambda: semver.version(1))
+got: #@ got.dict()
+---
+description: "Major+minor args"
+#@ got, _ = assert.try_to(lambda: semver.version(1, 2))
+got: #@ got.dict()
+---
+description: "Major+minor+patch args"
+#@ got, _ = assert.try_to(lambda: semver.version(1, 2, 3))
+got: #@ got.dict()
+---
+description: "Major+minor+patch+prerelease args"
+#@ got, _ = assert.try_to(lambda: semver.version(1, 2, 3, "pre.123"))
+got: #@ got.dict()
+---
+description: "All args"
+#@ got, _ = assert.try_to(lambda: semver.version(1, 2, 3, "pre.123", "build.456"))
+got: #@ got.dict()
+---
+description: "Patch kwarg"
+#@ got, _ = assert.try_to(lambda: semver.version(patch=333))
+got: #@ got.dict()
+---
+description: "Patch+major kwargs"
+#@ got, _ = assert.try_to(lambda: semver.version(patch=33, major=11))
+got: #@ got.dict()
+---
+description: "Bad major"
+#@ got, err = assert.try_to(lambda: semver.version("hello"))
+err: #@ err
+---
+description: "Unknown kwarg"
+#@ _, err = assert.try_to(lambda: semver.version(hello=11))
+err: #@ err
+
++++
+
+description: All defaults
+got:
+  major: 0
+  minor: 0
+  patch: 0
+  prerelease: ""
+  build: ""
+---
+description: Major arg
+got:
+  major: 1
+  minor: 0
+  patch: 0
+  prerelease: ""
+  build: ""
+---
+description: Major+minor args
+got:
+  major: 1
+  minor: 2
+  patch: 0
+  prerelease: ""
+  build: ""
+---
+description: Major+minor+patch args
+got:
+  major: 1
+  minor: 2
+  patch: 3
+  prerelease: ""
+  build: ""
+---
+description: Major+minor+patch+prerelease args
+got:
+  major: 1
+  minor: 2
+  patch: 3
+  prerelease: pre.123
+  build: ""
+---
+description: All args
+got:
+  major: 1
+  minor: 2
+  patch: 3
+  prerelease: pre.123
+  build: build.456
+---
+description: Patch kwarg
+got:
+  major: 0
+  minor: 0
+  patch: 333
+  prerelease: ""
+  build: ""
+---
+description: Patch+major kwargs
+got:
+  major: 11
+  minor: 0
+  patch: 33
+  prerelease: ""
+  build: ""
+---
+description: Bad major
+err: 'semver.version: version: for parameter major: got string, want int'
+---
+description: Unknown kwarg
+err: 'semver.version: unexpected kwarg "hello". expected kwargs are [major, minor, patch, prerelease, build]'

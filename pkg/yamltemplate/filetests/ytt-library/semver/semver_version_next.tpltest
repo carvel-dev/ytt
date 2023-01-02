@@ -1,0 +1,14 @@
+#@ load("@ytt:semver", "semver")
+
+#@ original = semver.from_str("1.2.3")
+next_patch: #@ original.next_patch().string()
+next_minor: #@ original.next_minor().string()
+next_major: #@ original.next_major().string()
+original: #@ original.string()
+
++++
+
+next_patch: 1.2.4
+next_minor: 1.3.0
+next_major: 2.0.0
+original: 1.2.3

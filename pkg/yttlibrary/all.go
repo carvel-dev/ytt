@@ -70,6 +70,7 @@ func NewAPI(
 
 		// Versioning
 		"version": VersionAPI,
+		"semver":  SemverAPI,
 
 		"library": libraryMod,
 	}
