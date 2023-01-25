@@ -77,7 +77,7 @@ readme: |
               (i.e. `namespace`), we expected it to be in
               a target document, but it was not."
      (we're working to make these error messages more easily
-      read; see https://github.com/vmware-tanzu/carvel-ytt/issues/95).
+      read; see https://github.com/carvel-dev/ytt/issues/95).
 
      a) which "target document" does not have a `namespace`
        map item under `metadata`?

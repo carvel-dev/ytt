@@ -6,8 +6,8 @@
 * Discover `ytt` in [video](https://youtu.be/KbB5tI_g3bo)
 * For more information about annotations, data values, overlays and other features see [Docs](https://carvel.dev/ytt/docs/latest/) page
 * Slack: [#carvel in Kubernetes slack](https://slack.kubernetes.io/)
-* Install: Grab prebuilt binaries from the [Releases page](https://github.com/vmware-tanzu/carvel-ytt/releases) or [Homebrew Carvel tap](https://github.com/vmware-tanzu/homebrew-carvel)
-* Backlog: [See what we're up to](https://app.zenhub.com/workspaces/carvel-backlog-6013063a24147d0011410709/board?repos=173207060). (Note: we use ZenHub which requires GitHub authorization).
+* Install: Grab prebuilt binaries from the [Releases page](https://github.com/carvel-dev/ytt/releases) or [Homebrew Carvel tap](https://github.com/carvel-dev/homebrew)
+* Backlog: [See what we're up to]([https://app.zenhub.com/workspaces/carvel-backlog-6013063a24147d0011410709/board?repos=173207060). (Note: we use ZenHub which requires GitHub authorization](https://github.com/orgs/carvel-dev/projects/1/views/1?filterQuery=repo%3A%22vmware-tanzu%2Fcarvel-ytt%22)).
 
 ## Overview
 
@@ -24,8 +24,8 @@
 To get started with `ytt` and to see examples, you use the online playground or download the binaries and run the playground locally.
 
 - Try out the [online playground](https://carvel.dev/ytt/#playground)
-- Download the latest binaries from the [releases page](https://github.com/vmware-tanzu/carvel-ytt/releases) and run the playground locally: `ytt website`
-- See the examples used in the playground on the [examples](https://github.com/vmware-tanzu/carvel-ytt/tree/develop/examples/playground) page
+- Download the latest binaries from the [releases page](https://github.com/carvel-dev/ytt/releases) and run the playground locally: `ytt website`
+- See the examples used in the playground on the [examples](https://github.com/carvel-dev/ytt/tree/develop/examples/playground) page
 - Editor Extensions: [vscode syntax highlighting](https://marketplace.visualstudio.com/items?itemName=ewrenn.vscode-ytt)
 
 ### Join the Community and Make Carvel Better
@@ -33,7 +33,7 @@ Carvel is better because of our contributors and maintainers. It is because of y
 
 You can chat with us on Kubernetes Slack in the #carvel channel and follow us on Twitter at @carvel_dev.
 
-Check out which organizations are using and contributing to Carvel: [Adopter's list](https://github.com/vmware-tanzu/carvel/blob/master/ADOPTERS.md)
+Check out which organizations are using and contributing to Carvel: [Adopter's list](https://github.com/carvel-dev/carvel/blob/master/ADOPTERS.md)
 
 ### Integrating with ytt
 
