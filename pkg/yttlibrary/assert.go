@@ -355,7 +355,7 @@ func (m AssertModule) oneNotNullCheck(keys starlark.Sequence) core.StarlarkFunc 
 				return nil, fmt.Errorf("check: unexpected error while looking up key %s in dict %s", key, dict)
 			}
 			if !found {
-				// allow schema to catch this (see also https://github.com/vmware-tanzu/carvel-ytt/issues/722)
+				// allow schema to catch this (see also https://github.com/carvel-dev/ytt/issues/722)
 				nulls = append(nulls, key)
 			}
 			if value == starlark.None {

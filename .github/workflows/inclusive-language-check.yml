@@ -7,4 +7,4 @@ on:
 
 jobs:
   check-inclusive-language:
-    uses: vmware-tanzu/carvel-release-scripts/.github/workflows/inclusive-language-check.yml@main
+    uses: carvel-dev/release-scripts/.github/workflows/inclusive-language-check.yml@main
