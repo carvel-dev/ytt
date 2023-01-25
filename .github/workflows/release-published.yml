@@ -7,7 +7,7 @@ jobs:
   validate-github-action:
     runs-on: ubuntu-latest
     steps:
-      - uses: vmware-tanzu/carvel-setup-action@v1
+      - uses: carvel-dev/setup-action@v1
         with:
           only: ytt
           ytt: ${{ github.event.release.tag_name }}
@@ -25,7 +25,7 @@ jobs:
             exit 1
           fi
       - run: |
-          curl -X POST https://api.github.com/repos/vmware-tanzu/carvel-release-scripts/dispatches \
+          curl -X POST https://api.github.com/repos/carvel-dev/release-scripts/dispatches \
           -H 'Accept: application/vnd.github.everest-preview+json' \
           -u ${{ secrets.carvel_bot_access_token }} \
           --data '{"event_type": "ytt_released", "client_payload": { "tagName": "${{ github.event.release.tag_name }}", "repo": "${{ github.repository }}", "toolName": "ytt" }}'

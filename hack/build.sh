@@ -7,7 +7,7 @@ VERSION="${1:-$LATEST_GIT_TAG}"
 
 # makes builds reproducible
 export CGO_ENABLED=0
-LDFLAGS="-X github.com/vmware-tanzu/carvel-ytt/pkg/version.Version=$VERSION"
+LDFLAGS="-X github.com/carvel-dev/ytt/pkg/version.Version=$VERSION"
 
 rm -f website/generated.go
 

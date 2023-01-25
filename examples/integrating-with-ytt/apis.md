@@ -26,8 +26,8 @@ How one does this depends largely on the platform from which you're integrating.
 
 Examples of how this can be done in Go:
 
-- https://github.com/vmware-tanzu/carvel-kapp-controller/blob/develop/pkg/template/ytt.go
-- https://github.com/vmware-tanzu/terraform-provider-carvel/blob/develop/pkg/ytt/ytt.go
+- https://github.com/carvel-dev/kapp-controller/blob/develop/pkg/template/ytt.go
+- https://github.com/carvel-dev/terraform-provider-carvel/blob/develop/pkg/ytt/ytt.go
 
 
 ## As a Go Module
@@ -40,7 +40,7 @@ Examples of how this can be done in Go:
    ...
    require  (
        ...
-       github.com/vmware-tanzu/carvel-ytt v0.40.0
+       github.com/carvel-dev/ytt v0.40.0
        ...
    )
    ```
@@ -57,10 +57,10 @@ Examples of how this can be done in Go:
 
 ### Examples
 - [./internal-templating/main.go](internal-templating/main.go) — "Hello, world" with ytt.
-- https://github.com/vmware-tanzu/carvel-kapp/blob/develop/pkg/kapp/yttresmod/overlay_contract_v1_mod.go — using `ytt` to overlay some existing YAML (here, a Kubernetes resource).
+- https://github.com/carvel-dev/kapp/blob/develop/pkg/kapp/yttresmod/overlay_contract_v1_mod.go — using `ytt` to overlay some existing YAML (here, a Kubernetes resource).
 
 # Next Steps
 
 We are always happy to support you in your use of `ytt`. You can:
 - find us at [Kubernetes Slack: #carvel](https://kubernetes.slack.com/archives/CH8KCCKA5) (if your not yet in the workspace, get an [invite](http://slack.k8s.io/)).
-- [pose a question](https://github.com/vmware-tanzu/carvel-ytt/discussions) or [report an issue](https://github.com/vmware-tanzu/carvel-ytt/issues/new/choose) in our GitHub repo.
+- [pose a question](https://github.com/carvel-dev/ytt/discussions) or [report an issue](https://github.com/carvel-dev/ytt/issues/new/choose) in our GitHub repo.
