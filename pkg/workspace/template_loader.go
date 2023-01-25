@@ -7,15 +7,15 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/carvel-dev/ytt/pkg/cmd/ui"
+	"github.com/carvel-dev/ytt/pkg/files"
+	"github.com/carvel-dev/ytt/pkg/template"
+	"github.com/carvel-dev/ytt/pkg/texttemplate"
+	"github.com/carvel-dev/ytt/pkg/workspace/datavalues"
+	"github.com/carvel-dev/ytt/pkg/yamlmeta"
+	"github.com/carvel-dev/ytt/pkg/yamltemplate"
+	"github.com/carvel-dev/ytt/pkg/yttlibrary"
 	"github.com/k14s/starlark-go/starlark"
-	"github.com/vmware-tanzu/carvel-ytt/pkg/cmd/ui"
-	"github.com/vmware-tanzu/carvel-ytt/pkg/files"
-	"github.com/vmware-tanzu/carvel-ytt/pkg/template"
-	"github.com/vmware-tanzu/carvel-ytt/pkg/texttemplate"
-	"github.com/vmware-tanzu/carvel-ytt/pkg/workspace/datavalues"
-	"github.com/vmware-tanzu/carvel-ytt/pkg/yamlmeta"
-	"github.com/vmware-tanzu/carvel-ytt/pkg/yamltemplate"
-	"github.com/vmware-tanzu/carvel-ytt/pkg/yttlibrary"
 )
 
 type TemplateLoader struct {

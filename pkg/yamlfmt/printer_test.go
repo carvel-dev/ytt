@@ -11,9 +11,9 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/carvel-dev/ytt/pkg/yamlfmt"
+	"github.com/carvel-dev/ytt/pkg/yamlmeta"
 	"github.com/k14s/difflib"
-	"github.com/vmware-tanzu/carvel-ytt/pkg/yamlfmt"
-	"github.com/vmware-tanzu/carvel-ytt/pkg/yamlmeta"
 )
 
 var (

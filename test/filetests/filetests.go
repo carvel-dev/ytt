@@ -17,12 +17,12 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/carvel-dev/ytt/pkg/template"
+	"github.com/carvel-dev/ytt/pkg/version"
+	"github.com/carvel-dev/ytt/pkg/yamlmeta"
+	"github.com/carvel-dev/ytt/pkg/yamltemplate"
+	"github.com/carvel-dev/ytt/pkg/yttlibrary"
 	"github.com/k14s/starlark-go/starlark"
-	"github.com/vmware-tanzu/carvel-ytt/pkg/template"
-	"github.com/vmware-tanzu/carvel-ytt/pkg/version"
-	"github.com/vmware-tanzu/carvel-ytt/pkg/yamlmeta"
-	"github.com/vmware-tanzu/carvel-ytt/pkg/yamltemplate"
-	"github.com/vmware-tanzu/carvel-ytt/pkg/yttlibrary"
 )
 
 // MarshalableResult is a template evaluation result that can be (likely) marshaled into a slice of bytes.

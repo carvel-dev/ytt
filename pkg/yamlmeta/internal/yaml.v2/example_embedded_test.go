@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/vmware-tanzu/carvel-ytt/pkg/yamlmeta/internal/yaml.v2"
+	"github.com/carvel-dev/ytt/pkg/yamlmeta/internal/yaml.v2"
 )
 
 // An example showing how to unmarshal embedded

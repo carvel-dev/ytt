@@ -6,9 +6,9 @@ package yamlmeta
 import (
 	"fmt"
 
-	"github.com/vmware-tanzu/carvel-ytt/pkg/filepos"
-	"github.com/vmware-tanzu/carvel-ytt/pkg/orderedmap"
-	"github.com/vmware-tanzu/carvel-ytt/pkg/yamlmeta/internal/yaml.v2"
+	"github.com/carvel-dev/ytt/pkg/filepos"
+	"github.com/carvel-dev/ytt/pkg/orderedmap"
+	"github.com/carvel-dev/ytt/pkg/yamlmeta/internal/yaml.v2"
 )
 
 func NewASTFromInterface(val interface{}) interface{} {

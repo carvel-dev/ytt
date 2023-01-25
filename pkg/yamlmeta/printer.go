@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/vmware-tanzu/carvel-ytt/pkg/filepos"
+	"github.com/carvel-dev/ytt/pkg/filepos"
 )
 
 type Printer struct {

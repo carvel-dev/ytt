@@ -6,7 +6,7 @@ package template_test
 import (
 	"testing"
 
-	"github.com/vmware-tanzu/carvel-ytt/pkg/files"
+	"github.com/carvel-dev/ytt/pkg/files"
 )
 
 func TestLoadAbs(t *testing.T) {

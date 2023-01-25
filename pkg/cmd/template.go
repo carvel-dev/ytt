@@ -4,11 +4,11 @@
 package cmd
 
 import (
+	"github.com/carvel-dev/ytt/pkg/cmd/template"
 	"github.com/spf13/cobra"
-	"github.com/vmware-tanzu/carvel-ytt/pkg/cmd/template"
 
 	// Load ytt library extensions (should be available in ytt binary)
-	_ "github.com/vmware-tanzu/carvel-ytt/pkg/yttlibraryext"
+	_ "github.com/carvel-dev/ytt/pkg/yttlibraryext"
 )
 
 // NewCmd construct main ytt command. It has been moved out of "template" package

@@ -7,9 +7,9 @@ import (
 	"encoding/base64"
 	"fmt"
 
+	"github.com/carvel-dev/ytt/pkg/template/core"
 	"github.com/k14s/starlark-go/starlark"
 	"github.com/k14s/starlark-go/starlarkstruct"
-	"github.com/vmware-tanzu/carvel-ytt/pkg/template/core"
 )
 
 var (

@@ -6,9 +6,9 @@ package overlay
 import (
 	"fmt"
 
+	"github.com/carvel-dev/ytt/pkg/template"
+	"github.com/carvel-dev/ytt/pkg/yamlmeta"
 	"github.com/k14s/starlark-go/starlark"
-	"github.com/vmware-tanzu/carvel-ytt/pkg/template"
-	"github.com/vmware-tanzu/carvel-ytt/pkg/yamlmeta"
 )
 
 type Op struct {

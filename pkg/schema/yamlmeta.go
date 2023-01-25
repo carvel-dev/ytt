@@ -3,7 +3,7 @@
 
 package schema
 
-import "github.com/vmware-tanzu/carvel-ytt/pkg/yamlmeta"
+import "github.com/carvel-dev/ytt/pkg/yamlmeta"
 
 const schemaType = "schema/type"
 

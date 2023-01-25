@@ -4,7 +4,7 @@
 package yamlmeta
 
 import (
-	"github.com/vmware-tanzu/carvel-ytt/pkg/filepos"
+	"github.com/carvel-dev/ytt/pkg/filepos"
 )
 
 type Node interface {

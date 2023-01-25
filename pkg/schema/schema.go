@@ -6,9 +6,9 @@ package schema
 import (
 	"fmt"
 
-	"github.com/vmware-tanzu/carvel-ytt/pkg/filepos"
-	"github.com/vmware-tanzu/carvel-ytt/pkg/validations"
-	"github.com/vmware-tanzu/carvel-ytt/pkg/yamlmeta"
+	"github.com/carvel-dev/ytt/pkg/filepos"
+	"github.com/carvel-dev/ytt/pkg/validations"
+	"github.com/carvel-dev/ytt/pkg/yamlmeta"
 )
 
 // NewDocumentType constructs a complete DocumentType based on the contents of a schema YAML document.

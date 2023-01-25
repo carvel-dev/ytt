@@ -14,7 +14,7 @@ import (
 	"net"
 	"os"
 
-	"github.com/vmware-tanzu/carvel-ytt/pkg/yamlmeta/internal/yaml.v2"
+	"github.com/carvel-dev/ytt/pkg/yamlmeta/internal/yaml.v2"
 	. "gopkg.in/check.v1"
 )
 

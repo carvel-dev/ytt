@@ -4,7 +4,7 @@
 package workspace
 
 import (
-	"github.com/vmware-tanzu/carvel-ytt/pkg/files"
+	"github.com/carvel-dev/ytt/pkg/files"
 )
 
 type DataLoader struct {

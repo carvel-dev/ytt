@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/vmware-tanzu/carvel-ytt/pkg/yamlmeta"
+	"github.com/carvel-dev/ytt/pkg/yamlmeta"
 )
 
 // keys used when generating an OpenAPI Document

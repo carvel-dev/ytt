@@ -9,8 +9,8 @@ import (
 	"io"
 	"strings"
 
-	"github.com/vmware-tanzu/carvel-ytt/pkg/filepos"
-	"github.com/vmware-tanzu/carvel-ytt/pkg/yamlmeta/internal/yaml.v2"
+	"github.com/carvel-dev/ytt/pkg/filepos"
+	"github.com/carvel-dev/ytt/pkg/yamlmeta/internal/yaml.v2"
 )
 
 type FilePositionPrinter struct {

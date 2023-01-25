@@ -85,7 +85,7 @@ itself to use this powerful editing feature.
 
 "Standard Library" modules that have Go dependencies are included as
 "extensions" to minimize the set of transitive dependencies that come from the
-github.com/vmware-tanzu/carvel-ytt module.
+github.com/carvel-dev/ytt module.
 
 	(1) => pkg/yttlibraryext => (1)
 	(1) => pkg/yttlibraryext/toml => (4)

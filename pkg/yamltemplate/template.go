@@ -7,10 +7,10 @@ import (
 	"bytes"
 	"fmt"
 
-	"github.com/vmware-tanzu/carvel-ytt/pkg/filepos"
-	"github.com/vmware-tanzu/carvel-ytt/pkg/template"
-	"github.com/vmware-tanzu/carvel-ytt/pkg/texttemplate"
-	"github.com/vmware-tanzu/carvel-ytt/pkg/yamlmeta"
+	"github.com/carvel-dev/ytt/pkg/filepos"
+	"github.com/carvel-dev/ytt/pkg/template"
+	"github.com/carvel-dev/ytt/pkg/texttemplate"
+	"github.com/carvel-dev/ytt/pkg/yamlmeta"
 )
 
 const (

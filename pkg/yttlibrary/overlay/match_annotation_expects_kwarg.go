@@ -9,8 +9,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/carvel-dev/ytt/pkg/filepos"
 	"github.com/k14s/starlark-go/starlark"
-	"github.com/vmware-tanzu/carvel-ytt/pkg/filepos"
 )
 
 const (

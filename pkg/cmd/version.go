@@ -6,9 +6,9 @@ package cmd
 import (
 	"fmt"
 
+	"github.com/carvel-dev/ytt/pkg/experiments"
+	"github.com/carvel-dev/ytt/pkg/version"
 	"github.com/spf13/cobra"
-	"github.com/vmware-tanzu/carvel-ytt/pkg/experiments"
-	"github.com/vmware-tanzu/carvel-ytt/pkg/version"
 )
 
 type VersionOptions struct{}

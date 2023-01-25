@@ -11,9 +11,9 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/vmware-tanzu/carvel-ytt/pkg/filepos"
-	"github.com/vmware-tanzu/carvel-ytt/pkg/spell"
-	"github.com/vmware-tanzu/carvel-ytt/pkg/yamlmeta"
+	"github.com/carvel-dev/ytt/pkg/filepos"
+	"github.com/carvel-dev/ytt/pkg/spell"
+	"github.com/carvel-dev/ytt/pkg/yamlmeta"
 )
 
 const schemaErrorReportTemplate = `

@@ -7,8 +7,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/carvel-dev/ytt/pkg/template"
 	"github.com/k14s/starlark-go/starlark"
-	"github.com/vmware-tanzu/carvel-ytt/pkg/template"
 )
 
 func TestEvalExecutesStarlarkAndReturnsGlobals(t *testing.T) {

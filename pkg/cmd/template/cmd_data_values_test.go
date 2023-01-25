@@ -7,11 +7,11 @@ import (
 	"fmt"
 	"testing"
 
+	cmdtpl "github.com/carvel-dev/ytt/pkg/cmd/template"
+	"github.com/carvel-dev/ytt/pkg/cmd/ui"
+	"github.com/carvel-dev/ytt/pkg/files"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	cmdtpl "github.com/vmware-tanzu/carvel-ytt/pkg/cmd/template"
-	"github.com/vmware-tanzu/carvel-ytt/pkg/cmd/ui"
-	"github.com/vmware-tanzu/carvel-ytt/pkg/files"
 )
 
 func TestEmptyDataValues(t *testing.T) {

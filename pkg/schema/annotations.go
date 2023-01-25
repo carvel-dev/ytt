@@ -7,12 +7,12 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/carvel-dev/ytt/pkg/filepos"
+	"github.com/carvel-dev/ytt/pkg/template"
+	"github.com/carvel-dev/ytt/pkg/template/core"
+	"github.com/carvel-dev/ytt/pkg/validations"
+	"github.com/carvel-dev/ytt/pkg/yamlmeta"
 	"github.com/k14s/starlark-go/starlark"
-	"github.com/vmware-tanzu/carvel-ytt/pkg/filepos"
-	"github.com/vmware-tanzu/carvel-ytt/pkg/template"
-	"github.com/vmware-tanzu/carvel-ytt/pkg/template/core"
-	"github.com/vmware-tanzu/carvel-ytt/pkg/validations"
-	"github.com/vmware-tanzu/carvel-ytt/pkg/yamlmeta"
 )
 
 // Declare @schema/... annotation names

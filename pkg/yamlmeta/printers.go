@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/vmware-tanzu/carvel-ytt/pkg/orderedmap"
+	"github.com/carvel-dev/ytt/pkg/orderedmap"
 )
 
 type DocumentPrinter interface {

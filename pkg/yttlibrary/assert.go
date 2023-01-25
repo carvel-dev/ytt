@@ -6,11 +6,11 @@ package yttlibrary
 import (
 	"fmt"
 
+	"github.com/carvel-dev/ytt/pkg/orderedmap"
+	"github.com/carvel-dev/ytt/pkg/template/core"
 	"github.com/k14s/starlark-go/starlark"
 	"github.com/k14s/starlark-go/starlarkstruct"
 	"github.com/k14s/starlark-go/syntax"
-	"github.com/vmware-tanzu/carvel-ytt/pkg/orderedmap"
-	"github.com/vmware-tanzu/carvel-ytt/pkg/template/core"
 )
 
 // NewAssertModule constructs a new instance of AssertModule, respecting the "validations" experiment flag.
@@ -355,7 +355,7 @@ func (m AssertModule) oneNotNullCheck(keys starlark.Sequence) core.StarlarkFunc 
 				return nil, fmt.Errorf("check: unexpected error while looking up key %s in dict %s", key, dict)
 			}
 			if !found {
-				// allow schema to catch this (see also https://github.com/vmware-tanzu/carvel-ytt/issues/722)
+				// allow schema to catch this (see also https://github.com/carvel-dev/ytt/issues/722)
 				nulls = append(nulls, key)
 			}
 			if value == starlark.None {

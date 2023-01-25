@@ -9,11 +9,11 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/vmware-tanzu/carvel-ytt/pkg/experiments"
-	"github.com/vmware-tanzu/carvel-ytt/pkg/validations"
-	"github.com/vmware-tanzu/carvel-ytt/pkg/yamlmeta"
-	_ "github.com/vmware-tanzu/carvel-ytt/pkg/yttlibraryext"
-	"github.com/vmware-tanzu/carvel-ytt/test/filetests"
+	"github.com/carvel-dev/ytt/pkg/experiments"
+	"github.com/carvel-dev/ytt/pkg/validations"
+	"github.com/carvel-dev/ytt/pkg/yamlmeta"
+	_ "github.com/carvel-dev/ytt/pkg/yttlibraryext"
+	"github.com/carvel-dev/ytt/test/filetests"
 )
 
 // TestMain is invoked when any tests are run in this package, *instead of* those tests being run directly.

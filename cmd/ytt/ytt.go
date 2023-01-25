@@ -9,8 +9,8 @@ import (
 	"os"
 	"time"
 
+	"github.com/carvel-dev/ytt/pkg/cmd"
 	uierrs "github.com/cppforlife/go-cli-ui/errors"
-	"github.com/vmware-tanzu/carvel-ytt/pkg/cmd"
 )
 
 func main() {

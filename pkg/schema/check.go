@@ -6,7 +6,7 @@ package schema
 import (
 	"fmt"
 
-	"github.com/vmware-tanzu/carvel-ytt/pkg/yamlmeta"
+	"github.com/carvel-dev/ytt/pkg/yamlmeta"
 )
 
 // CheckNode attempts type check of root node and its children.

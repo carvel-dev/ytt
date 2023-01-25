@@ -4,7 +4,7 @@
 package yamlmeta
 
 import (
-	"github.com/vmware-tanzu/carvel-ytt/pkg/yamlmeta/internal/yaml.v2"
+	"github.com/carvel-dev/ytt/pkg/yamlmeta/internal/yaml.v2"
 )
 
 func (d *Document) IsEmpty() bool {

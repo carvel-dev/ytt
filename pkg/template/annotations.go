@@ -6,8 +6,8 @@ package template
 import (
 	"strings"
 
+	"github.com/carvel-dev/ytt/pkg/filepos"
 	"github.com/k14s/starlark-go/starlark"
-	"github.com/vmware-tanzu/carvel-ytt/pkg/filepos"
 )
 
 type NodeAnnotations map[AnnotationName]NodeAnnotation

@@ -1,4 +1,4 @@
-module github.com/vmware-tanzu/carvel-ytt
+module github.com/carvel-dev/ytt
 
 go 1.19
 

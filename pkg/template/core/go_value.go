@@ -6,8 +6,8 @@ package core
 import (
 	"fmt"
 
+	"github.com/carvel-dev/ytt/pkg/orderedmap"
 	"github.com/k14s/starlark-go/starlark"
-	"github.com/vmware-tanzu/carvel-ytt/pkg/orderedmap"
 )
 
 type GoValueToStarlarkValueConversion interface {

@@ -4,7 +4,7 @@
 package workspace
 
 import (
-	"github.com/vmware-tanzu/carvel-ytt/pkg/cmd/ui"
+	"github.com/carvel-dev/ytt/pkg/cmd/ui"
 )
 
 // LibraryExecutionContext holds the total set of inputs that are involved in a LibraryExecution.

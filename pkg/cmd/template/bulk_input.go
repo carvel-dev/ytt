@@ -6,8 +6,8 @@ package template
 import (
 	"encoding/json"
 
-	"github.com/vmware-tanzu/carvel-ytt/pkg/cmd/ui"
-	"github.com/vmware-tanzu/carvel-ytt/pkg/files"
+	"github.com/carvel-dev/ytt/pkg/cmd/ui"
+	"github.com/carvel-dev/ytt/pkg/files"
 )
 
 type BulkFilesSourceOpts struct {

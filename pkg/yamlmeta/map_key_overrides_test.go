@@ -6,7 +6,7 @@ package yamlmeta_test
 import (
 	"testing"
 
-	"github.com/vmware-tanzu/carvel-ytt/pkg/yamlmeta"
+	"github.com/carvel-dev/ytt/pkg/yamlmeta"
 )
 
 func TestMapKeyOverridePlainYAML(t *testing.T) {

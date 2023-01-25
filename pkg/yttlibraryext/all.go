@@ -10,5 +10,5 @@
 package yttlibraryext
 
 import (
-	_ "github.com/vmware-tanzu/carvel-ytt/pkg/yttlibraryext/toml" // include toml
+	_ "github.com/carvel-dev/ytt/pkg/yttlibraryext/toml" // include toml
 )

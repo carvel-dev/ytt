@@ -10,7 +10,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/vmware-tanzu/carvel-ytt/pkg/files"
+	"github.com/carvel-dev/ytt/pkg/files"
 )
 
 const (

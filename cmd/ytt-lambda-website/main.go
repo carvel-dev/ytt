@@ -9,7 +9,7 @@ import (
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
-	"github.com/vmware-tanzu/carvel-ytt/pkg/cmd"
+	"github.com/carvel-dev/ytt/pkg/cmd"
 )
 
 type HandlerFuncAdapter struct {

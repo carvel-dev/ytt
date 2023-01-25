@@ -8,14 +8,14 @@ import (
 	"os"
 	"strings"
 
+	"github.com/carvel-dev/ytt/pkg/filepos"
+	"github.com/carvel-dev/ytt/pkg/files"
+	"github.com/carvel-dev/ytt/pkg/template"
+	"github.com/carvel-dev/ytt/pkg/workspace/datavalues"
+	"github.com/carvel-dev/ytt/pkg/workspace/ref"
+	"github.com/carvel-dev/ytt/pkg/yamlmeta"
+	yttoverlay "github.com/carvel-dev/ytt/pkg/yttlibrary/overlay"
 	"github.com/k14s/starlark-go/starlark"
-	"github.com/vmware-tanzu/carvel-ytt/pkg/filepos"
-	"github.com/vmware-tanzu/carvel-ytt/pkg/files"
-	"github.com/vmware-tanzu/carvel-ytt/pkg/template"
-	"github.com/vmware-tanzu/carvel-ytt/pkg/workspace/datavalues"
-	"github.com/vmware-tanzu/carvel-ytt/pkg/workspace/ref"
-	"github.com/vmware-tanzu/carvel-ytt/pkg/yamlmeta"
-	yttoverlay "github.com/vmware-tanzu/carvel-ytt/pkg/yttlibrary/overlay"
 )
 
 const (

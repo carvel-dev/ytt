@@ -8,7 +8,7 @@ import (
 	"strings"
 	"unicode"
 
-	"github.com/vmware-tanzu/carvel-ytt/pkg/template"
+	"github.com/carvel-dev/ytt/pkg/template"
 )
 
 type Template struct {

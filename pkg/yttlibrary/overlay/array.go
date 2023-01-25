@@ -4,7 +4,7 @@
 package overlay
 
 import (
-	"github.com/vmware-tanzu/carvel-ytt/pkg/yamlmeta"
+	"github.com/carvel-dev/ytt/pkg/yamlmeta"
 )
 
 func (o Op) mergeArrayItem(

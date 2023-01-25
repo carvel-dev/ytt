@@ -4,10 +4,10 @@
 package cmd
 
 import (
+	cmdtpl "github.com/carvel-dev/ytt/pkg/cmd/template"
+	"github.com/carvel-dev/ytt/pkg/version"
 	"github.com/cppforlife/cobrautil"
 	"github.com/spf13/cobra"
-	cmdtpl "github.com/vmware-tanzu/carvel-ytt/pkg/cmd/template"
-	"github.com/vmware-tanzu/carvel-ytt/pkg/version"
 )
 
 type YttOptions struct{}

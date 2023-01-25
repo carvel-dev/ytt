@@ -6,7 +6,7 @@ package template
 import (
 	"bytes"
 
-	"github.com/vmware-tanzu/carvel-ytt/pkg/filepos"
+	"github.com/carvel-dev/ytt/pkg/filepos"
 )
 
 type Line struct {

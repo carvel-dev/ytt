@@ -7,10 +7,10 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/carvel-dev/ytt/pkg/workspace/datavalues"
+	"github.com/carvel-dev/ytt/pkg/yamlmeta"
+	yttoverlay "github.com/carvel-dev/ytt/pkg/yttlibrary/overlay"
 	"github.com/k14s/starlark-go/starlark"
-	"github.com/vmware-tanzu/carvel-ytt/pkg/workspace/datavalues"
-	"github.com/vmware-tanzu/carvel-ytt/pkg/yamlmeta"
-	yttoverlay "github.com/vmware-tanzu/carvel-ytt/pkg/yttlibrary/overlay"
 )
 
 // DataValuesSchemaPreProcessing combines all data values schema documents (and any overlays) into a result set.

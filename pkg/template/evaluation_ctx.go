@@ -5,8 +5,8 @@ package template
 
 import (
 	"fmt"
+	"github.com/carvel-dev/ytt/pkg/template/core"
 	"github.com/k14s/starlark-go/starlark"
-	"github.com/vmware-tanzu/carvel-ytt/pkg/template/core"
 	// Should not import template specific packages here (like yamlmeta)
 )
 
