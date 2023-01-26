@@ -8,9 +8,9 @@ import (
 	"io"
 	"os"
 
-	yttcmd "github.com/carvel-dev/ytt/pkg/cmd/template"
-	yttui "github.com/carvel-dev/ytt/pkg/cmd/ui"
-	yttfiles "github.com/carvel-dev/ytt/pkg/files"
+	yttcmd "github.com/vmware-tanzu/carvel-ytt/pkg/cmd/template"
+	yttui "github.com/vmware-tanzu/carvel-ytt/pkg/cmd/ui"
+	yttfiles "github.com/vmware-tanzu/carvel-ytt/pkg/files"
 )
 
 func main() {
