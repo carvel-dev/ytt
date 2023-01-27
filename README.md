@@ -7,7 +7,7 @@
 * For more information about annotations, data values, overlays and other features see [Docs](https://carvel.dev/ytt/docs/latest/) page
 * Slack: [#carvel in Kubernetes slack](https://slack.kubernetes.io/)
 * Install: Grab prebuilt binaries from the [Releases page](https://github.com/carvel-dev/ytt/releases) or [Homebrew Carvel tap](https://github.com/carvel-dev/homebrew)
-* Backlog: [See what we're up to]([https://app.zenhub.com/workspaces/carvel-backlog-6013063a24147d0011410709/board?repos=173207060). (Note: we use ZenHub which requires GitHub authorization](https://github.com/orgs/carvel-dev/projects/1/views/1?filterQuery=repo%3A%22vmware-tanzu%2Fcarvel-ytt%22)).
+* Backlog: [See what we're up to]([https://app.zenhub.com/workspaces/carvel-backlog-6013063a24147d0011410709/board?repos=173207060). (Note: we use ZenHub which requires GitHub authorization](https://github.com/orgs/carvel-dev/projects/1/views/1?filterQuery=repo%3A%22carvel-dev%2Fytt%22)).
 
 ## Overview
 
