@@ -1,9 +1,9 @@
 ## Building
 
 ```bash
-git clone https://github.com/vmware-tanzu/carvel-ytt ./src/github.com/vmware-tanzu/carvel-ytt
+git clone https://github.com/carvel-dev/ytt ./src/github.com/carvel-dev/ytt
 export GOPATH=$PWD
-cd ./src/github.com/vmware-tanzu/carvel-ytt
+cd ./src/github.com/carvel-dev/ytt
 
 ./hack/build.sh
 ./hack/test-unit.sh
@@ -12,7 +12,7 @@ cd ./src/github.com/vmware-tanzu/carvel-ytt
 ```
 
 ## Source Code Changes
-To keep source code documentation up to date, ytt uses [godoc](https://go.dev/blog/godoc). To document a type, variable, constant, function, or a package, write a regular comment directly preceding its declaration that begins with the name of the element it describes. See the ["@ytt:ip" module](https://github.com/vmware-tanzu/carvel-ytt/blob/develop/pkg/yttlibrary/ip.go) for examples. When contributing new source code via a PR, the [GitHub Action linter](https://github.com/vmware-tanzu/carvel-ytt/blob/develop/.github/workflows/golangci-lint.yml) will ensure that godocs are included in the changes.
+To keep source code documentation up to date, ytt uses [godoc](https://go.dev/blog/godoc). To document a type, variable, constant, function, or a package, write a regular comment directly preceding its declaration that begins with the name of the element it describes. See the ["@ytt:ip" module](https://github.com/carvel-dev/ytt/blob/develop/pkg/yttlibrary/ip.go) for examples. When contributing new source code via a PR, the [GitHub Action linter](https://github.com/carvel-dev/ytt/blob/develop/.github/workflows/golangci-lint.yml) will ensure that godocs are included in the changes.
 
 To view the docs
   1. install godoc: `go get -v  golang.org/x/tools/cmd/godoc`
@@ -24,18 +24,18 @@ The go module was renamed from `github.com/k14s` to `github.com/vmware-tanzu/car
 
 For those interested in extending and improving `ytt`, below is a quick reference on the structure of the source code:
 
-- [pkg/cmd/template/cmd.go](https://github.com/vmware-tanzu/carvel-ytt/blob/develop/pkg/cmd/template/cmd.go#L95) is the top level call site for the template command
-- [pkg/files](https://github.com/vmware-tanzu/carvel-ytt/tree/develop/pkg/files) allows reading files from filesystem
-- [pkg/workspace](https://github.com/vmware-tanzu/carvel-ytt/tree/develop/pkg/workspace) keeps read files from the filesystem in memory for later access
+- [pkg/cmd/template/cmd.go](https://github.com/carvel-dev/ytt/blob/develop/pkg/cmd/template/cmd.go#L95) is the top level call site for the template command
+- [pkg/files](https://github.com/carvel-dev/ytt/tree/develop/pkg/files) allows reading files from filesystem
+- [pkg/workspace](https://github.com/carvel-dev/ytt/tree/develop/pkg/workspace) keeps read files from the filesystem in memory for later access
   - `load(...)` directive goes through `TemplateLoader` to load files
-- [pkg/yamlmeta](https://github.com/vmware-tanzu/carvel-ytt/tree/develop/pkg/yamlmeta) parses YAML and tracks YAML node annotations (metas)
-- [pkg/yamltemplate](https://github.com/vmware-tanzu/carvel-ytt/tree/develop/pkg/yamltemplate) generates Starlark template based on yamlmeta package structures
-- [pkg/texttemplate](https://github.com/vmware-tanzu/carvel-ytt/tree/develop/pkg/texttemplate) parses text templates and generates Starlark template
-- [pkg/template](https://github.com/vmware-tanzu/carvel-ytt/tree/develop/pkg/template)
+- [pkg/yamlmeta](https://github.com/carvel-dev/ytt/tree/develop/pkg/yamlmeta) parses YAML and tracks YAML node annotations (metas)
+- [pkg/yamltemplate](https://github.com/carvel-dev/ytt/tree/develop/pkg/yamltemplate) generates Starlark template based on yamlmeta package structures
+- [pkg/texttemplate](https://github.com/carvel-dev/ytt/tree/develop/pkg/texttemplate) parses text templates and generates Starlark template
+- [pkg/template](https://github.com/carvel-dev/ytt/tree/develop/pkg/template)
   - `InstructionSet` provides generic template instruction set for building Starlark templates
   - `CompiledTemplate` uses [Starlark Go library](https://github.com/google/starlark-go) to evaluate Starlark code
-- [pkg/yttlibrary](https://github.com/vmware-tanzu/carvel-ytt/tree/develop/pkg/yttlibrary) is bundled `@ytt` library
-  - you can also make your own libraries as exemplified by [vmware-tanzu/carvel-ytt-library-for-kubernetes](https://github.com/vmware-tanzu/carvel-ytt-library-for-kubernetes)
+- [pkg/yttlibrary](https://github.com/carvel-dev/ytt/tree/develop/pkg/yttlibrary) is bundled `@ytt` library
+  - you can also make your own libraries as exemplified by [carvel-dev/ytt-library-for-kubernetes](https://github.com/carvel-dev/ytt-library-for-kubernetes)
 
 ### Tests
 
@@ -103,5 +103,5 @@ When contributing to this library note:
 ### Prior Efforts
 
 For your convenience, here's a list of PRs of prior contributions to the standard library:
-- [module for handling Internet Protocol data #433](https://github.com/vmware-tanzu/carvel-ytt/pull/433)
-- [Add url type in the url module #372](https://github.com/vmware-tanzu/carvel-ytt/pull/372)
+- [module for handling Internet Protocol data #433](https://github.com/carvel-dev/ytt/pull/433)
+- [Add url type in the url module #372](https://github.com/carvel-dev/ytt/pull/372)
