@@ -6,6 +6,6 @@
 #! is not accessible to library consumers, allowing the
 #! library to have private functionality
 
-#@ load("@github.com/vmware-tanzu/test-lib:funcs.star", "testfunc")
+#@ load("@github.com/carvel-dev/test-lib:funcs.star", "testfunc")
 
 result: #@ testfunc()
