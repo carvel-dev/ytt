@@ -6,9 +6,9 @@ on:
 
 jobs:
   trivy-scan:
-    uses: vmware-tanzu/carvel-release-scripts/.github/workflows/trivy-scan.yml@main
+    uses: carvel-dev/release-scripts/.github/workflows/trivy-scan.yml@main
     with:
-      repo: vmware-tanzu/carvel-ytt
+      repo: carvel-dev/ytt
       tool: ytt
       goVersion: 1.19.5
     secrets:
