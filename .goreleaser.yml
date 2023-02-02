@@ -20,7 +20,7 @@ builds:
       - -trimpath
 
     ldflags:
-      - -X github.com/vmware-tanzu/carvel-ytt/pkg/version.Version={{ .Version }}
+      - -X github.com/carvel-dev/ytt/pkg/version.Version={{ .Version }}
 
 archives:
   - format: binary
@@ -39,8 +39,8 @@ snapshot:
 release:
   # Repo in which the release will be created.
   github:
-    owner: vmware-tanzu
-    name: carvel-ytt
+    owner: carvel-dev
+    name: ytt
 
   # If set to true, will not auto-publish the release.
   draft: true
