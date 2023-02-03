@@ -20,7 +20,7 @@ builds:
       - -trimpath
 
     ldflags:
-      - -X github.com/carvel-dev/ytt/pkg/version.Version={{ .Version }}
+      - -X github.com/vmware-tanzu/carvel-ytt/pkg/version.Version={{ .Version }}
 
 archives:
   - format: binary
