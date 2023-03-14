@@ -11,7 +11,7 @@ type NodeCodeMeta struct {
 	*NodeCode
 }
 
-func (p NodeCodeMeta) ShoudTrimSpaceLeft() bool {
+func (p NodeCodeMeta) ShouldTrimSpaceLeft() bool {
 	return strings.HasPrefix(p.Content, "-")
 }
 

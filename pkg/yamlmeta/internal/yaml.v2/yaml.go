@@ -104,7 +104,7 @@ func UnmarshalWithComments(in []byte, out interface{}) ([]Comment, error) {
 	return unmarshal(in, out, true)
 }
 
-// A Decorder reads and decodes YAML values from an input stream.
+// Decoder reads and decodes YAML values from an input stream.
 type Decoder struct {
 	strict                bool
 	useMapSlice           bool
