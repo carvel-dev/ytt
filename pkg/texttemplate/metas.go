@@ -11,6 +11,7 @@ type NodeCodeMeta struct {
 	*NodeCode
 }
 
+// ShouldTrimSpaceLeft indicates whether leading spaces should be removed (because the left-trim token, `-`, was present)
 func (p NodeCodeMeta) ShouldTrimSpaceLeft() bool {
 	return strings.HasPrefix(p.Content, "-")
 }
