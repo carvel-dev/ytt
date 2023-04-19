@@ -22,7 +22,7 @@ import (
 // a protocol: http://my-custom.host.com
 const CustomHostVariable = "GO_API_HOST"
 
-// DefaultServerAddress is prepended to the path of each incoming reuqest
+// DefaultServerAddress is prepended to the path of each incoming request
 const DefaultServerAddress = "https://aws-serverless-go-api.com"
 
 type RequestAccessor struct {
