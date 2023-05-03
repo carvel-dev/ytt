@@ -251,7 +251,7 @@ func (l DefaultTemplateLoader) FindCompiledTemplate(_ string) *template.Compiled
 
 // Load provides the ability to load any module from the ytt standard library (including `@ytt:data` populated with
 // DefaultTemplateLoader.DataValues)
-func (l DefaultTemplateLoader) Load(thread *starlark.Thread, module string) (starlark.StringDict, error) {
+func (l DefaultTemplateLoader) Load(_ *starlark.Thread, module string) (starlark.StringDict, error) {
 	api := yttlibrary.NewAPI(l.CompiledTemplate.TplReplaceNode,
 		yttlibrary.NewDataModule(&l.DataValues, nil), nil, nil)
 	return api.FindModule(strings.TrimPrefix(module, "@ytt:"))
