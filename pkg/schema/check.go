@@ -224,7 +224,7 @@ func (s *ScalarType) CheckType(node yamlmeta.Node) TypeCheck {
 // CheckType is a no-op because AnyType allows any value.
 //
 // Always returns an empty TypeCheck.
-func (a AnyType) CheckType(node yamlmeta.Node) TypeCheck {
+func (a AnyType) CheckType(_ yamlmeta.Node) TypeCheck {
 	return TypeCheck{}
 }
 

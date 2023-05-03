@@ -287,7 +287,7 @@ new_thing: new
 			{"--data-values-file": "-"},
 			{"-f": "-"},
 		}
-		actualOutput := runYttExpectingError(t, nil, "../../examples/data-values/values-file.yml", flags, nil)
+		actualOutput := runYttExpectingError(t, nil, flags, nil)
 		expectedOutput := "ytt: Error: Extracting data value from file:\n  Reading file 'stdin.yml':\n    Standard input has already been read, has the '-' argument been used in more than one flag?\n"
 		require.Equal(t, expectedOutput, actualOutput)
 	})
@@ -461,7 +461,7 @@ func runYtt(t *testing.T, files testInputFiles, stdinFileName string, flags yttF
 	return string(output)
 }
 
-func runYttExpectingError(t *testing.T, files testInputFiles, stdinFileName string, flags yttFlags, envs []string) string {
+func runYttExpectingError(t *testing.T, files testInputFiles, flags yttFlags, envs []string) string {
 	command, stdError := buildCommand(files, flags, envs)
 
 	_, err := command.Output()
