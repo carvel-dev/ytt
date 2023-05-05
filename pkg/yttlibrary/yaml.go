@@ -28,7 +28,7 @@ var (
 type yamlModule struct{}
 
 // starlarkEncode adapts a call from Starlark to yamlModule.Encode()
-func (b yamlModule) starlarkEncode(thread *starlark.Thread, f *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
+func (b yamlModule) starlarkEncode(_ *starlark.Thread, _ *starlark.Builtin, args starlark.Tuple, _ []starlark.Tuple) (starlark.Value, error) {
 	if args.Len() != 1 {
 		return starlark.None, fmt.Errorf("expected exactly one argument")
 	}
@@ -69,7 +69,7 @@ func (b yamlModule) Encode(goValue interface{}) (string, error) {
 }
 
 // Decode is a core.StarlarkFunc that parses the provided input from YAML format into dicts, lists, and scalars
-func (b yamlModule) starlarkDecode(thread *starlark.Thread, f *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
+func (b yamlModule) starlarkDecode(_ *starlark.Thread, _ *starlark.Builtin, args starlark.Tuple, _ []starlark.Tuple) (starlark.Value, error) {
 	if args.Len() != 1 {
 		return starlark.None, fmt.Errorf("expected exactly one argument")
 	}
