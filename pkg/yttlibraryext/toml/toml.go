@@ -37,7 +37,7 @@ func init() {
 type tomlModule struct{}
 
 // Encode is a core.StarlarkFunc that renders the provided input into a TOML formatted string
-func (b tomlModule) Encode(thread *starlark.Thread, f *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
+func (b tomlModule) Encode(_ *starlark.Thread, _ *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
 	if args.Len() != 1 {
 		return starlark.None, fmt.Errorf("expected exactly one argument")
 	}
@@ -80,7 +80,7 @@ func (b tomlModule) Encode(thread *starlark.Thread, f *starlark.Builtin, args st
 }
 
 // Decode is a core.StarlarkFunc that parses the provided input from TOML format into dicts, lists, and scalars
-func (b tomlModule) Decode(thread *starlark.Thread, f *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
+func (b tomlModule) Decode(_ *starlark.Thread, _ *starlark.Builtin, args starlark.Tuple, _ []starlark.Tuple) (starlark.Value, error) {
 	if args.Len() != 1 {
 		return starlark.None, fmt.Errorf("expected exactly one argument")
 	}
