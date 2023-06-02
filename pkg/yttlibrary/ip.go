@@ -28,7 +28,7 @@ var (
 
 type ipModule struct{}
 
-func (m ipModule) ParseAddr(thread *starlark.Thread, f *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
+func (m ipModule) ParseAddr(_ *starlark.Thread, _ *starlark.Builtin, args starlark.Tuple, _ []starlark.Tuple) (starlark.Value, error) {
 	if args.Len() != 1 {
 		return starlark.None, fmt.Errorf("expected exactly one argument")
 	}
@@ -72,7 +72,7 @@ func (av *IPAddrValue) ConversionHint() string {
 }
 
 // IsIPv4 is a core.StarlarkFunc that reveals whether this value is an IPv4 address.
-func (av *IPAddrValue) IsIPv4(thread *starlark.Thread, f *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
+func (av *IPAddrValue) IsIPv4(_ *starlark.Thread, _ *starlark.Builtin, args starlark.Tuple, _ []starlark.Tuple) (starlark.Value, error) {
 	if args.Len() != 0 {
 		return starlark.None, fmt.Errorf("expected no argument")
 	}
@@ -81,7 +81,7 @@ func (av *IPAddrValue) IsIPv4(thread *starlark.Thread, f *starlark.Builtin, args
 }
 
 // IsIPv6 is a core.StarlarkFunc that reveals whether this value is an IPv6 address.
-func (av *IPAddrValue) IsIPv6(thread *starlark.Thread, f *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
+func (av *IPAddrValue) IsIPv6(_ *starlark.Thread, _ *starlark.Builtin, args starlark.Tuple, _ []starlark.Tuple) (starlark.Value, error) {
 	if args.Len() != 0 {
 		return starlark.None, fmt.Errorf("expected no argument")
 	}
@@ -89,7 +89,7 @@ func (av *IPAddrValue) IsIPv6(thread *starlark.Thread, f *starlark.Builtin, args
 	return starlark.Bool(isV6), nil
 }
 
-func (av *IPAddrValue) string(thread *starlark.Thread, f *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
+func (av *IPAddrValue) string(_ *starlark.Thread, _ *starlark.Builtin, args starlark.Tuple, _ []starlark.Tuple) (starlark.Value, error) {
 	if args.Len() != 0 {
 		return starlark.None, fmt.Errorf("expected no argument")
 	}
@@ -97,7 +97,7 @@ func (av *IPAddrValue) string(thread *starlark.Thread, f *starlark.Builtin, args
 }
 
 // ParseCIDR is a core.StarlarkFunc that extracts the IP address and IP network value from a CIDR expression
-func (m ipModule) ParseCIDR(thread *starlark.Thread, f *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
+func (m ipModule) ParseCIDR(_ *starlark.Thread, _ *starlark.Builtin, args starlark.Tuple, _ []starlark.Tuple) (starlark.Value, error) {
 	if args.Len() != 1 {
 		return starlark.None, fmt.Errorf("expected exactly one argument")
 	}
@@ -141,7 +141,7 @@ func (inv *IPNetValue) ConversionHint() string {
 }
 
 // Addr is a core.StarlarkFunc that returns the masked address portion of the network value
-func (inv *IPNetValue) Addr(thread *starlark.Thread, f *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
+func (inv *IPNetValue) Addr(_ *starlark.Thread, _ *starlark.Builtin, args starlark.Tuple, _ []starlark.Tuple) (starlark.Value, error) {
 	if args.Len() != 0 {
 		return starlark.None, fmt.Errorf("expected no argument")
 	}
@@ -150,7 +150,7 @@ func (inv *IPNetValue) Addr(thread *starlark.Thread, f *starlark.Builtin, args s
 	return ip.AsStarlarkValue(), nil
 }
 
-func (inv *IPNetValue) string(thread *starlark.Thread, f *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
+func (inv *IPNetValue) string(_ *starlark.Thread, _ *starlark.Builtin, args starlark.Tuple, _ []starlark.Tuple) (starlark.Value, error) {
 	if args.Len() != 0 {
 		return starlark.None, fmt.Errorf("expected no argument")
 	}
