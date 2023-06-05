@@ -17,24 +17,30 @@ import (
 //   - handler must be a function
 //   - handler may take between 0 and two arguments.
 //   - if there are two arguments, the first argument must satisfy the "context.Context" interface.
-//   - handler may return between 0 and two arguments.
-//   - if there are two return values, the second argument must be an error.
+//   - handler may return between 0 and two values.
+//   - if there are two return values, the second return value must be an error.
 //   - if there is one return value it must be an error.
 //
 // Valid function signatures:
 //
 //	func ()
+//	func (TIn)
 //	func () error
 //	func (TIn) error
 //	func () (TOut, error)
 //	func (TIn) (TOut, error)
+//	func (context.Context)
 //	func (context.Context) error
-//	func (context.Context, TIn) error
 //	func (context.Context) (TOut, error)
+//	func (context.Context, TIn)
+//	func (context.Context, TIn) error
 //	func (context.Context, TIn) (TOut, error)
 //
 // Where "TIn" and "TOut" are types compatible with the "encoding/json" standard library.
 // See https://golang.org/pkg/encoding/json/#Unmarshal for how deserialization behaves
+//
+// "TOut" may also implement the io.Reader interface.
+// If "TOut" is both json serializable and implements io.Reader, then the json serialization is used.
 func Start(handler interface{}) {
 	StartWithOptions(handler)
 }
