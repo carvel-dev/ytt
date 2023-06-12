@@ -10,7 +10,7 @@ jobs:
     with:
       repo: carvel-dev/ytt
       tool: ytt
-      goVersion: "1.20.4"
+      goVersion: "1.20.5"
     secrets:
       githubToken: ${{ secrets.GITHUB_TOKEN }}
       slackWebhookURL: ${{ secrets.SLACK_WEBHOOK_URL }}
