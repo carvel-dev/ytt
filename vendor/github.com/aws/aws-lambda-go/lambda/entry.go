@@ -4,6 +4,7 @@ package lambda
 
 import (
 	"context"
+	"errors"
 	"log"
 	"os"
 )
@@ -14,33 +15,27 @@ import (
 //
 // Rules:
 //
-//   - handler must be a function
-//   - handler may take between 0 and two arguments.
-//   - if there are two arguments, the first argument must satisfy the "context.Context" interface.
-//   - handler may return between 0 and two values.
-//   - if there are two return values, the second return value must be an error.
-//   - if there is one return value it must be an error.
+// 	* handler must be a function
+// 	* handler may take between 0 and two arguments.
+// 	* if there are two arguments, the first argument must satisfy the "context.Context" interface.
+// 	* handler may return between 0 and two arguments.
+// 	* if there are two return values, the second argument must be an error.
+// 	* if there is one return value it must be an error.
 //
 // Valid function signatures:
 //
-//	func ()
-//	func (TIn)
-//	func () error
-//	func (TIn) error
-//	func () (TOut, error)
-//	func (TIn) (TOut, error)
-//	func (context.Context)
-//	func (context.Context) error
-//	func (context.Context) (TOut, error)
-//	func (context.Context, TIn)
-//	func (context.Context, TIn) error
-//	func (context.Context, TIn) (TOut, error)
+// 	func ()
+// 	func () error
+// 	func (TIn) error
+// 	func () (TOut, error)
+// 	func (TIn) (TOut, error)
+// 	func (context.Context) error
+// 	func (context.Context, TIn) error
+// 	func (context.Context) (TOut, error)
+// 	func (context.Context, TIn) (TOut, error)
 //
 // Where "TIn" and "TOut" are types compatible with the "encoding/json" standard library.
 // See https://golang.org/pkg/encoding/json/#Unmarshal for how deserialization behaves
-//
-// "TOut" may also implement the io.Reader interface.
-// If "TOut" is both json serializable and implements io.Reader, then the json serialization is used.
 func Start(handler interface{}) {
 	StartWithOptions(handler)
 }
@@ -57,7 +52,7 @@ func StartWithContext(ctx context.Context, handler interface{}) {
 //
 // Handler implementation requires a single "Invoke()" function:
 //
-//	func Invoke(context.Context, []byte) ([]byte, error)
+//  func Invoke(context.Context, []byte) ([]byte, error)
 //
 // Deprecated: use lambda.Start(handler) instead
 func StartHandler(handler Handler) {
@@ -75,11 +70,20 @@ type startFunction struct {
 }
 
 var (
+	// This allows users to save a little bit of coldstart time in the download, by the dependencies brought in for RPC support.
+	// The tradeoff is dropping compatibility with the go1.x runtime, functions must be "Custom Runtime" instead.
+	// To drop the rpc dependencies, compile with `-tags lambda.norpc`
+	rpcStartFunction = &startFunction{
+		env: "_LAMBDA_SERVER_PORT",
+		f: func(_ string, _ Handler) error {
+			return errors.New("_LAMBDA_SERVER_PORT was present but the function was compiled without RPC support")
+		},
+	}
 	runtimeAPIStartFunction = &startFunction{
 		env: "AWS_LAMBDA_RUNTIME_API",
 		f:   startRuntimeAPILoop,
 	}
-	startFunctions = []*startFunction{runtimeAPIStartFunction}
+	startFunctions = []*startFunction{rpcStartFunction, runtimeAPIStartFunction}
 
 	// This allows end to end testing of the Start functions, by tests overwriting this function to keep the program alive
 	logFatalf = log.Fatalf
@@ -89,7 +93,7 @@ var (
 //
 // Handler implementation requires a single "Invoke()" function:
 //
-//	func Invoke(context.Context, []byte) ([]byte, error)
+//  func Invoke(context.Context, []byte) ([]byte, error)
 //
 // Deprecated: use lambda.StartWithOptions(handler, lambda.WithContext(ctx)) instead
 func StartHandlerWithContext(ctx context.Context, handler Handler) {

@@ -11,7 +11,6 @@ import (
 	"os"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/vmware-tanzu/carvel-ytt/pkg/cmd/template"
 	cmdtpl "github.com/vmware-tanzu/carvel-ytt/pkg/cmd/template"
@@ -86,24 +85,6 @@ organization=Acme Widgets Inc.`)
 	require.NoError(t, err)
 
 	assertStdoutAndStderr(t, stdout, stderr, expectedStdOut, expectedStdErr)
-}
-
-func Test_Input_Marked_As_Starlark_Is_Evaluated_As_Starlark(t *testing.T) {
-	starlarkData := []byte(`fail("hello")`)
-
-	filesToProcess := []*files.File{
-		files.MustNewFileFromSource(files.NewBytesSource("print.star1", starlarkData)),
-	}
-
-	stdout := bytes.NewBufferString("")
-	stderr := bytes.NewBufferString("")
-	testUI := ui.NewCustomWriterTTY(false, stdout, stderr)
-	opts := cmdtpl.NewOptions()
-	opts.FileMarksOpts.FileMarks = []string{"print.star1:type=starlark"}
-
-	out := opts.RunWithFiles(cmdtpl.Input{Files: filesToProcess}, testUI)
-	require.Error(t, out.Err)
-	assert.ErrorContains(t, out.Err, "fail: hello")
 }
 
 func Test_FileMark_YAML_Shows_No_Warning(t *testing.T) {

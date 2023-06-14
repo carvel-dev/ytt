@@ -188,37 +188,6 @@ var versionCmd = &cobra.Command{
 }
 ```
 
-### Organizing subcommands
-
-A command may have subcommands which in turn may have other subcommands. This is achieved by using
-`AddCommand`. In some cases, especially in larger applications, each subcommand may be defined in
-its own go package.
-
-The suggested approach is for the parent command to use `AddCommand` to add its most immediate
-subcommands. For example, consider the following directory structure:
-
-```text
-├── cmd
-│   ├── root.go
-│   └── sub1
-│       ├── sub1.go
-│       └── sub2
-│           ├── leafA.go
-│           ├── leafB.go
-│           └── sub2.go
-└── main.go
-```
-
-In this case:
-
-* The `init` function of `root.go` adds the command defined in `sub1.go` to the root command.
-* The `init` function of `sub1.go` adds the command defined in `sub2.go` to the sub1 command.
-* The `init` function of `sub2.go` adds the commands defined in `leafA.go` and `leafB.go` to the
-  sub2 command.
-
-This approach ensures the subcommands are always included at compile time while avoiding cyclic
-references.
-
 ### Returning and handling errors
 
 If you wish to return an error to the caller of a command, `RunE` can be used.
@@ -333,19 +302,19 @@ rootCmd.MarkPersistentFlagRequired("region")
 
 ### Flag Groups
 
-If you have different flags that must be provided together (e.g. if they provide the `--username` flag they MUST provide the `--password` flag as well) then
+If you have different flags that must be provided together (e.g. if they provide the `--username` flag they MUST provide the `--password` flag as well) then 
 Cobra can enforce that requirement:
 ```go
 rootCmd.Flags().StringVarP(&u, "username", "u", "", "Username (required if password is set)")
 rootCmd.Flags().StringVarP(&pw, "password", "p", "", "Password (required if username is set)")
 rootCmd.MarkFlagsRequiredTogether("username", "password")
-```
+``` 
 
-You can also prevent different flags from being provided together if they represent mutually
+You can also prevent different flags from being provided together if they represent mutually 
 exclusive options such as specifying an output format as either `--json` or `--yaml` but never both:
 ```go
-rootCmd.Flags().BoolVar(&ofJson, "json", false, "Output in JSON")
-rootCmd.Flags().BoolVar(&ofYaml, "yaml", false, "Output in YAML")
+rootCmd.Flags().BoolVar(&u, "json", false, "Output in JSON")
+rootCmd.Flags().BoolVar(&pw, "yaml", false, "Output in YAML")
 rootCmd.MarkFlagsMutuallyExclusive("json", "yaml")
 ```
 
@@ -358,47 +327,29 @@ In both of these cases:
 ## Positional and Custom Arguments
 
 Validation of positional arguments can be specified using the `Args` field of `Command`.
-The following validators are built in:
-
-- Number of arguments:
-  - `NoArgs` - report an error if there are any positional args.
-  - `ArbitraryArgs` - accept any number of args.
-  - `MinimumNArgs(int)` - report an error if less than N positional args are provided.
-  - `MaximumNArgs(int)` - report an error if more than N positional args are provided.
-  - `ExactArgs(int)` - report an error if there are not exactly N positional args.
-  - `RangeArgs(min, max)` - report an error if the number of args is not between `min` and `max`.
-- Content of the arguments:
-  - `OnlyValidArgs` - report an error if there are any positional args not specified in the `ValidArgs` field of `Command`, which can optionally be set to a list of valid values for positional args.
-
 If `Args` is undefined or `nil`, it defaults to `ArbitraryArgs`.
 
-Moreover, `MatchAll(pargs ...PositionalArgs)` enables combining existing checks with arbitrary other checks.
-For instance, if you want to report an error if there are not exactly N positional args OR if there are any positional
-args that are not in the `ValidArgs` field of `Command`, you can call `MatchAll` on `ExactArgs` and `OnlyValidArgs`, as
-shown below:
+The following validators are built in:
 
-```go
-var cmd = &cobra.Command{
-  Short: "hello",
-  Args: cobra.MatchAll(cobra.ExactArgs(2), cobra.OnlyValidArgs),
-  Run: func(cmd *cobra.Command, args []string) {
-    fmt.Println("Hello, World!")
-  },
-}
-```
+- `NoArgs` - the command will report an error if there are any positional args.
+- `ArbitraryArgs` - the command will accept any args.
+- `OnlyValidArgs` - the command will report an error if there are any positional args that are not in the `ValidArgs` field of `Command`.
+- `MinimumNArgs(int)` - the command will report an error if there are not at least N positional args.
+- `MaximumNArgs(int)` - the command will report an error if there are more than N positional args.
+- `ExactArgs(int)` - the command will report an error if there are not exactly N positional args.
+- `ExactValidArgs(int)` - the command will report an error if there are not exactly N positional args OR if there are any positional args that are not in the `ValidArgs` field of `Command`
+- `RangeArgs(min, max)` - the command will report an error if the number of args is not between the minimum and maximum number of expected args.
+- `MatchAll(pargs ...PositionalArgs)` - enables combining existing checks with arbitrary other checks (e.g. you want to check the ExactArgs length along with other qualities).
 
-It is possible to set any custom validator that satisfies `func(cmd *cobra.Command, args []string) error`.
-For example:
+An example of setting the custom validator:
 
 ```go
 var cmd = &cobra.Command{
   Short: "hello",
   Args: func(cmd *cobra.Command, args []string) error {
-    // Optionally run one of the validators provided by cobra
-    if err := cobra.MinimumNArgs(1)(cmd, args); err != nil {
-        return err
+    if len(args) < 1 {
+      return errors.New("requires a color argument")
     }
-    // Run the custom validation logic
     if myapp.IsValidColor(args[0]) {
       return nil
     }
@@ -493,46 +444,37 @@ create' is called.  Every command will automatically have the '--help' flag adde
 The following output is automatically generated by Cobra. Nothing beyond the
 command and flag definitions are needed.
 
-    $ cobra-cli help
+    $ cobra help
 
     Cobra is a CLI library for Go that empowers applications.
     This application is a tool to generate the needed files
     to quickly create a Cobra application.
 
     Usage:
-      cobra-cli [command]
+      cobra [command]
 
     Available Commands:
       add         Add a command to a Cobra Application
-      completion  Generate the autocompletion script for the specified shell
       help        Help about any command
       init        Initialize a Cobra Application
 
     Flags:
       -a, --author string    author name for copyright attribution (default "YOUR NAME")
           --config string    config file (default is $HOME/.cobra.yaml)
-      -h, --help             help for cobra-cli
+      -h, --help             help for cobra
       -l, --license string   name of license for the project
-          --viper            use Viper for configuration
+          --viper            use Viper for configuration (default true)
 
-    Use "cobra-cli [command] --help" for more information about a command.
+    Use "cobra [command] --help" for more information about a command.
 
 
 Help is just a command like any other. There is no special logic or behavior
 around it. In fact, you can provide your own if you want.
 
-### Grouping commands in help
-
-Cobra supports grouping of available commands in the help output.  To group commands, each group must be explicitly
-defined using `AddGroup()` on the parent command.  Then a subcommand can be added to a group using the `GroupID` element
-of that subcommand. The groups will appear in the help output in the same order as they are defined using different
-calls to `AddGroup()`.  If you use the generated `help` or `completion` commands, you can set their group ids using
-`SetHelpCommandGroupId()` and `SetCompletionCommandGroupId()` on the root command, respectively.
-
 ### Defining your own help
 
 You can provide your own Help command or your own template for the default command to use
-with the following functions:
+with following functions:
 
 ```go
 cmd.SetHelpCommand(cmd *Command)
@@ -551,23 +493,22 @@ showing the user the 'usage'.
 You may recognize this from the help above. That's because the default help
 embeds the usage as part of its output.
 
-    $ cobra-cli --invalid
+    $ cobra --invalid
     Error: unknown flag: --invalid
     Usage:
-      cobra-cli [command]
+      cobra [command]
 
     Available Commands:
       add         Add a command to a Cobra Application
-      completion  Generate the autocompletion script for the specified shell
       help        Help about any command
       init        Initialize a Cobra Application
 
     Flags:
       -a, --author string    author name for copyright attribution (default "YOUR NAME")
           --config string    config file (default is $HOME/.cobra.yaml)
-      -h, --help             help for cobra-cli
+      -h, --help             help for cobra
       -l, --license string   name of license for the project
-          --viper            use Viper for configuration
+          --viper            use Viper for configuration (default true)
 
     Use "cobra [command] --help" for more information about a command.
 
@@ -686,7 +627,7 @@ Did you mean this?
 Run 'hugo --help' for usage.
 ```
 
-Suggestions are automatically generated based on existing subcommands and use an implementation of [Levenshtein distance](https://en.wikipedia.org/wiki/Levenshtein_distance). Every registered command that matches a minimum distance of 2 (ignoring case) will be displayed as a suggestion.
+Suggestions are automatic based on every subcommand registered and use an implementation of [Levenshtein distance](https://en.wikipedia.org/wiki/Levenshtein_distance). Every registered command that matches a minimum distance of 2 (ignoring case) will be displayed as a suggestion.
 
 If you need to disable suggestions or tweak the string distance in your command, use:
 
@@ -700,8 +641,7 @@ or
 command.SuggestionsMinimumDistance = 1
 ```
 
-You can also explicitly set names for which a given command will be suggested using the `SuggestFor` attribute. This allows suggestions for strings that are not close in terms of string distance, but make sense in your set of commands but for which
-you don't want aliases. Example:
+You can also explicitly set names for which a given command will be suggested using the `SuggestFor` attribute. This allows suggestions for strings that are not close in terms of string distance, but makes sense in your set of commands and for some which you don't want aliases. Example:
 
 ```
 $ kubectl remove

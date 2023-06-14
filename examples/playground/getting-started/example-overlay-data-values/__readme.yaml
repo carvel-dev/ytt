@@ -58,7 +58,7 @@ readme: |
 
   Add a new value to `prod/values.yml`:
      ```
-     app_name: prometheus-operator-blue
+     app_nmae: prometheus-operator-blue
      ```
 
   ytt error messages are information dense:
@@ -66,8 +66,8 @@ readme: |
   - lists the order in which data values are being applied;
   - that in `prod/values.yml`, the problem is...
     ...in the YAML Document starting on line 2
-       ...at the Map item named "app_name" on line 4
-  - where "app_name" was expected to be a node in the data
+       ...at the Map item named "app_nmae" on line 4
+  - where "app_nmae" was expected to be a node in the data
     value YAML tree, already, but it wasn't.
 
   Consider: what would have happened if ytt had — instead —

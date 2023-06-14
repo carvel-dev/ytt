@@ -156,7 +156,7 @@ func (o Op) insertDocument(
 		return err
 	}
 
-	insertAnn, err := NewInsertAnnotation(newDoc, o.Thread)
+	insertAnn, err := NewInsertAnnotation(newDoc)
 	if err != nil {
 		return err
 	}
@@ -169,23 +169,12 @@ func (o Op) insertDocument(
 			for _, leftIdx := range leftIdxs {
 				if leftIdx[0] == i && leftIdx[1] == j {
 					matched = true
-
-					newVal, err := insertAnn.Value(leftItem)
-					if err != nil {
-						return err
-					}
-					insertDoc := newDoc.DeepCopy()
-					err = insertDoc.SetValue(newVal)
-					if err != nil {
-						return err
-					}
-
 					if insertAnn.IsBefore() {
-						updatedDocs = append(updatedDocs, insertDoc)
+						updatedDocs = append(updatedDocs, newDoc.DeepCopy())
 					}
 					updatedDocs = append(updatedDocs, leftItem)
 					if insertAnn.IsAfter() {
-						updatedDocs = append(updatedDocs, insertDoc)
+						updatedDocs = append(updatedDocs, newDoc.DeepCopy())
 					}
 					break
 				}
