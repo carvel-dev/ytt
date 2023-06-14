@@ -726,7 +726,7 @@ type yamlEmitterT struct {
 	scalarData struct {
 		value               []byte           // The scalar value.
 		multiline           bool             // Does the scalar contain line breaks?
-		flowPlainAllowed    bool             // Can the scalar be expressed in the flow plain style?
+		flowPlainAllowed    bool             // Can the scalar be expessed in the flow plain style?
 		blockPlainAllowed   bool             // Can the scalar be expressed in the block plain style?
 		singleQuotedAllowed bool             // Can the scalar be expressed in the single quoted style?
 		blockAllowed        bool             // Can the scalar be expressed in the literal or folded styles?
