@@ -246,8 +246,8 @@ func (r *File) IsLibrary() bool {
 		return true
 	}
 
-	// Starlark files are always libraries
-	return r.Type() == TypeStarlark
+	// make exception for starlark files as they are just pure code
+	return r.matchesExt(starlarkExts)
 }
 
 func (r *File) matchesExt(exts []string) bool {

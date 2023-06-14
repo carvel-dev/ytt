@@ -78,7 +78,7 @@ import (
 //      %TAG    !yaml!  tag:yaml.org,2002:
 //      ---
 //
-// The corresponding sequence of tokens:
+// The correspoding sequence of tokens:
 //
 //      STREAM-START(utf-8)
 //      VERSION-DIRECTIVE(1,1)
@@ -1233,7 +1233,7 @@ func yamlParserFetchKey(parser *yamlParserT) bool {
 
 	// In the block context, additional checks are required.
 	if parser.flowLevel == 0 {
-		// Check if we are allowed to start a new key (not necessary simple).
+		// Check if we are allowed to start a new key (not nessesary simple).
 		if !parser.simpleKeyAllowed {
 			return yamlParserSetScannerError(parser, "", parser.mark,
 				"mapping keys are not allowed in this context")

@@ -68,15 +68,6 @@ func (av DynamoDBAttributeValue) Number() string {
 	return av.value.(string)
 }
 
-// Int64 provides access to an attribute of type Number.
-// DynamoDB sends the values as strings. For convenience this method
-// provides conversion to int.
-// Method panics if the attribute is not of type Number.
-func (av DynamoDBAttributeValue) Int64() (int64, error) {
-	number := av.Number()
-	return strconv.ParseInt(number, 10, 64)
-}
-
 // Integer provides access to an attribute of type Number.
 // DynamoDB sends the values as strings. For convenience this method
 // provides conversion to int. If the value cannot be represented by
@@ -85,7 +76,7 @@ func (av DynamoDBAttributeValue) Int64() (int64, error) {
 // Method panics if the attribute is not of type Number.
 func (av DynamoDBAttributeValue) Integer() (int64, error) {
 	number := av.Number()
-	value, err := av.Int64()
+	value, err := strconv.ParseInt(number, 10, 64)
 	if err == nil {
 		return value, nil
 	}

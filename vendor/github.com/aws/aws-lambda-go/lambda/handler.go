@@ -23,8 +23,6 @@ type handlerOptions struct {
 	jsonResponseEscapeHTML   bool
 	jsonResponseIndentPrefix string
 	jsonResponseIndentValue  string
-	enableSIGTERM            bool
-	sigtermCallbacks         []func()
 }
 
 type Option func(*handlerOptions)
@@ -32,13 +30,12 @@ type Option func(*handlerOptions)
 // WithContext is a HandlerOption that sets the base context for all invocations of the handler.
 //
 // Usage:
-//
-//	lambda.StartWithOptions(
-//	 	func (ctx context.Context) (string, error) {
-//	 		return ctx.Value("foo"), nil
-//	 	},
-//	 	lambda.WithContext(context.WithValue(context.Background(), "foo", "bar"))
-//	)
+//  lambda.StartWithOptions(
+//   	func (ctx context.Context) (string, error) {
+//   		return ctx.Value("foo"), nil
+//   	},
+//   	lambda.WithContext(context.WithValue(context.Background(), "foo", "bar"))
+//  )
 func WithContext(ctx context.Context) Option {
 	return Option(func(h *handlerOptions) {
 		h.baseContext = ctx
@@ -48,13 +45,12 @@ func WithContext(ctx context.Context) Option {
 // WithSetEscapeHTML sets the SetEscapeHTML argument on the underlying json encoder
 //
 // Usage:
-//
-//	lambda.StartWithOptions(
-//		func () (string, error) {
-//			return "<html><body>hello!></body></html>", nil
-//		},
-//		lambda.WithSetEscapeHTML(true),
-//	)
+//  lambda.StartWithOptions(
+//  	func () (string, error) {
+//  		return "<html><body>hello!></body></html>", nil
+//  	},
+//  	lambda.WithSetEscapeHTML(true),
+//  )
 func WithSetEscapeHTML(escapeHTML bool) Option {
 	return Option(func(h *handlerOptions) {
 		h.jsonResponseEscapeHTML = escapeHTML
@@ -64,38 +60,16 @@ func WithSetEscapeHTML(escapeHTML bool) Option {
 // WithSetIndent sets the SetIndent argument on the underling json encoder
 //
 // Usage:
-//
-//	lambda.StartWithOptions(
-//		func (event any) (any, error) {
-//			return event, nil
-//		},
-//		lambda.WithSetIndent(">"," "),
-//	)
+//  lambda.StartWithOptions(
+//  	func (event any) (any, error) {
+//  		return event, nil
+//  	},
+//  	lambda.WithSetIndent(">"," "),
+//  )
 func WithSetIndent(prefix, indent string) Option {
 	return Option(func(h *handlerOptions) {
 		h.jsonResponseIndentPrefix = prefix
 		h.jsonResponseIndentValue = indent
-	})
-}
-
-// WithEnableSIGTERM enables SIGTERM behavior within the Lambda platform on container spindown.
-// SIGKILL will occur ~500ms after SIGTERM.
-// Optionally, an array of callback functions to run on SIGTERM may be provided.
-//
-// Usage:
-//
-//	lambda.StartWithOptions(
-//	    func (event any) (any, error) {
-//			return event, nil
-//		},
-//		lambda.WithEnableSIGTERM(func() {
-//			log.Print("function container shutting down...")
-//		})
-//	)
-func WithEnableSIGTERM(callbacks ...func()) Option {
-	return Option(func(h *handlerOptions) {
-		h.sigtermCallbacks = append(h.sigtermCallbacks, callbacks...)
-		h.enableSIGTERM = true
 	})
 }
 
@@ -164,9 +138,6 @@ func newHandler(handlerFunc interface{}, options ...Option) *handlerOptions {
 	}
 	for _, option := range options {
 		option(h)
-	}
-	if h.enableSIGTERM {
-		enableSIGTERM(h.sigtermCallbacks)
 	}
 	h.Handler = reflectHandler(handlerFunc, h)
 	return h
