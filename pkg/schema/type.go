@@ -199,7 +199,7 @@ func (t *DocumentType) SetDefaultValue(val interface{}) {
 }
 
 // SetDefaultValue is ignored as default values should be set on each MapItemType, individually.
-func (m *MapType) SetDefaultValue(val interface{}) {
+func (m *MapType) SetDefaultValue(_ interface{}) {
 	// TODO: determine if we should set the contents of a MapType by setting the given Map...?
 	return
 }
@@ -315,7 +315,7 @@ func (n *NullType) GetDescription() string {
 }
 
 // SetDescription sets the description of the type
-func (t *DocumentType) SetDescription(desc string) {}
+func (t *DocumentType) SetDescription(_ string) {}
 
 // SetDescription sets the description of the type
 func (m *MapType) SetDescription(desc string) {
@@ -323,7 +323,7 @@ func (m *MapType) SetDescription(desc string) {
 }
 
 // SetDescription sets the description of the type
-func (t *MapItemType) SetDescription(desc string) {}
+func (t *MapItemType) SetDescription(_ string) {}
 
 // SetDescription sets the description of the type
 func (a *ArrayType) SetDescription(desc string) {
@@ -331,7 +331,7 @@ func (a *ArrayType) SetDescription(desc string) {
 }
 
 // SetDescription sets the description of the type
-func (a *ArrayItemType) SetDescription(desc string) {}
+func (a *ArrayItemType) SetDescription(_ string) {}
 
 // SetDescription sets the description of the type
 func (s *ScalarType) SetDescription(desc string) {
@@ -389,7 +389,7 @@ func (n *NullType) GetTitle() string {
 }
 
 // SetTitle sets the title of the type
-func (t *DocumentType) SetTitle(title string) {}
+func (t *DocumentType) SetTitle(_ string) {}
 
 // SetTitle sets the title of the type
 func (m *MapType) SetTitle(title string) {
@@ -397,7 +397,7 @@ func (m *MapType) SetTitle(title string) {
 }
 
 // SetTitle sets the title of the type
-func (t *MapItemType) SetTitle(title string) {}
+func (t *MapItemType) SetTitle(_ string) {}
 
 // SetTitle sets the title of the type
 func (a *ArrayType) SetTitle(title string) {
@@ -405,7 +405,7 @@ func (a *ArrayType) SetTitle(title string) {
 }
 
 // SetTitle sets the title of the type
-func (a *ArrayItemType) SetTitle(title string) {}
+func (a *ArrayItemType) SetTitle(_ string) {}
 
 // SetTitle sets the title of the type
 func (s *ScalarType) SetTitle(title string) {
@@ -463,7 +463,7 @@ func (n *NullType) GetExamples() []Example {
 }
 
 // SetExamples sets the description and example of the type
-func (t *DocumentType) SetExamples(data []Example) {}
+func (t *DocumentType) SetExamples(_ []Example) {}
 
 // SetExamples sets the description and example of the type
 func (m *MapType) SetExamples(exs []Example) {
@@ -471,7 +471,7 @@ func (m *MapType) SetExamples(exs []Example) {
 }
 
 // SetExamples sets the description and example of the type
-func (t *MapItemType) SetExamples(exs []Example) {}
+func (t *MapItemType) SetExamples(_ []Example) {}
 
 // SetExamples sets the description and example of the type
 func (a *ArrayType) SetExamples(exs []Example) {
@@ -479,7 +479,7 @@ func (a *ArrayType) SetExamples(exs []Example) {
 }
 
 // SetExamples sets the description and example of the type
-func (a *ArrayItemType) SetExamples(exs []Example) {}
+func (a *ArrayItemType) SetExamples(_ []Example) {}
 
 // SetExamples sets the description and example of the type
 func (s *ScalarType) SetExamples(exs []Example) {
@@ -538,7 +538,7 @@ func (n *NullType) IsDeprecated() (bool, string) {
 }
 
 // SetDeprecated sets the deprecated field value
-func (t *DocumentType) SetDeprecated(deprecated bool, notice string) {}
+func (t *DocumentType) SetDeprecated(_ bool, _ string) {}
 
 // SetDeprecated sets the deprecated field value
 func (m *MapType) SetDeprecated(deprecated bool, notice string) {
@@ -547,7 +547,7 @@ func (m *MapType) SetDeprecated(deprecated bool, notice string) {
 }
 
 // SetDeprecated sets the deprecated field value
-func (t *MapItemType) SetDeprecated(deprecated bool, notice string) {}
+func (t *MapItemType) SetDeprecated(_ bool, _ string) {}
 
 // SetDeprecated sets the deprecated field value
 func (a *ArrayType) SetDeprecated(deprecated bool, notice string) {
@@ -556,7 +556,7 @@ func (a *ArrayType) SetDeprecated(deprecated bool, notice string) {
 }
 
 // SetDeprecated sets the deprecated field value
-func (a *ArrayItemType) SetDeprecated(deprecated bool, notice string) {}
+func (a *ArrayItemType) SetDeprecated(_ bool, _ string) {}
 
 // SetDeprecated sets the deprecated field value
 func (s *ScalarType) SetDeprecated(deprecated bool, notice string) {

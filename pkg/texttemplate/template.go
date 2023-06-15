@@ -80,7 +80,7 @@ func (e *Template) compile(rootNode *NodeRoot,
 			meta := NodeCodeMeta{typedNode}
 			trimSpaceRight = meta.ShouldTrimSpaceRight()
 
-			if meta.ShouldTrimSpaceLeft() && i != 0 {
+			if meta.ShoudTrimSpaceLeft() && i != 0 {
 				if typedLastNode, ok := rootNode.Items[i-1].(*NodeText); ok {
 					typedLastNode.Content = strings.TrimRightFunc(
 						typedLastNode.Content, unicode.IsSpace)

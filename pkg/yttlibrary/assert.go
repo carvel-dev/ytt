@@ -43,7 +43,7 @@ func (m AssertModule) AsModule() starlark.StringDict {
 }
 
 // Equals compares two values for equality
-func (m AssertModule) Equals(thread *starlark.Thread, f *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
+func (m AssertModule) Equals(_ *starlark.Thread, _ *starlark.Builtin, args starlark.Tuple, _ []starlark.Tuple) (starlark.Value, error) {
 	if args.Len() != 2 {
 		return starlark.None, fmt.Errorf("got %d arguments, want %d", args.Len(), 2)
 	}
@@ -89,7 +89,7 @@ func (m AssertModule) asString(value starlark.Value) (string, error) {
 }
 
 // Fail is a core.StarlarkFunc that forces a Starlark failure.
-func (m AssertModule) Fail(thread *starlark.Thread, f *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
+func (m AssertModule) Fail(_ *starlark.Thread, _ *starlark.Builtin, args starlark.Tuple, _ []starlark.Tuple) (starlark.Value, error) {
 	if args.Len() != 1 {
 		return starlark.None, fmt.Errorf("got %d arguments, want %d", args.Len(), 1)
 	}
@@ -104,7 +104,7 @@ func (m AssertModule) Fail(thread *starlark.Thread, f *starlark.Builtin, args st
 
 // TryTo is a core.StarlarkFunc that attempts to invoke the passed in starlark.Callable, converting any error into
 // an error message.
-func (m AssertModule) TryTo(thread *starlark.Thread, f *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
+func (m AssertModule) TryTo(thread *starlark.Thread, _ *starlark.Builtin, args starlark.Tuple, _ []starlark.Tuple) (starlark.Value, error) {
 	if args.Len() != 1 {
 		return starlark.None, fmt.Errorf("got %d arguments, want %d", args.Len(), 1)
 	}
@@ -185,7 +185,7 @@ func NewAssertMaxLen(maximum starlark.Int) *Assertion {
 }
 
 // MaxLen is a core.StarlarkFunc wrapping NewAssertMaxLen()
-func (m AssertModule) MaxLen(thread *starlark.Thread, f *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
+func (m AssertModule) MaxLen(_ *starlark.Thread, _ *starlark.Builtin, args starlark.Tuple, _ []starlark.Tuple) (starlark.Value, error) {
 	if args.Len() != 1 {
 		return starlark.None, fmt.Errorf("got %d arguments, want %d", args.Len(), 1)
 	}
@@ -209,7 +209,7 @@ func NewAssertMinLen(minimum starlark.Int) *Assertion {
 }
 
 // MinLen is a core.StarlarkFunc wrapping NewAssertMinLen()
-func (m AssertModule) MinLen(thread *starlark.Thread, f *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
+func (m AssertModule) MinLen(_ *starlark.Thread, _ *starlark.Builtin, args starlark.Tuple, _ []starlark.Tuple) (starlark.Value, error) {
 	if args.Len() != 1 {
 		return starlark.None, fmt.Errorf("got %d arguments, want %d", args.Len(), 1)
 	}
@@ -233,7 +233,7 @@ func NewAssertMin(min starlark.Value) *Assertion {
 }
 
 // Min is a core.StarlarkFunc wrapping NewAssertMin()
-func (m AssertModule) Min(thread *starlark.Thread, f *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
+func (m AssertModule) Min(_ *starlark.Thread, _ *starlark.Builtin, args starlark.Tuple, _ []starlark.Tuple) (starlark.Value, error) {
 	if args.Len() != 1 {
 		return starlark.None, fmt.Errorf("got %d arguments, want %d", args.Len(), 1)
 	}
@@ -254,7 +254,7 @@ func NewAssertMax(max starlark.Value) *Assertion {
 }
 
 // Max is a core.StarlarkFunc wrapping NewAssertMax()
-func (m AssertModule) Max(thread *starlark.Thread, f *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
+func (m AssertModule) Max(_ *starlark.Thread, _ *starlark.Builtin, args starlark.Tuple, _ []starlark.Tuple) (starlark.Value, error) {
 	if args.Len() != 1 {
 		return starlark.None, fmt.Errorf("got %d arguments, want %d", args.Len(), 1)
 	}
@@ -273,7 +273,7 @@ func NewAssertNotNull() *Assertion {
 }
 
 // NotNull is a core.StarlarkFunc wrapping NewAssertNotNull()
-func (m AssertModule) NotNull(thread *starlark.Thread, f *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
+func (m AssertModule) NotNull(thread *starlark.Thread, _ *starlark.Builtin, args starlark.Tuple, _ []starlark.Tuple) (starlark.Value, error) {
 	if args.Len() > 1 {
 		return starlark.None, fmt.Errorf("got %d arguments, want at most %d", args.Len(), 1)
 	}
@@ -293,7 +293,7 @@ func NewAssertOneNotNull(keys starlark.Sequence) *Assertion {
 }
 
 // OneNotNull is a core.StarlarkFunc wrapping NewAssertOneNotNull()
-func (m AssertModule) OneNotNull(thread *starlark.Thread, f *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
+func (m AssertModule) OneNotNull(_ *starlark.Thread, _ *starlark.Builtin, args starlark.Tuple, _ []starlark.Tuple) (starlark.Value, error) {
 	if args.Len() > 1 {
 		return starlark.None, fmt.Errorf("got %d arguments, want %d", args.Len(), 1)
 	}
@@ -355,7 +355,7 @@ func (m AssertModule) oneNotNullCheck(keys starlark.Sequence) core.StarlarkFunc 
 				return nil, fmt.Errorf("check: unexpected error while looking up key %s in dict %s", key, dict)
 			}
 			if !found {
-				// allow schema to catch this (see also https://github.com/carvel-dev/ytt/issues/722)
+				// allow schema to catch this (see also https://github.com/vmware-tanzu/carvel-ytt/issues/722)
 				nulls = append(nulls, key)
 			}
 			if value == starlark.None {
@@ -391,7 +391,7 @@ func NewAssertOneOf(enum starlark.Sequence) *Assertion {
 }
 
 // OneOf is a core.StarlarkFunc wrapping NewAssertOneOf()
-func (m AssertModule) OneOf(thread *starlark.Thread, f *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
+func (m AssertModule) OneOf(_ *starlark.Thread, _ *starlark.Builtin, args starlark.Tuple, _ []starlark.Tuple) (starlark.Value, error) {
 	if args.Len() == 0 {
 		return starlark.None, fmt.Errorf("got %d arguments, want at least %d", args.Len(), 1)
 	}
