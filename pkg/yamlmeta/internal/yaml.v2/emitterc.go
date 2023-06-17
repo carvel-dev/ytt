@@ -1002,6 +1002,7 @@ func yamlEmitterAnalyzeScalar(emitter *yamlEmitterT, value []byte) bool {
 		followedByWhitespace = false
 		previousSpace        = false
 		previousBreak        = false
+		previousColon        = false
 	)
 
 	emitter.scalarData.value = value
@@ -1061,7 +1062,11 @@ func yamlEmitterAnalyzeScalar(emitter *yamlEmitterT, value []byte) bool {
 		if !isPrintable(value, i) || !isASCII(value, i) && !emitter.unicode {
 			specialCharacters = true
 		}
-		if isSpace(value, i) {
+		if isColon(value, i) {
+			previousColon = true
+			previousSpace = false
+			previousBreak = false
+		} else if isSpace(value, i) {
 			if i == 0 {
 				leadingSpace = true
 			}
@@ -1081,14 +1086,16 @@ func yamlEmitterAnalyzeScalar(emitter *yamlEmitterT, value []byte) bool {
 			if i+width(value[i]) == len(value) {
 				trailingBreak = true
 			}
-			if previousSpace {
+			if previousSpace && !previousColon {
 				spaceBreak = true
 			}
 			previousSpace = false
 			previousBreak = true
+			previousColon = false
 		} else {
 			previousSpace = false
 			previousBreak = false
+			previousColon = false
 		}
 
 		// [Go]: Why 'z'? Couldn't be the end of the string as that's the loop condition.

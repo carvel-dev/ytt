@@ -139,6 +139,18 @@ var marshalTests = []struct {
 		&marshalIntTest,
 		"123\n",
 	},
+	{
+		"a:\n  b",
+		"|-\n  a:\n    b\n",
+	},
+	{
+		"a: \n  b",
+		"|-\n  a: \n    b\n",
+	},
+	{
+		"a:     \n  b",
+		"|-\n  a:     \n    b\n",
+	},
 
 	// Structures
 	{

@@ -90,6 +90,11 @@ func isSpace(b []byte, i int) bool {
 	return b[i] == ' '
 }
 
+// Check if the character at the specified position is colon.
+func isColon(b []byte, i int) bool {
+	return b[i] == ':'
+}
+
 // Check if the character at the specified position is tab.
 func isTab(b []byte, i int) bool {
 	return b[i] == '\t'
