@@ -6,13 +6,13 @@ function get_latest_git_tag {
   git describe --tags | grep -Eo '[0-9]+\.[0-9]+\.[0-9]+'
 }
 
-VERSION="${1:-`get_latest_git_tag`}"
+VERSION="${1:-$(get_latest_git_tag)}"
 
 # makes builds reproducible
 export CGO_ENABLED=0
 LDFLAGS="-X github.com/vmware-tanzu/carvel-ytt/pkg/version.Version=$VERSION"
 
-./hack/build.sh $VERSION # Used to generate website/generated.go used by ytt website
+./hack/generate-website-assets.sh
 
 GOOS=darwin GOARCH=amd64 go build -ldflags="$LDFLAGS" -trimpath -o ytt-darwin-amd64 ./cmd/ytt
 GOOS=darwin GOARCH=arm64 go build -ldflags="$LDFLAGS" -trimpath -o ytt-darwin-arm64 ./cmd/ytt
