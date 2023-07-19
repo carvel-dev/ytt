@@ -13,7 +13,6 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/vmware-tanzu/carvel-ytt/pkg/cmd/template"
 	cmdtpl "github.com/vmware-tanzu/carvel-ytt/pkg/cmd/template"
 	"github.com/vmware-tanzu/carvel-ytt/pkg/cmd/ui"
 	"github.com/vmware-tanzu/carvel-ytt/pkg/files"
@@ -40,8 +39,8 @@ If you want to include those results, use the --output-files or --dangerous-empt
 	stderr := bytes.NewBufferString("")
 	ui := ui.NewCustomWriterTTY(false, stdout, stderr)
 	opts := cmdtpl.NewOptions()
-	rfsOpts := template.RegularFilesSourceOpts{OutputType: cmdtpl.OutputType{Types: []string{"yaml"}}}
-	rfs := template.NewRegularFilesSource(rfsOpts, ui)
+	rfsOpts := cmdtpl.RegularFilesSourceOpts{OutputType: cmdtpl.OutputType{Types: []string{"yaml"}}}
+	rfs := cmdtpl.NewRegularFilesSource(rfsOpts, ui)
 
 	out := opts.RunWithFiles(cmdtpl.Input{Files: filesToProcess}, ui)
 	require.NoError(t, out.Err)
@@ -76,8 +75,8 @@ organization=Acme Widgets Inc.`)
 	stderr := bytes.NewBufferString("")
 	ui := ui.NewCustomWriterTTY(false, stdout, stderr)
 	opts := cmdtpl.NewOptions()
-	rfsOpts := template.RegularFilesSourceOpts{OutputType: cmdtpl.OutputType{Types: []string{"yaml"}}, OutputFiles: outputDir}
-	rfs := template.NewRegularFilesSource(rfsOpts, ui)
+	rfsOpts := cmdtpl.RegularFilesSourceOpts{OutputType: cmdtpl.OutputType{Types: []string{"yaml"}}, OutputFiles: outputDir}
+	rfs := cmdtpl.NewRegularFilesSource(rfsOpts, ui)
 
 	out := opts.RunWithFiles(cmdtpl.Input{Files: filesToProcess}, ui)
 	require.NoError(t, out.Err)
@@ -121,8 +120,8 @@ func Test_FileMark_YAML_Shows_No_Warning(t *testing.T) {
 	ui := ui.NewCustomWriterTTY(false, stdout, stderr)
 	opts := cmdtpl.NewOptions()
 	opts.FileMarksOpts.FileMarks = []string{"yaml.txt:type=yaml-plain"}
-	rfsOpts := template.RegularFilesSourceOpts{OutputType: cmdtpl.OutputType{Types: []string{"yaml"}}}
-	rfs := template.NewRegularFilesSource(rfsOpts, ui)
+	rfsOpts := cmdtpl.RegularFilesSourceOpts{OutputType: cmdtpl.OutputType{Types: []string{"yaml"}}}
+	rfs := cmdtpl.NewRegularFilesSource(rfsOpts, ui)
 
 	out := opts.RunWithFiles(cmdtpl.Input{Files: filesToProcess}, ui)
 	require.NoError(t, out.Err)
