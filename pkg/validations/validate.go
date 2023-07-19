@@ -241,7 +241,7 @@ func (v validationKwargs) asRules() []rule {
 	}
 	if v.notNull {
 		rules = append(rules, rule{
-			msg:        fmt.Sprintf("not null"),
+			msg:        "not null",
 			assertion:  yttlibrary.NewAssertNotNull().CheckFunc(),
 			isCritical: true,
 			priority:   100,

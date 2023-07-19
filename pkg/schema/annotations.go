@@ -166,7 +166,7 @@ func NewDeprecatedAnnotation(ann template.NodeAnnotation, pos *filepos.Position)
 			annPositions: []*filepos.Position{ann.Position},
 			position:     pos,
 			description:  fmt.Sprintf("syntax error in @%v annotation", AnnotationDeprecated),
-			expected:     fmt.Sprintf("string"),
+			expected:     "string",
 			found:        fmt.Sprintf("keyword argument in @%v (by %v)", AnnotationDeprecated, ann.Position.AsCompactString()),
 			hints:        []string{"this annotation only accepts one argument: a string."},
 		}
@@ -177,7 +177,7 @@ func NewDeprecatedAnnotation(ann template.NodeAnnotation, pos *filepos.Position)
 			annPositions: []*filepos.Position{ann.Position},
 			position:     pos,
 			description:  fmt.Sprintf("syntax error in @%v annotation", AnnotationDeprecated),
-			expected:     fmt.Sprintf("string"),
+			expected:     "string",
 			found:        fmt.Sprintf("missing value in @%v (by %v)", AnnotationDeprecated, ann.Position.AsCompactString()),
 		}
 	case numArgs > 1:
@@ -185,7 +185,7 @@ func NewDeprecatedAnnotation(ann template.NodeAnnotation, pos *filepos.Position)
 			annPositions: []*filepos.Position{ann.Position},
 			position:     pos,
 			description:  fmt.Sprintf("syntax error in @%v annotation", AnnotationDeprecated),
-			expected:     fmt.Sprintf("string"),
+			expected:     "string",
 			found:        fmt.Sprintf("%v values in @%v (by %v)", numArgs, AnnotationDeprecated, ann.Position.AsCompactString()),
 		}
 	}
@@ -196,7 +196,7 @@ func NewDeprecatedAnnotation(ann template.NodeAnnotation, pos *filepos.Position)
 			annPositions: []*filepos.Position{ann.Position},
 			position:     pos,
 			description:  fmt.Sprintf("syntax error in @%v annotation", AnnotationDeprecated),
-			expected:     fmt.Sprintf("string"),
+			expected:     "string",
 			found:        fmt.Sprintf("Non-string value in @%v (by %v)", AnnotationDeprecated, ann.Position.AsCompactString()),
 		}
 	}
@@ -251,7 +251,7 @@ func NewDescriptionAnnotation(ann template.NodeAnnotation, pos *filepos.Position
 			annPositions: []*filepos.Position{ann.Position},
 			position:     pos,
 			description:  fmt.Sprintf("syntax error in @%v annotation", AnnotationDescription),
-			expected:     fmt.Sprintf("string"),
+			expected:     "string",
 			found:        fmt.Sprintf("keyword argument in @%v (by %v)", AnnotationDescription, ann.Position.AsCompactString()),
 			hints:        []string{"this annotation only accepts one argument: a string."},
 		}
@@ -262,7 +262,7 @@ func NewDescriptionAnnotation(ann template.NodeAnnotation, pos *filepos.Position
 			annPositions: []*filepos.Position{ann.Position},
 			position:     pos,
 			description:  fmt.Sprintf("syntax error in @%v annotation", AnnotationDescription),
-			expected:     fmt.Sprintf("string"),
+			expected:     "string",
 			found:        fmt.Sprintf("missing value in @%v (by %v)", AnnotationDescription, ann.Position.AsCompactString()),
 		}
 	case numArgs > 1:
@@ -270,7 +270,7 @@ func NewDescriptionAnnotation(ann template.NodeAnnotation, pos *filepos.Position
 			annPositions: []*filepos.Position{ann.Position},
 			position:     pos,
 			description:  fmt.Sprintf("syntax error in @%v annotation", AnnotationDescription),
-			expected:     fmt.Sprintf("string"),
+			expected:     "string",
 			found:        fmt.Sprintf("%v values in @%v (by %v)", numArgs, AnnotationDescription, ann.Position.AsCompactString()),
 		}
 	}
@@ -281,7 +281,7 @@ func NewDescriptionAnnotation(ann template.NodeAnnotation, pos *filepos.Position
 			annPositions: []*filepos.Position{ann.Position},
 			position:     pos,
 			description:  fmt.Sprintf("syntax error in @%v annotation", AnnotationDescription),
-			expected:     fmt.Sprintf("string"),
+			expected:     "string",
 			found:        fmt.Sprintf("Non-string value in @%v (by %v)", AnnotationDescription, ann.Position.AsCompactString()),
 		}
 	}
@@ -295,7 +295,7 @@ func NewTitleAnnotation(ann template.NodeAnnotation, pos *filepos.Position) (*Ti
 			annPositions: []*filepos.Position{ann.Position},
 			position:     pos,
 			description:  fmt.Sprintf("syntax error in @%v annotation", AnnotationTitle),
-			expected:     fmt.Sprintf("string"),
+			expected:     "string",
 			found:        fmt.Sprintf("keyword argument in @%v (by %v)", AnnotationTitle, ann.Position.AsCompactString()),
 			hints:        []string{"this annotation only accepts one argument: a string."},
 		}
@@ -306,7 +306,7 @@ func NewTitleAnnotation(ann template.NodeAnnotation, pos *filepos.Position) (*Ti
 			annPositions: []*filepos.Position{ann.Position},
 			position:     pos,
 			description:  fmt.Sprintf("syntax error in @%v annotation", AnnotationTitle),
-			expected:     fmt.Sprintf("string"),
+			expected:     "string",
 			found:        fmt.Sprintf("missing value in @%v (by %v)", AnnotationTitle, ann.Position.AsCompactString()),
 		}
 	case numArgs > 1:
@@ -314,7 +314,7 @@ func NewTitleAnnotation(ann template.NodeAnnotation, pos *filepos.Position) (*Ti
 			annPositions: []*filepos.Position{ann.Position},
 			position:     pos,
 			description:  fmt.Sprintf("syntax error in @%v annotation", AnnotationTitle),
-			expected:     fmt.Sprintf("string"),
+			expected:     "string",
 			found:        fmt.Sprintf("%v values in @%v (by %v)", numArgs, AnnotationTitle, ann.Position.AsCompactString()),
 		}
 	}
@@ -325,7 +325,7 @@ func NewTitleAnnotation(ann template.NodeAnnotation, pos *filepos.Position) (*Ti
 			annPositions: []*filepos.Position{ann.Position},
 			position:     pos,
 			description:  fmt.Sprintf("syntax error in @%v annotation", AnnotationTitle),
-			expected:     fmt.Sprintf("string"),
+			expected:     "string",
 			found:        fmt.Sprintf("Non-string value in @%v (by %v)", AnnotationTitle, ann.Position.AsCompactString()),
 		}
 	}
@@ -339,7 +339,7 @@ func NewExampleAnnotation(ann template.NodeAnnotation, pos *filepos.Position) (*
 			annPositions: []*filepos.Position{ann.Position},
 			position:     pos,
 			description:  fmt.Sprintf("syntax error in @%v annotation", AnnotationExamples),
-			expected:     fmt.Sprintf("2-tuple containing description (string) and example value (of expected type)"),
+			expected:     "2-tuple containing description (string) and example value (of expected type)",
 			found:        fmt.Sprintf("keyword argument in @%v (by %v)", AnnotationExamples, ann.Position.AsCompactString()),
 		}
 	}
@@ -348,7 +348,7 @@ func NewExampleAnnotation(ann template.NodeAnnotation, pos *filepos.Position) (*
 			annPositions: []*filepos.Position{ann.Position},
 			position:     pos,
 			description:  fmt.Sprintf("syntax error in @%v annotation", AnnotationExamples),
-			expected:     fmt.Sprintf("2-tuple containing description (string) and example value (of expected type)"),
+			expected:     "2-tuple containing description (string) and example value (of expected type)",
 			found:        fmt.Sprintf("missing value in @%v (by %v)", AnnotationExamples, ann.Position.AsCompactString()),
 		}
 	}
@@ -361,7 +361,7 @@ func NewExampleAnnotation(ann template.NodeAnnotation, pos *filepos.Position) (*
 				annPositions: []*filepos.Position{ann.Position},
 				position:     pos,
 				description:  fmt.Sprintf("syntax error in @%v annotation", AnnotationExamples),
-				expected:     fmt.Sprintf("2-tuple containing description (string) and example value (of expected type)"),
+				expected:     "2-tuple containing description (string) and example value (of expected type)",
 				found:        fmt.Sprintf("%v for @%v (at %v)", ex.Type(), AnnotationExamples, ann.Position.AsCompactString()),
 			}
 		}
@@ -371,7 +371,7 @@ func NewExampleAnnotation(ann template.NodeAnnotation, pos *filepos.Position) (*
 				annPositions: []*filepos.Position{ann.Position},
 				position:     pos,
 				description:  fmt.Sprintf("syntax error in @%v annotation", AnnotationExamples),
-				expected:     fmt.Sprintf("2-tuple containing description (string) and example value (of expected type)"),
+				expected:     "2-tuple containing description (string) and example value (of expected type)",
 				found:        fmt.Sprintf("empty tuple in @%v (by %v)", AnnotationExamples, ann.Position.AsCompactString()),
 			}
 		case len(exampleTuple) == 1:
@@ -379,7 +379,7 @@ func NewExampleAnnotation(ann template.NodeAnnotation, pos *filepos.Position) (*
 				annPositions: []*filepos.Position{ann.Position},
 				position:     pos,
 				description:  fmt.Sprintf("syntax error in @%v annotation", AnnotationExamples),
-				expected:     fmt.Sprintf("2-tuple containing description (string) and example value (of expected type)"),
+				expected:     "2-tuple containing description (string) and example value (of expected type)",
 				found:        fmt.Sprintf("empty tuple in @%v (by %v)", AnnotationExamples, ann.Position.AsCompactString()),
 			}
 		case len(exampleTuple) > 2:
@@ -387,7 +387,7 @@ func NewExampleAnnotation(ann template.NodeAnnotation, pos *filepos.Position) (*
 				annPositions: []*filepos.Position{ann.Position},
 				position:     pos,
 				description:  fmt.Sprintf("syntax error in @%v annotation", AnnotationExamples),
-				expected:     fmt.Sprintf("2-tuple containing description (string) and example value (of expected type)"),
+				expected:     "2-tuple containing description (string) and example value (of expected type)",
 				found:        fmt.Sprintf("%v-tuple argument in @%v (by %v)", len(exampleTuple), AnnotationExamples, ann.Position.AsCompactString()),
 			}
 		default:
@@ -397,7 +397,7 @@ func NewExampleAnnotation(ann template.NodeAnnotation, pos *filepos.Position) (*
 					annPositions: []*filepos.Position{ann.Position},
 					position:     pos,
 					description:  fmt.Sprintf("syntax error in @%v annotation", AnnotationExamples),
-					expected:     fmt.Sprintf("2-tuple containing description (string) and example value (of expected type)"),
+					expected:     "2-tuple containing description (string) and example value (of expected type)",
 					found:        fmt.Sprintf("%v value for @%v (at %v)", exampleTuple[0].Type(), AnnotationExamples, ann.Position.AsCompactString()),
 				}
 			}

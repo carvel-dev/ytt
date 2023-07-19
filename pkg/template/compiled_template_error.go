@@ -123,7 +123,7 @@ func (e CompiledTemplateMultiError) Error() string {
 		}
 
 		if len(otherLines) > 0 {
-			result = append(result, []string{"", fmt.Sprintf("    reason:")}...)
+			result = append(result, []string{"", "    reason:"}...)
 			for _, line := range otherLines {
 				result = append(result, fmt.Sprintf("     %s", line))
 			}
