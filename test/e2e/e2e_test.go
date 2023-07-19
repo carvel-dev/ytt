@@ -7,7 +7,6 @@ import (
 	"bytes"
 	"fmt"
 	"io/fs"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -111,7 +110,7 @@ float: 123.123
 			}
 			actualOutput := runYtt(t, testInputFiles{testDir + "/config"}, "", flags, nil)
 
-			expectedOutput, err := ioutil.ReadFile(filepath.Join(testDir, "expected.txt"))
+			expectedOutput, err := os.ReadFile(filepath.Join(testDir, "expected.txt"))
 			require.NoError(t, err)
 
 			require.Equal(t, string(expectedOutput), actualOutput)
@@ -138,7 +137,7 @@ float: 0
 
 	})
 	t.Run("can be 'required'", func(t *testing.T) {
-		expectedFileOutput, err := ioutil.ReadFile("../../examples/data-values-required/expected.txt")
+		expectedFileOutput, err := os.ReadFile("../../examples/data-values-required/expected.txt")
 		require.NoError(t, err)
 
 		dirs := []string{
@@ -212,7 +211,7 @@ func TestSchema(t *testing.T) {
 			dirPath := fmt.Sprintf("../../examples/%s", dir)
 			actualOutput := runYtt(t, testInputFiles{dirPath}, "", nil, nil)
 
-			expectedOutput, err := ioutil.ReadFile(filepath.Join(dirPath, "expected.txt"))
+			expectedOutput, err := os.ReadFile(filepath.Join(dirPath, "expected.txt"))
 			require.NoError(t, err)
 
 			require.Equal(t, string(expectedOutput), actualOutput)
@@ -232,7 +231,7 @@ func TestOverlays(t *testing.T) {
 			dirPath := fmt.Sprintf("../../examples/%s", dir)
 			actualOutput := runYtt(t, testInputFiles{dirPath}, "", nil, nil)
 
-			expectedOutput, err := ioutil.ReadFile(filepath.Join(dirPath, "expected.txt"))
+			expectedOutput, err := os.ReadFile(filepath.Join(dirPath, "expected.txt"))
 			require.NoError(t, err)
 
 			require.Equal(t, string(expectedOutput), actualOutput)
@@ -264,7 +263,7 @@ func TestReadingFromStandardIn(t *testing.T) {
 	t.Run("through --file", func(t *testing.T) {
 		actualOutput := runYtt(t, []string{"-", "../../examples/eirini/input.yml"}, "../../examples/eirini/config.yml", nil, nil)
 
-		expectedFileOutput, err := ioutil.ReadFile("../../examples/eirini/config-result.yml")
+		expectedFileOutput, err := os.ReadFile("../../examples/eirini/config-result.yml")
 		require.NoError(t, err)
 		require.Equal(t, string(expectedFileOutput), actualOutput)
 	})
@@ -294,16 +293,16 @@ new_thing: new
 }
 
 func TestCheckDirectoryOutput(t *testing.T) {
-	tempOutputDir, err := ioutil.TempDir(os.TempDir(), "ytt-check-dir")
+	tempOutputDir, err := os.MkdirTemp(os.TempDir(), "ytt-check-dir")
 	require.NoError(t, err)
 	defer os.Remove(tempOutputDir)
 	flags := yttFlags{{fmt.Sprintf("--dangerous-emptied-output-directory=%s", tempOutputDir): ""}}
 	runYtt(t, []string{"../../examples/eirini/"}, "", flags, nil)
 
-	expectedFileOutput, err := ioutil.ReadFile("../../examples/eirini/config-result.yml")
+	expectedFileOutput, err := os.ReadFile("../../examples/eirini/config-result.yml")
 	require.NoError(t, err)
 
-	actualOutput, err := ioutil.ReadFile(filepath.Join(tempOutputDir, "config-result.yml"))
+	actualOutput, err := os.ReadFile(filepath.Join(tempOutputDir, "config-result.yml"))
 	require.NoError(t, err)
 
 	require.Equal(t, string(expectedFileOutput), string(actualOutput))
@@ -371,7 +370,7 @@ func TestApplicationSpecificScenarios(t *testing.T) {
 				dirPath := fmt.Sprintf("../../examples/%s", dir)
 				actualOutput := runYtt(t, testInputFiles{dirPath}, "", nil, nil)
 
-				expectedOutput, err := ioutil.ReadFile(filepath.Join(dirPath, "expected.txt"))
+				expectedOutput, err := os.ReadFile(filepath.Join(dirPath, "expected.txt"))
 				require.NoError(t, err)
 
 				require.Equal(t, string(expectedOutput), actualOutput)
@@ -385,7 +384,7 @@ func TestApplicationSpecificScenarios(t *testing.T) {
 				dirPath := fmt.Sprintf("../../examples/%s", dir)
 				actualOutput := runYtt(t, testInputFiles{dirPath}, "", nil, nil)
 
-				expectedOutput, err := ioutil.ReadFile(filepath.Join(dirPath, "expected.txt"))
+				expectedOutput, err := os.ReadFile(filepath.Join(dirPath, "expected.txt"))
 				require.NoError(t, err)
 
 				require.Equal(t, string(expectedOutput), actualOutput)
@@ -396,14 +395,14 @@ func TestApplicationSpecificScenarios(t *testing.T) {
 		t.Run("config.yml", func(t *testing.T) {
 			actualOutput := runYtt(t, []string{"../../examples/eirini/config.yml", "../../examples/eirini/input.yml"}, "", nil, nil)
 
-			expectedFileOutput, err := ioutil.ReadFile("../../examples/eirini/config-result.yml")
+			expectedFileOutput, err := os.ReadFile("../../examples/eirini/config-result.yml")
 			require.NoError(t, err)
 			require.Equal(t, string(expectedFileOutput), actualOutput)
 		})
 		t.Run("config-alt1.yml", func(t *testing.T) {
 			actualOutput := runYtt(t, []string{"../../examples/eirini/config-alt1.yml", "../../examples/eirini/input.yml"}, "", nil, nil)
 
-			expectedFileOutput, err := ioutil.ReadFile("../../examples/eirini/config-result.yml")
+			expectedFileOutput, err := os.ReadFile("../../examples/eirini/config-result.yml")
 			require.NoError(t, err)
 			require.Equal(t, string(expectedFileOutput), actualOutput)
 		})
@@ -416,7 +415,7 @@ func TestApplicationSpecificScenarios(t *testing.T) {
 				"../../examples/eirini/input.yml"},
 				"", nil, nil)
 
-			expectedFileOutput, err := ioutil.ReadFile("../../examples/eirini/config-result.yml")
+			expectedFileOutput, err := os.ReadFile("../../examples/eirini/config-result.yml")
 			require.NoError(t, err)
 			require.Equal(t, string(expectedFileOutput), actualOutput)
 		})
@@ -434,7 +433,7 @@ func TestRemainingExamples(t *testing.T) {
 			dirPath := fmt.Sprintf("../../examples/%s", dir)
 			actualOutput := runYtt(t, testInputFiles{dirPath}, "", nil, nil)
 
-			expectedOutput, err := ioutil.ReadFile(filepath.Join(dirPath, "expected.txt"))
+			expectedOutput, err := os.ReadFile(filepath.Join(dirPath, "expected.txt"))
 			require.NoError(t, err)
 
 			require.Equal(t, string(expectedOutput), actualOutput)

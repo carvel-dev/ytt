@@ -5,7 +5,6 @@ package texttemplate_test
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -24,7 +23,7 @@ var (
 )
 
 func TestTextTemplate(t *testing.T) {
-	files, err := ioutil.ReadDir("filetests")
+	files, err := os.ReadDir("filetests")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -45,7 +44,7 @@ func TestTextTemplate(t *testing.T) {
 		testDesc := fmt.Sprintf("checking %s ...\n", file.Name())
 		fmt.Printf("%s", testDesc)
 
-		contents, err := ioutil.ReadFile(filePath)
+		contents, err := os.ReadFile(filePath)
 		if err != nil {
 			t.Fatal(err)
 		}

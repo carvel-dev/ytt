@@ -7,7 +7,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"os"
 	"testing"
 
@@ -66,7 +66,7 @@ organization=Acme Widgets Inc.`)
 		files.MustNewFileFromSource(files.NewBytesSource("foo.yaml", yamlData)),
 	}
 
-	outputDir, err := ioutil.TempDir(os.TempDir(), "fakedir")
+	outputDir, err := os.MkdirTemp(os.TempDir(), "fakedir")
 	require.NoError(t, err)
 	defer os.RemoveAll(outputDir)
 
@@ -252,12 +252,12 @@ func TestFileMarkMultipleExcludes(t *testing.T) {
 }
 
 func assertStdoutAndStderr(t *testing.T, stdout *bytes.Buffer, stderr *bytes.Buffer, expectedStdOut string, expectedStdErr string) {
-	stdoutOutput, err := ioutil.ReadAll(stdout)
+	stdoutOutput, err := io.ReadAll(stdout)
 	require.NoError(t, err, "reading stdout")
 
 	require.Equal(t, expectedStdOut, string(stdoutOutput), "comparing stdout")
 
-	stderrOutput, err := ioutil.ReadAll(stderr)
+	stderrOutput, err := io.ReadAll(stderr)
 	require.NoError(t, err, "reading stdout")
 
 	require.Equal(t, expectedStdErr, string(stderrOutput), "comparing stderr")

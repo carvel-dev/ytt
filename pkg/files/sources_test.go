@@ -6,7 +6,7 @@ package files_test
 import (
 	"bytes"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"testing"
 
@@ -23,7 +23,7 @@ func TestHTTPFileSources(t *testing.T) {
 		return &http.Response{
 			StatusCode: http.StatusOK,
 			// Send response to be tested
-			Body: ioutil.NopCloser(bytes.NewBufferString(`OK`)),
+			Body: io.NopCloser(bytes.NewBufferString(`OK`)),
 			// Must be set to non-nil value or it panics
 			Header: make(http.Header),
 		}
@@ -41,7 +41,7 @@ func TestHTTPFileSources(t *testing.T) {
 		require.Equal(t, req.URL.String(), url)
 		return &http.Response{
 			StatusCode: http.StatusIMUsed,
-			Body:       ioutil.NopCloser(bytes.NewBufferString(`OK`)),
+			Body:       io.NopCloser(bytes.NewBufferString(`OK`)),
 			Header:     make(http.Header),
 		}
 	})

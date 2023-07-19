@@ -5,7 +5,6 @@ package yamlfmt_test
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -51,7 +50,7 @@ func TestYAMLFmt(t *testing.T) {
 		testDesc := fmt.Sprintf("checking %s ...\n", filePath)
 		fmt.Printf("%s", testDesc)
 
-		contents, err := ioutil.ReadFile(filePath)
+		contents, err := os.ReadFile(filePath)
 		if err != nil {
 			t.Fatal(err)
 		}

@@ -5,7 +5,7 @@ package files
 
 import (
 	"fmt"
-	"io/ioutil"
+	"io"
 	"os"
 )
 
@@ -17,5 +17,5 @@ func ReadStdin() ([]byte, error) {
 		return nil, fmt.Errorf("Standard input has already been read, has the '-' argument been used in more than one flag?")
 	}
 	hasStdinBeenRead = true
-	return ioutil.ReadAll(os.Stdin)
+	return io.ReadAll(os.Stdin)
 }
