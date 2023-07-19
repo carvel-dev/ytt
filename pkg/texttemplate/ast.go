@@ -49,9 +49,7 @@ func (n *NodeRoot) AsString() string {
 
 func (n *NodeRoot) GetValues() []interface{} {
 	var result []interface{}
-	for _, item := range n.Items {
-		result = append(result, item)
-	}
+	result = append(result, n.Items...)
 	return result
 }
 
