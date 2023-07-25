@@ -81,6 +81,7 @@ func (s LocalSource) RelativePath() (string, error) {
 	return "", fmt.Errorf("unknown relative path for %s", s.path)
 }
 
+// Bytes returns  bytes of the read file
 func (s LocalSource) Bytes() ([]byte, error) { return os.ReadFile(s.path) }
 
 type HTTPSource struct {
