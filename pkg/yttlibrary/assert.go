@@ -332,9 +332,7 @@ func (m AssertModule) oneNotNullCheck(keys starlark.Sequence) core.StarlarkFunc 
 		var keysToCheck []starlark.Value
 
 		if keys == nil {
-			for _, key := range dict.Keys() {
-				keysToCheck = append(keysToCheck, key)
-			}
+			keysToCheck = append(keysToCheck, dict.Keys()...)
 		} else {
 			var key starlark.Value
 			keys := keys.Iterate()
