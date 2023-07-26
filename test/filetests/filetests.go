@@ -10,7 +10,6 @@ package filetests
 import (
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -86,7 +85,7 @@ func (f FileTests) Run(t *testing.T) {
 
 	for _, filePath := range files {
 		t.Run(filePath, func(t *testing.T) {
-			contents, err := ioutil.ReadFile(filePath)
+			contents, err := os.ReadFile(filePath)
 			if err != nil {
 				t.Fatal(err)
 			}

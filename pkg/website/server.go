@@ -6,7 +6,7 @@ package website
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"net"
 	"net/http"
@@ -115,7 +115,7 @@ func (s *Server) examplesHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) templateHandler(w http.ResponseWriter, r *http.Request) {
-	data, err := ioutil.ReadAll(r.Body)
+	data, err := io.ReadAll(r.Body)
 	if err != nil {
 		s.logError(w, err)
 		return

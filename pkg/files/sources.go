@@ -5,7 +5,7 @@ package files
 
 import (
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"os"
 	"path"
@@ -81,7 +81,8 @@ func (s LocalSource) RelativePath() (string, error) {
 	return "", fmt.Errorf("unknown relative path for %s", s.path)
 }
 
-func (s LocalSource) Bytes() ([]byte, error) { return ioutil.ReadFile(s.path) }
+// Bytes returns  bytes of the read file
+func (s LocalSource) Bytes() ([]byte, error) { return os.ReadFile(s.path) }
 
 type HTTPSource struct {
 	url    string
@@ -109,7 +110,7 @@ func (s HTTPSource) Bytes() ([]byte, error) {
 		return nil, fmt.Errorf("Requesting URL '%s': %s", s.url, resp.Status)
 	}
 
-	result, err := ioutil.ReadAll(resp.Body)
+	result, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, fmt.Errorf("Reading URL '%s': %s", s.url, err)
 	}
