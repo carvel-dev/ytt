@@ -1,5 +1,7 @@
 ![logo](docs/CarvelLogo.png)
 
+[![OpenSSF Best Practices](https://bestpractices.coreinfrastructure.org/projects/7746/badge)](https://bestpractices.coreinfrastructure.org/projects/7746)
+
 # ytt
 
 * Play: Jump right in by trying out the [online playground](https://carvel.dev/ytt/#playground)
