@@ -6,8 +6,8 @@ package template_test
 import (
 	"testing"
 
+	"carvel.dev/ytt/pkg/template"
 	"github.com/k14s/starlark-go/starlark"
-	"github.com/vmware-tanzu/carvel-ytt/pkg/template"
 )
 
 type ErrorHintTest struct {

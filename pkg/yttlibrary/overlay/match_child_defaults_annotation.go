@@ -6,8 +6,8 @@ package overlay
 import (
 	"fmt"
 
+	"carvel.dev/ytt/pkg/template"
 	"github.com/k14s/starlark-go/starlark"
-	"github.com/vmware-tanzu/carvel-ytt/pkg/template"
 )
 
 type MatchChildDefaultsAnnotation struct {

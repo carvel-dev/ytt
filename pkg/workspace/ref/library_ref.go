@@ -7,8 +7,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/vmware-tanzu/carvel-ytt/pkg/template"
-	"github.com/vmware-tanzu/carvel-ytt/pkg/template/core"
+	"carvel.dev/ytt/pkg/template"
+	"carvel.dev/ytt/pkg/template/core"
 )
 
 const (

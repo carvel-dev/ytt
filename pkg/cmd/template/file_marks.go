@@ -8,7 +8,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/vmware-tanzu/carvel-ytt/pkg/files"
+	"carvel.dev/ytt/pkg/files"
 )
 
 type FileMarksOpts struct {

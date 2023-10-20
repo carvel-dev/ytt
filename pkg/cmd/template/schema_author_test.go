@@ -6,8 +6,8 @@ package template_test
 import (
 	"testing"
 
-	cmdtpl "github.com/vmware-tanzu/carvel-ytt/pkg/cmd/template"
-	"github.com/vmware-tanzu/carvel-ytt/pkg/files"
+	cmdtpl "carvel.dev/ytt/pkg/cmd/template"
+	"carvel.dev/ytt/pkg/files"
 )
 
 func TestSchema_Unused_returns_error(t *testing.T) {

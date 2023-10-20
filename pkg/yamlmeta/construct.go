@@ -3,7 +3,7 @@
 
 package yamlmeta
 
-import "github.com/vmware-tanzu/carvel-ytt/pkg/filepos"
+import "carvel.dev/ytt/pkg/filepos"
 
 // NewDocumentSet creates a new DocumentSet instance based on the given prototype
 func NewDocumentSet(val *DocumentSetProto) *DocumentSet {

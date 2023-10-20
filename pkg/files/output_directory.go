@@ -8,7 +8,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/vmware-tanzu/carvel-ytt/pkg/cmd/ui"
+	"carvel.dev/ytt/pkg/cmd/ui"
 )
 
 var (

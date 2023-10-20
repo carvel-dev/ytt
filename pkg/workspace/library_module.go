@@ -7,15 +7,15 @@ import (
 	"fmt"
 	"strings"
 
+	"carvel.dev/ytt/pkg/filepos"
+	"carvel.dev/ytt/pkg/template/core"
+	"carvel.dev/ytt/pkg/workspace/datavalues"
+	"carvel.dev/ytt/pkg/workspace/ref"
+	"carvel.dev/ytt/pkg/yamlmeta"
+	"carvel.dev/ytt/pkg/yamltemplate"
+	"carvel.dev/ytt/pkg/yttlibrary/overlay"
 	"github.com/k14s/starlark-go/starlark"
 	"github.com/k14s/starlark-go/starlarkstruct"
-	"github.com/vmware-tanzu/carvel-ytt/pkg/filepos"
-	"github.com/vmware-tanzu/carvel-ytt/pkg/template/core"
-	"github.com/vmware-tanzu/carvel-ytt/pkg/workspace/datavalues"
-	"github.com/vmware-tanzu/carvel-ytt/pkg/workspace/ref"
-	"github.com/vmware-tanzu/carvel-ytt/pkg/yamlmeta"
-	"github.com/vmware-tanzu/carvel-ytt/pkg/yamltemplate"
-	"github.com/vmware-tanzu/carvel-ytt/pkg/yttlibrary/overlay"
 )
 
 // LibraryModule is the definition of the ytt-supplied Starlark module `@ytt:library`

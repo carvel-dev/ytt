@@ -10,7 +10,7 @@ VERSION="${1:-$(get_latest_git_tag)}"
 
 # makes builds reproducible
 export CGO_ENABLED=0
-LDFLAGS="-X github.com/vmware-tanzu/carvel-ytt/pkg/version.Version=$VERSION"
+LDFLAGS="-X carvel.dev/ytt/pkg/version.Version=$VERSION"
 
 ./hack/generate-website-assets.sh
 

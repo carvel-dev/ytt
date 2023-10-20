@@ -6,8 +6,8 @@ package schema
 import (
 	"fmt"
 
-	"github.com/vmware-tanzu/carvel-ytt/pkg/validations"
-	"github.com/vmware-tanzu/carvel-ytt/pkg/yamlmeta"
+	"carvel.dev/ytt/pkg/validations"
+	"carvel.dev/ytt/pkg/yamlmeta"
 )
 
 // AssignTypeTo assigns this schema metadata to `node`.

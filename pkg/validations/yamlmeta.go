@@ -4,7 +4,7 @@
 package validations
 
 import (
-	"github.com/vmware-tanzu/carvel-ytt/pkg/yamlmeta"
+	"carvel.dev/ytt/pkg/yamlmeta"
 )
 
 const validationsMeta = "validations"

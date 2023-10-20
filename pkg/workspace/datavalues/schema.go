@@ -7,10 +7,10 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/vmware-tanzu/carvel-ytt/pkg/schema"
-	"github.com/vmware-tanzu/carvel-ytt/pkg/template"
-	"github.com/vmware-tanzu/carvel-ytt/pkg/workspace/ref"
-	"github.com/vmware-tanzu/carvel-ytt/pkg/yamlmeta"
+	"carvel.dev/ytt/pkg/schema"
+	"carvel.dev/ytt/pkg/template"
+	"carvel.dev/ytt/pkg/workspace/ref"
+	"carvel.dev/ytt/pkg/yamlmeta"
 )
 
 // Schema is a definition of types and default values for Envelope.

@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/vmware-tanzu/carvel-ytt/pkg/filepos"
+	"carvel.dev/ytt/pkg/filepos"
 )
 
 type AnnotationName string

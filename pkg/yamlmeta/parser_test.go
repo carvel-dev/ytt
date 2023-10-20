@@ -8,9 +8,9 @@ import (
 	"strings"
 	"testing"
 
+	"carvel.dev/ytt/pkg/filepos"
+	"carvel.dev/ytt/pkg/yamlmeta"
 	"github.com/k14s/difflib"
-	"github.com/vmware-tanzu/carvel-ytt/pkg/filepos"
-	"github.com/vmware-tanzu/carvel-ytt/pkg/yamlmeta"
 )
 
 var _ = fmt.Sprintf

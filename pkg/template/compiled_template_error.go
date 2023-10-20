@@ -9,10 +9,10 @@ import (
 	"regexp"
 	"strings"
 
+	"carvel.dev/ytt/pkg/filepos"
 	"github.com/k14s/starlark-go/resolve"
 	"github.com/k14s/starlark-go/starlark"
 	"github.com/k14s/starlark-go/syntax"
-	"github.com/vmware-tanzu/carvel-ytt/pkg/filepos"
 )
 
 type CompiledTemplateMultiError struct {

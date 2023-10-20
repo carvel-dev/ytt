@@ -10,9 +10,9 @@ import (
 	"os"
 	"os/exec"
 
+	cmdtpl "carvel.dev/ytt/pkg/cmd/template"
+	"carvel.dev/ytt/pkg/website"
 	"github.com/spf13/cobra"
-	cmdtpl "github.com/vmware-tanzu/carvel-ytt/pkg/cmd/template"
-	"github.com/vmware-tanzu/carvel-ytt/pkg/website"
 )
 
 type WebsiteOptions struct {

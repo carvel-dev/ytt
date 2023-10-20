@@ -6,10 +6,10 @@ package validations
 import (
 	"fmt"
 
+	"carvel.dev/ytt/pkg/filepos"
+	"carvel.dev/ytt/pkg/template"
+	"carvel.dev/ytt/pkg/yamlmeta"
 	"github.com/k14s/starlark-go/starlark"
-	"github.com/vmware-tanzu/carvel-ytt/pkg/filepos"
-	"github.com/vmware-tanzu/carvel-ytt/pkg/template"
-	"github.com/vmware-tanzu/carvel-ytt/pkg/yamlmeta"
 )
 
 // Declare @assert/... annotation and keyword argument names
