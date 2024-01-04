@@ -34,6 +34,17 @@ checksum:
   name_template: 'checksums.txt'
   algorithm: sha256
   disable: false
+signs:
+  - artifacts: checksum
+    certificate: '${artifact}.pem'
+    cmd: cosign
+    args:
+      - sign-blob
+      - "--yes"
+      - '--output-certificate=${certificate}'
+      - '--output-signature=${signature}'
+      - '${artifact}'
+    output: true  
 snapshot:
   name_template: "{{ .Tag }}-next"
 release:
@@ -57,6 +68,61 @@ release:
   # You can disable this pipe in order to not upload any artifacts.
   # Defaults to false.
   disable: false
+
+  header: |
+    <details>
+
+    <summary><h2>Installation and signature verification</h2></summary>
+
+    ### Installation
+    
+    #### By downloading binary from the release
+
+    For instance, if you are using Linux on an AMD64 architecture:
+    ```shell
+    # Download the binary
+    curl -LO https://github.com/{{ .Env.GITHUB_REPOSITORY }}/releases/download/{{ .Tag }}/{{ .ProjectName }}-linux-amd64
+
+    # Move the binary in to your PATH
+    mv kapp-linux-amd64 /usr/local/bin/ytt
+
+    # Make the binary executable
+    chmod +x /usr/local/bin/ytt
+    ```
+
+    #### Via Homebrew (macOS or Linux)
+    ```shell
+    $ brew tap carvel-dev/carvel
+    $ brew install ytt
+    $ ytt version  
+    ```
+
+    ### Verify checksums file signature
+
+    The checksums file provided within the artifacts attached to this release is signed using [Cosign](https://docs.sigstore.dev/cosign/overview/) with GitHub OIDC(Refer [this](https://docs.sigstore.dev/system_config/installation/) page for cosign installation). To validate the signature of this file, run the following commands:
+
+    ```shell
+    # Download the checksums file, certificate and signature
+    curl -LO https://github.com/{{ .Env.GITHUB_REPOSITORY }}/releases/download/{{ .Tag }}/checksums.txt
+    curl -LO https://github.com/{{ .Env.GITHUB_REPOSITORY }}/releases/download/{{ .Tag }}/checksums.txt.pem
+    curl -LO https://github.com/{{ .Env.GITHUB_REPOSITORY }}/releases/download/{{ .Tag }}/checksums.txt.sig
+
+    # Verify the checksums file
+    cosign verify-blob checksums.txt \
+      --certificate checksums.txt.pem \
+      --signature checksums.txt.sig \
+      --certificate-identity-regexp=https://github.com/{{ .Env.GITHUB_REPOSITORY_OWNER }} \
+      --certificate-oidc-issuer=https://token.actions.githubusercontent.com
+    ```
+
+    ### Verify binary integrity
+
+    To verify the integrity of the downloaded binary, you can utilize the checksums file after having validated its signature.
+    ```shell
+    # Verify the binary using the checksums file
+    sha256sum -c checksums.txt --ignore-missing
+    ```
+    </details>
 
 changelog:
   # Set it to true if you wish to skip the changelog generation.
