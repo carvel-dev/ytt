@@ -70,7 +70,7 @@ func (b base64Module) Decode(thread *starlark.Thread, f *starlark.Builtin, args 
 func (b base64Module) buildEncoding(kwargs []starlark.Tuple) (*base64.Encoding, error) {
 	var encoding *base64.Encoding = base64.StdEncoding
 
-	isURL, err := core.BoolArg(kwargs, "url")
+	isURL, err := core.BoolArg(kwargs, "url", false)
 	if err != nil {
 		return nil, err
 	}
@@ -78,7 +78,7 @@ func (b base64Module) buildEncoding(kwargs []starlark.Tuple) (*base64.Encoding, 
 		encoding = base64.URLEncoding
 	}
 
-	isRaw, err := core.BoolArg(kwargs, "raw")
+	isRaw, err := core.BoolArg(kwargs, "raw", false)
 	if err != nil {
 		return nil, err
 	}
@@ -86,7 +86,7 @@ func (b base64Module) buildEncoding(kwargs []starlark.Tuple) (*base64.Encoding, 
 		encoding = encoding.WithPadding(base64.NoPadding)
 	}
 
-	isStrict, err := core.BoolArg(kwargs, "strict")
+	isStrict, err := core.BoolArg(kwargs, "strict", false)
 	if err != nil {
 		return nil, err
 	}

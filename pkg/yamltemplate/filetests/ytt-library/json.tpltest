@@ -15,6 +15,9 @@ encode:
   indent:
     test1: #@ json.encode({"a": [1,2,3,{"c":456}], "b": "str"}, indent=4)
     test2: #@ json.encode({"a": [1,2,3,{"c":456}], "b": "str"}, indent=0)
+  escape_html:
+    test1: #@ json.encode({"a": "<123>"})
+    test2: #@ json.encode({"a": "<123>"}, escape_html=False)
 decode:
   test1: #@ json.decode("{}")
   test2: #@ json.decode('{"a":[1,2,3,{"c":456}],"b":"str"}')
@@ -40,6 +43,9 @@ encode:
           "b": "str"
       }
     test2: '{"a":[1,2,3,{"c":456}],"b":"str"}'
+  escape_html:
+    test1: '{"a":"\u003c123\u003e"}'
+    test2: '{"a":"<123>"}'
 decode:
   test1: {}
   test2:

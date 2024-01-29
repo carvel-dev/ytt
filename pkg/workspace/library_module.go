@@ -192,7 +192,7 @@ func (l *libraryValue) WithDataValues(thread *starlark.Thread, f *starlark.Built
 		return starlark.None, err
 	}
 
-	usePlainMerge, err := core.BoolArg(kwargs, "plain")
+	usePlainMerge, err := core.BoolArg(kwargs, "plain", false)
 	if err != nil {
 		return starlark.None, err
 	}

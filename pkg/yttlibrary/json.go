@@ -4,6 +4,7 @@
 package yttlibrary
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"strings"
@@ -37,6 +38,7 @@ func (b jsonModule) Encode(thread *starlark.Thread, f *starlark.Builtin, args st
 	}
 	allowedKWArgs := map[string]struct{}{
 		"indent": {},
+		"escape_html": {},
 	}
 	if err := core.CheckArgNames(kwargs, allowedKWArgs); err != nil {
 		return starlark.None, err
@@ -49,26 +51,33 @@ func (b jsonModule) Encode(thread *starlark.Thread, f *starlark.Builtin, args st
 	val = orderedmap.Conversion{yamlmeta.NewGoFromAST(val)}.AsUnorderedStringMaps()
 
 	var valBs []byte
+	buffer := bytes.NewBuffer(valBs)
 	indent, err := core.Int64Arg(kwargs, "indent")
 	if err != nil {
 		return starlark.None, err
 	}
-
 	if indent < 0 || indent > 8 {
 		// mitigate https://cwe.mitre.org/data/definitions/409.html
 		return starlark.None, fmt.Errorf("indent value must be between 0 and 8")
 	}
 
-	if indent > 0 {
-		valBs, err = json.MarshalIndent(val, "", strings.Repeat(" ", int(indent)))
-	} else {
-		valBs, err = json.Marshal(val)
-	}
+	escapeHTML, err := core.BoolArg(kwargs, "escape_html", true)
 	if err != nil {
 		return starlark.None, err
 	}
 
-	return starlark.String(string(valBs)), nil
+	encoder := json.NewEncoder(buffer)
+	if indent > 0 {
+		encoder.SetIndent("", strings.Repeat(" ", int(indent)))
+	}
+	encoder.SetEscapeHTML(escapeHTML)
+
+	if err := encoder.Encode(val); err != nil {
+		return starlark.None, err
+	}
+
+	res := strings.TrimSuffix(buffer.String(), "\n")
+	return starlark.String(res), nil
 }
 
 // Decode is a core.StarlarkFunc that parses the provided input from JSON format into dicts, lists, and scalars
