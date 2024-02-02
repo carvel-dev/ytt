@@ -40,3 +40,6 @@ Check out which organizations are using and contributing to Carvel: [Adopter's l
 ### Integrating with ytt
 
 If you want to integrate `ytt` within your own tooling, review our [APIs](examples/integrating-with-ytt/apis.md).
+
+### Bazel
+`ytt` can be run with [Bazel](https://bazel.build/). See [rules_ytt](https://github.com/ekhabarov/rules_ytt) for details.
