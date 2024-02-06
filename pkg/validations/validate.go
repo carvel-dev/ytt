@@ -9,13 +9,13 @@ import (
 	"sort"
 	"strings"
 
+	"carvel.dev/ytt/pkg/filepos"
+	"carvel.dev/ytt/pkg/orderedmap"
+	"carvel.dev/ytt/pkg/template/core"
+	"carvel.dev/ytt/pkg/yamlmeta"
+	"carvel.dev/ytt/pkg/yamltemplate"
+	"carvel.dev/ytt/pkg/yttlibrary"
 	"github.com/k14s/starlark-go/starlark"
-	"github.com/vmware-tanzu/carvel-ytt/pkg/filepos"
-	"github.com/vmware-tanzu/carvel-ytt/pkg/orderedmap"
-	"github.com/vmware-tanzu/carvel-ytt/pkg/template/core"
-	"github.com/vmware-tanzu/carvel-ytt/pkg/yamlmeta"
-	"github.com/vmware-tanzu/carvel-ytt/pkg/yamltemplate"
-	"github.com/vmware-tanzu/carvel-ytt/pkg/yttlibrary"
 )
 
 // NodeValidation represents a validationRun attached to a Node via an annotation.

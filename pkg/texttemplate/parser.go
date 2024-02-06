@@ -6,7 +6,7 @@ package texttemplate
 import (
 	"fmt"
 
-	"github.com/vmware-tanzu/carvel-ytt/pkg/filepos"
+	"carvel.dev/ytt/pkg/filepos"
 )
 
 type Parser struct {

@@ -36,10 +36,10 @@ import (
 	"fmt"
 	"math"
 
+	"carvel.dev/ytt/pkg/cmd/ui"
+	"carvel.dev/ytt/pkg/template/core"
 	"github.com/k14s/starlark-go/starlark"
 	"github.com/k14s/starlark-go/starlarkstruct"
-	"github.com/vmware-tanzu/carvel-ytt/pkg/cmd/ui"
-	"github.com/vmware-tanzu/carvel-ytt/pkg/template/core"
 )
 
 // MathModule contains the definition of the @ytt:math module.

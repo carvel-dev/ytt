@@ -3,9 +3,9 @@ module example_internal_templating
 go 1.17
 
 // ensure example works with this copy of ytt; remove before use
-replace github.com/vmware-tanzu/carvel-ytt => ../../../
+replace carvel.dev/ytt => ../../../
 
-require github.com/vmware-tanzu/carvel-ytt v0.44.1
+require carvel.dev/ytt v0.44.1
 
 require (
 	github.com/hashicorp/go-version v1.6.0 // indirect

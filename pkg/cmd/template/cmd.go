@@ -7,12 +7,12 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/vmware-tanzu/carvel-ytt/pkg/cmd/ui"
-	"github.com/vmware-tanzu/carvel-ytt/pkg/files"
-	"github.com/vmware-tanzu/carvel-ytt/pkg/schema"
-	"github.com/vmware-tanzu/carvel-ytt/pkg/workspace"
-	"github.com/vmware-tanzu/carvel-ytt/pkg/workspace/datavalues"
-	"github.com/vmware-tanzu/carvel-ytt/pkg/yamlmeta"
+	"carvel.dev/ytt/pkg/cmd/ui"
+	"carvel.dev/ytt/pkg/files"
+	"carvel.dev/ytt/pkg/schema"
+	"carvel.dev/ytt/pkg/workspace"
+	"carvel.dev/ytt/pkg/workspace/datavalues"
+	"carvel.dev/ytt/pkg/yamlmeta"
 )
 
 // Options both contains the configuration for a "template" command AND the

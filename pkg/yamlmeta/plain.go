@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"reflect"
 
-	"github.com/vmware-tanzu/carvel-ytt/pkg/yamlmeta/internal/yaml.v2"
+	"carvel.dev/ytt/pkg/yamlmeta/internal/yaml.v2"
 )
 
 func PlainMarshal(in interface{}) ([]byte, error) {

@@ -55,7 +55,7 @@ import (
         "fmt"
         "log"
 
-        "github.com/vmware-tanzu/carvel-ytt/pkg/yamlmeta/internal/yaml.v2"
+        "carvel.dev/ytt/pkg/yamlmeta/internal/yaml.v2"
 )
 
 var data = `

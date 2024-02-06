@@ -6,9 +6,9 @@ package yamltemplate
 import (
 	"fmt"
 
+	tplcore "carvel.dev/ytt/pkg/template/core"
+	"carvel.dev/ytt/pkg/yamlmeta"
 	"github.com/k14s/starlark-go/starlark"
-	tplcore "github.com/vmware-tanzu/carvel-ytt/pkg/template/core"
-	"github.com/vmware-tanzu/carvel-ytt/pkg/yamlmeta"
 )
 
 func NewGoValueWithYAML(val interface{}) tplcore.GoValue {

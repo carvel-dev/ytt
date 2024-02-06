@@ -5,10 +5,11 @@ package overlay
 
 import (
 	"fmt"
+
+	"carvel.dev/ytt/pkg/template"
+	tplcore "carvel.dev/ytt/pkg/template/core"
+	"carvel.dev/ytt/pkg/yamltemplate"
 	"github.com/k14s/starlark-go/starlark"
-	"github.com/vmware-tanzu/carvel-ytt/pkg/template"
-	tplcore "github.com/vmware-tanzu/carvel-ytt/pkg/template/core"
-	"github.com/vmware-tanzu/carvel-ytt/pkg/yamltemplate"
 )
 
 // Kwargs of overlay/insert

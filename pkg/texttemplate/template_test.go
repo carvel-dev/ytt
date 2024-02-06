@@ -11,9 +11,9 @@ import (
 	"strings"
 	"testing"
 
+	"carvel.dev/ytt/pkg/template"
+	"carvel.dev/ytt/pkg/texttemplate"
 	"github.com/k14s/starlark-go/starlark"
-	"github.com/vmware-tanzu/carvel-ytt/pkg/template"
-	"github.com/vmware-tanzu/carvel-ytt/pkg/texttemplate"
 )
 
 var (

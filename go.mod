@@ -1,4 +1,4 @@
-module github.com/vmware-tanzu/carvel-ytt
+module carvel.dev/ytt
 
 go 1.21
 

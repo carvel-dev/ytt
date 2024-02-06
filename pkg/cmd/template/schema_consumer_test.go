@@ -13,11 +13,11 @@ import (
 	"testing"
 	"time"
 
+	cmdtpl "carvel.dev/ytt/pkg/cmd/template"
+	"carvel.dev/ytt/pkg/cmd/ui"
+	"carvel.dev/ytt/pkg/files"
 	fuzz "github.com/google/gofuzz"
 	"github.com/stretchr/testify/require"
-	cmdtpl "github.com/vmware-tanzu/carvel-ytt/pkg/cmd/template"
-	"github.com/vmware-tanzu/carvel-ytt/pkg/cmd/ui"
-	"github.com/vmware-tanzu/carvel-ytt/pkg/files"
 )
 
 func TestSchema_passes_when_DataValues_conform(t *testing.T) {

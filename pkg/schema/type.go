@@ -6,9 +6,9 @@ package schema
 import (
 	"fmt"
 
-	"github.com/vmware-tanzu/carvel-ytt/pkg/filepos"
-	"github.com/vmware-tanzu/carvel-ytt/pkg/validations"
-	"github.com/vmware-tanzu/carvel-ytt/pkg/yamlmeta"
+	"carvel.dev/ytt/pkg/filepos"
+	"carvel.dev/ytt/pkg/validations"
+	"carvel.dev/ytt/pkg/yamlmeta"
 )
 
 // Type encapsulates a schema that describes a yamlmeta.Node.

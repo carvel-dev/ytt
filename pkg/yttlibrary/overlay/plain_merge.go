@@ -6,10 +6,10 @@ package overlay
 import (
 	"fmt"
 
+	"carvel.dev/ytt/pkg/template"
+	"carvel.dev/ytt/pkg/yamlmeta"
+	"carvel.dev/ytt/pkg/yamltemplate"
 	"github.com/k14s/starlark-go/starlark"
-	"github.com/vmware-tanzu/carvel-ytt/pkg/template"
-	"github.com/vmware-tanzu/carvel-ytt/pkg/yamlmeta"
-	"github.com/vmware-tanzu/carvel-ytt/pkg/yamltemplate"
 )
 
 // AnnotateForPlainMerge configures `node` to be an overlay doing a "plain merge":

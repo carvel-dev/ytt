@@ -10,8 +10,8 @@ import (
 	"net/http"
 	"testing"
 
+	"carvel.dev/ytt/pkg/files"
 	"github.com/stretchr/testify/require"
-	"github.com/vmware-tanzu/carvel-ytt/pkg/files"
 )
 
 func TestHTTPFileSources(t *testing.T) {

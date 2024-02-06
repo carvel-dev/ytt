@@ -11,11 +11,11 @@ import (
 	"os"
 	"testing"
 
+	cmdtpl "carvel.dev/ytt/pkg/cmd/template"
+	"carvel.dev/ytt/pkg/cmd/ui"
+	"carvel.dev/ytt/pkg/files"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	cmdtpl "github.com/vmware-tanzu/carvel-ytt/pkg/cmd/template"
-	"github.com/vmware-tanzu/carvel-ytt/pkg/cmd/ui"
-	"github.com/vmware-tanzu/carvel-ytt/pkg/files"
 )
 
 func Test_Non_YAML_Files_With_No_Output_Flag_Produces_Warning(t *testing.T) {

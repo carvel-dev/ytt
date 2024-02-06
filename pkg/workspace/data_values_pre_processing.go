@@ -7,11 +7,11 @@ import (
 	"fmt"
 	"strings"
 
+	"carvel.dev/ytt/pkg/schema"
+	"carvel.dev/ytt/pkg/workspace/datavalues"
+	"carvel.dev/ytt/pkg/yamlmeta"
+	yttoverlay "carvel.dev/ytt/pkg/yttlibrary/overlay"
 	"github.com/k14s/starlark-go/starlark"
-	"github.com/vmware-tanzu/carvel-ytt/pkg/schema"
-	"github.com/vmware-tanzu/carvel-ytt/pkg/workspace/datavalues"
-	"github.com/vmware-tanzu/carvel-ytt/pkg/yamlmeta"
-	yttoverlay "github.com/vmware-tanzu/carvel-ytt/pkg/yttlibrary/overlay"
 )
 
 // DataValuesPreProcessing combines all data values documents (and any overlays) into a result set.

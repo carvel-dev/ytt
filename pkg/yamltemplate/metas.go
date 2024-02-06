@@ -8,9 +8,9 @@ import (
 	"strings"
 	"unicode"
 
-	"github.com/vmware-tanzu/carvel-ytt/pkg/filepos"
-	"github.com/vmware-tanzu/carvel-ytt/pkg/template"
-	"github.com/vmware-tanzu/carvel-ytt/pkg/yamlmeta"
+	"carvel.dev/ytt/pkg/filepos"
+	"carvel.dev/ytt/pkg/template"
+	"carvel.dev/ytt/pkg/yamlmeta"
 )
 
 var (
