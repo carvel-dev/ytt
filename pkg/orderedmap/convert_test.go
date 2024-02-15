@@ -6,7 +6,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/vmware-tanzu/carvel-ytt/pkg/orderedmap"
+	"carvel.dev/ytt/pkg/orderedmap"
 )
 
 func TestFromUnorderedMaps(t *testing.T) {
