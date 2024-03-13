@@ -9,7 +9,8 @@ import (
 	"github.com/k14s/starlark-go/starlark"
 )
 
-func BoolArg(kwargs []starlark.Tuple, keyToFind string) (bool, error) {
+// BoolArg return a boolean value from starlark.Tupe based on a given key, defaults to defaultValue.
+func BoolArg(kwargs []starlark.Tuple, keyToFind string, defaultValue bool) (bool, error) {
 	for _, arg := range kwargs {
 		key, err := NewStarlarkValue(arg.Index(0)).AsString()
 		if err != nil {
@@ -19,7 +20,7 @@ func BoolArg(kwargs []starlark.Tuple, keyToFind string) (bool, error) {
 			return NewStarlarkValue(arg.Index(1)).AsBool()
 		}
 	}
-	return false, nil
+	return defaultValue, nil
 }
 
 func Int64Arg(kwargs []starlark.Tuple, keyToFind string) (int64, error) {
