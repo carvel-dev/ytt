@@ -30,6 +30,7 @@ type Type interface {
 	IsDeprecated() (bool, string)
 	SetDeprecated(bool, string)
 	GetValidation() *validations.NodeValidation
+	GetValidationMap() map[string]interface{}
 	String() string
 }
 
@@ -83,6 +84,7 @@ type ScalarType struct {
 	Position      *filepos.Position
 	defaultValue  interface{}
 	documentation documentation
+	validations   map[string]interface{}
 }
 
 type AnyType struct {
@@ -117,6 +119,9 @@ func (m MapType) GetValueType() Type {
 
 // GetValueType provides the type of the value
 func (t MapItemType) GetValueType() Type {
+	if _, ok := t.ValueType.(*ScalarType); ok && t.validations != nil {
+		t.ValueType.(*ScalarType).validations = t.GetValidationMap()
+	}
 	return t.ValueType
 }
 
@@ -614,6 +619,55 @@ func (a AnyType) GetValidation() *validations.NodeValidation {
 // GetValidation provides the validation from @schema/validation for a node
 func (n NullType) GetValidation() *validations.NodeValidation {
 	return nil
+}
+
+// GetValidationMap provides the OpenAPI validation for the type
+func (t *DocumentType) GetValidationMap() map[string]interface{} {
+	if t.validations != nil {
+		return t.validations.ValidationMap()
+	}
+	return nil
+}
+
+// GetValidationMap provides the OpenAPI validation for the type
+func (t MapType) GetValidationMap() map[string]interface{} {
+	panic("Not implemented because MapType doesn't support validations")
+}
+
+// GetValidationMap provides the OpenAPI validation for the type
+func (t MapItemType) GetValidationMap() map[string]interface{} {
+	if t.validations != nil {
+		return t.validations.ValidationMap()
+	}
+	return nil
+}
+
+// GetValidationMap provides the OpenAPI validation for the type
+func (a ArrayType) GetValidationMap() map[string]interface{} {
+	panic("Not implemented because ArrayType doesn't support validations")
+}
+
+// GetValidationMap provides the OpenAPI validation for the type
+func (a ArrayItemType) GetValidationMap() map[string]interface{} {
+	if a.validations != nil {
+		return a.validations.ValidationMap()
+	}
+	return nil
+}
+
+// GetValidationMap provides the OpenAPI validation for the type
+func (s ScalarType) GetValidationMap() map[string]interface{} {
+	return s.validations
+}
+
+// GetValidationMap provides the OpenAPI validation for the type
+func (a AnyType) GetValidationMap() map[string]interface{} {
+	panic("Not implemented because it is unreachable")
+}
+
+// GetValidationMap provides the OpenAPI validation for the type
+func (n NullType) GetValidationMap() map[string]interface{} {
+	panic("Not implemented because it is unreachable")
 }
 
 // String produces a user-friendly name of the expected type.
