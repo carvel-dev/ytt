@@ -134,14 +134,15 @@ const (
 
 // When the FileSource are RegularFilesSource, indicates which schema type to use when rendering the output.
 const (
-	RegularFilesOutputTypeOpenAPI = "openapi-v3"
-	RegularFilesOutputTypeNone    = ""
+	RegularFilesOutputTypeOpenAPI    = "openapi-v3"
+	RegularFilesOutputTypeJsonSchema = "json-schema"
+	RegularFilesOutputTypeNone       = ""
 )
 
 // Collections of each category of output type
 var (
 	RegularFilesOutputFormatTypes = []string{RegularFilesOutputTypeYAML, RegularFilesOutputTypeJSON, RegularFilesOutputTypePos}
-	RegularFilesOutputSchemaTypes = []string{RegularFilesOutputTypeOpenAPI}
+	RegularFilesOutputSchemaTypes = []string{RegularFilesOutputTypeOpenAPI, RegularFilesOutputTypeJsonSchema}
 	RegularFilesOutputTypes       = append(RegularFilesOutputFormatTypes, RegularFilesOutputSchemaTypes...)
 )
 
