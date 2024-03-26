@@ -146,7 +146,7 @@ func (o *Options) RunWithFiles(in Input, ui ui.UI) Output {
 	if err != nil {
 		return Output{Err: err}
 	}
-	if schemaType == RegularFilesOutputTypeOpenAPI || schemaType == RegularFilesOutputTypeJsonSchema {
+	if schemaType == RegularFilesOutputTypeOpenAPI || schemaType == RegularFilesOutputTypeJSONSchema {
 		return Output{Err: fmt.Errorf("Output type currently only supported for data values schema (i.e. include --data-values-schema-inspect)")}
 	}
 
@@ -190,8 +190,8 @@ func (o *Options) inspectSchema(dataValuesSchema *datavalues.Schema) Output {
 			},
 		}
 	}
-	if format == RegularFilesOutputTypeJsonSchema {
-		jsonSchemaDoc := schema.NewJsonSchemaDocument(dataValuesSchema.GetDocumentType())
+	if format == RegularFilesOutputTypeJSONSchema {
+		jsonSchemaDoc := schema.NewJSONSchemaDocument(dataValuesSchema.GetDocumentType())
 		return Output{
 			DocSet: &yamlmeta.DocumentSet{
 				Items: []*yamlmeta.Document{jsonSchemaDoc.AsDocument()},
@@ -199,7 +199,7 @@ func (o *Options) inspectSchema(dataValuesSchema *datavalues.Schema) Output {
 		}
 	}
 	return Output{Err: fmt.Errorf("Data values schema export only supported in OpenAPI v3 and JSON Schema format; specify format with --output=(%s|%s) flag",
-		RegularFilesOutputTypeOpenAPI, RegularFilesOutputTypeJsonSchema)}
+		RegularFilesOutputTypeOpenAPI, RegularFilesOutputTypeJSONSchema)}
 }
 
 func (o *Options) pickSource(srcs []FileSource, pickFunc func(FileSource) bool) FileSource {
