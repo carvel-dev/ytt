@@ -57,31 +57,30 @@ type validationKwargs struct {
 	oneOf      starlark.Sequence
 }
 
-// VaklidationMap returns a map of the validationKwargs and their values.
-func (n NodeValidation) ValidationMap() map[string]interface{} {
-	v := n.kwargs
+// ValidationMap returns a map of the validationKwargs and their values.
+func (v NodeValidation) ValidationMap() map[string]interface{} {
 
 	validations := make(map[string]interface{})
 
-	if v.minLength != nil {
-		value, _ := v.minLength.Int64()
+	if v.kwargs.minLength != nil {
+		value, _ := v.kwargs.minLength.Int64()
 		validations["minLength"] = value
 	}
-	if v.maxLength != nil {
-		value, _ := v.maxLength.Int64()
+	if v.kwargs.maxLength != nil {
+		value, _ := v.kwargs.maxLength.Int64()
 		validations["maxLength"] = value
 	}
-	if v.min != nil {
-		value, _ := strconv.Atoi(v.min.String())
+	if v.kwargs.min != nil {
+		value, _ := strconv.Atoi(v.kwargs.min.String())
 		validations["min"] = value
 	}
-	if v.max != nil {
-		value, _ := strconv.Atoi(v.max.String())
+	if v.kwargs.max != nil {
+		value, _ := strconv.Atoi(v.kwargs.max.String())
 		validations["max"] = value
 	}
-	if v.oneOf != nil {
+	if v.kwargs.oneOf != nil {
 		enum := []interface{}{}
-		iter := starlark.Iterate(v.oneOf)
+		iter := starlark.Iterate(v.kwargs.oneOf)
 		defer iter.Done()
 		var x starlark.Value
 		for iter.Next(&x) {

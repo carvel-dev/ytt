@@ -630,7 +630,7 @@ func (t *DocumentType) GetValidationMap() map[string]interface{} {
 }
 
 // GetValidationMap provides the OpenAPI validation for the type
-func (t MapType) GetValidationMap() map[string]interface{} {
+func (m MapType) GetValidationMap() map[string]interface{} {
 	panic("Not implemented because MapType doesn't support validations")
 }
 
