@@ -1,4 +1,4 @@
-// Copyright 2021 VMware, Inc.
+// Copyright 2024 The Carvel Authors.
 // SPDX-License-Identifier: Apache-2.0
 
 package toml
