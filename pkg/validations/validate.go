@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"reflect"
 	"sort"
+	"strconv"
 	"strings"
 
 	"carvel.dev/ytt/pkg/filepos"
@@ -54,6 +55,55 @@ type validationKwargs struct {
 	notNull    bool
 	oneNotNull starlark.Value // valid values are either starlark.Sequence or starlark.Bool
 	oneOf      starlark.Sequence
+}
+
+// ValidationMap returns a map of the validationKwargs and their values.
+func (v NodeValidation) ValidationMap() map[string]interface{} {
+
+	validations := make(map[string]interface{})
+
+	if v.kwargs.minLength != nil {
+		value, _ := v.kwargs.minLength.Int64()
+		validations["minLength"] = value
+	}
+	if v.kwargs.maxLength != nil {
+		value, _ := v.kwargs.maxLength.Int64()
+		validations["maxLength"] = value
+	}
+	if v.kwargs.min != nil {
+		value, _ := strconv.Atoi(v.kwargs.min.String())
+		validations["min"] = value
+	}
+	if v.kwargs.max != nil {
+		value, _ := strconv.Atoi(v.kwargs.max.String())
+		validations["max"] = value
+	}
+	if v.kwargs.oneOf != nil {
+		enum := []interface{}{}
+		iter := starlark.Iterate(v.kwargs.oneOf)
+		defer iter.Done()
+		var x starlark.Value
+		for iter.Next(&x) {
+			var val interface{}
+			switch x.Type() {
+			case "string":
+				val, _ = strconv.Unquote(x.String())
+			case "int":
+				val, _ = strconv.Atoi(x.String())
+			default:
+				val = x.String()
+			}
+
+			enum = append(enum, val)
+
+		}
+
+		validations["oneOf"] = enum
+
+	}
+
+	return validations
+
 }
 
 // Run takes a root Node, and threadName, and validates each Node in the tree.
