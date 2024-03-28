@@ -1,11 +1,12 @@
-// Copyright 2022 VMware, Inc.
+// Copyright 2024 The Carvel Authors.
 // SPDX-License-Identifier: Apache-2.0
 
 package filetests
 
 import (
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestTrimTrailingMultilineWhitespace(t *testing.T) {

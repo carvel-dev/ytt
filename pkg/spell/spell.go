@@ -1,4 +1,4 @@
-// Copyright 2021 VMware, Inc.
+// Copyright 2024 The Carvel Authors.
 // SPDX-License-Identifier: Apache-2.0
 
 // (this source was copied from https://github.com/google/starlark-go/blob/b0039bd2cfe369fe8f2bdba0614bafd1f9402dbb/internal/spell/spell.go)

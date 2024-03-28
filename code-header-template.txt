@@ -1,2 +1,2 @@
-Copyright {{copyright-year}} VMware, Inc.
+Copyright {{copyright-year}} The Carvel Authors.
 SPDX-License-Identifier: Apache-2.0
