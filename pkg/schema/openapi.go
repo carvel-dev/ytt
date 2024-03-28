@@ -131,7 +131,7 @@ func (o *OpenAPIDocument) calculateProperties(schemaVal interface{}) *yamlmeta.M
 		items = append(items, collectDocumentation(typedValue)...)
 		items = append(items, &yamlmeta.MapItem{Key: defaultProp, Value: typedValue.GetDefaultValue()})
 
-		typeString := o.openAPITypeFor(typedValue)
+		typeString := schemaTypeFor(typedValue)
 		items = append(items, &yamlmeta.MapItem{Key: typeProp, Value: typeString})
 
 		items = append(items, convertValidations(typedValue.GetValidationMap())...)
@@ -204,7 +204,7 @@ func convertValidations(validations map[string]interface{}) []*yamlmeta.MapItem 
 	return items
 }
 
-func (o *OpenAPIDocument) openAPITypeFor(astType *ScalarType) string {
+func schemaTypeFor(astType *ScalarType) string {
 	switch astType.ValueType {
 	case StringType:
 		return "string"
