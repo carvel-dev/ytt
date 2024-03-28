@@ -24,6 +24,11 @@ const (
 	itemsProp              = "items"
 	propertiesProp         = "properties"
 	defaultProp            = "default"
+	minProp                = "minimum"
+	maxProp                = "maximum"
+	minLenProp             = "minLength"
+	maxLenProp             = "maxLength"
+	enumProp               = "enum"
 )
 
 var propOrder = map[string]int{
@@ -39,6 +44,11 @@ var propOrder = map[string]int{
 	itemsProp:              9,
 	propertiesProp:         10,
 	defaultProp:            11,
+	minProp:                12,
+	maxProp:                13,
+	minLenProp:             14,
+	maxLenProp:             15,
+	enumProp:               16,
 }
 
 type openAPIKeys []*yamlmeta.MapItem
@@ -121,8 +131,11 @@ func (o *OpenAPIDocument) calculateProperties(schemaVal interface{}) *yamlmeta.M
 		items = append(items, collectDocumentation(typedValue)...)
 		items = append(items, &yamlmeta.MapItem{Key: defaultProp, Value: typedValue.GetDefaultValue()})
 
-		typeString := o.openAPITypeFor(typedValue)
+		typeString := schemaTypeFor(typedValue)
 		items = append(items, &yamlmeta.MapItem{Key: typeProp, Value: typeString})
+
+		items = append(items, convertValidations(typedValue.GetValidationMap())...)
+
 		if typedValue.String() == "float" {
 			items = append(items, &yamlmeta.MapItem{Key: formatProp, Value: "float"})
 		}
@@ -171,7 +184,27 @@ func collectDocumentation(typedValue Type) []*yamlmeta.MapItem {
 	return items
 }
 
-func (o *OpenAPIDocument) openAPITypeFor(astType *ScalarType) string {
+// convertValidations converts the starlark validation map to a list of OpenAPI properties
+func convertValidations(validations map[string]interface{}) []*yamlmeta.MapItem {
+	var items []*yamlmeta.MapItem
+	for key, value := range validations {
+		switch key {
+		case "min":
+			items = append(items, &yamlmeta.MapItem{Key: minProp, Value: value})
+		case "max":
+			items = append(items, &yamlmeta.MapItem{Key: maxProp, Value: value})
+		case "minLength":
+			items = append(items, &yamlmeta.MapItem{Key: minLenProp, Value: value})
+		case "maxLength":
+			items = append(items, &yamlmeta.MapItem{Key: maxLenProp, Value: value})
+		case "oneOf":
+			items = append(items, &yamlmeta.MapItem{Key: enumProp, Value: value})
+		}
+	}
+	return items
+}
+
+func schemaTypeFor(astType *ScalarType) string {
 	switch astType.ValueType {
 	case StringType:
 		return "string"
