@@ -12,14 +12,14 @@ jobs:
     name: lint
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: '0'
       - name: Set Up Go
         uses: actions/setup-go@v5
         with:
           go-version-file: go.mod
           check-latest: true
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: '0'
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v6
         with:
