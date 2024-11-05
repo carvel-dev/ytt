@@ -18,10 +18,11 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Install Go
+      - name: Set Up Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.22'
+          go-version-file: go.mod
+          check-latest: true
       
       - name: Set up Cosign
         uses: sigstore/cosign-installer@v3    
