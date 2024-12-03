@@ -47,6 +47,12 @@ func NewSortedFilesFromPaths(paths []string, opts SymlinkAllowOpts) ([]*File, er
 
 		relativePath := ""
 		pathPieces := strings.Split(path, "=")
+		if strings.HasPrefix(pathPieces[0], "http://") || strings.HasPrefix(pathPieces[0], "https://") {
+			pathPieces = []string{path}
+		} else if len(pathPieces) > 1 && (strings.HasPrefix(pathPieces[1], "http://") || strings.HasPrefix(pathPieces[1], "https://")) {
+			pathPieces[1] = strings.Join(pathPieces[1:], "=")
+			pathPieces = pathPieces[0:2]
+		}
 
 		switch len(pathPieces) {
 		case 1:
@@ -71,6 +77,7 @@ func NewSortedFilesFromPaths(paths []string, opts SymlinkAllowOpts) ([]*File, er
 
 		case strings.HasPrefix(path, "http://") || strings.HasPrefix(path, "https://"):
 			file, err := NewFileFromSource(NewCachedSource(NewHTTPSource(path)))
+			file.relPath = strings.Split(file.relPath, "?")[0]
 			if err != nil {
 				return nil, err
 			}
