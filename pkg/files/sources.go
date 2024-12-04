@@ -97,7 +97,9 @@ func (s HTTPSource) Description() string {
 	return fmt.Sprintf("HTTP URL '%s'", s.url)
 }
 
-func (s HTTPSource) RelativePath() (string, error) { return path.Base(s.url), nil }
+func (s HTTPSource) RelativePath() (string, error) {
+	return path.Base(strings.Split(s.url, "?")[0]), nil
+}
 
 func (s HTTPSource) Bytes() ([]byte, error) {
 	resp, err := s.Client.Get(s.url)

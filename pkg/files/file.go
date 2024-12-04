@@ -77,7 +77,6 @@ func NewSortedFilesFromPaths(paths []string, opts SymlinkAllowOpts) ([]*File, er
 
 		case strings.HasPrefix(path, "http://") || strings.HasPrefix(path, "https://"):
 			file, err := NewFileFromSource(NewCachedSource(NewHTTPSource(path)))
-			file.relPath = strings.Split(file.relPath, "?")[0]
 			if err != nil {
 				return nil, err
 			}
