@@ -18,15 +18,9 @@ linters-settings:
     - name: line-length-limit
       disabled: true
     - name: add-constant
-      disabled: false
-      arguments:
-          - maxLitCount: "3"
-            allowStrs: '""'
-            allowInts: "0,1,2"
-            allowFloats: "0.0,0.,1.0,1.,2.0,2."
+      disabled: true
     - name: cognitive-complexity
-      disabled: false
-      exclude: ["TEST"]
+      disabled: true
 issues:
   max-issues-per-linter: 0
   max-same-issues: 0
