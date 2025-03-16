@@ -15,10 +15,23 @@ linters-settings:
     rules:
     - name: dot-imports
       disabled: true
+    - name: line-length-limit
+      disabled: true
+    - name: add-constant
+      disabled: false
+      arguments:
+          - maxLitCount: "3"
+            allowStrs: '""'
+            allowInts: "0,1,2"
+            allowFloats: "0.0,0.,1.0,1.,2.0,2."
+    - name: cognitive-complexity
+      disabled: false
+      exclude: ["TEST"]
 issues:
   max-issues-per-linter: 0
   max-same-issues: 0
   exclude-use-default: false
   exclude-dirs:
     - pkg/yamlmeta/internal
+    - pkg/spell
   new-from-rev: bd77aced0a1cd6d6f3ecd3ed04c1832e1c513ab0
