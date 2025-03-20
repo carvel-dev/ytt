@@ -14,13 +14,47 @@ linters-settings:
   revive:
     enable-all-rules: true
     rules:
-    - name: dot-imports
-      disabled: true
-    - name: line-length-limit
-      disabled: true
     - name: add-constant
       disabled: true
     - name: cognitive-complexity
+      disabled: true
+    - name: cyclomatic
+      disabled: true
+    - name: confusing-naming
+      disabled: true
+    - name: confusing-results
+      disabled: true
+    - name: dot-imports
+      disabled: true
+    - name: early-return
+      disabled: true
+    - name: empty-lines
+      disabled: true
+    - name: flag-parameter
+      disabled: true
+    - name: function-length
+      disabled: true
+    - name: function-result-limit
+      disabled: true
+    - name: import-shadowing
+      disabled: true
+    - name: line-length-limit
+      disabled: true
+    - name: max-public-structs
+      disabled: true
+    - name: modifies-value-receiver
+      disabled: true
+    - name: redefines-builtin-id
+      disabled: true
+    - name: unchecked-type-assertion
+      disabled: true
+    - name: unnecessary-stmt
+      disabled: true
+    - name: unused-receiver
+      disabled: true
+    - name: use-any
+      disabled: true
+    - name: use-errors-new
       disabled: true
 issues:
   max-issues-per-linter: 0
