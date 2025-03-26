@@ -12,7 +12,7 @@ linters-settings:
         copyright-year: 20[0-9][0-9]
     template-path: code-header-template.txt
   revive:
-    enable-all: true
+    enable-all-rules: true
     rules:
     - name: dot-imports
       disabled: true
@@ -20,7 +20,6 @@ issues:
   max-issues-per-linter: 0
   max-same-issues: 0
   exclude-use-default: false
-  new-from-rev: bd77aced0a1cd6d6f3ecd3ed04c1832e1c513ab0
-run:
   exclude-dirs:
     - pkg/yamlmeta/internal
+  new-from-rev: 07925eaf42bdbd6dc6d6ec802b9bc9aff1b67fd5
