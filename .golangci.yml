@@ -22,4 +22,4 @@ issues:
   exclude-use-default: false
   exclude-dirs:
     - pkg/yamlmeta/internal
-  new-from-rev: 07925eaf42bdbd6dc6d6ec802b9bc9aff1b67fd5
+  new-from-rev: 960a70d2f690a9c1fffa7f7a8a398c1b8de04a61
