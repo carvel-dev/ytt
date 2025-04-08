@@ -7,7 +7,6 @@ import (
 	"fmt"
 
 	"carvel.dev/ytt/pkg/template/core"
-	"carvel.dev/ytt/pkg/yamlmeta"
 	"github.com/k14s/starlark-go/starlark"
 	"github.com/k14s/starlark-go/starlarkstruct"
 )
@@ -22,9 +21,8 @@ type DataLoader interface {
 	FileData(string) ([]byte, error)
 }
 
-func NewDataModule(values *yamlmeta.Document, loader DataLoader) DataModule {
-	val := core.NewGoValueWithOpts(values.AsInterface(), core.GoValueOpts{MapIsStruct: true})
-	return DataModule{val.AsStarlarkValue(), loader}
+func NewDataModule(values starlark.Value, loader DataLoader) DataModule {
+	return DataModule{values, loader}
 }
 
 func (b DataModule) AsModule() starlark.StringDict {
