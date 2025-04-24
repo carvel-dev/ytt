@@ -21,6 +21,8 @@ type DataLoader interface {
 	FileData(string) ([]byte, error)
 }
 
+// NewDataModule constructs a new instance of DataModule,
+// used to access data values and files
 func NewDataModule(values starlark.Value, loader DataLoader) DataModule {
 	return DataModule{values, loader}
 }

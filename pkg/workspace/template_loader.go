@@ -52,8 +52,11 @@ func NewTemplateLoader(values *datavalues.Envelope, libraryValuess []*datavalues
 	}
 
 	return &TemplateLoader{
-		ui:                 ui,
-		values:             core.NewGoValueWithOpts(values.Doc.AsInterface(), core.GoValueOpts{MapIsStruct: true}).AsStarlarkValue(),
+		ui: ui,
+		values: core.NewGoValueWithOpts(
+			values.Doc.AsInterface(),
+			core.GoValueOpts{MapIsStruct: true},
+		).AsStarlarkValue(),
 		libraryValuess:     libraryValuess,
 		librarySchemas:     librarySchemas,
 		opts:               opts,
