@@ -1,25 +1,36 @@
+version: "2"
 linters:
+  default: none
   enable:
     - goheader
     - revive
     - unused
-  disable-all: true
-# all available settings of specific linters
-linters-settings:
-  goheader:
-    values:
-      regexp:
-        copyright-year: 20[0-9][0-9]
-    template-path: code-header-template.txt
-  revive:
-    enable-all-rules: true
-    rules:
-    - name: dot-imports
-      disabled: true
+  settings:
+    goheader:
+      values:
+        regexp:
+          copyright-year: 20[0-9][0-9]
+      template-path: code-header-template.txt
+    revive:
+      enable-all-rules: true
+      rules:
+        - name: dot-imports
+          disabled: true
+  exclusions:
+    generated: lax
+    paths:
+      - pkg/yamlmeta/internal
+      - third_party$
+      - builtin$
+      - examples$
 issues:
   max-issues-per-linter: 0
   max-same-issues: 0
-  exclude-use-default: false
-  exclude-dirs:
-    - pkg/yamlmeta/internal
   new-from-rev: 07925eaf42bdbd6dc6d6ec802b9bc9aff1b67fd5
+formatters:
+  exclusions:
+    generated: lax
+    paths:
+      - third_party$
+      - builtin$
+      - examples$

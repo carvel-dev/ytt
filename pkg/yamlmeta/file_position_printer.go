@@ -93,7 +93,7 @@ func (p *FilePositionPrinter) print(val interface{}, indent string, writer io.Wr
 		if !isLeaf {
 			panic(fmt.Sprintf("Expected leaf, but was %T", typedVal))
 		}
-		fmt.Fprintf(writer, p.padLine("")+fmt.Sprintf("%s%s\n", indent, valStr))
+		fmt.Fprintf(writer, "%s%s%s\n", p.padLine(""), indent, valStr)
 	}
 }
 

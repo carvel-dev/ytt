@@ -43,13 +43,13 @@ func (w *writer) AddContent(chunk writerChunk) {
 	if w.lastChunk.AllowsInlining {
 		if !chunk.CanBeInlined {
 			fmt.Fprintf(w.writer, "\n")
-			fmt.Fprintf(w.writer, chunk.Indent)
+			fmt.Fprint(w.writer, chunk.Indent)
 		} else {
-			fmt.Fprintf(w.writer, w.lastChunk.InliningSpacer)
+			fmt.Fprint(w.writer, w.lastChunk.InliningSpacer)
 			// continue with content
 		}
 	} else {
-		fmt.Fprintf(w.writer, chunk.Indent)
+		fmt.Fprint(w.writer, chunk.Indent)
 	}
 
 	fmt.Fprintf(w.writer, "%s", w.indentMultiline(chunk))
