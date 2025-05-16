@@ -56,6 +56,19 @@ func (m *Map) Delete(key interface{}) bool {
 }
 
 func (m *Map) isKeyEq(key1, key2 interface{}) bool {
+	/*
+		Optimize the common case of string keys, using a direct equality check.
+		Check key2 first, it remains constant over repeated calls within the
+		loops of the above Set, Get, and Delete functions
+	*/
+	if key2Str, ok := key2.(string); ok {
+		if key1Str, ok := key1.(string); ok {
+			return key1Str == key2Str
+		}
+		return false
+	}
+
+	// For non-string keys, use deep equality check.
 	return reflect.DeepEqual(key1, key2)
 }
 
