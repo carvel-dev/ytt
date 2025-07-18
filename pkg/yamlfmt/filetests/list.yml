@@ -10,6 +10,8 @@ test2:
 - 2
 - 3
 
+testEmpty: []
+
 +++
 
 test1:
@@ -23,3 +25,5 @@ test2:
   - 1
   - 2
   - 3
+
+testEmpty: []

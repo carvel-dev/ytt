@@ -155,7 +155,30 @@ func (v printerLeafValue) IsMultiline() bool {
 
 func (p *Printer) leafValue(val interface{}) printerLeafValue {
 	switch typedVal := val.(type) {
-	case *yamlmeta.DocumentSet, *yamlmeta.Document, *yamlmeta.Map, *yamlmeta.MapItem, *yamlmeta.Array, *yamlmeta.ArrayItem:
+	case *yamlmeta.DocumentSet, *yamlmeta.Document, *yamlmeta.MapItem,
+		*yamlmeta.ArrayItem:
+		return printerLeafValue{}
+
+	case *yamlmeta.Map:
+		// handle the case of an empty map
+		if len(typedVal.Items) == 0 {
+			return printerLeafValue{
+				String: "{}",
+				IsLeaf: true,
+				IsNil:  false,
+			}
+		}
+		return printerLeafValue{}
+
+	case *yamlmeta.Array:
+		// handle the case of an empty array
+		if len(typedVal.Items) == 0 {
+			return printerLeafValue{
+				String: "[]",
+				IsLeaf: true,
+				IsNil:  false,
+			}
+		}
 		return printerLeafValue{}
 
 	default:
