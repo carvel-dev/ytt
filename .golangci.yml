@@ -16,6 +16,9 @@ linters:
       rules:
         - name: dot-imports
           disabled: true
+        - name: add-constant
+          arguments:
+            - allowInts: "0,1"
   exclusions:
     generated: lax
     paths:
