@@ -18,7 +18,7 @@ linters:
           disabled: true
         - name: add-constant
           arguments:
-            - allowInts: "0"
+            - allowInts: "0,1"
   exclusions:
     generated: lax
     paths:
