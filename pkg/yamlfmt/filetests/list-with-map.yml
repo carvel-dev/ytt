@@ -2,6 +2,7 @@
 - test2: val
 - test3:
     test4: nested-val
+- test5: {}
 
 +++
 
@@ -9,3 +10,4 @@
 - test2: val
 - test3:
     test4: nested-val
+- test5: {}
