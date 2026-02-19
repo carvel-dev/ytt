@@ -1,6 +1,6 @@
 module example_internal_templating
 
-go 1.24.2
+go 1.25.7
 
 // ensure example works with this copy of ytt; remove before use
 replace carvel.dev/ytt => ../../../
