@@ -31,13 +31,14 @@ jobs:
           if [ "$BEFORE_MINOR" != "$AFTER_MINOR" ]; then
             LINT_VERSION=$(curl -fsSL \
               -H "Accept: application/vnd.github+json" \
+              -H "Authorization: Bearer ${{ github.token }}" \
               https://api.github.com/repos/golangci/golangci-lint/releases/latest \
               | jq -r '.tag_name')
 
             # Trim to vMAJOR.MINOR to match existing "version: v2.4" format
             LINT_VERSION_SHORT=$(echo "$LINT_VERSION" | grep -oE '^v[0-9]+\.[0-9]+')
 
-            sed -i "s|^\(\s*version:\s*\)v[0-9][0-9]*\.[0-9][0-9]*|\1${LINT_VERSION_SHORT}|" \
+            sed -i "s|^\([[:space:]]*version:[[:space:]]*\)v[0-9][0-9]*\.[0-9][0-9]*|\1${LINT_VERSION_SHORT}|" \
               .github/workflows/golangci-lint.yml
 
             {
