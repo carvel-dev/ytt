@@ -60,7 +60,7 @@ jobs:
             echo "PR_TITLE=Bump go" >> "$GITHUB_ENV"
           fi
       - name: Create Pull Request
-        uses: peter-evans/create-pull-request@v8.1
+        uses: peter-evans/create-pull-request@v8.1.0
         with:
           token: ${{ secrets.CARVEL_BOT_ACCESS_TOKEN }}
           committer: Carvel Bot <svc.bot.carvel@vmware.com>
