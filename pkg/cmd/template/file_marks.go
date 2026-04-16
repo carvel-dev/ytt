@@ -13,12 +13,19 @@ import (
 
 type FileMarksOpts struct {
 	FileMarks []string
+	Relaxed   bool
 }
 
 // Set registers file mark flags and wires-up those flags up to this
 // FileMarksOpts to be set when the corresponding cobra.Command is executed.
 func (s *FileMarksOpts) Set(cmdFlags CmdFlags) {
 	cmdFlags.StringArrayVar(&s.FileMarks, "file-mark", nil, "File mark (ie change file path, mark as non-template) (format: file:key=value) (can be specified multiple times)")
+	cmdFlags.BoolVar(
+		&s.Relaxed,
+		"file-mark-relaxed",
+		false,
+		"Do not error if a file path pattern containing '*' matches no files",
+	)
 }
 
 func (s *FileMarksOpts) Apply(filesToProcess []*files.File) ([]*files.File, error) {
@@ -101,7 +108,7 @@ func (s *FileMarksOpts) Apply(filesToProcess []*files.File) ([]*files.File, erro
 			}
 		}
 
-		if !matched {
+		if !matched && (!s.Relaxed || !strings.Contains(path, "*")) {
 			return nil, fmt.Errorf("Expected file mark '%s' to match at least one file by path, but did not", mark)
 		}
 
