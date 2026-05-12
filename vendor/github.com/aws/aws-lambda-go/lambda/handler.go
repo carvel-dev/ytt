@@ -12,6 +12,7 @@ import (
 	"io/ioutil" // nolint:staticcheck
 	"reflect"
 	"strings"
+	"sync"
 
 	"github.com/aws/aws-lambda-go/lambda/handlertrace"
 )
@@ -22,42 +23,36 @@ type Handler interface {
 
 type handlerOptions struct {
 	handlerFunc
-	baseContext              context.Context
-	jsonResponseEscapeHTML   bool
-	jsonResponseIndentPrefix string
-	jsonResponseIndentValue  string
-	enableSIGTERM            bool
-	sigtermCallbacks         []func()
+	baseContext                      context.Context
+	contextValues                    map[interface{}]interface{}
+	jsonRequestUseNumber             bool
+	jsonRequestDisallowUnknownFields bool
+	jsonResponseEscapeHTML           bool
+	jsonResponseIndentPrefix         string
+	jsonResponseIndentValue          string
+	enableSIGTERM                    bool
+	sigtermCallbacks                 []func()
+	jsonOutBufferPool                *sync.Pool // contains *jsonOutBuffer
 }
 
 type Option func(*handlerOptions)
 
 // WithContext is a HandlerOption that sets the base context for all invocations of the handler.
-//
-// Usage:
-//
-//	lambda.StartWithOptions(
-//	 	func (ctx context.Context) (string, error) {
-//	 		return ctx.Value("foo"), nil
-//	 	},
-//	 	lambda.WithContext(context.WithValue(context.Background(), "foo", "bar"))
-//	)
 func WithContext(ctx context.Context) Option {
 	return Option(func(h *handlerOptions) {
 		h.baseContext = ctx
 	})
 }
 
+// WithContextValue adds a value to the handler context.
+// If a base context was set using WithContext, that base is used as the parent.
+func WithContextValue(key interface{}, value interface{}) Option {
+	return Option(func(h *handlerOptions) {
+		h.contextValues[key] = value
+	})
+}
+
 // WithSetEscapeHTML sets the SetEscapeHTML argument on the underlying json encoder
-//
-// Usage:
-//
-//	lambda.StartWithOptions(
-//		func () (string, error) {
-//			return "<html><body>hello!></body></html>", nil
-//		},
-//		lambda.WithSetEscapeHTML(true),
-//	)
 func WithSetEscapeHTML(escapeHTML bool) Option {
 	return Option(func(h *handlerOptions) {
 		h.jsonResponseEscapeHTML = escapeHTML
@@ -65,15 +60,6 @@ func WithSetEscapeHTML(escapeHTML bool) Option {
 }
 
 // WithSetIndent sets the SetIndent argument on the underling json encoder
-//
-// Usage:
-//
-//	lambda.StartWithOptions(
-//		func (event any) (any, error) {
-//			return event, nil
-//		},
-//		lambda.WithSetIndent(">"," "),
-//	)
 func WithSetIndent(prefix, indent string) Option {
 	return Option(func(h *handlerOptions) {
 		h.jsonResponseIndentPrefix = prefix
@@ -81,20 +67,23 @@ func WithSetIndent(prefix, indent string) Option {
 	})
 }
 
+// WithUseNumber sets the UseNumber option on the underlying json decoder
+func WithUseNumber(useNumber bool) Option {
+	return Option(func(h *handlerOptions) {
+		h.jsonRequestUseNumber = useNumber
+	})
+}
+
+// WithDisallowUnknownFields sets the DisallowUnknownFields option on the underlying json decoder
+func WithDisallowUnknownFields(disallowUnknownFields bool) Option {
+	return Option(func(h *handlerOptions) {
+		h.jsonRequestDisallowUnknownFields = disallowUnknownFields
+	})
+}
+
 // WithEnableSIGTERM enables SIGTERM behavior within the Lambda platform on container spindown.
 // SIGKILL will occur ~500ms after SIGTERM.
 // Optionally, an array of callback functions to run on SIGTERM may be provided.
-//
-// Usage:
-//
-//	lambda.StartWithOptions(
-//	    func (event any) (any, error) {
-//			return event, nil
-//		},
-//		lambda.WithEnableSIGTERM(func() {
-//			log.Print("function container shutting down...")
-//		})
-//	)
 func WithEnableSIGTERM(callbacks ...func()) Option {
 	return Option(func(h *handlerOptions) {
 		h.sigtermCallbacks = append(h.sigtermCallbacks, callbacks...)
@@ -175,14 +164,23 @@ func newHandler(handlerFunc interface{}, options ...Option) *handlerOptions {
 	if h, ok := handlerFunc.(*handlerOptions); ok {
 		return h
 	}
+	pool := &sync.Pool{}
+	pool.New = func() interface{} {
+		return &jsonOutBuffer{pool, bytes.NewBuffer(nil)}
+	}
 	h := &handlerOptions{
 		baseContext:              context.Background(),
+		contextValues:            map[interface{}]interface{}{},
 		jsonResponseEscapeHTML:   false,
 		jsonResponseIndentPrefix: "",
 		jsonResponseIndentValue:  "",
+		jsonOutBufferPool:        pool,
 	}
 	for _, option := range options {
 		option(h)
+	}
+	for k, v := range h.contextValues {
+		h.baseContext = context.WithValue(h.baseContext, k, v)
 	}
 	if h.enableSIGTERM {
 		enableSIGTERM(h.sigtermCallbacks)
@@ -224,11 +222,18 @@ func errorHandler(err error) handlerFunc {
 }
 
 type jsonOutBuffer struct {
+	pool *sync.Pool
 	*bytes.Buffer
 }
 
 func (j *jsonOutBuffer) ContentType() string {
 	return contentTypeJSON
+}
+
+func (j *jsonOutBuffer) Close() error {
+	j.Reset()
+	j.pool.Put(j)
+	return nil
 }
 
 func reflectHandler(f interface{}, h *handlerOptions) handlerFunc {
@@ -262,11 +267,24 @@ func reflectHandler(f interface{}, h *handlerOptions) handlerFunc {
 		return errorHandler(err)
 	}
 
-	out := &jsonOutBuffer{bytes.NewBuffer(nil)}
-	return func(ctx context.Context, payload []byte) (io.Reader, error) {
-		out.Reset()
+	return func(ctx context.Context, payload []byte) (outFinal io.Reader, _ error) {
 		in := bytes.NewBuffer(payload)
 		decoder := json.NewDecoder(in)
+		if h.jsonRequestUseNumber {
+			decoder.UseNumber()
+		}
+		if h.jsonRequestDisallowUnknownFields {
+			decoder.DisallowUnknownFields()
+		}
+
+		out := h.jsonOutBufferPool.Get().(*jsonOutBuffer)
+		defer func() {
+			// If the final return value is not our buffer, reset and return it to the pool.
+			// The caller of the handlerFunc does this otherwise.
+			if outFinal != out {
+				out.Close()
+			}
+		}()
 		encoder := json.NewEncoder(out)
 		encoder.SetEscapeHTML(h.jsonResponseEscapeHTML)
 		encoder.SetIndent(h.jsonResponseIndentPrefix, h.jsonResponseIndentValue)
