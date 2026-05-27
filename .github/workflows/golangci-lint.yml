@@ -16,12 +16,12 @@ jobs:
         with:
           fetch-depth: '0'
       - name: Set Up Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v6
         with:
           go-version-file: go.mod
           check-latest: true
       - name: golangci-lint
-        uses: golangci/golangci-lint-action@v7
+        uses: golangci/golangci-lint-action@v9
         with:
-          version: v2.4
+          version: v2.12.2
           args: -v
