@@ -127,6 +127,13 @@ func yamlEmitterEmit(emitter *yamlEmitterT, event *yamlEventT) bool {
 		yamlEventDelete(event)
 		emitter.eventsHead++
 	}
+
+	// if eventsHead is caught up, then reset events back to empty to reduce allocations
+	if emitter.eventsHead > 0 && emitter.eventsHead == len(emitter.events) {
+		emitter.events = emitter.events[:0]
+		emitter.eventsHead = 0
+	}
+
 	return true
 }
 
