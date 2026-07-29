@@ -196,7 +196,9 @@ func (l *TemplateLoader) EvalYAML(libraryCtx LibraryExecutionContext, file *file
 	}
 
 	l.addCompiledTemplate(file.RelativePath(), compiledTemplate)
-	l.ui.Debugf("### template\n%s", compiledTemplate.DebugCodeAsString())
+	if l.ui.IsDebug() {
+		l.ui.Debugf("### template\n%s", compiledTemplate.DebugCodeAsString())
+	}
 
 	yttLibrary := yttlibrary.NewAPI(compiledTemplate.TplReplaceNode,
 		yttlibrary.NewDataModule(l.values, DataLoader{libraryCtx}),
@@ -238,7 +240,9 @@ func (l *TemplateLoader) EvalText(libraryCtx LibraryExecutionContext, file *file
 	}
 
 	l.addCompiledTemplate(file.RelativePath(), compiledTemplate)
-	l.ui.Debugf("### template\n%s", compiledTemplate.DebugCodeAsString())
+	if l.ui.IsDebug() {
+		l.ui.Debugf("### template\n%s", compiledTemplate.DebugCodeAsString())
+	}
 
 	yttLibrary := yttlibrary.NewAPI(compiledTemplate.TplReplaceNode,
 		yttlibrary.NewDataModule(l.values, DataLoader{libraryCtx}),
@@ -268,7 +272,9 @@ func (l *TemplateLoader) EvalStarlark(libraryCtx LibraryExecutionContext, file *
 		instructions, template.NewNodes(), template.EvaluationCtxDialects{})
 
 	l.addCompiledTemplate(file.RelativePath(), compiledTemplate)
-	l.ui.Debugf("### template\n%s", compiledTemplate.DebugCodeAsString())
+	if l.ui.IsDebug() {
+		l.ui.Debugf("### template\n%s", compiledTemplate.DebugCodeAsString())
+	}
 
 	yttLibrary := yttlibrary.NewAPI(compiledTemplate.TplReplaceNode,
 		yttlibrary.NewDataModule(l.values, DataLoader{libraryCtx}),

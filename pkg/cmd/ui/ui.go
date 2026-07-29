@@ -12,4 +12,5 @@ type UI interface {
 	Debugf(string, ...interface{})
 	Warnf(str string, args ...interface{})
 	DebugWriter() io.Writer
+	IsDebug() bool
 }

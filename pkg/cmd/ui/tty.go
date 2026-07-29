@@ -35,6 +35,12 @@ func (t TTY) Debugf(str string, args ...interface{}) {
 	}
 }
 
+// IsDebug reports whether debug output is enabled. Callers can use it to
+// skip computing expensive Debugf arguments when debugging is off.
+func (t TTY) IsDebug() bool {
+	return t.debug
+}
+
 func (t TTY) DebugWriter() io.Writer {
 	if t.debug {
 		return os.Stderr
