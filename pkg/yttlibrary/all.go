@@ -49,7 +49,7 @@ func NewAPI(
 		"regexp": RegexpAPI,
 
 		// Hashes
-		"md5":    MD5API,
+		"md5":    NewMD5Module(ui).AsModule(),
 		"sha256": SHA256API,
 
 		// Serializations
