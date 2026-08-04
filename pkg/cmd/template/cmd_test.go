@@ -312,6 +312,26 @@ simple_key: #@ another_data()
 	require.EqualError(t, out.Err, expectedErr)
 }
 
+func TestStarlarkErrorIncludesFilename(t *testing.T) {
+	starlarkData := []byte(`def testfunc():
+  wrong
+end`)
+
+	expectedErr := "Evaluating starlark template: \n" +
+		"- undefined: wrong\n" +
+		"    funcs.star:2 |   wrong"
+
+	filesToProcess := []*files.File{
+		files.MustNewFileFromSource(files.NewBytesSource("funcs.star", starlarkData)),
+	}
+
+	ui := ui.NewTTY(false)
+	opts := cmdtpl.NewOptions()
+
+	out := opts.RunWithFiles(cmdtpl.Input{Files: filesToProcess}, ui)
+	require.EqualError(t, out.Err, expectedErr)
+}
+
 func TestDisallowDirectLibraryLoading(t *testing.T) {
 	yamlTplData := []byte(`#@ load("_ytt_lib/data.lib.star", "data")`)
 
