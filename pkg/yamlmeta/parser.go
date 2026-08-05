@@ -39,8 +39,24 @@ func NewParser(opts ParserOpts) *Parser {
 	return &Parser{opts, ""}
 }
 
+// utf8BOM is the UTF-8 encoding of U+FEFF. Some editors, and Windows tooling in
+// particular, write it at the start of a file to record the encoding.
+var utf8BOM = []byte{0xEF, 0xBB, 0xBF}
+
+// TrimUTF8BOM returns data without a leading UTF-8 byte order mark. YAML treats
+// a BOM as a stream encoding marker rather than as content, so leaving it in
+// place makes it part of the first key.
+func TrimUTF8BOM(data []byte) []byte {
+	return bytes.TrimPrefix(data, utf8BOM)
+}
+
 func (p *Parser) ParseBytes(data []byte, associatedName string) (*DocumentSet, error) {
 	p.associatedName = associatedName
+
+	// A BOM marks the encoding of the stream and is not content. It has to go
+	// before the document marker check below: a BOM in front of "---" hides the
+	// marker, so the parser prepends its own and the input stops parsing.
+	data = TrimUTF8BOM(data)
 
 	// YAML library uses 0-based line numbers for nodes (but, first line in a text file is typically line 1)
 	nodeLineCorrection := 1
