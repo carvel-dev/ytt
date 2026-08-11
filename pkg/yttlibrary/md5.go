@@ -4,6 +4,7 @@
 package yttlibrary
 
 import (
+	"crypto/fips140"
 	"crypto/md5"
 	"fmt"
 
@@ -35,5 +36,16 @@ func (b md5Module) Sum(thread *starlark.Thread, f *starlark.Builtin, args starla
 		return starlark.None, err
 	}
 
-	return starlark.String(fmt.Sprintf("%x", md5.Sum([]byte(val)))), nil
+	// MD5 is not a FIPS 140-3 approved algorithm. This function is a general
+	// value-hashing convenience (e.g. for cache keys or dedup), not used for
+	// authentication or integrity verification, so it is safe to compute
+	// even under strict FIPS 140-3-only enforcement (GODEBUG=fips140=only).
+	// Without this, building with the native Go FIPS 140-3 module and
+	// running with fips140=only would panic on any call to md5.sum().
+	var sum [md5.Size]byte
+	fips140.WithoutEnforcement(func() {
+		sum = md5.Sum([]byte(val))
+	})
+
+	return starlark.String(fmt.Sprintf("%x", sum)), nil
 }
