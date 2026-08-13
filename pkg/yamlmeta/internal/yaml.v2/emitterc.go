@@ -127,16 +127,22 @@ func yamlEmitterEmit(emitter *yamlEmitterT, event *yamlEventT) bool {
 		yamlEventDelete(event)
 		emitter.eventsHead++
 	}
+
+	// if eventsHead is caught up, then reset events back to empty to reduce allocations
+	if emitter.eventsHead > 0 && emitter.eventsHead == len(emitter.events) {
+		emitter.events = emitter.events[:0]
+		emitter.eventsHead = 0
+	}
+
 	return true
 }
 
 // Check if we need to accumulate more events before emitting.
 //
 // We accumulate extra
-//  - 1 event for DOCUMENT-START
-//  - 2 events for SEQUENCE-START
-//  - 3 events for MAPPING-START
-//
+//   - 1 event for DOCUMENT-START
+//   - 2 events for SEQUENCE-START
+//   - 3 events for MAPPING-START
 func yamlEmitterNeedMoreEvents(emitter *yamlEmitterT) bool {
 	if emitter.eventsHead == len(emitter.events) {
 		return true
