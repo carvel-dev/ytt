@@ -322,13 +322,15 @@ end`)
 		"    funcs.star:2 |   wrong"
 
 	filesToProcess := []*files.File{
-		files.MustNewFileFromSource(files.NewBytesSource("funcs.star", starlarkData)),
+		files.MustNewFileFromSource(
+			files.NewBytesSource("funcs.star", starlarkData),
+		),
 	}
 
-	ui := ui.NewTTY(false)
+	testUI := ui.NewTTY(false)
 	opts := cmdtpl.NewOptions()
 
-	out := opts.RunWithFiles(cmdtpl.Input{Files: filesToProcess}, ui)
+	out := opts.RunWithFiles(cmdtpl.Input{Files: filesToProcess}, testUI)
 	require.EqualError(t, out.Err, expectedErr)
 }
 

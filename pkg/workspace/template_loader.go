@@ -266,7 +266,9 @@ func (l *TemplateLoader) EvalStarlark(libraryCtx LibraryExecutionContext, file *
 	instructions := template.NewInstructionSet()
 	compiledTemplate := template.NewCompiledTemplate(
 		file.RelativePath(), template.NewCodeFromBytesAtPosition(
-			fileBs, filepos.NewPositionInFile(1, file.RelativePath()), instructions),
+			fileBs,
+			filepos.NewPositionInFile(1, file.RelativePath()),
+			instructions),
 		instructions, template.NewNodes(), template.EvaluationCtxDialects{})
 
 	l.addCompiledTemplate(file.RelativePath(), compiledTemplate)
