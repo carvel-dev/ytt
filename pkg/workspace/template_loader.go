@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"carvel.dev/ytt/pkg/cmd/ui"
+	"carvel.dev/ytt/pkg/filepos"
 	"carvel.dev/ytt/pkg/files"
 	"carvel.dev/ytt/pkg/template"
 	"carvel.dev/ytt/pkg/template/core"
@@ -264,7 +265,10 @@ func (l *TemplateLoader) EvalStarlark(libraryCtx LibraryExecutionContext, file *
 
 	instructions := template.NewInstructionSet()
 	compiledTemplate := template.NewCompiledTemplate(
-		file.RelativePath(), template.NewCodeFromBytes(fileBs, instructions),
+		file.RelativePath(), template.NewCodeFromBytesAtPosition(
+			fileBs,
+			filepos.NewPositionInFile(1, file.RelativePath()),
+			instructions),
 		instructions, template.NewNodes(), template.EvaluationCtxDialects{})
 
 	l.addCompiledTemplate(file.RelativePath(), compiledTemplate)
