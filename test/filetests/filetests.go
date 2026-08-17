@@ -16,6 +16,7 @@ import (
 	"strings"
 	"testing"
 
+	"carvel.dev/ytt/pkg/cmd/ui"
 	"carvel.dev/ytt/pkg/template"
 	"carvel.dev/ytt/pkg/template/core"
 	"carvel.dev/ytt/pkg/version"
@@ -256,7 +257,7 @@ func (l DefaultTemplateLoader) Load(_ *starlark.Thread, module string) (starlark
 		yttlibrary.NewDataModule(
 			core.NewGoValueWithOpts(l.DataValues.AsInterface(),
 				core.GoValueOpts{MapIsStruct: true},
-			).AsStarlarkValue(), nil), nil, nil)
+			).AsStarlarkValue(), nil), nil, ui.NewTTY(false))
 	return api.FindModule(strings.TrimPrefix(module, "@ytt:"))
 }
 
