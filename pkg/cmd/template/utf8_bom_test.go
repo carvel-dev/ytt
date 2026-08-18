@@ -60,11 +60,55 @@ func TestUTF8BOMInsideAFileIsLeftAlone(t *testing.T) {
 	require.Equal(t, "test: \"a\\uFEFFb\"\n", rendered)
 }
 
+func TestUTF8BOMStarlarkLibraryLoadsTheSameAsNoBOM(t *testing.T) {
+	renderWithLibrary := func(t *testing.T, libraryData []byte) string {
+		t.Helper()
+
+		filesToProcess := []*files.File{
+			files.MustNewFileFromSource(files.NewBytesSource(
+				"data.yml", []byte("#@ load(\"values.star\", \"value\")\nresult: #@ value\n"))),
+			files.MustNewFileFromSource(files.NewBytesSource("values.star", libraryData)),
+		}
+
+		out := cmdtpl.NewOptions().RunWithFiles(
+			cmdtpl.Input{Files: filesToProcess}, ui.NewTTY(false))
+		require.NoError(t, out.Err)
+		require.Len(t, out.Files, 1, "unexpected number of output files")
+
+		return string(out.Files[0].Bytes())
+	}
+
+	const library = "value = \"from starlark\"\n"
+	withoutBOM := renderWithLibrary(t, []byte(library))
+	require.Equal(t, "result: from starlark\n", withoutBOM,
+		"the control case rendered unexpectedly")
+
+	withBOM := renderWithLibrary(t, []byte(utf8BOM+library))
+	require.Equal(t, withoutBOM, withBOM,
+		"a leading UTF-8 BOM changed how a Starlark library loaded")
+}
+
+func TestUTF8BOMTextTemplateRendersTheSameAsNoBOM(t *testing.T) {
+	const textTemplate = "result: (@= \"from text template\" @)\n"
+
+	withoutBOM := renderOneNamedFile(t, "data.txt", []byte(textTemplate))
+	require.Equal(t, "result: from text template\n", withoutBOM,
+		"the control case rendered unexpectedly")
+
+	withBOM := renderOneNamedFile(t, "data.txt", []byte(utf8BOM+textTemplate))
+	require.Equal(t, withoutBOM, withBOM,
+		"a leading UTF-8 BOM changed the text-template output")
+}
+
 func renderOneFile(t *testing.T, data []byte) string {
+	return renderOneNamedFile(t, "data.yml", data)
+}
+
+func renderOneNamedFile(t *testing.T, name string, data []byte) string {
 	t.Helper()
 
 	filesToProcess := []*files.File{
-		files.MustNewFileFromSource(files.NewBytesSource("data.yml", data)),
+		files.MustNewFileFromSource(files.NewBytesSource(name, data)),
 	}
 
 	input := cmdtpl.Input{Files: filesToProcess}

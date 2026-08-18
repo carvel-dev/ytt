@@ -6,6 +6,8 @@ package yamlmeta
 import (
 	"bytes"
 	"io"
+
+	"carvel.dev/ytt/pkg/files"
 )
 
 type DocSetOpts struct {
@@ -21,7 +23,7 @@ func NewDocumentSetFromBytes(data []byte, opts DocSetOpts) (*DocumentSet, error)
 	// Trimmed here as well as in ParseBytes so that the bytes retained below,
 	// which back AsSourceBytes and the source lines shown in template errors,
 	// are the same bytes that were parsed.
-	data = TrimUTF8BOM(data)
+	data = files.TrimUTF8BOM(data)
 
 	docSet, err := NewParser(parserOpts).ParseBytes(data, opts.AssociatedName)
 	if err != nil {

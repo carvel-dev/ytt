@@ -227,6 +227,8 @@ func (l *TemplateLoader) EvalText(libraryCtx LibraryExecutionContext, file *file
 		return nil, plainRootNode, nil
 	}
 
+	fileBs = files.TrimUTF8BOM(fileBs)
+
 	textRoot, err := texttemplate.NewParser().Parse(fileBs, file.RelativePath())
 	if err != nil {
 		return nil, nil, fmt.Errorf("Parsing text template '%s': %s", file.RelativePath(), err)
@@ -261,6 +263,8 @@ func (l *TemplateLoader) EvalStarlark(libraryCtx LibraryExecutionContext, file *
 	}
 
 	l.ui.Debugf("## file %s\n", file.RelativePath())
+
+	fileBs = files.TrimUTF8BOM(fileBs)
 
 	instructions := template.NewInstructionSet()
 	compiledTemplate := template.NewCompiledTemplate(

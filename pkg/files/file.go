@@ -4,12 +4,23 @@
 package files
 
 import (
+	"bytes"
 	"fmt"
 	"os"
 	"path/filepath"
 	"sort"
 	"strings"
 )
+
+// utf8BOM is the UTF-8 encoding of U+FEFF. Some editors, and Windows tooling in
+// particular, write it at the start of a file to record the encoding.
+var utf8BOM = []byte{0xEF, 0xBB, 0xBF}
+
+// TrimUTF8BOM returns data without a leading UTF-8 byte order mark. It only
+// removes the stream marker; a U+FEFF later in the input remains content.
+func TrimUTF8BOM(data []byte) []byte {
+	return bytes.TrimPrefix(data, utf8BOM)
+}
 
 var (
 	yamlExts     = []string{".yaml", ".yml"}
