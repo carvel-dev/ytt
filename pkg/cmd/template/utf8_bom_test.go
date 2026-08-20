@@ -64,10 +64,12 @@ func TestUTF8BOMStarlarkLibraryLoadsTheSameAsNoBOM(t *testing.T) {
 	renderWithLibrary := func(t *testing.T, libraryData []byte) string {
 		t.Helper()
 
+		dataYML := "#@ load(\"values.star\", \"value\")\nresult: #@ value\n"
 		filesToProcess := []*files.File{
-			files.MustNewFileFromSource(files.NewBytesSource(
-				"data.yml", []byte("#@ load(\"values.star\", \"value\")\nresult: #@ value\n"))),
-			files.MustNewFileFromSource(files.NewBytesSource("values.star", libraryData)),
+			files.MustNewFileFromSource(
+				files.NewBytesSource("data.yml", []byte(dataYML))),
+			files.MustNewFileFromSource(
+				files.NewBytesSource("values.star", libraryData)),
 		}
 
 		out := cmdtpl.NewOptions().RunWithFiles(
