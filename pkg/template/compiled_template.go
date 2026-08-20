@@ -15,8 +15,10 @@ import (
 	"github.com/k14s/starlark-go/syntax"
 )
 
-type EvaluationCtxDialectName string
-type EvaluationCtxDialects map[EvaluationCtxDialectName]EvaluationCtxDialect
+type (
+	EvaluationCtxDialectName string
+	EvaluationCtxDialects    map[EvaluationCtxDialectName]EvaluationCtxDialect
+)
 
 type CompiledTemplate struct {
 	name         string
@@ -28,13 +30,13 @@ type CompiledTemplate struct {
 	ctxs         []*EvaluationCtx
 }
 
-// NewCompiledTemplate creates a CompiledTemplate containing the generated code,
-// InstructionSet, and Nodes needed to template the resulting document.
-func NewCompiledTemplate(name string, code []Line,
-	instructions *InstructionSet, nodes *Nodes,
-	evalDialects EvaluationCtxDialects) *CompiledTemplate {
-
-	// TODO package globals
+// The Starlark templates used here require these resolver options. They live in
+// package-level variables in starlark-go, so they are set once here at init:
+// otherwise this causes a data race two templates compile concurrently, which
+// happens whenever ytt is embedded as a Go module and more than one render is
+// in flight. The values are process-wide by nature and never change, so this is
+// the best way to set it
+func init() {
 	resolve.AllowFloat = true
 	resolve.AllowSet = true
 	resolve.AllowLambda = true
@@ -42,7 +44,14 @@ func NewCompiledTemplate(name string, code []Line,
 	resolve.AllowBitwise = true
 	resolve.AllowRecursion = true
 	resolve.AllowGlobalReassign = true
+}
 
+// NewCompiledTemplate creates a CompiledTemplate containing the generated code,
+// InstructionSet, and Nodes needed to template the resulting document.
+func NewCompiledTemplate(name string, code []Line,
+	instructions *InstructionSet, nodes *Nodes,
+	evalDialects EvaluationCtxDialects,
+) *CompiledTemplate {
 	return &CompiledTemplate{
 		name:         name,
 		code:         code,
@@ -101,8 +110,8 @@ func (e *CompiledTemplate) DebugCodeAsString() string {
 // Eval templates a document by executing the compiled code and instructions from a CompiledTemplate.
 // `instructionBindings` maps the compiled code and instructions to functions defined on a CompiledTemplate.
 func (e *CompiledTemplate) Eval(thread *starlark.Thread, loader CompiledTemplateLoader) (
-	starlark.StringDict, interface{}, error) {
-
+	starlark.StringDict, interface{}, error,
+) {
 	globals := make(starlark.StringDict)
 
 	if e.nodes != nil {
@@ -137,8 +146,8 @@ func (e *CompiledTemplate) Eval(thread *starlark.Thread, loader CompiledTemplate
 
 func (e *CompiledTemplate) eval(
 	thread *starlark.Thread, globals starlark.StringDict) (
-	gs starlark.StringDict, resultVal interface{}, resultErr error) {
-
+	gs starlark.StringDict, resultVal interface{}, resultErr error,
+) {
 	// Catch any panics to give a better contextual information
 	defer func() {
 		if err := recover(); err != nil {
@@ -212,15 +221,15 @@ func (e *CompiledTemplate) newCtx(ctxType EvaluationCtxDialectName) *EvaluationC
 
 func (e *CompiledTemplate) tplSetCtxType(
 	thread *starlark.Thread, _ *starlark.Builtin,
-	args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
-
+	args starlark.Tuple, kwargs []starlark.Tuple,
+) (starlark.Value, error) {
 	return starlark.None, nil
 }
 
 func (e *CompiledTemplate) tplStartCtx(
 	thread *starlark.Thread, _ *starlark.Builtin,
-	args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
-
+	args starlark.Tuple, kwargs []starlark.Tuple,
+) (starlark.Value, error) {
 	ctxType, err := tplcore.NewStarlarkValue(args.Index(0)).AsString()
 	if err != nil {
 		return starlark.None, err
@@ -237,8 +246,8 @@ func (e *CompiledTemplate) tplStartCtx(
 
 func (e *CompiledTemplate) tplEndCtx(
 	thread *starlark.Thread, _ *starlark.Builtin,
-	args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
-
+	args starlark.Tuple, kwargs []starlark.Tuple,
+) (starlark.Value, error) {
 	if len(e.ctxs) == 0 {
 		panic("unexpected ctx end")
 	}
@@ -259,42 +268,42 @@ func (e *CompiledTemplate) tplEndCtx(
 
 func (e *CompiledTemplate) tplSetNode(
 	thread *starlark.Thread, f *starlark.Builtin,
-	args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
-
+	args starlark.Tuple, kwargs []starlark.Tuple,
+) (starlark.Value, error) {
 	return e.ctxs[len(e.ctxs)-1].TplSetNode(thread, f, args, kwargs)
 }
 
 func (e *CompiledTemplate) tplSetMapItemKey(
 	thread *starlark.Thread, f *starlark.Builtin,
-	args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
-
+	args starlark.Tuple, kwargs []starlark.Tuple,
+) (starlark.Value, error) {
 	return e.ctxs[len(e.ctxs)-1].TplSetMapItemKey(thread, f, args, kwargs)
 }
 
 func (e *CompiledTemplate) tplStartNodeAnnotation(
 	thread *starlark.Thread, f *starlark.Builtin,
-	args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
-
+	args starlark.Tuple, kwargs []starlark.Tuple,
+) (starlark.Value, error) {
 	return e.ctxs[len(e.ctxs)-1].TplStartNodeAnnotation(thread, f, args, kwargs)
 }
 
 func (e *CompiledTemplate) tplCollectNodeAnnotation(
 	thread *starlark.Thread, f *starlark.Builtin,
-	args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
-
+	args starlark.Tuple, kwargs []starlark.Tuple,
+) (starlark.Value, error) {
 	return e.ctxs[len(e.ctxs)-1].TplCollectNodeAnnotation(thread, f, args, kwargs)
 }
 
 func (e *CompiledTemplate) tplStartNode(
 	thread *starlark.Thread, f *starlark.Builtin,
-	args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
-
+	args starlark.Tuple, kwargs []starlark.Tuple,
+) (starlark.Value, error) {
 	return e.ctxs[len(e.ctxs)-1].TplStartNode(thread, f, args, kwargs)
 }
 
 func (e *CompiledTemplate) TplReplaceNode(
 	thread *starlark.Thread, f *starlark.Builtin,
-	args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
-
+	args starlark.Tuple, kwargs []starlark.Tuple,
+) (starlark.Value, error) {
 	return e.ctxs[len(e.ctxs)-1].TplReplace(thread, f, args, kwargs)
 }
