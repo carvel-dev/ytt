@@ -16,8 +16,11 @@ import (
 )
 
 type (
+	// EvaluationCtxDialectName is name of an evaluation dialect
 	EvaluationCtxDialectName string
-	EvaluationCtxDialects    map[EvaluationCtxDialectName]EvaluationCtxDialect
+	// EvaluationCtxDialects is a map of evaluation dialect names to their
+	// dialects
+	EvaluationCtxDialects map[EvaluationCtxDialectName]EvaluationCtxDialect
 )
 
 type CompiledTemplate struct {
@@ -110,7 +113,7 @@ func (e *CompiledTemplate) DebugCodeAsString() string {
 // Eval templates a document by executing the compiled code and instructions from a CompiledTemplate.
 // `instructionBindings` maps the compiled code and instructions to functions defined on a CompiledTemplate.
 func (e *CompiledTemplate) Eval(thread *starlark.Thread, loader CompiledTemplateLoader) (
-	starlark.StringDict, interface{}, error,
+	starlark.StringDict, any, error,
 ) {
 	globals := make(starlark.StringDict)
 
@@ -146,7 +149,7 @@ func (e *CompiledTemplate) Eval(thread *starlark.Thread, loader CompiledTemplate
 
 func (e *CompiledTemplate) eval(
 	thread *starlark.Thread, globals starlark.StringDict) (
-	gs starlark.StringDict, resultVal interface{}, resultErr error,
+	gs starlark.StringDict, resultVal any, resultErr error,
 ) {
 	// Catch any panics to give a better contextual information
 	defer func() {
@@ -215,20 +218,20 @@ func (e *CompiledTemplate) newCtx(ctxType EvaluationCtxDialectName) *EvaluationC
 		dialect:   e.evalDialects[ctxType],
 
 		pendingAnnotations: map[NodeTag]NodeAnnotations{},
-		pendingMapItemKeys: map[NodeTag]interface{}{},
+		pendingMapItemKeys: map[NodeTag]any{},
 	}
 }
 
 func (e *CompiledTemplate) tplSetCtxType(
-	thread *starlark.Thread, _ *starlark.Builtin,
-	args starlark.Tuple, kwargs []starlark.Tuple,
+	_ *starlark.Thread, _ *starlark.Builtin,
+	_ starlark.Tuple, _ []starlark.Tuple,
 ) (starlark.Value, error) {
 	return starlark.None, nil
 }
 
 func (e *CompiledTemplate) tplStartCtx(
 	thread *starlark.Thread, _ *starlark.Builtin,
-	args starlark.Tuple, kwargs []starlark.Tuple,
+	args starlark.Tuple, _ []starlark.Tuple,
 ) (starlark.Value, error) {
 	ctxType, err := tplcore.NewStarlarkValue(args.Index(0)).AsString()
 	if err != nil {
@@ -246,7 +249,7 @@ func (e *CompiledTemplate) tplStartCtx(
 
 func (e *CompiledTemplate) tplEndCtx(
 	thread *starlark.Thread, _ *starlark.Builtin,
-	args starlark.Tuple, kwargs []starlark.Tuple,
+	args starlark.Tuple, _ []starlark.Tuple,
 ) (starlark.Value, error) {
 	if len(e.ctxs) == 0 {
 		panic("unexpected ctx end")
