@@ -15,6 +15,7 @@ import (
 	"strings"
 
 	"carvel.dev/ytt/pkg/filepos"
+	"carvel.dev/ytt/pkg/files"
 	"carvel.dev/ytt/pkg/yamlmeta/internal/yaml.v2"
 )
 
@@ -41,6 +42,11 @@ func NewParser(opts ParserOpts) *Parser {
 
 func (p *Parser) ParseBytes(data []byte, associatedName string) (*DocumentSet, error) {
 	p.associatedName = associatedName
+
+	// A BOM marks the encoding of the stream and is not content. It has to go
+	// before the document marker check below: a BOM in front of "---" hides the
+	// marker, so the parser prepends its own and the input stops parsing.
+	data = files.TrimUTF8BOM(data)
 
 	// YAML library uses 0-based line numbers for nodes (but, first line in a text file is typically line 1)
 	nodeLineCorrection := 1
