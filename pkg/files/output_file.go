@@ -8,6 +8,10 @@ import (
 	"path/filepath"
 )
 
+// outputFilePerm keeps generated files readable and writable by the owner
+// only, since they may contain sensitive data, without marking them executable.
+const outputFilePerm os.FileMode = 0600
+
 type OutputFile struct {
 	relativePath string
 	data         []byte
@@ -37,7 +41,8 @@ func (f OutputFile) Create(dirPath string) error {
 		return err
 	}
 
-	fd, err := os.OpenFile(resultPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0700)
+	fd, err := os.OpenFile(
+		resultPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, outputFilePerm)
 	if err != nil {
 		return err
 	}
