@@ -320,5 +320,5 @@ func (b overlayModule) NotOp(
 		return starlark.Bool(!resultBool), nil
 	}
 
-	return starlark.NewBuiltin("overlay.or_op", core.ErrWrapper(matchFunc)), nil
+	return starlark.NewBuiltin("overlay.not_op", core.ErrWrapper(matchFunc)), nil
 }

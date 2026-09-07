@@ -1,0 +1,10 @@
+#@ load("@ytt:math", "math")
+
+val: #@ math.mod(5)
+
++++
+
+ERR: 
+- mod: expected exactly two arguments
+    in <toplevel>
+      stdin:3 | val: #@ math.mod(5)

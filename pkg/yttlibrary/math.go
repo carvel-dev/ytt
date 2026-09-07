@@ -115,7 +115,7 @@ func (m MathModule) AsModule() starlark.StringDict {
 				"copysign":  m.newBinaryBuiltin("copysign", math.Copysign),
 				"fabs":      m.newUnaryBuiltin("fabs", math.Abs),
 				"floor":     starlark.NewBuiltin("floor", m.warnOnCall(core.ErrWrapper(m.floor))),
-				"mod":       m.newBinaryBuiltin("round", math.Mod),
+				"mod":       m.newBinaryBuiltin("mod", math.Mod),
 				"pow":       m.newBinaryBuiltin("pow", math.Pow),
 				"remainder": m.newBinaryBuiltin("remainder", math.Remainder),
 				"round":     m.newUnaryBuiltin("round", math.Round),
