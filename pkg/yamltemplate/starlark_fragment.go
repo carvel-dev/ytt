@@ -116,7 +116,8 @@ func (s *StarlarkFragment) Index(i int) starlark.Value {
 	case *yamlmeta.DocumentSet:
 		return NewGoValueWithYAML(typedData.Items[i].Value).AsStarlarkValue()
 	default:
-		panic(fmt.Sprintf("%s.Index: Expected value to be a array or docset, but was %T", starlarkFragmentType, s.data))
+		panic(fmt.Sprintf("%s.Index: Expected value to be an array or docset, "+
+			"but was %T", starlarkFragmentType, s.data))
 	}
 }
 
@@ -216,7 +217,8 @@ func (s *StarlarkFragmentValuesIterator) Next(p *starlark.Value) bool {
 		case *yamlmeta.DocumentSet:
 			val = NewGoValueWithYAML(typedData.Items[s.idx].Value).AsStarlarkValue()
 		default:
-			panic(fmt.Sprintf("%s.Next: Expected value to be a array or docset, but was %T", starlarkFragmentType, s.data))
+			panic(fmt.Sprintf("%s.Next: Expected value to be an array or "+
+				"docset, but was %T", starlarkFragmentType, s.data))
 		}
 		*p = val
 		s.idx++
