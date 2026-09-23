@@ -82,7 +82,7 @@ func (a DocumentMatchAnnotation) MatchNodes(leftDocSets []*yamlmeta.DocumentSet)
 
 	if a.matcher == nil {
 		return nil, nil, fmt.Errorf("Expected '%s' annotation "+
-			"keyword argument 'by'  to be specified", AnnotationMatch)
+			"keyword argument 'by' to be specified", AnnotationMatch)
 	}
 
 	switch typedVal := (*a.matcher).(type) {

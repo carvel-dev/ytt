@@ -5,6 +5,7 @@ package website
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -176,7 +177,7 @@ func (s *Server) redirectToHTTPS(wrappedFunc func(http.ResponseWriter, *http.Req
 			}
 
 			// Fail if it's not a GET or HEAD since req may have carried body insecurely
-			s.logError(w, fmt.Errorf("expected HTTPs connection"))
+			s.logError(w, errors.New("expected HTTPS connection"))
 			return
 		}
 
