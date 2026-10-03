@@ -1,0 +1,24 @@
+#@ load("@ytt:overlay", "overlay")
+
+#@ def matcher(idx, left, right):
+#@   return "yes"
+#@ end
+
+#@ def test_left():
+- name: first
+#@ end
+
+#@ def test_right():
+#@overlay/match by=overlay.not_op(matcher)
+- name: second
+#@ end
+
+---
+test: #@ overlay.apply(test_left(), test_right())
+
++++
+
+ERR: 
+- overlay.apply: Array item on line stdin:13: overlay.not_op: expected starlark.Bool, but was starlark.String
+    in <toplevel>
+      stdin:17 | test: #@ overlay.apply(test_left(), test_right())
