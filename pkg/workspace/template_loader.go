@@ -197,7 +197,6 @@ func (l *TemplateLoader) EvalYAML(libraryCtx LibraryExecutionContext, file *file
 	}
 
 	l.addCompiledTemplate(file.RelativePath(), compiledTemplate)
-	l.ui.Debugf("### template\n%s", compiledTemplate.DebugCodeAsString())
 
 	yttLibrary := yttlibrary.NewAPI(compiledTemplate.TplReplaceNode,
 		yttlibrary.NewDataModule(l.values, DataLoader{libraryCtx}),
@@ -241,7 +240,6 @@ func (l *TemplateLoader) EvalText(libraryCtx LibraryExecutionContext, file *file
 	}
 
 	l.addCompiledTemplate(file.RelativePath(), compiledTemplate)
-	l.ui.Debugf("### template\n%s", compiledTemplate.DebugCodeAsString())
 
 	yttLibrary := yttlibrary.NewAPI(compiledTemplate.TplReplaceNode,
 		yttlibrary.NewDataModule(l.values, DataLoader{libraryCtx}),
@@ -276,7 +274,6 @@ func (l *TemplateLoader) EvalStarlark(libraryCtx LibraryExecutionContext, file *
 		instructions, template.NewNodes(), template.EvaluationCtxDialects{})
 
 	l.addCompiledTemplate(file.RelativePath(), compiledTemplate)
-	l.ui.Debugf("### template\n%s", compiledTemplate.DebugCodeAsString())
 
 	yttLibrary := yttlibrary.NewAPI(compiledTemplate.TplReplaceNode,
 		yttlibrary.NewDataModule(l.values, DataLoader{libraryCtx}),
@@ -346,6 +343,7 @@ func (l *TemplateLoader) newThread(libraryCtx LibraryExecutionContext,
 
 func (l *TemplateLoader) addCompiledTemplate(path string, ct *template.CompiledTemplate) {
 	l.compiledTemplates[path] = ct
+	l.ui.Debugf("### template\n%s", debugCode{ct})
 }
 
 func (opts TemplateLoaderOpts) Merge(overrides TemplateLoaderOptsOverrides) TemplateLoaderOpts {
@@ -361,3 +359,9 @@ func (opts TemplateLoaderOpts) Merge(overrides TemplateLoaderOptsOverrides) Temp
 	}
 	return optsCopy
 }
+
+// debugCode defers building the compiled template dump until it is formatted,
+// so the work is skipped when debug output is disabled.
+type debugCode struct{ t *template.CompiledTemplate }
+
+func (d debugCode) String() string { return d.t.DebugCodeAsString() }
