@@ -4,6 +4,7 @@
 package workspace
 
 import (
+	"bytes"
 	"fmt"
 	"strings"
 
@@ -169,22 +170,18 @@ func (l *TemplateLoader) EvalYAML(libraryCtx LibraryExecutionContext, file *file
 		return nil, nil, err
 	}
 
-	l.ui.Debugf("### ast ")
-
 	// is this plain YAML?
 	if !file.IsTemplate() && !file.IsLibrary() || !yamltemplate.HasTemplating(docSet) {
 		// YAML spec requires map keys to be unique.
 		// Tools retain just the last instance: each subsequent map item overrides the value of any previous.
 		docSet.OverrideMapKeys()
 
-		l.ui.Debugf("(plain)\n")
-		docSet.Print(l.ui.DebugWriter())
+		l.ui.Debugf("### ast (plain)\n%s", debugAST{docSet})
 
 		return nil, docSet, nil
 	}
 
-	l.ui.Debugf("(templated)\n")
-	docSet.Print(l.ui.DebugWriter())
+	l.ui.Debugf("### ast (templated)\n%s", debugAST{docSet})
 
 	tplOpts := yamltemplate.TemplateOpts{
 		IgnoreUnknownComments:   l.opts.IgnoreUnknownComments,
@@ -365,3 +362,13 @@ func (opts TemplateLoaderOpts) Merge(overrides TemplateLoaderOptsOverrides) Temp
 type debugCode struct{ t *template.CompiledTemplate }
 
 func (d debugCode) String() string { return d.t.DebugCodeAsString() }
+
+// debugAST defers printing the parsed document set until it is formatted,
+// so the work is skipped when debug output is disabled.
+type debugAST struct{ ds *yamlmeta.DocumentSet }
+
+func (d debugAST) String() string {
+	var buf bytes.Buffer
+	d.ds.Print(&buf)
+	return buf.String()
+}
