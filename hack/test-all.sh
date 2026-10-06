@@ -8,7 +8,7 @@ if [ -z "$GITHUB_ACTION" ]; then
   go clean -testcache
 fi
 
-go test ./... "$@"
+go test -race ./... "$@"
 
 # run a "contract test" to smoke Go module integration
 (
