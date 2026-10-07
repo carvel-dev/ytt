@@ -96,11 +96,14 @@ func NewSortedFilesFromPaths(paths []string, opts SymlinkAllowOpts) ([]*File, er
 				if err != nil {
 					return nil, fmt.Errorf("Resolving path '%s': %s", path, err)
 				}
-				err = filepath.Walk(absDir, func(walkedPath string, fi os.FileInfo, err error) error {
+				err = filepath.Walk(absDir, func(
+					walkedPath string, fi os.FileInfo, err error,
+				) error {
 					if err != nil || fi.IsDir() {
 						return err
 					}
-					regLocalSource, err := NewRegularFileLocalSource(walkedPath, absDir, fi, opts)
+					regLocalSource, err := NewRegularFileLocalSource(
+						walkedPath, absDir, fi, opts)
 					if err != nil {
 						return err
 					}
