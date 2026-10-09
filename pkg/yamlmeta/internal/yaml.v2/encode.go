@@ -7,6 +7,7 @@ import (
 	"encoding"
 	"fmt"
 	"io"
+	"math/big"
 	"reflect"
 	"regexp"
 	"sort"
@@ -300,6 +301,85 @@ func isBase60Float(s string) (result bool) {
 // is bogus. In practice parsers do not enforce the "\.[0-9_]*" suffix.
 var base60float = regexp.MustCompile(`^[-+]?[0-9][0-9_]*(?::[0-5]?[0-9])+(?:\.[0-9_]*)?$`)
 
+// isUnrepresentableNumber returns whether s is shaped like a YAML 1.1 numeric
+// literal whose value cannot be represented exactly in a 64-bit integer or a
+// 64-bit float.
+//
+// Resolution of a plain scalar decides int vs. string by whether the text
+// parses within 64-bit limits; text beyond those limits silently resolves as
+// a string. A string holding such text is therefore emitted unquoted, and
+// reading the result back yields a different value. These are marshalled
+// quoted, mirroring the base 60 handling above.
+func isUnrepresentableNumber(s string) bool {
+	// Fast path.
+	if s == "" {
+		return false
+	}
+	c := s[0]
+	if !(c == '+' || c == '-' || c == '.' || c >= '0' && c <= '9') {
+		return false
+	}
+
+	plain := strings.Replace(s, "_", "", -1)
+	neg := false
+	if plain[0] == '-' {
+		neg = true
+		plain = plain[1:]
+	} else if plain[0] == '+' {
+		plain = plain[1:]
+	}
+
+	body, base := plain, 0
+	switch {
+	case strings.HasPrefix(plain, "0x"), strings.HasPrefix(plain, "0X"):
+		body, base = plain[2:], 16
+	case strings.HasPrefix(plain, "0o"), strings.HasPrefix(plain, "0O"):
+		body, base = plain[2:], 8
+	case strings.HasPrefix(plain, "0b"), strings.HasPrefix(plain, "0B"):
+		body, base = plain[2:], 2
+	}
+
+	if base != 0 {
+		if body == "" {
+			return false
+		}
+		intVal, ok := new(big.Int).SetString(body, base)
+		if !ok {
+			return false
+		}
+		if neg {
+			intVal.Neg(intVal)
+		}
+		return !int64Rangeable(intVal)
+	}
+
+	// decimal integer or float-shaped text
+	if strictStyleInt.MatchString(plain) {
+		intVal, ok := new(big.Int).SetString(plain, 10)
+		if !ok {
+			return false
+		}
+		return !int64Rangeable(intVal)
+	}
+	if yamlStyleFloat.MatchString(plain) {
+		if _, err := strconv.ParseFloat(plain, 64); err != nil {
+			return true
+		}
+	}
+	return false
+}
+
+var (
+	maxParseUint64 = new(big.Int).Sub(new(big.Int).Lsh(big.NewInt(1), 64), big.NewInt(1))
+	minParseInt64  = new(big.Int).Neg(new(big.Int).Lsh(big.NewInt(1), 63))
+)
+
+// int64Rangeable reports whether v lies within the range accepted when
+// parsing a 64-bit integer: [-2^63, 2^63-1] signed or [0, 2^64-1] unsigned.
+func int64Rangeable(v *big.Int) bool {
+	return v.Cmp(minParseInt64) >= 0 && v.Cmp(maxParseUint64) <= 0
+}
+
 func (e *encoder) stringv(tag string, in reflect.Value) {
 	var style yamlScalarStyleT
 	s := in.String()
@@ -321,7 +401,8 @@ func (e *encoder) stringv(tag string, in reflect.Value) {
 		// tag when encoded unquoted. If it doesn't,
 		// there's no need to quote it.
 		rtag, _ := resolve("", s)
-		canUsePlain = rtag == yamlStrTag && !isBase60Float(s)
+		canUsePlain = rtag == yamlStrTag && !isBase60Float(s) &&
+			!isUnrepresentableNumber(s)
 	}
 	// Note: it's possible for user code to emit invalid YAML
 	// if they explicitly specify a tag and a string containing
