@@ -115,6 +115,12 @@ func (e StarlarkValue) asInterface(val starlark.Value) (interface{}, error) {
 	case *starlark.Set:
 		return e.itearableAsInterface(typedVal)
 
+	case *starlark.Builtin:
+		return nil, fmt.Errorf("Unable to convert value: %s does not encode (did you mean to call %s()?)", typedVal.Type(), typedVal.Name())
+
+	case *starlark.Function:
+		return nil, fmt.Errorf("Unable to convert value: %s does not encode (did you mean to call %s()?)", typedVal.Type(), typedVal.Name())
+
 	default:
 		panic(fmt.Sprintf("unknown type %T for conversion to go value", val))
 	}
