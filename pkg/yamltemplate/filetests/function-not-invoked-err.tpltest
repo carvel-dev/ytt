@@ -1,0 +1,11 @@
+#@ def greet():
+#@   return "hi"
+#@ end
+key: #@ greet
+
++++
+
+ERR: 
+- __ytt_tplXXX_set_node: Unable to convert value: function does not encode (did you mean to call greet()?)
+    in <toplevel>
+      stdin:4 | key: #@ greet

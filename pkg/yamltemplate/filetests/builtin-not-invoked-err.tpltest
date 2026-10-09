@@ -1,0 +1,8 @@
+key: #@ "".lower
+
++++
+
+ERR: 
+- __ytt_tplXXX_set_node: Unable to convert value: builtin_function_or_method does not encode (did you mean to call lower()?)
+    in <toplevel>
+      stdin:1 | key: #@ "".lower
