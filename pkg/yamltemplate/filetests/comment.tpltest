@@ -21,7 +21,12 @@ test1: true #! inline
 test2: #@ a
 #@ end
 
-#! test3: #@ # inline-comment TODO
+test3: #@ a # inline-comment
+test4: #@ a #! inline ytt comment
+test5: #@ "#not-a-comment" #! hash inside a string
+test6: #@ ['#', "'#'", '''#''']  # hashes inside strings
+#@yaml/text-templated-strings #! annotation with a comment
+test7: "(@= str(a) @)"
 
 #@comment comment-via-annotation
 
@@ -29,3 +34,11 @@ test2: #@ a
 
 test1: true
 test2: 5
+test3: 5
+test4: 5
+test5: '#not-a-comment'
+test6:
+- '#'
+- '''#'''
+- '#'
+test7: "5"

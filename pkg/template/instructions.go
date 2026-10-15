@@ -57,7 +57,7 @@ func (is *InstructionSet) NewEndCtxNone() Instruction {
 }
 
 func (is *InstructionSet) NewStartNodeAnnotation(nodeTag NodeTag, ann Annotation) Instruction {
-	collectedArgs := is.CollectNodeAnnotation.WithArgs(ann.Content).AsString()
+	collectedArgs := is.CollectNodeAnnotation.WithArgs(withoutComments(ann.Content)).AsString()
 
 	return is.StartNodeAnnotation.WithArgs(nodeTag.AsString(), `"`+string(ann.Name)+`"`, collectedArgs)
 }
@@ -71,11 +71,53 @@ func (is *InstructionSet) NewSetNode(nodeTag NodeTag) Instruction {
 }
 
 func (is *InstructionSet) NewSetNodeValue(nodeTag NodeTag, code string) Instruction {
-	return is.SetNode.WithArgs(nodeTag.AsString(), "("+code+")")
+	return is.SetNode.WithArgs(nodeTag.AsString(), "("+withoutComments(code)+")")
 }
 
 func (is *InstructionSet) NewSetMapItemKey(nodeTag NodeTag, code string) Instruction {
-	return is.SetMapItemKey.WithArgs(nodeTag.AsString(), "("+code+")")
+	return is.SetMapItemKey.WithArgs(nodeTag.AsString(), "("+withoutComments(code)+")")
+}
+
+// withoutComments removes Starlark comments (an unquoted '#' up to the end of its line) from code
+// that is about to be wrapped in parentheses, so that a trailing comment such as
+// `#@ value #! note` does not also comment out the closing parenthesis.
+func withoutComments(code string) string {
+	var out strings.Builder
+	quote := ""
+	for i := 0; i < len(code); i++ {
+		c := code[i]
+		switch {
+		case quote != "":
+			if c == '\\' && i+1 < len(code) {
+				out.WriteString(code[i : i+2])
+				i++
+				continue
+			}
+			if strings.HasPrefix(code[i:], quote) {
+				out.WriteString(quote)
+				i += len(quote) - 1
+				quote = ""
+				continue
+			}
+			out.WriteByte(c)
+		case c == '\'' || c == '"':
+			quote = string(c)
+			if strings.HasPrefix(code[i:], strings.Repeat(quote, 3)) {
+				quote = strings.Repeat(quote, 3)
+			}
+			out.WriteString(quote)
+			i += len(quote) - 1
+		case c == '#':
+			end := strings.IndexByte(code[i:], '\n')
+			if end < 0 {
+				return out.String()
+			}
+			i += end - 1
+		default:
+			out.WriteByte(c)
+		}
+	}
+	return out.String()
 }
 
 func (is *InstructionSet) NewCode(code string) Instruction {
