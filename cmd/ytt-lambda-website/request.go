@@ -73,7 +73,8 @@ func (r *RequestAccessor) ProxyEventToHTTPRequest(req events.ALBTargetGroupReque
 		bytes.NewReader(decodedBody),
 	)
 	if err != nil {
-		fmt.Printf("Could not convert request %s:%s to http.Request\n", req.HTTPMethod, req.Path)
+		fmt.Printf("Could not convert request (%s) to http.Request\n",
+			req.HTTPMethod)
 		log.Println(err)
 		return nil, err
 	}
