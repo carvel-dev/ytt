@@ -68,6 +68,13 @@ func (e StarlarkValue) AsFloat64() (float64, error) {
 	return 0, fmt.Errorf("expected float value, but was %T", e.val)
 }
 
+// uninvokedFuncErr reports a function that was named but never called, which
+// is almost always a missing pair of parentheses.
+func uninvokedFuncErr(typeName, funcName string) error {
+	return fmt.Errorf("Unable to convert value: %s does not encode "+
+		"(did you mean to call %s()?)", typeName, funcName)
+}
+
 func (e StarlarkValue) asInterface(val starlark.Value) (interface{}, error) {
 	if obj, ok := val.(UnconvertableStarlarkValue); ok {
 		return nil, fmt.Errorf("Unable to convert value: %s", obj.ConversionHint())
@@ -114,6 +121,12 @@ func (e StarlarkValue) asInterface(val starlark.Value) (interface{}, error) {
 
 	case *starlark.Set:
 		return e.itearableAsInterface(typedVal)
+
+	case *starlark.Builtin:
+		return nil, uninvokedFuncErr(typedVal.Type(), typedVal.Name())
+
+	case *starlark.Function:
+		return nil, uninvokedFuncErr(typedVal.Type(), typedVal.Name())
 
 	default:
 		panic(fmt.Sprintf("unknown type %T for conversion to go value", val))
