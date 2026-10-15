@@ -9,9 +9,13 @@
 #@ def/end app_labels(app):
 app: #@ app.name
 
+---
+
 #@ def app_svc_name(app):
 #@   return app.name + "-svc"
 #@ end
+
+---
 
 #@ def app_config(app):
 ---
