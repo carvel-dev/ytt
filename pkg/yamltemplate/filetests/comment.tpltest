@@ -27,6 +27,8 @@ test5: #@ "#not-a-comment" #! hash inside a string
 test6: #@ ['#', "'#'", '''#''']  # hashes inside strings
 #@yaml/text-templated-strings #! annotation with a comment
 test7: "(@= str(a) @)"
+#@yaml/text-templated-strings
+test8: "(@= 'a' # comment ended by a carriage return\r + 'b' @)"
 
 #@comment comment-via-annotation
 
@@ -42,3 +44,4 @@ test6:
 - '''#'''
 - '#'
 test7: "5"
+test8: ab

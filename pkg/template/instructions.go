@@ -108,7 +108,8 @@ func withoutComments(code string) string {
 			out.WriteString(quote)
 			i += len(quote) - 1
 		case c == '#':
-			end := strings.IndexByte(code[i:], '\n')
+			// Starlark ends a comment at a line feed or a carriage return.
+			end := strings.IndexAny(code[i:], "\r\n")
 			if end < 0 {
 				return out.String()
 			}
