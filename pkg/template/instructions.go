@@ -57,7 +57,8 @@ func (is *InstructionSet) NewEndCtxNone() Instruction {
 }
 
 func (is *InstructionSet) NewStartNodeAnnotation(nodeTag NodeTag, ann Annotation) Instruction {
-	collectedArgs := is.CollectNodeAnnotation.WithArgs(withoutComments(ann.Content)).AsString()
+	collectedArgs := is.CollectNodeAnnotation.WithArgs(
+		withoutComments(ann.Content)).AsString()
 
 	return is.StartNodeAnnotation.WithArgs(nodeTag.AsString(), `"`+string(ann.Name)+`"`, collectedArgs)
 }
@@ -71,42 +72,31 @@ func (is *InstructionSet) NewSetNode(nodeTag NodeTag) Instruction {
 }
 
 func (is *InstructionSet) NewSetNodeValue(nodeTag NodeTag, code string) Instruction {
-	return is.SetNode.WithArgs(nodeTag.AsString(), "("+withoutComments(code)+")")
+	return is.SetNode.WithArgs(nodeTag.AsString(), parenthesized(code))
 }
 
 func (is *InstructionSet) NewSetMapItemKey(nodeTag NodeTag, code string) Instruction {
-	return is.SetMapItemKey.WithArgs(nodeTag.AsString(), "("+withoutComments(code)+")")
+	return is.SetMapItemKey.WithArgs(nodeTag.AsString(), parenthesized(code))
 }
 
-// withoutComments removes Starlark comments (an unquoted '#' up to the end of its line) from code
-// that is about to be wrapped in parentheses, so that a trailing comment such as
-// `#@ value #! note` does not also comment out the closing parenthesis.
+// tripleQuoteLen is the length of a Starlark triple-quote delimiter.
+const tripleQuoteLen = 3
+
+// parenthesized wraps code in parentheses, dropping its comments first so
+// that a trailing comment such as `#@ value #! note` does not also comment
+// out the closing parenthesis.
+func parenthesized(code string) string {
+	return "(" + withoutComments(code) + ")"
+}
+
+// withoutComments removes Starlark comments (an unquoted '#' up to the end
+// of its line) from code and keeps string literals as they are.
 func withoutComments(code string) string {
 	var out strings.Builder
-	quote := ""
 	for i := 0; i < len(code); i++ {
-		c := code[i]
-		switch {
-		case quote != "":
-			if c == '\\' && i+1 < len(code) {
-				out.WriteString(code[i : i+2])
-				i++
-				continue
-			}
-			if strings.HasPrefix(code[i:], quote) {
-				out.WriteString(quote)
-				i += len(quote) - 1
-				quote = ""
-				continue
-			}
-			out.WriteByte(c)
+		switch c := code[i]; {
 		case c == '\'' || c == '"':
-			quote = string(c)
-			if strings.HasPrefix(code[i:], strings.Repeat(quote, 3)) {
-				quote = strings.Repeat(quote, 3)
-			}
-			out.WriteString(quote)
-			i += len(quote) - 1
+			i = copyStringLiteral(&out, code, i)
 		case c == '#':
 			// Starlark ends a comment at a line feed or a carriage return.
 			end := strings.IndexAny(code[i:], "\r\n")
@@ -119,6 +109,30 @@ func withoutComments(code string) string {
 		}
 	}
 	return out.String()
+}
+
+// copyStringLiteral writes the string literal that opens at code[start] to
+// out and returns the index of its last byte. An unterminated literal runs
+// to the end of code.
+func copyStringLiteral(out *strings.Builder, code string, start int) int {
+	quote := code[start : start+1]
+	if triple := strings.Repeat(quote, tripleQuoteLen); strings.HasPrefix(
+		code[start:], triple) {
+		quote = triple
+	}
+	for i := start + len(quote); i < len(code); i++ {
+		if code[i] == '\\' {
+			i++ // the escaped byte cannot close the literal
+			continue
+		}
+		if strings.HasPrefix(code[i:], quote) {
+			end := i + len(quote)
+			out.WriteString(code[start:end])
+			return end - 1
+		}
+	}
+	out.WriteString(code[start:])
+	return len(code) - 1
 }
 
 func (is *InstructionSet) NewCode(code string) Instruction {
