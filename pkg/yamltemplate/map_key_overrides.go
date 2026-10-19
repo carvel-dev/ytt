@@ -16,6 +16,8 @@ const (
 
 type MapItemOverride struct {
 	implicit bool
+	// placeholder is the item being replaced, so it never conflicts
+	placeholder *yamlmeta.MapItem
 }
 
 func (d MapItemOverride) Apply(
@@ -24,7 +26,9 @@ func (d MapItemOverride) Apply(
 	itemIndex := map[interface{}]int{}
 
 	for idx, item := range typedMap.Items {
-		itemIndex[item.Key] = idx
+		if item != d.placeholder {
+			itemIndex[item.Key] = idx
+		}
 	}
 
 	if prevIdx, ok := itemIndex[newItem.Key]; ok {
