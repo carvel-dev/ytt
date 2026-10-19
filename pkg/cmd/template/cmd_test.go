@@ -334,6 +334,66 @@ end`)
 	require.EqualError(t, out.Err, expectedErr)
 }
 
+func TestSelfReferencingValueReturnsError(t *testing.T) {
+	t.Run("list", func(t *testing.T) {
+		tplData := []byte(`
+#@ def cyc():
+#@   x = []
+#@   x.append(x)
+#@   return x
+#@ end
+out: #@ cyc()`)
+
+		src := files.NewBytesSource("tpl.yml", tplData)
+		filesToProcess := []*files.File{files.MustNewFileFromSource(src)}
+
+		testUI := ui.NewTTY(false)
+		opts := cmdtpl.NewOptions()
+
+		out := opts.RunWithFiles(cmdtpl.Input{Files: filesToProcess}, testUI)
+		require.Error(t, out.Err)
+		require.Contains(t, out.Err.Error(), "self-referencing list")
+	})
+	t.Run("dict", func(t *testing.T) {
+		tplData := []byte(`
+#@ def cyc():
+#@   x = {}
+#@   x["k"] = x
+#@   return x
+#@ end
+out: #@ cyc()`)
+
+		src := files.NewBytesSource("tpl.yml", tplData)
+		filesToProcess := []*files.File{files.MustNewFileFromSource(src)}
+
+		testUI := ui.NewTTY(false)
+		opts := cmdtpl.NewOptions()
+
+		out := opts.RunWithFiles(cmdtpl.Input{Files: filesToProcess}, testUI)
+		require.Error(t, out.Err)
+		require.Contains(t, out.Err.Error(), "self-referencing dict")
+	})
+	t.Run("indirect list-dict cycle", func(t *testing.T) {
+		tplData := []byte(`
+#@ def cyc():
+#@   x = []
+#@   x.append({"k": x})
+#@   return x
+#@ end
+out: #@ cyc()`)
+
+		src := files.NewBytesSource("tpl.yml", tplData)
+		filesToProcess := []*files.File{files.MustNewFileFromSource(src)}
+
+		testUI := ui.NewTTY(false)
+		opts := cmdtpl.NewOptions()
+
+		out := opts.RunWithFiles(cmdtpl.Input{Files: filesToProcess}, testUI)
+		require.Error(t, out.Err)
+		require.Contains(t, out.Err.Error(), "self-referencing list")
+	})
+}
+
 func TestDisallowDirectLibraryLoading(t *testing.T) {
 	yamlTplData := []byte(`#@ load("_ytt_lib/data.lib.star", "data")`)
 
