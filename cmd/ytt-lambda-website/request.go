@@ -6,6 +6,7 @@ package main
 import (
 	"bytes"
 	"encoding/base64"
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -73,10 +74,9 @@ func (r *RequestAccessor) ProxyEventToHTTPRequest(req events.ALBTargetGroupReque
 		bytes.NewReader(decodedBody),
 	)
 	if err != nil {
-		fmt.Printf("Could not convert request (%s) to http.Request\n",
-			req.HTTPMethod)
-		log.Println(err)
-		return nil, err
+		sanitizedErr := sanitizeRequestError(req.HTTPMethod, err)
+		log.Println(sanitizedErr)
+		return nil, sanitizedErr
 	}
 
 	for h := range req.Headers {
@@ -90,4 +90,16 @@ func (r *RequestAccessor) ProxyEventToHTTPRequest(req events.ALBTargetGroupReque
 	}
 
 	return httpRequest, nil
+}
+
+// sanitizeRequestError keeps the cause of a request construction failure but
+// drops the URL, which http.NewRequest embeds in its error and which may
+// contain secrets in the query string.
+func sanitizeRequestError(method string, err error) error {
+	var urlErr *url.Error
+	if errors.As(err, &urlErr) {
+		err = urlErr.Err
+	}
+	return fmt.Errorf("could not convert %s request to http.Request: %w",
+		method, err)
 }
