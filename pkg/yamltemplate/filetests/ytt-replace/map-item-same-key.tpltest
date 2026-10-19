@@ -1,0 +1,20 @@
+#@ load("@ytt:template", "template")
+
+#@ def map_from_def():
+_: from-def
+#@ end
+
+from-dict:
+  a: 1
+  _: #@ template.replace({"_": "from-dict"})
+
+from-def:
+  _: #@ template.replace(map_from_def())
+
++++
+
+from-dict:
+  a: 1
+  _: from-dict
+from-def:
+  _: from-def
