@@ -284,3 +284,30 @@ array:
 	assert.Equal(t, "tpl.yml", file.RelativePath())
 	assert.Equal(t, expectedYAMLTplData, string(file.Bytes()))
 }
+
+func TestDocumentOverlayExpectsOversizedIntegerDescriptiveError(t *testing.T) {
+	yamlTplData := []byte(`
+foo: 1
+`)
+
+	// an integer too large for int64 and for uint64 can never equal a node count,
+	// and it used to reach a panic instead of being reported
+	yamlOverlayTplData := []byte(`
+#@ load("@ytt:overlay", "overlay")
+#@overlay/match by=overlay.all, expects=99999999999999999999999999999999999999999
+---
+foo: 2
+`)
+
+	filesToProcess := files.NewSortedFiles([]*files.File{
+		files.MustNewFileFromSource(files.NewBytesSource("tpl.yml", yamlTplData)),
+		files.MustNewFileFromSource(files.NewBytesSource("overlay.yml", yamlOverlayTplData)),
+	})
+
+	ui := ui.NewTTY(false)
+	opts := cmdtpl.NewOptions()
+
+	out := opts.RunWithFiles(cmdtpl.Input{Files: filesToProcess}, ui)
+	require.Error(t, out.Err)
+	assert.Contains(t, out.Err.Error(), "Expected 'expects' to be an integer that fits in 64 bits")
+}

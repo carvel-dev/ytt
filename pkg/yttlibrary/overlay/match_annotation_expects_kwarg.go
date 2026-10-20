@@ -142,7 +142,11 @@ func (a MatchAnnotationExpectsKwarg) checkInt(typedVal starlark.Int, matches []*
 		return nil
 	}
 
-	panic("Unsure how to convert starlark.Int to int")
+	// the value is an integer, but too large for either int64 or uint64. It can
+	// never equal a node count, and it comes straight from the template, so report
+	// it rather than crashing ytt.
+	return fmt.Errorf("Expected '%s' to be an integer that fits in 64 bits, but was %s",
+		MatchAnnotationKwargExpects, typedVal.String())
 }
 
 func (a MatchAnnotationExpectsKwarg) checkString(typedVal starlark.String, matches []*filepos.Position) error {
