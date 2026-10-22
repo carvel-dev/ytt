@@ -199,7 +199,10 @@ func (ll *LibraryExecution) Eval(values *datavalues.Envelope, libraryValues []*d
 			return nil, fmt.Errorf("Marshaling template result: %s", err)
 		}
 
-		ll.ui.Debugf("### %s result\n%s", fileInLib.RelativePath(), resultDocBytes)
+		ll.ui.Debugf("### %s result: %d bytes\n",
+			fileInLib.RelativePath(),
+			len(resultDocBytes),
+		)
 		result.Files = append(result.Files, files.NewOutputFile(fileInLib.RelativePath(), resultDocBytes, fileInLib.File.Type()))
 	}
 
@@ -237,7 +240,10 @@ func (ll *LibraryExecution) eval(values *datavalues.Envelope, libraryValues []*d
 
 				resultStr := resultVal.AsString()
 
-				ll.ui.Debugf("### %s result\n%s", fileInLib.RelativePath(), resultStr)
+				ll.ui.Debugf("### %s result: %d bytes\n",
+					fileInLib.RelativePath(),
+					len(resultStr),
+				)
 				outputFiles = append(outputFiles, files.NewOutputFile(fileInLib.RelativePath(), []byte(resultStr), fileInLib.File.Type()))
 
 			default:
