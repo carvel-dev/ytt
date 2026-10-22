@@ -334,7 +334,7 @@ func (s *DataValuesFlags) buildOverlay(keyPieces []string, value interface{}, de
 	var lastMapItem *yamlmeta.MapItem
 
 	pos := filepos.NewPositionInFile(1, desc)
-	pos.SetLine(line)
+	pos.SetLine(strings.Join(keyPieces, ".") + "=[REDACTED]")
 
 	for _, piece := range keyPieces {
 		newMap := &yamlmeta.Map{}
