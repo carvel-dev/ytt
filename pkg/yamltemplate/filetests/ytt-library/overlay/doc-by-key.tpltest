@@ -1,0 +1,64 @@
+#@ load("@ytt:overlay", "overlay")
+#@ load("@ytt:template", "template")
+
+#@ def test1_left():
+---
+kind: Deployment
+metadata:
+  name: app
+---
+kind: Service
+metadata:
+  name: app
+#@ end
+
+#@ def test1_right():
+#@overlay/match by="kind"
+---
+kind: Service
+#@overlay/match missing_ok=True
+spec:
+  type: ClusterIP
+#@ end
+
+#@ def test2_right():
+#@overlay/match by=overlay.map_key("kind")
+---
+kind: Service
+#@overlay/match missing_ok=True
+spec:
+  type: ClusterIP
+#@ end
+
+---
+test1
+--- #@ template.replace(overlay.apply(test1_left(), test1_right()))
+---
+test2
+--- #@ template.replace(overlay.apply(test1_left(), test2_right()))
+
++++
+
+test1
+---
+kind: Deployment
+metadata:
+  name: app
+---
+kind: Service
+metadata:
+  name: app
+spec:
+  type: ClusterIP
+---
+test2
+---
+kind: Deployment
+metadata:
+  name: app
+---
+kind: Service
+metadata:
+  name: app
+spec:
+  type: ClusterIP
