@@ -80,12 +80,24 @@ func (a DocumentMatchAnnotation) MatchNodes(leftDocSets []*yamlmeta.DocumentSet)
 		return [][]int{{0, 0}}, []*filepos.Position{leftDocSets[0].Items[0].Position}, nil
 	}
 
-	if a.matcher == nil {
+	matcher := a.matcher
+
+	if matcher == nil {
 		return nil, nil, fmt.Errorf("Expected '%s' annotation "+
 			"keyword argument 'by' to be specified", AnnotationMatch)
 	}
 
-	switch typedVal := (*a.matcher).(type) {
+	if _, ok := (*matcher).(starlark.String); ok {
+		matcherFunc, err := starlark.Call(a.thread, overlayModule{}.MapKey(),
+			starlark.Tuple{*matcher}, []starlark.Tuple{})
+		if err != nil {
+			return nil, nil, err
+		}
+
+		matcher = &matcherFunc
+	}
+
+	switch typedVal := (*matcher).(type) {
 	case starlark.Callable:
 		var leftIdxs [][]int
 		var combinedIdx int
@@ -100,7 +112,8 @@ func (a DocumentMatchAnnotation) MatchNodes(leftDocSets []*yamlmeta.DocumentSet)
 				}
 
 				// TODO check thread correctness
-				result, err := starlark.Call(a.thread, *a.matcher, matcherArgs, []starlark.Tuple{})
+				result, err := starlark.Call(a.thread, *matcher,
+					matcherArgs, []starlark.Tuple{})
 				if err != nil {
 					return nil, nil, err
 				}
@@ -122,6 +135,7 @@ func (a DocumentMatchAnnotation) MatchNodes(leftDocSets []*yamlmeta.DocumentSet)
 
 	default:
 		return nil, nil, fmt.Errorf("Expected '%s' annotation keyword argument 'by'"+
-			" to be function, but was %T", AnnotationMatch, typedVal)
+			" to be either string (for map key) or function,"+
+			" but was %T", AnnotationMatch, typedVal)
 	}
 }
