@@ -26,7 +26,8 @@ var _ template.EvaluationCtxDialect = EvaluationCtx{}
 func (e EvaluationCtx) PrepareNode(parentNode template.EvaluationNode, val template.EvaluationNode) error {
 	if typedMap, ok := parentNode.(*yamlmeta.Map); ok {
 		if typedMapItem, ok := val.(*yamlmeta.MapItem); ok {
-			return MapItemOverride{e.implicitMapKeyOverrides}.Apply(typedMap, typedMapItem, true)
+			override := MapItemOverride{implicit: e.implicitMapKeyOverrides}
+			return override.Apply(typedMap, typedMapItem, true)
 		}
 	}
 	return nil
@@ -135,10 +136,15 @@ func (e EvaluationCtx) replaceItemInMap(
 		return err
 	}
 
+	override := MapItemOverride{
+		implicit:    e.implicitMapKeyOverrides,
+		placeholder: placeholderItem,
+	}
+
 	// If map items does not carry metadata
 	// we cannot check for override conflicts
 	for _, newItem := range insertItems {
-		err := MapItemOverride{e.implicitMapKeyOverrides}.Apply(dstMap, newItem, carryMeta)
+		err := override.Apply(dstMap, newItem, carryMeta)
 		if err != nil {
 			return err
 		}
