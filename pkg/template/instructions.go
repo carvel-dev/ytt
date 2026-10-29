@@ -6,6 +6,7 @@ package template
 import (
 	"fmt"
 	"strings"
+	"sync/atomic"
 )
 
 type InstructionSet struct {
@@ -20,13 +21,17 @@ type InstructionSet struct {
 	ReplaceNode           InstructionOp
 }
 
-var (
-	globalInsSetID = 1
-)
+// globalInsSetID names each InstructionSet apart from every other one, so that
+// the Starlark identifiers a template compiles down to cannot collide with
+// those of a template it loads.
+//
+// This is to protect concurrent usage when consumed as a Go module. In the
+// worse case scenario this could be a race that ends up with two templates
+// having the same ID.
+var globalInsSetID atomic.Int64
 
 func NewInstructionSet() *InstructionSet {
-	globalInsSetID++
-	uniqueID := globalInsSetID
+	uniqueID := globalInsSetID.Add(1)
 	return &InstructionSet{
 		SetCtxType:            InstructionOp{fmt.Sprintf("__ytt_tpl%d_set_ctx_type", uniqueID)},
 		StartCtx:              InstructionOp{fmt.Sprintf("__ytt_tpl%d_start_ctx", uniqueID)},
