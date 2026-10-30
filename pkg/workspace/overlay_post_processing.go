@@ -50,8 +50,16 @@ func (o OverlayPostProcessing) Apply() (map[*FileInLibrary]*yamlmeta.DocumentSet
 	}
 	SortFilesInLibrary(sortedOverlayFiles)
 
+	var addedDocSet *yamlmeta.DocumentSet
+
 	for _, file := range sortedOverlayFiles {
 		for _, overlay := range overlayDocSets[file] {
+			if len(docSetsWithoutOverlays) == 0 {
+				addedDocSet = &yamlmeta.DocumentSet{}
+				docSetsWithoutOverlays = []*yamlmeta.DocumentSet{addedDocSet}
+				docSetToFilesMapping[addedDocSet] = file
+			}
+
 			op := yttoverlay.Op{
 				// special case: array of docsets so that file association can be preserved
 				Left: docSetsWithoutOverlays,
@@ -72,6 +80,9 @@ func (o OverlayPostProcessing) Apply() (map[*FileInLibrary]*yamlmeta.DocumentSet
 	result := map[*FileInLibrary]*yamlmeta.DocumentSet{}
 
 	for _, docSet := range docSetsWithoutOverlays {
+		if docSet == addedDocSet && len(docSet.Items) == 0 {
+			continue
+		}
 		if file, ok := docSetToFilesMapping[docSet]; ok {
 			result[file] = docSet
 		} else {

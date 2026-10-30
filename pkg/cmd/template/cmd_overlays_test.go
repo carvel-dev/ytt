@@ -284,3 +284,32 @@ array:
 	assert.Equal(t, "tpl.yml", file.RelativePath())
 	assert.Equal(t, expectedYAMLTplData, string(file.Bytes()))
 }
+
+func TestAppendDocumentWithNoOtherDocuments(t *testing.T) {
+	yamlOverlayTplData := []byte(`
+#@overlay/match by=lambda i,l,r: False
+#@overlay/append
+---
+kind: Stuff
+`)
+
+	expectedYAMLTplData := `kind: Stuff
+`
+
+	filesToProcess := files.NewSortedFiles([]*files.File{
+		files.MustNewFileFromSource(
+			files.NewBytesSource("overlay.yml", yamlOverlayTplData)),
+	})
+
+	opts := cmdtpl.NewOptions()
+
+	out := opts.RunWithFiles(
+		cmdtpl.Input{Files: filesToProcess}, ui.NewTTY(false))
+	require.NoError(t, out.Err)
+	require.Len(t, out.Files, 1, "unexpected number of output files")
+
+	file := out.Files[0]
+
+	assert.Equal(t, "overlay.yml", file.RelativePath())
+	assert.Equal(t, expectedYAMLTplData, string(file.Bytes()))
+}
