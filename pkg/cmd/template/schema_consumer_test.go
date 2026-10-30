@@ -272,7 +272,7 @@ One or more data values were invalid
 Given data value is not declared in schema
 dvs1.yml:
     |
-  3 |   wrong_key: not right key
+  3 |   wrong_key: [REDACTED]
     |
 
     = found: wrong_key
@@ -309,7 +309,7 @@ One or more data values were invalid
 
 data_values.yml:
     |
-  4 |   port: localhost
+  4 |   port: [REDACTED]
     |
 
     = found: string
@@ -325,7 +325,7 @@ data_values.yml:
 
 data_values.yml:
     |
-  7 |   timeout: 5m
+  7 |   timeout: [REDACTED]
     |
 
     = found: string
@@ -390,7 +390,7 @@ One or more data values were invalid
 
 dataValues.yml:
     |
-  3 | foo: "bar"
+  3 | foo: "[REDACTED]"
     |
 
     = found: string
@@ -430,7 +430,7 @@ One or more data values were invalid
 
 data_values.yml:
      |
-   4 | - flags: secure  #! expecting an array, got a string
+   4 | - flags: [REDACTED]  #! expecting an array, got a string
      |
 
      = found: string
@@ -438,7 +438,7 @@ data_values.yml:
 
 data_values.yml:
      |
-   6 |   - secure  #! expecting a map, got a string
+   6 |   - [REDACTED]  #! expecting a map, got a string
      |
 
      = found: string
@@ -446,7 +446,7 @@ data_values.yml:
 
 data_values.yml:
      |
-   9 |     - one  #! expecting a float, got a string
+   9 |     - [REDACTED]  #! expecting a float, got a string
      |
 
      = found: string
@@ -493,7 +493,7 @@ One or more data values were invalid
 
 dataValues.yml:
     |
-  5 | key: one
+  5 | key: [REDACTED]
     |
 
     = found: string
@@ -584,7 +584,7 @@ One or more data values were invalid
 
 (data-value arg):
     |
-  1 | foo=not an integer
+  1 | foo=[REDACTED]
     |
 
     = found: string
@@ -614,7 +614,7 @@ One or more data values were invalid
 
 (data-value-yaml arg):
     |
-  1 | foo=not an integer
+  1 | foo=[REDACTED]
     |
 
     = found: string
@@ -649,7 +649,7 @@ One or more data values were invalid
 
 (data-values-env arg) DVS:
     |
-  1 | DVS_foo=not an integer
+  1 | foo=[REDACTED]
     |
 
     = found: string
@@ -683,7 +683,7 @@ One or more data values were invalid
 
 (data-values-env-yaml arg) DVS:
     |
-  1 | DVS_foo=not an integer
+  1 | foo=[REDACTED]
     |
 
     = found: string
@@ -728,7 +728,7 @@ One or more data values were invalid
 
 (data-value-file arg) foo=dvs1.yml:
     |
-  1 | not an integer
+  1 | foo=[REDACTED]
     |
 
     = found: string
@@ -773,7 +773,7 @@ One or more data values were invalid
 
 dvs1.yml:
     |
-  1 | foo: not an integer
+  1 | foo: [REDACTED]
     |
 
     = found: string
@@ -822,7 +822,7 @@ One or more data values were invalid
 Given data value is not declared in schema
 dvs1.yml:
     |
-  2 | not_in_schema: this should be the only violation reported
+  2 | not_in_schema: [REDACTED]
     |
 
     = found: not_in_schema
@@ -2073,7 +2073,7 @@ foo: 42`)
      
      values.yml:
          |
-       5 | foo: bar
+       5 | foo: [REDACTED]
          |
      
          = found: string
@@ -2190,7 +2190,7 @@ foo: #@ data.values.foo
      
      (data-value arg):
          |
-       1 | @lib:foo=42
+       1 | foo=[REDACTED]
          |
      
          = found: string
