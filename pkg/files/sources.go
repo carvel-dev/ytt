@@ -11,6 +11,8 @@ import (
 	"path"
 	"path/filepath"
 	"strings"
+
+	"carvel.dev/ytt/internal/diagnostics"
 )
 
 type Source interface {
@@ -94,7 +96,7 @@ type HTTPSource struct {
 func NewHTTPSource(path string) HTTPSource { return HTTPSource{path, &http.Client{}} }
 
 func (s HTTPSource) Description() string {
-	return fmt.Sprintf("HTTP URL '%s'", s.url)
+	return fmt.Sprintf("HTTP URL '%s'", diagnostics.URL(s.url))
 }
 
 func (s HTTPSource) RelativePath() (string, error) {
@@ -104,18 +106,27 @@ func (s HTTPSource) RelativePath() (string, error) {
 func (s HTTPSource) Bytes() ([]byte, error) {
 	resp, err := s.Client.Get(s.url)
 	if err != nil {
-		return nil, fmt.Errorf("Requesting URL '%s': %s", s.url, err)
+		return nil, fmt.Errorf("Requesting URL '%s': %s",
+			diagnostics.URL(s.url),
+			diagnostics.Error(err),
+		)
 	}
 
 	defer resp.Body.Close()
 
 	if resp.StatusCode < 200 || resp.StatusCode > 299 {
-		return nil, fmt.Errorf("Requesting URL '%s': %s", s.url, resp.Status)
+		return nil, fmt.Errorf("Requesting URL '%s': %s",
+			diagnostics.URL(s.url),
+			resp.Status,
+		)
 	}
 
 	result, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return nil, fmt.Errorf("Reading URL '%s': %s", s.url, err)
+		return nil, fmt.Errorf("Reading URL '%s': %s",
+			diagnostics.URL(s.url),
+			diagnostics.Error(err),
+		)
 	}
 
 	return result, nil

@@ -101,7 +101,10 @@ func (o *Options) Run() error {
 	return o.pickSource(srcs, func(s FileSource) bool { return s.HasOutput() }).Output(out)
 }
 
-func (o *Options) RunWithFiles(in Input, ui ui.UI) Output {
+// RunWithFiles renders input files and returns value-redacted diagnostics.
+func (o *Options) RunWithFiles(in Input, presentation ui.UI) (out Output) {
+	diagnostics := diagnosticValuesFromFiles(in.Files)
+	defer diagnostics.redactOutput(&out)
 	var err error
 
 	in.Files, err = o.FileMarksOpts.Apply(in.Files)
@@ -110,7 +113,7 @@ func (o *Options) RunWithFiles(in Input, ui ui.UI) Output {
 	}
 
 	rootLibrary := workspace.NewRootLibrary(in.Files)
-	rootLibrary.Print(ui.DebugWriter())
+	rootLibrary.Print(presentation.DebugWriter())
 
 	if o.InspectFiles {
 		return o.inspectFiles(rootLibrary)
@@ -121,8 +124,11 @@ func (o *Options) RunWithFiles(in Input, ui ui.UI) Output {
 		return Output{Err: err}
 	}
 
+	diagnostics.add(valuesOverlays...)
+	diagnostics.add(libraryValuesOverlays...)
+
 	libraryExecutionFactory := workspace.NewLibraryExecutionFactory(
-		ui,
+		presentation,
 		workspace.TemplateLoaderOpts{
 			IgnoreUnknownComments:   o.IgnoreUnknownComments,
 			ImplicitMapKeyOverrides: o.ImplicitMapKeyOverrides,
@@ -150,18 +156,28 @@ func (o *Options) RunWithFiles(in Input, ui ui.UI) Output {
 		return Output{Err: fmt.Errorf("Output type currently only supported for data values schema (i.e. include --data-values-schema-inspect)")}
 	}
 
-	values, libraryValues, err := rootLibraryExecution.Values(valuesOverlays, schema)
+	return o.renderWithValues(rootLibraryExecution, valuesOverlays,
+		libraryValuesOverlays, schema, librarySchemas, &diagnostics)
+}
+
+func (o *Options) renderWithValues(execution *workspace.LibraryExecution,
+	overlays, libraryOverlays []*datavalues.Envelope,
+	inputSchema *datavalues.Schema, librarySchemas []*datavalues.SchemaEnvelope,
+	diagnostics *diagnosticValues) Output {
+	values, libraryValues, err := execution.Values(overlays, inputSchema)
 	if err != nil {
 		return Output{Err: err}
 	}
 
-	libraryValues = append(libraryValues, libraryValuesOverlays...)
+	libraryValues = append(libraryValues, libraryOverlays...)
+	diagnostics.add(values)
+	diagnostics.add(libraryValues...)
 
 	if o.DataValuesFlags.Inspect {
 		return o.inspectDataValues(values)
 	}
 
-	result, err := rootLibraryExecution.Eval(values, libraryValues, librarySchemas)
+	result, err := execution.Eval(values, libraryValues, librarySchemas)
 	if err != nil {
 		return Output{Err: err}
 	}

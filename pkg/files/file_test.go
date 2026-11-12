@@ -4,10 +4,11 @@
 package files_test
 
 import (
+	"testing"
+
 	"carvel.dev/ytt/pkg/files"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"testing"
 )
 
 func TestNewSortedFilesFromPaths(t *testing.T) {
@@ -21,7 +22,9 @@ func TestNewSortedFilesFromPaths(t *testing.T) {
 
 	assert.Equal(t, filesToProcess[0].RelativePath(), "def.tpltest")
 	assert.Equal(t, filesToProcess[1].RelativePath(), "test.yaml")
-	assert.Equal(t, filesToProcess[1].Description(), "HTTP URL 'https://example.org/test.yaml?hello=world&foo=bar'")
+	assert.Equal(t, filesToProcess[1].Description(),
+		"HTTP URL 'https://example.org/test.yaml'")
 	assert.Equal(t, filesToProcess[2].RelativePath(), "an/overwritten/path/to/file.yaml")
-	assert.Equal(t, filesToProcess[2].Description(), "HTTP URL 'https://example.org/test.yaml?hello=world&foo=bar'")
+	assert.Equal(t, filesToProcess[2].Description(),
+		"HTTP URL 'https://example.org/test.yaml'")
 }
