@@ -31,8 +31,8 @@ func NewStarlarkValue(val starlark.Value) StarlarkValue {
 }
 
 func (e StarlarkValue) AsGoValue() (interface{}, error) {
-	e.inProgress = map[starlark.Value]struct{}{}
-	return e.asInterface(e.val)
+	conv := StarlarkValue{val: e.val, inProgress: map[starlark.Value]struct{}{}}
+	return conv.asInterface(e.val)
 }
 
 func (e StarlarkValue) AsString() (string, error) {
