@@ -1,0 +1,17 @@
+#@ load("@ytt:yaml", "yaml")
+#@ load("@ytt:struct", "struct")
+#@ def cyc():
+#@   x = []
+#@   x.append(struct.make(items=x))
+#@   return yaml.encode(x)
+#@ end
+key: #@ cyc()
+
++++
+
+ERR: 
+- yaml.encode: Unable to convert value: list contains itself
+    in cyc
+      stdin:6 | #@   return yaml.encode(x)
+    in <toplevel>
+      stdin:8 | key: #@ cyc()

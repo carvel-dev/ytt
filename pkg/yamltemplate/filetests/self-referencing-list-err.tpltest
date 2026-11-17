@@ -1,0 +1,13 @@
+#@ def cyc():
+#@   x = []
+#@   x.append(x)
+#@   return x
+#@ end
+key: #@ cyc()
+
++++
+
+ERR: 
+- __ytt_tplXXX_set_node: Unable to convert value: list contains itself
+    in <toplevel>
+      stdin:6 | key: #@ cyc()
