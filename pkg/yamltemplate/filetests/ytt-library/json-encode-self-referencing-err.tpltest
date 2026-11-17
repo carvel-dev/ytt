@@ -1,0 +1,16 @@
+#@ load("@ytt:json", "json")
+#@ def cyc():
+#@   x = {}
+#@   x["self"] = x
+#@   return json.encode(x)
+#@ end
+key: #@ cyc()
+
++++
+
+ERR: 
+- json.encode: Unable to convert value: dict contains itself
+    in cyc
+      stdin:5 | #@   return json.encode(x)
+    in <toplevel>
+      stdin:7 | key: #@ cyc()

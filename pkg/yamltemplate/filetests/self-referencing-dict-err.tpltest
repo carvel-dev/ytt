@@ -1,0 +1,13 @@
+#@ def cyc():
+#@   x = {}
+#@   x["self"] = [x]
+#@   return x
+#@ end
+key: #@ cyc()
+
++++
+
+ERR: 
+- __ytt_tplXXX_set_node: Unable to convert value: dict contains itself
+    in <toplevel>
+      stdin:6 | key: #@ cyc()

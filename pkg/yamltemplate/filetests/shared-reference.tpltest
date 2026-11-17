@@ -1,0 +1,17 @@
+#@ def shared():
+#@   x = [1, 2]
+#@   return {"a": x, "b": [x, x]}
+#@ end
+key: #@ shared()
+
++++
+
+key:
+  a:
+  - 1
+  - 2
+  b:
+  - - 1
+    - 2
+  - - 1
+    - 2

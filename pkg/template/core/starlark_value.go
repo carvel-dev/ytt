@@ -22,13 +22,16 @@ type UnconvertableStarlarkValue interface {
 
 type StarlarkValue struct {
 	val starlark.Value
+	// lists, dicts and structs whose conversion has started but not finished
+	inProgress map[starlark.Value]struct{}
 }
 
 func NewStarlarkValue(val starlark.Value) StarlarkValue {
-	return StarlarkValue{val}
+	return StarlarkValue{val: val}
 }
 
 func (e StarlarkValue) AsGoValue() (interface{}, error) {
+	e.inProgress = map[starlark.Value]struct{}{}
 	return e.asInterface(e.val)
 }
 
@@ -75,7 +78,30 @@ func uninvokedFuncErr(typeName, funcName string) error {
 		"(did you mean to call %s()?)", typeName, funcName)
 }
 
+// enterContainer records that the conversion of a list, dict or struct has
+// started. Reaching one that is already in progress means the value contains
+// itself, which is reported instead of recursing until the stack overflows.
+func (e StarlarkValue) enterContainer(val starlark.Value) (func(), error) {
+	switch val.(type) {
+	case *starlark.Dict, *starlark.List, *StarlarkStruct:
+	default:
+		return func() {}, nil
+	}
+	if _, found := e.inProgress[val]; found {
+		return nil, fmt.Errorf("Unable to convert value: "+
+			"%s contains itself", val.Type())
+	}
+	e.inProgress[val] = struct{}{}
+	return func() { delete(e.inProgress, val) }, nil
+}
+
 func (e StarlarkValue) asInterface(val starlark.Value) (interface{}, error) {
+	leave, err := e.enterContainer(val)
+	if err != nil {
+		return nil, err
+	}
+	defer leave()
+
 	if obj, ok := val.(UnconvertableStarlarkValue); ok {
 		return nil, fmt.Errorf("Unable to convert value: %s", obj.ConversionHint())
 	}
