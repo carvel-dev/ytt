@@ -238,8 +238,15 @@ func NewDefaultAnnotation(ann template.NodeAnnotation, effectiveType Type, pos *
 
 	val, err := core.NewStarlarkValue(ann.Args[0]).AsGoValue()
 	if err != nil {
-		// at this point the annotation is processed, and the Starlark evaluated
-		panic(err)
+		return nil, schemaAssertionError{
+			annPositions: []*filepos.Position{ann.Position},
+			position:     pos,
+			description: fmt.Sprintf("invalid value in @%v annotation",
+				AnnotationDefault),
+			expected: fmt.Sprintf("%s (by %s)", effectiveType.String(),
+				effectiveType.GetDefinitionPosition().AsCompactString()),
+			found: err.Error(),
+		}
 	}
 	return &DefaultAnnotation{yamlmeta.NewASTFromInterfaceWithPosition(val, pos), ann.Position}, nil
 }

@@ -1,0 +1,8 @@
+key: #@ range(3)
+
++++
+
+ERR: 
+- __ytt_tplXXX_set_node: Unable to convert value: range does not encode
+    in <toplevel>
+      stdin:1 | key: #@ range(3)

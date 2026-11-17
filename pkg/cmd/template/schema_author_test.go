@@ -387,6 +387,34 @@ schema.yml:
 
 			assertFails(t, filesToProcess, expectedErr, opts)
 		})
+		t.Run("is a range", func(t *testing.T) {
+			schemaYAML := `#@data/values-schema
+---
+#@schema/default range(3)
+foo: [0]
+`
+			expectedErr := `
+Invalid schema
+==============
+
+invalid value in @schema/default annotation
+schema.yml:
+    |
+  3 | #@schema/default range(3)
+  4 | foo: [0]
+    |
+
+    = found: Unable to convert value: range does not encode
+    = expected: array (by schema.yml:4)
+`
+
+			filesToProcess := files.NewSortedFiles([]*files.File{
+				files.MustNewFileFromSource(
+					files.NewBytesSource("schema.yml", []byte(schemaYAML))),
+			})
+
+			assertFails(t, filesToProcess, expectedErr, opts)
+		})
 		t.Run("is an invalid starlark Tuple", func(t *testing.T) {
 			schemaYAML := `#@data/values-schema
 ---

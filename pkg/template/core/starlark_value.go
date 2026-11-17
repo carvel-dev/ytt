@@ -68,6 +68,13 @@ func (e StarlarkValue) AsFloat64() (float64, error) {
 	return 0, fmt.Errorf("expected float value, but was %T", e.val)
 }
 
+// unencodableTypeErr reports a value of a type that has no Go equivalent,
+// such as a range.
+func unencodableTypeErr(typeName string) error {
+	return fmt.Errorf("Unable to convert value: %s "+
+		"does not encode", typeName)
+}
+
 // uninvokedFuncErr reports a function that was named but never called, which
 // is almost always a missing pair of parentheses.
 func uninvokedFuncErr(typeName, funcName string) error {
@@ -102,7 +109,8 @@ func (e StarlarkValue) asInterface(val starlark.Value) (interface{}, error) {
 		if ok {
 			return i2, nil
 		}
-		panic("not sure how to get int") // TODO
+		return nil, fmt.Errorf("Unable to convert value: integer %s "+
+			"does not fit in 64 bits", typedVal.String())
 
 	case starlark.Float:
 		return float64(typedVal), nil
@@ -129,7 +137,7 @@ func (e StarlarkValue) asInterface(val starlark.Value) (interface{}, error) {
 		return nil, uninvokedFuncErr(typedVal.Type(), typedVal.Name())
 
 	default:
-		panic(fmt.Sprintf("unknown type %T for conversion to go value", val))
+		return nil, unencodableTypeErr(val.Type())
 	}
 }
 

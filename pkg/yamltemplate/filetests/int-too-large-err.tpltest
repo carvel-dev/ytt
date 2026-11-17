@@ -1,0 +1,8 @@
+key: #@ 1 << 70
+
++++
+
+ERR: 
+- __ytt_tplXXX_set_node: Unable to convert value: integer 1180591620717411303424 does not fit in 64 bits
+    in <toplevel>
+      stdin:1 | key: #@ 1 << 70
