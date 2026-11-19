@@ -7,6 +7,6 @@ Explanation of `remove-test.yml`:
 - `#@overlay/match by="name"` tells ytt to find job that matches `name: unit`
 
 - `#@overlay/match by=overlay.subset({"task":"test"})` tells ytt to find array item that has `{"task":"test"}` in it
-cant use `#@overlay/match by="task"` for that last one because no all array items within `plan` have task key
+can't use `#@overlay/match by="task"` for that last one because no all array items within `plan` have task key
 
 - `-` is an empty array item since we don't care what's inside

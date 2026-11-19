@@ -9,7 +9,7 @@ readme: |
 
   In `deployment.yml`, below...
 
-  - `cpus()` and `memorys()` explicitly return resource
+  - `cpus()` and `memory()` explicitly return resource
     values with units.
   - `request_50m_per_factor()` implicitly returns
     a YAMLFragment that is the resource configuration.

@@ -1,7 +1,7 @@
 This example shows how to use `ytt` overlaying in regards to accomplish the modification of X Kubernetes Ingress object.
 
 Specifically the `apiVersion` is bumped to **networking.k8s.io/v1** from **networking.k8s.io/v1beta1**. This is done in order to get the Falco installation Helm post-rendered into a state that matches the version of the `networking` API on a specific `Kubernetes` version.
-As a consequence of that we're required to `ytt overlay` **backend** and **paths** on the **Kubernetes Ingress Object**. In order for these to match the `apiVersion` that is overlayed to.
+As a consequence of that we're required to `ytt overlay` **backend** and **paths** on the **Kubernetes Ingress Object**. In order for these to match the `apiVersion` that is overlaid to.
 
 All of this stems from the Falco Helm chart having issues with the version tag that K3s uses. It's e.g `v1.22.3+k3s2`. This results in the **Falco** chart using the **v1beta1** of the **networking** API instead of the newest version of the **networking** API that we want.
 
