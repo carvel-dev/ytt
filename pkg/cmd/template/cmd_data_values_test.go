@@ -944,3 +944,34 @@ values:
 		})
 	})
 }
+
+func TestDataValues_non_string_key_is_reported_as_error(t *testing.T) {
+	yamlTplData := []byte(`
+#@ load("@ytt:data", "data")
+notifications: #@ data.values.notifications`)
+
+	// YAML 1.1 reads an unquoted "on" as the boolean true
+	yamlData := []byte(`#@data/values
+---
+notifications:
+  recipients:
+  - admin@example.com
+  on:
+  - any
+`)
+
+	filesToProcess := files.NewSortedFiles([]*files.File{
+		files.MustNewFileFromSource(files.NewBytesSource("tpl.yml", yamlTplData)),
+		files.MustNewFileFromSource(files.NewBytesSource("data.yml", yamlData)),
+	})
+
+	ui := ui.NewTTY(false)
+	opts := cmdtpl.NewOptions()
+
+	var out cmdtpl.Output
+	require.NotPanics(t, func() {
+		out = opts.RunWithFiles(cmdtpl.Input{Files: filesToProcess}, ui)
+	})
+	require.EqualError(t, out.Err, "Data value key at data.yml:6 must be a string, but was boolean (true) "+
+		"(hint: in YAML, unquoted on, off, yes and no are booleans; quote the key to make it a string)")
+}

@@ -99,6 +99,11 @@ func (ll *LibraryExecution) Values(valuesOverlays []*datavalues.Envelope, schema
 		return nil, nil, err
 	}
 
+	err = checkDataValueKeysAreStrings(values.Doc)
+	if err != nil {
+		return nil, nil, err
+	}
+
 	if !ll.skipDataValuesValidation {
 		err = ll.validateValues(values)
 		if err != nil {
