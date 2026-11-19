@@ -19,7 +19,7 @@ readme: |
   document meets the criteria, it becomes a "left."
 
   Step 2: Path to the Node to Edit
-  The contents of the overlay (i.e. the "right") mimicks the
+  The contents of the overlay (i.e. the "right") mimics the
   path in the "left" down to the node we wish to edit.
 
   Step 3: Apply an Operation
