@@ -1,0 +1,34 @@
+#! whitespace at the start of lines within a triple-quoted string is preserved
+#@ def f():
+#@     return """ asd1
+#@ asd2
+#@        asd3
+#@ """
+#@     end
+
+string: #@ f()
+
+#@ def g():
+#@     return '''a
+#@   b
+#@     c'''
+#@ end
+
+single-quotes: #@ g()
+
+#! a triple-quote inside a comment or a one-line string does not open a string
+#@ x = "\"\"\""   # """
+#@   y = 1
+test3: #@ y
+
++++
+
+string: |2
+   asd1
+  asd2
+         asd3
+single-quotes: |-
+  a
+    b
+      c
+test3: 1
