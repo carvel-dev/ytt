@@ -5,9 +5,13 @@
 #@   return str(n)+"m"
 #@ end
 
+---
+
 #@ def memorys(n):
 #@   return "{}Mi".format(n)
 #@ end
+
+---
 
 #! request_50m_per_factor — generates a resources request
 #!   given a scaling factor such that the limits are twice
