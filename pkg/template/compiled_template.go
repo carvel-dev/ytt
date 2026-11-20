@@ -66,16 +66,50 @@ func (e *CompiledTemplate) CodeAtLine(pos *filepos.Position) *Line {
 func (e *CompiledTemplate) CodeAsString() string {
 	result := []string{}
 	cont := false
+	openQuote := "" // triple quote ("""/''') of a string still open at the start of a line
 	for _, line := range e.code {
 		src := line.Instruction.AsString()
-		if !cont {
+		if !cont && openQuote == "" {
 			src = strings.TrimLeftFunc(src, unicode.IsSpace)
 		}
 		cont = strings.HasSuffix(src, "\\")
+		openQuote = openTripleQuote(src, openQuote)
 		result = append(result, src)
 	}
 	// Do not add any unnecessary newlines to match code lines
 	return strings.Join(result, "\n")
+}
+
+// openTripleQuote returns the triple quote delimiter of the string that is still
+// open at the end of line (given the one open at its start), or "" if none.
+// shortcut: raw-string prefixes (r"""...""") are not special-cased, only `\` escapes.
+func openTripleQuote(line, open string) string {
+	for i := 0; i < len(line); i++ {
+		c := line[i]
+		switch {
+		case open != "":
+			if c == '\\' {
+				i++
+			} else if strings.HasPrefix(line[i:], open) {
+				open = ""
+				i += 2
+			}
+		case c == '#':
+			return ""
+		case c == '"' || c == '\'':
+			if q := strings.Repeat(string(c), 3); strings.HasPrefix(line[i:], q) {
+				open = q
+				i += 2
+				continue
+			}
+			for i++; i < len(line) && line[i] != c; i++ { // one-line string
+				if line[i] == '\\' {
+					i++
+				}
+			}
+		}
+	}
+	return open
 }
 
 func (e *CompiledTemplate) DebugCodeAsString() string {
